@@ -1,0 +1,107 @@
+{
+  "task_id": "CORE-007",
+  "git_commit": "75905459d404619c8843969f7aac156d9bba7cf0",
+  "recorded_at": "2026-09-12T02:00:35Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-12T01-58-30Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 101,
+      "result": "FAIL",
+      "log": "evidence/CORE-007/2026-09-12T01-58-30Z/command-2.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-12T01-58-30Z/command-3.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-12T01-58-30Z/command-4.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/CORE-007/2026-09-12T01-58-30Z/command-5.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-12T01-58-30Z/command-6.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 101,
+      "result": "FAIL"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/artifacts/mod.rs",
+      "sha256": "8b8954f7589a2e8b14946b5935a4c3f5da17aad80046594fbf85d75a47bc5e35",
+      "bytes": 3023
+    },
+    {
+      "path": "crates/server/src/artifacts/metadata.rs",
+      "sha256": "efb879b573c8b2dcabd4b5cfb2b45aa29a9bed2c8482e3c85ed047af8374f539",
+      "bytes": 45522
+    },
+    {
+      "path": "crates/server/src/artifacts/object_store.rs",
+      "sha256": "5a4f13a678e3b83898ee774a67306d2955788fba746a2c635970e3c6101147e9",
+      "bytes": 25211
+    },
+    {
+      "path": "crates/server/src/artifacts/sigv4.rs",
+      "sha256": "8ce2e57717fe3154ced696ed2f804b135167df87883da46a8a6a8d5d60b72272",
+      "bytes": 7592
+    },
+    {
+      "path": "crates/server/tests/artifacts.rs",
+      "sha256": "8d94a67e0f96515ff30d00c41799c6990009156366a81c964b0300baf369cfc3",
+      "bytes": 26996
+    },
+    {
+      "path": "infra/compose/compose.yaml",
+      "sha256": "afd5e94caa2e286d36be48af29f318b4e098391d61e1124314695aa5366e7e00",
+      "bytes": 4595
+    }
+  ]
+}

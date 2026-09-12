@@ -1,0 +1,31 @@
+$ cargo clippy --workspace --all-targets -- -D warnings
+exit_code: 0
+
+--- stdout ---
+
+--- stderr ---
+    Checking sync_wrapper v1.0.2
+    Checking ipnet v2.12.2
+    Checking form_urlencoded v1.2.2
+    Checking tokio-rustls v0.26.5
+    Checking ryu v1.0.23
+    Checking tower v0.5.3
+    Checking axum-core v0.4.5
+    Checking url v2.5.8
+    Checking serde_urlencoded v0.7.1
+    Checking hyper-util v0.1.20
+    Checking sqlx-core v0.8.6
+    Checking tower-http v0.6.11
+    Checking hyper-rustls v0.27.9
+    Checking hyper-timeout v0.5.2
+    Checking reqwest v0.12.28
+    Checking axum v0.7.9
+    Checking sqlx-postgres v0.8.6
+    Checking tonic v0.12.3
+    Checking sqlx v0.8.6
+    Checking quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Checking quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/crates/events)
+    Checking quansio-contracts v0.1.0 (/Users/mohsin/projects/quansiov3/crates/contracts)
+    Checking quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/crates/graph)
+    Checking quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/crates/core)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.42s

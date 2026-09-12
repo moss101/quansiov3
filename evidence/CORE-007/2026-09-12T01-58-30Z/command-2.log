@@ -1,0 +1,188 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace
+exit_code: 101
+
+--- stdout ---
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 19 tests
+test generator_advances_with_the_clock ... ok
+test generation_accepts_current_or_newer_and_rejects_stale ... ok
+test canonical_ids_round_trip_with_their_prefix ... ok
+test correlation_and_causation_ids_carry_the_right_shape ... ok
+test idempotency_keys_are_stable_and_sensitive ... ok
+test cursors_round_trip_and_stay_opaque ... ok
+test prefix_table_matches_the_generated_contract_enum ... ok
+test revision_check_and_bump_is_compare_and_set ... ok
+test ids_serialize_as_their_canonical_string ... ok
+test sequence_must_be_positive ... ok
+test typed_ids_reject_the_wrong_prefix ... ok
+test ulid_matches_the_published_spec_vector ... ok
+test duplicate_commands_replay_or_conflict ... ok
+test ulid_ordering_follows_time_then_randomness ... ok
+test fence_tokens_round_trip_and_reject_stale_leases ... ok
+test ulid_rejects_malformed_input ... ok
+test unknown_prefix_is_rejected ... ok
+test ulid_round_trips_through_base32 ... ok
+test generator_is_monotonic_within_one_millisecond ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+test malformed_types_are_rejected ... ok
+test unknown_family_is_rejected_with_a_typed_error ... ok
+test canonical_families_match_the_generated_catalog ... ok
+test known_types_parse_and_subjects_follow_domain_naming ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test unavailable_transport_fails_closed_instead_of_dropping ... ok
+test crash_between_send_and_mark_cannot_duplicate_and_loses_no_event ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.59s
+
+
+running 6 tests
+test a_rolled_back_commit_releases_its_sequence_instead_of_burning_it ... ok
+test concurrent_writers_get_distinct_gap_free_sequences ... ok
+test committed_mutation_writes_state_event_and_outbox_together ... ok
+test committing_without_an_event_is_refused ... ok
+test failing_mutation_rolls_back_state_event_and_outbox ... ok
+test consumer_resumes_exactly_after_the_stored_sequence ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.51s
+
+
+running 8 tests
+test state::tests::only_depends_on_and_parent_of_relations_must_be_acyclic ... ok
+test state::tests::every_status_declares_a_round_tripping_db_string ... ok
+test state::tests::kinds_and_origins_round_trip_through_their_db_strings ... ok
+test state::tests::run_reaches_success_only_through_verifying ... ok
+test state::tests::terminal_work_node_states_never_transition ... ok
+test state::tests::run_terminals_are_immutable ... ok
+test state::tests::step_and_attempt_transitions_fail_closed ... ok
+test state::tests::unknown_state_strings_fail_closed ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test the_narrowing_hook_is_invoked_and_rejection_writes_nothing ... ok
+test teammates_never_join_and_workers_do ... ok
+test delegation_records_the_parent_capability_and_requires_the_parent ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s
+
+
+running 3 tests
+test one_invalid_item_rolls_back_the_whole_batch ... ok
+test stale_batch_revision_applies_nothing ... ok
+test one_batch_mutates_work_agent_and_state_graphs_together ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.70s
+
+
+running 1 test
+test retries_append_attempts_and_never_overwrite_earlier_ones ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.51s
+
+
+running 1 test
+test graph_rejects_self_two_node_and_longer_cycles ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+
+running 4 tests
+test step_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+test work_node_transitions_fail_closed ... ok
+test turn_transitions_fail_closed ... ok
+test run_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.67s
+
+
+running 1 test
+test stale_revision_conflicts_and_writes_nothing ... FAILED
+
+failures:
+
+---- stale_revision_conflicts_and_writes_nothing stdout ----
+
+thread 'stale_revision_conflicts_and_writes_nothing' (50446373) panicked at crates/graph/tests/common/mod.rs:57:10:
+connect to the admin database: Protocol("unexpected response from SSLRequest: 0x00 (sqlx_postgres::connection::tls:95)")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    stale_revision_conflicts_and_writes_nothing
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+--- stderr ---
+   Compiling tower v0.5.3
+   Compiling hyper-util v0.1.20
+   Compiling tokio-rustls v0.26.5
+   Compiling axum-core v0.4.5
+   Compiling sqlx-core v0.8.6
+   Compiling tower-http v0.6.11
+   Compiling axum v0.7.9
+   Compiling hyper-rustls v0.27.9
+   Compiling hyper-timeout v0.5.2
+   Compiling sqlx-postgres v0.8.6
+   Compiling reqwest v0.12.28
+   Compiling tonic v0.12.3
+   Compiling sqlx-macros-core v0.8.6
+   Compiling quansio-contracts v0.1.0 (/Users/mohsin/projects/quansiov3/crates/contracts)
+   Compiling sqlx-macros v0.8.6
+   Compiling sqlx v0.8.6
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+   Compiling quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/crates/events)
+   Compiling quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/crates/core)
+   Compiling quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/crates/graph)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 29.38s
+     Running unittests src/lib.rs (target/debug/deps/quansio_capability-f3e9a3d5a42c00e0)
+     Running unittests src/lib.rs (target/debug/deps/quansio_cli-c2b6ed63af2ff711)
+     Running unittests src/lib.rs (target/debug/deps/quansio_contracts-d8dc763884f14db1)
+     Running unittests src/lib.rs (target/debug/deps/quansio_core-f634f031af8709da)
+     Running tests/identity.rs (target/debug/deps/identity-592a3d4576a9d414)
+     Running unittests src/lib.rs (target/debug/deps/quansio_events-94164780a8cb5988)
+     Running tests/event_families.rs (target/debug/deps/event_families-d0ffedf43300777e)
+     Running tests/outbox_publisher.rs (target/debug/deps/outbox_publisher-8335de029ca72383)
+     Running tests/runtime_event_store.rs (target/debug/deps/runtime_event_store-3e8e2642812adb15)
+     Running unittests src/lib.rs (target/debug/deps/quansio_graph-1d4d42b5f22cae53)
+     Running tests/agent_graph.rs (target/debug/deps/agent_graph-ea246d966381b6d6)
+     Running tests/atomic_batch.rs (target/debug/deps/atomic_batch-385203c29fb14952)
+     Running tests/attempts_append_only.rs (target/debug/deps/attempts_append_only-a9a5cefd6e581a26)
+     Running tests/cycle_rejection.rs (target/debug/deps/cycle_rejection-a711548f095a4d18)
+     Running tests/illegal_transitions.rs (target/debug/deps/illegal_transitions-069fbcb30222817c)
+     Running tests/revision_cas.rs (target/debug/deps/revision_cas-49f7b35aa23dd182)
+error: test failed, to rerun pass `-p quansio-graph --test revision_cas`
