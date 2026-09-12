@@ -1,0 +1,103 @@
+{
+  "task_id": "RUN-003",
+  "git_commit": "d825c65f692d4c66faedd19848a6eb9640d4af0d",
+  "recorded_at": "2026-09-12T04:52:03Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test planning",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-12T04-47-56Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-graph --test planning",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-12T04-47-56Z/command-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-12T04-47-56Z/command-3.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-12T04-47-56Z/command-4.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-12T04-47-56Z/command-5.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-12T04-47-56Z/command-6.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-12T04-47-56Z/command-7.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test planning",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-graph --test planning",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/runtime/planning/mod.rs",
+      "sha256": "2ef0615a9e150a0a2ba69aa6f6646b99052705de945af8c9d08ca343eb784b6d",
+      "bytes": 7788
+    },
+    {
+      "path": "crates/server/tests/planning.rs",
+      "sha256": "a56561556ffe4ba26a17dc97e21190d8d1a0671cd60bec3e2f9f03b9f07b5c52",
+      "bytes": 26695
+    },
+    {
+      "path": "crates/graph/tests/planning.rs",
+      "sha256": "45d7a27435339e15d324ac0db1a4d5ab0db31bd975eb7c5b597955e78d6d3109",
+      "bytes": 21777
+    }
+  ]
+}

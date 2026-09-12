@@ -1,0 +1,17 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-graph --test planning
+exit_code: 0
+
+--- stdout ---
+
+running 4 tests
+test the_seed_node_id_is_visible_to_the_compiler_snapshot ... ok
+test a_compiled_plan_commits_through_graph_transaction_with_one_revision_bump ... ok
+test replaying_a_compiled_plan_conflicts_instead_of_duplicating_nodes ... ok
+test the_same_plan_over_the_same_state_is_deterministic_across_runs_and_restart ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.10s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running tests/planning.rs (target/debug/deps/planning-04c22e9a7ce1b4b1)
