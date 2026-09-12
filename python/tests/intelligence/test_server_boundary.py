@@ -51,9 +51,9 @@ HOSTILE_CONTENT = (
 )
 BENIGN_CONTENT = "Summarise the failing tests from yesterday's run."
 
-# Method -> owning task for the behaviour INT-001 must not fake.
+# Method -> owning task for the behaviour INT-001 must not fake. FulfillModel is implemented
+# by INT-002 (it delegates to the model gateway) and has its own boundary tests.
 UNIMPLEMENTED_METHODS = {
-    "FulfillModel": "INT-002",
     "BuildContext": "INT-005",
     "Search": "INT-005",
     "ProposeMemory": "INT-007",
@@ -62,7 +62,9 @@ UNIMPLEMENTED_METHODS = {
 }
 # Requests that carry no ScopeContext field of their own and must use invocation metadata.
 METADATA_SCOPE_METHODS = frozenset({"FulfillModel", "Search"})
-ALL_METHODS = (*sorted(UNIMPLEMENTED_METHODS), "ClassifyTrust")
+ALL_METHODS = (*sorted(UNIMPLEMENTED_METHODS), "ClassifyTrust", "FulfillModel")
+# Server-streaming RPCs whose response must be consumed before the status surfaces.
+STREAMING_METHODS = frozenset({"FulfillModel"})
 
 
 class GatewayHandle(NamedTuple):
@@ -142,9 +144,8 @@ def invoke(
         result = rpc(payload, metadata=metadata, timeout=call_timeout)
     else:
         result = rpc(payload, timeout=call_timeout)
-    if method == "FulfillModel":
-        list(result)
-        raise AssertionError("FulfillModel must not yield a success-shaped stream")
+    if method in STREAMING_METHODS:
+        return list(result)
     return result
 
 

@@ -29,6 +29,7 @@ from pathlib import Path
 import grpc
 from quansio.v1.intelligence import service_pb2, service_pb2_grpc
 
+from intelligence.model_gateway import ModelGateway
 from intelligence.server.servicer import (
     IMPLEMENTED_METHODS,
     SERVICER_LOGGER_NAME,
@@ -152,7 +153,13 @@ class IntelligenceServer:
         logger: logging.Logger | None = None,
     ) -> None:
         self._config = config
-        self._servicer = servicer if servicer is not None else IntelligenceGatewayServicer()
+        # Composition root: the process builds the one gateway every model call goes through
+        # (INT-002/D-006). Provider credentials are materialized by the gateway, never here.
+        self._servicer = (
+            servicer
+            if servicer is not None
+            else IntelligenceGatewayServicer(gateway=ModelGateway.from_environment())
+        )
         self._logger = logger if logger is not None else logging.getLogger(SERVICER_LOGGER_NAME)
         self._server: grpc.Server | None = None
         self._address: str | None = None
