@@ -259,7 +259,7 @@
       "claimed_by": "agent:subagent-core003",
       "started_at": "2026-09-12T01:31:18Z",
       "updated_at": "2026-09-12T01:31:18Z",
-      "git_commit": "546833c",
+      "git_commit": "8da14c49a42a768bfd67086422f5e0c1346534a0",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-events",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
