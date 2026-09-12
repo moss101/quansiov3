@@ -19,6 +19,21 @@ jobs:
   baseline:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    services:
+      # Schema/persistence tests exercise a real database (CORE-001); the image ships pgvector.
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: quansio
+          POSTGRES_PASSWORD: quansio-ci-only
+          POSTGRES_DB: quansio
+        ports:
+          - 55440:5432
+        options: >-
+          --health-cmd "pg_isready -U quansio"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,6 +64,8 @@ jobs:
           (cd python && uv sync --python 3.12 --frozen)
 
       - name: Run the baseline pipeline
+        env:
+          QUANSIO_TEST_POSTGRES_URL: postgres://quansio:quansio-ci-only@127.0.0.1:55440/quansio
         run: bash scripts/ci/ci.sh
 
       - name: Upload the machine-readable summary
