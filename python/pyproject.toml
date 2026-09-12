@@ -22,6 +22,8 @@ dev = [
     # Contract generation and validation (GOV-004).
     "grpcio-tools>=1.68",
     "jsonschema>=4.23",
+    # Dev-stack integration tests: real Postgres/NATS/MinIO assertions (GOV-007).
+    "psycopg[binary]>=3.2",
 ]
 
 [build-system]
