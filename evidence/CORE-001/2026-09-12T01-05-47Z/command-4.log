@@ -1,0 +1,163 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace
+exit_code: 0
+
+--- stdout ---
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 5 tests
+test tenant_context_validation_rejects_non_canonical_ids ... ok
+test migrations_are_reapplied_safely_over_existing_data ... ok
+test bootstrap_from_zero_creates_the_authoritative_schema ... ok
+test tenant_isolation_returns_zero_rows_without_context ... ok
+test unset_context_fails_closed_on_a_plain_connection ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+--- stderr ---
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.90s
+     Running unittests src/lib.rs (target/debug/deps/quansio_capability-f3e9a3d5a42c00e0)
+     Running unittests src/lib.rs (target/debug/deps/quansio_cli-c2b6ed63af2ff711)
+     Running unittests src/lib.rs (target/debug/deps/quansio_contracts-f8edde6c39c0608a)
+     Running unittests src/lib.rs (target/debug/deps/quansio_core-1f666a33fa149530)
+     Running unittests src/lib.rs (target/debug/deps/quansio_events-4eeea4ec6073b2f1)
+     Running unittests src/lib.rs (target/debug/deps/quansio_graph-2f09d994368ffa72)
+     Running unittests src/lib.rs (target/debug/deps/quansio_indexer-b3857ad1691f1b1c)
+     Running unittests src/lib.rs (target/debug/deps/quansio_machine-5e9967b6689860bf)
+     Running unittests src/lib.rs (target/debug/deps/quansio_native_windows-e1490b7c610a548d)
+     Running unittests src/lib.rs (target/debug/deps/quansio_qworkerd-f1864637845a6c41)
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-ea8fd59758b7f46b)
+     Running tests/schema_bootstrap.rs (target/debug/deps/schema_bootstrap-1926e7c161738b37)
+     Running unittests src/lib.rs (target/debug/deps/quansio_tools-fab3adb1fc9aba55)
+   Doc-tests quansio_capability
+   Doc-tests quansio_cli
+   Doc-tests quansio_contracts
+   Doc-tests quansio_core
+   Doc-tests quansio_events
+   Doc-tests quansio_graph
+   Doc-tests quansio_indexer
+   Doc-tests quansio_machine
+   Doc-tests quansio_native_windows
+   Doc-tests quansio_qworkerd
+   Doc-tests quansio_server
+   Doc-tests quansio_tools

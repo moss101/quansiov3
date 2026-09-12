@@ -1,0 +1,1 @@
+CORE-001 schema: migrations/0001_canonical_schema.sql applied through quansio_server::control::schema::migrate

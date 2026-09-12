@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import sys
 import time
@@ -48,6 +49,33 @@ GATES: List[tuple] = [
 OPTIONAL_GATES = {"architecture": "scripts/ci/arch_check.py"}
 
 
+def dev_database_url(root: Path = ROOT) -> Optional[str]:
+    """Database URL for database-backed tests, derived from the generated dev `.env`.
+
+    `scripts/dev/up` writes the gitignored `.env`; when it exists the baseline pipeline
+    exports `QUANSIO_TEST_POSTGRES_URL` so schema tests exercise a real database instead
+    of reporting `BLOCKED_EXTERNAL`. An explicit environment value always wins.
+    """
+    if os.environ.get("QUANSIO_TEST_POSTGRES_URL"):
+        return os.environ["QUANSIO_TEST_POSTGRES_URL"]
+    env_file = root / ".env"
+    if not env_file.exists():
+        return None
+    values: Dict[str, str] = {}
+    for line in env_file.read_text().splitlines():
+        if "=" in line and not line.strip().startswith("#"):
+            key, _, value = line.partition("=")
+            values[key.strip()] = value.strip()
+    host = values.get("QUANSIO_DEV_POSTGRES_HOST", "127.0.0.1")
+    port = values.get("QUANSIO_DEV_POSTGRES_PORT", "55440")
+    user = values.get("QUANSIO_DEV_POSTGRES_USER", "quansio")
+    password = values.get("QUANSIO_DEV_POSTGRES_PASSWORD")
+    database = values.get("QUANSIO_DEV_POSTGRES_DB", "quansio")
+    if not password:
+        return None
+    return f"postgres://{user}:{password}@{host}:{port}/{database}"
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -65,11 +93,23 @@ def git_commit(root: Path) -> Optional[str]:
         return None
 
 
-def run_gate(name: str, command: str, root: Path, timeout: int = 3600) -> Dict[str, object]:
+def run_gate(
+    name: str,
+    command: str,
+    root: Path,
+    timeout: int = 3600,
+    env: Optional[Dict[str, str]] = None,
+) -> Dict[str, object]:
     started = time.monotonic()
     try:
         result = subprocess.run(
-            command, cwd=str(root), shell=True, capture_output=True, text=True, timeout=timeout
+            command,
+            cwd=str(root),
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=env,
         )
         exit_code: Optional[int] = result.returncode
         tail = "\n".join((result.stdout + result.stderr).splitlines()[-25:])
@@ -99,6 +139,11 @@ def run(
         gates = [(f"gate-{i}", command) for i, command in enumerate(commands, start=1)]
     elif gates is None:
         gates = GATES
+    env = os.environ.copy()
+    database_url = dev_database_url(root)
+    if database_url:
+        env["QUANSIO_TEST_POSTGRES_URL"] = database_url
+
     results: List[Dict[str, object]] = []
     for name, command in gates:
         if name in OPTIONAL_GATES:
@@ -115,7 +160,7 @@ def run(
                     }
                 )
                 continue
-        results.append(run_gate(name, command, root))
+        results.append(run_gate(name, command, root, env=env))
 
     artifacts: Dict[str, str] = {}
     for relative in ("registries/progress.json", "TASKS.md", "MANIFEST.json"):
@@ -129,6 +174,7 @@ def run(
         "results": results,
         "artifacts": artifacts,
         "status": "FAIL" if any(r["status"] == "FAIL" or r["status"] == "TIMEOUT" for r in results) else "PASS",
+        "database_backed_tests": database_url is not None,
     }
     destination = out or (DEFAULT_OUT_DIR / f"summary-{(summary['commit'] or 'nogit')[:12]}.json")
     destination.parent.mkdir(parents=True, exist_ok=True)
