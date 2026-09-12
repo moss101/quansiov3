@@ -73,9 +73,7 @@ def derive(
     labels = [segment_trust[ref] for ref in referenced if ref in segment_trust]
     # An unknown segment is an unknown origin: the element is untrusted-derived regardless of how
     # trustworthy its known references are.
-    weakest = (
-        TrustLevel.UNTRUSTED_EXTERNAL if unknown else max(labels, key=lambda level: level.rank)
-    )
+    weakest = TrustLevel.UNTRUSTED_EXTERNAL if unknown else max(labels, key=lambda level: level.rank)
     return Propagation(
         element_id=element_id,
         trust=weakest,

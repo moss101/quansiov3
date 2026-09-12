@@ -20,7 +20,7 @@ use quansio_server::control::schema;
 use quansio_server::effects::{EffectLedger, EffectStatus};
 use quansio_server::policy::TrustLevel;
 use quansio_server::policy::{
-    ActorRoles, ApprovalRuntime, ApprovalSigner, TenantRole, WorkspaceRole,
+    ActorRoles, ApprovalRuntime, ApprovalSigner, PolicyStore, TenantRole, WorkspaceRole,
 };
 use quansio_server::runtime::agents::AgentDelegationPort;
 use quansio_server::runtime::state_machine::{
@@ -1320,6 +1320,176 @@ async fn an_unprovable_proposal_chain_escalates_a_tier_two_call_to_approval() {
     );
     assert_eq!(host.dispatch_count(), 0);
     finish(fixture).await;
+}
+
+/// INT-012 build item 3, end to end: an escalated call reaches the operator with its
+/// untrusted origin visible, and the call it parked completes through that approval.
+#[tokio::test]
+async fn an_escalated_call_shows_its_untrusted_origin_and_completes_through_approval() {
+    let Some(fixture) = prepare("int012_origin").await else {
+        blocked_marker();
+        return;
+    };
+    seed_policy(&fixture).await;
+    let model = StubModel::with(vec![
+        ModelProposal {
+            tool_calls: vec![ProposedToolCall::new(
+                "call_navigate",
+                "browser.navigate",
+                json!({ "url": "https://runbook.example.invalid/", "session_id": "brs_seed" }),
+            )],
+            ..ModelProposal::default()
+        },
+        ModelProposal {
+            assistant_text: Some("navigated".to_string()),
+            ..ModelProposal::default()
+        },
+    ]);
+    let host = ConformanceHost::default();
+    // The chain proves nothing about where the proposal came from, so it fails closed to
+    // UNTRUSTED_EXTERNAL and the tier 2 egress call escalates to tier 3.
+    let seams = build_seams_with_trust(
+        &fixture,
+        model,
+        host.clone(),
+        Arc::new(UnavailableProposalTrust),
+    );
+    let run = start_run(&fixture, &seams.engine, 8).await;
+    seed_projection(&fixture, &run.id.to_string()).await;
+    allow_network_egress(&fixture).await;
+
+    let outcome = seams
+        .engine
+        .run_turn(
+            &run.id,
+            run.generation,
+            TurnInput::new(RunTriggerKind::Manual),
+        )
+        .await
+        .expect("turn");
+    let TurnOutcome::Parked {
+        state, wait_key, ..
+    } = outcome
+    else {
+        panic!("an unprovable chain escalates the egress call to approval: {outcome:?}");
+    };
+    assert_eq!(state, RunStatus::WaitingApproval);
+    assert_eq!(
+        host.dispatch_count(),
+        0,
+        "nothing dispatched before the receipt"
+    );
+
+    // What the operator is shown: the origin is present, typed and named.
+    let policies =
+        PolicyStore::new(fixture.pool.clone(), fixture.identity.clone()).expect("policy store");
+    let request = policies
+        .load_approval_request(&wait_key)
+        .await
+        .expect("approval request");
+    let origin = request
+        .consequence_preview
+        .untrusted_origin
+        .as_ref()
+        .expect("an escalated proposal reaches the operator with its origin");
+    assert_eq!(origin.trust(), TrustLevel::UntrustedExternal);
+    assert_eq!(
+        origin
+            .source_refs
+            .iter()
+            .filter(|reference| reference.starts_with("tool_call:"))
+            .count(),
+        1,
+        "the origin names the call it came from: {:?}",
+        origin.source_refs
+    );
+    assert!(origin
+        .source_refs
+        .iter()
+        .any(|reference| reference == &format!("run:{}", run.id)));
+    assert!(request.is_grantable(chrono::Utc::now()));
+
+    let parked = seams.engine.store().load_run(&run.id).await.expect("run");
+    let protocol = seams
+        .engine
+        .store()
+        .load_protocol_state(&run.id)
+        .await
+        .expect("protocol")
+        .expect("state");
+    let effect_id = protocol.pending_tool_calls[0].effect_id.clone();
+    let ledger = EffectLedger::new(fixture.pool.clone(), fixture.identity.clone()).expect("ledger");
+    assert_eq!(
+        ledger.load(&effect_id).await.expect("effect").status,
+        EffectStatus::Proposed,
+        "the effect waits for the receipt"
+    );
+
+    let signer = ApprovalSigner::new(TEST_KEY.to_vec()).expect("signer");
+    let approvals =
+        ApprovalRuntime::new(fixture.pool.clone(), fixture.identity.clone()).expect("approvals");
+    approvals
+        .grant_and_resume(
+            &wait_key,
+            USER,
+            parked.generation,
+            &signer,
+            chrono::Utc::now(),
+        )
+        .await
+        .expect("grant");
+    let resumed = seams.engine.store().load_run(&run.id).await.expect("run");
+    assert_eq!(resumed.status, RunStatus::Running);
+
+    let outcome = seams
+        .engine
+        .run_turn(
+            &run.id,
+            resumed.generation,
+            TurnInput::new(RunTriggerKind::Manual),
+        )
+        .await
+        .expect("resumed turn");
+    assert!(
+        matches!(outcome, TurnOutcome::Completed { .. }),
+        "the approved call completes: {outcome:?}"
+    );
+    assert_eq!(host.dispatch_count(), 1, "exactly one dispatch");
+    assert_eq!(
+        ledger.load(&effect_id).await.expect("effect").status,
+        EffectStatus::SettledSuccess
+    );
+    finish(fixture).await;
+}
+
+/// Allow one tier 2 egress class for a single test, so that *escalation* rather than a
+/// policy rule is what parks the call for approval.
+async fn allow_network_egress(fixture: &Fixture) {
+    let mut tx = fixture.pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant context");
+    sqlx::query(
+        "UPDATE policies SET rules = rules || \
+         '[{\"effect_class\": \"network.egress.new_destination\", \
+            \"resource\": {\"kind\": \"domain\", \"selector\": \"*\"}, \
+            \"decision\": \"allow\"}]'::jsonb WHERE tenant_id = $1",
+    )
+    .bind(TENANT)
+    .execute(&mut *tx)
+    .await
+    .expect("egress policy rule");
+    sqlx::query(
+        "UPDATE capability_projections SET grants = grants || \
+         '[{\"effect_class\": \"network.egress.new_destination\", \
+            \"resource\": {\"kind\": \"domain\", \"selector\": \"*\"}, \
+            \"constraints\": {}}]'::jsonb WHERE tenant_id = $1",
+    )
+    .bind(TENANT)
+    .execute(&mut *tx)
+    .await
+    .expect("egress grant");
+    tx.commit().await.expect("commit");
 }
 
 /// Remove every grant from the run's stored projection, leaving a projection that
