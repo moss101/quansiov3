@@ -1,0 +1,15 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.03s
+     Running tests/orchestration.rs (target/debug/deps/orchestration-94fde5dc413eb790)
+
+running 7 tests
+test a_cycle_in_the_graph_is_refused_before_anything_is_dispatched ... ok
+test capacity_bounds_concurrency_and_frees_slots_as_runs_finish ... ok
+test a_parallel_dag_releases_and_dispatches_in_dependency_order ... ok
+test a_dependent_with_a_failed_prerequisite_is_blocked_never_dispatched ... ok
+test a_waiting_parent_joins_once_its_last_child_completes ... ok
+test a_cancel_storm_cancels_each_run_once_and_blocks_dependents ... ok
+test a_lost_graph_race_is_recomputed_against_the_new_revision ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s
+

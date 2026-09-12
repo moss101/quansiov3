@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0/M1 complete; M2/M3 in progress; 27 PASS + 1 BLOCKED_EXTERNAL)
+Updated: 2026-09-12 (M0/M1 complete; M2 in progress; 28 PASS + 1 BLOCKED_EXTERNAL)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,10 +16,10 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M2 — the runtime loop (M0/M1 complete)
-Current task: none in flight — RUN-011 closed `PASS`; `--next` selects RUN-004 (then RUN-008, INT-003, INT-005, INT-011, EXEC-001)
-Current task status: 27 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
+Current task: none in flight — RUN-004 closed `PASS`; `--next` selects RUN-008 (then INT-003, INT-005, INT-011, EXEC-001)
+Current task status: 28 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
 Current owner: `agent:principal-1`
-Current component: `turn loop` (`crates/server/src/runtime/turn_loop/`, `crates/tools/`)
+Current component: `orchestration` (`crates/server/src/runtime/orchestration/`)
 Current language: Rust + SQL
 
 Resolved host incident: for part of this session the machine would not execute newly created
@@ -187,28 +187,48 @@ recorded under "Environment requirements".
   `UNTRUSTED_EXTERNAL` until INT-005 supplies real context labels, so a tier ≥ 2 call is escalated and
   needs a receipt. Evidence: `evidence/RUN-011/<ts>/`.
 
+- RUN-004 — concurrency, fanout/fanin, cancellation and waits — `PASS`.
+  `crates/server/src/runtime/orchestration/` owns the execution decisions over the canonical WorkGraph:
+  a deterministic ready queue (priority, then id), dependency release (`draft`/`blocked` → `ready` once
+  every `depends_on` prerequisite is `done`, → `blocked` when one failed or was cancelled), fan-in joins
+  (a `waiting` parent joins once its last child is `done`, and is blocked if a child can never finish),
+  bounded concurrency counted from **durable** run state so the bound survives a restart and two
+  instances agree, cancellation that propagates down `parent_id`, blocks dependents, stops live runs
+  through the one authoritative `RuntimeStore::cancel`, and converges under a cancel storm, and durable
+  waits obeyed by never selecting a node whose run is parked or suspended. Every run it starts goes
+  through the existing `RunDispatch` port into the canonical Run state machine — there is no second
+  scheduler; every node transition goes through a `WorkGraphPort` whose production implementation
+  applies it as one event-emitting `GraphTransaction` (`crates/graph/tests/orchestration.rs` proves that
+  against the real store). `depends_on` reads `from` depends on `to` (documented on `WorkEdgeKind`), so
+  `to` is the prerequisite. Two semantic limits are recorded, not papered over: the Run state machine has
+  no `QUEUED → CANCELLED` edge, so an unstarted run inside a cancelled subtree is reported
+  (`runs_left_unstarted`) and is never dispatched rather than being cancelled; and the concurrency limit
+  is supplied by the caller (RUN-010 owns the budget), so orchestration never invents a default policy
+  value. Evidence: `evidence/RUN-004/<ts>/`.
+
 ## What is currently being implemented
 
-None — RUN-011 is closed. The runtime M2 path now executes model-proposed tool calls end to end
-through capability, policy, approval, the Effect Ledger and the host seam.
+None — RUN-004 is closed. The runtime now selects, releases, bounds and cancels work over the canonical
+WorkGraph, and every selected run enters through the canonical dispatch port.
 
 ## Exact next action
 
-Run `python3 scripts/validate_v81.py --next` and take what it selects: right now that is **RUN-004**
-(concurrency, fanout/fanin, cancellation and waits), which completes M2, followed by **RUN-008**
+Run `python3 scripts/validate_v81.py --next` and take what it selects: right now that is **RUN-008**
 (CompletionContract verification — it closes the turn loop's `completion_claim` branch, which still
 returns `SeamNotAvailable` naming RUN-008, and it depends only on the Effect Ledger that is already
-`PASS`). Before wiring the planner into the turn loop, apply the alias fix recorded under
-"Architecture decisions" so a plan can reference nodes it creates in the same batch.
+`PASS`), followed by INT-003 and INT-005. Before wiring the planner into the turn loop, apply the alias
+fix recorded under "Architecture decisions" so a plan can reference nodes it creates in the same batch.
+Wire the real `WorkGraphPort` (snapshot SQL + `GraphTransaction` apply) where both crates are visible
+when APP-001 composes the server.
 Database-backed suites need `scripts/dev/up` plus
 `QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`; the baseline
 pipeline derives that URL from the generated `.env` automatically.
 
 ## Ready queue
 
-1. `RUN-004` — concurrency, fanout/fanin, cancellation and waits; completes M2 (`--next` selects it).
-2. `RUN-008` — CompletionContract verification (depends on the Effect Ledger, now PASS); it closes the
-   turn loop's completion-claim branch.
+1. `RUN-008` — CompletionContract verification (depends on the Effect Ledger, now PASS); it closes the
+   turn loop's completion-claim branch (`--next` selects it).
+2. `INT-003` — deterministic model selection, DLP and failover.
 3. `INT-003` — deterministic model selection, DLP and failover (ready; real boundary like INT-002).
 4. `INT-005` — ContextProjection and typed SearchProgram; supplies the trust labels RUN-011 reads.
 5. `EXEC-001` — machine control and execution-target lifecycle.
