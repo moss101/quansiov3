@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0/M1 complete; M2 in progress; 28 PASS + 1 IN_PROGRESS + 1 BLOCKED_EXTERNAL)
+Updated: 2026-09-12 (M0/M1 complete; M2 in progress; 29 PASS + 1 BLOCKED_EXTERNAL)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,8 +16,8 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M2 — the runtime loop (M0/M1 complete)
-Current task: **RUN-008 — CompletionContract verification — `IN_PROGRESS`** (resume this before claiming anything new)
-Current task status: 28 tasks `PASS`, RUN-008 `IN_PROGRESS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
+Current task: none in flight — RUN-008 closed `PASS`
+Current task status: 29 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
 Current owner: `agent:principal-1`
 Current component: `verification` (`crates/server/src/runtime/verification/`, `python/intelligence/evaluation/semantic_verifier/`)
 Current language: Rust + Python
@@ -208,36 +208,36 @@ recorded under "Environment requirements".
 
 ## What is currently being implemented
 
-**RUN-008 — CompletionContract verification — `IN_PROGRESS`.**
+**RUN-008 — CompletionContract verification — `PASS`.**
 
-What exists (implemented, verified, on `main` at merge `9eddaa899872`):
-`crates/server/src/runtime/verification/` implements DOMAIN.md §4.4. `contract.rs` parses a WorkNode's
-CompletionContract fail-closed — an unknown check kind is refused rather than skipped, a malformed bound
-is refused, and a contract that binds nothing is recognised as certifying nothing. `checks.rs` implements
-the checks the runtime can prove today: `artifact_exists` over real artifact metadata (role +
-`min_versions`) and `effects_settled` over the run's EffectRecords (a named class must be settled; an
-unsettled record means the external outcome is unknown, so nothing is certified); `test_command`,
-`assertion` and `citations_valid` fail closed naming their owners (EXEC-006, the missing predicate
-registry, CAP-002) so an unimplemented check can never become a silent pass. `service.rs` is the
-`ContractVerifier` plugged into the engine's existing `VerificationPort`: a model's completion claim
-reaches `SUCCEEDED` only after every deterministic check passes, `human_signoff_required` is respected as
-a human's decision, and a required independent semantic verification that is unavailable or disagrees
-rejects the claim using the verifier's critique as actionable feedback.
+Rust (`crates/server/src/runtime/verification/`): `contract.rs` parses a WorkNode's CompletionContract
+fail-closed (an unknown check kind is refused rather than skipped, a malformed bound is refused, a
+contract that binds nothing is recognised as certifying nothing); `checks.rs` implements
+`artifact_exists` over real artifact metadata and `effects_settled` over the run's EffectRecords, and
+fails closed naming the owner for `test_command` (EXEC-006), `assertion` (no predicate registry yet) and
+`citations_valid` (CAP-002), so an unimplemented check never becomes a silent pass; `service.rs` is the
+`ContractVerifier` in the engine's existing `VerificationPort`, so a model's claim reaches `SUCCEEDED`
+only after every deterministic check passes, `human_signoff_required` stays a human's decision, and a
+required semantic verification that is unavailable or disagrees rejects the claim with the verifier's
+critique as actionable feedback.
 
-What remains (the only thing between RUN-008 and `PASS`):
-`python/intelligence/evaluation/semantic_verifier/` — the gateway-backed implementation of the
-`SemanticVerifierPort` seam the Rust side already defines, injects and tests (with an injected verifier).
-It must produce an independent verdict through `python/intelligence/model_gateway`
-(`ModelGateway`, INT-002; offline-testable through its `conformance` stub provider), enforce
-`independent_model` when the contract asks for it, and be covered by a test showing that a verdict
-disagreeing with the claimant rejects the claim end to end.
+Python (`python/intelligence/evaluation/semantic_verifier/`): `GatewaySemanticVerifier` builds the
+independent verifier call (claim and evidence quoted as data with explicit no-follow instructions),
+fulfils it through `ModelGateway` (INT-002) and reads a strict verdict — a response that is not exactly
+`{agrees: bool, critique: non-empty}` is refused, never read as agreement, and a gateway failure is a
+refusal; independence is a proof obligation (an unnamed claimant, or this verifier's own model, is
+refused).
+
+Recorded limits, not papered over: the cross-process binding between the Rust port and this Python
+verifier belongs to the RPC boundary and the composition root (INT-001/APP-001); and because a run does
+not yet record its model route (INT-002/INT-003), the Rust verifier passes `claimant_model=None`, so a
+contract requiring `independent_model` is refused rather than self-certified until that route exists.
 
 ## Exact next action
 
-Per AGENTS.md, resume the task that is `IN_PROGRESS` and claimed by this agent first: **RUN-008**, whose
-remaining piece is the Python semantic verifier described above. Then `python3 scripts/validate_v81.py
---next` (INT-003 and INT-005 are the next ready tasks). Before wiring the planner into the turn loop, apply the alias
-fix recorded under "Architecture decisions" so a plan can reference nodes it creates in the same batch.
+Run `python3 scripts/validate_v81.py --next` and take what it selects; INT-003 and INT-005 are the next
+ready tasks. Before wiring the planner into the turn loop, apply the alias fix recorded under
+"Architecture decisions" so a plan can reference nodes it creates in the same batch.
 Wire the real `WorkGraphPort` (snapshot SQL + `GraphTransaction` apply) where both crates are visible
 when APP-001 composes the server.
 Database-backed suites need `scripts/dev/up` plus
@@ -246,9 +246,8 @@ pipeline derives that URL from the generated `.env` automatically.
 
 ## Ready queue
 
-1. `RUN-008` — CompletionContract verification: resume it (Rust half done, Python semantic verifier
-   remaining).
-2. `INT-003` — deterministic model selection, DLP and failover.
+1. `INT-003` — deterministic model selection, DLP and failover.
+2. `INT-005` — ContextProjection and typed SearchProgram.
 3. `INT-003` — deterministic model selection, DLP and failover (ready; real boundary like INT-002).
 4. `INT-005` — ContextProjection and typed SearchProgram; supplies the trust labels RUN-011 reads.
 5. `EXEC-001` — machine control and execution-target lifecycle.
