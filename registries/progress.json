@@ -623,18 +623,27 @@
       "notes": ""
     },
     "INT-004": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-int004",
+      "started_at": "2026-09-12T03:04:55Z",
+      "updated_at": "2026-09-12T03:04:55Z",
+      "git_commit": "15caf85",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-indexer",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/INT-004/2026-09-12T03-01-56Z/summary.json",
+        "crates/indexer/src/program.rs",
+        "crates/indexer/src/tantivy_engine.rs",
+        "crates/indexer/tests/search_api.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Derived exact/lexical/symbol SearchIndex over authoritative artifact text with typed SearchProgram filters (no free-form predicates), provenance (source, locator, snapshot), budgets with reported truncation, tenant isolation, incremental add/update/delete including idempotent re-application, and a rebuild from PostgreSQL that reproduces identical hits. Integrated and re-verified by the principal agent after the subagent was killed by a full disk."
     },
     "INT-005": {
       "coverage": null,

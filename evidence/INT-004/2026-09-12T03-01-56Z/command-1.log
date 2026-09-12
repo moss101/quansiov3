@@ -1,0 +1,46 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-indexer
+exit_code: 0
+
+--- stdout ---
+
+running 2 tests
+test snapshot::tests::rejects_malformed_snapshot ... ok
+test snapshot::tests::round_trips_canonical_form ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test maintenance_reflects_updates_deletes_and_idempotent_replay ... ok
+test rebuild_propagates_authoritative_new_versions_and_deletions ... ok
+test rebuild_from_authoritative_rows_is_deterministic_and_tenant_isolated ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.00s
+
+
+running 10 tests
+test searching_an_unrebuilt_tenant_returns_an_empty_set ... ok
+test provenance_carries_source_locator_and_snapshot ... ok
+test semantic_and_unowned_channels_are_rejected_with_a_typed_error ... ok
+test exact_lexical_and_symbol_channels_round_trip_real_content ... ok
+test budget_truncation_is_reported_and_oversized_requests_fail_closed ... ok
+test typed_filters_and_workspace_scope_narrow_results ... ok
+test stale_snapshot_is_detected ... ok
+test tenant_isolation_never_returns_another_tenants_documents ... ok
+test incremental_add_update_delete_is_idempotent ... ok
+test rebuild_is_deterministic_for_a_fixed_corpus ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.84s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.43s
+     Running unittests src/lib.rs (target/debug/deps/quansio_indexer-ce31046bee0ac029)
+     Running tests/postgres_rebuild.rs (target/debug/deps/postgres_rebuild-64ced7bcf0e70b42)
+     Running tests/search_api.rs (target/debug/deps/search_api-466d7821d5c051ad)
+   Doc-tests quansio_indexer
