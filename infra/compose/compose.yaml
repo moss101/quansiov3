@@ -59,7 +59,7 @@ services:
       start_period: 5s
 
   minio-init:
-    image: ${QUANSIO_DEV_MINIO_MC_IMAGE:-minio/mc:RELEASE.2024-01-13T08-44-48Z}
+    image: ${QUANSIO_DEV_MINIO_MC_IMAGE:-quay.io/minio/mc:RELEASE.2024-01-13T08-44-48Z}
     depends_on:
       minio:
         condition: service_healthy

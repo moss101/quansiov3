@@ -149,10 +149,10 @@
     },
     "GOV-007": {
       "coverage": "GENUINE_GAP",
-      "status": "PASS",
+      "status": "FAIL",
       "claimed_by": "agent:subagent-gov007",
       "started_at": "2026-09-12T00:40:29Z",
-      "updated_at": "2026-09-12T00:40:41Z",
+      "updated_at": "2026-09-12T00:48:53Z",
       "git_commit": "7add8c5",
       "tests": [
         "bash scripts/dev/up && bash scripts/dev/healthcheck && bash scripts/dev/seed",
@@ -169,7 +169,7 @@
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Postgres17+pgvector, NATS JetStream, MinIO, stub model provider and optional vector adapter on loopback ports 55440/54230/59010/59020/59030; scripts/dev/{up,down,reset,seed,healthcheck}; gitignored .env holds dev-only credentials; integration test asserts real extension, rows, bucket and JetStream state plus reset/reseed determinism. Reviewed and re-run by the principal agent before PASS."
+      "notes": "test_bootstrap_smoke failed at 7add8c5: scripts/dev/up could not pull images because Docker Desktop's docker-credential-desktop helper is not on the default PATH (error getting credentials)."
     },
     "GOV-008": {
       "coverage": null,

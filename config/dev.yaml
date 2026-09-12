@@ -31,7 +31,7 @@ nats_monitor_port: 54231
 # MinIO S3-compatible object storage (DOSSIER.md §9). Env var names:
 # QUANSIO_DEV_MINIO_{PORT,CONSOLE_PORT,BUCKET,ROOT_USER,ROOT_PASSWORD}.
 minio_image: quay.io/minio/minio:latest
-minio_mc_image: minio/mc:RELEASE.2024-01-13T08-44-48Z
+minio_mc_image: quay.io/minio/mc:RELEASE.2024-01-13T08-44-48Z
 minio_host: 127.0.0.1
 minio_port: 59010
 minio_console_port: 59011
