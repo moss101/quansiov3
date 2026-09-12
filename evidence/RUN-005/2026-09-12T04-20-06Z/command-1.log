@@ -1,0 +1,84 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-capability
+exit_code: 0
+
+--- stdout ---
+
+running 4 tests
+test layer::tests::layer_ordinals_are_dense_and_ordered ... ok
+test layer::tests::canonical_order_rejects_disorder_and_duplicates ... ok
+test layer::tests::layer_order_and_names_match_the_generated_contract ... ok
+test layer::tests::inputs_digest_changes_with_order_and_content ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test narrowing_predicate_is_reused_for_skills_and_tools ... ok
+test widening_child_is_rejected_with_nothing_written ... ok
+test narrower_child_is_accepted_and_its_projection_is_staged ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 6 tests
+test unparseable_grant_is_rejected ... ok
+test unparseable_layer_payload_fails_closed ... ok
+test unresolvable_layer_yields_empty_projection_and_typed_error ... ok
+test unknown_catalogue_tier_fails_closed ... ok
+test policy_gap_at_tier_one_or_above_fails_closed ... ok
+test tier_zero_without_a_policy_rule_keeps_the_default_allow ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 8 tests
+test approval_only_narrows_toward_ask_or_never ... ok
+test narrow_is_exactly_idempotent_for_disjoint_regions ... ok
+test constraints_combine_most_restrictively ... ok
+test grant_intersection_is_commutative_and_monotone ... ok
+test selector_containment_is_conservative ... ok
+test narrow_never_produces_a_grant_outside_its_held_input ... ok
+test narrow_rejects_candidates_absent_from_the_input ... ok
+test composed_grants_are_narrowings_of_both_inputs ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 1 test
+test stored_projection_round_trips_and_event_carries_the_inputs_digest ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.29s
+
+
+running 4 tests
+test layer_expiry_narrows_the_projection_expiry ... ok
+test expired_projection_cannot_authorize ... ok
+test current_inputs_match_only_while_the_layer_digests_are_unchanged ... ok
+test fresh_projection_authorizes_and_a_changed_digest_forces_recomputation ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test lower_layer_narrowing_is_accepted ... ok
+test lower_layer_trying_a_wider_selector_never_widens ... ok
+test lower_layer_adding_a_grant_is_ignored_and_recorded_once ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.37s
+     Running unittests src/lib.rs (target/debug/deps/quansio_capability-ffb10ca8cd2c0325)
+     Running tests/delegation_narrowing.rs (target/debug/deps/delegation_narrowing-3ac7f3b78eb61025)
+     Running tests/fail_closed.rs (target/debug/deps/fail_closed-2081b7b689ca9fc5)
+     Running tests/narrowing_properties.rs (target/debug/deps/narrowing_properties-8eee2d627486f376)
+     Running tests/projection_persistence.rs (target/debug/deps/projection_persistence-384ba4cc129f659c)
+     Running tests/stale_projection.rs (target/debug/deps/stale_projection-1a7bcaae97e7ecd1)
+     Running tests/widening_rejection.rs (target/debug/deps/widening_rejection-64b71f771feeb7a5)
+   Doc-tests quansio_capability

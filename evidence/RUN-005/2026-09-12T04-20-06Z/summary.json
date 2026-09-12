@@ -1,0 +1,107 @@
+{
+  "task_id": "RUN-005",
+  "git_commit": "7493731a5379fed25f55d07def102b84cb0bc70c",
+  "recorded_at": "2026-09-12T04:22:20Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-capability",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-005/2026-09-12T04-20-06Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-005/2026-09-12T04-20-06Z/command-2.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-005/2026-09-12T04-20-06Z/command-3.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-005/2026-09-12T04-20-06Z/command-4.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-005/2026-09-12T04-20-06Z/command-5.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-005/2026-09-12T04-20-06Z/command-6.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-capability",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/capability/src/algebra.rs",
+      "sha256": "41145c7bfed410d225850f39917079f2bf1b7203fa344b5faaea62269d0ff81d",
+      "bytes": 4000
+    },
+    {
+      "path": "crates/capability/src/projection.rs",
+      "sha256": "e7ec8d15a89ddf8fb99348bf622a927e727ca0c44c6f3074ee2f8cb2b39967a0",
+      "bytes": 21530
+    },
+    {
+      "path": "crates/capability/src/authorize.rs",
+      "sha256": "73417c0fcddcf5c5d5e1077057e5f98481e7d6895f69f02a94e4a6fced44e351",
+      "bytes": 8684
+    },
+    {
+      "path": "crates/capability/src/persistence.rs",
+      "sha256": "180577aeb5682f01ef7337fbae703027b94e02b749d3f132ae8724b6cc126958",
+      "bytes": 9472
+    },
+    {
+      "path": "crates/capability/tests/narrowing_properties.rs",
+      "sha256": "ddcd2d3866e848bc251a691a714f6aab290008e9bf8ec2987dd916eebe1defc2",
+      "bytes": 9912
+    },
+    {
+      "path": "crates/capability/tests/stale_projection.rs",
+      "sha256": "0d86c006e88647126187824ac75a93268247dee11254956b859a4d8c39db8c76",
+      "bytes": 4748
+    }
+  ]
+}

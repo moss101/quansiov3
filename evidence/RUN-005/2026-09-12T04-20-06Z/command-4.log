@@ -1,0 +1,8 @@
+$ cargo clippy --workspace --all-targets -- -D warnings
+exit_code: 0
+
+--- stdout ---
+
+--- stderr ---
+    Checking quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/crates/capability)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.17s

@@ -496,18 +496,28 @@
       "notes": ""
     },
     "RUN-005": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-run005",
+      "started_at": "2026-09-12T04:22:31Z",
+      "updated_at": "2026-09-12T04:22:31Z",
+      "git_commit": "7493731",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-capability",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/RUN-005/2026-09-12T04-20-06Z/summary.json",
+        "crates/capability/src/algebra.rs",
+        "crates/capability/src/projection.rs",
+        "crates/capability/src/authorize.rs",
+        "crates/capability/tests/narrowing_properties.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Capability algebra composes grants by intersection with most-restrictive constraints (max_tier=min, approval only toward ask/never, earliest expiry, smallest budget) over all nine DOMAIN \u00a76.1 selector kinds; projection assembly follows the fixed \u00a76.2 layer order, ignores and records any widening as capability.widening_rejected naming the layer, and fails closed with an empty projection plus CAPABILITY_INPUTS_UNAVAILABLE when an input layer is unavailable or a policy has a gap at tier >= 1; authorize() always re-checks the current inputs digest and expiry so a stale projection cannot authorize dispatch; delegation narrowing is implemented for RUN-002's hook. During integration the architecture gate's new-persistent-store rule was corrected: capability owns capability_projections, so it is an allowed store owner, and the rule's fixtures now cover every table-owning module."
     },
     "RUN-006": {
       "coverage": null,
