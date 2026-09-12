@@ -8,23 +8,23 @@ only when Docker itself is unavailable.
 Connection settings come from environment variables; each one falls back to the
 documented dev default from `config/dev.yaml`:
 
-  QUANSIO_TEST_COMPOSE_PROJECT        compose project name            (quansio-dev)
+  QUANSIO_TEST_COMPOSE_PROJECT        compose project name            (quansio-dev-test)
   QUANSIO_TEST_COMPOSE_FILE           compose file path               (infra/compose/compose.yaml)
   QUANSIO_TEST_POSTGRES_HOST          dev Postgres host               (127.0.0.1)
-  QUANSIO_TEST_POSTGRES_PORT          dev Postgres port               (55440)
+  QUANSIO_TEST_POSTGRES_PORT          dev Postgres port               (56440)
   QUANSIO_TEST_POSTGRES_USER          dev database user               (quansio)
   QUANSIO_TEST_POSTGRES_PASSWORD      dev-only password               (quansio-dev-only)
   QUANSIO_TEST_POSTGRES_DB            dev database name               (quansio)
   QUANSIO_TEST_NATS_HOST              NATS host                       (127.0.0.1)
-  QUANSIO_TEST_NATS_PORT              NATS client port                (54230)
-  QUANSIO_TEST_NATS_MONITOR_PORT      NATS monitoring port            (54231)
+  QUANSIO_TEST_NATS_PORT              NATS client port                (55230)
+  QUANSIO_TEST_NATS_MONITOR_PORT      NATS monitoring port            (55231)
   QUANSIO_TEST_MINIO_HOST             MinIO S3 API host               (127.0.0.1)
-  QUANSIO_TEST_MINIO_PORT             MinIO S3 API port               (59010)
+  QUANSIO_TEST_MINIO_PORT             MinIO S3 API port               (59110)
   QUANSIO_TEST_MINIO_ROOT_USER        MinIO root user                 (quansio-dev)
   QUANSIO_TEST_MINIO_ROOT_PASSWORD    dev-only MinIO password         (quansio-dev-only)
   QUANSIO_TEST_MINIO_BUCKET           dev object-storage bucket       (quansio-dev)
   QUANSIO_TEST_STUB_PROVIDER_HOST     stub model provider host        (127.0.0.1)
-  QUANSIO_TEST_STUB_PROVIDER_PORT     stub model provider port        (59020)
+  QUANSIO_TEST_STUB_PROVIDER_PORT     stub model provider port        (59120)
 """
 from __future__ import annotations
 
@@ -43,22 +43,26 @@ ROOT = Path(__file__).resolve().parents[2]
 COMPOSE_FILE = ROOT / os.environ.get("QUANSIO_TEST_COMPOSE_FILE", "infra/compose/compose.yaml")
 ENV_FILE = ROOT / ".env"
 
-COMPOSE_PROJECT = os.environ.get("QUANSIO_TEST_COMPOSE_PROJECT", "quansio-dev")
+# The suite exercises its OWN compose project on offset ports by default: it runs
+# `scripts/dev/reset`, which tears the stack down with its volumes, and the default
+# project/ports may be in use by a developer or another agent. Override the
+# QUANSIO_TEST_* values to point the suite at a different stack.
+COMPOSE_PROJECT = os.environ.get("QUANSIO_TEST_COMPOSE_PROJECT", "quansio-dev-test")
 POSTGRES_HOST = os.environ.get("QUANSIO_TEST_POSTGRES_HOST", "127.0.0.1")
-POSTGRES_PORT = os.environ.get("QUANSIO_TEST_POSTGRES_PORT", "55440")
+POSTGRES_PORT = os.environ.get("QUANSIO_TEST_POSTGRES_PORT", "56440")
 POSTGRES_USER = os.environ.get("QUANSIO_TEST_POSTGRES_USER", "quansio")
 POSTGRES_PASSWORD = os.environ.get("QUANSIO_TEST_POSTGRES_PASSWORD", "quansio-dev-only")
 POSTGRES_DB = os.environ.get("QUANSIO_TEST_POSTGRES_DB", "quansio")
 NATS_HOST = os.environ.get("QUANSIO_TEST_NATS_HOST", "127.0.0.1")
-NATS_PORT = os.environ.get("QUANSIO_TEST_NATS_PORT", "54230")
-NATS_MONITOR_PORT = os.environ.get("QUANSIO_TEST_NATS_MONITOR_PORT", "54231")
+NATS_PORT = os.environ.get("QUANSIO_TEST_NATS_PORT", "55230")
+NATS_MONITOR_PORT = os.environ.get("QUANSIO_TEST_NATS_MONITOR_PORT", "55231")
 MINIO_HOST = os.environ.get("QUANSIO_TEST_MINIO_HOST", "127.0.0.1")
-MINIO_PORT = os.environ.get("QUANSIO_TEST_MINIO_PORT", "59010")
+MINIO_PORT = os.environ.get("QUANSIO_TEST_MINIO_PORT", "59110")
 MINIO_ROOT_USER = os.environ.get("QUANSIO_TEST_MINIO_ROOT_USER", "quansio-dev")
 MINIO_ROOT_PASSWORD = os.environ.get("QUANSIO_TEST_MINIO_ROOT_PASSWORD", "quansio-dev-only")
 MINIO_BUCKET = os.environ.get("QUANSIO_TEST_MINIO_BUCKET", "quansio-dev")
 STUB_PROVIDER_HOST = os.environ.get("QUANSIO_TEST_STUB_PROVIDER_HOST", "127.0.0.1")
-STUB_PROVIDER_PORT = os.environ.get("QUANSIO_TEST_STUB_PROVIDER_PORT", "59020")
+STUB_PROVIDER_PORT = os.environ.get("QUANSIO_TEST_STUB_PROVIDER_PORT", "59120")
 
 TENANT_ID = "tn_01J8Z3K6F1DEV0000000000TEN"
 WORKSPACE_ID = "ws_01J8Z3K6F1DEV0000000000WKS"
@@ -88,15 +92,29 @@ def require_docker() -> None:
         )
 
 
+# Port and project overrides that keep this suite's stack separate from any other one.
+ISOLATION = {
+    "QUANSIO_DEV_COMPOSE_PROJECT": COMPOSE_PROJECT,
+    "QUANSIO_DEV_POSTGRES_PORT": POSTGRES_PORT,
+    "QUANSIO_DEV_NATS_PORT": NATS_PORT,
+    "QUANSIO_DEV_NATS_MONITOR_PORT": NATS_MONITOR_PORT,
+    "QUANSIO_DEV_MINIO_PORT": MINIO_PORT,
+    "QUANSIO_DEV_MINIO_CONSOLE_PORT": str(int(MINIO_PORT) + 1),
+    "QUANSIO_DEV_STUB_PROVIDER_PORT": STUB_PROVIDER_PORT,
+}
+
+
 def run_dev(command: str, *args: str, timeout: int = 300) -> subprocess.CompletedProcess[str]:
     script = ROOT / "scripts" / "dev" / command
     assert script.is_file(), f"missing committed script: {script}"
+    env = {**os.environ, **ISOLATION}
     return subprocess.run(
         ["bash", str(script), *args],
         cwd=ROOT,
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=env,
     )
 
 

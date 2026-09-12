@@ -32,6 +32,16 @@ FAMILIES = {
     "TurnStatus": ("turns", "status"),
     "StepStatus": ("steps", "status"),
     "AttemptStatus": ("attempts", "status"),
+    "AgentThreadStatus": ("agent_threads", "status"),
+}
+
+# AgentThreadStatus has its own owner in each duplicated expression.
+ENUM_LOCATIONS = {
+    "RunStatus": (SERVER_STATE, GRAPH_STATE),
+    "TurnStatus": (SERVER_STATE, GRAPH_STATE),
+    "StepStatus": (SERVER_STATE, GRAPH_STATE),
+    "AttemptStatus": (SERVER_STATE, GRAPH_STATE),
+    "AgentThreadStatus": ("crates/server/src/runtime/agents/mod.rs", GRAPH_STATE),
 }
 
 
@@ -63,10 +73,11 @@ def db_check_values(table: str, column: str) -> set[str]:
 
 def test_server_and_graph_expose_identical_state_values():
     for enum_name in FAMILIES:
-        server = enum_values(SERVER_STATE, enum_name)
-        graph = enum_values(GRAPH_STATE, enum_name)
-        assert server, f"{SERVER_STATE} must define {enum_name}"
-        assert graph, f"{GRAPH_STATE} must define {enum_name}"
+        server_rel, graph_rel = ENUM_LOCATIONS[enum_name]
+        server = enum_values(server_rel, enum_name)
+        graph = enum_values(graph_rel, enum_name)
+        assert server, f"{server_rel} must define {enum_name}"
+        assert graph, f"{graph_rel} must define {enum_name}"
         assert server == graph, (
             f"{enum_name} drifted between the runtime and graph owners: "
             f"server-only={sorted(server - graph)} graph-only={sorted(graph - server)}"
@@ -76,7 +87,7 @@ def test_server_and_graph_expose_identical_state_values():
 def test_state_values_are_accepted_by_the_database_constraint():
     for enum_name, (table, column) in FAMILIES.items():
         allowed = db_check_values(table, column)
-        values = enum_values(SERVER_STATE, enum_name)
+        values = enum_values(ENUM_LOCATIONS[enum_name][0], enum_name)
         unexpected = values - allowed
         assert not unexpected, (
             f"{enum_name} produces values the database rejects for {table}.{column}: {sorted(unexpected)}"
@@ -86,7 +97,7 @@ def test_state_values_are_accepted_by_the_database_constraint():
 def test_database_constraint_has_no_unreachable_state():
     for enum_name, (table, column) in FAMILIES.items():
         allowed = db_check_values(table, column)
-        values = enum_values(SERVER_STATE, enum_name)
+        values = enum_values(ENUM_LOCATIONS[enum_name][0], enum_name)
         missing = allowed - values
         assert not missing, (
             f"{table}.{column} allows values no {enum_name} variant produces: {sorted(missing)}"
