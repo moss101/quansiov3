@@ -1,0 +1,64 @@
+{
+  "task_id": "GOV-001",
+  "git_commit": "1a1b5eb016dc2fc7f0394a485207885264964355",
+  "recorded_at": "2026-09-12T00:14:33Z",
+  "commands": [
+    {
+      "command": "python3.12 scripts/ci/inventory.py --scan",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-001/2026-09-12T00-14-04Z/command-1.log"
+    },
+    {
+      "command": "uv run --python 3.12 --with pytest pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-001/2026-09-12T00-14-04Z/command-2.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-001/2026-09-12T00-14-04Z/command-3.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "python3.12 scripts/ci/inventory.py --scan",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --python 3.12 --with pytest pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/review/2026-09-12-gov-001-reconciliation.md",
+      "sha256": "a0b1efaf1ccfbb9268489ece4a00aa74bb17152ad02f18543121061a9aad6c1b",
+      "bytes": 7047
+    },
+    {
+      "path": "scripts/ci/inventory.py",
+      "sha256": "8009dbb30114ae9de1b0f40e4b29b6763521b39ada47322b49214e59ab9ef476",
+      "bytes": 16182
+    },
+    {
+      "path": "tests/architecture/test_inventory.py",
+      "sha256": "39581188a276c7e272a7f4afe3148fd93677635204cb9c3937e83770218825ec",
+      "bytes": 5074
+    },
+    {
+      "path": "evidence/GOV-001/2026-09-12T00-14-04Z/inventory.json",
+      "sha256": "21932edf0c67bb165f91a71c859328bbb67829443774aa6d83c686f5f97d56b0",
+      "bytes": 1086
+    }
+  ]
+}
