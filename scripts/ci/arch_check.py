@@ -176,10 +176,17 @@ COMPOSE_SERVICE_RE = re.compile(r"^  ([A-Za-z0-9][A-Za-z0-9_.-]*)\s*:\s*$")
 DECISION_RE = re.compile(r"^- \*\*(D-\d{3}):\*\*", re.MULTILINE)
 
 # --- new-persistent-store ---------------------------------------------------------
+# Modules that own authoritative tables (or the derived vector index) in the canonical
+# schema and may therefore hold a database client. A module outside this list with a
+# store client is a *new* persistent store and fails the gate. `crates/capability` owns
+# `capability_projections`, so it belongs here even though its writes go through the
+# canonical event-emitting transaction (`EventStore::commit_mutation*`) rather than a
+# private connection.
 STORE_OWNER_PREFIXES = (
     "crates/server/",
     "crates/events/",
     "crates/graph/",
+    "crates/capability/",
     "crates/machine/",
     "crates/indexer/",
     "python/intelligence/embeddings/",

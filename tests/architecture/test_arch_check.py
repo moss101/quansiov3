@@ -450,9 +450,9 @@ def test_new_persistent_store_flags_rust_client_outside_owner(tmp_path):
     root = _tree(
         tmp_path,
         {
-            "crates/capability/Cargo.toml": """
+            "crates/tools/Cargo.toml": """
             [package]
-            name = "quansio-capability"
+            name = "quansio-tools"
 
             [dependencies]
             sqlx = { version = "0.8", features = ["postgres"] }
@@ -461,8 +461,26 @@ def test_new_persistent_store_flags_rust_client_outside_owner(tmp_path):
     )
     findings = _findings(root, "new-persistent-store")
     assert len(findings) == 1
-    assert findings[0]["path"] == "crates/capability/Cargo.toml"
+    assert findings[0]["path"] == "crates/tools/Cargo.toml"
     assert "sqlx" in str(findings[0]["detail"])
+
+
+def test_new_persistent_store_allows_every_table_owning_module(tmp_path):
+    """Each module that owns canonical tables may hold a store client (RUN-005 includes capability)."""
+    owners = {
+        "crates/server": "quansio-server",
+        "crates/events": "quansio-events",
+        "crates/graph": "quansio-graph",
+        "crates/capability": "quansio-capability",
+        "crates/machine": "quansio-machine",
+        "crates/indexer": "quansio-indexer",
+    }
+    files = {
+        f"{path}/Cargo.toml": f'[package]\nname = "{name}"\n\n[dependencies]\nsqlx = "0.8"\n'
+        for path, name in owners.items()
+    }
+    root = _tree(tmp_path, files)
+    assert _findings(root, "new-persistent-store") == [], "canonical store owners must be allowed"
 
 
 def test_new_persistent_store_flags_typescript_client_outside_owner(tmp_path):
