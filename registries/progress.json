@@ -23,18 +23,25 @@
   "field_reference": "DOSSIER.md \u00a719 (evidence schema) and \u00a720 (status/readiness rules)",
   "tasks": {
     "GOV-001": {
-      "coverage": null,
-      "status": "RECONCILING",
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T00:13:58Z",
-      "updated_at": "2026-09-12T00:13:58Z",
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "updated_at": "2026-09-12T00:14:49Z",
+      "git_commit": "5df4ff6",
+      "tests": [
+        "python3.12 scripts/ci/inventory.py --scan",
+        "uv run --python 3.12 --with pytest pytest tests -q",
+        "python3.12 scripts/validate_v81.py"
+      ],
+      "artifacts": [
+        "evidence/GOV-001/2026-09-12T00-14-04Z/summary.json",
+        "docs/review/2026-09-12-gov-001-reconciliation.md"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Greenfield: no legacy authority found; every canonical owner classified GENUINE_GAP."
     },
     "GOV-002": {
       "coverage": null,
