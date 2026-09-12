@@ -139,6 +139,14 @@ async fn approval_events(fixture: &Fixture) -> Vec<RuntimeEvent> {
         .collect()
 }
 
+async fn policy_events(fixture: &Fixture) -> Vec<RuntimeEvent> {
+    all_events(fixture)
+        .await
+        .into_iter()
+        .filter(|event| event.event_type.family().as_str() == "policy")
+        .collect()
+}
+
 async fn count_execute(pool: &PgPool, sql: &str) -> i64 {
     let mut tx = pool.begin().await.expect("begin");
     schema::set_tenant_context(&mut tx, TENANT)
@@ -361,7 +369,7 @@ async fn policy_deny_wins_over_user_always_and_a_missing_rule_denies() {
         resource: &resource,
         catalog_tier: Tier::new(3).expect("tier"),
         action: ActionFamily::ExecuteEffect { tier: 3 },
-        roles: ActorRoles::new(Some(TenantRole::Member), Some(WorkspaceRole::Editor)),
+        roles: ActorRoles::new(Some(TenantRole::Member), Some(WorkspaceRole::Approver)),
         derived_from_trust: Some(TrustLevel::TrustedUser),
         data_classes: &[],
         destination: None,
@@ -382,7 +390,7 @@ async fn policy_deny_wins_over_user_always_and_a_missing_rule_denies() {
         resource: &resource,
         catalog_tier: Tier::new(3).expect("tier"),
         action: ActionFamily::ExecuteEffect { tier: 3 },
-        roles: ActorRoles::new(Some(TenantRole::Member), Some(WorkspaceRole::Editor)),
+        roles: ActorRoles::new(Some(TenantRole::Member), Some(WorkspaceRole::Approver)),
         derived_from_trust: Some(TrustLevel::TrustedUser),
         data_classes: &[],
         destination: None,
@@ -397,6 +405,64 @@ async fn policy_deny_wins_over_user_always_and_a_missing_rule_denies() {
     assert_eq!(
         outcome.reason,
         PolicyReason::NoMatchingPolicyRule { tier: 3 }
+    );
+    drop_pool(&f.pool, &f.name).await;
+}
+
+#[tokio::test]
+async fn a_policy_decision_is_recorded_with_exactly_one_policy_event() {
+    let Some(f) = prepare("policy_decision").await else {
+        blocked_marker();
+        return;
+    };
+    let policies = f
+        .approvals
+        .store()
+        .load_policy_set(WORKSPACE)
+        .await
+        .expect("policy set");
+    let effect = class("record.delete");
+    let resource = selector("api.example.com");
+    let grants = EgressGrantSet::empty();
+    let sequence = SequenceContext::empty();
+    let outcome = PolicyEvaluator::new(&policies, &[]).evaluate(&EvaluationRequest {
+        effect_class: &effect,
+        resource: &resource,
+        catalog_tier: Tier::new(3).expect("tier"),
+        action: ActionFamily::ExecuteEffect { tier: 3 },
+        roles: ActorRoles::new(Some(TenantRole::Member), Some(WorkspaceRole::Approver)),
+        derived_from_trust: Some(TrustLevel::TrustedUser),
+        data_classes: &[],
+        destination: None,
+        egress_grants: &grants,
+        capability_projection_id: Some("cap_x"),
+        sequence_guards: &[],
+        sequence: &sequence,
+        user_id: Some(USER),
+        now: Utc::now(),
+    });
+    assert!(outcome.is_deny());
+
+    let row = f
+        .approvals
+        .store()
+        .record_decision(WORKSPACE, None, Some(EFFECT), Some("cap_x"), &outcome)
+        .await
+        .expect("record decision");
+    assert_eq!(row.decision, Decision::Deny);
+    assert_eq!(row.reason, "no_matching_policy_rule");
+    assert!(!row.inputs_digest.is_empty());
+
+    let events = policy_events(&f).await;
+    assert_eq!(events.len(), 1, "exactly one policy.* event per decision");
+    assert_eq!(events[0].event_type.to_string(), "policy.decision_recorded");
+    assert_eq!(
+        count_execute(
+            &f.pool,
+            "SELECT count(*) FROM policy_decisions WHERE decision = 'deny'"
+        )
+        .await,
+        1
     );
     drop_pool(&f.pool, &f.name).await;
 }
