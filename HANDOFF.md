@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0 complete; M1: CORE-001…CORE-007 PASS; M3 started: INT-001 PASS; 17 of 99 tasks complete)
+Updated: 2026-09-12 (M0 complete, M1 complete; M3 started; 20 of 99 tasks complete)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,9 +16,8 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M1 — canonical state, events and persistence
-Current task: CORE-008 (scheduler and durable timers), CORE-009 (projections and resumable streaming)
-and INT-004 (Rust indexer) delegated in isolated worktrees
-Current task status: 17 of 99 tasks `PASS`; the baseline pipeline is green on `main`
+Current task: RUN-001 — authoritative Rust runtime state machine (M2), delegated in an isolated worktree
+Current task status: 20 of 99 tasks `PASS`; M1 closed, M3 started; the baseline pipeline is green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
@@ -55,6 +54,19 @@ Current language: Rust + SQL
   `deny.toml` completeness, deterministic CycloneDX SBOM with drift verification, a real
   RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill quarantine-lifecycle checks; `cargo-deny` is an
   explicit informational result when absent. Evidence: `evidence/OPS-007/<ts>/`.
+- CORE-008 — scheduler, waits and durable timers — `PASS` (`crates/server/src/scheduler/`, migration
+  `0004_durable_timers.sql`): timers and waits persisted in PostgreSQL with exactly-once firing proven
+  under two competing scheduler loops, survival across a pool drop, generation fencing, a typed
+  saturated-queue error, run dispatch through the canonical Run state machine, and routine due times with
+  `skip`/`queue`/`catch_up_once`. Evidence: `evidence/CORE-008/<ts>/`.
+- CORE-009 — projections and resumable streaming — `PASS` (`crates/events/src/{projection,stream}.rs`,
+  migration `0005_projections.sql`): deterministic rebuildable read models with per-projection checkpoints,
+  idempotent re-application, and DOMAIN §9.3 streaming with cursors, transient live frames, channel/tenant
+  scoping and bounded backpressure. Evidence: `evidence/CORE-009/<ts>/`.
+- INT-004 — derived search index — `PASS` (`crates/indexer/`): typed `SearchProgram` filters over exact,
+  lexical (Tantivy) and symbol channels with provenance, budgets and reported truncation, tenant
+  isolation, incremental maintenance and a PostgreSQL rebuild that reproduces identical hits. Evidence:
+  `evidence/INT-004/<ts>/`.
 - INT-001 — Python intelligence service and typed RPC boundary — `PASS`
   (`python/intelligence/server/`): `IntelligenceGateway` over loopback TCP or a unix socket, one
   scope/deadline gate (tenant, workspace, correlation id, capability projection id) that aborts before any
@@ -95,27 +107,24 @@ Current language: Rust + SQL
 
 TASK: INT-004 — Rust indexer and `SearchIndex` API (`crates/indexer/`): exact/lexical/symbol channels over
 artifact text, typed SearchProgram filters, rebuildability, tenant isolation and budgets.
-TASK: CORE-008 — scheduler, waits and durable timers (`crates/server/src/scheduler/`): persisted timers,
-wait registry, single-fire leasing and routine due-time computation.
-TASK: CORE-009 — projections and resumable streaming (`crates/events`): rebuildable read models with
-checkpoints, plus cursor-resumable channels with bounded backpressure.
+TASK: RUN-001 — the authoritative Rust runtime state machine (`crates/server/src/runtime/`): Run/Turn/
+Step/Attempt transitions driven by protocol state, the agent turn loop entry points, recovery, and the
+canonical dispatch path. This is the heart of M2.
 
 ## Exact next action
 
 Integrate each delegated branch as it completes (review → merge → re-run its tests on `main` → set
-progress `PASS` with evidence naming the merge commit). Then take INT-001 (Python
-intelligence service and typed RPC boundary) and INT-004 (Rust indexer and SearchIndex API).
+progress `PASS` with evidence naming the merge commit). Then take INT-002 (server-side model
+gateway; a real-boundary task whose live conformance suite needs `QUANSIO_TEST_ANTHROPIC_API_KEY` or
+`QUANSIO_TEST_OPENAI_API_KEY` — without them the live part is recorded as `BLOCKED_EXTERNAL`).
 Database-backed suites need `scripts/dev/up` plus
 `QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`; the baseline
 pipeline derives that URL from the generated `.env` automatically.
 
 ## Ready queue
 
-1. `CORE-005` — GraphTransaction (in flight, delegated).
-2. `CORE-008` — scheduler, waits and durable timers (in flight, delegated).
-3. `CORE-009` — projections and resumable event streaming (in flight, delegated).
-4. `INT-001` — Python intelligence service and typed RPC boundary.
-5. `INT-004` — Rust indexer and SearchIndex API.
+1. `RUN-001` — authoritative Rust runtime state machine (in flight, delegated).
+2. `INT-002` — server-side model gateway (M3; real boundary).
 
 ## Blocked work
 
