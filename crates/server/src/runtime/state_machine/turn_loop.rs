@@ -91,7 +91,10 @@ pub struct DelegationRequest {
     pub instruction: String,
 }
 
-/// A human question the model proposes (DOMAIN.md §3.4).
+/// A human question the model proposes (DOMAIN.md §3.4, §5.6).
+///
+/// The fields mirror the Question entity's own shape, so the proposal can carry the
+/// choices and requiredness a `single_choice`/`multi_choice`/`confirm` question needs.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProposedQuestion {
     /// Model-supplied question id.
@@ -100,6 +103,10 @@ pub struct ProposedQuestion {
     pub prompt: String,
     /// Question kind (`free_text`, `single_choice`, `multi_choice`, `confirm`).
     pub kind: String,
+    /// Choices offered by a choice question.
+    pub options: Vec<String>,
+    /// Whether an answer is required before the run can continue.
+    pub required: bool,
 }
 
 /// A parsed model proposal (DOMAIN.md §5.6).

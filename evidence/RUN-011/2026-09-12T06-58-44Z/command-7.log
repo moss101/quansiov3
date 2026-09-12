@@ -1,0 +1,13 @@
+
+running 8 tests
+test approval_required_actions_cannot_bypass_the_receipt ... ok
+test effect_events_are_one_per_transition_in_order ... ok
+test effect_reads_are_tenant_scoped ... ok
+test protocol_state_keeps_reconcile_effect_until_settled ... ok
+test racing_dispatchers_reserve_exactly_one_action ... ok
+test retry_creates_a_new_identity_with_the_same_key ... ok
+test settlement_is_terminal_with_one_event_per_transition ... ok
+test unknown_outcomes_are_reconciled_by_strategy_and_never_retried ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.48s
+

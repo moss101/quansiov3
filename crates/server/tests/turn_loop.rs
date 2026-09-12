@@ -18,6 +18,7 @@ use quansio_capability::Grant;
 use quansio_core::{CanonicalId, CorrelationId, Prefix, UlidGenerator};
 use quansio_server::control::schema;
 use quansio_server::effects::{EffectLedger, EffectStatus};
+use quansio_server::policy::TrustLevel;
 use quansio_server::policy::{
     ActorRoles, ApprovalRuntime, ApprovalSigner, TenantRole, WorkspaceRole,
 };
@@ -28,8 +29,9 @@ use quansio_server::runtime::state_machine::{
     RuntimeIdentity, StepKind, StepStatus, TurnInput, TurnOutcome,
 };
 use quansio_server::runtime::turn_loop::{
-    load_turn_usage, ActingActor, HostDispatch, HostFailure, HostOutcome, QuestionService,
-    RoleProvider, StoredProjectionProvider, ToolDispatchService, ToolHostPort,
+    load_turn_usage, ActingActor, HostDispatch, HostFailure, HostOutcome, ProposalTrustSource,
+    QuestionService, RoleProvider, StoredProjectionProvider, ToolDispatchService, ToolHostPort,
+    UnavailableProposalTrust,
 };
 use serde_json::{json, Value};
 use sqlx::PgPool;
@@ -82,12 +84,17 @@ impl ModelProposalSource for StubModel {
 
 /// A tool host that records what it was asked to do and can be scripted to fail or to lose
 /// the outcome.
+///
+/// When a barrier is installed, every host call must reach it before any of them proceeds:
+/// a runtime that dispatched the calls one after another would time out instead of passing,
+/// which is how the concurrency test proves the calls really overlap.
 #[derive(Clone, Default)]
 struct ConformanceHost {
     dispatches: Arc<Mutex<Vec<HostDispatch>>>,
     timeline: Arc<Mutex<Vec<String>>>,
     unknown: Arc<Mutex<HashSet<String>>>,
     failing: Arc<Mutex<HashSet<String>>>,
+    barrier: Arc<Mutex<Option<Arc<tokio::sync::Barrier>>>>,
 }
 
 impl ConformanceHost {
@@ -107,9 +114,18 @@ impl ToolHostPort for ConformanceHost {
             .lock()
             .expect("timeline")
             .push(format!("start:{}", dispatch.tool_call_id));
-        // Yielding here lets a concurrently dispatched call start before this one finishes,
-        // which is what the ordering test observes.
-        tokio::task::yield_now().await;
+        let barrier = self.barrier.lock().expect("barrier").clone();
+        if let Some(barrier) = barrier {
+            if tokio::time::timeout(std::time::Duration::from_secs(5), barrier.wait())
+                .await
+                .is_err()
+            {
+                self.timeline
+                    .lock()
+                    .expect("timeline")
+                    .push(format!("no-overlap:{}", dispatch.tool_call_id));
+            }
+        }
         self.dispatches
             .lock()
             .expect("dispatches")
@@ -146,6 +162,17 @@ impl ToolHostPort for ConformanceHost {
             evidence_ids: vec![format!("evd_{}", dispatch.tool.replace('.', "_"))],
             remote_ref: None,
         })
+    }
+}
+
+/// The proposal trust the conformance model declares. The model's own proposal is
+/// `AGENT_GENERATED` (DOMAIN.md §12); the default source proves nothing and fails closed.
+#[derive(Clone, Copy)]
+struct StaticProposalTrust(TrustLevel);
+
+impl ProposalTrustSource for StaticProposalTrust {
+    fn proposal_trust(&self, _run_id: &str) -> Option<TrustLevel> {
+        Some(self.0)
     }
 }
 
@@ -324,6 +351,21 @@ struct Seams {
 
 /// Build the engine and its seams: real dispatch, real questions, real delegation.
 fn build_seams(fixture: &Fixture, model: StubModel, host: ConformanceHost) -> Seams {
+    build_seams_with_trust(
+        fixture,
+        model,
+        host,
+        Arc::new(StaticProposalTrust(TrustLevel::AgentGenerated)),
+    )
+}
+
+/// Build the engine with an explicit proposal-trust source.
+fn build_seams_with_trust(
+    fixture: &Fixture,
+    model: StubModel,
+    host: ConformanceHost,
+    trust: Arc<dyn ProposalTrustSource>,
+) -> Seams {
     let delegation: Arc<dyn DelegationPort> = Arc::new(
         AgentDelegationPort::with_structural_check(fixture.pool.clone(), fixture.identity.clone())
             .expect("delegation port"),
@@ -341,6 +383,7 @@ fn build_seams(fixture: &Fixture, model: StubModel, host: ConformanceHost) -> Se
         Arc::clone(&delegation),
     )
     .expect("dispatch service")
+    .with_proposal_trust(trust)
     .with_signer(ApprovalSigner::new(TEST_KEY.to_vec()).expect("signer"));
 
     let engine = RuntimeEngine::new(fixture.pool.clone(), fixture.identity.clone())
@@ -389,6 +432,23 @@ async fn events_of_type(pool: &PgPool, event_type: &str) -> Vec<Value> {
         .filter(|event| event.event_type.to_string() == event_type)
         .map(|event| event.payload)
         .collect()
+}
+
+/// The durable tool-call rows, used in assertion messages so a refusal names itself.
+async fn tool_call_rows(fixture: &Fixture) -> Vec<(String, String, Option<Value>)> {
+    let mut tx = fixture.pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant context");
+    let rows = sqlx::query_as::<_, (String, String, Option<Value>)>(
+        "SELECT tool_name, status, result FROM tool_calls WHERE tenant_id = $1 ORDER BY created_at",
+    )
+    .bind(TENANT)
+    .fetch_all(&mut *tx)
+    .await
+    .expect("tool calls");
+    tx.commit().await.expect("commit");
+    rows
 }
 
 fn read_tool(call_id: &str, path: &str) -> ProposedToolCall {
@@ -443,7 +503,12 @@ async fn a_turn_executes_tool_proposals_through_capability_policy_and_the_effect
         "a turn without a completion claim completes: {outcome:?}"
     );
     assert_eq!(seams.model.calls(), 2, "one model call per loop iteration");
-    assert_eq!(host.dispatch_count(), 2, "both tool calls were dispatched");
+    assert_eq!(
+        host.dispatch_count(),
+        2,
+        "both tool calls were dispatched; rows: {:?}",
+        tool_call_rows(&fixture).await
+    );
 
     let turns = seams
         .engine
@@ -626,7 +691,12 @@ async fn unknown_tools_and_unknown_fields_are_rejected_before_dispatch() {
         matches!(outcome, TurnOutcome::Completed { .. }),
         "refusals are model-correctable, not fatal: {outcome:?}"
     );
-    assert_eq!(host.dispatch_count(), 0, "no host saw a refused call");
+    assert_eq!(
+        host.dispatch_count(),
+        0,
+        "no host saw a refused call; rows: {:?}",
+        tool_call_rows(&fixture).await
+    );
 
     let turns = seams
         .engine
@@ -686,6 +756,9 @@ async fn independent_tool_calls_run_together_and_settle_in_proposal_order() {
         },
     ]);
     let host = ConformanceHost::default();
+    // Two parties: neither host call can return until the other has started, so a runtime
+    // that dispatched them one after another would time out instead of passing.
+    *host.barrier.lock().expect("barrier") = Some(Arc::new(tokio::sync::Barrier::new(2)));
     let seams = build_seams(&fixture, model, host.clone());
     let run = start_run(&fixture, &seams.engine, 8).await;
     seed_projection(&fixture, &run.id.to_string()).await;
@@ -700,12 +773,17 @@ async fn independent_tool_calls_run_together_and_settle_in_proposal_order() {
         .await
         .expect("turn");
 
-    // Both calls started before either finished: the host yielded while the other ran.
     let timeline = host.timeline();
+    assert!(
+        !timeline
+            .iter()
+            .any(|entry| entry.starts_with("no-overlap:")),
+        "both dispatches were in flight together: {timeline:?}"
+    );
     assert_eq!(timeline.len(), 4, "two starts and two ends: {timeline:?}");
     assert!(
         timeline[0].starts_with("start:") && timeline[1].starts_with("start:"),
-        "both dispatches overlapped: {timeline:?}"
+        "both dispatches started before either finished: {timeline:?}"
     );
 
     // The durable order is the proposal order, not the completion order.
@@ -911,20 +989,35 @@ async fn a_crash_between_dispatch_and_settlement_reconciles_instead_of_redispatc
     );
 
     // Reconciliation resolves it with evidence, and only then does the run continue.
-    ledger
+    // A `process.exec.sandboxed` record carries the `none` strategy (config/effects.yaml):
+    // its unknown outcome is resolved by a human with evidence, never by a guess, and a
+    // "determined" claim is refused.
+    let determined = ledger
         .reconcile(
             &effect_id,
             quansio_server::effects::ReconciliationEvidence::Determined {
                 landed: true,
-                remote_ref: Some("terminal://rm".to_string()),
-                evidence_ids: vec!["evd_reconciled".to_string()],
+                remote_ref: None,
+                evidence_ids: Vec::new(),
+            },
+        )
+        .await;
+    assert!(
+        determined.is_err(),
+        "a class with no reconciliation strategy cannot be resolved by query"
+    );
+    ledger
+        .reconcile(
+            &effect_id,
+            quansio_server::effects::ReconciliationEvidence::Manual {
+                evidence_ids: vec!["evd_manual_check".to_string()],
             },
         )
         .await
-        .expect("reconcile");
+        .expect("manual reconcile");
     assert_eq!(
         ledger.load(&effect_id).await.expect("effect").status,
-        EffectStatus::ReconciledSuccess
+        EffectStatus::ReconciliationManual
     );
     finish(fixture).await;
 }
@@ -942,6 +1035,8 @@ async fn a_question_wait_survives_a_restart_and_resumes_on_the_answer() {
                 question_id: "question_1".to_string(),
                 prompt: "Which environment should I deploy to?".to_string(),
                 kind: "single_choice".to_string(),
+                options: vec!["staging".to_string(), "production".to_string()],
+                required: true,
             }),
             ..ModelProposal::default()
         },
@@ -1177,6 +1272,54 @@ async fn every_declared_effect_class_has_a_catalog_tier() {
             );
         }
     }
+}
+
+#[tokio::test]
+async fn an_unprovable_proposal_chain_escalates_a_tier_two_call_to_approval() {
+    let Some(fixture) = prepare("run011_trust").await else {
+        blocked_marker();
+        return;
+    };
+    seed_policy(&fixture).await;
+    let model = StubModel::with(vec![ModelProposal {
+        // `user.ask` is `record.create` (tier 2) and would be allowed outright.
+        tool_calls: vec![ProposedToolCall::new(
+            "call_ask",
+            "user.ask",
+            json!({ "kind": "confirm", "prompt": "Proceed?" }),
+        )],
+        ..ModelProposal::default()
+    }]);
+    let host = ConformanceHost::default();
+    // The default source can prove nothing about the proposal's causal chain.
+    let seams = build_seams_with_trust(
+        &fixture,
+        model,
+        host.clone(),
+        Arc::new(UnavailableProposalTrust),
+    );
+    let run = start_run(&fixture, &seams.engine, 8).await;
+    seed_projection(&fixture, &run.id.to_string()).await;
+
+    let outcome = seams
+        .engine
+        .run_turn(
+            &run.id,
+            run.generation,
+            TurnInput::new(RunTriggerKind::Manual),
+        )
+        .await
+        .expect("turn");
+    let TurnOutcome::Parked { state, .. } = outcome else {
+        panic!("an untrusted chain escalates a tier 2 call to approval: {outcome:?}");
+    };
+    assert_eq!(
+        state,
+        RunStatus::WaitingApproval,
+        "DOMAIN.md §12 rule 2 escalates one tier, and tier 3 needs a receipt"
+    );
+    assert_eq!(host.dispatch_count(), 0);
+    finish(fixture).await;
 }
 
 /// Remove every grant from the run's stored projection, leaving a projection that

@@ -439,16 +439,20 @@ fn is_canonical_tool_name(name: &str) -> bool {
 }
 
 fn parse_effect_class_rule(tool: &str, raw: &str) -> Result<EffectClassRule, ToolError> {
+    // Named derivations are tried first: their spellings are fixed and never dotted, so a
+    // derivation name can never be mistaken for a DOMAIN §7.1 effect class.
+    if let Ok(derivation) = NamedDerivation::parse(raw) {
+        return Ok(EffectClassRule::Derived(derivation));
+    }
     if let Ok(class) = EffectClass::parse(raw) {
         return Ok(EffectClassRule::Static(class));
     }
-    match NamedDerivation::parse(raw) {
-        Ok(derivation) => Ok(EffectClassRule::Derived(derivation)),
-        Err(detail) => Err(ToolError::MalformedDeclaration {
-            tool: tool.to_string(),
-            detail,
-        }),
-    }
+    Err(ToolError::MalformedDeclaration {
+        tool: tool.to_string(),
+        detail: format!(
+            "effect_class {raw:?} is neither a DOMAIN §7.1 class nor an implemented derivation"
+        ),
+    })
 }
 
 fn parse_resource_rule(tool: &str, raw: &RawResourceRule) -> Result<ResourceRule, ToolError> {

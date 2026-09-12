@@ -111,12 +111,53 @@ pub fn plan_rounds(calls: &[ProposedToolCall]) -> Vec<Vec<usize>> {
 
 #[cfg(test)]
 mod tests {
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::{Arc, Mutex};
+
     use serde_json::json;
 
-    use super::{is_control_tool, plan_rounds, ProposedToolCall};
+    use super::{is_control_tool, join_all, plan_rounds, ProposedToolCall};
 
     fn call(id: &str, tool: &str, args: serde_json::Value) -> ProposedToolCall {
         ProposedToolCall::new(id, tool, args)
+    }
+
+    #[tokio::test]
+    async fn join_all_runs_yielding_futures_concurrently() {
+        let log: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+        let futures: Vec<Pin<Box<dyn Future<Output = ()> + Send + '_>>> = ["a", "b"]
+            .into_iter()
+            .map(|name| {
+                let log = Arc::clone(&log);
+                Box::pin(async move {
+                    log.lock().expect("log").push(format!("start:{name}"));
+                    tokio::task::yield_now().await;
+                    log.lock().expect("log").push(format!("end:{name}"));
+                }) as Pin<Box<dyn Future<Output = ()> + Send + '_>>
+            })
+            .collect();
+
+        join_all(futures).await;
+
+        let entries = log.lock().expect("log").clone();
+        assert_eq!(
+            entries,
+            vec!["start:a", "start:b", "end:a", "end:b"],
+            "both futures must start before either finishes"
+        );
+    }
+
+    #[tokio::test]
+    async fn join_all_preserves_result_order_not_completion_order() {
+        let slower = Box::pin(async {
+            tokio::task::yield_now().await;
+            tokio::task::yield_now().await;
+            1
+        }) as Pin<Box<dyn Future<Output = i32> + Send + '_>>;
+        let faster = Box::pin(async { 2 }) as Pin<Box<dyn Future<Output = i32> + Send + '_>>;
+        let results = join_all(vec![slower, faster]).await;
+        assert_eq!(results, vec![1, 2], "results follow input order");
     }
 
     #[test]

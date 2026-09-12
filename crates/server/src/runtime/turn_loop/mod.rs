@@ -17,9 +17,9 @@ pub mod usage;
 pub use dispatch::{
     is_internal_tool, ActingActor, HostDispatch, HostFailure, HostOutcome, MemoryProposalContext,
     MemoryProposalPort, PlanApplicationContext, PlanApplicationPort, ProjectionProvider,
-    RoleProvider, StoredProjectionProvider, ToolDispatchService, ToolHostPort,
-    UnavailableMemoryProposals, UnavailablePlanApplication, UnavailableRoles, UnavailableToolHost,
-    INTERNAL_TOOLS,
+    ProposalTrustSource, RoleProvider, StoredProjectionProvider, ToolDispatchService, ToolHostPort,
+    UnavailableMemoryProposals, UnavailablePlanApplication, UnavailableProposalTrust,
+    UnavailableRoles, UnavailableToolHost, INTERNAL_TOOLS,
 };
 pub use parallel::{is_control_tool, join_all, plan_rounds, CONTROL_TOOLS};
 pub use questions::{

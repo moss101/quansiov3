@@ -39,10 +39,9 @@ use crate::effects::{
     NewEffect, TargetKind, ToolCallRef,
 };
 use crate::policy::{
-    derived_from_trust, ActionFamily, ActorRoles, ApprovalSigner, ConsequencePreview, DataClass,
-    DispatchBinding, EgressGrantSet, EvaluationRequest, NewApprovalRequest, PolicyEvaluator,
-    PolicyOutcome, PolicyStore, SequenceContext, TrustLabellingSource, TrustLevel,
-    UnavailableTrustLabelling,
+    ActionFamily, ActorRoles, ApprovalSigner, ConsequencePreview, DataClass, DispatchBinding,
+    EgressGrantSet, EvaluationRequest, NewApprovalRequest, PolicyEvaluator, PolicyOutcome,
+    PolicyStore, SequenceContext, TrustLevel, FAIL_CLOSED_TRUST,
 };
 use crate::runtime::planning::PLAN_GRAPH_OWNER;
 use crate::runtime::protocol_state::{is_unsettled, PendingToolCall, ProtocolState};
@@ -60,6 +59,8 @@ pub const FILE_TOOL_HOST_OWNER: &str = "EXEC-006";
 pub const BROWSER_TOOL_HOST_OWNER: &str = "EXEC-009";
 /// The task that owns the connector and integration broker.
 pub const CONNECTOR_HOST_OWNER: &str = "EXEC-011";
+/// The task that owns source-control, PR and CI tools.
+pub const SCM_HOST_OWNER: &str = "EXEC-012";
 /// The task that owns workspace artifacts (server-hosted artifact tools).
 pub const ARTIFACT_HOST_OWNER: &str = "CORE-007";
 /// The task that owns ACTIVE knowledge (the server-hosted citation tool).
@@ -76,6 +77,8 @@ pub fn host_owner(tool: &str) -> &'static str {
         "browser.navigate" | "browser.click" | "browser.type" | "browser.extract"
         | "browser.screenshot" => BROWSER_TOOL_HOST_OWNER,
         "web.search" | "web.fetch" => CONNECTOR_HOST_OWNER,
+        _ if tool.starts_with("connector.") => CONNECTOR_HOST_OWNER,
+        _ if tool.starts_with("scm.") => SCM_HOST_OWNER,
         _ => FILE_TOOL_HOST_OWNER,
     }
 }
@@ -248,6 +251,28 @@ pub struct ActingActor {
     pub user_id: Option<String>,
 }
 
+/// Labels the trust of the causal chain a proposal was built from (DOMAIN.md §12).
+///
+/// The runtime cannot yet prove the chain's trust: INT-005 builds the ContextProjection
+/// whose segments carry labels, and INT-012 owns labelling them. Until it does, the
+/// default fails closed to [`FAIL_CLOSED_TRUST`], so a tier >= 2 call is escalated and
+/// needs an approval rather than silently acting on content nobody vouched for.
+pub trait ProposalTrustSource: Send + Sync {
+    /// The most-untrusted label of the proposal's causal chain, or `None` when it cannot
+    /// be established.
+    fn proposal_trust(&self, run_id: &str) -> Option<TrustLevel>;
+}
+
+/// The default source: it can prove nothing, so policy evaluates from untrusted origin.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct UnavailableProposalTrust;
+
+impl ProposalTrustSource for UnavailableProposalTrust {
+    fn proposal_trust(&self, _run_id: &str) -> Option<TrustLevel> {
+        None
+    }
+}
+
 /// Resolves the acting user and roles for a run.
 #[async_trait]
 pub trait RoleProvider: Send + Sync {
@@ -368,7 +393,7 @@ pub struct ToolDispatchService {
     delegation: Arc<dyn DelegationPort>,
     plans: Arc<dyn PlanApplicationPort>,
     memories: Arc<dyn MemoryProposalPort>,
-    trust: Arc<dyn TrustLabellingSource + Send + Sync>,
+    trust: Arc<dyn ProposalTrustSource>,
     signer: Option<ApprovalSigner>,
 }
 
@@ -405,7 +430,7 @@ impl ToolDispatchService {
             delegation,
             plans: Arc::new(UnavailablePlanApplication),
             memories: Arc::new(UnavailableMemoryProposals),
-            trust: Arc::new(UnavailableTrustLabelling),
+            trust: Arc::new(UnavailableProposalTrust),
             signer: ApprovalSigner::from_env(),
         })
     }
@@ -424,12 +449,9 @@ impl ToolDispatchService {
         self
     }
 
-    /// Install the context-trust labelling seam (INT-012).
+    /// Install the proposal-trust source (INT-005's ContextProjection labels).
     #[must_use]
-    pub fn with_trust_source(
-        mut self,
-        source: Arc<dyn TrustLabellingSource + Send + Sync>,
-    ) -> Self {
+    pub fn with_proposal_trust(mut self, source: Arc<dyn ProposalTrustSource>) -> Self {
         self.trust = source;
         self
     }
@@ -714,11 +736,16 @@ impl ToolDispatchPort for ToolDispatchService {
                 )
                 .await;
         };
-        // The proposal's causal chain has no proven-trusted label until INT-005's context
-        // projection supplies one, so policy evaluates from FAIL_CLOSED_TRUST (an empty
-        // segment set): untrusted origin escalates the tier and forbids `always` rules.
-        let derived = derived_from_trust(self.trust.as_ref(), &[]);
-        let outcome = self.evaluate_policy(&run, &plan, &actor, derived).await?;
+        // Policy evaluates the proposal's origin: an unprovable chain fails closed to
+        // UNTRUSTED_EXTERNAL, which escalates a tier >= 2 call one tier and forbids
+        // `always` rules (DOMAIN.md §12 rule 2).
+        let derived = self
+            .trust
+            .proposal_trust(&request.run_id)
+            .unwrap_or(FAIL_CLOSED_TRUST);
+        let outcome = self
+            .evaluate_policy(&run, &plan, &actor, derived, &projection.id.to_string())
+            .await?;
         if outcome.is_deny() {
             return self
                 .reject(
@@ -797,6 +824,12 @@ impl ToolDispatchPort for ToolDispatchService {
                 "a reserved effect has no dispatch token".to_string(),
             ));
         };
+        // The fence token moves the reservation to DISPATCHED; nothing settles from
+        // RESERVED, so a crash before this point leaves a record that must be reconciled.
+        self.ledger
+            .mark_dispatched(&effect.id, &token)
+            .await
+            .map_err(effect_refusal)?;
         self.update_tool_call(&tool_call_id, "dispatched", Some(&effect.id), None)
             .await?;
         self.emit_tool_event(
@@ -1242,6 +1275,7 @@ impl ToolDispatchService {
         plan: &ToolCallPlan,
         actor: &ActingActor,
         derived_trust: TrustLevel,
+        capability_projection_id: &str,
     ) -> Result<PolicyOutcome, RuntimeError> {
         let policies = self
             .policies
@@ -1275,7 +1309,8 @@ impl ToolDispatchService {
             data_classes: &data_classes,
             destination: None,
             egress_grants: &egress,
-            capability_projection_id: None,
+            // Policy fails closed without the projection that authorized the call.
+            capability_projection_id: Some(capability_projection_id),
             sequence_guards: &sequence_guards,
             sequence: &sequence,
             user_id: actor.user_id.as_deref(),
@@ -1742,5 +1777,6 @@ mod tests {
         assert_eq!(host_owner("connector.github.create_issue"), "EXEC-011");
         assert_eq!(host_owner("artifact.create"), "CORE-007");
         assert_eq!(host_owner("knowledge.cite"), "INT-006");
+        assert_eq!(host_owner("scm.git.push"), "EXEC-012");
     }
 }

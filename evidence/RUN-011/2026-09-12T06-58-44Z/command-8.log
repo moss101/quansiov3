@@ -1,0 +1,17 @@
+
+running 12 tests
+test a_cycle_against_the_existing_graph_is_rejected ... ok
+test a_cycle_through_proposed_parent_ids_is_rejected ... ok
+test a_missing_base_revision_is_a_revision_conflict ... ok
+test a_plan_above_the_policy_bound_is_rejected_with_validation_bounds ... ok
+test a_self_edge_cycle_is_rejected ... ok
+test a_two_node_cycle_is_rejected ... ok
+test an_over_authorized_plan_is_rejected_and_writes_nothing ... ok
+test completion_contract_inheritance_is_recorded_and_missing_contracts_are_rejected ... ok
+test duplicate_ids_and_unknown_endpoints_are_rejected ... ok
+test malformed_proposals_are_rejected_and_write_nothing ... ok
+test replaying_an_applied_plan_conflicts_and_never_duplicates_nodes ... ok
+test the_same_proposal_over_the_same_starting_state_is_deterministic ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.76s
+

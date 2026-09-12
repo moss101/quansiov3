@@ -602,8 +602,8 @@ impl QuestionPort for QuestionService {
                 thread_id: context.thread_id.clone(),
                 kind: question.kind,
                 prompt: question.prompt,
-                options: Vec::new(),
-                required: true,
+                options: question.options,
+                required: question.required,
                 ttl_seconds: ttl,
                 generation: Generation::new(context.generation).ok(),
             })

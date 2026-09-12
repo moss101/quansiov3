@@ -1,0 +1,16 @@
+
+running 11 tests
+test a_call_outside_the_capability_projection_is_rejected_before_dispatch ... ok
+test a_crash_between_dispatch_and_settlement_reconciles_instead_of_redispatching ... ok
+test a_delegation_wait_survives_a_restart ... ok
+test a_question_wait_survives_a_restart_and_resumes_on_the_answer ... ok
+test a_tier_three_call_parks_for_approval_and_resumes_without_a_duplicate_dispatch ... ok
+test a_turn_executes_tool_proposals_through_capability_policy_and_the_effect_ledger ... ok
+test a_user_ask_call_parks_the_run_and_the_question_is_durable ... ok
+test an_unprovable_proposal_chain_escalates_a_tier_two_call_to_approval ... ok
+test every_declared_effect_class_has_a_catalog_tier ... ok
+test independent_tool_calls_run_together_and_settle_in_proposal_order ... ok
+test unknown_tools_and_unknown_fields_are_rejected_before_dispatch ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.12s
+

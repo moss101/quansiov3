@@ -1,0 +1,16 @@
+
+running 11 tests
+test builtin_registry_covers_the_generated_tool_catalog ... ok
+test declared_hosts_and_output_bounds_come_from_the_declaration ... ok
+test derived_effect_class_follows_the_target_root ... ok
+test exposure_is_capability_filtered ... ok
+test missing_and_ill_typed_arguments_are_rejected ... ok
+test open_object_schemas_are_refused ... ok
+test parameter_digest_is_canonical_and_key_order_independent ... ok
+test reserved_family_names_are_not_callable ... ok
+test schemas_reject_unsupported_vocabulary_at_load_time ... ok
+test unknown_argument_field_is_rejected ... ok
+test unknown_tool_is_rejected_before_dispatch ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
