@@ -1,0 +1,75 @@
+{
+  "task_id": "INT-005",
+  "git_commit": "1e12ba6491066f96351099114adc0e4665d9223e",
+  "recorded_at": "2026-09-12T10:59:22Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_search_program.py tests/intelligence/test_context_projection.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T10-59-12Z/command-1.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T10-59-12Z/command-2.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T10-59-12Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T10-59-12Z/command-4.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_search_program.py tests/intelligence/test_context_projection.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/context/search.py",
+      "sha256": "ac44312f668cab528fde20934e43c508163b6bec6d6ebc09eda090fac690f7d9",
+      "bytes": 12102
+    },
+    {
+      "path": "python/intelligence/context/projection.py",
+      "sha256": "f5be2d7b4c7eb2487192e95dcd2a58e2f6245238c5811cdeb01f0d27dc8947e9",
+      "bytes": 10772
+    },
+    {
+      "path": "python/tests/intelligence/test_search_program.py",
+      "sha256": "c7f24b112551cac76dda22b8075c3fa13168242149e6691f8b2b63ce3a5b54c1",
+      "bytes": 7603
+    },
+    {
+      "path": "python/tests/intelligence/test_context_projection.py",
+      "sha256": "cdbc7d1b759f693f202202233e28d972eb500453c780a7480031cd5d634e7f1a",
+      "bytes": 8111
+    }
+  ]
+}

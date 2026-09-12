@@ -822,23 +822,25 @@
       "status": "IN_PROGRESS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T10:01:29Z",
-      "updated_at": "2026-09-12T10:09:45Z",
-      "git_commit": "b6d620de675608303b493931a01a7a17911a57ab",
+      "updated_at": "2026-09-12T10:59:22Z",
+      "git_commit": "1e12ba6491066f96351099114adc0e4665d9223e",
       "tests": [
-        "(cd python && uv run --frozen pytest tests/intelligence/test_search_program.py -q) (15 tests: AST validation, closed vocabulary, literal-only values, canonical form, no-evaluator structural gate)",
-        "(cd python && uv run --frozen pytest -q) (209 passed, 6 skipped live-provider cases)",
+        "(cd python && uv run --frozen pytest tests/intelligence/test_search_program.py tests/intelligence/test_context_projection.py -q) (22 tests: AST validation, closed vocabulary, literal-only values, canonical form, trust-required, ledger/provenance, budget packing, dedupe, stable prefix, stale snapshot, contract parity)",
+        "(cd python && uv run --frozen pytest -q) (216 passed, 6 skipped live-provider cases)",
         "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
         "bash scripts/ci/ci.sh"
       ],
       "artifacts": [
-        "evidence/INT-005/2026-09-12T10-09-35Z/summary.json",
+        "evidence/INT-005/2026-09-12T10-59-12Z/summary.json",
         "python/intelligence/context/search.py",
-        "python/tests/intelligence/test_search_program.py"
+        "python/intelligence/context/projection.py",
+        "python/tests/intelligence/test_search_program.py",
+        "python/tests/intelligence/test_context_projection.py"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": "IN PROGRESS \u2014 the typed SearchProgram half is implemented and verified; the bounded-context half remains. DONE: python/intelligence/context/search.py implements DOMAIN.md \u00a711.3's SearchProgram as data: the six channels (exact/lexical/semantic/graph/history/memory), typed predicates over a closed field-and-operator vocabulary, canonical order-independent serialization so a projection can record the program it was built from, and fail-closed validation that refuses an unknown channel, key, field, operator, value shape or limit. Acceptance 1 is met and proven: a value that reads like an expression (parentheses, statement separators, comment markers, shell substitution, boolean operators) is refused as a predicate, while a literal that merely contains punctuation (a file named a=b) stays searchable \u2014 the protection is that values are literals in a closed vocabulary, and a structural test parses the module and asserts it makes no evaluator call and imports no evaluator. Evidence: evidence/INT-005/<ts>/; 15 tests pass, the full plane passes (209 passed, 6 skipped), ruff/format/mypy clean, ci.sh green. REMAINING: (1) ranking, dedupe and budgeted packing with provenance and degradation reporting, plus the budget-packing and stale-snapshot tests; (2) ContextProjection per \u00a711.2 \u2014 segments carrying a source, a snapshot and a trust_level per \u00a712, with a segment lacking one rejected, and the stable-prefix-first rendering for caching; (3) the Rust crates/server/src/runtime/context_bridge/ that consumes the program and returns the projection. CORE-009's indexer (crates/indexer) is PASS, so the exact and lexical channels have a real backend to drive."
+      "notes": "IN PROGRESS \u2014 both Python halves are implemented and verified; the Rust bridge remains. DONE: context/search.py implements \u00a711.3's SearchProgram as data (six channels, typed predicates over a closed field/operator vocabulary, canonical order-independent serialization, fail-closed validation) and context/projection.py implements \u00a711.2's ContextProjection: a segment without a trust_level is refused at construction AND against the policy floor, a bundle records its program key, snapshot, policy and token ledger (used/remaining/dropped tokens and dropped segments by channel), packing is deterministic (score, then trust, then id) and bounded, duplicates are deduplicated with the more trusted copy winning, degradation is reported, the stable prefix is a pure function of stable-trust segments only (so it is cacheable and excludes agent-generated and external content), and a projection whose sources have moved is refused rather than served. All three acceptance statements are now covered by tests that fail if they were false: no executable predicate strings (plus a structural no-evaluator gate), the bundle records source/snapshot/policy/ledger, and every segment carries a trust_level with a missing one rejected. Evidence: evidence/INT-005/<ts>/; 22 tests, the plane passes 216/216 (6 skipped live-provider), ruff/format/mypy clean, ci.sh green. REMAINING: crates/server/src/runtime/context_bridge/ \u2014 the Rust side that hands the canonical program to the intelligence plane and receives the projection, applying the runtime's \u00a712 trust labels at that boundary (INT-001 owns the typed RPC boundary it crosses); CORE-009's indexer is PASS, so the exact and lexical channels have a real backend."
     },
     "INT-006": {
       "coverage": null,
