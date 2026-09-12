@@ -24,8 +24,11 @@ echo "== architecture gates =="
 "$PYTHON" scripts/ci/check_authority.py --check
 "$PYTHON" scripts/ci/workspace_check.py
 "$PYTHON" scripts/ci/legacy_map_check.py
-"$PYTHON" scripts/ci/gen_contracts.py --check
-"$PYTHON" scripts/ci/contract_compat.py
+# Contract gates need PyYAML (catalogs) and protobuf (compatibility), so they run in
+# the intelligence-plane environment declared by python/pyproject.toml.
+uv run --project python python scripts/ci/gen_contracts.py --check
+uv run --project python python scripts/ci/contract_compat.py
+uv run --project python python scripts/ci/dossier_consistency.py
 
 echo "== rust workspace =="
 cargo fmt --all --check
@@ -42,6 +45,13 @@ pnpm build
 pnpm typecheck
 pnpm test
 pnpm lint
+
+echo "== architecture gate (GOV-008) =="
+if [[ -f scripts/ci/arch_check.py ]]; then
+  "$PYTHON" scripts/ci/arch_check.py
+else
+  echo "scripts/ci/arch_check.py not present yet (GOV-008 pending): gate skipped"
+fi
 
 echo "== native bridges (macos, optional) =="
 if command -v swift >/dev/null 2>&1 && [ "$(uname -s)" = "Darwin" ]; then
