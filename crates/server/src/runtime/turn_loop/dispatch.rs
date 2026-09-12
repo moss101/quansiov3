@@ -41,7 +41,7 @@ use crate::effects::{
 use crate::policy::{
     ActionFamily, ActorRoles, ApprovalSigner, ConsequencePreview, DataClass, DispatchBinding,
     EgressGrantSet, EvaluationRequest, NewApprovalRequest, PolicyEvaluator, PolicyOutcome,
-    PolicyStore, SequenceContext, TrustLevel, FAIL_CLOSED_TRUST,
+    PolicyStore, SequenceContext, TrustLevel, UntrustedOrigin, FAIL_CLOSED_TRUST,
 };
 use crate::runtime::planning::PLAN_GRAPH_OWNER;
 use crate::runtime::protocol_state::{is_unsettled, PendingToolCall, ProtocolState};
@@ -776,7 +776,7 @@ impl ToolDispatchPort for ToolDispatchService {
 
         if outcome.requires_approval() {
             return self
-                .park_for_approval(&run, &request, &plan, &projection, &tool_call_id)
+                .park_for_approval(&run, &request, &plan, &projection, &tool_call_id, &outcome)
                 .await;
         }
 
@@ -1343,6 +1343,7 @@ impl ToolDispatchService {
         plan: &ToolCallPlan,
         projection: &CapabilityProjection,
         tool_call_id: &str,
+        outcome: &PolicyOutcome,
     ) -> Result<ToolDispatchOutcome, RuntimeError> {
         let effect = self
             .ledger
@@ -1366,13 +1367,24 @@ impl ToolDispatchService {
             .map_err(effect_refusal)?;
 
         let ttl = self.approval_ttl_seconds(&run.workspace_id).await?;
+        // The operator sees what they are approving: the tool, and — when policy escalated the
+        // proposal because its chain reached untrusted content — the untrusted origin itself, so a
+        // page-supplied instruction can never be presented as an ordinary request (INT-012).
+        let preview = approval_preview(
+            &plan.tool,
+            outcome.escalated,
+            vec![
+                format!("tool_call:{tool_call_id}"),
+                format!("run:{}", run.id),
+            ],
+        );
         let approval = NewApprovalRequest::new(
             request.run_id.clone(),
             run.workspace_id.clone(),
             effect.id.clone(),
             Vec::new(),
             format!("Approve {} ({})", plan.tool, plan.effect_class.as_str()),
-            ConsequencePreview::default(),
+            preview,
             plan.params_digest.clone(),
             projection.id.to_string(),
             Utc::now() + chrono::Duration::seconds(ttl),
@@ -1615,6 +1627,27 @@ impl ToolDispatchService {
     }
 }
 
+/// Build the approval preview an operator approves against.
+///
+/// The untrusted origin is present **if and only if** policy escalated the proposal, which is the
+/// contract `ConsequencePreview` states: an ordinary request must not claim an untrusted origin,
+/// and an escalated one must not hide it.
+#[must_use]
+pub fn approval_preview(
+    tool: &str,
+    escalated: bool,
+    untrusted_refs: Vec<String>,
+) -> ConsequencePreview {
+    let origin = escalated.then(|| UntrustedOrigin::new(untrusted_refs));
+    ConsequencePreview::new(
+        Vec::new(),
+        Vec::new(),
+        vec![tool.to_string()],
+        Vec::new(),
+        origin,
+    )
+}
+
 /// The stored form of a call, as the `tool_calls` row records it.
 struct StoredCall {
     id: String,
@@ -1757,7 +1790,7 @@ fn decode_projection(row: &sqlx::postgres::PgRow) -> Result<CapabilityProjection
 mod tests {
     use serde_json::json;
 
-    use super::{bound_output, host_owner};
+    use super::{approval_preview, bound_output, host_owner};
 
     #[test]
     fn output_is_bounded_to_the_declared_size() {
@@ -1768,6 +1801,24 @@ mod tests {
         let bounded = bound_output(large, 32);
         assert_eq!(bounded["truncated"], json!(true));
         assert!(bounded["preview"].as_str().expect("preview").len() <= 32);
+    }
+
+    #[test]
+    fn the_preview_shows_an_untrusted_origin_only_when_policy_escalated() {
+        let escalated = approval_preview("web.fetch", true, vec!["tool_call:tc_1".to_string()]);
+        assert!(
+            escalated.shows_untrusted_origin(),
+            "an escalated proposal shows its origin"
+        );
+        assert_eq!(escalated.targets, vec!["web.fetch".to_string()]);
+        let origin = escalated.untrusted_origin.expect("origin");
+        assert_eq!(origin.source_refs, vec!["tool_call:tc_1".to_string()]);
+
+        let ordinary = approval_preview("fs.read", false, Vec::new());
+        assert!(
+            !ordinary.shows_untrusted_origin(),
+            "an ordinary request must not claim an untrusted origin"
+        );
     }
 
     #[test]
