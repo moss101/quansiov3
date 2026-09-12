@@ -87,12 +87,26 @@ class DlpPolicy:
         return self.data_class_by_profile.get(profile, self.default_data_class)
 
     @classmethod
-    def builtin(cls) -> DlpPolicy:
-        """The shipped policy: credentials never leave, and known secret shapes are redacted.
+    def from_catalog(cls, catalog: object, *, allowed: frozenset[DataClass] | None = None) -> DlpPolicy:
+        """The default policy for a catalog: its configured providers, cleared for `allowed`.
 
-        Provider clearances are deliberately *not* shipped here: which provider a deployment is
-        cleared to use is a deployment decision, so the composition root supplies them and an
-        unlisted provider is denied by default.
+        The catalog is the deployment's statement of which providers exist, so they are cleared for
+        public and internal content by default; confidential and restricted content still needs an
+        explicit policy, so the default cannot leak anything sensitive by omission.
+        """
+        clearance = allowed if allowed is not None else frozenset({DataClass.PUBLIC, DataClass.INTERNAL})
+        providers = getattr(catalog, "providers", {})
+        return cls(
+            allowed_by_provider={config.name: clearance for config in providers.values()},
+            redactions=cls.builtin().redactions,
+        )
+
+    @classmethod
+    def builtin(cls) -> DlpPolicy:
+        """The shipped redaction rules; no provider is cleared by this policy alone.
+
+        Provider clearances are a deployment decision, so a caller uses
+        [`DlpPolicy.from_catalog`] for the catalog's own providers or supplies explicit clearances.
         """
         return cls(
             redactions=(

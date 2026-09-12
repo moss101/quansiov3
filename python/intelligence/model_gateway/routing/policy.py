@@ -29,6 +29,9 @@ REQUEST_CLASSES: frozenset[str] = frozenset(
 )
 
 # Rule ids recorded in `ModelRoute.chosen_by`.
+#: INT-002's rule id for an explicit `route_hint`, kept because the vocabulary is the
+#: contract a route is explained with and that decision is unchanged.
+RULE_ROUTE_HINT = "catalog.route_hint"
 RULE_USER_CHOICE = "policy.user_choice"
 RULE_REQUEST_CLASS = "policy.request_class"
 RULE_CAPABILITY = "policy.capability"

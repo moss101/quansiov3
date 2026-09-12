@@ -51,6 +51,8 @@ def gateway(stub: StubProvider) -> ModelGateway:
         catalog=catalog,
         environ=credential_environ(),
         tool_schemas={},
+        # INT-003's selector and guard are the ones under test, injected through INT-002's seams.
+        selector=PolicyRouteSelector(),
         dlp=DlpGuard(policy),
     )
 
@@ -75,7 +77,9 @@ def test_route_selection_is_deterministic_and_records_its_rule(gateway: ModelGat
     )
     chosen = selector.select(gateway.catalog, explicit)
     assert chosen.model.id == catalog_model_for_kind(gateway.catalog, STUB_PROVIDER_KINDS[0])
-    assert chosen.route.chosen_by.startswith("policy.user_choice")
+    # An explicit choice keeps the rule id INT-002 established for it: the vocabulary is the
+    # contract a route is explained with, and that decision is unchanged by INT-003.
+    assert chosen.route.chosen_by == "catalog.route_hint"
 
     impossible = build_call(model_catalog_id="no_such_model", scenario="text")
     with pytest.raises(GatewayError) as raised:
@@ -128,19 +132,19 @@ def test_failover_is_bounded_and_reuses_the_same_request(gateway: ModelGateway) 
     decision = PolicyRouteSelector().select(gateway.catalog, request)
     tried: list[str] = []
 
-    class Retryable(Exception):
+    class RetryableError(Exception):
         pass
 
     def failing(model: object) -> str:
         tried.append(model.id)  # type: ignore[attr-defined]
-        raise Retryable("provider hiccup")
+        raise RetryableError("provider hiccup")
 
-    with pytest.raises(Retryable):
+    with pytest.raises(RetryableError):
         bounded_failover(
             decision,
             gateway.catalog,
             failing,
-            is_retryable=lambda error: isinstance(error, Retryable),
+            is_retryable=lambda error: isinstance(error, RetryableError),
             max_attempts=2,
         )
     assert tried[0] == decision.model.id
@@ -149,12 +153,12 @@ def test_failover_is_bounded_and_reuses_the_same_request(gateway: ModelGateway) 
 
     # The same call, bounded to one attempt, does not try a fallback at all.
     tried.clear()
-    with pytest.raises(Retryable):
+    with pytest.raises(RetryableError):
         bounded_failover(
             decision,
             gateway.catalog,
             failing,
-            is_retryable=lambda error: isinstance(error, Retryable),
+            is_retryable=lambda error: isinstance(error, RetryableError),
             max_attempts=1,
         )
     assert tried == [decision.model.id]
@@ -170,7 +174,7 @@ def test_failover_is_bounded_and_reuses_the_same_request(gateway: ModelGateway) 
             decision,
             gateway.catalog,
             fatal,
-            is_retryable=lambda error: isinstance(error, Retryable),
+            is_retryable=lambda error: isinstance(error, RetryableError),
             max_attempts=3,
         )
     assert tried == [decision.model.id], "a fatal error stops the walk"

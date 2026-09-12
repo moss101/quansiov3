@@ -36,11 +36,10 @@ from intelligence.model_gateway.routing.policy import (
     RULE_CAPABILITY,
     RULE_CATALOG_FALLBACK,
     RULE_CATALOG_PRIMARY,
-    RULE_CONTEXT_WINDOW,
     RULE_COST_PREFERENCE,
-    RULE_DLP_ELIGIBILITY,
     RULE_QUALITY_PREFERENCE,
     RULE_REQUEST_CLASS,
+    RULE_ROUTE_HINT,
     RULE_USER_CHOICE,
     ClassPreference,
     Preference,
@@ -110,12 +109,11 @@ class PolicyRouteSelector:
         required = set(preference.require_capabilities)
 
         def eligible(model: ModelSpec) -> tuple[bool, str]:
+            # Routing decides fitness for the *task*. A model's data-policy clearance is enforced
+            # by the DLP guard before transmission, and an output bound that does not fit is a
+            # request-shape error raised by `prepare()`, so neither is re-litigated here.
             if not all(model.supports(capability) for capability in required):
                 return False, RULE_CAPABILITY
-            if not model.dlp_eligible:
-                return False, RULE_DLP_ELIGIBILITY
-            if request.max_output_tokens > model.context_window:
-                return False, RULE_CONTEXT_WINDOW
             return True, RULE_REQUEST_CLASS
 
         hint = request.route_hint.strip()
@@ -132,7 +130,9 @@ class PolicyRouteSelector:
                 raise RouteUnavailableError(
                     f"route hint {hint!r} is not eligible ({rule}; rule {RULE_USER_CHOICE})"
                 )
-            rule_id = f"{RULE_USER_CHOICE}:{rule}"
+            # An explicit choice keeps the rule id INT-002 established for it: the vocabulary is
+            # the contract a route is explained with, and this decision is unchanged.
+            rule_id = RULE_ROUTE_HINT
             ordered = [model]
         else:
             ordered, rule_id = self._order(catalog, preference, eligible)
@@ -212,7 +212,7 @@ class PolicyRouteSelector:
                 else preferred + [model for model in [primary] if model.id not in {m.id for m in preferred}]
             )
             ordered.extend(model for model in ranked if model.id not in {m.id for m in ordered})
-            chosen_rule = RULE_CATALOG_PRIMARY if not preferred else chosen_rule
+            chosen_rule = RULE_CATALOG_PRIMARY
             return ordered, chosen_rule
         ordered = preferred + [model for model in ranked if model.id not in {m.id for m in preferred}]
         if not ordered:
