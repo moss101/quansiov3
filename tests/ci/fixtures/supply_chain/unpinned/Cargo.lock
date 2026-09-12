@@ -1,0 +1,7 @@
+# Fixture lockfile for tests/ci/test_supply_chain.py. It deliberately omits `serde`,
+# which tests/ci/fixtures/supply_chain/unpinned/Cargo.toml declares.
+version = 3
+
+[[package]]
+name = "fixture-crate"
+version = "0.1.0"

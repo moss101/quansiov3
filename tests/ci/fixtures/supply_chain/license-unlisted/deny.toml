@@ -1,0 +1,15 @@
+# Fixture cargo-deny config whose allow-list omits the licence the paired Cargo.toml
+# declares, for the license-not-allowlisted rule in tests/ci/test_supply_chain.py.
+[advisories]
+version = 2
+db-urls = ["https://github.com/rustsec/advisory-db"]
+yanked = "deny"
+ignore = []
+
+[licenses]
+version = 2
+allow = ["MIT", "Apache-2.0"]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

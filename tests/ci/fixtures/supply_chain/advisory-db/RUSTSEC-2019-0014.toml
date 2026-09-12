@@ -1,0 +1,21 @@
+# Offline advisory record for the vulnerable-dependency rule (OPS-007).
+#
+# Real published advisory, reproduced from the RustSec advisory database:
+#   RUSTSEC-2019-0014 / CVE-2019-16138 / GHSA-m2pf-hprp-3vqm
+#   https://rustsec.org/advisories/RUSTSEC-2019-0014.html
+#   CVSS 9.8 CRITICAL, patched >=0.21.3, unaffected <0.10.2
+# The paired fixture tests/ci/fixtures/supply_chain/vulnerable-cargo.lock pins
+# `image 0.21.2`, a real version inside the affected range, so the match is genuine.
+[advisory]
+id = "RUSTSEC-2019-0014"
+package = "image"
+title = "Flaw in interface may drop uninitialized instance of arbitrary types"
+url = "https://rustsec.org/advisories/RUSTSEC-2019-0014.html"
+aliases = ["CVE-2019-16138", "GHSA-m2pf-hprp-3vqm"]
+severity = "critical"
+cvss = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+date = "2019-08-21"
+
+[versions]
+patched = [">=0.21.3"]
+unaffected = ["<0.10.2"]
