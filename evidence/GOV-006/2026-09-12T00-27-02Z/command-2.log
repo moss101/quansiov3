@@ -1,0 +1,8 @@
+$ uv run --project python pytest tests/architecture/test_legacy_map_check.py -q
+exit_code: 0
+
+--- stdout ---
+...........                                                              [100%]
+11 passed in 0.15s
+
+--- stderr ---

@@ -1,0 +1,7 @@
+$ python3.12 scripts/ci/legacy_map_check.py
+exit_code: 0
+
+--- stdout ---
+legacy map check: CLEAN (0 findings)
+
+--- stderr ---
