@@ -277,18 +277,27 @@
       "notes": "RuntimeEvent envelope and 34 event families from DOMAIN.md \u00a79; sequence assigned inside the commit transaction through a per-tenant counter row (concurrent writers serialize, rollback releases the value so the stream stays gap-free); mutation + event + outbox written atomically with NoEventStaged failing closed; outbox publishing behind an EventTransport trait with an explicit UnavailableTransport that never drops events silently; durable consumer cursors with resume. Reviewed and re-run on main (12 tests pass)."
     },
     "CORE-004": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-core004",
+      "started_at": "2026-09-12T01:41:31Z",
+      "updated_at": "2026-09-12T01:41:31Z",
+      "git_commit": "e7216ba",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-graph",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/CORE-004/2026-09-12T01-40-24Z/summary.json",
+        "crates/graph/src/work.rs",
+        "crates/graph/src/batch.rs",
+        "migrations/0003_graph_heads.sql"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "WorkGraph/AgentGraph/StateGraph stores with cycle rejection (recursive reachability including parent_id), state-transition tables, revision compare-and-set, done only via mark_verification_passed, append-only attempts, and one atomic batch under a single graph revision. The delegation narrowing hook is a trait for RUN-005 rather than a second capability engine. Migration renumbered to 0003_graph_heads.sql during integration so migration versions stay unique; crate README trimmed to the documented length after the pipeline caught it."
     },
     "CORE-005": {
       "coverage": null,

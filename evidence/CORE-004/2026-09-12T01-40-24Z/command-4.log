@@ -1,0 +1,7 @@
+$ cargo clippy --workspace --all-targets -- -D warnings
+exit_code: 0
+
+--- stdout ---
+
+--- stderr ---
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.30s
