@@ -628,7 +628,7 @@
       "claimed_by": "agent:subagent-int004",
       "started_at": "2026-09-12T03:04:55Z",
       "updated_at": "2026-09-12T03:04:55Z",
-      "git_commit": "15caf85",
+      "git_commit": "4974a336d4c8f206149066e3afb6dffcb840bd1a",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-indexer",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
