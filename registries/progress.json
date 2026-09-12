@@ -24,10 +24,10 @@
   "tasks": {
     "GOV-001": {
       "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T00:13:58Z",
+      "updated_at": "2026-09-12T00:13:58Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
