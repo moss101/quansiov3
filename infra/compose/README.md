@@ -32,7 +32,7 @@ be overridden by exporting it before `scripts/dev/up`.
 
 `QUANSIO_DEV_COMPOSE_PROJECT`, `QUANSIO_DEV_POSTGRES_{IMAGE,HOST,PORT,USER,PASSWORD,DB}`,
 `QUANSIO_DEV_NATS_{IMAGE,HOST,PORT,MONITOR_PORT}`,
-`QUANSIO_DEV_MINIO_{IMAGE,MC_IMAGE,HOST,PORT,CONSOLE_PORT,BUCKET,ROOT_USER,ROOT_PASSWORD}`,
+`QUANSIO_DEV_MINIO_{IMAGE,MC_IMAGE,HOST,PORT,CONSOLE_PORT,BUCKET,ROOT_USER,ROOT_PASSWORD,KMS_SECRET_KEY}`,
 `QUANSIO_DEV_STUB_PROVIDER_{IMAGE,HOST,PORT}`, `QUANSIO_DEV_VECTOR_ADAPTER_{IMAGE,PORT}`,
 `QUANSIO_DEV_HEALTH_TIMEOUT`, `QUANSIO_DEV_ENV_FILE`.
 
@@ -53,4 +53,6 @@ Point the model gateway's openai-compatible provider at the stub with
 
 `QUANSIO_DEV_POSTGRES_PASSWORD` and `QUANSIO_DEV_MINIO_ROOT_PASSWORD` default to
 `quansio-dev-only` for local development only; `scripts/dev/up` writes them into
-the gitignored `.env`. Real deployments supply secrets via the secret broker.
+the gitignored `.env`. `QUANSIO_DEV_MINIO_KMS_SECRET_KEY` defaults to dev-only key
+material so MinIO accepts the SSE-S3 object writes (DOSSIER.md §9); it is never a
+real key. Real deployments supply secrets via the secret broker.

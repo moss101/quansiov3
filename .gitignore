@@ -30,8 +30,10 @@ __pycache__/
 *.local.yml
 local/
 
-# CI output (published as a workflow artifact, never committed)
-artifacts/
+# CI output (published as a workflow artifact, never committed). Anchored to the
+# repository root so the canonical product module `crates/server/src/artifacts/`
+# is not caught by the pattern.
+/artifacts/
 
 # Evidence and scratch
 scratch/
