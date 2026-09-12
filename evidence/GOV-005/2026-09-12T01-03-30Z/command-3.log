@@ -1,0 +1,7 @@
+$ python3.12 scripts/ci/dossier_consistency.py
+exit_code: 0
+
+--- stdout ---
+dossier consistency: CLEAN (0 findings)
+
+--- stderr ---

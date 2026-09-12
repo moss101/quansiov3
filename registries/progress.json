@@ -126,15 +126,16 @@
         "uv run --project python pytest tests/architecture/test_arch_check.py -q"
       ],
       "artifacts": [
-        "evidence/GOV-005/2026-09-12T00-59-30Z/ci-summary.json",
         ".github/workflows/ci.yml",
+        "evidence/GOV-005/2026-09-12T00-59-30Z/ci-summary.json",
+        "evidence/GOV-005/2026-09-12T01-03-30Z/summary.json",
         "scripts/ci/ci_summary.py",
         "scripts/ci/dossier_consistency.py"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Baseline pipeline runs the same gate list locally (scripts/ci/ci.sh) and in GitHub Actions (.github/workflows/ci.yml), publishing a commit-bound summary to artifacts/ci/. Negative tests cover manifest tamper, dependency cycle, unknown dependency, acceptance-scope shrink, generated-view drift, fabricated PASS and unreachable PASS/evidence commits."
+      "notes": "Baseline pipeline runs the same gate list locally (scripts/ci/ci.sh) and in GitHub Actions (.github/workflows/ci.yml), publishing a commit-bound summary to artifacts/ci/; the workflow provisions Postgres+pgvector so schema tests run in CI. Negative tests cover manifest tamper, dependency cycle, unknown dependency, acceptance-scope shrink, generated-view drift, fabricated PASS and unreachable PASS/evidence commits."
     },
     "GOV-006": {
       "coverage": "GENUINE_GAP",
@@ -206,7 +207,7 @@
       "status": "RECONCILING",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T01:00:14Z",
-      "updated_at": "2026-09-12T01:00:14Z",
+      "updated_at": "2026-09-12T01:05:36Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],

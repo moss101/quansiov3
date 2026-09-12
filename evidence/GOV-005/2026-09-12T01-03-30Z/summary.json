@@ -1,0 +1,75 @@
+{
+  "task_id": "GOV-005",
+  "git_commit": "dea083901b5572c9e6961fe1e9e308f45a33fe3f",
+  "recorded_at": "2026-09-12T01:05:02Z",
+  "commands": [
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-12T01-03-30Z/command-1.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/ci -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-12T01-03-30Z/command-2.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-12T01-03-30Z/command-3.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-12T01-03-30Z/command-4.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/ci -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "8d78b14f72a95e324a27d544aab32c04cd6ce2cc582d7587b90d02a2bb9929d0",
+      "bytes": 1574
+    },
+    {
+      "path": "scripts/ci/ci_summary.py",
+      "sha256": "1be072a02dade15a3d152c2a78fa02e492bd7cc38dd0058bbc8a65285214b4e4",
+      "bytes": 6332
+    },
+    {
+      "path": "scripts/ci/dossier_consistency.py",
+      "sha256": "1aae8926479dd7757a213fbdd6c18669068261f1fda3b9ea99ce898ad8700fc8",
+      "bytes": 6443
+    },
+    {
+      "path": "scripts/ci/ci.sh",
+      "sha256": "063ddab8947ec461e6bee44054702d8a490479ec623de02ed65fd0625361aa78",
+      "bytes": 575
+    }
+  ]
+}
