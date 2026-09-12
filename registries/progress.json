@@ -768,18 +768,18 @@
       "notes": "Implementation complete and verified offline: three adapters (Anthropic primary, OpenAI, OpenAI-compatible) normalized to the DOMAIN \u00a711.1 stream through one EventFactory (exactly one usage/stop/terminal outcome per call), cancellable streaming that interrupts a silent provider, strict tool schemas, operator-channel instructions, multimodal mapping with capability checks from config/models.yaml only, provider-side compaction/context-editing rejected on the prepared bytes, and credential custody proven by a canary secret-leak scan. The deterministic stub proves wire-level behaviour for all three adapters and is explicitly NOT real-boundary evidence; the live suite reports BLOCKED_EXTERNAL with the missing variable named (6 skipped). One earlier pipeline run in an evidence bundle at 03-45-20Z failed only in the tests gate because a parallel worktree was building against the shared dev stack; the immediate re-run passed every gate and this bundle records the passing run."
     },
     "INT-003": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T09:46:13Z",
+      "updated_at": "2026-09-12T09:46:13Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "INT-003 claimed: Implement deterministic model selection, DLP and failover (goal: Select models without hidden prerequisite LLM calls and enforce data policy.)"
     },
     "INT-004": {
       "coverage": "GENUINE_GAP",

@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0/M1 complete; M2 in progress; 30 PASS + 1 BLOCKED_EXTERNAL)
+Updated: 2026-09-12 (M0/M1 complete; M2 complete through RUN-010; 31 PASS + 1 BLOCKED_EXTERNAL)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,12 +16,12 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M2 — the runtime loop (M0/M1 complete)
-Current task: RUN-010 — runtime budgets, quotas and capacity control — `RECONCILING` (claimed, not started)
-Previous task: RUN-008 closed `PASS`
-Current task status: 30 tasks `PASS`, RUN-010 `RECONCILING`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
+Current task: INT-003 — implement deterministic model selection, dlp and failover — `RECONCILING` (claimed, not started)
+Previous task: RUN-010 closed `PASS`
+Current task status: 31 tasks `PASS`, INT-003 `RECONCILING`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
 Current owner: `agent:principal-1`
-Current component: `budgets` (`crates/server/src/runtime/budgets/`)
-Current language: Rust + SQL
+Current component: `model-gateway` (`python/intelligence/model_gateway/routing/`, `python/intelligence/model_gateway/dlp/`)
+Current language: Python
 
 Resolved host incident: for part of this session the machine would not execute newly created
 binaries (a freshly compiled `cc` hello-world hung in `_dyld_start`), which blocked `cargo test`
@@ -208,6 +208,24 @@ recorded under "Environment requirements".
   value. Evidence: `evidence/RUN-004/<ts>/`.
 
 ## What is currently being implemented
+
+**RUN-010 — runtime budgets, quotas and capacity control — `PASS` (merge `a0568951c3fd`).**
+
+`crates/server/src/runtime/budgets/` implements DOMAIN.md §13.2. `limits.rs` holds the pure rules —
+the seven meters, remaining/fits, the deterministic first-exhausted report, the child ≤ parent
+*remaining* check and the narrowing helper — and `service.rs` is the durable authority that grants
+budgets, charges them and emits `usage.*` events. Nesting holds through the chain (a grandchild is
+bounded by its child parent), and a charge beyond a limit is refused, marks the budget exhausted and
+emits `usage.exhausted`, after which `capacity_limit` reports 0 so RUN-004's orchestration gate admits
+nothing. The service writes only the budget row and its usage event, so an effect already reserved or
+dispatched is left for the Effect Ledger: the graceful-stop test asserts an in-flight effect keeps its
+exact row and that no settlement event appears. Recorded gap: the canonical prefix catalog has no
+budget prefix, so `BudgetService::create` takes the id from its creator instead of minting one —
+extending the authority set is not this module's call. Evidence:
+`evidence/RUN-010/2026-09-12T09-41-20Z/`; `bash scripts/ci/ci.sh` green on all eleven gates.
+
+**INT-003 — claimed, not started.** Canonical owner: python/intelligence/model_gateway/routing/, python/intelligence/model_gateway/dlp/. Its build items are
+Resolve route from policy, capability demand, model availability, cost/latency and explicit user choice.; Apply redaction/data-classification rules before provider call.; Implement bounded failover with preserved request identity.; Implement ModelRoute per DOMAIN.md §11.1 with request classes (chat, planning, tool_heavy, synthesis, verification, embedding, cheap_worker) and rule ids recorded on every route decision..
 
 **RUN-009 — recovery, generation fencing and effect reconciliation — `PASS` (merge `e5293f658205`).**
 
