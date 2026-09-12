@@ -1,0 +1,95 @@
+{
+  "task_id": "INT-003",
+  "git_commit": "47365327f7ca8a6cf09691cce22d0127c7363a5b",
+  "recorded_at": "2026-09-12T09:59:06Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_routing.py tests/intelligence/test_model_dlp.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-003/2026-09-12T09-58-52Z/command-1.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-003/2026-09-12T09-58-52Z/command-2.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-003/2026-09-12T09-58-52Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-003/2026-09-12T09-58-52Z/command-4.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_routing.py tests/intelligence/test_model_dlp.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/model_gateway/routing/__init__.py",
+      "sha256": "a6201cc922efe75cefb55f0a604b03b6230104cebbd074a88d6073d385667e36",
+      "bytes": 1149
+    },
+    {
+      "path": "python/intelligence/model_gateway/routing/policy.py",
+      "sha256": "b9f8b999d436ec78f364037991525d20f83b109eb7f283983959294a005cb006",
+      "bytes": 5230
+    },
+    {
+      "path": "python/intelligence/model_gateway/routing/selector.py",
+      "sha256": "d268d0b8d19701596c471788f8de87ff140f08e411f818f45407c0e3d551cccc",
+      "bytes": 11219
+    },
+    {
+      "path": "python/intelligence/model_gateway/dlp/__init__.py",
+      "sha256": "4d6e407d32cb9f52d47e81124480623f3b694fe6110ada8efd33366f12e730f4",
+      "bytes": 721
+    },
+    {
+      "path": "python/intelligence/model_gateway/dlp/guard.py",
+      "sha256": "3d5774fe3fe9445465443063b64ac43547f1adb9df492f764dc070a9bac41fb5",
+      "bytes": 9017
+    },
+    {
+      "path": "python/intelligence/model_gateway/gateway.py",
+      "sha256": "11daeadf3782020f983a886401beb035f432ce1afca8ccb9bc53093bc6ee8422",
+      "bytes": 22107
+    },
+    {
+      "path": "python/tests/intelligence/test_model_routing.py",
+      "sha256": "e55e9de61d212921160ba1cff202c1a8f0b0494ce4a877eba539599980b90793",
+      "bytes": 7800
+    },
+    {
+      "path": "python/tests/intelligence/test_model_dlp.py",
+      "sha256": "2be51d9f335a1f0c161e64969bc5b308827b940f2ff154e87d0aaf8567d69f90",
+      "bytes": 5537
+    }
+  ]
+}

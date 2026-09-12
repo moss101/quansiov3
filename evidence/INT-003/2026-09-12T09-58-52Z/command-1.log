@@ -1,0 +1,26 @@
+F.....                                                                   [100%]
+=================================== FAILURES ===================================
+__________ test_route_selection_is_deterministic_and_records_its_rule __________
+
+gateway = <intelligence.model_gateway.gateway.ModelGateway object at 0x1068c67b0>
+
+    def test_route_selection_is_deterministic_and_records_its_rule(gateway: ModelGateway) -> None:
+        """The same request resolves to the same route, model and rule, every time."""
+        request = build_call(model_catalog_id="", scenario="text")
+        selector = PolicyRouteSelector()
+    
+        first = selector.select(gateway.catalog, request)
+        second = selector.select(gateway.catalog, request)
+>       assert first.route.id == second.route.id, "route ids are a pure function of the decision"
+E       AssertionError: route ids are a pure function of the decision
+E       assert 'mr_01M2AGWFS...R0MMPMBJYGZVB' == 'mr_01M2AGWFS...R0MMPMBJYGZVB'
+E         
+E         - mr_01M2AGWFSAZ2WR0MMPMBJYGZVB
+E         ?             ^
+E         + mr_01M2AGWFS9Z2WR0MMPMBJYGZVB
+E         ?             ^
+
+tests/intelligence/test_model_routing.py:67: AssertionError
+=========================== short test summary info ============================
+FAILED tests/intelligence/test_model_routing.py::test_route_selection_is_deterministic_and_records_its_rule
+1 failed, 5 passed in 2.48s

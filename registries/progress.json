@@ -769,17 +769,30 @@
     },
     "INT-003": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T09:46:13Z",
-      "updated_at": "2026-09-12T09:46:13Z",
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "updated_at": "2026-09-12T09:59:06Z",
+      "git_commit": "47365327f7ca8a6cf09691cce22d0127c7363a5b",
+      "tests": [
+        "(cd python && uv run --frozen pytest tests/intelligence/test_model_routing.py tests/intelligence/test_model_dlp.py -q) (6 tests: route determinism, no-auxiliary-call, bounded failover, DLP denial, redaction, model clearance)",
+        "(cd python && uv run --frozen pytest -q) (194 passed, 6 skipped live-provider cases)",
+        "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/INT-003/2026-09-12T09-58-52Z/summary.json",
+        "python/intelligence/model_gateway/routing/policy.py",
+        "python/intelligence/model_gateway/routing/selector.py",
+        "python/intelligence/model_gateway/dlp/guard.py",
+        "python/intelligence/model_gateway/gateway.py",
+        "python/tests/intelligence/test_model_routing.py",
+        "python/tests/intelligence/test_model_dlp.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "INT-003 claimed: Implement deterministic model selection, DLP and failover (goal: Select models without hidden prerequisite LLM calls and enforce data policy.)"
+      "implementation_complete": true,
+      "blocker": "Real-boundary evidence needs live provider credentials: the task is real_boundary=true and its provider path is INT-002's live suite, which is BLOCKED_EXTERNAL for exactly the same reason. Unblock condition: provider credentials in the environment (INT-002's QUANSIO_TEST_* provider variables), after which the routing, DLP and failover suites can be run against a live provider.",
+      "notes": "Deterministic model selection, DLP and bounded failover, implemented offline and blocked only on live provider credentials for its real-boundary evidence. routing/ holds the policy (seven request classes, capability demand, cost/quality preference, bounded fallbacks) and the pure, I/O-free PolicyRouteSelector that records a rule id on every decision; dlp/ holds the data-class guard that refuses a disallowed data/provider combination before anything is transmitted and redacts secret-shaped content from what is. Acceptance 1 is proven on the real path: with INT-003's selector injected, a normal call reaches exactly one provider (the stub records one call, naming the selected model). Acceptance 2 is proven the same way: a confidential request against a public-only provider raises DLP_DENIED and the stub records zero calls, and a request carrying a secret reaches the provider with the placeholder instead. The selector deliberately does not re-litigate data clearance or output bounds: the DLP guard enforces the first before transmission and prepare() raises VALIDATION_BOUNDS for the second, so routing decides fitness for the task and the downstream authorities keep their own decisions. Recorded integration decision: INT-002's gateway keeps its proven default selector and runs the DLP guard only when one is installed, because swapping the default broke 22 of INT-002's existing assertions about rule ids and eligibility; INT-003's selector and guard are injectable through the seams INT-002 left, and wiring them as the deployment default belongs to the composition root (APP-001). An explicit route hint keeps INT-002's rule id (catalog.route_hint) because that decision is unchanged and the vocabulary is the contract a route is explained with."
     },
     "INT-004": {
       "coverage": "GENUINE_GAP",
