@@ -1,0 +1,8 @@
+packages:
+  - "apps/*"
+  - "sdk/typescript"
+
+# esbuild (used by vitest) downloads its platform binary in an install script;
+# pnpm 11 requires explicit approval for dependency build scripts.
+allowBuilds:
+  esbuild: true

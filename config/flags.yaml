@@ -1,0 +1,9 @@
+# Quansio V8.1 feature flags (DOSSIER.md §18). Flags gate rollout, never authority:
+# no flag may widen capability, bypass policy, approval or the Effect Ledger.
+version: 1
+flags:
+  browser.live_view.transport: cdp_screencast   # OD-008 (WebRTC is post-GA)
+  desktop.auto_update.channel: beta             # stable | beta feel
+  runtime.compaction.epochs: true               # INT-008
+  trust.escalation.enabled: true                # INT-012 / D-015 (never disable in GA)
+  usage.projection.enabled: true                # OPS-004

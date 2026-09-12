@@ -1,0 +1,13 @@
+[package]
+name = "quansio-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "IDs, generation counters, idempotency keys and typed errors shared across the Quansio runtime."
+
+[lints]
+workspace = true
+
+[dependencies]

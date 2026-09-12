@@ -1,0 +1,13 @@
+[package]
+name = "quansio-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "quansio-server: authoritative API, control, runtime, policy, effects, scheduler and artifact composition."
+
+[lints]
+workspace = true
+
+[dependencies]

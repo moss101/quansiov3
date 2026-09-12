@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/primary.swiftdeps"
+  },
+  "/Users/mohsin/projects/quansiov3/native/macos/Sources/QuansioMacBridge/MacBridge.swift": {
+    "dependencies": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/MacBridge.d",
+    "object": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/MacBridge.swift.o",
+    "swiftmodule": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/MacBridge~partial.swiftmodule",
+    "swift-dependencies": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/MacBridge.swiftdeps",
+    "diagnostics": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/MacBridge.dia"
+  }
+}

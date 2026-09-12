@@ -1,0 +1,13 @@
+[package]
+name = "quansio-tools"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Tool contract, Tool Registry and dispatch descriptors shared by the runtime and qworkerd."
+
+[lints]
+workspace = true
+
+[dependencies]

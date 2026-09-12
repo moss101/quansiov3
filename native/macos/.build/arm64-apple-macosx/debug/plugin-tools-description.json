@@ -1,0 +1,602 @@
+{
+  "builtTestProducts" : [
+    {
+      "binaryPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.xctest/Contents/MacOS/QuansioMacBridgePackageTests",
+      "packagePath" : "/Users/mohsin/projects/quansiov3/native/macos",
+      "productName" : "QuansioMacBridgePackageTests"
+    }
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.QuansioMacBridge-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/sources",
+      "importPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/Sources/QuansioMacBridge/MacBridge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "QuansioMacBridge",
+      "moduleOutputPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules/QuansioMacBridge.swiftmodule",
+      "objects" : [
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/MacBridge.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j18",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/include/QuansioMacBridge-Swift.h",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "macos"
+      ],
+      "outputFileMapPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/MacBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules/QuansioMacBridge.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/mohsin/projects/quansiov3/native/macos/Sources/QuansioMacBridge/MacBridge.swift"
+      ],
+      "tempsPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.QuansioMacBridgePackageTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/sources",
+      "importPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.derived/runner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules/QuansioMacBridgeTests.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "QuansioMacBridgePackageTests",
+      "moduleOutputPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules/QuansioMacBridgePackageTests.swiftmodule",
+      "objects" : [
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/runner.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j18",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/include/QuansioMacBridgePackageTests-Swift.h",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "macos"
+      ],
+      "outputFileMapPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules/QuansioMacBridgePackageTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.derived/runner.swift"
+      ],
+      "tempsPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.QuansioMacBridgeTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgeTests.build/sources",
+      "importPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/Tests/QuansioMacBridgeTests/MacBridgeTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules/QuansioMacBridge.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgeTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "QuansioMacBridgeTests",
+      "moduleOutputPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules/QuansioMacBridgeTests.swiftmodule",
+      "objects" : [
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgeTests.build/MacBridgeTests.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j18",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "macos"
+      ],
+      "outputFileMapPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgeTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgeTests.build/MacBridgeTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules/QuansioMacBridgeTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/mohsin/projects/quansiov3/native/macos/Tests/QuansioMacBridgeTests/MacBridgeTests.swift"
+      ],
+      "tempsPath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgeTests.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "QuansioMacBridge" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "QuansioMacBridge",
+      "-package-name",
+      "macos",
+      "-c",
+      "/Users/mohsin/projects/quansiov3/native/macos/Sources/QuansioMacBridge/MacBridge.swift",
+      "-I",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j18",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/include/QuansioMacBridge-Swift.h",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "macos",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "QuansioMacBridgePackageTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "QuansioMacBridgePackageTests",
+      "-package-name",
+      "macos",
+      "-c",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.derived/runner.swift",
+      "-I",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j18",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/include/QuansioMacBridgePackageTests-Swift.h",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "macos",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "QuansioMacBridgeTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "QuansioMacBridgeTests",
+      "-package-name",
+      "macos",
+      "-c",
+      "/Users/mohsin/projects/quansiov3/native/macos/Tests/QuansioMacBridgeTests/MacBridgeTests.swift",
+      "-I",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j18",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "macos",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "QuansioMacBridge" : [
+
+    ],
+    "QuansioMacBridgePackageTests" : [
+      "QuansioMacBridgeTests",
+      "QuansioMacBridge"
+    ],
+    "QuansioMacBridgeTests" : [
+      "QuansioMacBridge"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+    "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.derived/runner.swift" : {
+      "inputs" : [
+
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.derived/runner.swift"
+        }
+      ]
+    }
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/Sources/QuansioMacBridge/MacBridge.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/sources"
+    },
+    "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.derived/runner.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/sources"
+    },
+    "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/MacBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgeTests.build/MacBridgeTests.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.product/Objects.LinkFileList"
+    },
+    "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgeTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/mohsin/projects/quansiov3/native/macos/Tests/QuansioMacBridgeTests/MacBridgeTests.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgeTests.build/sources"
+    },
+    "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

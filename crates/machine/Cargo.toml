@@ -1,0 +1,13 @@
+[package]
+name = "quansio-machine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Machine control, worker gateway, secret broker and egress broker."
+
+[lints]
+workspace = true
+
+[dependencies]

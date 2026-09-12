@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/primary.swiftdeps"
+  },
+  "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.derived/runner.swift": {
+    "dependencies": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/runner.d",
+    "object": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.build/runner.dia"
+  }
+}

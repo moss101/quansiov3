@@ -46,21 +46,77 @@ EXCLUDED_PREFIXES = (
     "evidence/",
     "registries/",
     "manifest",
-    ".git/",
     ".github/",
-    "node_modules/",
-    "target/",
-    ".venv/",
-    "dist/",
-    "build/",
     "scripts/",
 )
+# Root-level tooling/config files that carry a code suffix but are not product code.
+ROOT_TOOLING_FILES = {
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "rust-toolchain.toml",
+    "deny.toml",
+    "Cargo.toml",
+    "package.json",
+    "tsconfig.base.json",
+    ".python-version",
+    ".nvmrc",
+    "eslint.config.js",
+    "eslint.config.mjs",
+    "eslint.config.cjs",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "tailwind.config.js",
+    "postcss.config.js",
+    "prettier.config.js",
+}
+
 EXCLUDED_SUFFIXES = (".pyc", ".pyo", ".lock", ".min.js", ".map")
-EXCLUDED_FILES = set(AUTHORITY_FILES) | {
+EXCLUDED_FILES = set(AUTHORITY_FILES) | ROOT_TOOLING_FILES | {
     "scripts/validate_v81.py",
     "scripts/ci/inventory.py",
     "scripts/ci/arch_check.py",
 }
+
+# Directory segments that never contain product code (VCS, caches, build output,
+# dependency trees) at any depth.
+EXCLUDED_DIR_SEGMENTS = {
+    ".git",
+    ".hg",
+    ".svn",
+    ".venv",
+    "venv",
+    "node_modules",
+    "target",
+    "dist",
+    "build",
+    "coverage",
+    "__pycache__",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pytest_cache",
+    ".pnpm-store",
+    ".turbo",
+    ".next",
+}
+
+# Roots that contain product code; a code file under these must map to a canonical
+# owner (anything else is reported as `no-canonical-owner`).
+PRODUCT_ROOTS = (
+    "crates/",
+    "python/",
+    "apps/",
+    "sdk/",
+    "native/",
+    "schemas/",
+    "migrations/",
+    "config/",
+    "packs/",
+    "infra/",
+    "services/",
+    "packages/",
+    "tests/",
+)
 
 LANG_BY_SUFFIX = {
     ".rs": "rust",
@@ -92,6 +148,7 @@ CANONICAL_OWNERS: Dict[str, Tuple[str, ...]] = {
     "cli": ("crates/cli/",),
     "contracts": ("crates/contracts/", "schemas/"),
     "intelligence": ("python/intelligence/",),
+    "intelligence-tests": ("python/tests/",),
     "model-gateway": ("python/intelligence/model_gateway/",),
     "context": ("python/intelligence/context/",),
     "knowledge": ("python/intelligence/knowledge/",),
@@ -153,20 +210,36 @@ Rule = Tuple[str, str, str]  # rule_id, applies_to path prefix, description
 
 
 def is_product_code(rel: str) -> bool:
+    parts = Path(rel).parts
+    if any(part in EXCLUDED_DIR_SEGMENTS for part in parts):
+        return False
     if rel in EXCLUDED_FILES:
+        return False
+    if Path(rel).name in ROOT_TOOLING_FILES:
         return False
     if rel.endswith(EXCLUDED_SUFFIXES):
         return False
-    return not any(rel.startswith(p) for p in EXCLUDED_PREFIXES)
+    if any(rel.startswith(p) for p in EXCLUDED_PREFIXES):
+        return False
+    if len(parts) > 1 and rel.startswith(PRODUCT_ROOTS):
+        return True
+    # A code file outside every product root (e.g. a stray top-level module) is
+    # still scan target: it must be reported as having no canonical owner.
+    return Path(rel).suffix in LANG_BY_SUFFIX
 
 
 def owner_of(rel: str) -> Optional[str]:
+    """Canonical owner for a repository-relative path, or None.
+
+    Accepts both directory form (`crates/core`) and file form (`crates/core/src/lib.rs`).
+    """
     best: Optional[str] = None
     best_len = -1
     for owner, prefixes in CANONICAL_OWNERS.items():
         for p in prefixes:
-            if rel.startswith(p) and len(p) > best_len:
-                best, best_len = owner, len(p)
+            prefix = p.rstrip("/")
+            if (rel == prefix or rel.startswith(prefix + "/")) and len(prefix) > best_len:
+                best, best_len = owner, len(prefix)
     return best
 
 
@@ -222,7 +295,10 @@ def git_info() -> Dict[str, object]:
 def inventory() -> Dict[str, object]:
     files = tracked_files()
     product = [
-        f for f in files if is_product_code(f) and Path(f).suffix in LANG_BY_SUFFIX
+        f
+        for f in files
+        if is_product_code(f)
+        and (Path(f).suffix in LANG_BY_SUFFIX or Path(f).name in ROOT_TOOLING_FILES)
     ]
     by_language: Dict[str, int] = {}
     by_owner: Dict[str, int] = {}
