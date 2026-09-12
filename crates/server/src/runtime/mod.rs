@@ -5,6 +5,7 @@
 //! resume possible without reading semantic memory (DOSSIER.md §8, DOMAIN.md §5.7–§5.8).
 
 pub mod agents;
+pub mod budgets;
 pub mod checkpoints;
 pub mod orchestration;
 pub mod planning;
