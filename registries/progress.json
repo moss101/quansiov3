@@ -370,18 +370,28 @@
       "notes": "Artifact/ArtifactVersion/Evidence/EvidenceBundle metadata with immutable evidence (insert-only, new identities per capture), tenant-prefixed content-addressed object keys verified by sha256, SigV4 S3 client with multipart upload and SSE-S3 against the real dev MinIO, fail-closed grants, and retention/legal-hold decisions recorded rather than silently deleting. Verification required two dev-stack fixes, both committed here: the generated .env now picks up settings added to config/dev.yaml (the MinIO SSE key previously stayed unset), and credentials stay stable across upgrades."
     },
     "CORE-008": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-core008",
+      "started_at": "2026-09-12T02:53:53Z",
+      "updated_at": "2026-09-12T02:53:53Z",
+      "git_commit": "e052040",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test scheduler",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/CORE-008/2026-09-12T02-52-02Z/summary.json",
+        "crates/server/src/scheduler/timer.rs",
+        "crates/server/src/scheduler/wait.rs",
+        "crates/server/tests/scheduler.rs",
+        "migrations/0004_durable_timers.sql"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Durable timers and a wait registry persisted in PostgreSQL (migration 0004) with exactly-once firing proven under two concurrent scheduler loops, survival across a pool drop/reconnect, fencing by generation, a typed saturated-queue error instead of silent drops, run dispatch through the canonical Run state machine, and routine due-time computation with skip/queue/catch_up_once absence policies. Integrated and re-verified by the principal agent after the delegating subagent was killed by a full disk."
     },
     "CORE-009": {
       "coverage": null,
