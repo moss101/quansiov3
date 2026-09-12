@@ -1,0 +1,95 @@
+# GENERATED from DOMAIN.md by scripts/ci/gen_contracts.py --catalog.
+# Do not hand edit: regenerate instead. DOMAIN.md is the naming/shape authority.
+commands:
+  Identity:
+  - CreateWorkspace
+  - UpdateWorkspace
+  - InviteMember
+  - UpdateMembership
+  - RemoveMember
+  - CreateServicePrincipal
+  - RevokeServicePrincipal
+  - UpdateUserSettings
+  Teammates:
+  - CreateTeammate
+  - UpdateTeammate
+  - ArchiveTeammate
+  Conversation:
+  - CreateThread
+  - PostMessage
+  - EditMessage
+  - DeleteMessage
+  - ReactToMessage
+  - AddParticipant
+  - RemoveParticipant
+  - AnswerQuestion
+  - CancelTurn
+  Work:
+  - CreateObjective
+  - ProposeGraphEdit
+  - CancelRun
+  - RetryRun
+  - PauseRun
+  - ResumeRun
+  - RequestVerification
+  Trust:
+  - ApproveEffect
+  - DenyEffect
+  - SetUserRule
+  - RevokeUserRule
+  Execution:
+  - ProvisionTarget
+  - StopTarget
+  - ResetTarget
+  - CreateCheckpoint
+  - RestoreCheckpoint
+  Browser/computer:
+  - RequestTakeover
+  - Handback
+  - ImportBrowserSession
+  - GrantComputerTier
+  Artifacts:
+  - CreateArtifact
+  - AddArtifactVersion
+  - GrantArtifactAccess
+  - DeleteArtifact
+  Knowledge & memory:
+  - IngestSource
+  - DeleteKnowledge
+  - SupersedeKnowledge
+  - CreateMemory
+  - DeleteMemory
+  Skills & packs:
+  - InstallSkill
+  - PromoteSkillVersion
+  - DisableSkill
+  - SubmitPack
+  - QualifyPack
+  - PublishPack
+  - RollbackPack
+  Routines:
+  - CreateRoutine
+  - UpdateRoutine
+  - PauseRoutine
+  - ResumeRoutine
+  - TriggerRoutineNow
+  - DeleteRoutine
+  Connectors:
+  - BeginConnectorAuth
+  - CompleteConnectorAuth
+  - RevokeConnector
+  - CreateWebhookSubscription
+  - DeleteWebhookSubscription
+  Notifications:
+  - UpdateNotificationPreferences
+  - MarkNotificationRead
+  Admin/ops:
+  - SetPolicy
+  - FreezeEffects
+  - UnfreezeEffects
+  - DisableProvider
+  - EnableProvider
+  - QuarantineWorker
+  - DrainTarget
+  - ExportTenantData
+  - DeleteUserData

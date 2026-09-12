@@ -1,0 +1,7 @@
+$ uv run --project python python scripts/ci/gen_contracts.py --check
+exit_code: 0
+
+--- stdout ---
+contract regeneration check: CLEAN (catalog,openapi,rust,python,ts)
+
+--- stderr ---

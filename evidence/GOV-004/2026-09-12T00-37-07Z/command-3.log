@@ -1,0 +1,8 @@
+$ uv run --project python pytest tests/contract -q
+exit_code: 0
+
+--- stdout ---
+....................                                                     [100%]
+20 passed in 1.62s
+
+--- stderr ---

@@ -1,0 +1,7 @@
+$ uv run --project python python scripts/ci/contract_compat.py
+exit_code: 0
+
+--- stdout ---
+contract check: CLEAN (lint + compatibility)
+
+--- stderr ---

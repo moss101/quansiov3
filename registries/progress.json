@@ -90,18 +90,27 @@
       "notes": "Monorepo created: 12 Rust crates, python/intelligence plane, pnpm apps+sdk, macOS Swift bridge; owner mapping enforced by scripts/ci/workspace_check.py; bootstrap green across all four toolchains."
     },
     "GOV-004": {
-      "coverage": null,
-      "status": "RECONCILING",
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T00:27:57Z",
-      "updated_at": "2026-09-12T00:27:57Z",
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "updated_at": "2026-09-12T00:38:06Z",
+      "git_commit": "8e8803f",
+      "tests": [
+        "uv run --project python python scripts/ci/gen_contracts.py --check",
+        "uv run --project python python scripts/ci/contract_compat.py",
+        "uv run --project python pytest tests/contract -q",
+        "bash scripts/dev/bootstrap.sh"
+      ],
+      "artifacts": [
+        "evidence/GOV-004/2026-09-12T00-37-07Z/summary.json",
+        "schemas/openapi/public-api-v1.yaml",
+        "tests/contract/compat/descriptor.baseline.pb"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "DOMAIN.md-derived catalogs (commands/errors/effect-classes/event-families/trust/ids/tools), 15 protos with prost/tonic+protoc bindings, generated OpenAPI 3.1, 4 JSON Schemas, regeneration-diff and additive-only compat gates. Limitation: per-command params schemas are open objects marked x-quansio-params-defined:false until the owning tasks define them."
     },
     "GOV-005": {
       "coverage": null,

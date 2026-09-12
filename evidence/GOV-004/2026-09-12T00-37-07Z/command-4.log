@@ -1,0 +1,330 @@
+$ bash scripts/dev/bootstrap.sh
+exit_code: 0
+
+--- stdout ---
+== authority gate ==
+V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 4 PASS, 0 ready)
+== architecture gates ==
+duplicate-authority scan: CLEAN (0 findings)
+authority check: CLEAN (0 findings)
+workspace check: CLEAN (0 findings)
+legacy map check: CLEAN (0 findings)
+contract regeneration check: CLEAN (catalog,openapi,rust,python,ts)
+contract check: CLEAN (lint + compatibility)
+== rust workspace ==
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+== python intelligence plane ==
+[1;32mAll checks passed![0m
+16 files already formatted
+Success: no issues found in 58 source files
+...............                                                          [100%]
+15 passed in 0.91s
+== typescript workspace ==
+Scope: all 4 workspace projects
+Already up to date
+Done in 173ms using pnpm v11.8.0
+Scope: 3 of 4 workspace projects
+apps/desktop build$ tsc -p tsconfig.build.json
+apps/web build$ tsc -p tsconfig.build.json
+sdk/typescript build$ tsc -p tsconfig.build.json
+apps/web build: Done
+sdk/typescript build: Done
+apps/desktop build: Done
+Scope: 3 of 4 workspace projects
+apps/desktop typecheck$ tsc -p tsconfig.json
+apps/web typecheck$ tsc -p tsconfig.json
+sdk/typescript typecheck$ tsc -p tsconfig.json
+sdk/typescript typecheck: Done
+apps/web typecheck: Done
+apps/desktop typecheck: Done
+Scope: 3 of 4 workspace projects
+apps/desktop test$ vitest run
+apps/web test$ vitest run
+sdk/typescript test$ vitest run
+sdk/typescript test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/sdk/typescript
+apps/web test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/web
+apps/desktop test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+sdk/typescript test:  ✓ tests/client.test.ts (2 tests) 2ms
+sdk/typescript test:  Test Files  1 passed (1)
+sdk/typescript test:       Tests  2 passed (2)
+sdk/typescript test:    Start at  03:37:44
+sdk/typescript test:    Duration  552ms (transform 32ms, setup 0ms, collect 22ms, tests 2ms, environment 0ms, prepare 85ms)
+apps/desktop test:  ✓ tests/surfaces.test.ts (3 tests) 2ms
+apps/desktop test:  Test Files  1 passed (1)
+apps/desktop test:       Tests  3 passed (3)
+apps/desktop test:    Start at  03:37:44
+apps/desktop test:    Duration  552ms (transform 26ms, setup 0ms, collect 23ms, tests 2ms, environment 0ms, prepare 180ms)
+apps/web test:  ✓ tests/surfaces.test.ts (3 tests) 2ms
+apps/web test:  Test Files  1 passed (1)
+apps/web test:       Tests  3 passed (3)
+apps/web test:    Start at  03:37:44
+apps/web test:    Duration  582ms (transform 31ms, setup 0ms, collect 25ms, tests 2ms, environment 0ms, prepare 66ms)
+sdk/typescript test: Done
+apps/desktop test: Done
+apps/web test: Done
+== native bridges (macos, optional) ==
+Test Suite 'All tests' started at 2026-09-12 03:37:49.121.
+Test Suite 'QuansioMacBridgePackageTests.xctest' started at 2026-09-12 03:37:49.121.
+Test Suite 'MacBridgeTests' started at 2026-09-12 03:37:49.121.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testAppleSiliconIsSupported]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testAppleSiliconIsSupported]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testIntelIsBestEffort]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testIntelIsBestEffort]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testRequireSupportPassesOnArm64]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testRequireSupportPassesOnArm64]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testUnknownArchitectureFailsClosed]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testUnknownArchitectureFailsClosed]' passed (0.000 seconds).
+Test Suite 'MacBridgeTests' passed at 2026-09-12 03:37:49.123.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'QuansioMacBridgePackageTests.xctest' passed at 2026-09-12 03:37:49.123.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'All tests' passed at 2026-09-12 03:37:49.123.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
+bootstrap: OK
+
+--- stderr ---
+    Checking quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/crates/graph)
+    Checking quansio-indexer v0.1.0 (/Users/mohsin/projects/quansiov3/crates/indexer)
+    Checking quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+    Checking quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Checking quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/crates/core)
+    Checking quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/crates/events)
+    Checking quansio-cli v0.1.0 (/Users/mohsin/projects/quansiov3/crates/cli)
+    Checking quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/crates/tools)
+    Checking quansio-qworkerd v0.1.0 (/Users/mohsin/projects/quansiov3/crates/qworkerd)
+    Checking quansio-native-windows v0.1.0 (/Users/mohsin/projects/quansiov3/native/windows)
+    Checking quansio-contracts v0.1.0 (/Users/mohsin/projects/quansiov3/crates/contracts)
+    Checking quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/crates/capability)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.32s
+   Compiling pin-project-lite v0.2.17
+   Compiling bytes v1.12.1
+   Compiling futures-core v0.3.34
+   Compiling slab v0.4.12
+   Compiling itoa v1.0.18
+   Compiling futures-task v0.3.34
+   Compiling futures-sink v0.3.34
+   Compiling tower-service v0.3.3
+   Compiling tracing-core v0.1.36
+   Compiling atomic-waker v1.1.2
+   Compiling libc v0.2.189
+   Compiling zerocopy v0.8.57
+   Compiling fnv v1.0.7
+   Compiling tower-layer v0.3.3
+   Compiling try-lock v0.2.5
+   Compiling httparse v1.10.1
+   Compiling httpdate v1.0.3
+   Compiling smallvec v1.16.1
+   Compiling futures-channel v0.3.34
+   Compiling want v0.3.1
+   Compiling sync_wrapper v1.0.2
+   Compiling serde_core v1.0.229
+   Compiling hashbrown v0.12.3
+   Compiling futures-util v0.3.34
+   Compiling mime v0.3.17
+   Compiling pin-project v1.1.13
+   Compiling percent-encoding v2.3.2
+   Compiling memchr v2.8.3
+   Compiling matchit v0.7.3
+   Compiling async-stream v0.3.6
+   Compiling base64 v0.22.1
+   Compiling quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/crates/capability)
+   Compiling quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/crates/graph)
+   Compiling quansio-indexer v0.1.0 (/Users/mohsin/projects/quansiov3/crates/indexer)
+   Compiling quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/crates/events)
+   Compiling quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/crates/tools)
+   Compiling quansio-native-windows v0.1.0 (/Users/mohsin/projects/quansiov3/native/windows)
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+   Compiling quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/crates/core)
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+   Compiling quansio-qworkerd v0.1.0 (/Users/mohsin/projects/quansiov3/crates/qworkerd)
+   Compiling tracing v0.1.44
+   Compiling quansio-cli v0.1.0 (/Users/mohsin/projects/quansiov3/crates/cli)
+   Compiling http v1.5.0
+   Compiling mio v1.2.3
+   Compiling socket2 v0.6.5
+   Compiling getrandom v0.2.17
+   Compiling indexmap v1.9.3
+   Compiling prost v0.13.5
+   Compiling socket2 v0.5.10
+   Compiling rand_core v0.6.4
+   Compiling prost-types v0.13.5
+   Compiling tokio v1.53.1
+   Compiling http-body v1.1.0
+   Compiling http-body-util v0.1.5
+   Compiling axum-core v0.4.5
+   Compiling tower v0.5.3
+   Compiling serde v1.0.229
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.3.1
+   Compiling rand v0.8.8
+   Compiling axum v0.7.9
+   Compiling tokio-util v0.7.19
+   Compiling tokio-stream v0.1.19
+   Compiling h2 v0.4.19
+   Compiling tower v0.4.13
+   Compiling hyper v1.11.1
+   Compiling hyper-util v0.1.20
+   Compiling hyper-timeout v0.5.2
+   Compiling tonic v0.12.3
+   Compiling quansio-contracts v0.1.0 (/Users/mohsin/projects/quansiov3/crates/contracts)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.94s
+     Running unittests src/lib.rs (target/debug/deps/quansio_capability-f3e9a3d5a42c00e0)
+     Running unittests src/lib.rs (target/debug/deps/quansio_cli-c2b6ed63af2ff711)
+     Running unittests src/lib.rs (target/debug/deps/quansio_contracts-e46427c8b13994ae)
+     Running unittests src/lib.rs (target/debug/deps/quansio_core-1f666a33fa149530)
+     Running unittests src/lib.rs (target/debug/deps/quansio_events-4eeea4ec6073b2f1)
+     Running unittests src/lib.rs (target/debug/deps/quansio_graph-2f09d994368ffa72)
+     Running unittests src/lib.rs (target/debug/deps/quansio_indexer-b3857ad1691f1b1c)
+     Running unittests src/lib.rs (target/debug/deps/quansio_machine-5e9967b6689860bf)
+     Running unittests src/lib.rs (target/debug/deps/quansio_native_windows-e1490b7c610a548d)
+     Running unittests src/lib.rs (target/debug/deps/quansio_qworkerd-f1864637845a6c41)
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-0e7e45a126b6927d)
+     Running unittests src/lib.rs (target/debug/deps/quansio_tools-fab3adb1fc9aba55)
+   Doc-tests quansio_capability
+   Doc-tests quansio_cli
+   Doc-tests quansio_contracts
+   Doc-tests quansio_core
+   Doc-tests quansio_events
+   Doc-tests quansio_graph
+   Doc-tests quansio_indexer
+   Doc-tests quansio_machine
+   Doc-tests quansio_native_windows
+   Doc-tests quansio_qworkerd
+   Doc-tests quansio_server
+   Doc-tests quansio_tools
+$ pnpm -r --if-present build
+$ pnpm -r --if-present typecheck
+$ pnpm -r --if-present test
+$ eslint .
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[2/4] Write swift-version--58304C5D6DBC2206.txt
+[4/6] Emitting module QuansioMacBridge
+[5/6] Compiling QuansioMacBridge MacBridge.swift
+[6/8] Emitting module QuansioMacBridgeTests
+[7/8] Compiling QuansioMacBridgeTests MacBridgeTests.swift
+Build complete! (0.60s)

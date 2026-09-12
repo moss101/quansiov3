@@ -1,0 +1,91 @@
+{
+  "task_id": "GOV-004",
+  "git_commit": "8e8803fa1cdac9af8dd5dd26d177a6db60a0bc03",
+  "recorded_at": "2026-09-12T00:37:49Z",
+  "commands": [
+    {
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-004/2026-09-12T00-37-07Z/command-1.log"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/contract_compat.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-004/2026-09-12T00-37-07Z/command-2.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/contract -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-004/2026-09-12T00-37-07Z/command-3.log"
+    },
+    {
+      "command": "bash scripts/dev/bootstrap.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-004/2026-09-12T00-37-07Z/command-4.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-004/2026-09-12T00-37-07Z/command-5.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/contract_compat.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/contract -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/dev/bootstrap.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "schemas/openapi/public-api-v1.yaml",
+      "sha256": "b8391b4c1cb7f860377ce338c290e06112dac1cf9ddacf161c5f34c491fd8c3a",
+      "bytes": 155272
+    },
+    {
+      "path": "schemas/json/evidence-summary.schema.json",
+      "sha256": "d34b446824f5d48d0aceca36a7a64a361a3e63d38dfae72e58f07c2bf7f8f938",
+      "bytes": 1946
+    },
+    {
+      "path": "tests/contract/compat/descriptor.baseline.pb",
+      "sha256": "9bf912fed9f4323fb565d644a5b0cd913af1cb988d66925c7441fec9dd5e3952",
+      "bytes": 54201
+    },
+    {
+      "path": "tests/contract/test_contracts.py",
+      "sha256": "05f7db55c74e24a4851290659123e4dd752e9bbf464646b2012bb596ca9c3b82",
+      "bytes": 11043
+    },
+    {
+      "path": "crates/contracts/src/generated/mod.rs",
+      "sha256": "9a750db689a4eb6415b4e338d95d06cc2c474ede53c52bbd6c7db88c828f2d82",
+      "bytes": 972
+    }
+  ]
+}
