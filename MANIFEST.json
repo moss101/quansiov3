@@ -1,0 +1,51 @@
+{
+  "version": "8.1",
+  "algorithm": "sha256",
+  "files": [
+    {
+      "path": "DOSSIER.md",
+      "bytes": 40030,
+      "sha256": "25d62031664f9c0aac5910e208bd4e553f95384484b1b06338146af0bc821cd9"
+    },
+    {
+      "path": "DOMAIN.md",
+      "bytes": 46669,
+      "sha256": "1ca22fa1436a16fbd95d3a87258f9a8e560f8f6a40994d359ba0827d6ce58d50"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 9701,
+      "sha256": "f57203bbe1404d5590e9ced7e4130e243b0cb4d26df27b5e7627ba0d2502304a"
+    },
+    {
+      "path": "IMPLEMENTATION_MASTER_PROMPT.md",
+      "bytes": 3463,
+      "sha256": "e839c9bfe1af1bf145596d089336aed22605be083992d3c4c8f68eea4e8d4309"
+    },
+    {
+      "path": "TASKS.md",
+      "bytes": 100938,
+      "sha256": "e5f0d293dc9af2a836638a447db509121a50db6da1852faa65d5d5d005ef3915"
+    },
+    {
+      "path": "registries/tasks.json",
+      "bytes": 125985,
+      "sha256": "af40ce3e24e697e0ea3c3abb2d3a594910973d002e8869c2cb38bbc3496f0d5b"
+    },
+    {
+      "path": "registries/task-graph.json",
+      "bytes": 17977,
+      "sha256": "8be8d4c5071c2596fe394d025a7a30c4203fc8cca5aead4c698a224e1432932e"
+    },
+    {
+      "path": "registries/progress.json",
+      "bytes": 34385,
+      "sha256": "74e63cf00bb947148bb4cbb9a3284ed3b4dfd037713b3aec60328e456dc4606e"
+    },
+    {
+      "path": "scripts/validate_v81.py",
+      "bytes": 17827,
+      "sha256": "172b8f5995fb3fbec7bea440af6569bfa9ad167686f0f809f4eef5bdcdc0548a"
+    }
+  ]
+}

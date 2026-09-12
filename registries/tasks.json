@@ -1,0 +1,3399 @@
+{
+  "version": "8.1",
+  "generated_at": "2026-09-12",
+  "authority": "registries/tasks.json",
+  "milestones": [
+    {
+      "id": "M0",
+      "title": "Authority, repository and build foundation",
+      "exit_criteria": "Clean checkout builds all three workspaces, contracts generate reproducibly, dev stack reaches health, CI runs validator + architecture checks, and every legacy path has a disposition."
+    },
+    {
+      "id": "M1",
+      "title": "Canonical state, events and persistence",
+      "exit_criteria": "PostgreSQL schema migrates from zero; commands are idempotent; every committed mutation has its RuntimeEvent; graphs, protocol state, artifacts, timers and projections are durable and tenant-scoped."
+    },
+    {
+      "id": "M2",
+      "title": "Runtime, policy, effects and recovery",
+      "exit_criteria": "A Run can be created, advance through a bounded turn loop with validated tool calls, park on approval, survive a kill/restart, reserve/settle/reconcile effects, and be verified — all in Rust with no model provider required."
+    },
+    {
+      "id": "M3",
+      "title": "Model, context, search, memory and skills",
+      "exit_criteria": "One chat turn reaches a live provider through the gateway with deterministic routing, trust-labelled bounded context, semantic retrieval, memory and skills resolved, and evaluations reproducible from pinned inputs."
+    },
+    {
+      "id": "M4",
+      "title": "Execution fabric, browser, computer and integrations",
+      "exit_criteria": "A worker under lease executes file/terminal/browser/connector/git tools inside a real isolated target on at least one substrate, with deny-by-default egress and no credential reaching the guest."
+    },
+    {
+      "id": "M5",
+      "title": "Product server, desktop/web/CLI and collaboration",
+      "exit_criteria": "A new user signs in, creates a teammate, runs a chat objective end-to-end from desktop, approves an effect with exact preview, watches the browser, reviews artifacts, and the same journey works via web, CLI and SDK."
+    },
+    {
+      "id": "M6",
+      "title": "Research, artifacts, Business Capabilities and skill evolution",
+      "exit_criteria": "Research, artifact, WikiSkill, built-in packs, Capability Compiler and controlled skill evolution work through existing primitives with passing evals."
+    },
+    {
+      "id": "M7",
+      "title": "Enterprise security, operations and deployment",
+      "exit_criteria": "Enterprise identity, audit/retention/deletion, observability, usage/quotas, DR drill, deployment topologies, supply-chain checks and kill switches are proven."
+    },
+    {
+      "id": "M8",
+      "title": "Qualification and end-to-end proof",
+      "exit_criteria": "Every qualification suite executed on real boundaries where required; no P0/P1; SLOs and eval thresholds met or explicitly waived."
+    },
+    {
+      "id": "M9",
+      "title": "Packaging, canary and production release",
+      "exit_criteria": "Reproducible candidate, signed desktop packages, deployed infrastructure, canary + rollback exercised, GA sealed."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "GOV-001",
+      "milestone": "M0",
+      "title": "Inventory repository and reconcile implementation",
+      "owner": "Architecture",
+      "language": "Mixed",
+      "component": "repository",
+      "depends_on": [],
+      "goal": "Create the factual baseline before code changes.",
+      "build": [
+        "Inventory packages, services, databases, schemas, build systems, CI, runtime paths and product surfaces.",
+        "Classify existing implementation against V8.1 canonical owners as ALREADY_COVERED, PARTIAL, GENUINE_GAP, SUPERSEDED, CONFLICT or IMPLEMENTED_UNDOCUMENTED.",
+        "Record duplicate runtimes, stores, policy/effect paths and direct provider/tool paths.",
+        "If no pre-existing product code exists, apply the greenfield rule in AGENTS.md: classify all tasks GENUINE_GAP and record 'no legacy authority found'.",
+        "Initialize git on main if the directory is not a repository; the reconciliation report is the first evidence bundle."
+      ],
+      "acceptance": [
+        "A committed reconciliation report covers every active package and deployable.",
+        "No unknown canonical owner remains for code that can mutate durable state or cause external effects."
+      ],
+      "tests": [
+        "Repository inventory check",
+        "duplicate-authority scan",
+        "manual architecture review"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "docs/review/",
+        "evidence/GOV-001/"
+      ]
+    },
+    {
+      "id": "GOV-002",
+      "milestone": "M0",
+      "title": "Install V8.1 as the sole active implementation authority",
+      "owner": "Architecture",
+      "language": "Markdown/Python",
+      "component": "governance",
+      "depends_on": [
+        "GOV-001"
+      ],
+      "goal": "Prevent agents from implementing against stale or competing dossiers.",
+      "build": [
+        "Move superseded implementation authorities under docs/archive and exclude them from active agent instructions.",
+        "Install DOSSIER.md, AGENTS.md, registries/tasks.json and progress.json as the only active authority set.",
+        "Update root README/agent pointers to V8.1.",
+        "Greenfield: close as trivially satisfied with evidence referencing GOV-001."
+      ],
+      "acceptance": [
+        "Only V8.1 files are referenced by active implementation instructions.",
+        "Archived material is readable but cannot be consumed as current task authority."
+      ],
+      "tests": [
+        "authority-pointer check",
+        "archive exclusion check"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "docs/archive/",
+        "README.md",
+        "AGENTS.md"
+      ]
+    },
+    {
+      "id": "GOV-003",
+      "milestone": "M0",
+      "title": "Create canonical monorepo and language boundaries",
+      "owner": "Build",
+      "language": "Rust/Python/TypeScript",
+      "component": "monorepo",
+      "depends_on": [
+        "GOV-001"
+      ],
+      "goal": "Make the target runtime layout compile from one repository.",
+      "build": [
+        "Create Cargo workspace for trusted runtime/control/machine crates.",
+        "Create Python workspace for intelligence/model/context adapters.",
+        "Create pnpm workspace for desktop/web UI.",
+        "Add minimal native helper projects for macOS and Windows only where OS APIs require them.",
+        "Do not add new Go code; legacy Go may exist only behind a documented migration boundary until removed or retained by explicit ADR.",
+        "Lay out the repository exactly as DOSSIER.md §17 (crates/core, graph, events, capability, tools, indexer, machine, qworkerd, cli, contracts; python/intelligence modules; apps/desktop, apps/web; packs/, sdk/, config/, evidence/).",
+        "Pin toolchains: rust-toolchain.toml, Python 3.12+ with uv lockfile, pnpm with Node LTS; add cargo-deny, ruff, mypy, eslint configs."
+      ],
+      "acceptance": [
+        "cargo check, Python import/type checks and TypeScript build pass from clean checkout.",
+        "Each canonical owner maps to exactly one package/module.",
+        "Directory layout matches DOSSIER.md §17 or documents an equivalent mapping in evidence."
+      ],
+      "tests": [
+        "clean bootstrap",
+        "workspace dependency cycle check",
+        "language-boundary import check"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "Cargo.toml",
+        "python/pyproject.toml",
+        "pnpm-workspace.yaml",
+        "native/"
+      ]
+    },
+    {
+      "id": "GOV-004",
+      "milestone": "M0",
+      "title": "Establish canonical contract generation",
+      "owner": "Platform",
+      "language": "Rust/Python/TypeScript",
+      "component": "contracts",
+      "depends_on": [
+        "GOV-003"
+      ],
+      "goal": "Eliminate hand-written DTO drift.",
+      "build": [
+        "Create Protobuf for internal RPC/events, OpenAPI 3.1 for public APIs and JSON Schema for persisted/config artifacts.",
+        "Generate Rust, Python and TypeScript bindings in CI.",
+        "Version contracts and add compatibility fixtures.",
+        "Derive every message/schema from DOMAIN.md: IDs (§1), entities (§3–§13), command catalog (§14), error taxonomy (§15) and conventions (§17); a contract that disagrees with DOMAIN.md is a defect.",
+        "Generate TypeScript/Python SDK clients from OpenAPI into sdk/ and Rust/Python gRPC bindings into crates/contracts and python/intelligence/contracts."
+      ],
+      "acceptance": [
+        "Generated bindings are reproducible.",
+        "No service owns a divergent copy of a canonical request/event schema.",
+        "Every entity, command and error in DOMAIN.md has a generated contract; a DOMAIN.md drift check runs in CI."
+      ],
+      "tests": [
+        "schema lint",
+        "binding regeneration diff",
+        "backward-compatibility fixtures"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "schemas/",
+        "crates/contracts/",
+        "python/intelligence/contracts/",
+        "sdk/"
+      ]
+    },
+    {
+      "id": "GOV-005",
+      "milestone": "M0",
+      "title": "Build CI and dossier consistency validation",
+      "owner": "Build",
+      "language": "Python/Shell",
+      "component": "ci",
+      "depends_on": [
+        "GOV-002",
+        "GOV-003",
+        "GOV-004"
+      ],
+      "goal": "Make drift and superficial completion fail automatically.",
+      "build": [
+        "Run formatting, linting, type checks, unit tests, contract tests and architecture checks.",
+        "Run scripts/validate_v81.py on every change.",
+        "Publish machine-readable test/evidence summaries bound to commit and artifacts.",
+        "Fail CI if `python scripts/validate_v81.py` fails, if generated views/bindings drift, or if a PASS task's git_commit is not reachable from main."
+      ],
+      "acceptance": [
+        "A clean checkout passes the baseline pipeline.",
+        "Tampering with tasks, dependencies, generated task view or manifest fails CI."
+      ],
+      "tests": [
+        "negative manifest test",
+        "negative DAG test",
+        "generated-view drift test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "scripts/ci/",
+        ".github/workflows/ or ci/",
+        "scripts/validate_v81.py"
+      ]
+    },
+    {
+      "id": "GOV-006",
+      "milestone": "M0",
+      "title": "Define legacy migration and deletion plan",
+      "owner": "Architecture",
+      "language": "Mixed",
+      "component": "migration",
+      "depends_on": [
+        "GOV-001",
+        "GOV-003"
+      ],
+      "goal": "Reuse useful code without preserving legacy authority.",
+      "build": [
+        "For each legacy module choose KEEP_BEHIND_BOUNDARY, PORT, REPLACE or DELETE.",
+        "Preserve provider/tool parsing and UI utilities only when they fit canonical owners.",
+        "Create explicit removal tasks for parallel orchestrators, direct provider calls and shadow state.",
+        "Greenfield: close as trivially satisfied with evidence referencing GOV-001."
+      ],
+      "acceptance": [
+        "Every legacy authoritative path has an owner and removal/port disposition.",
+        "No release-critical behavior depends on an undocumented compatibility path."
+      ],
+      "tests": [
+        "migration-map completeness",
+        "legacy direct-path scan"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "docs/review/legacy-migration-map.md",
+        "evidence/GOV-006/"
+      ]
+    },
+    {
+      "id": "GOV-007",
+      "milestone": "M0",
+      "title": "Provide deterministic local development stack",
+      "owner": "Platform",
+      "language": "Docker/Rust/Python/TypeScript",
+      "component": "dev-environment",
+      "depends_on": [
+        "GOV-003",
+        "GOV-004"
+      ],
+      "goal": "Allow any implementation agent to run the product locally with repeatable dependencies.",
+      "build": [
+        "Provide one command to start PostgreSQL, NATS JetStream, S3-compatible object storage and optional vector adapter.",
+        "Seed test tenant/workspace identities and non-secret development config.",
+        "Document reset and fixture commands in DOSSIER.md only.",
+        "Include pgvector-enabled PostgreSQL 16, NATS JetStream, MinIO and a stub model provider for offline development; seed one personal tenant, one workspace and one teammate template.",
+        "Provide `scripts/dev/up`, `down`, `reset`, `seed` and a health-ready check used by CI."
+      ],
+      "acceptance": [
+        "Fresh environment reaches health-ready state without manual database edits.",
+        "Reset produces deterministic empty baseline."
+      ],
+      "tests": [
+        "bootstrap smoke test",
+        "reset/reseed test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "infra/compose/",
+        "scripts/dev/",
+        "config/"
+      ]
+    },
+    {
+      "id": "GOV-008",
+      "milestone": "M0",
+      "title": "Enforce architecture conformance rules",
+      "owner": "Architecture",
+      "language": "Rust/Python/TypeScript",
+      "component": "architecture-tests",
+      "depends_on": [
+        "GOV-003",
+        "GOV-004"
+      ],
+      "goal": "Stop shadow runtimes, stores and privileged shortcuts from entering the codebase.",
+      "build": [
+        "Add dependency/import rules for canonical owners.",
+        "Reject client-to-provider, worker-to-control-database and model-gateway-to-effect execution wiring.",
+        "Reject new persistent stores, deployables or effect paths unless DOSSIER.md decision log is updated.",
+        "Encode the forbidden wirings as fixtures: renderer->provider, python->control tables (write), qworkerd->control DB, gateway->effect execution, any crate other than crates/tools registering tools, any second scheduler/timer loop."
+      ],
+      "acceptance": [
+        "Known forbidden dependency fixtures fail.",
+        "Architecture checks run in CI and locally."
+      ],
+      "tests": [
+        "forbidden-import tests",
+        "network/DB ownership tests",
+        "new-deployable guard"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "tests/architecture/",
+        "scripts/ci/arch_check.py"
+      ]
+    },
+    {
+      "id": "CORE-001",
+      "milestone": "M1",
+      "title": "Implement authoritative persistence schema and migrations",
+      "owner": "Core Platform",
+      "language": "Rust/SQL",
+      "component": "persistence",
+      "depends_on": [
+        "GOV-004",
+        "GOV-007"
+      ],
+      "goal": "Create one authoritative control/runtime data model.",
+      "build": [
+        "Model tenant, user, workspace, work graph, agents, runs, protocol state, approvals, effects, skills, capabilities, schedules and artifact metadata in PostgreSQL.",
+        "Use forward migrations with rollback/forward-fix policy and tenant-scoped keys.",
+        "Enable PostgreSQL row-level security on every tenant table with the tenant set per transaction; application scoping remains mandatory.",
+        "Create the `derived` schema for rebuildable indexes (pgvector) separate from authoritative tables.",
+        "Model every entity in DOMAIN.md §2–§13 including Teammate, Thread/Message/Attachment, Question, Turn/Step/Attempt, ToolCall, UserRule, Budget, Notification, WebhookSubscription, AuditEntry and UsageRecord."
+      ],
+      "acceptance": [
+        "Schema can bootstrap from zero and migrate from supported legacy state.",
+        "All authoritative rows carry stable IDs, tenant/workspace scope and timestamps/version where required.",
+        "A cross-tenant query without tenant context returns zero rows under RLS."
+      ],
+      "tests": [
+        "migration up/down or forward-fix test",
+        "tenant isolation test",
+        "legacy fixture migration",
+        "RLS no-context zero-rows test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "migrations/",
+        "crates/server/control/schema/"
+      ]
+    },
+    {
+      "id": "CORE-002",
+      "milestone": "M1",
+      "title": "Implement identity, generation and idempotency primitives",
+      "owner": "Core Platform",
+      "language": "Rust",
+      "component": "core-types",
+      "depends_on": [
+        "CORE-001",
+        "GOV-004"
+      ],
+      "goal": "Give every command, effect, lease and stream stable replay-safe identity.",
+      "build": [
+        "Implement canonical IDs, command_id, idempotency_key, generation, fence token, cursor and correlation/causation IDs.",
+        "Provide typed validation and database uniqueness constraints.",
+        "Implement the typed prefixed ULID scheme and replay-safety primitives exactly as DOMAIN.md §1 (command_id, idempotency_key, generation, fence_token, revision, sequence, cursor, correlation/causation)."
+      ],
+      "acceptance": [
+        "Duplicate commands are replay-safe.",
+        "Stale generations/fences are rejected before mutation or effect execution."
+      ],
+      "tests": [
+        "duplicate command test",
+        "stale generation test",
+        "ID round-trip fixtures"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/core/"
+      ]
+    },
+    {
+      "id": "CORE-003",
+      "milestone": "M1",
+      "title": "Implement RuntimeEvent store and transactional outbox",
+      "owner": "Core Platform",
+      "language": "Rust",
+      "component": "events",
+      "depends_on": [
+        "CORE-001",
+        "CORE-002"
+      ],
+      "goal": "Persist state transition evidence atomically with canonical mutations.",
+      "build": [
+        "Define RuntimeEvent envelope and sequence rules.",
+        "Write state mutation plus outbox entry in one transaction.",
+        "Publish to NATS with retry and deduplication; consumers track durable cursors.",
+        "Implement the RuntimeEvent envelope and event families of DOMAIN.md §9.1–§9.2; subject naming `q.<tenant>.<aggregate_type>.<type>`; Nats-Msg-Id dedup."
+      ],
+      "acceptance": [
+        "No committed state transition lacks its corresponding event.",
+        "Publisher restart cannot duplicate externally visible semantic events."
+      ],
+      "tests": [
+        "transaction rollback test",
+        "outbox crash/replay test",
+        "cursor resume test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/events/"
+      ]
+    },
+    {
+      "id": "CORE-004",
+      "milestone": "M1",
+      "title": "Implement WorkGraph, AgentGraph and StateGraph stores",
+      "owner": "Core Platform",
+      "language": "Rust",
+      "component": "graphs",
+      "depends_on": [
+        "CORE-001",
+        "CORE-002"
+      ],
+      "goal": "Represent work, participants and observed execution without parallel graph systems.",
+      "build": [
+        "Implement versioned nodes/edges and graph reads for WorkGraph, AgentGraph and StateGraph.",
+        "Keep definitions, delegation lineage and runtime observations distinct but linkable.",
+        "Implement WorkNode/WorkEdge/AgentGraph edges/StateGraph links with the fields and kinds in DOMAIN.md §4–§5; enforce acyclicity for depends_on/parent_of."
+      ],
+      "acceptance": [
+        "Graph reads are tenant-scoped and revision-aware.",
+        "No feature-specific graph duplicates canonical work/agent/state ownership."
+      ],
+      "tests": [
+        "graph invariant tests",
+        "revision conflict tests",
+        "tenant isolation tests"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/graph/"
+      ]
+    },
+    {
+      "id": "CORE-005",
+      "milestone": "M1",
+      "title": "Implement GraphTransaction",
+      "owner": "Core Platform",
+      "language": "Rust",
+      "component": "graphs",
+      "depends_on": [
+        "CORE-003",
+        "CORE-004"
+      ],
+      "goal": "Make semantic graph changes atomic and revision-safe.",
+      "build": [
+        "Provide compare-and-set graph mutation with preconditions, emitted RuntimeEvents and outbox writes.",
+        "Support atomic work/agent/state changes required by delegation and completion."
+      ],
+      "acceptance": [
+        "Concurrent conflicting mutations deterministically accept one revision and reject stale writers.",
+        "Events exactly match committed graph mutation."
+      ],
+      "tests": [
+        "concurrency CAS test",
+        "transaction/event atomicity test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/graph/transaction/"
+      ]
+    },
+    {
+      "id": "CORE-006",
+      "milestone": "M1",
+      "title": "Implement durable protocol state and checkpoints",
+      "owner": "Runtime",
+      "language": "Rust",
+      "component": "protocol-state",
+      "depends_on": [
+        "CORE-001",
+        "CORE-002"
+      ],
+      "goal": "Make exact resume independent of semantic memory.",
+      "build": [
+        "Persist tool/model calls, approvals, questions, waits, terminal/browser control, agent lifecycle and cancellation state.",
+        "Define checkpoint metadata for workspace/browser/terminal snapshots and generation ownership.",
+        "Persist ProtocolState with the fields in DOMAIN.md §5.7 and Checkpoint metadata per §5.8."
+      ],
+      "acceptance": [
+        "Process crash can reconstruct the next safe protocol action without reading semantic memory.",
+        "Unknown external-effect outcomes remain explicitly unsettled."
+      ],
+      "tests": [
+        "crash/restart replay test",
+        "partial tool-call recovery test",
+        "approval wait recovery test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/runtime/protocol_state/",
+        "crates/server/runtime/checkpoints/"
+      ]
+    },
+    {
+      "id": "CORE-007",
+      "milestone": "M1",
+      "title": "Implement artifact and evidence storage",
+      "owner": "Core Platform",
+      "language": "Rust",
+      "component": "artifacts",
+      "depends_on": [
+        "CORE-001",
+        "CORE-002",
+        "GOV-007"
+      ],
+      "goal": "Store durable user artifacts and immutable execution evidence.",
+      "build": [
+        "Store metadata in PostgreSQL and bytes in S3-compatible object storage.",
+        "Use content digests, immutable evidence descriptors, scoped grants and retention metadata.",
+        "Implement Artifact/ArtifactVersion/Evidence per DOMAIN.md §10 with tenant-prefixed object keys, server-side encryption and multipart upload for attachments."
+      ],
+      "acceptance": [
+        "Artifact bytes verify against recorded digest.",
+        "Evidence cannot be silently overwritten; new versions create new identities."
+      ],
+      "tests": [
+        "digest corruption test",
+        "grant scope test",
+        "retention fixture"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/artifacts/"
+      ]
+    },
+    {
+      "id": "CORE-008",
+      "milestone": "M1",
+      "title": "Implement scheduler, waits and durable timers",
+      "owner": "Runtime",
+      "language": "Rust",
+      "component": "scheduler",
+      "depends_on": [
+        "CORE-003",
+        "CORE-006"
+      ],
+      "goal": "Support routines and long-running work without polling loops hidden in features.",
+      "build": [
+        "Implement durable timers, event waits, backoff, wakeups and cancellation.",
+        "Timers publish canonical runtime events and are generation-fenced.",
+        "Implement Routine firing semantics (cron/interval/event, timezone, absence policy) as timers per DOMAIN.md §13.1."
+      ],
+      "acceptance": [
+        "Restart preserves due work without double firing.",
+        "Cancelled or stale-generation timers cannot wake obsolete work."
+      ],
+      "tests": [
+        "restart timer test",
+        "double-fire test",
+        "cancel/fence test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/scheduler/"
+      ]
+    },
+    {
+      "id": "CORE-009",
+      "milestone": "M1",
+      "title": "Implement projections and resumable event streaming",
+      "owner": "Core Platform",
+      "language": "Rust",
+      "component": "projections",
+      "depends_on": [
+        "CORE-003",
+        "CORE-004"
+      ],
+      "goal": "Give clients read models without making UI caches authoritative.",
+      "build": [
+        "Build projection consumers for run status, work graph summaries, notifications and activity timelines.",
+        "Expose cursor-based replay semantics for WebSocket/SSE delivery.",
+        "Implement the client stream frame protocol of DOMAIN.md §9.3 (durable event frames with cursor; transient live frames) and STREAM_BACKPRESSURE shedding."
+      ],
+      "acceptance": [
+        "Client reconnect resumes from cursor without lost or reordered semantic events.",
+        "Projection rebuild from event/store state is deterministic.",
+        "Live frames are never persisted and clients render correctly when they are absent."
+      ],
+      "tests": [
+        "cursor reconnect test",
+        "projection rebuild test",
+        "slow-consumer backpressure test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/events/projections/",
+        "crates/server/api/stream/"
+      ]
+    },
+    {
+      "id": "RUN-001",
+      "milestone": "M2",
+      "title": "Implement authoritative Rust runtime state machine",
+      "owner": "Runtime",
+      "language": "Rust",
+      "component": "runtime",
+      "depends_on": [
+        "CORE-005",
+        "CORE-006",
+        "CORE-008"
+      ],
+      "goal": "Make quansio-runtime the only authority that advances executable work.",
+      "build": [
+        "Define Run, Step, Attempt and terminal/nonterminal states with typed transitions.",
+        "Require transaction, generation and event emission for state changes.",
+        "Implement the Run/Turn/Step/Attempt states and transitions exactly as DOMAIN.md §5.2–§5.5, including WAITING_* variants, SUSPENDED and BLOCKED_UNRECOVERABLE with typed reasons."
+      ],
+      "acceptance": [
+        "Illegal transitions fail closed.",
+        "Every accepted transition is durable, observable and replayable."
+      ],
+      "tests": [
+        "state transition matrix",
+        "crash between transition/event test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/runtime/state_machine/"
+      ]
+    },
+    {
+      "id": "RUN-002",
+      "milestone": "M2",
+      "title": "Implement AgentThread, delegation and handoff lifecycle",
+      "owner": "Runtime",
+      "language": "Rust",
+      "component": "agents",
+      "depends_on": [
+        "RUN-001",
+        "CORE-004"
+      ],
+      "goal": "Support persistent teammates and scoped ephemeral workers on one runtime.",
+      "build": [
+        "Implement AgentThread mailbox, parent/child lineage, capability narrowing, suspend/resume, handoff and join.",
+        "Represent persistent and ephemeral agents through the same primitives with different lifecycle policies.",
+        "Implement AgentThread states per DOMAIN.md §5.1; persistent teammates never JOIN, workers must."
+      ],
+      "acceptance": [
+        "Child cannot widen authority.",
+        "Handoff preserves conversation/work/evidence lineage and is recoverable."
+      ],
+      "tests": [
+        "capability narrowing test",
+        "handoff recovery test",
+        "fanout join test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/runtime/agents/"
+      ]
+    },
+    {
+      "id": "RUN-003",
+      "milestone": "M2",
+      "title": "Compile model plans into validated WorkGraph mutations",
+      "owner": "Runtime",
+      "language": "Rust",
+      "component": "planning",
+      "depends_on": [
+        "RUN-001",
+        "CORE-005"
+      ],
+      "goal": "Let models propose plans without giving them graph authority.",
+      "build": [
+        "Define PlanProposal contract, validate bounded task structure, dependencies, acceptance and capability needs.",
+        "Apply accepted proposals only through GraphTransaction.",
+        "Implement PlanProposal validation per DOMAIN.md §4.5 including max_plan_nodes policy bound and CompletionContract inheritance."
+      ],
+      "acceptance": [
+        "Malformed/cyclic/over-authorized plans are rejected.",
+        "Accepted plans produce deterministic graph revisions and events."
+      ],
+      "tests": [
+        "cycle injection test",
+        "invalid capability test",
+        "plan replay fixture"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/runtime/planning/"
+      ]
+    },
+    {
+      "id": "RUN-004",
+      "milestone": "M2",
+      "title": "Implement concurrency, fanout/fanin, cancellation and waits",
+      "owner": "Runtime",
+      "language": "Rust",
+      "component": "orchestration",
+      "depends_on": [
+        "RUN-001",
+        "RUN-002",
+        "RUN-003"
+      ],
+      "goal": "Execute independent work in parallel with bounded concurrency.",
+      "build": [
+        "Implement ready-queue selection, dependency release, capacity tickets, cancellation propagation, joins and durable waits.",
+        "Make ordering deterministic where semantics require it."
+      ],
+      "acceptance": [
+        "No dependent work starts before prerequisites.",
+        "Cancellation and retry do not produce duplicate consequential effects."
+      ],
+      "tests": [
+        "parallel DAG test",
+        "cancel storm test",
+        "retry/idempotency test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/runtime/orchestration/"
+      ]
+    },
+    {
+      "id": "RUN-005",
+      "milestone": "M2",
+      "title": "Implement Capability Projection",
+      "owner": "Security",
+      "language": "Rust",
+      "component": "capabilities",
+      "depends_on": [
+        "CORE-002",
+        "RUN-002"
+      ],
+      "goal": "Derive the exact authority available to each run, agent and tool call.",
+      "build": [
+        "Compose platform, organization, user, workspace, agent, skill, tool and execution-target constraints using only narrowing operations.",
+        "Snapshot capability inputs for each consequential decision.",
+        "Implement Grant, CapabilityProjection and the intersection/most-restrictive algebra with fixed layer order exactly as DOMAIN.md §6; log capability.widening_rejected."
+      ],
+      "acceptance": [
+        "Delegation/skills/tools cannot widen authority.",
+        "Missing or ambiguous security inputs fail closed."
+      ],
+      "tests": [
+        "narrowing property tests",
+        "stale capability snapshot test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/capability/"
+      ]
+    },
+    {
+      "id": "RUN-006",
+      "milestone": "M2",
+      "title": "Implement policy, RBAC, privacy guards and approvals",
+      "owner": "Security",
+      "language": "Rust",
+      "component": "policy",
+      "depends_on": [
+        "RUN-005",
+        "CORE-003"
+      ],
+      "goal": "Bind governance decisions to exact actions.",
+      "build": [
+        "Evaluate RBAC/policy/privacy/sequence constraints.",
+        "Issue ApprovalReceipt bound to actor, effect, parameters/digest, scope, expiry and generation.",
+        "Support Ask/Always/Never style user rules where applicable.",
+        "Implement Policy, UserRule, ApprovalRequest and ApprovalReceipt per DOMAIN.md §7.3 including consequence_preview typing, superseded-on-change and server signature.",
+        "Integrate content-trust escalation hooks (INT-012 provides labels; policy enforces)."
+      ],
+      "acceptance": [
+        "Approval for one action cannot authorize a changed action.",
+        "Denied/expired/stale approvals cannot execute.",
+        "A UserRule cannot set `always` on a tier-4 effect class."
+      ],
+      "tests": [
+        "approval substitution test",
+        "policy deny test",
+        "privacy sequence test",
+        "tier-4 always-rule rejection test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/policy/"
+      ]
+    },
+    {
+      "id": "RUN-007",
+      "milestone": "M2",
+      "title": "Implement Universal Effect Ledger",
+      "owner": "Runtime/Security",
+      "language": "Rust",
+      "component": "effects",
+      "depends_on": [
+        "RUN-006",
+        "CORE-003"
+      ],
+      "goal": "Give every consequential external action one reservation/settlement path.",
+      "build": [
+        "Classify semantic effects independent of low-level click/API mechanism.",
+        "Implement reserve, dispatch token, settle, unknown outcome, reconcile and retry policy.",
+        "Require idempotency/reconciliation strategy per effect class.",
+        "Implement the effect class table, tiers, default policy and reconciliation strategies of DOMAIN.md §7.1 as configuration in config/effects.yaml validated against the taxonomy; EffectRecord states per §7.2."
+      ],
+      "acceptance": [
+        "Browser clicks, connectors and tools that cause the same consequence share effect semantics.",
+        "UNKNOWN effects are reconciled before retry.",
+        "Every effect class in DOMAIN.md §7.1 has a registered tier, default decision and reconciliation strategy."
+      ],
+      "tests": [
+        "duplicate effect test",
+        "unknown-outcome reconciliation test",
+        "browser/API equivalence fixture"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/effects/"
+      ]
+    },
+    {
+      "id": "RUN-008",
+      "milestone": "M2",
+      "title": "Implement CompletionContract verification",
+      "owner": "Runtime/QA",
+      "language": "Rust/Python",
+      "component": "verification",
+      "depends_on": [
+        "RUN-001",
+        "CORE-007",
+        "RUN-007"
+      ],
+      "goal": "Prevent model self-certification of task completion.",
+      "build": [
+        "Define deterministic checks first, then optional independent semantic verification.",
+        "Bind completion to expected artifacts, assertions, tests and effect settlement.",
+        "Implement CompletionContract deterministic check kinds per DOMAIN.md §4.4 (artifact_exists, test_command, assertion, effects_settled, citations_valid) and the optional independent semantic verifier via the gateway."
+      ],
+      "acceptance": [
+        "A model message alone cannot mark work succeeded.",
+        "Failed required verification keeps work incomplete with actionable evidence."
+      ],
+      "tests": [
+        "false-done test",
+        "missing artifact test",
+        "semantic verifier disagreement test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/runtime/verification/",
+        "python/intelligence/evaluation/semantic_verifier/"
+      ]
+    },
+    {
+      "id": "RUN-009",
+      "milestone": "M2",
+      "title": "Implement recovery, generation fencing and effect reconciliation",
+      "owner": "Runtime",
+      "language": "Rust",
+      "component": "recovery",
+      "depends_on": [
+        "RUN-004",
+        "RUN-007",
+        "CORE-006"
+      ],
+      "goal": "Recover after process, worker and machine failures without corrupting state or repeating effects.",
+      "build": [
+        "Rebuild from durable state/events/checkpoints.",
+        "Fence stale workers and streams by generation/lease.",
+        "Reconcile uncertain effects before resuming.",
+        "Recovery must read only ProtocolState, RuntimeEvents, Checkpoints, Evidence and the Effect Ledger; add a test that fails if MemoryEntry tables are read during recovery."
+      ],
+      "acceptance": [
+        "Killed runtime resumes to the same safe logical point.",
+        "Stale worker output cannot mutate current run."
+      ],
+      "tests": [
+        "kill/restart matrix",
+        "stale worker test",
+        "uncertain effect recovery"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/runtime/recovery/"
+      ]
+    },
+    {
+      "id": "RUN-010",
+      "milestone": "M2",
+      "title": "Implement runtime budgets, quotas and capacity control",
+      "owner": "Runtime",
+      "language": "Rust",
+      "component": "capacity",
+      "depends_on": [
+        "RUN-004",
+        "RUN-005"
+      ],
+      "goal": "Bound autonomous execution by explicit resource policy.",
+      "build": [
+        "Enforce token, time, tool, concurrency, machine and cost budgets at run/agent/workspace scopes.",
+        "Emit usage events and graceful budget-exhausted states.",
+        "Implement Budget per DOMAIN.md §13.2 with child<=parent enforcement and usage.* events consumed by OPS-004."
+      ],
+      "acceptance": [
+        "Budget exhaustion stops new work without corrupting active effects.",
+        "Child budgets cannot exceed parent remaining allowance."
+      ],
+      "tests": [
+        "budget inheritance test",
+        "capacity saturation test",
+        "graceful stop test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/runtime/budgets/"
+      ]
+    },
+    {
+      "id": "RUN-011",
+      "milestone": "M2",
+      "title": "Implement agent turn loop, Tool contract and Tool Registry",
+      "owner": "Runtime",
+      "language": "Rust",
+      "component": "turn-loop",
+      "depends_on": [
+        "RUN-003",
+        "RUN-006",
+        "RUN-007",
+        "GOV-004"
+      ],
+      "goal": "Make the model-driven loop that turns proposals into governed steps a single Rust-owned authority.",
+      "build": [
+        "Implement the Turn loop exactly as DOMAIN.md §5.6: input -> ContextProjection request -> model call -> ModelProposal parse -> tool/plan/delegate/question/memory/completion handling -> bounded iteration.",
+        "Define the Tool contract (DOMAIN.md §7.5) and a control-plane Tool Registry with versioned declarations, JSON Schema validation (additionalProperties=false), effect-class/resource derivation, idempotency-key derivation, host, output bounds and evidence capture.",
+        "Implement the ToolCall protocol (DOMAIN.md §7.4) including parallel independent calls whose results are returned together, WAITING_* parking, dispatch tokens and OUTCOME_UNKNOWN handling.",
+        "Implement the human question protocol (user.ask tool, Question entity, WAITING_QUESTION, expiry) and the agent-originated work.delegate / work.propose_plan / memory.propose tools as registry entries.",
+        "Expose only capability-filtered tools to the model; record which tools/model/context were used per turn for UI inspection."
+      ],
+      "acceptance": [
+        "A turn with a conformance-stub model (no provider) executes file/terminal tool proposals through capability, policy, approval wait and Effect Ledger, and produces durable Steps, Attempts and events.",
+        "A tool proposal with unknown fields, an unregistered tool, or a tool outside the capability projection is rejected before any dispatch.",
+        "A crash between dispatch and settlement resumes to OUTCOME_UNKNOWN reconciliation, never to a duplicate dispatch.",
+        "Question and delegation waits are resumable after restart."
+      ],
+      "tests": [
+        "turn loop conformance suite with stub model",
+        "tool schema rejection tests",
+        "parallel tool result ordering test",
+        "question/delegate wait recovery test",
+        "crash-between-dispatch-and-settle test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/tools/",
+        "crates/server/runtime/turn_loop/"
+      ]
+    },
+    {
+      "id": "INT-001",
+      "milestone": "M3",
+      "title": "Create Python intelligence service and typed RPC boundary",
+      "owner": "AI Platform",
+      "language": "Python",
+      "component": "intelligence",
+      "depends_on": [
+        "GOV-004",
+        "CORE-002"
+      ],
+      "goal": "Isolate fast-moving AI logic from trusted Rust execution authority.",
+      "build": [
+        "Create typed service for model gateway, context assembly, ranking, knowledge and capability compilation modules.",
+        "Use generated Protobuf clients; no direct control-plane database mutation outside assigned read/derived stores.",
+        "Use gRPC (tonic/grpcio) over Unix socket when co-located, mTLS when split; every RPC carries tenant/workspace scope, correlation_id, deadline and capability_projection_id."
+      ],
+      "acceptance": [
+        "Service starts with health/version endpoints and generated contracts.",
+        "Rust runtime can call it without shared in-process Python state."
+      ],
+      "tests": [
+        "RPC contract test",
+        "service restart test",
+        "forbidden DB mutation test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/",
+        "python/intelligence/contracts/"
+      ]
+    },
+    {
+      "id": "INT-002",
+      "milestone": "M3",
+      "title": "Implement server-side model gateway",
+      "owner": "AI Platform",
+      "language": "Python",
+      "component": "model-gateway",
+      "depends_on": [
+        "INT-001",
+        "GOV-004"
+      ],
+      "goal": "Route all model fulfillment through one trusted gateway.",
+      "build": [
+        "Implement provider adapters, request normalization, streaming ModelEvent, cancellation, timeout and usage capture.",
+        "Keep provider credentials in trusted server/local-service secret custody; never send them to renderer, normal worker or microVM guest.",
+        "Ship adapters for Anthropic (primary), OpenAI, and an OpenAI-compatible generic endpoint; model ids and capabilities come from config/models.yaml only.",
+        "Normalize per DOMAIN.md §11.1: streaming ModelEvent, strict-schema tool calling, operator-channel instructions, multimodal image/document input, prompt-cache hints (stable prefix first), usage incl. cache tokens, typed stop reasons incl. refusal, cancellation; disable provider-side compaction/context-editing.",
+        "Provide a deterministic conformance-stub provider for offline tests; it never counts as real-boundary evidence."
+      ],
+      "acceptance": [
+        "At least two provider adapters pass the same conformance suite.",
+        "Cancellation closes stream and records terminal provider outcome.",
+        "No provider-side compaction or context-editing feature is enabled; the conformance suite asserts the request shape."
+      ],
+      "tests": [
+        "live provider sandbox test",
+        "stream/cancel test",
+        "secret-leak scan"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/model_gateway/",
+        "config/models.yaml"
+      ]
+    },
+    {
+      "id": "INT-003",
+      "milestone": "M3",
+      "title": "Implement deterministic model selection, DLP and failover",
+      "owner": "AI Platform",
+      "language": "Python",
+      "component": "model-gateway",
+      "depends_on": [
+        "INT-002",
+        "RUN-005"
+      ],
+      "goal": "Select models without hidden prerequisite LLM calls and enforce data policy.",
+      "build": [
+        "Resolve route from policy, capability demand, model availability, cost/latency and explicit user choice.",
+        "Apply redaction/data-classification rules before provider call.",
+        "Implement bounded failover with preserved request identity.",
+        "Implement ModelRoute per DOMAIN.md §11.1 with request classes (chat, planning, tool_heavy, synthesis, verification, embedding, cheap_worker) and rule ids recorded on every route decision."
+      ],
+      "acceptance": [
+        "Normal primary-model path performs zero mandatory auxiliary LLM calls before the selected model.",
+        "Disallowed data/provider combinations fail before transmission."
+      ],
+      "tests": [
+        "route determinism test",
+        "DLP denial test",
+        "provider failover test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/model_gateway/routing/",
+        "python/intelligence/model_gateway/dlp/"
+      ]
+    },
+    {
+      "id": "INT-004",
+      "milestone": "M3",
+      "title": "Implement Rust indexer and SearchIndex API",
+      "owner": "Context",
+      "language": "Rust",
+      "component": "indexer",
+      "depends_on": [
+        "CORE-007",
+        "GOV-004"
+      ],
+      "goal": "Provide high-throughput exact, lexical, symbol and graph retrieval as a derived subsystem.",
+      "build": [
+        "Index files, artifacts, knowledge sources, metadata, symbols and links with snapshot/index epochs.",
+        "Use Tantivy/local indexes and server adapters; vectors remain derived/rebuildable."
+      ],
+      "acceptance": [
+        "Index can rebuild from authoritative sources.",
+        "Queries are snapshot/tenant scoped and return provenance."
+      ],
+      "tests": [
+        "incremental index test",
+        "rebuild equivalence test",
+        "tenant leakage test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/indexer/"
+      ]
+    },
+    {
+      "id": "INT-005",
+      "milestone": "M3",
+      "title": "Implement ContextProjection and typed SearchProgram",
+      "owner": "Context",
+      "language": "Python/Rust",
+      "component": "context",
+      "depends_on": [
+        "INT-001",
+        "INT-004",
+        "RUN-005"
+      ],
+      "goal": "Build bounded model-visible context from canonical sources.",
+      "build": [
+        "Define typed search AST with exact/lexical/semantic/graph/history/memory channels.",
+        "Rank, dedupe and pack evidence under token budget with provenance and degradation reporting.",
+        "Implement ContextProjection per DOMAIN.md §11.2 with trust_level on every segment (labels supplied per §12) and SearchProgram per §11.3; render stable prefix first for caching."
+      ],
+      "acceptance": [
+        "No executable/arbitrary predicate strings are accepted.",
+        "Context bundle records source, snapshot, policy and token ledger.",
+        "Every segment carries a trust_level; a segment without one is rejected."
+      ],
+      "tests": [
+        "AST validation test",
+        "budget packing test",
+        "stale snapshot test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/context/",
+        "crates/server/runtime/context_bridge/"
+      ]
+    },
+    {
+      "id": "INT-006",
+      "milestone": "M3",
+      "title": "Implement Knowledge Fabric",
+      "owner": "Context",
+      "language": "Python",
+      "component": "knowledge",
+      "depends_on": [
+        "INT-005",
+        "CORE-007",
+        "INT-011"
+      ],
+      "goal": "Store durable evaluated knowledge separately from transcript and recovery state.",
+      "build": [
+        "Define candidate, provenance, confidence, scope, version and lifecycle.",
+        "Ingest approved sources and verified run outcomes; support supersession and deletion.",
+        "Implement KnowledgeEntry per DOMAIN.md §11.4 with quarantine on source deletion; use INT-011 for the semantic channel."
+      ],
+      "acceptance": [
+        "Knowledge entries are tenant/scoped and provenance-addressable.",
+        "Removing source invalidates or marks affected derived knowledge."
+      ],
+      "tests": [
+        "provenance test",
+        "tenant isolation test",
+        "source deletion propagation"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/knowledge/"
+      ]
+    },
+    {
+      "id": "INT-007",
+      "milestone": "M3",
+      "title": "Implement semantic memory with provenance",
+      "owner": "Context",
+      "language": "Python",
+      "component": "memory",
+      "depends_on": [
+        "INT-006",
+        "RUN-005"
+      ],
+      "goal": "Remember useful user/workspace decisions without becoming a recovery mechanism.",
+      "build": [
+        "Create memory candidates from explicit user direction and verified work.",
+        "Gate writes by policy and provenance; retrieve only task-relevant memories through ContextProjection.",
+        "Implement MemoryEntry per DOMAIN.md §11.4; writes only through the memory.propose tool gated by policy; scopes user/workspace/teammate."
+      ],
+      "acceptance": [
+        "Runtime restart succeeds with memory disabled.",
+        "Memory deletion prevents future retrieval after index refresh."
+      ],
+      "tests": [
+        "memory-off recovery test",
+        "delete/retrieval test",
+        "cross-tenant isolation"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/memory/"
+      ]
+    },
+    {
+      "id": "INT-008",
+      "milestone": "M3",
+      "title": "Implement compaction epochs and bounded conversation projection",
+      "owner": "Runtime/Context",
+      "language": "Rust/Python",
+      "component": "compaction",
+      "depends_on": [
+        "CORE-006",
+        "INT-005"
+      ],
+      "goal": "Control long-running context size without losing protocol truth.",
+      "build": [
+        "Create versioned compaction epochs tied to source event ranges.",
+        "Reject stale async compaction after fork/revert and provide synchronous fallback.",
+        "Keep tool/protocol state outside summaries."
+      ],
+      "acceptance": [
+        "Fork/revert never installs compaction from abandoned history.",
+        "Exact protocol replay does not depend on summary text."
+      ],
+      "tests": [
+        "stale compaction test",
+        "fork/revert test",
+        "fallback test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/runtime/compaction/",
+        "python/intelligence/context/compaction/"
+      ]
+    },
+    {
+      "id": "INT-009",
+      "milestone": "M3",
+      "title": "Implement Skill Registry and task-scoped resolver",
+      "owner": "AI Platform",
+      "language": "Python/Rust",
+      "component": "skills",
+      "depends_on": [
+        "INT-005",
+        "RUN-005",
+        "CORE-001"
+      ],
+      "goal": "Treat skills as versioned procedural assets rather than autonomous subsystems.",
+      "build": [
+        "Store skill metadata/provenance/evals in control plane.",
+        "Resolve only relevant approved skills for a task and capability snapshot.",
+        "Skills may guide procedure but cannot grant permissions or add infrastructure.",
+        "Implement Skill/SkillVersion states per DOMAIN.md §11.5; only ACTIVE versions resolve."
+      ],
+      "acceptance": [
+        "Unapproved skill version cannot enter production context.",
+        "Skill resolution is bounded and deterministic for fixed inputs."
+      ],
+      "tests": [
+        "promotion-state test",
+        "capability narrowing test",
+        "resolver budget test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/skills/",
+        "crates/server/control/skills/"
+      ]
+    },
+    {
+      "id": "INT-010",
+      "milestone": "M3",
+      "title": "Implement intelligence evaluation harness",
+      "owner": "QA/AI Platform",
+      "language": "Python",
+      "component": "evaluation",
+      "depends_on": [
+        "INT-002",
+        "INT-005",
+        "INT-009"
+      ],
+      "goal": "Make model/context/skill changes measurable before promotion.",
+      "build": [
+        "Define versioned datasets for route quality, retrieval, answer grounding, tool proposal validity and skill behavior.",
+        "Record model/provider/index/skill versions and cost/latency.",
+        "Encode the provisional thresholds from DOSSIER.md §21.3 as the initial protected gate configuration in tests/evaluation/thresholds.yaml."
+      ],
+      "acceptance": [
+        "Evaluation runs are reproducible from pinned inputs.",
+        "Protected safety/recovery regressions block promotion regardless of aggregate quality gain."
+      ],
+      "tests": [
+        "dataset digest check",
+        "regression threshold test",
+        "cost/latency capture"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/evaluation/",
+        "tests/evaluation/"
+      ]
+    },
+    {
+      "id": "INT-011",
+      "milestone": "M3",
+      "title": "Implement embedding pipeline and derived vector index",
+      "owner": "Context",
+      "language": "Python/SQL",
+      "component": "embeddings",
+      "depends_on": [
+        "INT-002",
+        "INT-004",
+        "CORE-007"
+      ],
+      "goal": "Provide semantic retrieval as a derived, rebuildable index without a second knowledge store.",
+      "build": [
+        "Implement chunking, embedding via the model gateway (embedding request class), and pgvector storage in the PostgreSQL `derived` schema keyed by tenant/workspace, source ref, snapshot and content digest.",
+        "Support incremental re-embedding on source change, deletion propagation on source/knowledge/memory delete, and full rebuild from authoritative sources and object storage.",
+        "Expose the semantic channel to SearchProgram execution with provenance and snapshot metadata."
+      ],
+      "acceptance": [
+        "Index rebuild from authoritative sources produces equivalent retrieval results.",
+        "Deleted sources disappear from semantic retrieval within the published SLO.",
+        "Cross-tenant semantic retrieval is impossible by construction (tenant filter is mandatory in the query API)."
+      ],
+      "tests": [
+        "rebuild equivalence test",
+        "deletion propagation test",
+        "tenant filter mandatory test",
+        "embedding provider failover test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/embeddings/",
+        "migrations/derived/"
+      ]
+    },
+    {
+      "id": "INT-012",
+      "milestone": "M3",
+      "title": "Implement content trust labelling and injection defense",
+      "owner": "Security/Context",
+      "language": "Python/Rust",
+      "component": "trust",
+      "depends_on": [
+        "INT-005",
+        "RUN-006",
+        "RUN-011"
+      ],
+      "goal": "Treat web, email, document, file and tool content as data so injected instructions cannot become authorized actions.",
+      "build": [
+        "Label every ContextProjection segment with a trust level (DOMAIN.md §12) from its source; render untrusted segments inside typed boundaries with a data-only instruction.",
+        "Propagate derived_from_trust onto every ModelProposal element using the causal window of referenced segments.",
+        "Implement policy-side escalation: untrusted-derived tier>=2 proposals escalate one tier, cannot use `always` rules, and require fresh approval with untrusted-origin preview at tier>=3.",
+        "Implement the exfiltration guard: untrusted or protected-class content cannot be sent to a destination outside the current egress grant set without a data.upload.protected approval.",
+        "Implement deterministic (non-LLM) injection heuristics that tag suspected segments, truncate them to evidence references in context and surface them in UI.",
+        "Build and pin the injection corpus (web pages, emails, documents, tool outputs) used by QA-007."
+      ],
+      "acceptance": [
+        "Zero unauthorized effect executions across the pinned injection corpus.",
+        "An instruction embedded in a fetched page cannot change a tool call's target or bypass approval.",
+        "Trust labels and escalation decisions are visible in the approval preview and evidence timeline."
+      ],
+      "tests": [
+        "injection corpus suite",
+        "escalation policy test",
+        "exfiltration guard test",
+        "trust propagation unit tests"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/trust/",
+        "crates/server/policy/trust/",
+        "tests/security/injection/"
+      ]
+    },
+    {
+      "id": "EXEC-001",
+      "milestone": "M4",
+      "title": "Implement Rust machine-control and execution-target lifecycle",
+      "owner": "Execution",
+      "language": "Rust",
+      "component": "machine-control",
+      "depends_on": [
+        "RUN-005",
+        "CORE-003"
+      ],
+      "goal": "Own placement, generations, leases and lifecycle for all execution environments.",
+      "build": [
+        "Implement ExecutionTarget, Lease, generation, desired/observed state and health.",
+        "Support persistent workspace, isolated task runtime, local capsule, Windows VM and private worker classes behind one contract.",
+        "Implement ExecutionTarget classes/substrates, states and Lease per DOMAIN.md §8.1–§8.3."
+      ],
+      "acceptance": [
+        "Only machine-control mutates target/lease lifecycle.",
+        "Lease expiry or generation change fences old controllers."
+      ],
+      "tests": [
+        "lease race test",
+        "generation fence test",
+        "lifecycle transition test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/machine/control/"
+      ]
+    },
+    {
+      "id": "EXEC-002",
+      "milestone": "M4",
+      "title": "Implement qworkerd typed endpoint/guest protocol",
+      "owner": "Execution",
+      "language": "Rust",
+      "component": "qworkerd",
+      "depends_on": [
+        "EXEC-001",
+        "GOV-004"
+      ],
+      "goal": "Provide one safe worker daemon for local, microVM and private-worker execution.",
+      "build": [
+        "Implement outbound authenticated control channel, heartbeat, lease validation, tool dispatch, stream output, checkpoint hooks and evidence upload.",
+        "Do not allow direct control-plane database access.",
+        "qworkerd exposes tool execution only for dispatch tokens issued by the runtime (RUN-011); it never evaluates policy itself."
+      ],
+      "acceptance": [
+        "Disconnected worker resumes or is fenced without duplicate effect execution.",
+        "Malformed/stale action envelopes fail before tool execution."
+      ],
+      "tests": [
+        "disconnect/reconnect test",
+        "stale envelope test",
+        "network ACL test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/qworkerd/",
+        "crates/machine/gateway/"
+      ]
+    },
+    {
+      "id": "EXEC-003",
+      "milestone": "M4",
+      "title": "Implement macOS local Linux microVM capsule",
+      "owner": "Execution",
+      "language": "Rust/Swift",
+      "component": "local-capsule",
+      "depends_on": [
+        "EXEC-001",
+        "EXEC-002"
+      ],
+      "goal": "Provide isolated local execution on macOS.",
+      "build": [
+        "Use Apple virtualization APIs through minimal native bridge, private guest channel and host-side networking.",
+        "Launch qworkerd in guest; expose file/terminal/browser services only through typed protocol.",
+        "Cookie/saved-login import requires explicit user permission.",
+        "Ship or download a pinned, digest-verified Linux guest image (qworkerd, Chromium, base tooling) through the desktop update channel."
+      ],
+      "acceptance": [
+        "Guest cannot reach host secrets or cloud metadata by default.",
+        "Start/stop/reset and checkpoint flows are repeatable."
+      ],
+      "tests": [
+        "real macOS VM smoke test",
+        "permission denial test",
+        "reset isolation test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "native/macos/",
+        "crates/machine/substrates/macos_capsule/"
+      ]
+    },
+    {
+      "id": "EXEC-004",
+      "milestone": "M4",
+      "title": "Implement Windows local capsule and native broker",
+      "owner": "Execution",
+      "language": "Rust/Windows native",
+      "component": "windows-execution",
+      "depends_on": [
+        "EXEC-001",
+        "EXEC-002"
+      ],
+      "goal": "Provide equivalent managed execution on Windows.",
+      "build": [
+        "Use WSL/Linux capsule for generic workloads and narrow native broker for Windows-only app automation.",
+        "Preserve same ExecutionTarget, capability, effect and evidence contracts."
+      ],
+      "acceptance": [
+        "Windows path passes shared worker/tool conformance suite.",
+        "Native broker exposes no arbitrary host command escape."
+      ],
+      "tests": [
+        "real Windows smoke test",
+        "broker allowlist test",
+        "lease fence test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "native/windows/",
+        "crates/machine/substrates/windows/"
+      ]
+    },
+    {
+      "id": "EXEC-005",
+      "milestone": "M4",
+      "title": "Implement cloud microVM execution fabric",
+      "owner": "Execution/Platform",
+      "language": "Rust/Infra",
+      "component": "cloud-execution",
+      "depends_on": [
+        "EXEC-001",
+        "EXEC-002"
+      ],
+      "goal": "Provide hardware-isolated on-demand persistent and disposable execution targets.",
+      "build": [
+        "Implement immutable images, CoW/snapshot restore, warm pool, placement, host networking and guest credential isolation.",
+        "Keep substrate replaceable behind ExecutionTarget/Lease contracts."
+      ],
+      "acceptance": [
+        "Tenant workloads are isolated and do not receive host/cloud root credentials.",
+        "Lost node results in fenced replacement and safe runtime recovery."
+      ],
+      "tests": [
+        "cloud microVM integration test",
+        "node loss test",
+        "tenant isolation test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "crates/machine/substrates/cloud_microvm/",
+        "infra/images/"
+      ]
+    },
+    {
+      "id": "EXEC-006",
+      "milestone": "M4",
+      "title": "Implement file, terminal and process tool host",
+      "owner": "Execution",
+      "language": "Rust",
+      "component": "tools",
+      "depends_on": [
+        "EXEC-002",
+        "RUN-007",
+        "RUN-011"
+      ],
+      "goal": "Provide typed local/guest tools with bounded outputs and evidence.",
+      "build": [
+        "Implement file read/write/patch, directory operations, process spawn, PTY/terminal replay and command cancellation.",
+        "Every mutating operation carries capability/effect/idempotency context.",
+        "Implement fs.read/fs.write/fs.patch/terminal.exec/process.spawn as Tool Registry entries with effect classes fs.write.workspace / process.exec.sandboxed; TerminalSession per DOMAIN.md §8.5."
+      ],
+      "acceptance": [
+        "Path traversal and unauthorized roots are denied.",
+        "Terminal replay resumes from durable cursor without duplicating command."
+      ],
+      "tests": [
+        "path traversal test",
+        "PTY reconnect test",
+        "command cancellation test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/qworkerd/tools/"
+      ]
+    },
+    {
+      "id": "EXEC-007",
+      "milestone": "M4",
+      "title": "Implement secret broker and opaque credential handles",
+      "owner": "Security/Execution",
+      "language": "Rust",
+      "component": "secrets",
+      "depends_on": [
+        "RUN-005",
+        "EXEC-002"
+      ],
+      "goal": "Keep raw credentials out of model context, renderer and normal guest payloads.",
+      "build": [
+        "Resolve opaque credential handles only at approved execution boundary.",
+        "Support short-lived scoped materialization, rotation/revocation and audit.",
+        "Implement SecretHandle and credential.access effect (tier 4, always audited); KeyProvider abstraction with cloud KMS and local master-key implementations."
+      ],
+      "acceptance": [
+        "Secret values are absent from model/tool logs and normal RPC payloads.",
+        "Revoked handle cannot be reused from cached worker state."
+      ],
+      "tests": [
+        "secret scan",
+        "revocation test",
+        "scope substitution test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/machine/secrets/"
+      ]
+    },
+    {
+      "id": "EXEC-008",
+      "milestone": "M4",
+      "title": "Implement deny-by-default network and egress policy",
+      "owner": "Security/Execution",
+      "language": "Rust",
+      "component": "network",
+      "depends_on": [
+        "EXEC-001",
+        "RUN-006"
+      ],
+      "goal": "Control where execution targets and connectors can communicate.",
+      "build": [
+        "Enforce DNS/domain/IP/port policy at host/network gateway.",
+        "Bind egress grants to tenant, target, capability and lifetime; log decisions without leaking secrets.",
+        "Implement network.egress.new_destination grants bound to tenant/target/capability/lifetime; webhook and connector egress use the same broker."
+      ],
+      "acceptance": [
+        "Unknown destinations are denied by default.",
+        "Policy changes fence or expire affected grants safely."
+      ],
+      "tests": [
+        "blocked-domain test",
+        "DNS rebinding test",
+        "grant expiry test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/machine/egress/"
+      ]
+    },
+    {
+      "id": "EXEC-009",
+      "milestone": "M4",
+      "title": "Implement managed browser session with DOM/CDP-first control",
+      "owner": "Execution",
+      "language": "Rust + optional adapter",
+      "component": "browser",
+      "depends_on": [
+        "EXEC-002",
+        "EXEC-008",
+        "RUN-007",
+        "RUN-011"
+      ],
+      "goal": "Give agents a live browser that does not depend on screenshots for normal understanding.",
+      "build": [
+        "Maintain one browser session exposed to agent and user.",
+        "Use DOM, CDP, accessibility and network metadata first; screenshot/vision is fallback.",
+        "Persist safe session/checkpoint metadata and return typed observations/evidence.",
+        "Implement the Rust CDP driver inside qworkerd; BrowserSession per DOMAIN.md §8.4; CDP screencast frames as live frames; user input relay for takeover.",
+        "Provide headless fetch/extract mode as the web.fetch tool (readable text + links + metadata, bounded output, trust UNTRUSTED_EXTERNAL); no separate scraper runtime.",
+        "Register browser.navigate/click/type/extract/screenshot tools with effect derivation from page semantics (form submit that sends/buys/deletes -> corresponding tier 3/4 class)."
+      ],
+      "acceptance": [
+        "Research and action workflows use the same browser stack.",
+        "Browser action that causes external consequence routes through Effect Ledger.",
+        "web.fetch output is bounded, labelled UNTRUSTED_EXTERNAL and carries the source URL, retrieval time and content digest."
+      ],
+      "tests": [
+        "DOM action test",
+        "screenshot fallback test",
+        "effect classification test",
+        "session resume test",
+        "web.fetch bounds/labelling test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "crates/qworkerd/browser/"
+      ]
+    },
+    {
+      "id": "EXEC-010",
+      "milestone": "M4",
+      "title": "Implement computer-use and human takeover",
+      "owner": "Execution",
+      "language": "Rust/Swift/Windows native",
+      "component": "computer-use",
+      "depends_on": [
+        "EXEC-009",
+        "RUN-006"
+      ],
+      "goal": "Control native applications through a narrow privileged bridge while allowing user takeover.",
+      "build": [
+        "Use app identity, accessibility tree and bounded screenshot input.",
+        "Support read/click/type/clipboard/system-key capability tiers.",
+        "Fence automation while user has control and resume only after explicit handback.",
+        "Implement computer.click/type/clipboard/system-key tools with tiers via GrantComputerTier; app identity resolution via AX (macOS) and UIA (Windows)."
+      ],
+      "acceptance": [
+        "Unknown foreground app fails closed for privileged action.",
+        "User takeover cannot race with agent input."
+      ],
+      "tests": [
+        "app identity test",
+        "takeover race test",
+        "permission tier test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "crates/machine/computer_use/",
+        "native/macos/",
+        "native/windows/"
+      ]
+    },
+    {
+      "id": "EXEC-011",
+      "milestone": "M4",
+      "title": "Implement connector and integration broker",
+      "owner": "Integrations",
+      "language": "Rust/Python adapters",
+      "component": "connectors",
+      "depends_on": [
+        "RUN-007",
+        "EXEC-007",
+        "EXEC-008",
+        "RUN-011"
+      ],
+      "goal": "Connect external SaaS/APIs without bypassing canonical effects.",
+      "build": [
+        "Maintain connector metadata and auth handles in control plane.",
+        "Run adapters in restricted worker boundary; normalize reads/actions/events.",
+        "All consequential writes reserve/settle EffectRecord.",
+        "Ship GA connectors: GitHub, Google Workspace (Gmail read/send, Drive, Calendar), Slack, and one web-search provider adapter exposed as the web.search tool.",
+        "Implement Connector states (connected/degraded/revoked) and OAuth begin/complete commands; tokens as secret handles only."
+      ],
+      "acceptance": [
+        "Connector token never reaches renderer/model.",
+        "Webhook/event redelivery is idempotent and tenant scoped.",
+        "Each GA connector passes the shared connector conformance suite in its provider sandbox."
+      ],
+      "tests": [
+        "provider sandbox test",
+        "token isolation test",
+        "webhook replay test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "crates/server/control/connectors/",
+        "python/intelligence/adapters/connectors/"
+      ]
+    },
+    {
+      "id": "EXEC-012",
+      "milestone": "M4",
+      "title": "Implement source-control, PR and CI tools",
+      "owner": "Execution",
+      "language": "Rust/Python adapters",
+      "component": "developer-tools",
+      "depends_on": [
+        "EXEC-006",
+        "EXEC-011"
+      ],
+      "goal": "Support coding work as ordinary governed tool capability.",
+      "build": [
+        "Implement Git status/diff/branch/commit/worktree operations and provider adapters for PR/CI status/actions.",
+        "Bind remote writes such as push/PR/comment/merge to effect/approval policy.",
+        "Bind push-to-own-branch as scm.remote.write allow+log and PR/comment/merge as ask by default per DOMAIN.md §7.1."
+      ],
+      "acceptance": [
+        "Local read operations work offline in execution target.",
+        "Remote source-control writes are idempotent/effect-tracked."
+      ],
+      "tests": [
+        "git worktree test",
+        "PR sandbox test",
+        "merge approval test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "crates/qworkerd/tools/scm/",
+        "python/intelligence/adapters/connectors/github/"
+      ]
+    },
+    {
+      "id": "APP-001",
+      "milestone": "M5",
+      "title": "Build Rust quansio-server API/control composition",
+      "owner": "Server",
+      "language": "Rust",
+      "component": "server",
+      "depends_on": [
+        "RUN-001",
+        "CORE-009",
+        "RUN-006",
+        "RUN-011",
+        "INT-002"
+      ],
+      "goal": "Expose canonical product commands without creating a second orchestration layer.",
+      "build": [
+        "Compose API, control, runtime command facade, policy, schedule, artifact metadata and notification modules in one deployable by default.",
+        "Expose REST/OpenAPI and WebSocket endpoints with auth, tenant scope, idempotency and typed errors.",
+        "Expose the command catalog and read projections of DOMAIN.md §14 as OpenAPI-generated endpoints with the error taxonomy of §15; per-tenant API rate limits; feature flags from config/flags.yaml.",
+        "Walking skeleton: a smoke test drives one chat turn end-to-end (HTTP command -> runtime -> gateway with conformance-stub or live provider -> tool proposal -> Effect Ledger -> projection -> WebSocket event)."
+      ],
+      "acceptance": [
+        "Every mutating endpoint calls the canonical owner rather than writing foreign tables.",
+        "Generated clients pass contract tests.",
+        "The walking-skeleton smoke test passes in CI with the conformance-stub provider."
+      ],
+      "tests": [
+        "API contract suite",
+        "cross-owner mutation scan",
+        "WebSocket reconnect test",
+        "walking-skeleton smoke test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/",
+        "crates/server/api/"
+      ]
+    },
+    {
+      "id": "APP-002",
+      "milestone": "M5",
+      "title": "Implement identity, onboarding, workspaces and settings",
+      "owner": "Product/Server",
+      "language": "Rust/TypeScript",
+      "component": "onboarding",
+      "depends_on": [
+        "APP-001",
+        "CORE-001"
+      ],
+      "goal": "Get a new user from sign-in to a usable governed workspace.",
+      "build": [
+        "Implement account/session, workspace creation, model/provider setup, execution target choice, privacy/security defaults and layered settings.",
+        "Keep secrets as handles; show effective policy/settings and restart/reindex effects.",
+        "Baseline auth per OD-002 (email magic link + Google/Microsoft/GitHub OAuth); access JWT + rotating refresh in OS keychain; personal tenant auto-provisioned."
+      ],
+      "acceptance": [
+        "Fresh user can complete onboarding without manual configuration files.",
+        "Settings merge is deterministic and most-restrictive for security controls."
+      ],
+      "tests": [
+        "new-user E2E",
+        "settings precedence test",
+        "secret setup test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/control/identity/",
+        "apps/desktop/src/onboarding/"
+      ]
+    },
+    {
+      "id": "APP-003",
+      "milestone": "M5",
+      "title": "Build Electron desktop shell and secure preload bridge",
+      "owner": "Desktop",
+      "language": "TypeScript",
+      "component": "desktop",
+      "depends_on": [
+        "GOV-003",
+        "APP-001"
+      ],
+      "goal": "Provide the primary desktop product without renderer privilege.",
+      "build": [
+        "Implement Electron main, React renderer, secure preload, deep links, update hooks and typed server/local-runtime clients.",
+        "No Node integration or arbitrary host API from renderer.",
+        "Renderer receives model deltas, terminal bytes and browser frames only via the server stream client; externalize UI strings from day one."
+      ],
+      "acceptance": [
+        "Renderer security baseline passes.",
+        "Desktop reconnects to server/runtime without losing active run state."
+      ],
+      "tests": [
+        "CSP/preload test",
+        "desktop reconnect E2E",
+        "permission boundary test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "apps/desktop/"
+      ]
+    },
+    {
+      "id": "APP-004",
+      "milestone": "M5",
+      "title": "Implement chat, objective and thread experience",
+      "owner": "Product/Desktop",
+      "language": "TypeScript/Rust",
+      "component": "conversation",
+      "depends_on": [
+        "APP-002",
+        "APP-003",
+        "INT-002",
+        "RUN-011"
+      ],
+      "goal": "Support fast assistant turns and durable long-running objectives through the same runtime.",
+      "build": [
+        "Create chat/objective composer, streaming model output, tool/progress cards, thread persistence and cancel/resume.",
+        "Map every objective to WorkGraph/Run rather than a UI-only workflow.",
+        "Support file attachments (upload -> Artifact -> message), in-thread agent questions (answer via AnswerQuestion) and a per-turn inspector showing model route, context sources, trust labels and tools used."
+      ],
+      "acceptance": [
+        "Chat and long objective survive client reload.",
+        "User can inspect which model/context/tools were used.",
+        "Attachments and answered questions survive reload and appear in the run timeline."
+      ],
+      "tests": [
+        "streaming UI test",
+        "reload/resume test",
+        "cancel test",
+        "attachment/question E2E"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "apps/desktop/src/conversation/",
+        "crates/server/api/threads/"
+      ]
+    },
+    {
+      "id": "APP-005",
+      "milestone": "M5",
+      "title": "Implement plan, WorkGraph and agent control experience",
+      "owner": "Product/Desktop",
+      "language": "TypeScript",
+      "component": "work-monitor",
+      "depends_on": [
+        "APP-004",
+        "RUN-003",
+        "RUN-002"
+      ],
+      "goal": "Make autonomous work inspectable and steerable.",
+      "build": [
+        "Render plan/dependencies, active agents, handoffs, blockers and completion contracts.",
+        "Support user edits through validated graph commands, not local mutation."
+      ],
+      "acceptance": [
+        "Graph view matches canonical revision.",
+        "Concurrent server update produces conflict/rebase UX rather than silent overwrite."
+      ],
+      "tests": [
+        "graph projection E2E",
+        "revision conflict test",
+        "agent handoff UI test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "apps/desktop/src/work/"
+      ]
+    },
+    {
+      "id": "APP-006",
+      "milestone": "M5",
+      "title": "Implement approvals, effects, timeline and evidence UI",
+      "owner": "Product/Desktop",
+      "language": "TypeScript",
+      "component": "trust-ui",
+      "depends_on": [
+        "APP-005",
+        "RUN-006",
+        "RUN-007",
+        "CORE-007"
+      ],
+      "goal": "Show exactly what Quansio wants to do and why.",
+      "build": [
+        "Display scoped approval request, effect semantics, target, data involved, expiry and consequences.",
+        "Render run/effect/evidence timeline and verification status.",
+        "Show untrusted-origin warnings and trust escalation reasons in approval previews; show OUTCOME_UNKNOWN and reconciliation state distinctly."
+      ],
+      "acceptance": [
+        "Approval UI cannot approve changed payload after preview.",
+        "Unknown/unsettled effects remain visibly unresolved."
+      ],
+      "tests": [
+        "approval binding E2E",
+        "effect timeline E2E",
+        "evidence digest error UI"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "apps/desktop/src/trust/"
+      ]
+    },
+    {
+      "id": "APP-007",
+      "milestone": "M5",
+      "title": "Implement live browser/computer surface",
+      "owner": "Product/Desktop",
+      "language": "TypeScript",
+      "component": "browser-ui",
+      "depends_on": [
+        "APP-003",
+        "EXEC-009",
+        "EXEC-010",
+        "EXEC-006"
+      ],
+      "goal": "Let users observe and take over the same live session used by the agent.",
+      "build": [
+        "Embed live browser/computer stream, navigation/session state, agent cursor state and takeover controls.",
+        "Show when automation is paused by user control or policy.",
+        "Include the live terminal view (PTY replay from durable cursor) alongside browser/computer views."
+      ],
+      "acceptance": [
+        "No hidden replacement session is created on takeover.",
+        "Agent input is fenced while user owns control."
+      ],
+      "tests": [
+        "single-session test",
+        "takeover E2E",
+        "reconnect test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "apps/desktop/src/live/"
+      ]
+    },
+    {
+      "id": "APP-008",
+      "milestone": "M5",
+      "title": "Implement artifact, file and document workspace",
+      "owner": "Product/Desktop",
+      "language": "TypeScript",
+      "component": "artifacts",
+      "depends_on": [
+        "APP-003",
+        "CORE-007"
+      ],
+      "goal": "Make generated/retrieved work first-class rather than buried in chat.",
+      "build": [
+        "Provide artifact browser, version history, safe preview/download/open, diff where applicable and source/evidence links.",
+        "Support document/spreadsheet/slide/media artifact metadata.",
+        "Provide global search across threads, artifacts, knowledge and evidence via the typed /search endpoint."
+      ],
+      "acceptance": [
+        "Artifacts remain available after chat/run closure.",
+        "Preview cannot execute active content with host privileges."
+      ],
+      "tests": [
+        "artifact persistence E2E",
+        "malicious preview test",
+        "version history test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "apps/desktop/src/artifacts/"
+      ]
+    },
+    {
+      "id": "APP-009",
+      "milestone": "M5",
+      "title": "Implement collaboration, group chat, reactions and handoffs",
+      "owner": "Product",
+      "language": "Rust/TypeScript",
+      "component": "collaboration",
+      "depends_on": [
+        "APP-001",
+        "RUN-002",
+        "CORE-009"
+      ],
+      "goal": "Support multi-participant human/agent collaboration on canonical threads.",
+      "build": [
+        "Implement membership, mentions, reactions, message/event ordering, agent handoff and attention state.",
+        "Enforce tenant/workspace permissions for every participant."
+      ],
+      "acceptance": [
+        "Concurrent messages preserve stable order/IDs.",
+        "Removed participant cannot receive new protected events."
+      ],
+      "tests": [
+        "multi-client ordering test",
+        "membership revoke test",
+        "handoff E2E"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/control/collaboration/",
+        "apps/desktop/src/collaboration/"
+      ]
+    },
+    {
+      "id": "APP-010",
+      "milestone": "M5",
+      "title": "Implement routines, schedules, events and notifications",
+      "owner": "Product",
+      "language": "Rust/TypeScript",
+      "component": "automation",
+      "depends_on": [
+        "CORE-008",
+        "APP-001",
+        "RUN-001"
+      ],
+      "goal": "Allow recurring/event-driven work without separate automation runtime.",
+      "build": [
+        "Create routine definitions that compile to WorkGraph triggers/waits.",
+        "Implement event subscriptions, notification preferences, absence handling and retry/backoff.",
+        "Notification channels: in-app, desktop native, email (OD-009); attention kinds per DOMAIN.md §13.3."
+      ],
+      "acceptance": [
+        "Restart does not duplicate scheduled runs.",
+        "Routine uses same policy/capability/effect path as interactive work."
+      ],
+      "tests": [
+        "schedule restart test",
+        "event dedupe test",
+        "notification preference E2E"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/control/routines/",
+        "crates/server/notify/",
+        "apps/desktop/src/automation/"
+      ]
+    },
+    {
+      "id": "APP-011",
+      "milestone": "M5",
+      "title": "Implement memory, knowledge, skills and capability settings UI",
+      "owner": "Product",
+      "language": "TypeScript",
+      "component": "knowledge-ui",
+      "depends_on": [
+        "APP-003",
+        "INT-006",
+        "INT-007",
+        "INT-009",
+        "APP-004"
+      ],
+      "goal": "Give users visibility and control over reusable intelligence.",
+      "build": [
+        "Show knowledge/memory provenance, scope, delete/supersede controls, active skill versions and task-scoped capability resolution.",
+        "Separate semantic memory from recovery/checkpoint information in UI."
+      ],
+      "acceptance": [
+        "Deleted memory/knowledge disappears from future retrieval.",
+        "Unapproved skill/capability cannot be activated through UI."
+      ],
+      "tests": [
+        "delete propagation E2E",
+        "skill activation policy test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "apps/desktop/src/knowledge/"
+      ]
+    },
+    {
+      "id": "APP-012",
+      "milestone": "M5",
+      "title": "Build web administration and review surface",
+      "owner": "Web",
+      "language": "TypeScript",
+      "component": "web-admin",
+      "depends_on": [
+        "APP-001",
+        "APP-002",
+        "APP-006"
+      ],
+      "goal": "Provide browser-based review, administration and remote monitoring.",
+      "build": [
+        "Implement responsive React web app for work review, approvals, policies, connectors, users, capabilities, audit and artifacts.",
+        "Do not expose local privileged desktop APIs.",
+        "Serve the web app as static assets from quansio-server or a CDN; no host-privileged APIs."
+      ],
+      "acceptance": [
+        "Web uses same public contracts and authorization rules as desktop.",
+        "Admin-only pages enforce server RBAC."
+      ],
+      "tests": [
+        "web RBAC E2E",
+        "approval E2E",
+        "responsive smoke"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "apps/web/"
+      ]
+    },
+    {
+      "id": "APP-013",
+      "milestone": "M5",
+      "title": "Build CLI and SDK surface",
+      "owner": "Developer Experience",
+      "language": "Rust/Generated SDKs",
+      "component": "cli-sdk",
+      "depends_on": [
+        "APP-001",
+        "GOV-004"
+      ],
+      "goal": "Allow automation and operators to use the same canonical APIs.",
+      "build": [
+        "Implement Rust CLI for auth, runs, agents, artifacts, approvals, routines and diagnostics.",
+        "Publish generated TypeScript/Python clients from OpenAPI/Protobuf where appropriate.",
+        "CLI supports login, workspaces, threads/messages, objectives/runs, approvals, artifacts, routines, targets, diagnostics bundle and `--json` output for automation."
+      ],
+      "acceptance": [
+        "CLI never bypasses API/runtime policy.",
+        "SDK compatibility test passes against current server."
+      ],
+      "tests": [
+        "CLI E2E",
+        "SDK contract fixture",
+        "auth token scope test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/cli/",
+        "sdk/"
+      ]
+    },
+    {
+      "id": "APP-014",
+      "milestone": "M5",
+      "title": "Implement teammate definitions, persona and roster",
+      "owner": "Product/Server",
+      "language": "Rust/TypeScript",
+      "component": "teammates",
+      "depends_on": [
+        "APP-004",
+        "RUN-002",
+        "RUN-005"
+      ],
+      "goal": "Let users create and govern persistent teammates as first-class, capability-bounded participants.",
+      "build": [
+        "Implement Teammate (agent definition) with persona, standing instructions, default capability grants (narrowing only), memory scope, model route preference, default execution target and availability.",
+        "Provision one persistent AgentThread per teammate per workspace; route direct/group thread messages to it through the canonical turn loop.",
+        "Build the roster UI: create/edit/archive teammates, show active runs, attention state and effective capability.",
+        "Ship default teammate templates (general assistant, researcher, engineer) as configuration, not code."
+      ],
+      "acceptance": [
+        "A teammate's standing instructions cannot widen its capability projection.",
+        "Archiving a teammate suspends its AgentThread without losing thread/work/evidence lineage.",
+        "Teammate configuration changes are audited and take effect on the next turn without restart."
+      ],
+      "tests": [
+        "teammate capability narrowing test",
+        "archive/suspend lineage test",
+        "roster E2E"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/control/teammates/",
+        "apps/desktop/src/teammates/"
+      ]
+    },
+    {
+      "id": "APP-015",
+      "milestone": "M5",
+      "title": "Implement public event stream and outbound webhooks",
+      "owner": "Developer Experience",
+      "language": "Rust",
+      "component": "webhooks",
+      "depends_on": [
+        "APP-001",
+        "CORE-009",
+        "RUN-007",
+        "EXEC-008"
+      ],
+      "goal": "Give integrators the same canonical events clients receive, delivered safely.",
+      "build": [
+        "Implement webhook subscriptions (DOMAIN.md §13.5) with event-type filters, HMAC signing via secret handle, retry/backoff, dead-letter and delivery status projection.",
+        "Deliver through the egress broker as network.egress effects with redaction applied to payloads.",
+        "Document the public event stream (WS/SSE) and webhook payload schema in OpenAPI; generate SDK helpers for signature verification."
+      ],
+      "acceptance": [
+        "Delivery is at-least-once with stable event ids so consumers can dedupe; no event is delivered to a subscription outside its tenant/workspace.",
+        "Webhook destinations obey egress policy and can be disabled by kill switch.",
+        "Secrets and protected data classes never appear in webhook payloads."
+      ],
+      "tests": [
+        "delivery/retry test",
+        "tenant scope test",
+        "redaction scan",
+        "egress deny test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/api/webhooks/",
+        "crates/server/notify/webhooks/"
+      ]
+    },
+    {
+      "id": "CAP-001",
+      "milestone": "M6",
+      "title": "Implement evidence-first research workflow",
+      "owner": "Product/AI",
+      "language": "Rust/Python",
+      "component": "research",
+      "depends_on": [
+        "INT-005",
+        "INT-002",
+        "RUN-003",
+        "CORE-007",
+        "EXEC-009",
+        "EXEC-011",
+        "INT-012"
+      ],
+      "goal": "Deliver deep research through normal WorkGraph/context/evidence primitives.",
+      "build": [
+        "Compile research intent to typed SearchProgram and bounded WorkGraph branches.",
+        "Collect source evidence, uncertainty and answer artifacts; model synthesizes only from authorized context.",
+        "Use web.search and web.fetch/browser tools under egress policy; all fetched content enters context as UNTRUSTED_EXTERNAL."
+      ],
+      "acceptance": [
+        "Research creates no second orchestrator or memory store.",
+        "Final claims can resolve to evidence descriptors."
+      ],
+      "tests": [
+        "multi-source research E2E",
+        "unsupported claim test",
+        "cancel/recover test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/research/",
+        "packs/skills/research/"
+      ]
+    },
+    {
+      "id": "CAP-002",
+      "milestone": "M6",
+      "title": "Implement citations, EvidenceBundle and research verification",
+      "owner": "Product/AI",
+      "language": "Python/Rust",
+      "component": "research-evidence",
+      "depends_on": [
+        "CAP-001",
+        "CORE-007"
+      ],
+      "goal": "Make research outputs traceable and verifiable.",
+      "build": [
+        "Create EvidenceBundle with source identity, excerpt locator/digest, retrieval time and claim links.",
+        "Run deterministic citation existence/coverage checks plus optional semantic support scoring."
+      ],
+      "acceptance": [
+        "Missing/invalid evidence prevents verified research completion.",
+        "Evidence bundle survives provider/model changes."
+      ],
+      "tests": [
+        "broken citation test",
+        "claim coverage test",
+        "bundle reload test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/research/evidence/",
+        "crates/server/runtime/verification/citations/"
+      ]
+    },
+    {
+      "id": "CAP-003",
+      "milestone": "M6",
+      "title": "Implement artifact creation and editing workflows",
+      "owner": "Product/AI",
+      "language": "Python/TypeScript",
+      "component": "artifact-workflows",
+      "depends_on": [
+        "APP-008",
+        "RUN-008",
+        "EXEC-006"
+      ],
+      "goal": "Create polished documents, spreadsheets, slides, media and code artifacts through governed tools.",
+      "build": [
+        "Represent artifact-edit tasks as skills/tools with versioned source files and preview/evidence.",
+        "Require format validation and task-specific quality checks before completion."
+      ],
+      "acceptance": [
+        "Artifacts are editable/versioned and not opaque chat blobs.",
+        "Failed format validation blocks completion."
+      ],
+      "tests": [
+        "document/spreadsheet/slide fixtures",
+        "round-trip edit test",
+        "malformed artifact test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/artifacts/",
+        "packs/skills/artifacts/"
+      ]
+    },
+    {
+      "id": "CAP-004",
+      "milestone": "M6",
+      "title": "Implement Capability Compiler ingestion pipeline",
+      "owner": "Business Platform",
+      "language": "Python",
+      "component": "capability-compiler",
+      "depends_on": [
+        "INT-006",
+        "INT-009",
+        "EXEC-011"
+      ],
+      "goal": "Turn authoritative enterprise material into candidate Business Capability Packs without creating a second runtime.",
+      "build": [
+        "Ingest documents, SOPs, policies, APIs, permissions, workflows and verified historical work.",
+        "Decompose knowledge/process/tool/policy/evaluation requirements and generate candidate pack artifacts with provenance."
+      ],
+      "acceptance": [
+        "Compiler output is non-executable until qualification/promotion.",
+        "Raw credentials and private cross-tenant data are excluded from generated packs."
+      ],
+      "tests": [
+        "ingestion provenance test",
+        "credential leak test",
+        "tenant isolation test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/capability_compiler/"
+      ]
+    },
+    {
+      "id": "CAP-005",
+      "milestone": "M6",
+      "title": "Implement Business Capability Pack lifecycle and runtime resolution",
+      "owner": "Business Platform",
+      "language": "Rust/Python",
+      "component": "capability-packs",
+      "depends_on": [
+        "CAP-004",
+        "RUN-005",
+        "RUN-008"
+      ],
+      "goal": "Govern, evaluate, version and execute enterprise capabilities through existing Quansio primitives.",
+      "build": [
+        "Define pack schema combining knowledge, skills, tools, connectors, policies, RBAC, approvals, workflow templates and evals.",
+        "Qualify/promote versions, then resolve execution into WorkGraph + Skills + Tools + Knowledge + Policy."
+      ],
+      "acceptance": [
+        "Pack cannot widen caller authority.",
+        "Rollback to prior qualified version is deterministic."
+      ],
+      "tests": [
+        "pack qualification test",
+        "authority narrowing test",
+        "rollback test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/control/packs/",
+        "python/intelligence/capability_compiler/lifecycle/"
+      ]
+    },
+    {
+      "id": "CAP-006",
+      "milestone": "M6",
+      "title": "Ship WikiSkill and knowledge-navigation baseline",
+      "owner": "AI/Product",
+      "language": "Python",
+      "component": "skills",
+      "depends_on": [
+        "INT-009",
+        "INT-010",
+        "INT-004"
+      ],
+      "goal": "Provide a strong built-in skill for navigating large knowledge/repository spaces without adding a subsystem.",
+      "build": [
+        "Create approved WikiSkill package using existing SearchProgram, index and Knowledge Fabric.",
+        "Add evals for navigation, source selection, summarization, link/provenance preservation and context budget."
+      ],
+      "acceptance": [
+        "Skill passes evaluation thresholds on pinned corpora.",
+        "Disabling the skill leaves core search/context functional."
+      ],
+      "tests": [
+        "skill eval campaign",
+        "budget regression test",
+        "disable/fallback test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "packs/skills/wiki/"
+      ]
+    },
+    {
+      "id": "CAP-007",
+      "milestone": "M6",
+      "title": "Ship initial built-in skill and capability packs",
+      "owner": "Product",
+      "language": "Python/Markdown",
+      "component": "skills",
+      "depends_on": [
+        "INT-009",
+        "CAP-003",
+        "CAP-006"
+      ],
+      "goal": "Make the final product useful on day one across core work domains.",
+      "build": [
+        "Package governed skills for research, coding/source control, artifact creation, data analysis, cloud/DevOps and business operations.",
+        "Each pack declares tools, capability needs, evaluation cases, examples and recovery guidance."
+      ],
+      "acceptance": [
+        "Every built-in pack has owner, version, provenance and passing eval.",
+        "No pack installs daemons or bypasses runtime/tool policy."
+      ],
+      "tests": [
+        "pack schema/eval checks",
+        "capability scan",
+        "tool availability test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "packs/skills/",
+        "packs/capabilities/"
+      ]
+    },
+    {
+      "id": "CAP-008",
+      "milestone": "M6",
+      "title": "Implement controlled skill evolution",
+      "owner": "AI/Product",
+      "language": "Python",
+      "component": "skill-evolution",
+      "depends_on": [
+        "INT-010",
+        "CAP-007",
+        "CORE-007"
+      ],
+      "goal": "Improve procedures from verified experience without self-modifying production behavior.",
+      "build": [
+        "Detect repeated verified success/failure/recovery patterns from evidence.",
+        "Generate candidate skill patches, evaluate against regression/safety/cost suites and require governed promotion."
+      ],
+      "acceptance": [
+        "Production skill cannot change directly from a task run.",
+        "Candidate provenance links back to evidence and evaluation."
+      ],
+      "tests": [
+        "silent mutation negative test",
+        "candidate-to-promotion test",
+        "regression rejection test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "python/intelligence/skills/evolution/"
+      ]
+    },
+    {
+      "id": "OPS-001",
+      "milestone": "M7",
+      "title": "Implement enterprise identity and service principals",
+      "owner": "Security/Platform",
+      "language": "Rust",
+      "component": "identity",
+      "depends_on": [
+        "APP-001",
+        "APP-002"
+      ],
+      "goal": "Support organization-grade authentication and lifecycle.",
+      "build": [
+        "Add OIDC/SAML-compatible SSO boundary, SCIM provisioning, service identities, device/workload identity and session revocation.",
+        "Map external groups to internal RBAC without trusting client claims."
+      ],
+      "acceptance": [
+        "Deprovisioned identity loses access promptly.",
+        "Service identity scopes are explicit and auditable."
+      ],
+      "tests": [
+        "SSO sandbox test",
+        "SCIM deprovision test",
+        "token revocation test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "crates/server/control/identity/enterprise/"
+      ]
+    },
+    {
+      "id": "OPS-002",
+      "milestone": "M7",
+      "title": "Implement audit, privacy, retention and user data controls",
+      "owner": "Security/Platform",
+      "language": "Rust",
+      "component": "governance",
+      "depends_on": [
+        "CORE-003",
+        "INT-006",
+        "CORE-007",
+        "INT-007",
+        "INT-004",
+        "INT-011"
+      ],
+      "goal": "Provide durable auditability and controllable data lifecycle.",
+      "build": [
+        "Record admin/access/effect/policy events with actor and provenance.",
+        "Implement retention, export and deletion workflows across authoritative and derived stores.",
+        "Deletion propagates to Tantivy indexes, pgvector, memory and caches; AuditEntry hash chain per DOMAIN.md §16."
+      ],
+      "acceptance": [
+        "Deletion propagates to indexes/memory/derived data subject to explicit legal retention.",
+        "Audit entries cannot be edited in place."
+      ],
+      "tests": [
+        "export/delete E2E",
+        "derived deletion test",
+        "audit immutability test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/audit/",
+        "crates/server/control/data_lifecycle/"
+      ]
+    },
+    {
+      "id": "OPS-003",
+      "milestone": "M7",
+      "title": "Implement observability and redacted diagnostics",
+      "owner": "Platform",
+      "language": "Rust/Python/TypeScript",
+      "component": "observability",
+      "depends_on": [
+        "APP-001",
+        "INT-001",
+        "EXEC-002"
+      ],
+      "goal": "Make production behavior diagnosable without leaking sensitive data.",
+      "build": [
+        "Instrument traces, metrics and structured logs with correlation IDs across runtime, intelligence and workers.",
+        "Apply secret/PII redaction and bounded diagnostic bundle export.",
+        "OpenTelemetry traces/metrics/logs (OTLP), Prometheus-compatible metrics, structured JSON logs with correlation_id; secret canaries injected in CI."
+      ],
+      "acceptance": [
+        "A run can be traced end-to-end across service boundaries.",
+        "Secret canary values do not appear in logs/traces."
+      ],
+      "tests": [
+        "trace propagation test",
+        "secret canary scan",
+        "diagnostic bundle test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/observability/",
+        "python/intelligence/observability/",
+        "apps/desktop/src/diagnostics/"
+      ]
+    },
+    {
+      "id": "OPS-004",
+      "milestone": "M7",
+      "title": "Implement usage, budget, quota and entitlement projections",
+      "owner": "Platform/Product",
+      "language": "Rust",
+      "component": "usage",
+      "depends_on": [
+        "RUN-010",
+        "CORE-009"
+      ],
+      "goal": "Measure resources and enforce plan/organization limits without contaminating runtime truth.",
+      "build": [
+        "Project model tokens/cost, machine time, storage, connector calls and concurrency.",
+        "Enforce hard/soft quotas through runtime/capability policy; keep billing as projection.",
+        "UsageRecord meters per DOMAIN.md §13.4."
+      ],
+      "acceptance": [
+        "Usage rebuild from source events is deterministic.",
+        "Quota failure does not partially commit a new effect."
+      ],
+      "tests": [
+        "usage rebuild test",
+        "quota race test",
+        "budget alert test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/usage/"
+      ]
+    },
+    {
+      "id": "OPS-005",
+      "milestone": "M7",
+      "title": "Implement backup, restore and disaster-recovery consistency",
+      "owner": "Platform",
+      "language": "Infra/Rust",
+      "component": "dr",
+      "depends_on": [
+        "CORE-001",
+        "CORE-007",
+        "RUN-009"
+      ],
+      "goal": "Restore canonical state, artifacts and effects to a consistent point.",
+      "build": [
+        "Configure PostgreSQL PITR, object versioning/replication and event/outbox recovery.",
+        "Define RecoveryConsistencyPoint spanning DB/event position, artifact manifest, target snapshots and Effect Ledger settlement watermark."
+      ],
+      "acceptance": [
+        "DR drill restores a usable tenant and proves no settled effect becomes pending or repeats.",
+        "RPO/RTO are measured rather than asserted."
+      ],
+      "tests": [
+        "automated restore drill",
+        "consistency point validation",
+        "effect settlement audit"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "infra/dr/",
+        "crates/server/control/recovery_point/"
+      ]
+    },
+    {
+      "id": "OPS-006",
+      "milestone": "M7",
+      "title": "Implement supported deployment topologies",
+      "owner": "Platform",
+      "language": "Terraform/Helm/Containers",
+      "component": "deployment",
+      "depends_on": [
+        "APP-001",
+        "INT-001",
+        "EXEC-005"
+      ],
+      "goal": "Run the same product in managed cloud, private cloud/VPC and developer environments.",
+      "build": [
+        "Build containers and infrastructure modules for server, intelligence, indexer, machine control and backing stores.",
+        "Support endpoint/local execution without exposing provider/control secrets."
+      ],
+      "acceptance": [
+        "Topology changes do not change canonical contracts or ownership.",
+        "Private deployment passes health and smoke tests."
+      ],
+      "tests": [
+        "managed deployment smoke",
+        "private topology smoke",
+        "upgrade fixture"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "infra/terraform/",
+        "infra/helm/",
+        "infra/images/"
+      ]
+    },
+    {
+      "id": "OPS-007",
+      "milestone": "M7",
+      "title": "Implement supply-chain and dependency security",
+      "owner": "Security/Build",
+      "language": "Mixed",
+      "component": "supply-chain",
+      "depends_on": [
+        "GOV-005",
+        "GOV-003"
+      ],
+      "goal": "Protect release inputs and third-party dependencies.",
+      "build": [
+        "Pin dependencies, generate SBOM, scan vulnerabilities/licenses, verify container/base-image provenance and protect update channels.",
+        "Quarantine imported skills/tools before promotion."
+      ],
+      "acceptance": [
+        "Known critical dependency fixture blocks release.",
+        "SBOM matches built artifacts."
+      ],
+      "tests": [
+        "dependency scan",
+        "SBOM verification",
+        "untrusted skill quarantine test"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "scripts/ci/supply_chain/",
+        "deny.toml"
+      ]
+    },
+    {
+      "id": "OPS-008",
+      "milestone": "M7",
+      "title": "Implement operational runbooks and kill switches",
+      "owner": "Platform/Security",
+      "language": "Markdown/Rust",
+      "component": "operations",
+      "depends_on": [
+        "OPS-003",
+        "OPS-005",
+        "RUN-006"
+      ],
+      "goal": "Provide safe operator actions for incidents and degraded dependencies.",
+      "build": [
+        "Implement provider disable, connector revoke, worker quarantine, machine drain, effect freeze and policy emergency controls.",
+        "Document concise runbooks in DOSSIER.md release section rather than separate manuals.",
+        "Implement the kill switches listed in DOSSIER.md §21.5 as runtime.control effects with audit; runbooks generated into docs/runbooks/."
+      ],
+      "acceptance": [
+        "Kill switches are audited and recoverable.",
+        "Effect freeze blocks new consequential actions without corrupting reads or active evidence."
+      ],
+      "tests": [
+        "kill-switch E2E",
+        "worker quarantine test",
+        "provider outage drill"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "crates/server/control/ops/",
+        "docs/runbooks/"
+      ]
+    },
+    {
+      "id": "QA-001",
+      "milestone": "M8",
+      "title": "Close unit, schema and contract verification",
+      "owner": "QA",
+      "language": "Mixed",
+      "component": "verification",
+      "depends_on": [
+        "GOV-005",
+        "APP-013"
+      ],
+      "goal": "Ensure every canonical module has executable local correctness coverage.",
+      "build": [
+        "Set coverage expectations for safety-critical paths, validate schemas/bindings and run public/internal contract suites.",
+        "Ban skipped/xfail release-blocking tests."
+      ],
+      "acceptance": [
+        "All required suites pass from clean checkout.",
+        "Generated contract drift is zero."
+      ],
+      "tests": [
+        "CI unit suite",
+        "schema suite",
+        "contract compatibility suite"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "tests/contract/",
+        "scripts/ci/"
+      ]
+    },
+    {
+      "id": "QA-002",
+      "milestone": "M8",
+      "title": "Prove architecture and authority consistency",
+      "owner": "QA/Architecture",
+      "language": "Python/Mixed",
+      "component": "architecture",
+      "depends_on": [
+        "GOV-008",
+        "QA-001"
+      ],
+      "goal": "Verify there is exactly one authority per concern in the final build.",
+      "build": [
+        "Scan dependencies, database access, network paths and task/manifest registries.",
+        "Detect shadow runtimes, direct provider calls, worker DB access and alternate effect paths."
+      ],
+      "acceptance": [
+        "All known negative fixtures are caught.",
+        "V8.1 validator reports zero consistency errors."
+      ],
+      "tests": [
+        "architecture negative corpus",
+        "manifest/DAG validation",
+        "forbidden wiring scan"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "tests/architecture/"
+      ]
+    },
+    {
+      "id": "QA-003",
+      "milestone": "M8",
+      "title": "Qualify runtime concurrency, crash recovery and replay",
+      "owner": "QA/Runtime",
+      "language": "Rust",
+      "component": "runtime",
+      "depends_on": [
+        "RUN-009",
+        "RUN-010",
+        "CORE-008"
+      ],
+      "goal": "Demonstrate durable autonomous work under failure.",
+      "build": [
+        "Inject runtime crashes, worker loss, stream loss, timer restart, cancellation races and concurrent graph updates.",
+        "Verify protocol replay, generation fencing and effect reconciliation."
+      ],
+      "acceptance": [
+        "No duplicate settled effects or impossible states occur.",
+        "Recovered run either safely continues or ends with typed unrecoverable reason."
+      ],
+      "tests": [
+        "fault-injection matrix",
+        "long-run soak",
+        "race/property tests"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "tests/recovery/"
+      ]
+    },
+    {
+      "id": "QA-004",
+      "milestone": "M8",
+      "title": "Qualify model, context, search, memory and skills",
+      "owner": "QA/AI",
+      "language": "Python/Rust",
+      "component": "intelligence",
+      "depends_on": [
+        "INT-010",
+        "CAP-006",
+        "CAP-008"
+      ],
+      "goal": "Prove intelligence quality and safety against pinned evaluation sets.",
+      "build": [
+        "Run route, retrieval, grounding, context budget, memory isolation, skill regression and cost/latency evaluations.",
+        "Compare against frozen V8.1 thresholds, not self-selected examples.",
+        "Gate on the ratified thresholds (DOSSIER.md §21.3 / OD-011)."
+      ],
+      "acceptance": [
+        "Protected quality and safety thresholds pass.",
+        "Cross-tenant or deleted-memory retrieval is zero in adversarial set."
+      ],
+      "tests": [
+        "evaluation campaign",
+        "retrieval benchmark",
+        "memory isolation suite"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "tests/evaluation/"
+      ]
+    },
+    {
+      "id": "QA-005",
+      "milestone": "M8",
+      "title": "Qualify real execution, browser and computer boundaries",
+      "owner": "QA/Execution",
+      "language": "Rust/TypeScript",
+      "component": "execution",
+      "depends_on": [
+        "EXEC-003",
+        "EXEC-004",
+        "EXEC-005",
+        "EXEC-009",
+        "EXEC-010"
+      ],
+      "goal": "Verify execution on actual supported environments rather than mocks.",
+      "build": [
+        "Run local macOS, Windows and cloud target suites where available.",
+        "Test browser DOM/CDP, screenshot fallback, downloads/uploads, app automation, takeover and checkpoint recovery."
+      ],
+      "acceptance": [
+        "Unavailable required environment is BLOCKED_REAL_BOUNDARY, never PASS.",
+        "Consequential GUI actions produce correct EffectRecords."
+      ],
+      "tests": [
+        "real-device matrix",
+        "browser recovery suite",
+        "takeover race suite"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "tests/integration/execution/"
+      ]
+    },
+    {
+      "id": "QA-006",
+      "milestone": "M8",
+      "title": "Qualify connectors and external effects",
+      "owner": "QA/Integrations",
+      "language": "Mixed",
+      "component": "integrations",
+      "depends_on": [
+        "EXEC-011",
+        "RUN-007"
+      ],
+      "goal": "Prove external actions are idempotent, scoped and reconcilable.",
+      "build": [
+        "Exercise representative read/write connectors in provider sandboxes.",
+        "Inject timeout after remote success, webhook duplicates, token revoke and approval expiry."
+      ],
+      "acceptance": [
+        "No blind retry duplicates external consequence.",
+        "Revoked connector stops future calls and surfaces attention state."
+      ],
+      "tests": [
+        "sandbox connector suite",
+        "unknown outcome test",
+        "token revoke test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "tests/integration/connectors/"
+      ]
+    },
+    {
+      "id": "QA-007",
+      "milestone": "M8",
+      "title": "Run security and privacy adversarial qualification",
+      "owner": "Security QA",
+      "language": "Mixed",
+      "component": "security",
+      "depends_on": [
+        "OPS-001",
+        "OPS-002",
+        "OPS-007",
+        "EXEC-007",
+        "EXEC-008",
+        "INT-012"
+      ],
+      "goal": "Attack the trust boundaries before release.",
+      "build": [
+        "Test tenant breakout, capability escalation, approval substitution, secret exfiltration, SSRF/DNS rebinding, path traversal, malicious skill/content, unsafe preview and stale lease reuse.",
+        "Include the INT-012 injection corpus and the threat table in DOSSIER.md §16 as the minimum attack list."
+      ],
+      "acceptance": [
+        "No P0/P1 security finding remains open.",
+        "Security-critical ambiguity fails closed."
+      ],
+      "tests": [
+        "adversarial suite",
+        "secret canaries",
+        "tenant isolation campaign"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "tests/security/"
+      ]
+    },
+    {
+      "id": "QA-008",
+      "milestone": "M8",
+      "title": "Qualify desktop/web UX and accessibility",
+      "owner": "QA/Product",
+      "language": "TypeScript",
+      "component": "ui",
+      "depends_on": [
+        "APP-003",
+        "APP-012",
+        "APP-011",
+        "APP-014"
+      ],
+      "goal": "Prove complete human workflows, not isolated screens.",
+      "build": [
+        "Automate onboarding, chat/objective, plan steering, approval, browser takeover, artifact review, collaboration, routines and settings.",
+        "Run keyboard/accessibility and degraded/offline-state checks.",
+        "Run on the support matrix in DOSSIER.md §21.1."
+      ],
+      "acceptance": [
+        "Critical journeys pass on supported desktop OS versions and major browsers.",
+        "Accessibility blockers are resolved."
+      ],
+      "tests": [
+        "Playwright E2E",
+        "desktop smoke",
+        "accessibility scan"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "tests/e2e/"
+      ]
+    },
+    {
+      "id": "QA-009",
+      "milestone": "M8",
+      "title": "Qualify performance, scale and cost controls",
+      "owner": "QA/Platform",
+      "language": "Mixed",
+      "component": "performance",
+      "depends_on": [
+        "OPS-003",
+        "OPS-004",
+        "RUN-010"
+      ],
+      "goal": "Ensure the product remains responsive and bounded under realistic load.",
+      "build": [
+        "Measure API latency, event lag, runtime scheduling, index/query latency, model stream startup, browser control, worker density and cost/usage accuracy.",
+        "Run overload/backpressure tests.",
+        "Measure against the ratified SLOs (DOSSIER.md §21.2 / OD-011)."
+      ],
+      "acceptance": [
+        "Published V8.1 SLO thresholds pass or are explicitly waived before candidate creation.",
+        "Overload degrades with bounded queues rather than unbounded memory growth."
+      ],
+      "tests": [
+        "load test",
+        "soak test",
+        "backpressure test",
+        "usage accuracy check"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "tests/performance/"
+      ]
+    },
+    {
+      "id": "QA-010",
+      "milestone": "M8",
+      "title": "Run final end-to-end product and migration journeys",
+      "owner": "QA/Product",
+      "language": "Mixed",
+      "component": "e2e",
+      "depends_on": [
+        "QA-003",
+        "QA-004",
+        "QA-005",
+        "QA-006",
+        "QA-007",
+        "QA-008",
+        "QA-009",
+        "GOV-006"
+      ],
+      "goal": "Prove the final product as users will experience it and prove migration from legacy state.",
+      "build": [
+        "Execute representative persistent teammate, research, coding/tool, artifact, routine, collaboration and Business Capability journeys from UI/API to real effects/evidence.",
+        "Migrate supported legacy fixtures and verify no shadow authority remains."
+      ],
+      "acceptance": [
+        "All GA journeys end with verified completion/evidence and can be resumed after injected interruption.",
+        "Migration preserves supported user data or emits explicit incompatibility report."
+      ],
+      "tests": [
+        "GA journey suite",
+        "migration suite",
+        "fresh-install suite"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "tests/e2e/journeys/",
+        "tests/integration/migration/"
+      ]
+    },
+    {
+      "id": "REL-001",
+      "milestone": "M9",
+      "title": "Create immutable release candidate",
+      "owner": "Release",
+      "language": "Mixed",
+      "component": "release",
+      "depends_on": [
+        "QA-010",
+        "OPS-006",
+        "OPS-007"
+      ],
+      "goal": "Build one candidate from a known commit and exact dependencies.",
+      "build": [
+        "Freeze version, migrations, contracts, container/image digests, desktop assets, skill/capability versions and evaluation dataset digests.",
+        "Generate CI attestation and checksum manifest; no custom per-task signing ceremony is required."
+      ],
+      "acceptance": [
+        "Candidate is reproducible from tagged commit and build config.",
+        "All artifacts resolve to recorded digests."
+      ],
+      "tests": [
+        "rebuild comparison",
+        "manifest verification",
+        "SBOM check"
+      ],
+      "real_boundary": false,
+      "ga_required": true,
+      "paths": [
+        "scripts/release/",
+        "infra/images/"
+      ]
+    },
+    {
+      "id": "REL-002",
+      "milestone": "M9",
+      "title": "Package and notarize macOS desktop",
+      "owner": "Release/Desktop",
+      "language": "TypeScript/Rust/Swift",
+      "component": "macos-release",
+      "depends_on": [
+        "REL-001",
+        "APP-003",
+        "EXEC-003"
+      ],
+      "goal": "Produce installable trusted macOS distribution.",
+      "build": [
+        "Build universal/supported architecture bundle, hardened runtime, entitlements, code signing, notarization and auto-update metadata.",
+        "Signing credentials remain operator/CI secrets outside repository."
+      ],
+      "acceptance": [
+        "Signed/notarized package installs and updates on clean supported macOS.",
+        "Unsigned developer build remains available when release credentials are unavailable."
+      ],
+      "tests": [
+        "clean-machine install",
+        "update/rollback test",
+        "Gatekeeper validation"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "apps/desktop/build/macos/",
+        "scripts/release/macos/"
+      ]
+    },
+    {
+      "id": "REL-003",
+      "milestone": "M9",
+      "title": "Package and sign Windows desktop",
+      "owner": "Release/Desktop",
+      "language": "TypeScript/Rust",
+      "component": "windows-release",
+      "depends_on": [
+        "REL-001",
+        "APP-003",
+        "EXEC-004"
+      ],
+      "goal": "Produce installable trusted Windows distribution.",
+      "build": [
+        "Build installer, native helper registration, signing and update metadata.",
+        "Keep signing certificate outside repository/agent context."
+      ],
+      "acceptance": [
+        "Signed package installs/uninstalls/upgrades on clean supported Windows.",
+        "WSL/native broker prerequisites are detected with actionable UI."
+      ],
+      "tests": [
+        "clean Windows install",
+        "upgrade/rollback",
+        "prerequisite detection"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "apps/desktop/build/windows/",
+        "scripts/release/windows/"
+      ]
+    },
+    {
+      "id": "REL-004",
+      "milestone": "M9",
+      "title": "Deploy server and execution infrastructure",
+      "owner": "Release/Platform",
+      "language": "Containers/Terraform/Helm",
+      "component": "cloud-release",
+      "depends_on": [
+        "REL-001",
+        "OPS-006",
+        "EXEC-005"
+      ],
+      "goal": "Deploy production control, intelligence and execution planes from immutable artifacts.",
+      "build": [
+        "Apply database migrations, deploy services with workload identity, secrets, autoscaling, backups and observability.",
+        "Register execution images/templates by immutable digest."
+      ],
+      "acceptance": [
+        "Production-like environment passes health, migration and smoke gates.",
+        "Rollback path is tested before canary."
+      ],
+      "tests": [
+        "staging deployment",
+        "migration rollback/forward-fix",
+        "execution image verification"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "infra/terraform/",
+        "infra/helm/"
+      ]
+    },
+    {
+      "id": "REL-005",
+      "milestone": "M9",
+      "title": "Run canary and rollback qualification",
+      "owner": "Release/Platform",
+      "language": "Mixed",
+      "component": "canary",
+      "depends_on": [
+        "REL-002",
+        "REL-003",
+        "REL-004"
+      ],
+      "goal": "Expose candidate gradually while preserving fast rollback.",
+      "build": [
+        "Canary server/desktop cohorts, monitor error/effect/recovery/SLO signals, test rollback and forward compatibility.",
+        "Do not rebuild candidate during qualification."
+      ],
+      "acceptance": [
+        "Canary thresholds pass and rollback has been exercised successfully.",
+        "No unresolved P0/P1 incident or data/effect inconsistency remains."
+      ],
+      "tests": [
+        "canary telemetry review",
+        "rollback drill",
+        "compatibility test"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "scripts/release/canary/"
+      ]
+    },
+    {
+      "id": "REL-006",
+      "milestone": "M9",
+      "title": "Seal production readiness and release V8.1",
+      "owner": "Release",
+      "language": "Governance",
+      "component": "ga",
+      "depends_on": [
+        "REL-005"
+      ],
+      "goal": "Make the final go/no-go decision from executed evidence.",
+      "build": [
+        "Verify every GA task is PASS or explicitly non-GA/deferred by approved scope decision.",
+        "Verify manifest, QA results, known issues, rollback, support/runbook readiness and release artifacts.",
+        "Tag and publish the exact qualified candidate."
+      ],
+      "acceptance": [
+        "No open release-blocking task or failed mandatory suite.",
+        "Published artifacts are byte-identical to qualified candidate."
+      ],
+      "tests": [
+        "final readiness validator",
+        "artifact digest verification",
+        "post-release smoke"
+      ],
+      "real_boundary": true,
+      "ga_required": true,
+      "paths": [
+        "scripts/release/seal.py",
+        "evidence/REL-006/"
+      ]
+    }
+  ],
+  "revision": 2
+}
