@@ -418,18 +418,29 @@
       "notes": "Rebuildable projections with a checkpoint per projection (deterministic incremental vs rebuilt state, idempotent re-application, crash/resume with no gaps or duplicates) and resumable client streaming per DOMAIN.md \u00a79.3: durable event frames with cursors, transient live frames, channel and tenant scoping, and bounded backpressure that disconnects a slow consumer with a typed error. Integrated and re-verified by the principal agent after the subagent was killed by a full disk; the projections migration was renumbered to 0005 and the dev-dependency cycle the workspace gate caught was removed."
     },
     "RUN-001": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-run001",
+      "started_at": "2026-09-12T03:32:13Z",
+      "updated_at": "2026-09-12T03:32:13Z",
+      "git_commit": "e14e6fc",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test runtime_state_machine",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh",
+        "uv run --project python pytest tests/architecture/test_runtime_state_parity.py -q"
+      ],
+      "artifacts": [
+        "evidence/RUN-001/2026-09-12T03-29-56Z/summary.json",
+        "crates/server/src/runtime/state_machine/engine.rs",
+        "crates/server/src/runtime/state_machine/store.rs",
+        "crates/server/src/runtime/state_machine/turn_loop.rs",
+        "crates/server/tests/runtime_state_machine.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Authoritative runtime: Run/Turn/Step/Attempt transitions evaluated inside the event-emitting transaction (illegal transitions roll back state and events together), generation fencing before any write, attempts appended never overwritten, cancellation and suspension as authoritative transitions, and recovery that applies next_safe_action (a WAITING_* run is released only by its matching resolution, an unsettled effect is reconciled never retried) and is idempotent across repeated calls. Turn-loop seams (model proposal, tool dispatch, delegation, verification) return typed not-available errors naming INT-002/RUN-011/RUN-002/RUN-008 rather than fabricating success. Two deviations are recorded: the runtime commits through EventStore::commit_mutation_tx instead of crates/graph because graph depends on the server's schema module (consolidation steps in HANDOFF.md), and the parity of both state tables with the database constraints is enforced by tests/architecture/test_runtime_state_parity.py added during integration. Also fixed a real CORE-006 defect found by the recovery test: cancellation_at is TIMESTAMPTZ and was decoded as a String."
     },
     "RUN-002": {
       "coverage": null,

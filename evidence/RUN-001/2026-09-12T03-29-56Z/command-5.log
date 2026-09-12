@@ -1,0 +1,19 @@
+$ bash scripts/ci/ci.sh
+exit_code: 0
+
+--- stdout ---
+PASS             authority              python3.12 scripts/validate_v81.py
+PASS             dossier-consistency    python3.12 scripts/ci/dossier_consistency.py
+PASS             architecture           python3.12 scripts/ci/arch_check.py
+PASS             authority-pointers     python3.12 scripts/ci/check_authority.py --check
+PASS             workspace              python3.12 scripts/ci/workspace_check.py
+PASS             supply-chain           python3.12 scripts/ci/supply_chain/check.py
+PASS             legacy-map             python3.12 scripts/ci/legacy_map_check.py
+PASS             contract-drift         uv run --project python python scripts/ci/gen_contracts.py --check
+PASS             contract-lint-compat   uv run --project python python scripts/ci/contract_compat.py
+PASS             toolchains             bash scripts/dev/bootstrap.sh
+PASS             tests                  uv run --project python pytest tests -q
+summary: /Users/mohsin/projects/quansiov3/artifacts/ci/summary-e14e6fc4dbc0.json
+pipeline: PASS
+
+--- stderr ---

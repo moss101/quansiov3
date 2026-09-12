@@ -1,0 +1,118 @@
+{
+  "task_id": "RUN-001",
+  "git_commit": "e14e6fc4dbc0343cd444e5ca95495c4d7db5e0e5",
+  "recorded_at": "2026-09-12T03:32:03Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test runtime_state_machine",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-001/2026-09-12T03-29-56Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-001/2026-09-12T03-29-56Z/command-2.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-001/2026-09-12T03-29-56Z/command-3.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-001/2026-09-12T03-29-56Z/command-4.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-001/2026-09-12T03-29-56Z/command-5.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture/test_runtime_state_parity.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-001/2026-09-12T03-29-56Z/command-6.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-001/2026-09-12T03-29-56Z/command-7.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test runtime_state_machine",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture/test_runtime_state_parity.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/runtime/state_machine/engine.rs",
+      "sha256": "e24f46a90693ab008df7a43e9cae3f41d1138539a7bda230ebd1a058ff233189",
+      "bytes": 30687
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/store.rs",
+      "sha256": "1101d35445c01157652222ba81818f0fb05a64fd63ac5d2183455720b60ced67",
+      "bytes": 72645
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/turn_loop.rs",
+      "sha256": "ec42929b0daa54eb0371af45adcaeec74fb37e38b3bed1a406d51dc96781f963",
+      "bytes": 12369
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/state.rs",
+      "sha256": "6d2100ed333324f80a663279b90d7a3c1b03ee5a73434d588f87ed7c2385fc42",
+      "bytes": 18976
+    },
+    {
+      "path": "crates/server/tests/runtime_state_machine.rs",
+      "sha256": "9b4e0e86cf6cb3d4d6a0538f5463fb5d03d03ed764a53ab4110d82a0140ffe54",
+      "bytes": 37429
+    },
+    {
+      "path": "tests/architecture/test_runtime_state_parity.py",
+      "sha256": "77fb9e5aee39c81daff48e1a64379812ab1d8b05bdc0c3a5654453e33dc1fc79",
+      "bytes": 4518
+    }
+  ]
+}
