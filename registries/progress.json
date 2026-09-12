@@ -1266,18 +1266,27 @@
       "notes": ""
     },
     "OPS-007": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-ops007",
+      "started_at": "2026-09-12T01:34:38Z",
+      "updated_at": "2026-09-12T01:34:38Z",
+      "git_commit": "fe8f034",
+      "tests": [
+        "python3.12 scripts/ci/supply_chain/check.py",
+        "uv run --project python pytest tests/ci -q",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/OPS-007/2026-09-12T01-32-36Z/summary.json",
+        "scripts/ci/supply_chain/check.py",
+        "deny.toml",
+        "tests/ci/test_supply_chain.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Offline supply-chain gate: lockfile pinning (Rust/pnpm/uv), deny.toml completeness and licence allow-list, deterministic CycloneDX SBOM with drift verification, a real RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill/pack quarantine lifecycle checks. cargo-deny is optional and reports an explicit informational result when absent, so the gate never silently passes and never requires network. Wired into scripts/ci/ci_summary.py so ci.sh and the GitHub workflow both run it."
     },
     "OPS-008": {
       "coverage": null,

@@ -1,0 +1,8 @@
+$ uv run --project python pytest tests/ci -q
+exit_code: 0
+
+--- stdout ---
+.......................................................                  [100%]
+55 passed in 6.24s
+
+--- stderr ---

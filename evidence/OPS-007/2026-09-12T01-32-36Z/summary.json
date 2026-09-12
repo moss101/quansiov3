@@ -1,0 +1,96 @@
+{
+  "task_id": "OPS-007",
+  "git_commit": "fe8f03416bf694bcb21cff546ccef9e4389aa530",
+  "recorded_at": "2026-09-12T01:34:29Z",
+  "commands": [
+    {
+      "command": "python3.12 scripts/ci/supply_chain/check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-12T01-32-36Z/command-1.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/ci -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-12T01-32-36Z/command-2.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/ci_summary.py --json",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-12T01-32-36Z/command-3.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-12T01-32-36Z/command-4.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-12T01-32-36Z/command-5.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "python3.12 scripts/ci/supply_chain/check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/ci -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/ci_summary.py --json",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "scripts/ci/supply_chain/check.py",
+      "sha256": "edd685de813bb140323aa10e1a76d7452f2bbe3762762e2808845c2eddee7c7d",
+      "bytes": 6484
+    },
+    {
+      "path": "scripts/ci/supply_chain/sbom.py",
+      "sha256": "a4e58d7728d66de363ce6394052eec88ffe930e6267be3ff57017edc1a557166",
+      "bytes": 10838
+    },
+    {
+      "path": "scripts/ci/supply_chain/skills.py",
+      "sha256": "69e792ac1c82fb7ab11a2937fc6dfa4e361bdf1031faaaeb0a3ce0af53b3e3ac",
+      "bytes": 8746
+    },
+    {
+      "path": "deny.toml",
+      "sha256": "7d8cc1de9792e329fad36c79a70928a0f3c74891cb86d45cf4f386826a7b67f9",
+      "bytes": 551
+    },
+    {
+      "path": "tests/ci/test_supply_chain.py",
+      "sha256": "3bd50f694bfd319abc5fd0f21eeac6f770c3bdc37cb19d965e0844bd0f9c208c",
+      "bytes": 12006
+    },
+    {
+      "path": "tests/ci/fixtures/supply_chain/vulnerable-cargo.lock",
+      "sha256": "cb64fde7a3da3859d87f112101f34dbda72edd94498be592da652579b2a455a5",
+      "bytes": 550
+    }
+  ]
+}
