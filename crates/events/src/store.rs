@@ -284,9 +284,14 @@ pub(crate) fn row_to_event(row: &PgRow) -> Result<RuntimeEvent, EventError> {
         .map_err(|error| malformed(&error.to_string()))?;
     let generation = row
         .try_get::<Option<i64>, _>("generation")?
-        .map(|value| Generation::new(value.unsigned_abs()))
-        .transpose()
-        .map_err(|error| malformed(&error.to_string()))?;
+        .map(|value| {
+            u64::try_from(value)
+                .map_err(|_| malformed("generation must not be negative"))
+                .and_then(|value| {
+                    Generation::new(value).map_err(|error| malformed(&error.to_string()))
+                })
+        })
+        .transpose()?;
     Ok(RuntimeEvent {
         event_id,
         tenant_id: row.try_get("tenant_id")?,
