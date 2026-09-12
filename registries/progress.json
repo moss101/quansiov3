@@ -891,18 +891,18 @@
       "notes": ""
     },
     "INT-009": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T11:49:49Z",
+      "updated_at": "2026-09-12T11:49:49Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "INT-009 claimed: Implement Skill Registry and task-scoped resolver (goal: Treat skills as versioned procedural assets rather than autonomous subsystems.)"
     },
     "INT-010": {
       "coverage": null,

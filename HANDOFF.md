@@ -17,8 +17,8 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 
 Milestone: M2 — the runtime loop (M0/M1 complete)
 Current task: INT-003 — implement deterministic model selection, dlp and failover — `RECONCILING` (claimed, not started)
-Previous task: INT-003 implemented and verified offline, `BLOCKED_EXTERNAL` on live provider credentials
-Current task status: 31 tasks `PASS`, INT-003 `BLOCKED_EXTERNAL` (implementation complete), INT-005 `IN_PROGRESS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
+Previous task: INT-005 closed `PASS` (context projection, search program and the runtime bridge)
+Current task status: 32 tasks `PASS`, INT-002/INT-003 `BLOCKED_EXTERNAL` (implementation complete), INT-009 `RECONCILING`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
 Current owner: `agent:principal-1`
 Current component: `context` (`python/intelligence/context/`, `crates/server/runtime/context_bridge/`)
 Current language: Python
@@ -209,27 +209,23 @@ recorded under "Environment requirements".
 
 ## What is currently being implemented
 
-**INT-005 — ContextProjection and typed SearchProgram — `IN_PROGRESS` (merge `1e12ba649106`).**
+**INT-005 — ContextProjection and typed SearchProgram — `PASS` (merge `a2d621784fd4`).**
 
-Done, both Python halves, with all three acceptance statements covered by tests that fail if they
-were false. `context/search.py`: §11.3's SearchProgram **as data** — six channels, typed predicates
-over a closed field/operator vocabulary, canonical order-independent serialization, fail-closed
-validation, and a structural gate proving the module cannot evaluate anything (acceptance 1).
-`context/projection.py`: §11.2's ContextProjection — a segment without a `trust_level` is refused at
-construction *and* against the policy floor (acceptance 3); the bundle records its program key,
-snapshot, policy and token ledger with dropped tokens and dropped segments by channel (acceptance 2);
-packing is deterministic (score, then trust, then id) and bounded; duplicates collapse with the more
-trusted copy winning; degradation is reported; the stable prefix is a pure function of stable-trust
-segments only, so it is cacheable and excludes agent-generated and external content; and a
-projection whose sources have moved is refused rather than served. Evidence:
-`evidence/INT-005/2026-09-12T10-59-12Z/` — 22 tests, the plane passes 216/216 (6 skipped
-live-provider cases), ruff/format/mypy clean, `ci.sh` green.
+Both halves. `python/intelligence/context/search.py` implements §11.3's SearchProgram as data and
+`projection.py` implements §11.2's ContextProjection — all three acceptance statements are covered by
+tests that fail if they were false (no executable predicate strings, with a structural no-evaluator
+gate; the bundle records source, snapshot, policy and token ledger; every segment carries a
+`trust_level` and one without it is rejected). `crates/server/src/runtime/context_bridge/` is the
+runtime's side: the port is the only way a run asks for a projection, `validate_projection` is a
+fail-closed boundary check (unlabelled, unknown-labelled, identity-less, snapshot-less and stale
+projections are all refused before a run sees anything), and a validated projection's id is what the
+turn records — proven end to end by running a real turn and reading `turns.context_projection_id`
+back. The bridge deliberately does not re-implement search, ranking or packing: that is the plane's
+authority, and the port's production RPC implementation belongs to INT-001's typed boundary (its
+default fails closed until then). Evidence: `evidence/INT-005/2026-09-12T11-46-48Z/`.
 
-Remaining, the only item left: the Rust `crates/server/src/runtime/context_bridge/` — the side that
-hands the canonical program to the intelligence plane and receives the projection, applying the
-runtime's §12 trust labels at that boundary (INT-001 owns the typed RPC boundary it crosses).
-CORE-009's indexer is `PASS`, so the exact and lexical channels have a real backend to drive.
-**INT-003 — deterministic model selection, DLP and bounded failover — `BLOCKED_EXTERNAL` (implementation complete, merge `47365327f7ca`).**
+**INT-009 — claimed, not started.** Canonical owner: python/intelligence/skills/, crates/server/control/skills/. Its build items are
+Store skill metadata/provenance/evals in control plane.; Resolve only relevant approved skills for a task and capability snapshot.; Skills may guide procedure but cannot grant permissions or add infrastructure.; Implement Skill/SkillVersion states per DOMAIN.md §11.5; only ACTIVE versions resolve..**INT-003 — deterministic model selection, DLP and bounded failover — `BLOCKED_EXTERNAL` (implementation complete, merge `47365327f7ca`).**
 
 `model_gateway/routing/` holds the policy (the seven request classes, capability demand, cost/quality
 preference and bounded fallbacks) and `PolicyRouteSelector`, a pure I/O-free selector that records a
