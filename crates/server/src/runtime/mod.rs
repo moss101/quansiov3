@@ -9,6 +9,7 @@ pub mod checkpoints;
 pub mod orchestration;
 pub mod planning;
 pub mod protocol_state;
+pub mod recovery;
 pub mod state_machine;
 pub mod turn_loop;
 pub mod verification;
