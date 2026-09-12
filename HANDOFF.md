@@ -209,6 +209,30 @@ recorded under "Environment requirements".
 
 ## What is currently being implemented
 
+**INT-009 — Skill Registry and task-scoped resolver — `IN_PROGRESS` (work on `task/INT-009-skills`, not yet merged).**
+
+The resolver half is implemented and verified there: only `ACTIVE` versions resolve (every other state,
+including `APPROVED`, is excluded with the rule that excluded it), a version whose `tool_needs` or
+`capability_needs` exceed the caller's snapshot is excluded rather than granted — the resolution
+carries the caller's snapshot unchanged, so a skill can never widen authority — resolution is bounded
+by `max_skills` and is a pure function of (task, snapshot, candidates) with every non-resolved
+candidate accounted for, and the manifest vocabulary is closed with provenance as a version field,
+not a manifest key. 5 tests, the Python plane at 221/221 (6 skipped live-provider), ruff/format/mypy
+clean — captured in `evidence/INT-009/2026-09-12T12-30-38Z/` **before the environment failed**.
+
+**Environment incident (in force):** the container runtime is down — the Docker API returns 500 and
+the dev-stack Postgres port is closed — so the DB-backed gates (`toolchains`, which runs
+`cargo test --workspace`) cannot run. That is why the slice is on its branch and `main` is untouched:
+a pipeline that cannot be verified is not a green pipeline. Unblock: bring the runtime back with
+`bash scripts/dev/up` (never `down`) and re-run `bash scripts/ci/ci.sh`; then merge the branch.
+
+**Remaining for INT-009:** `crates/server/src/control/skills/` — the Rust control-plane store holding
+metadata, provenance and evals and owning the promotion state machine (draft → candidate → evaluating
+→ approved → active → deprecated → retired, evaluating → rejected) that sets
+`skills.current_active_version_id`. The `skills`/`skill_versions` tables already exist, so no
+migration is needed.
+
+
 **INT-005 — ContextProjection and typed SearchProgram — `PASS` (merge `a2d621784fd4`).**
 
 Both halves. `python/intelligence/context/search.py` implements §11.3's SearchProgram as data and

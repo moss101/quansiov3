@@ -892,17 +892,17 @@
     },
     "INT-009": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "IN_PROGRESS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T11:49:49Z",
-      "updated_at": "2026-09-12T11:49:49Z",
+      "updated_at": "2026-09-12T12:39:53Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": null,
-      "notes": "INT-009 claimed: Implement Skill Registry and task-scoped resolver (goal: Treat skills as versioned procedural assets rather than autonomous subsystems.)"
+      "blocker": "The container runtime is down (docker API returns 500 and the dev Postgres port is closed), so the DB-backed gates in `bash scripts/dev/ci.sh` (toolchains/tests) cannot run. Unblock: bring the runtime back (`bash scripts/dev/up`, never `down`) and re-run the pipeline; the slice is otherwise verified.",
+      "notes": "IN PROGRESS \u2014 the resolver half is implemented and verified on branch task/INT-009-skills (commit c2d754b5c9c552b963e20d880892e1463b8b4100), awaiting a green pipeline before it can merge. python/intelligence/skills implements DOMAIN.md \u00a711.5's skill model and the task-scoped resolver: only ACTIVE versions resolve (every other state, including APPROVED, is excluded with the rule that excluded it), a version whose tool_needs or capability_needs exceed the caller's snapshot is excluded rather than granted (the resolution carries the caller's snapshot unchanged, so a skill can never widen authority), resolution is bounded by max_skills and is a pure function of (task, snapshot, candidates) with every non-resolved candidate accounted for, and the manifest vocabulary is closed with provenance as a version field rather than a manifest key. Verified there: 5 tests pass, the Python plane passes 221/221 (6 skipped live-provider cases), ruff/format/mypy clean \u2014 all captured in evidence/INT-009/2026-09-12T12-30-38Z/ before the runtime went down. REMAINING: crates/server/src/control/skills/ \u2014 the Rust control-plane store holding metadata, provenance and evals and owning the promotion state machine (draft \u2192 candidate \u2192 evaluating \u2192 approved \u2192 active \u2192 deprecated \u2192 retired, evaluating \u2192 rejected) that sets skills.current_active_version_id; the skills/skill_versions tables already exist, so no migration is needed."
     },
     "INT-010": {
       "coverage": null,
