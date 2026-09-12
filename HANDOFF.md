@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (GOV-002, GOV-003 closed)
+Updated: 2026-09-12 (M0 complete: GOV-001…GOV-008 PASS)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -15,12 +15,12 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 
 ## Current position
 
-Milestone: M0 — Authority, repository and build foundation
-Current task: GOV-004 in progress (contract generation); GOV-007 delegated in an isolated worktree
-Current task status: GOV-001 `PASS`, GOV-002 `PASS`, GOV-003 `PASS`; 3 of 99 tasks complete
+Milestone: M0 complete (GOV-001…GOV-008 all `PASS`); starting M1
+Current task: CORE-001 — authoritative persistence schema and migrations
+Current task status: 8 of 99 tasks `PASS`; the baseline pipeline is green on `main`
 Current owner: `agent:principal-1`
-Current component: `contracts` (GOV-004), `dev-environment` (GOV-007)
-Current language: Rust/Python/TypeScript
+Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
+Current language: Rust + SQL
 
 ## What was completed
 
@@ -45,26 +45,24 @@ Current language: Rust/Python/TypeScript
 
 ## What is currently being implemented
 
-TASK: GOV-004 — Establish canonical contract generation.
-Goal: contract sources in `schemas/` (Protobuf, OpenAPI 3.1, JSON Schema) derived from DOMAIN.md, with
-generated Rust/Python/TypeScript bindings and a regeneration-diff CI gate.
-Delegated in parallel (isolated worktree): GOV-007 — deterministic local development stack
-(`infra/compose/`, `scripts/dev/up|down|reset|seed`, health check).
+TASK: CORE-001 — Implement authoritative persistence schema and migrations.
+Goal: one authoritative PostgreSQL data model for DOMAIN.md §2–§13, forward migrations with
+forward-fix rollback, RLS enabled and forced on every tenant table, and a separate `derived` schema
+for rebuildable pgvector structures.
+Files: `migrations/0001_canonical_schema.sql`, `crates/server/src/control/schema/mod.rs`,
+`crates/server/tests/schema_bootstrap.rs`.
 
 ## Exact next action
 
-Finish GOV-004 on `task/GOV-004-contracts`: add `schemas/domain/` (ids, events, errors, commands),
-generators, generated bindings under `crates/contracts`, `python/intelligence/contracts`, `sdk/typescript`,
-plus the DOMAIN.md drift check, then evidence → PASS → merge. GOV-006 (`Define legacy migration and
-deletion plan`) is a greenfield trivial close referencing GOV-001; GOV-008 depends on GOV-003+GOV-004.
+Finish CORE-001 on `task/CORE-001-schema`: apply the migration through the shipped sqlx runner against
+the running dev stack (`QUANSIO_TEST_POSTGRES_URL=postgres://quansio:…@127.0.0.1:55440/quansio`), prove
+bootstrap-from-zero, tenant isolation (zero rows without context), forward-fix re-run and trigger/RLS
+presence, then collect evidence, set progress `PASS` and merge.
 
 ## Ready queue
 
-1. `GOV-004` — contracts (depends on GOV-003 `PASS`); unblocks GOV-005, GOV-008 and every RPC/event task.
-2. `GOV-006` — legacy migration map (greenfield: trivially satisfied, evidence references GOV-001).
-3. `GOV-007` — deterministic local dev stack (depends on GOV-003+GOV-004); being implemented by a
-   delegated agent in an isolated worktree.
-4. `GOV-008` — architecture conformance rules (depends on GOV-003+GOV-004).
+1. `CORE-001` — authoritative persistence schema (M1, depends on GOV-004+GOV-007); unblocks all of M1–M7.
+2. `OPS-007` — supply-chain and dependency security (M7, depends on GOV-003+GOV-005).
 
 ## Blocked work
 
@@ -91,8 +89,9 @@ reached (27 tasks declare `real_boundary: true`).
 
 ## Tests
 
-Last successful: `bash scripts/dev/bootstrap.sh` (all gates) and `uv run --project python pytest tests -q`
-(53 passed) at GOV-003's merge.
+Last successful: `bash scripts/ci/ci.sh` — all ten baseline gates PASS (authority, dossier consistency,
+architecture, authority pointers, workspace, legacy map, contract drift, contract lint/compat,
+toolchains, repository tests) at `9604c1a`; `uv run --project python pytest tests -q` → 104 passed.
 Last failed: none.
 Tests still required: GOV-004 schema lint + regeneration diff + compatibility fixtures; GOV-005 CI
 negative tests; GOV-008 forbidden-wiring fixtures; then per-task tests from M1 onward.
@@ -127,12 +126,15 @@ Qualification: `scripts/ci/inventory.py --scan`, `check_authority.py --check`, `
 
 ## Environment requirements
 
-Services: Docker daemon available; local Postgres 17 (port 54329), Redis 8 (54330) and MinIO
-(54331/54332) containers are running for later integration/qualification work. GOV-007 will define the
-reproducible compose stack and the standard dev credentials.
-Credentials/handles: no `QUANSIO_TEST_*` credentials are set; real-boundary tasks must record
-`BLOCKED_EXTERNAL` until provided. Never place raw secrets in this file.
-Ports: fixed by GOV-007.
+Services: the repository's own dev stack starts with `scripts/dev/up` (Docker Compose project
+`quansio-dev`): Postgres 17 + pgvector on 55440, NATS JetStream on 54230/54231, MinIO on 59010/59011,
+stub model provider on 59020, optional Qdrant on 59030. Dev-only credentials live in the gitignored
+`.env` generated by `scripts/dev/up`; the documented dev defaults are `quansio` / `quansio-dev-only`.
+`scripts/dev/_common.sh` puts Docker Desktop's credential helper on `PATH` before any pull.
+Credentials/handles: no production `QUANSIO_TEST_*` credentials are set; real-boundary tasks must record
+`BLOCKED_EXTERNAL` until provided. Database-backed tests read `QUANSIO_TEST_POSTGRES_URL`, for example
+`postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`. Never place raw secrets in this file.
+Ports: dev stack as above; product ports are fixed by later tasks.
 External dependencies: Rust 1.97.1 (+ rustfmt/clippy), Node 26 + pnpm 11.8, Python 3.12 + uv 0.12,
 protoc 36, Swift 6.3, Docker 29. All present.
 
