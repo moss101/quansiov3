@@ -203,18 +203,29 @@
       "notes": "Eight forbidden-wiring rules with positive and negative fixture tests; reuses the inventory rule engine; reviewed and re-run on main (arch_check CLEAN, 104 architecture tests pass)."
     },
     "CORE-001": {
-      "coverage": null,
-      "status": "RECONCILING",
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T01:00:14Z",
-      "updated_at": "2026-09-12T01:05:36Z",
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "updated_at": "2026-09-12T01:06:44Z",
+      "git_commit": "2e0e55d",
+      "tests": [
+        "cargo fmt --all --check",
+        "cargo clippy --workspace --all-targets -- -D warnings",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test schema_bootstrap",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/CORE-001/2026-09-12T01-05-47Z/summary.json",
+        "migrations/0001_canonical_schema.sql",
+        "migrations/README.md",
+        "crates/server/src/control/schema/mod.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "61 public + 2 derived tables for DOMAIN.md \u00a72\u2013\u00a713; RLS enabled and forced on every tenant table (no-context queries return zero rows, inserts are refused); derived embeddings/index epochs carry tenant RLS too; forward-fix re-run preserves data; quansio_app role is idempotent under concurrent migration. Dev-only DSN appears in the recorded command: it is the documented dev default, never a production credential."
     },
     "CORE-002": {
       "coverage": null,
