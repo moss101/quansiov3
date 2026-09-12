@@ -4,13 +4,13 @@
   "recorded_at": "2026-09-12T07:00:26Z",
   "commands": [
     {
-      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/turn_loop-0dec34643ebde035 --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test turn_loop",
       "exit_code": 0,
       "result": "PASS",
       "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-1.log"
     },
     {
-      "command": "all quansio-server and quansio-tools test binaries (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server -p quansio-tools",
       "exit_code": 0,
       "result": "PASS",
       "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-2.log"
@@ -86,16 +86,22 @@
       "exit_code": 0,
       "result": "PASS",
       "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-14.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-15.log"
     }
   ],
   "results": [
     {
-      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/turn_loop-0dec34643ebde035 --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test turn_loop",
       "exit_code": 0,
       "result": "PASS"
     },
     {
-      "command": "all quansio-server and quansio-tools test binaries (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server -p quansio-tools",
       "exit_code": 0,
       "result": "PASS"
     },
@@ -156,6 +162,11 @@
     },
     {
       "command": "pnpm build && pnpm typecheck && pnpm test && pnpm lint",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
       "exit_code": 0,
       "result": "PASS"
     }
@@ -235,6 +246,11 @@
       "path": "migrations/0007_tool_call_declaration_version.sql",
       "sha256": "b0312f875fa2d129fc23db0085e7b04841f826372106382a3e14834fa7657435",
       "bytes": 313
+    },
+    {
+      "path": "artifacts/ci/summary-69a7d20f4c7f.json",
+      "sha256": "84bcca47034c17ff0925f901892c8fee28393222c0e39d4f0ccc78cb45ce2f45",
+      "bytes": 4518
     }
   ]
 }

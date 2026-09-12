@@ -22,11 +22,11 @@ Current owner: `agent:principal-1`
 Current component: `turn loop` (`crates/server/src/runtime/turn_loop/`, `crates/tools/`)
 Current language: Rust + SQL
 
-Blocker in force: **this host cannot execute newly created binaries.** A freshly compiled
-`cc` hello-world hangs in `_dyld_start` (the same for any newly linked test binary), so
-`cargo test` cannot spawn a new test binary and `bash scripts/ci/ci.sh` cannot complete its
-Rust test gate. Every gate it covers was run individually instead — see "Environment
-requirements" for the workaround and the evidence for it.
+Resolved host incident: for part of this session the machine would not execute newly created
+binaries (a freshly compiled `cc` hello-world hung in `_dyld_start`), which blocked `cargo test`
+until it cleared. `bash scripts/ci/ci.sh` now runs normally and is green on `main`; the incident,
+the workaround used to keep verifying while it lasted, and the artifact corruption it caused are
+recorded under "Environment requirements".
 
 ## What was completed
 
@@ -303,16 +303,16 @@ rather than fabricated.
 
 ## Tests
 
-Last successful (RUN-011, this session): all 15 `quansio-server` and `quansio-tools` test binaries —
-181 tests, 0 failures — including the new `turn_loop` conformance suite (11 tests), plus
+Last successful (RUN-011, this session): `bash scripts/ci/ci.sh` — all eleven baseline gates PASS
+(authority, dossier consistency, architecture, authority pointers, workspace, supply-chain, legacy
+map, contract drift, contract lint/compat, toolchains, repository tests) at the RUN-011 merge
+(`69a7d20f4c7f`), plus all 15 `quansio-server` and `quansio-tools` test binaries — 181 tests, 0
+failures — including the new `turn_loop` conformance suite (11 tests), plus
 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`,
 `uv run --project python pytest tests -q` → 188 passed, `(cd python && uv run --frozen pytest -q)` →
 173 passed / 6 skipped (INT-002's live-provider cases), `pnpm build/typecheck/test/lint` green,
 `python3 scripts/validate_v81.py` PASS and `python3.12 scripts/ci/arch_check.py` CLEAN.
 Last failed: none.
-Not run: `bash scripts/ci/ci.sh` as one command — its `cargo test --workspace` gate cannot spawn a
-freshly linked test binary on this host. Every gate it covers was run individually (above); the Rust
-binaries were executed through the pre-existing-inode workaround in "Environment requirements".
 Tests still required: GOV-005 CI negative tests; the per-task tests of the remaining registry tasks.
 
 ## Runtime/recovery state
@@ -359,16 +359,20 @@ Credentials/handles: no production `QUANSIO_TEST_*` credentials are set; real-bo
 `BLOCKED_EXTERNAL` until provided. Database-backed tests read `QUANSIO_TEST_POSTGRES_URL`, for example
 `postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`. Never place raw secrets in this file.
 Ports: dev stack as above; product ports are fixed by later tasks.
-Host caveat (this session, unresolved): the machine stopped executing **newly created** binaries
+Host incident (this session, resolved): the machine stopped executing **newly created** binaries
 partway through RUN-011. A freshly compiled `cc` hello-world hangs in `_dyld_start`, and every newly
 linked `cargo test` binary does the same, while binaries whose inode already existed keep running
 (`/bin/ls`, an already-built test binary). `cargo build`/`link` still work; only `exec` of a new inode
 fails. `sudo` is not available, so neither a `syspolicyd` kickstart nor a reboot could be performed.
-Workaround used to finish RUN-011's verification: write the freshly linked binary's bytes into a
-**pre-existing** inode (`cat <new-binary> > <old-binary-path>`, `chmod +x`) and run that path. This
-does not change the test code or its assertions; the exit code and output are those of the real suite.
-Re-check on the next session: if `cargo test -p quansio-tools` runs normally again, the host recovered
-and the workaround can be dropped (the previously overwritten paths are rebuilt by cargo anyway).
+Workaround used while it lasted: write the freshly linked binary's bytes into a **pre-existing**
+inode (`cat <new-binary> > <old-binary-path>`, `chmod +x`) and run that path; the workaround did not
+change the test code or its assertions, and its counts were later reproduced exactly by a clean
+`cargo test` after the host recovered. *Damage it caused and how it was repaired:* the candidate
+paths included compiled `.dylib`/`.o`/test-binary artifacts, so a few of them held the wrong bytes
+afterwards; deleting `target/debug/deps/libzerofrom_derive-*.dylib` and every extension-less
+executable under `target/debug/deps` (cargo relinks them) restored a clean, verified build. If this
+recurs, restrict candidates to extension-less old test binaries and re-run `cargo test` to prove the
+counts rather than trusting the workaround alone.
 Disk caveat: the volume hosting this work is nearly full. Keep at most two concurrent Rust worktrees,
 delete a finished worktree's `target/` directory (`rm -rf <worktree>/target`) after its task is closed, and
 `rm -rf target/debug/incremental` in the main workspace when space is needed (it holds ~6 GB and is
