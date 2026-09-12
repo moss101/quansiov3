@@ -1,0 +1,8 @@
+$ uv run --python 3.12 --with pytest pytest tests -q
+exit_code: 0
+
+--- stdout ---
+.......................                                                  [100%]
+23 passed in 0.16s
+
+--- stderr ---
