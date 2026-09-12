@@ -1,0 +1,31 @@
+# Rust
+target/
+Cargo.lock.orig
+
+# Node / TypeScript
+node_modules/
+dist/
+.pnpm-store/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local runtime state and secrets
+.env
+.env.*
+!.env.example
+*.local.yaml
+*.local.yml
+local/
+
+# Evidence and scratch
+scratch/
+*.log
+!evidence/**/*.log
