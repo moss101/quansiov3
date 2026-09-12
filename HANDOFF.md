@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0/M1 complete; M2 in progress; 28 PASS + 1 BLOCKED_EXTERNAL)
+Updated: 2026-09-12 (M0/M1 complete; M2 in progress; 28 PASS + 1 IN_PROGRESS + 1 BLOCKED_EXTERNAL)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,11 +16,11 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M2 — the runtime loop (M0/M1 complete)
-Current task: none in flight — RUN-004 closed `PASS`; `--next` selects RUN-008 (then INT-003, INT-005, INT-011, EXEC-001)
-Current task status: 28 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
+Current task: **RUN-008 — CompletionContract verification — `IN_PROGRESS`** (resume this before claiming anything new)
+Current task status: 28 tasks `PASS`, RUN-008 `IN_PROGRESS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
 Current owner: `agent:principal-1`
-Current component: `orchestration` (`crates/server/src/runtime/orchestration/`)
-Current language: Rust + SQL
+Current component: `verification` (`crates/server/src/runtime/verification/`, `python/intelligence/evaluation/semantic_verifier/`)
+Current language: Rust + Python
 
 Resolved host incident: for part of this session the machine would not execute newly created
 binaries (a freshly compiled `cc` hello-world hung in `_dyld_start`), which blocked `cargo test`
@@ -208,15 +208,35 @@ recorded under "Environment requirements".
 
 ## What is currently being implemented
 
-None — RUN-004 is closed. The runtime now selects, releases, bounds and cancels work over the canonical
-WorkGraph, and every selected run enters through the canonical dispatch port.
+**RUN-008 — CompletionContract verification — `IN_PROGRESS`.**
+
+What exists (implemented, verified, on `main` at merge `9eddaa899872`):
+`crates/server/src/runtime/verification/` implements DOMAIN.md §4.4. `contract.rs` parses a WorkNode's
+CompletionContract fail-closed — an unknown check kind is refused rather than skipped, a malformed bound
+is refused, and a contract that binds nothing is recognised as certifying nothing. `checks.rs` implements
+the checks the runtime can prove today: `artifact_exists` over real artifact metadata (role +
+`min_versions`) and `effects_settled` over the run's EffectRecords (a named class must be settled; an
+unsettled record means the external outcome is unknown, so nothing is certified); `test_command`,
+`assertion` and `citations_valid` fail closed naming their owners (EXEC-006, the missing predicate
+registry, CAP-002) so an unimplemented check can never become a silent pass. `service.rs` is the
+`ContractVerifier` plugged into the engine's existing `VerificationPort`: a model's completion claim
+reaches `SUCCEEDED` only after every deterministic check passes, `human_signoff_required` is respected as
+a human's decision, and a required independent semantic verification that is unavailable or disagrees
+rejects the claim using the verifier's critique as actionable feedback.
+
+What remains (the only thing between RUN-008 and `PASS`):
+`python/intelligence/evaluation/semantic_verifier/` — the gateway-backed implementation of the
+`SemanticVerifierPort` seam the Rust side already defines, injects and tests (with an injected verifier).
+It must produce an independent verdict through `python/intelligence/model_gateway`
+(`ModelGateway`, INT-002; offline-testable through its `conformance` stub provider), enforce
+`independent_model` when the contract asks for it, and be covered by a test showing that a verdict
+disagreeing with the claimant rejects the claim end to end.
 
 ## Exact next action
 
-Run `python3 scripts/validate_v81.py --next` and take what it selects: right now that is **RUN-008**
-(CompletionContract verification — it closes the turn loop's `completion_claim` branch, which still
-returns `SeamNotAvailable` naming RUN-008, and it depends only on the Effect Ledger that is already
-`PASS`), followed by INT-003 and INT-005. Before wiring the planner into the turn loop, apply the alias
+Per AGENTS.md, resume the task that is `IN_PROGRESS` and claimed by this agent first: **RUN-008**, whose
+remaining piece is the Python semantic verifier described above. Then `python3 scripts/validate_v81.py
+--next` (INT-003 and INT-005 are the next ready tasks). Before wiring the planner into the turn loop, apply the alias
 fix recorded under "Architecture decisions" so a plan can reference nodes it creates in the same batch.
 Wire the real `WorkGraphPort` (snapshot SQL + `GraphTransaction` apply) where both crates are visible
 when APP-001 composes the server.
@@ -226,8 +246,8 @@ pipeline derives that URL from the generated `.env` automatically.
 
 ## Ready queue
 
-1. `RUN-008` — CompletionContract verification (depends on the Effect Ledger, now PASS); it closes the
-   turn loop's completion-claim branch (`--next` selects it).
+1. `RUN-008` — CompletionContract verification: resume it (Rust half done, Python semantic verifier
+   remaining).
 2. `INT-003` — deterministic model selection, DLP and failover.
 3. `INT-003` — deterministic model selection, DLP and failover (ready; real boundary like INT-002).
 4. `INT-005` — ContextProjection and typed SearchProgram; supplies the trust labels RUN-011 reads.
