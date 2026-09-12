@@ -26,6 +26,7 @@ runner (`quansio_server::control::schema::migrate`).
 | Migration | Contents |
 |---|---|
 | `0001_canonical_schema.sql` | DOMAIN.md §2–§13: identity/tenancy, conversation, work graph, runtime (runs/turns/steps/attempts/protocol state/checkpoints), capability/policy/approvals, Universal Effect Ledger, tool calls and command idempotency, RuntimeEvent + outbox + cursors, execution fabric (targets/leases/browser/terminal), artifacts/evidence, intelligence state (context, model routes/calls, knowledge, memory, skills, packs), automation/notification/usage/audit, `derived` embeddings + index epochs, RLS policies, the `quansio_app` role and `updated_at` triggers. |
+| `0002_graph_heads.sql` | WorkGraph aggregate revision head per (tenant, workspace) for the batch-level compare-and-set of a GraphTransaction (DOMAIN.md §1.2, §4.5): RLS, `quansio_app` grant and `updated_at` trigger. |
 
 ## Applying
 

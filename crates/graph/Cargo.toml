@@ -11,3 +11,11 @@ description = "WorkGraph, AgentGraph and StateGraph stores plus GraphTransaction
 workspace = true
 
 [dependencies]
+quansio-core = { path = "../core" }
+quansio-server = { path = "../server" }
+serde_json = "1"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "chrono", "json"] }
+thiserror = "2"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
