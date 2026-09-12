@@ -933,18 +933,28 @@
       "notes": ""
     },
     "INT-012": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "IN_PROGRESS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T16:19:38Z",
+      "updated_at": "2026-09-12T16:19:38Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "(cd python && uv run --frozen pytest tests/intelligence/test_trust_labelling.py -q) (15 tests: labelling by source, typed boundaries, the pinned corpus, benign pass-through, determinism, corpus non-vacuity)",
+        "(cd python && uv run --frozen pytest -q) (231 passed, 6 skipped live-provider cases)",
+        "(cd python && ruff check . && ruff format --check . && mypy intelligence)"
+      ],
+      "artifacts": [
+        "python/intelligence/trust/__init__.py",
+        "python/intelligence/trust/labelling.py",
+        "python/intelligence/trust/injection.py",
+        "python/tests/intelligence/test_trust_labelling.py",
+        "tests/security/injection/corpus.json"
+      ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "blocker": "The container runtime is down (docker API 500s, dev Postgres port closed), so the DB-backed gates and the branch pipeline cannot run. Unblock: `bash scripts/dev/up`, then `bash scripts/ci/ci.sh` and merge task/INT-012-trust. INT-012's own slice is DB-free and already verified.",
+      "notes": "IN PROGRESS \u2014 the labelling and injection half is implemented and verified on branch task/INT-012-trust (tip e3d47e88243f573d87ff918f7f7baa73fb5353c0), awaiting a healthy container runtime before merging. DONE (all DB-free): python/intelligence/trust/labelling.py labels every segment by its SOURCE (system/policy/tool_definition \u2192 trusted_system, user \u2192 trusted_user, knowledge/skill \u2192 verified_knowledge, agent/assistant/worker \u2192 agent_generated, web/email/document/file/tool_output/connector \u2192 untrusted_external) with an unrecognised source failing closed to untrusted_external, and renders untrusted content inside a typed boundary carrying the data-only instruction while trusted content renders as itself (wrapping it would blur the signal). injection.py implements deterministic, non-LLM heuristics \u2014 instruction override, role play, imperative tool call, exfiltration URL, encoded blob, hidden markup \u2014 that tag a suspect segment, replace its text in context with an evidence reference, and expose the rules and reasons so a person can look; being suspected is not being wrong, so nothing is dropped silently. tests/security/injection/corpus.json pins 7 malicious shapes and 4 benign ones; the suite asserts every malicious sample fires its expected rules, every benign sample passes through untouched, the assessment is deterministic and total, and the corpus is non-vacuous. One heuristic was corrected because the benign sample caught a false positive: the tool-imperative rule now requires the tool noun to follow the verb directly, so 'run the shell tool' is flagged while 'run the project's own test command' is not. Verified: 15 tests, the plane passes 231/231 (6 skipped live-provider), ruff/format/mypy clean. REMAINING: the Rust policy half (crates/server/src/policy/trust/) \u2014 escalation of untrusted-derived tier \u2265 2 proposals, refusal of `always` rules for untrusted origin, fresh approval with an untrusted-origin preview at tier \u2265 3, and the exfiltration guard that blocks protected content leaving the egress grant set without a data.upload.protected approval; plus QA-007 consuming the pinned corpus."
     },
     "EXEC-001": {
       "coverage": null,

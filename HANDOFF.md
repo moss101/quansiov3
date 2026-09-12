@@ -209,6 +209,30 @@ recorded under "Environment requirements".
 
 ## What is currently being implemented
 
+**INT-012 — content trust labelling and injection defense — `IN_PROGRESS` (work on `task/INT-012-trust` at `e3d47e88243f573d87ff918f7f7baa73fb5353c0`).**
+
+Picked up as the DB-free fallback while the runtime is down. `python/intelligence/trust/labelling.py`
+labels every segment by its **source** (never by what it says), fails closed to `untrusted_external`
+for an unknown source, and renders untrusted content inside a typed boundary carrying the data-only
+instruction — trusted content renders as itself, so the boundary keeps its signal.
+`injection.py` implements deterministic, non-LLM heuristics (instruction override, role play,
+imperative tool call, exfiltration URL, encoded blob, hidden markup) that tag a suspect segment,
+replace its text with an evidence reference and expose the rules and reasons. The pinned corpus
+`tests/security/injection/corpus.json` holds 7 malicious and 4 benign shapes; the suite asserts every
+malicious sample fires its expected rules, benign content passes through untouched, the assessment is
+deterministic and total, and the corpus cannot silently empty itself. One heuristic was corrected
+after the benign sample caught a false positive ("run the project's own test command" was being
+flagged). Verified: 15 tests, plane 231/231 (6 skipped live-provider), ruff/format/mypy clean.
+
+**Remaining for INT-012:** the Rust policy half (`crates/server/src/policy/trust/`) — escalation of
+untrusted-derived tier ≥ 2 proposals, refusal of `always` rules for untrusted origin, fresh approval
+with an untrusted-origin preview at tier ≥ 3, and the exfiltration guard — plus QA-007 consuming the
+corpus.
+
+**INT-009 still waits on `task/INT-009-skills`** (`13626c6`): resolver + §11.5 state machine verified,
+DB-backed store operations outstanding.
+
+
 **INT-009 — Skill Registry and task-scoped resolver — `IN_PROGRESS` (work on `task/INT-009-skills` at `13626c6374105f09bab1f6f699487119f8ce34e2`, not yet merged).**
 
 The resolver half is implemented and verified there: only `ACTIVE` versions resolve (every other state,
