@@ -28,8 +28,8 @@
 pub mod cancel;
 pub mod capacity;
 pub mod graph;
-pub mod service;
 pub mod queue;
+pub mod service;
 
 use quansio_events::EventError;
 use thiserror::Error;
@@ -40,11 +40,11 @@ pub use graph::{
     DependencyEdge, GraphSnapshot, NodeTransition, ReleaseBatch, ReleaseOutcome, RunRef,
     UnavailableWorkGraph, WorkGraphPort, WorkNodeView, GRAPH_TRANSACTION_OWNER,
 };
-pub use service::{Orchestrator, TickReport, MAX_CANCEL_ATTEMPTS, MAX_REVISION_ATTEMPTS};
 pub use queue::{
     ensure_acyclic, join_plan, node_ids, project, release_plan, select, DeferralReason,
     DispatchCandidate, JoinPlan, ReleasePlan, Selection,
 };
+pub use service::{Orchestrator, TickReport, MAX_CANCEL_ATTEMPTS, MAX_REVISION_ATTEMPTS};
 
 /// Repository path of this module's canonical owner.
 pub const ORCHESTRATION_OWNER: &str = "crates/server/src/runtime/orchestration";
