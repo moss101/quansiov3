@@ -1,0 +1,60 @@
+# Quansio V8.1 baseline CI (GOV-005).
+#
+# The pipeline definition lives in `scripts/ci/ci_summary.py`; this workflow only
+# provisions the toolchains and runs `scripts/ci/ci.sh`, so a clean checkout runs
+# exactly what the commit-bound summary records.
+name: ci
+
+on:
+  push:
+    branches: [main, "task/**", "fix/**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # dossier consistency needs full history for commit reachability
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install workspace dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          (cd python && uv sync --python 3.12 --frozen)
+
+      - name: Run the baseline pipeline
+        run: bash scripts/ci/ci.sh
+
+      - name: Upload the machine-readable summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-summary
+          path: artifacts/ci/summary-*.json
+          if-no-files-found: warn

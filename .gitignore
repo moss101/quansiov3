@@ -30,6 +30,9 @@ __pycache__/
 *.local.yml
 local/
 
+# CI output (published as a workflow artifact, never committed)
+artifacts/
+
 # Evidence and scratch
 scratch/
 *.log
