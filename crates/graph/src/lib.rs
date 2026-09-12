@@ -23,6 +23,7 @@ pub mod error;
 pub mod runtime;
 pub mod state;
 pub mod store;
+pub mod transaction;
 pub mod work;
 
 pub use agent::{
@@ -37,4 +38,9 @@ pub use state::{
     TurnStatus, WorkEdgeKind, WorkNodeKind, WorkNodeStatus, WorkOrigin,
 };
 pub use store::GraphStore;
+pub use transaction::{
+    GraphTransaction, GraphTransactionError, PlanCapabilityNarrowingCheck, PlanEdgeRemoval,
+    PlanNodeUpdate, PlanProposal, PlanProposer, PlanRejection, StructuralPlanCapabilityCheck,
+    TransactionContext, TransactionOutcome, DEFAULT_MAX_PLAN_NODES,
+};
 pub use work::{NewWorkEdge, NewWorkNode, WorkEdge, WorkNode};

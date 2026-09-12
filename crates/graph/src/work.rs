@@ -330,31 +330,8 @@ impl GraphStore {
         expected: Revision,
     ) -> Result<(), GraphError> {
         let mut tx = self.begin().await?;
-        let edge = self.get_edge_tx(&mut tx, id).await?;
-        if edge.revision != expected {
-            return Err(Self::revision_conflict(
-                Entity::WorkEdge,
-                &id.to_string(),
-                expected,
-                edge.revision,
-            ));
-        }
-        let deleted = sqlx::query(
-            "DELETE FROM work_edges WHERE id = $1 AND tenant_id = $2 AND revision = $3",
-        )
-        .bind(id.to_string())
-        .bind(&self.tenant_id)
-        .bind(expected.get() as i64)
-        .execute(&mut *tx)
-        .await?;
-        if deleted.rows_affected() != 1 {
-            return Err(GraphError::StateConflict {
-                entity: Entity::WorkEdge.as_str(),
-                id: id.to_string(),
-                expected: expected.to_string(),
-            });
-        }
-        Self::bump_head_tx(&mut tx, &self.tenant_id, &edge.workspace_id).await?;
+        let removed = self.remove_edge_tx(&mut tx, id, expected).await?;
+        Self::bump_head_tx(&mut tx, &self.tenant_id, &removed.workspace_id).await?;
         tx.commit().await?;
         Ok(())
     }
@@ -570,6 +547,39 @@ impl GraphStore {
         }
     }
 
+    pub(crate) async fn remove_edge_tx(
+        &self,
+        tx: &mut Transaction<'static, Postgres>,
+        id: &CanonicalId,
+        expected: Revision,
+    ) -> Result<WorkEdge, GraphError> {
+        let edge = self.get_edge_tx(tx, id).await?;
+        if edge.revision != expected {
+            return Err(Self::revision_conflict(
+                Entity::WorkEdge,
+                &id.to_string(),
+                expected,
+                edge.revision,
+            ));
+        }
+        let deleted = sqlx::query(
+            "DELETE FROM work_edges WHERE id = $1 AND tenant_id = $2 AND revision = $3",
+        )
+        .bind(id.to_string())
+        .bind(&self.tenant_id)
+        .bind(expected.get() as i64)
+        .execute(&mut **tx)
+        .await?;
+        if deleted.rows_affected() != 1 {
+            return Err(GraphError::StateConflict {
+                entity: Entity::WorkEdge.as_str(),
+                id: id.to_string(),
+                expected: expected.to_string(),
+            });
+        }
+        Ok(edge)
+    }
+
     pub(crate) async fn transition_node_tx(
         &self,
         tx: &mut Transaction<'static, Postgres>,
@@ -601,7 +611,7 @@ impl GraphStore {
             .await
     }
 
-    async fn lock_node_tx(
+    pub(crate) async fn lock_node_tx(
         &self,
         tx: &mut Transaction<'static, Postgres>,
         id: &CanonicalId,

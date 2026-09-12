@@ -2,9 +2,8 @@
 
 **Canonical owner:** `crates/graph` — WorkGraph, AgentGraph and StateGraph stores plus GraphTransaction.
 
-Owns only the responsibilities named in DOSSIER.md §5. It must not become a second runtime,
-store, policy engine or effect path: all state transitions go through the canonical Quansio
-primitives described in `DOSSIER.md`.
+Owns only the responsibilities named in DOSSIER.md §5, and never becomes a second runtime,
+store, policy engine or effect path: transitions use the canonical Quansio primitives.
 
 Modules:
 
@@ -15,6 +14,7 @@ Modules:
   RUN-005 plugs the Capability Projection algebra into.
 - `runtime` — `runs`/`turns`/`steps`/`attempts`; the Run state machine including `SUSPENDED`, and
   append-only attempts.
-- `batch` — one transaction and one graph-revision compare-and-set across all three graphs;
-  CORE-005 wraps it to add event emission.
+- `batch` — one transaction and one graph-revision compare-and-set across all three graphs.
+- `transaction` — `GraphTransaction`: a batch plus its RuntimeEvents in one transaction behind
+  that compare-and-set, with DOMAIN §9.2 event mapping and PlanProposal validation.
 Build: `cargo test -p quansio-graph` (database tests need `QUANSIO_TEST_POSTGRES_URL`).

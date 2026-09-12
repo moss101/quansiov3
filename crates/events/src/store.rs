@@ -73,10 +73,13 @@ impl EventStore {
 
     /// Begin a transaction with the tenant context set, so row-level security applies
     /// (DOSSIER.md §16).
+    ///
+    /// The transaction owns a pooled connection, so it carries the `'static` lifetime a
+    /// second canonical store needs to apply its changes on the same unit of work.
     pub async fn begin_tenant_transaction(
         &self,
         tenant_id: &str,
-    ) -> Result<Transaction<'_, Postgres>, EventError> {
+    ) -> Result<Transaction<'static, Postgres>, EventError> {
         validate_tenant_id(tenant_id)?;
         let mut tx = self.pool.begin().await?;
         sqlx::query("SELECT set_config('quansio.tenant_id', $1, true)")
@@ -105,6 +108,56 @@ impl EventStore {
         let mut tx = self.begin_tenant_transaction(tenant_id).await?;
         let mut batch = EventBatch::default();
         let output = mutation(&mut tx, &mut batch).await?;
+        self.commit_staged(tx, tenant_id, batch).await?;
+        Ok(output)
+    }
+
+    /// Commit one state mutation together with its RuntimeEvent and outbox row, handing
+    /// the mutation the open transaction rather than its connection view.
+    ///
+    /// Identical in contract to [`EventStore::commit_mutation`]: when the mutation returns
+    /// `Ok` and staged at least one event, the store assigns the tenant-monotonic
+    /// `sequence`, writes `runtime_events` and `event_outbox`, and commits; on `Err` — or
+    /// when no event was staged — the transaction is rolled back.
+    ///
+    /// This is the seam for a second canonical store that owns its own transaction-level
+    /// helpers: `crates/graph`'s `GraphTransaction` applies WorkGraph/AgentGraph/StateGraph
+    /// changes on this very transaction, so graph state and its RuntimeEvents commit or
+    /// roll back as one. `commit_mutation` stays the API for callers that only need the
+    /// connection.
+    ///
+    /// # Errors
+    /// Returns [`EventError::NoEventStaged`] if the mutation committed no event, and
+    /// propagates database or envelope errors.
+    pub async fn commit_mutation_tx<T, F>(
+        &self,
+        tenant_id: &str,
+        mutation: F,
+    ) -> Result<T, EventError>
+    where
+        T: Send,
+        F: for<'a> FnOnce(
+            &'a mut Transaction<'static, Postgres>,
+            &'a mut EventBatch,
+        ) -> BoxEventFuture<'a, T>,
+    {
+        let mut tx = self.begin_tenant_transaction(tenant_id).await?;
+        let mut batch = EventBatch::default();
+        let output = mutation(&mut tx, &mut batch).await?;
+        self.commit_staged(tx, tenant_id, batch).await?;
+        Ok(output)
+    }
+
+    /// Assign sequences, write the events with their outbox rows and commit.
+    ///
+    /// Shared by both commit entry points so they cannot drift: a mutation that staged
+    /// nothing is refused and the transaction is dropped, which rolls it back.
+    async fn commit_staged(
+        &self,
+        mut tx: Transaction<'static, Postgres>,
+        tenant_id: &str,
+        batch: EventBatch,
+    ) -> Result<(), EventError> {
         if batch.is_empty() {
             return Err(EventError::NoEventStaged);
         }
@@ -114,7 +167,7 @@ impl EventStore {
             insert_event(&mut tx, &event).await?;
         }
         tx.commit().await?;
-        Ok(output)
+        Ok(())
     }
 
     /// Assign the next tenant sequence inside the caller's transaction.
