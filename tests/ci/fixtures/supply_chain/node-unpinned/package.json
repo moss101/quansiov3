@@ -1,0 +1,8 @@
+{
+  "name": "fixture-node-unpinned",
+  "private": true,
+  "devDependencies": {
+    "left-pad": "^1.3.0",
+    "typescript": "^5.7.2"
+  }
+}

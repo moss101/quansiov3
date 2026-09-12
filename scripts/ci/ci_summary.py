@@ -38,6 +38,7 @@ GATES: List[tuple] = [
     ("architecture", "python3.12 scripts/ci/arch_check.py"),
     ("authority-pointers", "python3.12 scripts/ci/check_authority.py --check"),
     ("workspace", "python3.12 scripts/ci/workspace_check.py"),
+    ("supply-chain", "python3.12 scripts/ci/supply_chain/check.py"),
     ("legacy-map", "python3.12 scripts/ci/legacy_map_check.py"),
     ("contract-drift", "uv run --project python python scripts/ci/gen_contracts.py --check"),
     ("contract-lint-compat", "uv run --project python python scripts/ci/contract_compat.py"),

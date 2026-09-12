@@ -1,0 +1,33 @@
+{
+  "skill_id": "fixture.approved",
+  "name": "Approved fixture skill",
+  "version": "1.0.0",
+  "status": "approved",
+  "quarantine": {
+    "status": "cleared",
+    "imported_at": "2026-09-12T00:00:00Z"
+  },
+  "provenance": {
+    "source": "quansio-builtin",
+    "ref": "fixture/approved-skill",
+    "digest": "sha256:fixture-approved-skill-digest"
+  },
+  "review": {
+    "reviewed_by": "fixture-reviewer",
+    "reviewed_at": "2026-09-12T00:00:00Z",
+    "outcome": "approved"
+  },
+  "normalization": {
+    "normalized_at": "2026-09-12T00:00:00Z",
+    "normalizer": "fixture-normalizer"
+  },
+  "evaluation": {
+    "eval_suite_id": "fixture-eval-suite",
+    "result": "passed",
+    "evaluated_at": "2026-09-12T00:00:00Z"
+  },
+  "approved": {
+    "approved_by": "fixture-approver",
+    "approved_at": "2026-09-12T00:00:00Z"
+  }
+}

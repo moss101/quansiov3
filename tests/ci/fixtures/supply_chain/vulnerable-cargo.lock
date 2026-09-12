@@ -1,0 +1,15 @@
+# Fixture lockfile for the vulnerable-dependency rule in tests/ci/test_supply_chain.py.
+# `image 0.21.2` lies in the affected range (`<0.21.3, >=0.10.2`) of the real published
+# advisory RUSTSEC-2019-0014 (CVE-2019-16138, GHSA-m2pf-hprp-3vqm, CVSS 9.8 CRITICAL,
+# patched >=0.21.3), whose record ships at
+# tests/ci/fixtures/supply_chain/advisory-db/RUSTSEC-2019-0014.toml.
+version = 3
+
+[[package]]
+name = "fixture-app"
+version = "0.1.0"
+
+[[package]]
+name = "image"
+version = "0.21.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"

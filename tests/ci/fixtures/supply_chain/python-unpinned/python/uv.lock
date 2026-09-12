@@ -1,0 +1,13 @@
+# Fixture lockfile for tests/ci/test_supply_chain.py. The first-party project resolves
+# but `pyyaml` (declared in python/pyproject.toml) is deliberately absent.
+version = 1
+revision = 3
+requires-python = ">=3.12"
+
+[[package]]
+name = "fixture-python-unpinned"
+version = "0.1.0"
+source = { editable = "." }
+
+[package.metadata]
+requires-dist = []

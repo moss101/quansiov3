@@ -1,0 +1,15 @@
+{
+  "skill_id": "fixture.self-promoted",
+  "name": "Self-promoted fixture skill",
+  "version": "0.1.0",
+  "status": "active",
+  "quarantine": {
+    "status": "quarantined",
+    "imported_at": "2026-09-12T00:00:00Z"
+  },
+  "provenance": {},
+  "review": {},
+  "normalization": {},
+  "evaluation": {},
+  "approved": {}
+}
