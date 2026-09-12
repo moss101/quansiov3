@@ -1,0 +1,7 @@
+$ bash scripts/dev/healthcheck
+exit_code: 0
+
+--- stdout ---
+dev stack: HEALTHY (postgres+pgvector, nats jetstream, minio)
+
+--- stderr ---
