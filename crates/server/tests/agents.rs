@@ -608,7 +608,7 @@ async fn handoff_is_recoverable_across_a_pool_drop_and_idempotent() {
             &pool,
             TENANT,
             "SELECT count(*) FROM agent_handoffs WHERE id = $1",
-            &[handoff.id.clone()],
+            std::slice::from_ref(&handoff.id),
         )
         .await,
         1
