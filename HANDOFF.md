@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0 complete, M1 complete; M3 started; 20 of 99 tasks complete)
+Updated: 2026-09-12 (M0/M1 complete; M2 started: RUN-001 PASS; 21 of 99 tasks complete)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,8 +16,8 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M1 — canonical state, events and persistence
-Current task: RUN-001 — authoritative Rust runtime state machine (M2), delegated in an isolated worktree
-Current task status: 20 of 99 tasks `PASS`; M1 closed, M3 started; the baseline pipeline is green on `main`
+Current task: INT-002 — server-side model gateway (M3, real boundary), delegated in an isolated worktree
+Current task status: 21 of 99 tasks `PASS`; M2 started; the baseline pipeline is green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
@@ -54,6 +54,15 @@ Current language: Rust + SQL
   `deny.toml` completeness, deterministic CycloneDX SBOM with drift verification, a real
   RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill quarantine-lifecycle checks; `cargo-deny` is an
   explicit informational result when absent. Evidence: `evidence/OPS-007/<ts>/`.
+- RUN-001 — authoritative Rust runtime state machine — `PASS`
+  (`crates/server/src/runtime/state_machine/`): Run/Turn/Step/Attempt transitions are evaluated inside the
+  event-emitting transaction, so an illegal transition rolls back state and events together; every
+  mutation is generation-fenced before any write; attempts are appended and never overwritten; cancelling
+  or suspending a run is an authoritative transition; and `recover` applies `next_safe_action` so a
+  `WAITING_*` run is released only by its matching resolution and an unsettled effect is reconciled rather
+  than retried (idempotent across repeated calls). The turn-loop seams for model proposals, tool dispatch,
+  delegation and verification return typed not-available errors naming INT-002/RUN-011/RUN-002/RUN-008
+  instead of fabricating success. Evidence: `evidence/RUN-001/<ts>/`.
 - CORE-008 — scheduler, waits and durable timers — `PASS` (`crates/server/src/scheduler/`, migration
   `0004_durable_timers.sql`): timers and waits persisted in PostgreSQL with exactly-once firing proven
   under two competing scheduler loops, survival across a pool drop, generation fencing, a typed
@@ -107,24 +116,22 @@ Current language: Rust + SQL
 
 TASK: INT-004 — Rust indexer and `SearchIndex` API (`crates/indexer/`): exact/lexical/symbol channels over
 artifact text, typed SearchProgram filters, rebuildability, tenant isolation and budgets.
-TASK: RUN-001 — the authoritative Rust runtime state machine (`crates/server/src/runtime/`): Run/Turn/
-Step/Attempt transitions driven by protocol state, the agent turn loop entry points, recovery, and the
-canonical dispatch path. This is the heart of M2.
 
 ## Exact next action
 
 Integrate each delegated branch as it completes (review → merge → re-run its tests on `main` → set
-progress `PASS` with evidence naming the merge commit). Then take INT-002 (server-side model
-gateway; a real-boundary task whose live conformance suite needs `QUANSIO_TEST_ANTHROPIC_API_KEY` or
-`QUANSIO_TEST_OPENAI_API_KEY` — without them the live part is recorded as `BLOCKED_EXTERNAL`).
+progress `PASS` with evidence naming the merge commit). Then take RUN-002 (AgentThread,
+delegation and handoff) and RUN-003 (plan compilation), then RUN-005/006/007/011 which build the
+capability, policy, effect and tool-dispatch path.
 Database-backed suites need `scripts/dev/up` plus
 `QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`; the baseline
 pipeline derives that URL from the generated `.env` automatically.
 
 ## Ready queue
 
-1. `RUN-001` — authoritative Rust runtime state machine (in flight, delegated).
-2. `INT-002` — server-side model gateway (M3; real boundary).
+1. `INT-002` — server-side model gateway (in flight, delegated; real boundary).
+2. `RUN-002` — AgentThread, delegation and handoff lifecycle.
+3. `RUN-003` — compile model plans into validated WorkGraph mutations.
 
 ## Blocked work
 
@@ -133,6 +140,14 @@ reached (27 tasks declare `real_boundary: true`).
 
 ## Architecture decisions made during implementation
 
+- **Runtime state tables are duplicated and guarded (RUN-001).** The runtime keeps its own copies of the
+  DOMAIN run/turn/step/attempt status values because `crates/graph` depends on the server's schema module,
+  so `crates/server` cannot depend on `crates/graph` (a package cycle). `tests/architecture/test_runtime_state_parity.py`
+  fails if either copy, or the database `CHECK` constraints, diverge. *Consolidation (next hardening step):*
+  move the pure state enums and transition tables into `crates/core` (they need no SQL), have both
+  `crates/graph` and the runtime re-export them, then the runtime can call `GraphTransaction` directly and
+  the parity test can be retired. Rationale: one expression of one state machine. Affected paths:
+  `crates/core/src/state.rs` (new), `crates/graph/src/state.rs`, `crates/server/src/runtime/state_machine/state.rs`.
 - Reconciliation, authority pointers and workspace mapping are executable gates
   (`scripts/ci/inventory.py`, `check_authority.py`, `workspace_check.py`), not prose. Rationale:
   governance that cannot fail a build is not governance. GOV-008 consolidates them behind
