@@ -11,3 +11,18 @@ description = "Capability Projection: effective authority derivation and narrowi
 workspace = true
 
 [dependencies]
+quansio-core = { path = "../core" }
+quansio-events = { path = "../events" }
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+[dev-dependencies]
+# The persistence test applies the canonical migrations and writes the
+# `capability_projections` row through the canonical EventStore transaction. The
+# capability owner declares no database client itself (`scripts/ci/arch_check.py`,
+# `new-persistent-store`); the store client belongs to the store-owning caller and is
+# a test-only dependency here.
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "json", "chrono", "migrate", "macros"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
