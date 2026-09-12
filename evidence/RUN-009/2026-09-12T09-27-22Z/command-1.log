@@ -1,0 +1,13 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.07s
+     Running tests/recovery.rs (target/debug/deps/recovery-db9b830d0c7d1d16)
+
+running 5 tests
+test recovery_decisions_read_only_durable_state ... ok
+test the_recovery_module_never_reads_a_memory_table ... ok
+test an_uncertain_effect_is_reconciled_before_the_run_resumes ... ok
+test killed_runtime_resumes_to_the_same_safe_logical_point ... ok
+test stale_worker_output_cannot_mutate_the_current_run ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.68s
+
