@@ -28,7 +28,7 @@
 pub mod cancel;
 pub mod capacity;
 pub mod graph;
-pub mod orchestrator;
+pub mod service;
 pub mod queue;
 
 use quansio_events::EventError;
@@ -40,7 +40,7 @@ pub use graph::{
     DependencyEdge, GraphSnapshot, NodeTransition, ReleaseBatch, ReleaseOutcome, RunRef,
     UnavailableWorkGraph, WorkGraphPort, WorkNodeView, GRAPH_TRANSACTION_OWNER,
 };
-pub use orchestrator::{Orchestrator, TickReport, MAX_REVISION_ATTEMPTS};
+pub use service::{Orchestrator, TickReport, MAX_CANCEL_ATTEMPTS, MAX_REVISION_ATTEMPTS};
 pub use queue::{
     ensure_acyclic, join_plan, node_ids, project, release_plan, select, DeferralReason,
     DispatchCandidate, JoinPlan, ReleasePlan, Selection,

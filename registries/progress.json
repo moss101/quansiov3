@@ -512,7 +512,7 @@
         "crates/server/src/runtime/orchestration/queue.rs",
         "crates/server/src/runtime/orchestration/capacity.rs",
         "crates/server/src/runtime/orchestration/cancel.rs",
-        "crates/server/src/runtime/orchestration/orchestrator.rs",
+        "crates/server/src/runtime/orchestration/service.rs",
         "crates/server/tests/orchestration.rs",
         "crates/graph/tests/orchestration.rs"
       ],
