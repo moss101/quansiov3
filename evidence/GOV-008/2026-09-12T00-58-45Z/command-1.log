@@ -1,0 +1,7 @@
+$ python3.12 scripts/ci/arch_check.py
+exit_code: 0
+
+--- stdout ---
+architecture check: CLEAN (0 findings)
+
+--- stderr ---

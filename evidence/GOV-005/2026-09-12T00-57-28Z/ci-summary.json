@@ -1,0 +1,93 @@
+{
+  "commit": "1599417018553f49ea7b3d92e1b9ed24e205cc1f",
+  "recorded_at": "2026-09-12T00:58:11Z",
+  "results": [
+    {
+      "gate": "authority",
+      "command": "python3.12 scripts/validate_v81.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.049,
+      "tail": "V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 6 PASS, 3 ready)"
+    },
+    {
+      "gate": "dossier-consistency",
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.647,
+      "tail": "dossier consistency: CLEAN (0 findings)"
+    },
+    {
+      "gate": "architecture",
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "status": "SKIPPED_PENDING",
+      "exit_code": null,
+      "duration_s": 0.0,
+      "tail": "scripts/ci/arch_check.py not present yet"
+    },
+    {
+      "gate": "authority-pointers",
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.043,
+      "tail": "authority check: CLEAN (0 findings)"
+    },
+    {
+      "gate": "workspace",
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.068,
+      "tail": "workspace check: CLEAN (0 findings)"
+    },
+    {
+      "gate": "legacy-map",
+      "command": "python3.12 scripts/ci/legacy_map_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.149,
+      "tail": "legacy map check: CLEAN (0 findings)"
+    },
+    {
+      "gate": "contract-drift",
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 3.229,
+      "tail": "contract regeneration check: CLEAN (catalog,openapi,rust,python,ts)"
+    },
+    {
+      "gate": "contract-lint-compat",
+      "command": "uv run --project python python scripts/ci/contract_compat.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.747,
+      "tail": "contract check: CLEAN (lint + compatibility)"
+    },
+    {
+      "gate": "toolchains",
+      "command": "bash scripts/dev/bootstrap.sh",
+      "status": "FAIL",
+      "exit_code": 1,
+      "duration_s": 0.611,
+      "tail": "== authority gate ==\nV8.1 VALIDATION: PASS (99 tasks, 10 milestones, 6 PASS, 3 ready)\n== architecture gates ==\nduplicate-authority scan: CLEAN (0 findings)\nauthority check: CLEAN (0 findings)\nworkspace check: CLEAN (0 findings)\nlegacy map check: CLEAN (0 findings)\nTraceback (most recent call last):\n  File \"/Users/mohsin/projects/quansiov3/scripts/ci/gen_contracts.py\", line 409, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/Users/mohsin/projects/quansiov3/scripts/ci/gen_contracts.py\", line 379, in main\n    problems = check(only)\n               ^^^^^^^^^^^\n  File \"/Users/mohsin/projects/quansiov3/scripts/ci/gen_contracts.py\", line 346, in check\n    domain_catalog.write_catalog(out)\n  File \"/Users/mohsin/projects/quansiov3/scripts/ci/domain_catalog.py\", line 260, in write_catalog\n    path.write_text(render_catalog(catalog, key))\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/mohsin/projects/quansiov3/scripts/ci/domain_catalog.py\", line 248, in render_catalog\n    import yaml\nModuleNotFoundError: No module named 'yaml'"
+    },
+    {
+      "gate": "tests",
+      "command": "uv run --project python pytest tests -q",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 37.079,
+      "tail": "........................................................................ [ 69%]\n...............................                                          [100%]\n103 passed in 36.64s"
+    }
+  ],
+  "artifacts": {
+    "registries/progress.json": "fd01830e2ede43e5bea0d09b1e4d149aeb62c7ed125a956c9c7ef3c6125164fb",
+    "TASKS.md": "e5f0d293dc9af2a836638a447db509121a50db6da1852faa65d5d5d005ef3915",
+    "MANIFEST.json": "c0d8652b64a80c55ed4075aa13746cb89f6c5b6c9c4a7abd9bffcfad89d8f447"
+  },
+  "status": "FAIL",
+  "summary_path": "/Users/mohsin/projects/quansiov3/artifacts/ci/summary-159941701855.json"
+}

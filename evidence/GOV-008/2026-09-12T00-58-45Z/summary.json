@@ -1,0 +1,65 @@
+{
+  "task_id": "GOV-008",
+  "git_commit": "6cdeae9545ed26e86859040535d9bd19608083ff",
+  "recorded_at": "2026-09-12T00:58:47Z",
+  "commands": [
+    {
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-008/2026-09-12T00-58-45Z/command-1.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-008/2026-09-12T00-58-45Z/command-2.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/inventory.py --scan",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-008/2026-09-12T00-58-45Z/command-3.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-008/2026-09-12T00-58-45Z/command-4.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/inventory.py --scan",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "scripts/ci/arch_check.py",
+      "sha256": "a452c8716e2733289c908dfeec7fa2aae88b69780632ba6aa953c7bb4f0680af",
+      "bytes": 28256
+    },
+    {
+      "path": "tests/architecture/test_arch_check.py",
+      "sha256": "3e5978c23ed8af59693f28b82d42ca61420a41c45a8c1971d8589a3bd4038b22",
+      "bytes": 18534
+    }
+  ]
+}

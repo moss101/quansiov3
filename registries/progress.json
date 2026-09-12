@@ -170,18 +170,26 @@
       "notes": "Regression fixed at 47f1ce1: Docker Desktop's credential helper was missing from PATH and minio/mc had moved registries, so a cold environment could not pull images (test_bootstrap_smoke failed at 7add8c5). Verified from a cleared image cache: scripts/dev/up pulls, reaches HEALTHY and the integration test passes (2 passed)."
     },
     "GOV-008": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-gov008",
+      "started_at": "2026-09-12T00:58:47Z",
+      "updated_at": "2026-09-12T00:58:47Z",
+      "git_commit": "6cdeae9",
+      "tests": [
+        "python3.12 scripts/ci/arch_check.py",
+        "uv run --project python pytest tests/architecture -q",
+        "python3.12 scripts/ci/inventory.py --scan"
+      ],
+      "artifacts": [
+        "evidence/GOV-008/2026-09-12T00-58-45Z/summary.json",
+        "scripts/ci/arch_check.py",
+        "tests/architecture/test_arch_check.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Eight forbidden-wiring rules with positive and negative fixture tests; reuses the inventory rule engine; reviewed and re-run on main (arch_check CLEAN, 104 architecture tests pass)."
     },
     "CORE-001": {
       "coverage": null,
