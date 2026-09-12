@@ -9,7 +9,7 @@
 //! Rollback policy: forward migrations with forward-fix (see `migrations/README.md`).
 //! There is no automated `down`; recovery is a new forward migration plus restore.
 
-use sqlx::postgres::PgPool;
+use sqlx::postgres::{PgConnection, PgPool};
 use sqlx::{Executor, Postgres, Transaction};
 
 /// The canonical migration set: every file in `migrations/`, applied in order.
@@ -44,10 +44,21 @@ pub async fn set_tenant_context(
     tx: &mut Transaction<'_, Postgres>,
     tenant_id: &str,
 ) -> Result<(), SchemaError> {
+    set_tenant_context_conn(&mut *tx, tenant_id).await
+}
+
+/// Set the tenant context on a plain connection (outside a managed transaction).
+///
+/// Callers that own the unit of work use this form so several stores can be mutated in
+/// one transaction (for example [`crate::runtime::protocol_state`] plus the event store).
+pub async fn set_tenant_context_conn(
+    conn: &mut PgConnection,
+    tenant_id: &str,
+) -> Result<(), SchemaError> {
     validate_tenant_id(tenant_id)?;
     sqlx::query("SELECT set_config('quansio.tenant_id', $1, true)")
         .bind(tenant_id)
-        .execute(&mut **tx)
+        .execute(&mut *conn)
         .await?;
     Ok(())
 }
@@ -66,8 +77,13 @@ pub async fn set_user_context(
 
 /// Clear the tenant context for the current transaction.
 pub async fn clear_tenant_context(tx: &mut Transaction<'_, Postgres>) -> Result<(), SchemaError> {
+    clear_tenant_context_conn(&mut *tx).await
+}
+
+/// Clear the tenant context on a plain connection.
+pub async fn clear_tenant_context_conn(conn: &mut PgConnection) -> Result<(), SchemaError> {
     sqlx::query("SELECT set_config('quansio.tenant_id', '', true)")
-        .execute(&mut **tx)
+        .execute(&mut *conn)
         .await?;
     Ok(())
 }

@@ -1,3 +1,6 @@
+// Each integration test binary compiles this module separately and uses a subset of it.
+#![allow(dead_code)]
+
 //! Shared helpers for database-backed integration tests.
 //!
 //! Every test creates and drops its own scratch database, so a development database is
@@ -21,7 +24,17 @@ pub fn blocked_marker() {
     eprintln!("BLOCKED_EXTERNAL: QUANSIO_TEST_POSTGRES_URL is not set; dev stack not running");
 }
 
-fn scratch_url(admin: &str, database: &str) -> String {
+/// URL of a scratch database on the same server as the admin DSN.
+///
+/// # Panics
+/// Panics when `QUANSIO_TEST_POSTGRES_URL` is not set; callers gate on [`admin_url`].
+#[must_use]
+pub fn scratch_url(database: &str) -> String {
+    let admin = admin_url().expect("caller checked QUANSIO_TEST_POSTGRES_URL");
+    join_url(&admin, database)
+}
+
+fn join_url(admin: &str, database: &str) -> String {
     match admin.rsplit_once('/') {
         Some((base, _)) => format!("{base}/{database}"),
         None => format!("{admin}/{database}"),
@@ -44,7 +57,7 @@ pub async fn fresh_database(name: &str) -> Option<PgPool> {
         .execute(format!("CREATE DATABASE {name}").as_str())
         .await
         .expect("create scratch database");
-    let url = scratch_url(&admin, name);
+    let url = join_url(&admin, name);
     Some(
         PgPoolOptions::new()
             .max_connections(4)
