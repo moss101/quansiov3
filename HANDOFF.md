@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0/M1 complete; M2 started: RUN-001 PASS; 21 of 99 tasks complete)
+Updated: 2026-09-12 (M0/M1 complete; M2/M3 in progress; 21 PASS + 1 BLOCKED_EXTERNAL)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,8 +16,8 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M1 — canonical state, events and persistence
-Current task: INT-002 — server-side model gateway (M3, real boundary), delegated in an isolated worktree
-Current task status: 21 of 99 tasks `PASS`; M2 started; the baseline pipeline is green on `main`
+Current task: RUN-002 — AgentThread, delegation and handoff lifecycle (M2), delegated in an isolated worktree
+Current task status: 21 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; pipeline green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
@@ -129,14 +129,27 @@ pipeline derives that URL from the generated `.env` automatically.
 
 ## Ready queue
 
-1. `INT-002` — server-side model gateway (in flight, delegated; real boundary).
-2. `RUN-002` — AgentThread, delegation and handoff lifecycle.
-3. `RUN-003` — compile model plans into validated WorkGraph mutations.
+1. `RUN-002` — AgentThread, delegation and handoff lifecycle (in flight, delegated).
+2. `RUN-003` — compile model plans into validated WorkGraph mutations.
+3. `INT-011` — embedding pipeline and derived vector index (ready because INT-002 is
+   `BLOCKED_EXTERNAL` with implementation complete; per D-017 it may start but a task that depends on it
+   can only reach `PASS` once the live conformance runs).
 
 ## Blocked work
 
-None. No `QUANSIO_TEST_*` credentials exist, so real-boundary tasks will be `BLOCKED_EXTERNAL` when
-reached (27 tasks declare `real_boundary: true`).
+### INT-002 — server-side model gateway (`BLOCKED_EXTERNAL`, implementation complete)
+Reason: the live provider conformance suite cannot run here.
+External dependency: `QUANSIO_TEST_ANTHROPIC_API_KEY` and `QUANSIO_TEST_OPENAI_API_KEY` (plus egress to
+`api.anthropic.com` / `api.openai.com`).
+Exact unblock condition: set both variables and run
+`uv run --project python python -m pytest python/tests/intelligence/test_model_gateway_live.py -q`,
+then record the run in `real_boundary_evidence` and flip the task to `PASS`. Everything else about the
+task is implemented and verified offline (173 Python-plane tests, 6 skipped live cases that name the
+missing variable).
+Independent work available: yes — RUN-003, RUN-002 and the rest of M2/M3 continue.
+
+No other task is blocked. 27 tasks declare `real_boundary: true`; each will be recorded the same way
+rather than fabricated.
 
 ## Architecture decisions made during implementation
 
