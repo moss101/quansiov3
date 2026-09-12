@@ -152,7 +152,11 @@ class PolicyRouteSelector:
         provider = catalog.provider_for(primary)
         route = intelligence_pb2.ModelRoute(
             schema_version=SCHEMA_VERSION,
-            id=f"mr_{new_ulid(seed=f'{request.call_id}|{primary.id}|{rule_id}')}",
+            # A route id must be a pure function of the decision, which is an INT-002 property the
+            # resolver relies on: `new_ulid` makes the *randomness* reproducible from the seed but
+            # still stamps the current millisecond, so the timestamp is pinned too. Without this the
+            # id changed whenever the two calls straddled a millisecond boundary.
+            id=f"mr_{new_ulid(seed=f'{request.call_id}|{primary.id}|{rule_id}', timestamp_ms=0)}",
             request_class=REQUEST_CLASS_PROTO[request_class],
             provider=provider.name,
             model_id=primary.model_id,

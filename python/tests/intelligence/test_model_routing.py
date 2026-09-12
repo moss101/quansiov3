@@ -8,6 +8,7 @@ primary-model path needs no model call before the selected model.
 
 from __future__ import annotations
 
+import time
 from collections.abc import Iterator
 
 import pytest
@@ -62,7 +63,10 @@ def test_route_selection_is_deterministic_and_records_its_rule(gateway: ModelGat
     request = build_call(model_catalog_id="", scenario="text")
     selector = PolicyRouteSelector()
 
+    # The two selections are deliberately separated by more than a millisecond: a route id that
+    # embeds the clock would differ here, which is exactly how this defect was caught.
     first = selector.select(gateway.catalog, request)
+    time.sleep(0.01)
     second = selector.select(gateway.catalog, request)
     assert first.route.id == second.route.id, "route ids are a pure function of the decision"
     assert first.route.chosen_by == second.route.chosen_by

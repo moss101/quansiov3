@@ -502,38 +502,7 @@ Generation/lease concerns: none.
 
 ## Known defects
 
-**Intermittent intelligence-plane failure (unidentified).** Across 9 full-suite runs while verifying INT-012, 2 reported `1 failed, 235 passed, 6 skipped` and 7 reported `236 passed` — roughly one run in five. The failing test was never identified (the first failure's output was filtered away and six follow-up runs were clean). Most likely the suites that start a loopback conformance stub provider. Treat a green plane run as necessary but not sufficient until this is pinned down.
-
-
-Release-quality placeholder audit (DOMAIN §26 defect search), run on `main` after RUN-008:
-
-```bash
-grep -rnE "TODO|FIXME|HACK|unimplemented!|todo!|placeholder|NotImplemented" \
-  crates/*/src python/intelligence apps/*/src sdk/typescript/src native
-grep -rnE "#\[ignore\]|xfail|pytest.mark.skip" crates/*/src crates/*/tests python apps
-```
-
-Findings: **none in product code.** The `NotImplementedError` hits are protoc's own gRPC
-servicer boilerplate in `python/intelligence/contracts/generated/` (generated, committed on
-purpose so CI detects contract drift), and the `TODO`/`FIXME` hits are inside
-`native/macos/.build/`, which `.gitignore` excludes (only four Swift source files are tracked).
-No `#[ignore]`d Rust test and no skipped/xfailed repository test; the only skipped Python cases
-are INT-002's six live-provider tests, which need provider credentials. No duplicate authority:
-`Orchestrator` is RUN-004's single orchestration service (the GOV-006 legacy-map gate, which
-flags a file *named* `orchestrator.rs` as a parallel-authority signal, is why that module file is
-`service.rs`), `ApprovalRuntime` is RUN-006's, and `TokenLedger` is a generated usage-accounting
-contract type, not a second Effect Ledger.
-
-Recorded limitations (not defects; each is fail-closed and named where it lives):
-- `test_command`, `assertion` and `citations_valid` contract checks are unimplemented and refuse
-  the contract, naming EXEC-006, the missing predicate registry and CAP-002 (RUN-008).
-- The execution hosts behind `ToolHostPort` are unwired, so a tool call fails closed naming its
-  owner (EXEC-006/009/011, CORE-007, INT-006) (RUN-011).
-- The graph-backed `WorkGraphPort` (orchestration) and the cross-process binding from the Rust
-  `SemanticVerifierPort` to the Python semantic verifier belong to the composition root
-  (APP-001/INT-001); both refuse rather than guess while absent (RUN-004/RUN-008).
-- A run does not yet record its model route, so a contract requiring `independent_model` is
-  refused rather than self-certified until INT-002/INT-003 record it (RUN-008).
+**Intermittent intelligence-plane failure — FIXED.** Found while verifying INT-012: 2 of 9 full-suite runs failed. The culprit was `PolicyRouteSelector`: `new_ulid(seed=…)` makes the *random field* reproducible but still stamps the current millisecond, so a route id changed whenever two selections straddled a millisecond boundary (observed as `…A655…` vs `…A654…`) — breaking the INT-002 property that a route id is a pure function of the decision. Fixed by pinning `timestamp_ms=0` for seeded route ids, and the regression test now sleeps 10 ms between the two selections so it fails deterministically without the fix (verified: fails without, passes with). Before: 2 failures in 9 runs. After: 0 failures in 10 runs.
 
 ## Working tree
 
