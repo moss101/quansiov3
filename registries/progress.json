@@ -95,7 +95,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T00:27:57Z",
       "updated_at": "2026-09-12T00:38:06Z",
-      "git_commit": "8e8803f",
+      "git_commit": "8fc819f100edd1ee3fbe9184621788d3b8cc81fe",
       "tests": [
         "uv run --project python python scripts/ci/gen_contracts.py --check",
         "uv run --project python python scripts/ci/contract_compat.py",
