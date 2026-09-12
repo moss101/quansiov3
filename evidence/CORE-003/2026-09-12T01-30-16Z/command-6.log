@@ -1,0 +1,7 @@
+$ python3.12 scripts/validate_v81.py
+exit_code: 0
+
+--- stdout ---
+V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 11 PASS, 5 ready)
+
+--- stderr ---

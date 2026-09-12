@@ -1,0 +1,112 @@
+{
+  "task_id": "CORE-003",
+  "git_commit": "546833c0b06e41a1ab01c20400b9d1e336c0c831",
+  "recorded_at": "2026-09-12T01:31:10Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-events",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-12T01-30-16Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-12T01-30-16Z/command-2.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-12T01-30-16Z/command-3.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-12T01-30-16Z/command-4.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-12T01-30-16Z/command-5.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-12T01-30-16Z/command-6.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-events",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/events/src/envelope.rs",
+      "sha256": "3c9c00c9c3912c4fde0c43123b6e76012f8953ad0d0508aa2868fc06e329d0a5",
+      "bytes": 11423
+    },
+    {
+      "path": "crates/events/src/store.rs",
+      "sha256": "c67ffbf0aea4a1f97824211b5c95a9560748fa49e77677430277080aa58c98a4",
+      "bytes": 12024
+    },
+    {
+      "path": "crates/events/src/outbox.rs",
+      "sha256": "a13bf710a1ca71f80727915da508a160a13b36f9fa504a66a5224aab61601a5c",
+      "bytes": 5561
+    },
+    {
+      "path": "crates/events/src/cursor.rs",
+      "sha256": "b8fa32b4513fd4733b4a81887c71b7c0d4217bfc8399bc2559bb34566f268039",
+      "bytes": 6333
+    },
+    {
+      "path": "crates/events/src/event_type.rs",
+      "sha256": "c1f7e3a4ea6bfeb6f830473b4cf147dbd74e3124b9cea5505e6c7de2ea809e03",
+      "bytes": 7538
+    },
+    {
+      "path": "migrations/0002_runtime_event_sequences.sql",
+      "sha256": "a93426772c298ed556a58f1246174ace426efb709b078d310aef1e8491de3704",
+      "bytes": 1223
+    },
+    {
+      "path": "crates/events/tests/runtime_event_store.rs",
+      "sha256": "a6b26a1da2eebc9129cd0928851c36837a828dcbcf8ed9845223f2417872914b",
+      "bytes": 15663
+    }
+  ]
+}

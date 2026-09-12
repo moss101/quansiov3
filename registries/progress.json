@@ -254,18 +254,27 @@
       "notes": "Typed prefixed ULID with a spec-vector fixture and monotonic same-millisecond generation; 46-entry prefix table cross-checked against the generated EntityPrefix enum; generation/revision/fence/cursor primitives; effect idempotency keys and command duplicate classification. Database-backed tests prove duplicate commands replay (unique constraint) or conflict on parameter drift, and that stale generations update zero rows. Also hardened the CORE-001 migration: concurrent CREATE ROLE can surface unique_violation as well as duplicate_object."
     },
     "CORE-003": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-core003",
+      "started_at": "2026-09-12T01:31:18Z",
+      "updated_at": "2026-09-12T01:31:18Z",
+      "git_commit": "546833c",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-events",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/CORE-003/2026-09-12T01-30-16Z/summary.json",
+        "crates/events/src/envelope.rs",
+        "crates/events/src/store.rs",
+        "migrations/0002_runtime_event_sequences.sql"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "RuntimeEvent envelope and 34 event families from DOMAIN.md \u00a79; sequence assigned inside the commit transaction through a per-tenant counter row (concurrent writers serialize, rollback releases the value so the stream stays gap-free); mutation + event + outbox written atomically with NoEventStaged failing closed; outbox publishing behind an EventTransport trait with an explicit UnavailableTransport that never drops events silently; durable consumer cursors with resume. Reviewed and re-run on main (12 tests pass)."
     },
     "CORE-004": {
       "coverage": null,
