@@ -26,18 +26,31 @@ class ErrorCode(StrEnum):
     """DOMAIN.md §15 codes emitted by the intelligence boundary."""
 
     VALIDATION_SCHEMA = "VALIDATION_SCHEMA"
+    VALIDATION_BOUNDS = "VALIDATION_BOUNDS"
     SCOPE_FORBIDDEN = "SCOPE_FORBIDDEN"
     TOOL_TIMEOUT = "TOOL_TIMEOUT"
     INTERNAL = "INTERNAL"
+    # Model family (DOMAIN.md §15): emitted by the model gateway (INT-002) and surfaced here.
+    ROUTE_UNAVAILABLE = "ROUTE_UNAVAILABLE"
+    DLP_DENIED = "DLP_DENIED"
+    PROVIDER_UNAVAILABLE = "PROVIDER_UNAVAILABLE"
+    PROVIDER_RATE_LIMITED = "PROVIDER_RATE_LIMITED"
+    PROVIDER_REFUSAL = "PROVIDER_REFUSAL"
 
 
 _GRPC_STATUS_BY_CODE: dict[ErrorCode, grpc.StatusCode] = {
     ErrorCode.VALIDATION_SCHEMA: grpc.StatusCode.INVALID_ARGUMENT,
+    ErrorCode.VALIDATION_BOUNDS: grpc.StatusCode.INVALID_ARGUMENT,
     ErrorCode.SCOPE_FORBIDDEN: grpc.StatusCode.PERMISSION_DENIED,
     # The taxonomy has no DEADLINE_EXCEEDED code; a request whose deadline expired before
     # processing (or during a call the runtime bounded) is the Execution family's timeout.
     ErrorCode.TOOL_TIMEOUT: grpc.StatusCode.DEADLINE_EXCEEDED,
     ErrorCode.INTERNAL: grpc.StatusCode.INTERNAL,
+    ErrorCode.ROUTE_UNAVAILABLE: grpc.StatusCode.FAILED_PRECONDITION,
+    ErrorCode.DLP_DENIED: grpc.StatusCode.PERMISSION_DENIED,
+    ErrorCode.PROVIDER_UNAVAILABLE: grpc.StatusCode.UNAVAILABLE,
+    ErrorCode.PROVIDER_RATE_LIMITED: grpc.StatusCode.UNAVAILABLE,
+    ErrorCode.PROVIDER_REFUSAL: grpc.StatusCode.FAILED_PRECONDITION,
 }
 
 
