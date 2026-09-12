@@ -337,18 +337,27 @@
       "notes": "ProtocolState per DOMAIN.md \u00a75.7 with a pure next_safe_action precedence (cancel > reconcile unknown effect > approval > question > takeover handback > child > waits > continue); an unknown effect outcome is reconciled, never retried. Checkpoint metadata with generation and retention fencing. Stores take a caller-owned PgConnection so several writes compose into one transaction (the seam CORE-005 needs). Paths implemented as crates/server/src/runtime/{protocol_state,checkpoints}/ \u2014 equivalent to the task's crates/server/runtime/... mapping under this repository's src/ layout."
     },
     "CORE-007": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-core007",
+      "started_at": "2026-09-12T02:05:45Z",
+      "updated_at": "2026-09-12T02:05:45Z",
+      "git_commit": "7590545",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/CORE-007/2026-09-12T02-04-25Z/summary.json",
+        "crates/server/src/artifacts/metadata.rs",
+        "crates/server/src/artifacts/object_store.rs",
+        "crates/server/tests/artifacts.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Artifact/ArtifactVersion/Evidence/EvidenceBundle metadata with immutable evidence (insert-only, new identities per capture), tenant-prefixed content-addressed object keys verified by sha256, SigV4 S3 client with multipart upload and SSE-S3 against the real dev MinIO, fail-closed grants, and retention/legal-hold decisions recorded rather than silently deleting. Verification required two dev-stack fixes, both committed here: the generated .env now picks up settings added to config/dev.yaml (the MinIO SSE key previously stayed unset), and credentials stay stable across upgrades."
     },
     "CORE-008": {
       "coverage": null,

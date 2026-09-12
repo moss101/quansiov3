@@ -1,0 +1,68 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server
+exit_code: 0
+
+--- stdout ---
+
+running 5 tests
+test artifacts::object_store::tests::endpoint_split_preserves_port_and_rejects_bad_schemes ... ok
+test artifacts::object_store::tests::object_keys_reject_traversal_and_non_tenant_prefixes ... ok
+test artifacts::sigv4::tests::query_encoding_is_rfc3986_and_sorted ... ok
+test artifacts::object_store::tests::object_keys_are_tenant_prefixed_and_content_addressed ... ok
+test artifacts::sigv4::tests::matches_the_aws_documented_signing_example ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 8 tests
+test grant_scope_denies_ungranted_callers_and_read_cannot_write ... ok
+test evidence_bundle_records_claims_sources_and_verification ... ok
+test digest_corruption_is_rejected_against_minio ... ok
+test new_bytes_get_a_new_version_identity ... ok
+test artifact_round_trip_verifies_the_recorded_digest_against_minio ... ok
+test evidence_is_insert_only_and_never_overwritten ... ok
+test legal_hold_and_retention_are_recorded_not_silently_deleted ... ok
+test multipart_attachment_round_trips_against_minio ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.35s
+
+
+running 2 tests
+test duplicate_commands_replay_and_param_changes_conflict ... ok
+test stale_generations_are_rejected_before_mutation ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+
+running 5 tests
+test partial_tool_call_recovery_reconciles_and_never_retries ... ok
+test protocol_state_is_tenant_scoped ... ok
+test approval_and_question_waits_survive_restart ... ok
+test checkpoints_are_generation_and_retention_fenced ... ok
+test crash_restart_reconstructs_the_next_safe_action ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.77s
+
+
+running 5 tests
+test tenant_context_validation_rejects_non_canonical_ids ... ok
+test migrations_are_reapplied_safely_over_existing_data ... ok
+test tenant_isolation_returns_zero_rows_without_context ... ok
+test bootstrap_from_zero_creates_the_authoritative_schema ... ok
+test unset_context_fails_closed_on_a_plain_connection ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.82s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.30s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-8002b51bc7e4533f)
+     Running tests/artifacts.rs (target/debug/deps/artifacts-ff6dcffacad6574a)
+     Running tests/command_idempotency.rs (target/debug/deps/command_idempotency-a2c7b41ff19cd88a)
+     Running tests/protocol_state.rs (target/debug/deps/protocol_state-c24a385ea178a89d)
+     Running tests/schema_bootstrap.rs (target/debug/deps/schema_bootstrap-42cc5c1358cb0b4d)
+   Doc-tests quansio_server
