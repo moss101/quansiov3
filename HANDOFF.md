@@ -209,7 +209,7 @@ recorded under "Environment requirements".
 
 ## What is currently being implemented
 
-**INT-009 — Skill Registry and task-scoped resolver — `IN_PROGRESS` (work on `task/INT-009-skills`, not yet merged).**
+**INT-009 — Skill Registry and task-scoped resolver — `IN_PROGRESS` (work on `task/INT-009-skills` at `07c30f2048bb0e4c41052f7b7ca48fc4370966a9`, not yet merged).**
 
 The resolver half is implemented and verified there: only `ACTIVE` versions resolve (every other state,
 including `APPROVED`, is excluded with the rule that excluded it), a version whose `tool_needs` or
@@ -224,7 +224,7 @@ clean — captured in `evidence/INT-009/2026-09-12T12-30-38Z/` **before the envi
 the dev-stack Postgres port is closed — so the DB-backed gates (`toolchains`, which runs
 `cargo test --workspace`) cannot run. That is why the slice is on its branch and `main` is untouched:
 a pipeline that cannot be verified is not a green pipeline. Unblock: bring the runtime back with
-`bash scripts/dev/up` (never `down`) and re-run `bash scripts/ci/ci.sh`; then merge the branch.
+`bash scripts/dev/up` (never `down`) and re-run `bash scripts/ci/ci.sh`; then merge `task/INT-009-skills` (`07c30f2048bb0e4c41052f7b7ca48fc4370966a9`).
 
 **Remaining for INT-009:** `crates/server/src/control/skills/` — the Rust control-plane store holding
 metadata, provenance and evals and owning the promotion state machine (draft → candidate → evaluating
