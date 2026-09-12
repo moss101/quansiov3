@@ -136,6 +136,26 @@ pub enum ToolDispatchOutcome {
         /// Typed tool error.
         error: Value,
     },
+    /// The call was refused before any dispatch: unknown tool or field, an argument that
+    /// failed its schema, or a capability/policy denial. The Step records the refusal and
+    /// the turn continues so the model can correct itself within budget.
+    Rejected {
+        /// Quansio error code (DOMAIN.md §15).
+        code: String,
+        /// Why the call was refused.
+        detail: String,
+    },
+    /// The run must park in a `WAITING_*` state before the call can proceed
+    /// (approval, question, delegation or takeover). The dispatch has already persisted
+    /// the protocol state that resolution matches.
+    Parked {
+        /// Waiting state the run holds.
+        state: RunStatus,
+        /// Key that resolution must match.
+        wait_key: String,
+        /// EffectRecord reserved for the parked call, when one exists.
+        effect_id: Option<String>,
+    },
     /// The tool was dispatched and its external outcome is unknown; it must be
     /// reconciled before any retry (DOMAIN.md §7.2).
     OutcomeUnknown {
@@ -192,6 +212,20 @@ pub trait ToolDispatchPort: Send + Sync {
         call: ProposedToolCall,
         request: ToolDispatchRequest,
     ) -> Result<ToolDispatchOutcome, RuntimeError>;
+
+    /// Continue a call that parked earlier instead of proposing it again.
+    ///
+    /// The default refuses: a port that cannot resume must not pretend the call happened.
+    async fn resume(
+        &self,
+        _pending: crate::runtime::protocol_state::PendingToolCall,
+        _request: ToolDispatchRequest,
+    ) -> Result<ToolDispatchOutcome, RuntimeError> {
+        Err(RuntimeError::seam_not_available(
+            "tool resume",
+            TOOL_DISPATCH_OWNER,
+        ))
+    }
 }
 
 /// Identity the tool dispatch seam records on its effect (DOMAIN.md §7.2).
@@ -245,6 +279,60 @@ pub struct VerificationContext {
     pub run_id: String,
     /// Turn the claim was made in.
     pub turn_id: String,
+}
+
+/// Identity the question seam records on the Question (DOMAIN.md §3.4).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QuestionContext {
+    /// Run that asked.
+    pub run_id: String,
+    /// Turn that asked.
+    pub turn_id: String,
+    /// `question` Step the Question is recorded under.
+    pub step_id: String,
+    /// Run generation the ask is fenced by.
+    pub generation: u64,
+    /// Thread the Question is posted to, when the run has one.
+    pub thread_id: Option<String>,
+}
+
+/// What the human question protocol produced.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum QuestionOutcome {
+    /// A durable Question row exists and the run must park in `WAITING_QUESTION`.
+    Asked {
+        /// `q_…` question id.
+        question_id: String,
+    },
+}
+
+/// Injected human question protocol (DOMAIN.md §3.4, §5.6).
+#[async_trait]
+pub trait QuestionPort: Send + Sync {
+    /// Persist the Question and return its id; the runtime parks the run.
+    async fn ask(
+        &self,
+        question: ProposedQuestion,
+        context: QuestionContext,
+    ) -> Result<QuestionOutcome, RuntimeError>;
+}
+
+/// Default question seam: the question protocol is RUN-011.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct UnavailableQuestions;
+
+#[async_trait]
+impl QuestionPort for UnavailableQuestions {
+    async fn ask(
+        &self,
+        _question: ProposedQuestion,
+        _context: QuestionContext,
+    ) -> Result<QuestionOutcome, RuntimeError> {
+        Err(RuntimeError::seam_not_available(
+            "human question protocol",
+            QUESTION_OWNER,
+        ))
+    }
 }
 
 /// Default model seam: the gateway is INT-002.

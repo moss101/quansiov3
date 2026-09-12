@@ -1703,6 +1703,7 @@ dependencies = [
  "quansio-capability",
  "quansio-core",
  "quansio-events",
+ "quansio-tools",
  "reqwest",
  "serde",
  "serde_json",
@@ -1716,6 +1717,16 @@ dependencies = [
 [[package]]
 name = "quansio-tools"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+ "quansio-capability",
+ "quansio-contracts",
+ "quansio-core",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror",
+]
 
 [[package]]
 name = "quinn"

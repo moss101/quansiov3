@@ -19,18 +19,24 @@ use quansio_core::{CanonicalId, Generation};
 use serde_json::json;
 use sqlx::PgPool;
 
-use crate::runtime::protocol_state::{next_safe_action, NextAction, ProtocolState, WaitKind};
+use crate::runtime::protocol_state::{
+    is_unsettled, next_safe_action, NextAction, ProtocolState, WaitKind,
+};
 
 use super::state::{AttemptStatus, RunStatus, StepKind, StepStatus, TurnStatus};
-use super::store::{Budget, NewRun, NewStep, Run, RuntimeStore, Turn, TurnInput, WaitResolution};
+use super::store::{
+    Attempt, Budget, NewRun, NewStep, Run, RuntimeStore, Step, Turn, TurnInput, WaitResolution,
+};
 use super::turn_loop::{
     CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort, ModelCallRequest,
-    ModelProposalSource, ProposedToolCall, ToolDispatchOutcome, ToolDispatchPort,
-    ToolDispatchRequest, TurnOutcome, UnavailableDelegation, UnavailableModelProposalSource,
-    UnavailableToolDispatch, UnavailableVerification, VerificationContext, VerificationOutcome,
-    VerificationPort, MEMORY_OWNER, PLAN_VALIDATION_OWNER, QUESTION_OWNER,
+    ModelProposalSource, ProposedToolCall, QuestionContext, QuestionOutcome, QuestionPort,
+    ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest, TurnOutcome, UnavailableDelegation,
+    UnavailableModelProposalSource, UnavailableQuestions, UnavailableToolDispatch,
+    UnavailableVerification, VerificationContext, VerificationOutcome, VerificationPort,
+    MEMORY_OWNER, PLAN_VALIDATION_OWNER,
 };
 use super::{fence, RuntimeError, RuntimeIdentity};
+use crate::runtime::turn_loop::parallel;
 
 /// What `recover` concluded from durable state.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -74,6 +80,7 @@ pub struct RuntimeEngine {
     tools: Arc<dyn ToolDispatchPort>,
     delegation: Arc<dyn DelegationPort>,
     verification: Arc<dyn VerificationPort>,
+    questions: Arc<dyn QuestionPort>,
 }
 
 impl RuntimeEngine {
@@ -89,6 +96,7 @@ impl RuntimeEngine {
             tools: Arc::new(UnavailableToolDispatch),
             delegation: Arc::new(UnavailableDelegation),
             verification: Arc::new(UnavailableVerification),
+            questions: Arc::new(UnavailableQuestions),
         })
     }
 
@@ -117,6 +125,13 @@ impl RuntimeEngine {
     #[must_use]
     pub fn with_verification(mut self, port: Arc<dyn VerificationPort>) -> Self {
         self.verification = port;
+        self
+    }
+
+    /// Install the human question protocol (DOMAIN.md §3.4).
+    #[must_use]
+    pub fn with_question_port(mut self, port: Arc<dyn QuestionPort>) -> Self {
+        self.questions = port;
         self
     }
 
@@ -363,6 +378,15 @@ impl RuntimeEngine {
             .await?;
         let mut steps_used: u32 = 0;
 
+        // A run released from a WAITING_* state continues its recorded call instead of
+        // asking the model to propose it again.
+        if let Some(outcome) = self
+            .resume_pending_calls(&run, &turn, generation, budget, &mut steps_used)
+            .await?
+        {
+            return Ok(outcome);
+        }
+
         loop {
             if steps_used >= budget.max_steps {
                 return self
@@ -423,78 +447,18 @@ impl RuntimeEngine {
                 ));
             }
 
-            for call in &proposal.tool_calls {
-                if steps_used >= budget.max_steps {
-                    return self
-                        .exhaust_budget(&run, &turn, generation, steps_used, budget)
-                        .await;
-                }
-                let tool_step = self
-                    .store
-                    .record_step(
-                        &turn.id,
-                        generation,
-                        NewStep::new(StepKind::ToolCall).with_ref(call.call_id.clone()),
-                    )
-                    .await?;
-                steps_used += 1;
-                let (_, attempt) = self.store.dispatch_step(&tool_step.id, generation).await?;
-                let dispatch_request = ToolDispatchRequest {
-                    run_id: run.id.to_string(),
-                    turn_id: turn.id.to_string(),
-                    step_id: tool_step.id.to_string(),
-                    generation: generation.get(),
-                };
-                match self.tools.dispatch(call.clone(), dispatch_request).await {
-                    Ok(ToolDispatchOutcome::Completed { evidence_ids, .. }) => {
-                        self.store
-                            .complete_step(
-                                &tool_step.id,
-                                generation,
-                                &attempt.id,
-                                StepStatus::Completed,
-                                AttemptStatus::Succeeded,
-                                None,
-                                evidence_ids,
-                            )
-                            .await?;
-                    }
-                    Ok(ToolDispatchOutcome::Failed { error }) => {
-                        self.store
-                            .complete_step(
-                                &tool_step.id,
-                                generation,
-                                &attempt.id,
-                                StepStatus::Failed,
-                                AttemptStatus::Failed,
-                                Some(error),
-                                Vec::new(),
-                            )
-                            .await?;
-                    }
-                    Ok(ToolDispatchOutcome::OutcomeUnknown { effect_id }) => {
-                        self.store
-                            .complete_step(
-                                &tool_step.id,
-                                generation,
-                                &attempt.id,
-                                StepStatus::Unknown,
-                                AttemptStatus::TimedOut,
-                                None,
-                                Vec::new(),
-                            )
-                            .await?;
-                        return self
-                            .park_unsettled_effect(&run, &turn, generation, call, effect_id)
-                            .await;
-                    }
-                    Err(error) => {
-                        self.fail_step(&tool_step.id, &attempt.id, generation, &error)
-                            .await?;
-                        self.abort_turn(&turn.id, generation).await?;
-                        return Err(error);
-                    }
-                }
+            if let Some(outcome) = self
+                .dispatch_tool_calls(
+                    &run,
+                    &turn,
+                    generation,
+                    &proposal.tool_calls,
+                    budget,
+                    &mut steps_used,
+                )
+                .await?
+            {
+                return Ok(outcome);
             }
 
             for delegation in &proposal.delegate_requests {
@@ -562,12 +526,55 @@ impl RuntimeEngine {
                 }
             }
 
-            if proposal.question.is_some() {
-                self.abort_turn(&turn.id, generation).await?;
-                return Err(RuntimeError::seam_not_available(
-                    "human question protocol",
-                    QUESTION_OWNER,
-                ));
+            if let Some(question) = &proposal.question {
+                if steps_used >= budget.max_steps {
+                    return self
+                        .exhaust_budget(&run, &turn, generation, steps_used, budget)
+                        .await;
+                }
+                let question_step = self
+                    .store
+                    .record_step(
+                        &turn.id,
+                        generation,
+                        NewStep::new(StepKind::Wait).with_ref(question.question_id.clone()),
+                    )
+                    .await?;
+                let (_, attempt) = self
+                    .store
+                    .dispatch_step(&question_step.id, generation)
+                    .await?;
+                let context = QuestionContext {
+                    run_id: run.id.to_string(),
+                    turn_id: turn.id.to_string(),
+                    step_id: question_step.id.to_string(),
+                    generation: generation.get(),
+                    thread_id: None,
+                };
+                match self.questions.ask(question.clone(), context).await {
+                    Ok(QuestionOutcome::Asked { question_id }) => {
+                        self.store
+                            .complete_step(
+                                &question_step.id,
+                                generation,
+                                &attempt.id,
+                                StepStatus::Completed,
+                                AttemptStatus::Succeeded,
+                                None,
+                                Vec::new(),
+                            )
+                            .await?;
+                        return self
+                            .park_question(&run, &turn, generation, &question_id)
+                            .await;
+                    }
+                    Err(error) => {
+                        self.fail_step(&question_step.id, &attempt.id, generation, &error)
+                            .await?;
+                        self.abort_turn(&turn.id, generation).await?;
+                        return Err(error);
+                    }
+                }
             }
 
             if let Some(claim) = &proposal.completion_claim {
@@ -591,6 +598,338 @@ impl RuntimeEngine {
                 });
             }
         }
+    }
+
+    /// Record, dispatch and settle the turn's proposed tool calls (DOMAIN.md §7.4).
+    ///
+    /// Calls the runtime judges independent are dispatched concurrently and their results
+    /// are applied together in proposal order; every call gets its own durable Step and
+    /// Attempt before dispatch, so a crash leaves them recoverable. Returns `Some` when the
+    /// turn must end (parked, unknown outcome or budget exhausted).
+    async fn dispatch_tool_calls(
+        &self,
+        run: &Run,
+        turn: &Turn,
+        generation: Generation,
+        calls: &[ProposedToolCall],
+        budget: Budget,
+        steps_used: &mut u32,
+    ) -> Result<Option<TurnOutcome>, RuntimeError> {
+        for round in parallel::plan_rounds(calls) {
+            let mut pending = Vec::with_capacity(round.len());
+            for index in round {
+                if *steps_used >= budget.max_steps {
+                    let outcome = self
+                        .exhaust_budget(run, turn, generation, *steps_used, budget)
+                        .await?;
+                    return Ok(Some(outcome));
+                }
+                let call = &calls[index];
+                let tool_step = self
+                    .store
+                    .record_step(
+                        &turn.id,
+                        generation,
+                        NewStep::new(StepKind::ToolCall).with_ref(call.call_id.clone()),
+                    )
+                    .await?;
+                *steps_used += 1;
+                let (_, attempt) = self.store.dispatch_step(&tool_step.id, generation).await?;
+                let request = ToolDispatchRequest {
+                    run_id: run.id.to_string(),
+                    turn_id: turn.id.to_string(),
+                    step_id: tool_step.id.to_string(),
+                    generation: generation.get(),
+                };
+                pending.push((tool_step, attempt, call.clone(), request));
+            }
+
+            let futures = pending
+                .iter()
+                .map(|(_, _, call, request)| {
+                    Box::pin(self.tools.dispatch(call.clone(), request.clone()))
+                        as std::pin::Pin<
+                            Box<
+                                dyn std::future::Future<
+                                        Output = Result<ToolDispatchOutcome, RuntimeError>,
+                                    > + Send
+                                    + '_,
+                            >,
+                        >
+                })
+                .collect();
+            let results = parallel::join_all(futures).await;
+
+            for ((tool_step, attempt, call, _), result) in pending.into_iter().zip(results) {
+                let outcome = match result {
+                    Ok(outcome) => outcome,
+                    Err(error) => {
+                        self.fail_step(&tool_step.id, &attempt.id, generation, &error)
+                            .await?;
+                        self.abort_turn(&turn.id, generation).await?;
+                        return Err(error);
+                    }
+                };
+                if let Some(turn_outcome) = self
+                    .apply_tool_outcome(run, turn, generation, &tool_step, &attempt, &call, outcome)
+                    .await?
+                {
+                    return Ok(Some(turn_outcome));
+                }
+            }
+        }
+        Ok(None)
+    }
+
+    /// Continue calls that parked for a human decision (DOMAIN.md §5.6 "on resume continue
+    /// loop").
+    ///
+    /// The runtime never re-proposes a parked call: it reloads the recorded call by its
+    /// effect and either finishes it or, when the outcome is unsettled, reports it for
+    /// reconciliation without dispatching anything.
+    async fn resume_pending_calls(
+        &self,
+        run: &Run,
+        turn: &Turn,
+        generation: Generation,
+        budget: Budget,
+        steps_used: &mut u32,
+    ) -> Result<Option<TurnOutcome>, RuntimeError> {
+        let state = self.pending_state(run).await?;
+        if state.pending_tool_calls.is_empty() {
+            return Ok(None);
+        }
+        for pending in state.pending_tool_calls.clone() {
+            let call = ProposedToolCall::new(
+                pending.tool_call_id.clone(),
+                pending.tool_name.clone(),
+                json!({}),
+            );
+            if is_unsettled(&pending.effect_status) {
+                let outcome = self
+                    .park_unsettled_effect(
+                        run,
+                        turn,
+                        generation,
+                        &call,
+                        Some(pending.effect_id.clone()),
+                    )
+                    .await?;
+                return Ok(Some(outcome));
+            }
+            if *steps_used >= budget.max_steps {
+                let outcome = self
+                    .exhaust_budget(run, turn, generation, *steps_used, budget)
+                    .await?;
+                return Ok(Some(outcome));
+            }
+            let step = self
+                .store
+                .record_step(
+                    &turn.id,
+                    generation,
+                    NewStep::new(StepKind::ToolCall).with_ref(pending.tool_call_id.clone()),
+                )
+                .await?;
+            *steps_used += 1;
+            let (_, attempt) = self.store.dispatch_step(&step.id, generation).await?;
+            let request = ToolDispatchRequest {
+                run_id: run.id.to_string(),
+                turn_id: turn.id.to_string(),
+                step_id: step.id.to_string(),
+                generation: generation.get(),
+            };
+            let outcome = match self.tools.resume(pending.clone(), request).await {
+                Ok(outcome) => outcome,
+                Err(error) => {
+                    self.fail_step(&step.id, &attempt.id, generation, &error)
+                        .await?;
+                    self.abort_turn(&turn.id, generation).await?;
+                    return Err(error);
+                }
+            };
+            if let Some(turn_outcome) = self
+                .apply_tool_outcome(run, turn, generation, &step, &attempt, &call, outcome)
+                .await?
+            {
+                return Ok(Some(turn_outcome));
+            }
+        }
+        Ok(None)
+    }
+
+    /// Record what a tool dispatch produced on its Step and Attempt.
+    ///
+    /// Returns `Some` when the turn must end; `None` to continue the loop.
+    #[allow(clippy::too_many_arguments)]
+    async fn apply_tool_outcome(
+        &self,
+        run: &Run,
+        turn: &Turn,
+        generation: Generation,
+        step: &Step,
+        attempt: &Attempt,
+        call: &ProposedToolCall,
+        outcome: ToolDispatchOutcome,
+    ) -> Result<Option<TurnOutcome>, RuntimeError> {
+        match outcome {
+            ToolDispatchOutcome::Completed { evidence_ids, .. } => {
+                self.store
+                    .complete_step(
+                        &step.id,
+                        generation,
+                        &attempt.id,
+                        StepStatus::Completed,
+                        AttemptStatus::Succeeded,
+                        None,
+                        evidence_ids,
+                    )
+                    .await?;
+                Ok(None)
+            }
+            ToolDispatchOutcome::Failed { error } => {
+                self.store
+                    .complete_step(
+                        &step.id,
+                        generation,
+                        &attempt.id,
+                        StepStatus::Failed,
+                        AttemptStatus::Failed,
+                        Some(error),
+                        Vec::new(),
+                    )
+                    .await?;
+                Ok(None)
+            }
+            ToolDispatchOutcome::Rejected { code, detail } => {
+                // A refusal is a known, model-correctable outcome: the Step records it and
+                // the turn continues within budget.
+                self.store
+                    .complete_step(
+                        &step.id,
+                        generation,
+                        &attempt.id,
+                        StepStatus::Failed,
+                        AttemptStatus::Failed,
+                        Some(json!({ "code": code, "detail": detail })),
+                        Vec::new(),
+                    )
+                    .await?;
+                Ok(None)
+            }
+            ToolDispatchOutcome::Parked {
+                state,
+                wait_key,
+                effect_id,
+            } => {
+                self.store
+                    .complete_step(
+                        &step.id,
+                        generation,
+                        &attempt.id,
+                        StepStatus::Completed,
+                        AttemptStatus::Succeeded,
+                        None,
+                        Vec::new(),
+                    )
+                    .await?;
+                self.park_wait(run, turn, generation, state, &wait_key, effect_id)
+                    .await
+                    .map(Some)
+            }
+            ToolDispatchOutcome::OutcomeUnknown { effect_id } => {
+                self.store
+                    .complete_step(
+                        &step.id,
+                        generation,
+                        &attempt.id,
+                        StepStatus::Unknown,
+                        AttemptStatus::TimedOut,
+                        None,
+                        Vec::new(),
+                    )
+                    .await?;
+                self.park_unsettled_effect(run, turn, generation, call, effect_id)
+                    .await
+                    .map(Some)
+            }
+        }
+    }
+
+    /// Park the run in a `WAITING_*` state the tool dispatch reported.
+    async fn park_wait(
+        &self,
+        run: &Run,
+        turn: &Turn,
+        generation: Generation,
+        state: RunStatus,
+        wait_key: &str,
+        _effect_id: Option<String>,
+    ) -> Result<TurnOutcome, RuntimeError> {
+        let mut record = self.pending_state(run).await?;
+        match state {
+            RunStatus::WaitingApproval
+                if !record.pending_approvals.iter().any(|id| id == wait_key) =>
+            {
+                record.pending_approvals.push(wait_key.to_string());
+            }
+            RunStatus::WaitingQuestion
+                if !record.open_questions.iter().any(|id| id == wait_key) =>
+            {
+                record.open_questions.push(wait_key.to_string());
+            }
+            RunStatus::WaitingChild
+                if !record.child_agent_threads.iter().any(|id| id == wait_key) =>
+            {
+                record.child_agent_threads.push(wait_key.to_string());
+            }
+            _ => {}
+        }
+        self.store.store_protocol_state(&record).await?;
+        self.store
+            .transition_run(&run.id, generation, state, Some("tool wait".to_string()))
+            .await?;
+        self.store
+            .finish_turn(&turn.id, generation, TurnStatus::Completed)
+            .await?;
+        Ok(TurnOutcome::Parked {
+            run_id: run.id.to_string(),
+            turn_id: turn.id.to_string(),
+            state,
+            wait_key: wait_key.to_string(),
+        })
+    }
+
+    /// Park the run in `WAITING_QUESTION` for a durable Question (DOMAIN.md §3.4).
+    async fn park_question(
+        &self,
+        run: &Run,
+        turn: &Turn,
+        generation: Generation,
+        question_id: &str,
+    ) -> Result<TurnOutcome, RuntimeError> {
+        let mut state = self.pending_state(run).await?;
+        if !state.open_questions.iter().any(|id| id == question_id) {
+            state.open_questions.push(question_id.to_string());
+        }
+        self.store.store_protocol_state(&state).await?;
+        self.store
+            .transition_run(
+                &run.id,
+                generation,
+                RunStatus::WaitingQuestion,
+                Some("question asked".to_string()),
+            )
+            .await?;
+        self.store
+            .finish_turn(&turn.id, generation, TurnStatus::Completed)
+            .await?;
+        Ok(TurnOutcome::Parked {
+            run_id: run.id.to_string(),
+            turn_id: turn.id.to_string(),
+            state: RunStatus::WaitingQuestion,
+            wait_key: question_id.to_string(),
+        })
     }
 
     async fn verify_claim(
@@ -752,15 +1091,21 @@ impl RuntimeEngine {
             // The dispatch token and settlement belong to RUN-011's effect reservation;
             // the runtime records only what it knows so recovery reconciles instead of
             // retrying (DOMAIN.md §7.2).
-            state
+            if !state
                 .pending_tool_calls
-                .push(crate::runtime::protocol_state::PendingToolCall {
-                    tool_call_id: call.call_id.clone(),
-                    tool_name: call.tool.clone(),
-                    dispatch_token: String::new(),
-                    effect_id: effect_id.clone(),
-                    effect_status: "OUTCOME_UNKNOWN".to_string(),
-                });
+                .iter()
+                .any(|pending| &pending.effect_id == effect_id)
+            {
+                state
+                    .pending_tool_calls
+                    .push(crate::runtime::protocol_state::PendingToolCall {
+                        tool_call_id: call.call_id.clone(),
+                        tool_name: call.tool.clone(),
+                        dispatch_token: String::new(),
+                        effect_id: effect_id.clone(),
+                        effect_status: "OUTCOME_UNKNOWN".to_string(),
+                    });
+            }
         }
         self.store.store_protocol_state(&state).await?;
         self.store
