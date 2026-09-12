@@ -1,0 +1,7 @@
+$ python3.12 scripts/ci/check_authority.py --check
+exit_code: 0
+
+--- stdout ---
+authority check: CLEAN (0 findings)
+
+--- stderr ---

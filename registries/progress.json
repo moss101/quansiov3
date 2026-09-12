@@ -44,18 +44,26 @@
       "notes": "Greenfield: no legacy authority found; every canonical owner classified GENUINE_GAP."
     },
     "GOV-002": {
-      "coverage": null,
-      "status": "RECONCILING",
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T00:15:02Z",
-      "updated_at": "2026-09-12T00:15:02Z",
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "updated_at": "2026-09-12T00:15:47Z",
+      "git_commit": "3476fd7",
+      "tests": [
+        "python3.12 scripts/ci/check_authority.py --check",
+        "uv run --python 3.12 --with pytest pytest tests -q",
+        "python3.12 scripts/validate_v81.py"
+      ],
+      "artifacts": [
+        "evidence/GOV-002/2026-09-12T00-15-40Z/summary.json",
+        "README.md",
+        "docs/archive/README.md"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Greenfield: no superseded implementation authority exists to archive; V8.1 authority pointers installed and enforced by scripts/ci/check_authority.py."
     },
     "GOV-003": {
       "coverage": null,

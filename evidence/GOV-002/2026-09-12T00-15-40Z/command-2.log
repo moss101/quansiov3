@@ -1,0 +1,7 @@
+$ python3.12 scripts/ci/inventory.py --scan
+exit_code: 0
+
+--- stdout ---
+duplicate-authority scan: CLEAN (0 findings)
+
+--- stderr ---
