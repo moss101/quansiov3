@@ -29,6 +29,12 @@ from intelligence.trust.labelling import (
     TrustLevel,
     label_for_source,
 )
+from intelligence.trust.propagation import (
+    Propagation,
+    PropagationError,
+    derive,
+    derive_all,
+)
 
 __all__ = [
     "BOUNDARY_CLOSE",
@@ -40,9 +46,13 @@ __all__ = [
     "Assessment",
     "InjectionError",
     "LabelledSegment",
+    "Propagation",
+    "PropagationError",
     "SuspectedSegment",
     "TrustLevel",
     "assess_all",
     "assess_segment",
+    "derive",
+    "derive_all",
     "label_for_source",
 ]
