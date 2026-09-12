@@ -7,7 +7,7 @@
 
 use chrono::{DateTime, Utc};
 use quansio_core::{Cursor, Sequence, UlidGenerator};
-use sqlx::Row;
+use sqlx::{Postgres, Row, Transaction};
 
 use crate::envelope::RuntimeEvent;
 use crate::error::EventError;
@@ -175,4 +175,66 @@ impl EventStore {
             .or(position);
         Ok(ResumeBatch { events, cursor })
     }
+}
+
+/// Consumer name under which projection checkpoints are stored.
+///
+/// A projection's checkpoint is a cursor over the tenant RuntimeEvent stream, not the
+/// authoritative `sequence` itself: it records how far *this* projection has consumed.
+pub const PROJECTION_CONSUMER: &str = "projection";
+
+/// Advance a consumer position inside the caller's transaction.
+///
+/// Projections record their checkpoint in the same transaction that writes the
+/// projection rows, so a crash can never leave the checkpoint ahead of the state it
+/// describes.
+///
+/// # Errors
+/// Returns a database error.
+pub(crate) async fn advance_cursor_in_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    tenant_id: &str,
+    stream_id: &str,
+    consumer: &str,
+    sequence: Sequence,
+) -> Result<(), EventError> {
+    let id = format!("ecr_{}", UlidGenerator::new().generate());
+    sqlx::query(
+        "INSERT INTO event_cursors (id, tenant_id, stream_id, consumer, sequence) \
+         VALUES ($1, $2, $3, $4, $5) \
+         ON CONFLICT (tenant_id, stream_id, consumer) \
+         DO UPDATE SET sequence = EXCLUDED.sequence, updated_at = now()",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .bind(stream_id)
+    .bind(consumer)
+    .bind(sequence.get())
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
+}
+
+/// Remove a consumer position inside the caller's transaction.
+///
+/// Used by a projection rebuild, which replays the stream from zero and must not
+/// resume from the pre-rebuild checkpoint.
+///
+/// # Errors
+/// Returns a database error.
+pub(crate) async fn clear_cursor_in_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    tenant_id: &str,
+    stream_id: &str,
+    consumer: &str,
+) -> Result<(), EventError> {
+    sqlx::query(
+        "DELETE FROM event_cursors WHERE tenant_id = $1 AND stream_id = $2 AND consumer = $3",
+    )
+    .bind(tenant_id)
+    .bind(stream_id)
+    .bind(consumer)
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
 }
