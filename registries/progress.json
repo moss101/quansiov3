@@ -599,7 +599,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T08:02:19Z",
       "updated_at": "2026-09-12T08:37:48Z",
-      "git_commit": "9eddaa899872235da5337db8fbb2c05ec1180727",
+      "git_commit": "fb84465e968f9671cb91c57351ee513ef8e1fed6",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test verification (6 tests)",
         "cargo test -p quansio-server --lib (93 unit tests, 8 new for verification)",
