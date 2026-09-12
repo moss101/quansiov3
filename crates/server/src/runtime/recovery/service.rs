@@ -15,9 +15,7 @@ use super::plan::{fence, plan_from, DurableState, SafeAction};
 use super::RecoveryError;
 use crate::effects::{EffectLedger, EffectRecord, EffectStatus, ReconciliationEvidence};
 use crate::runtime::protocol_state::ProtocolState;
-use crate::runtime::state_machine::{
-    Run, RunStatus, RuntimeError, RuntimeIdentity, RuntimeStore,
-};
+use crate::runtime::state_machine::{Run, RunStatus, RuntimeError, RuntimeIdentity, RuntimeStore};
 
 /// What recovery did, or requires, for one run.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -111,10 +109,7 @@ impl Recoverer {
     /// # Errors
     /// Returns [`RecoveryError::NotFound`] when the run is unknown and the store's refusal when a
     /// transition cannot be applied.
-    pub async fn recover_run(
-        &self,
-        run_id: &CanonicalId,
-    ) -> Result<RecoveryReport, RecoveryError> {
+    pub async fn recover_run(&self, run_id: &CanonicalId) -> Result<RecoveryReport, RecoveryError> {
         let run = self
             .runs
             .load_run(run_id)
@@ -211,9 +206,8 @@ impl Recoverer {
             .await?
             .into_iter()
             .find(|record| record.run_id.as_deref() == Some(&run.id.to_string()));
-        let state = protocol.unwrap_or_else(|| {
-            ProtocolState::new(run.id.to_string(), run.generation.get() as i64)
-        });
+        let state = protocol
+            .unwrap_or_else(|| ProtocolState::new(run.id.to_string(), run.generation.get() as i64));
         Ok(DurableState {
             run_status: run.status.as_db_str().to_string(),
             cancellation_requested: state.cancellation_requested,

@@ -69,7 +69,10 @@ impl SafeAction {
     /// Whether the action changes durable state.
     #[must_use]
     pub const fn mutates(&self) -> bool {
-        matches!(self, Self::Cancel | Self::ReconcileEffect { .. } | Self::Resume)
+        matches!(
+            self,
+            Self::Cancel | Self::ReconcileEffect { .. } | Self::Resume
+        )
     }
 }
 
@@ -96,9 +99,11 @@ pub fn plan_from(state: &DurableState) -> SafeAction {
         };
     }
     let wait = match state.run_status.as_str() {
-        "WAITING_APPROVAL" => state.pending_approvals.first().cloned().map(|key| {
-            ("WAITING_APPROVAL".to_string(), key)
-        }),
+        "WAITING_APPROVAL" => state
+            .pending_approvals
+            .first()
+            .cloned()
+            .map(|key| ("WAITING_APPROVAL".to_string(), key)),
         "WAITING_QUESTION" => state
             .open_questions
             .first()

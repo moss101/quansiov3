@@ -88,13 +88,25 @@ async fn started_run(fixture: &Fixture) -> (CanonicalId, u64) {
         ))
         .await
         .expect("run");
-    let run = fixture.engine.enqueue(&run.id, run.generation).await.expect("enqueue");
-    let run = fixture.engine.start(&run.id, run.generation).await.expect("start");
+    let run = fixture
+        .engine
+        .enqueue(&run.id, run.generation)
+        .await
+        .expect("enqueue");
+    let run = fixture
+        .engine
+        .start(&run.id, run.generation)
+        .await
+        .expect("start");
     (run.id, run.generation.get())
 }
 
 /// Write a ProtocolState the way a crash would leave it.
-async fn write_protocol_state(fixture: &Fixture, run_id: &CanonicalId, mutate: impl FnOnce(&mut ProtocolState)) {
+async fn write_protocol_state(
+    fixture: &Fixture,
+    run_id: &CanonicalId,
+    mutate: impl FnOnce(&mut ProtocolState),
+) {
     let mut state = fixture
         .engine
         .store()
@@ -142,7 +154,13 @@ async fn unsettled_effect(fixture: &Fixture, run_id: &CanonicalId, status: &str)
 }
 
 async fn run_status(fixture: &Fixture, run_id: &CanonicalId) -> RunStatus {
-    fixture.engine.store().load_run(run_id).await.expect("run").status
+    fixture
+        .engine
+        .store()
+        .load_run(run_id)
+        .await
+        .expect("run")
+        .status
 }
 
 async fn events_of_type(pool: &PgPool, event_type: &str) -> usize {
@@ -175,7 +193,12 @@ async fn killed_runtime_resumes_to_the_same_safe_logical_point() {
     fixture
         .engine
         .store()
-        .transition_run(&awaiting, Generation::new(1).expect("generation"), RunStatus::WaitingApproval, None)
+        .transition_run(
+            &awaiting,
+            Generation::new(1).expect("generation"),
+            RunStatus::WaitingApproval,
+            None,
+        )
         .await
         .expect("park");
     let (cancelling, _) = started_run(&fixture).await;
@@ -210,7 +233,10 @@ async fn killed_runtime_resumes_to_the_same_safe_logical_point() {
         RecoveryResolution::Cancelled,
         "a cancellation requested before the crash is honoured"
     );
-    assert_eq!(run_status(&fixture, &cancelling).await, RunStatus::Cancelled);
+    assert_eq!(
+        run_status(&fixture, &cancelling).await,
+        RunStatus::Cancelled
+    );
     assert_eq!(events_of_type(&fixture.pool, "run.cancelled").await, 1);
 
     // A restarted runtime — a different instance reading only durable state — lands on the very
@@ -224,7 +250,10 @@ async fn killed_runtime_resumes_to_the_same_safe_logical_point() {
         );
     }
     // The cancelled run is now terminal, and recovery does not cancel it a second time.
-    let settled = after_restart.recover_run(&cancelling).await.expect("recover");
+    let settled = after_restart
+        .recover_run(&cancelling)
+        .await
+        .expect("recover");
     assert_eq!(
         settled.resolution,
         RecoveryResolution::Terminal,
@@ -252,7 +281,9 @@ async fn stale_worker_output_cannot_mutate_the_current_run() {
     let advanced = generation + 1;
     {
         let mut tx = fixture.pool.begin().await.expect("begin");
-        schema::set_tenant_context(&mut tx, TENANT).await.expect("context");
+        schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .expect("context");
         sqlx::query("UPDATE runs SET generation = $1 WHERE id = $2 AND tenant_id = $3")
             .bind(i64::try_from(advanced).unwrap_or(2))
             .bind(run_id.to_string())
@@ -289,12 +320,19 @@ async fn stale_worker_output_cannot_mutate_the_current_run() {
         matches!(stale, RuntimeError::FencedStaleGeneration { .. }),
         "the refusal names the fence: {stale:?}"
     );
-    assert_eq!(run_status(&fixture, &run_id).await, before, "state is untouched");
+    assert_eq!(
+        run_status(&fixture, &run_id).await,
+        before,
+        "state is untouched"
+    );
 
     // The recovery report carries the current generation, so a stale caller can be judged against it.
     let report = recoverer.recover_run(&run_id).await.expect("recover");
     assert_eq!(report.generation, advanced);
-    assert_eq!(report.stale_attempts, 0, "no attempt was written by the stale worker");
+    assert_eq!(
+        report.stale_attempts, 0,
+        "no attempt was written by the stale worker"
+    );
     finish(fixture).await;
 }
 
@@ -318,7 +356,10 @@ async fn an_uncertain_effect_is_reconciled_before_the_run_resumes() {
         panic!("an unknown outcome must be reconciled first: {report:?}");
     };
     assert_eq!(required, effect_id);
-    assert!(!strategy.is_empty(), "the class's strategy is named: {strategy}");
+    assert!(
+        !strategy.is_empty(),
+        "the class's strategy is named: {strategy}"
+    );
     assert!(report.requires_reconciliation());
 
     // Applying evidence settles it without dispatching anything.
@@ -340,7 +381,9 @@ async fn an_uncertain_effect_is_reconciled_before_the_run_resumes() {
     assert_eq!(after.resolution, RecoveryResolution::Resumable);
     let effects: i64 = {
         let mut tx = fixture.pool.begin().await.expect("begin");
-        schema::set_tenant_context(&mut tx, TENANT).await.expect("context");
+        schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .expect("context");
         let count = sqlx::query_scalar("SELECT COUNT(*) FROM effect_records WHERE run_id = $1")
             .bind(run_id.to_string())
             .fetch_one(&mut *tx)
@@ -349,7 +392,10 @@ async fn an_uncertain_effect_is_reconciled_before_the_run_resumes() {
         tx.commit().await.expect("commit");
         count
     };
-    assert_eq!(effects, 1, "recovery reconciled the record instead of retrying it");
+    assert_eq!(
+        effects, 1,
+        "recovery reconciled the record instead of retrying it"
+    );
     finish(fixture).await;
 }
 
@@ -362,7 +408,10 @@ async fn recovery_decisions_read_only_durable_state() {
         child_agent_threads: vec!["ath_child".to_string()],
         ..DurableState::default()
     };
-    assert!(!plan_from(&waiting).mutates(), "a park changes nothing on its own");
+    assert!(
+        !plan_from(&waiting).mutates(),
+        "a park changes nothing on its own"
+    );
     waiting.run_status = "RUNNING".to_string();
     assert!(plan_from(&waiting).mutates());
 
@@ -411,7 +460,10 @@ async fn the_recovery_module_never_reads_a_memory_table() {
         );
     }
     assert_eq!(
-        referenced.iter().filter(|table| table.as_str() == "protocol_states").count(),
+        referenced
+            .iter()
+            .filter(|table| table.as_str() == "protocol_states")
+            .count(),
         0,
         "ProtocolState is read through the store, not by raw SQL"
     );
@@ -450,7 +502,9 @@ fn tables_in_literal(literal: &str) -> Vec<String> {
                     .trim_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_')
                     .to_ascii_lowercase();
                 if !table.is_empty()
-                    && table.chars().all(|c| c.is_ascii_lowercase() || c == '_' || c.is_ascii_digit())
+                    && table
+                        .chars()
+                        .all(|c| c.is_ascii_lowercase() || c == '_' || c.is_ascii_digit())
                 {
                     tables.push(table);
                 }
