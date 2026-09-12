@@ -29,7 +29,7 @@ nats_port: 54230
 nats_monitor_port: 54231
 
 # MinIO S3-compatible object storage (DOSSIER.md §9). Env var names:
-# QUANSIO_DEV_MINIO_{PORT,CONSOLE_PORT,BUCKET,ROOT_USER,ROOT_PASSWORD}.
+# QUANSIO_DEV_MINIO_{PORT,CONSOLE_PORT,BUCKET,ROOT_USER,ROOT_PASSWORD,KMS_SECRET_KEY}.
 minio_image: quay.io/minio/minio:latest
 minio_mc_image: quay.io/minio/mc:RELEASE.2024-01-13T08-44-48Z
 minio_host: 127.0.0.1
@@ -38,6 +38,9 @@ minio_console_port: 59011
 minio_bucket: quansio-dev
 minio_root_user: quansio-dev
 minio_root_password_env: QUANSIO_DEV_MINIO_ROOT_PASSWORD
+# Single-key KMS for SSE-S3 object writes (dev-only key material, inline default
+# in infra/compose/compose.yaml; never a real key).
+minio_kms_secret_key_env: QUANSIO_DEV_MINIO_KMS_SECRET_KEY
 
 # Offline stub model provider (OpenAI-compatible). Config env var name:
 # QUANSIO_DEV_STUB_PROVIDER_PORT. Point config/models.yaml's openai-compatible

@@ -46,6 +46,9 @@ services:
     environment:
       MINIO_ROOT_USER: ${QUANSIO_DEV_MINIO_ROOT_USER:-quansio-dev}
       MINIO_ROOT_PASSWORD: ${QUANSIO_DEV_MINIO_ROOT_PASSWORD:?run scripts/dev/up to provide dev credentials}
+      # Single-key KMS so the dev bucket accepts the SSE-S3 writes the artifact
+      # authority makes (DOSSIER.md §9). Dev-only key material; never a real key.
+      MINIO_KMS_SECRET_KEY: ${QUANSIO_DEV_MINIO_KMS_SECRET_KEY:-quansio-dev-kms-key:cXVhbnNpby1kZXYta21zLWtleS0wMDAwMDAwMDAwMDA=}
     ports:
       - "127.0.0.1:${QUANSIO_DEV_MINIO_PORT:-59010}:9000"
       - "127.0.0.1:${QUANSIO_DEV_MINIO_CONSOLE_PORT:-59011}:9001"
