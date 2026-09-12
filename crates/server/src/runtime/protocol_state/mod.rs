@@ -413,7 +413,12 @@ fn decode_state(row: &sqlx::postgres::PgRow) -> Result<ProtocolState, ProtocolSt
         cancellation_requested: row
             .try_get("cancellation_requested")
             .map_err(decode_error)?,
-        cancellation_at: row.try_get("cancellation_at").map_err(decode_error)?,
+        cancellation_at: row
+            .try_get::<Option<sqlx::types::chrono::DateTime<sqlx::types::chrono::Utc>>, _>(
+                "cancellation_at",
+            )
+            .map_err(decode_error)?
+            .map(|at| at.to_rfc3339()),
         last_compaction_epoch_id: row
             .try_get("last_compaction_epoch_id")
             .map_err(decode_error)?,
