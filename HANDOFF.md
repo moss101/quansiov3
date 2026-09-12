@@ -382,7 +382,22 @@ Database-backed suites need `scripts/dev/up` plus
 `QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`; the baseline
 pipeline derives that URL from the generated `.env` automatically.
 
-## Ready queue
+## Ready queue — all blocked on the container runtime
+
+`docker ps` returns `500 Internal Server Error` and the dev Postgres port is closed, so every
+database-backed gate and test is unrunnable: `bash scripts/ci/ci.sh` fails on `toolchains` alone
+while every pure gate passes (`{SCRATCH}/ci.log`, `{SCRATCH}/runtime-blocker.log`). The unblock is one
+command the loop must not run for you: **`bash scripts/dev/up`** (the project forbids
+`scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`.
+
+| Task | State | Verified now | First action after the runtime is back |
+|---|---|---|---|
+| INT-009 | verified on `task/INT-009-skills` (`13626c6374105f09bab1f6f699487119f8ce34e2`) | §11.5 state machine (4) + resolver (5) | merge the branch, then the DB-backed store operations |
+| INT-012 | verified on `task/INT-012-trust` (`f6c0e087fe307f3ad8ad1416188da0f1513ad798`) | labelling, boundaries, heuristics, corpus, propagation (20) + escalation/egress guard (6) + approval-preview origin (1) | merge the branch, then the approval path end to end and QA-007's corpus run |
+| INT-008, INT-011, EXEC-001, APP-001, OPS-004, OPS-005, QA-003 | dependency-ready, not started | nothing (starting would only produce unverifiable code) | run `--next`, claim and implement |
+| INT-002, INT-003 | `BLOCKED_EXTERNAL` (live provider credentials) | offline evidence only | provider credentials, then their live suites |
+
+## Ready queue (historical)
 
 1. `INT-003` — deterministic model selection, DLP and failover.
 2. `INT-005` — ContextProjection and typed SearchProgram.
