@@ -60,3 +60,16 @@ models:
     context_window: 32768
     cost_class: low
     dlp_eligible: false
+  # The embedding route the derived vector index is built with (INT-011). The embedding
+  # request class requires the `embeddings` capability, so this entry is what makes a
+  # semantic retrieval route resolvable at all; `context_window` is the endpoint's maximum
+  # input length, since an embedding model has no conversational window. The index pins the
+  # width in `migrations/` (derived.embeddings.dimensions), so a route that produced another
+  # width would be refused rather than written.
+  - id: openai-text-embedding-3-small
+    provider: openai
+    model_id: text-embedding-3-small
+    capabilities: [embeddings]
+    context_window: 8191
+    cost_class: low
+    dlp_eligible: true

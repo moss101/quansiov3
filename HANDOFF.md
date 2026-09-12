@@ -17,13 +17,14 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: `INT-011` — embedding pipeline and derived vector index (`--next` selected it; not started)
+Current task: `INT-011` — embedding pipeline and derived vector index — `IN_PROGRESS` on
+`task/INT-011-embeddings` (tip `aff344d`, pipeline green; the remaining items are listed below)
 Previous task: `INT-012` closed `PASS` (trust labelling, injection defense and the escalated
 approval path end to end), after `INT-009` closed `PASS` (skill registry, promotion ladder, resolver)
-Current task status: 34 tasks `PASS`, M2 complete, `INT-002`/`INT-003` `BLOCKED_EXTERNAL` on live
-provider credentials (implementation complete); every baseline gate green on `main`
+Current task status: 34 tasks `PASS`, `INT-011` `IN_PROGRESS`, `INT-002`/`INT-003` `BLOCKED_EXTERNAL`
+on live provider credentials (implementation complete); every baseline gate green
 Current owner: `agent:principal-1`
-Current component: `embeddings` (`python/intelligence/embeddings/`, `migrations/derived/`)
+Current component: `embeddings` (`python/intelligence/embeddings/`, `migrations/0008_embedding_index_key.sql`)
 Current language: Python/SQL
 
 The container runtime came back at the start of this run (`docker info` → 29.7.2), so the previous
@@ -377,17 +378,53 @@ contract requiring `independent_model` is refused rather than self-certified unt
 down and its policy half was verified against the shipped guards; this run merged the remaining
 branch, added the end-to-end escalated approval path, and flipped the task to `PASS`.
 
+## What is currently being implemented
+
+**INT-011 — embedding pipeline and derived vector index — `IN_PROGRESS` (branch
+`task/INT-011-embeddings` at `aff344d`, pipeline green).**
+
+`python/intelligence/embeddings` now owns the semantic channel the Rust indexer already points
+at (`crates/indexer`: `Channel::Semantic → python/intelligence/embeddings`). Three modules:
+`chunking.py` splits a source deterministically on paragraph, then sentence, then word
+boundaries and keys every chunk by the sha256 of its text, so an edit re-embeds its tail and a
+rebuild can prove it reproduced the same content; `provider.py` embeds through an ordered route
+list that refuses a candidate whose width differs from the index *before* any call — failover
+moves between endpoints, never between embedding spaces — and records every attempt, so a
+failover is observable and a total failure names what each route said; `index.py` is the index:
+rows in `derived.embeddings` keyed by tenant, workspace, source kind, source ref, model,
+snapshot, content digest and chunk index, with incremental re-embedding, deletion propagation,
+full rebuild and a semantic `query` that returns each hit with its provenance and snapshot.
+
+Cross-tenant retrieval is impossible by construction rather than by remembering a predicate: an
+`EmbeddingIndex` is bound to one tenant and no public method accepts a tenant, every statement
+in `SqlEmbeddingStore` carries the filter, and the table's forced row-level security is given a
+context on every operation. `migrations/0008_embedding_index_key.sql` adds the provenance key
+(the table previously allowed one row per source, which cannot hold chunks) and
+`config/models.yaml` declares the embedding route — capability `embeddings`, which is what makes
+the embedding request class resolvable at all — while `derived.embeddings.dimensions` stays the
+pinned width.
+
+Verified: 15 unit tests over the rules (rebuild equivalence, tail-only re-embedding, deletion
+propagation, per-tenant isolation, the filter in every statement, failover, width refusal) and
+4 tests against real PostgreSQL + pgvector (row writes and vector search, unchanged source not
+re-embedded, rebuild equivalence, tenant isolation as the `quansio_app` role where a missing
+context returns zero rows). The database run caught a defect the in-memory double could not: a
+NULL snapshot parameter made the similarity query ambiguous to PostgreSQL, now cast.
+
+**Remaining before `PASS`:** (1) the wire — an `EmbeddingProvider` implementation over the model
+gateway's embedding request class and the `Embed` RPC handler the servicer still reports as
+owned by INT-011; (2) the full-rebuild path that reads sources from object storage (CORE-007
+artifacts) rather than only caller-supplied text; (3) the deletion hook into INT-006 (knowledge)
+and INT-007 (memory) deletes, which the index exposes as `delete_source` but nothing calls yet;
+(4) the evidence bundle and the PASS record.
+
 ## Exact next action
 
-`python3 scripts/validate_v81.py --next` selects **`INT-011`** (embedding pipeline and derived vector
-index): `python/intelligence/embeddings/`, `migrations/derived/`, chunking and embedding through the
-model gateway's embedding request class, pgvector storage in the `derived` schema keyed by
-tenant/workspace, source ref, snapshot and content digest, incremental re-embedding on source change,
-deletion propagation, full rebuild from authoritative sources and object storage, and the semantic
-channel exposed to `SearchProgram` with provenance and snapshot metadata (INT-004 built the channel's
-consumer). Note that a task that consumes the live provider can only reach `PASS` once the live
-conformance runs (D-017); INT-011 is `real_boundary: false`, but its embedding calls go through
-INT-002's gateway, which is implemented and offline-verified.
+Finish `INT-011` (see "What is currently being implemented"): the gateway embedding fulfilment and
+the `Embed` RPC handler, the object-storage rebuild path, and the INT-006/INT-007 deletion hook, then
+the evidence bundle and the PASS record. `python3 scripts/validate_v81.py --next` then selects from
+`INT-008` (compaction epochs and the bounded conversation projection), `INT-010` (evaluation harness),
+`EXEC-001` (machine control), `APP-001` (server composition), `OPS-004`, `OPS-005` and `QA-003`.
 Do not forget the two recorded hardening steps before APP-001 composes the server: the plan-batch
 alias fix under "Architecture decisions" and the real `WorkGraphPort` wiring.
 Database-backed suites need `scripts/dev/up` plus
@@ -525,17 +562,18 @@ rather than fabricated.
 
 ## Tests
 
-Last successful (INT-009 + INT-012 close-out, this session): `bash scripts/ci/ci.sh` — all eleven
-baseline gates PASS (authority, dossier consistency, architecture, authority pointers, workspace,
-supply-chain, legacy map, contract drift, contract lint/compat, toolchains, repository tests) at
-`3914fc5`, plus `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`,
-`cargo test -p quansio-server --test skills` (6), `--test turn_loop` (12), `--test trust_policy` (6),
-`uv run --project python pytest tests -q` → 188 passed, `(cd python && uv run --frozen pytest -q)` →
-241 passed / 6 skipped (INT-002's live-provider cases), and `(cd python && ruff check . && ruff format
---check . && mypy intelligence)` clean. Evidence: `evidence/INT-009/2026-09-12T21-51-59Z/`,
-`evidence/INT-012/2026-09-12T21-51-59Z/`.
-Last failed: none after the format fix (the first sweep failed on `cargo fmt --all --check` and
-`ruff format --check` for the new files; both were reformatted and the whole sweep re-run green).
+Last successful (INT-011 slice, branch `task/INT-011-embeddings` at `aff344d`): `bash
+scripts/ci/ci.sh` — all eleven baseline gates PASS, plus `cargo fmt --all --check`, `cargo
+clippy --workspace --all-targets -- -D warnings`, `cargo test -p quansio-server --test
+schema_bootstrap` (5, the new migration applies from zero), `(cd python && uv run --frozen
+pytest -q)` → 256 passed / 10 skipped, `uv run --project python pytest tests -q` → 188 passed,
+and the database-backed suite `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen
+pytest tests/integration/test_embedding_index.py -q)` → 4 passed against real PostgreSQL +
+pgvector.
+Previous (INT-009 + INT-012 close-out, `main` at `3914fc5`): the same pipeline plus `cargo test
+-p quansio-server --test skills` (6), `--test turn_loop` (12) and `--test trust_policy` (6), with
+evidence under `evidence/INT-009/2026-09-12T21-51-59Z/` and `evidence/INT-012/2026-09-12T21-51-59Z/`.
+Last failed: none after the format fixes noted above.
 Tests still required: GOV-005 CI negative tests; the per-task tests of the remaining registry tasks.
 
 ## Runtime/recovery state
@@ -554,8 +592,9 @@ Generation/lease concerns: none.
 
 ## Working tree
 
-Modified: none on `main` after the INT-009/INT-012 close-out commit.
-Untracked: none (the two merged task branches carry no unmerged work).
+Modified: `registries/progress.json`, `HANDOFF.md`, `MANIFEST.json` (regenerated) on
+`task/INT-011-embeddings`.
+Untracked: none.
 Generated (never hand-edit): `TASKS.md`, `registries/task-graph.json`, `MANIFEST.json` —
 regenerate with `python3 scripts/validate_v81.py --write`. Contract bindings are generated by GOV-004
 tooling; regenerate, never hand-edit.

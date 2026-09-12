@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-12T22:04:02Z",
+  "updated_at": "2026-09-12T22:28:20Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -936,18 +936,26 @@
       "notes": ""
     },
     "INT-011": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
+      "coverage": "GENUINE_GAP",
+      "status": "IN_PROGRESS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T22:28:20Z",
+      "updated_at": "2026-09-12T22:28:20Z",
+      "git_commit": "aff344d634264b5e5f203e5ebba6b552ced2f0c2",
+      "tests": [
+        "(cd python && uv run --frozen pytest tests/intelligence/test_embeddings.py -q) (15 tests: chunk determinism and digest keying, chunking refusals, rebuild equivalence, rebuild-after-edit equivalence, tail-only re-embedding, superseded snapshot, deletion propagation, per-tenant isolation, the tenant filter in every statement, failover with recorded attempts, width refusal before any call, malformed vector refusal, query bounds)",
+        "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_embedding_index.py -q) (4 tests against real PostgreSQL + pgvector: writes/searches/deletes real rows, unchanged source not re-embedded, rebuild equivalence on real rows, tenant isolation as the quansio_app role with a missing context returning zero rows)",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test schema_bootstrap (5 tests: the new migration applies from zero and re-applies safely)",
+        "(cd python && uv run --frozen pytest -q) (256 passed, 10 skipped: 6 live-provider cases and the 4 database-backed cases without a DSN)",
+        "uv run --project python pytest tests -q (188 passed)",
+        "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && (cd python && ruff check . && ruff format --check . && mypy intelligence)",
+        "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh (11 gates PASS)"
+      ],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "IN PROGRESS on branch task/INT-011-embeddings (tip aff344d63426, pipeline green). DONE AND VERIFIED: python/intelligence/embeddings owns the derived vector index. `chunking.py` chunks a source deterministically on paragraph, then sentence, then word boundaries, keyed by the sha256 of the chunk text, so an edit re-embeds its tail rather than the document and a rebuild can prove it reproduced the same content. `provider.py` embeds through an ordered route list that refuses any candidate whose width differs from the index *before* making a call (failover moves between endpoints, never between embedding spaces) and records every attempt, so a failover is observable and a total failure names what each route said. `index.py` is the index itself: rows in `derived.embeddings` keyed by tenant, workspace, source kind, source ref, model, snapshot, content digest and chunk index, with incremental re-embedding (a chunk whose digest is already present is reused), deletion propagation (`delete_source` removes a deleted knowledge/memory/artifact source from retrieval), full rebuild from the authoritative sources, and semantic `query` returning hits with their provenance and snapshot. Cross-tenant retrieval is impossible by construction: the index is bound to one tenant at construction, no public method accepts a tenant, every statement carries the filter, and the table's forced RLS is given a context on every operation. `migrations/0008_embedding_index_key.sql` adds the provenance key (snapshot, content digest, chunk index) and replaces the old one-row-per-source uniqueness; `config/models.yaml` declares the embedding route (capability `embeddings`), which is what makes the embedding request class resolvable at all, and `derived.embeddings.dimensions` remains the pinned width. The database-backed run earned its keep: it caught a defect the in-memory double could not \u2014 a NULL snapshot parameter made the similarity query ambiguous to PostgreSQL, now cast. REMAINING for PASS: (1) the wire \u2014 an `EmbeddingProvider` implementation over the model gateway's embedding request class, and the `Embed` RPC handler the servicer still reports as owned by INT-011; (2) the full-rebuild path that reads sources from object storage (CORE-007 artifacts) rather than only from caller-supplied text; (3) the deletion hook into INT-006 (knowledge) and INT-007 (memory) deletes, which the index exposes as `delete_source` but nothing calls yet; (4) the live pgvector evidence bundle and the task's PASS record."
     },
     "INT-012": {
       "coverage": "GENUINE_GAP",
