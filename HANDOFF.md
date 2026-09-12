@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0 complete: GOV-001…GOV-008 PASS)
+Updated: 2026-09-12 (M0 complete; M1 started: CORE-001, CORE-002 PASS)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -15,15 +15,27 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 
 ## Current position
 
-Milestone: M0 complete (GOV-001…GOV-008 all `PASS`); starting M1
-Current task: CORE-001 — authoritative persistence schema and migrations
-Current task status: 8 of 99 tasks `PASS`; the baseline pipeline is green on `main`
+Milestone: M1 — canonical state, events and persistence
+Current task: CORE-003 (RuntimeEvent store and outbox) and CORE-004 (graph stores) delegated in parallel
+Current task status: 10 of 99 tasks `PASS`; the baseline pipeline is green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
 
 ## What was completed
 
+- CORE-001 — authoritative persistence schema and migrations — `PASS`. `migrations/0001_canonical_schema.sql`
+  (61 public + 2 derived tables for DOMAIN.md §2–§13), RLS enabled and forced on every tenant table
+  (no-context queries return zero rows and inserts are refused), `derived` schema for rebuildable
+  pgvector structures, `quansio_app` role, `updated_at` triggers and the sqlx migration runner in
+  `crates/server/src/control/schema/`. Proof: `crates/server/tests/schema_bootstrap.rs` (5 tests) plus
+  the full pipeline.
+- CORE-002 — identity, generation and idempotency primitives — `PASS`. `crates/core`: typed
+  `<prefix>_<ULID>` ids (46-entry prefix table cross-checked against the generated `EntityPrefix`
+  enum), monotonic ULID generator with injectable clock/entropy, generations, revisions, lease fence
+  tokens, resumable cursors, effect idempotency keys and duplicate-command classification.
+  Proof: `crates/core/tests/identity.rs` (19 tests) and `crates/server/tests/command_idempotency.rs`
+  (duplicate command replay/conflict, stale generation updates zero rows).
 - GOV-001 — repository inventory and V8.1 reconciliation — `PASS`.
   Greenfield rule applied: **no legacy authority found**; every canonical owner `GENUINE_GAP`.
   Deliverables: `docs/review/2026-09-12-gov-001-reconciliation.md`, `scripts/ci/inventory.py`
@@ -45,24 +57,30 @@ Current language: Rust + SQL
 
 ## What is currently being implemented
 
-TASK: CORE-001 — Implement authoritative persistence schema and migrations.
-Goal: one authoritative PostgreSQL data model for DOMAIN.md §2–§13, forward migrations with
-forward-fix rollback, RLS enabled and forced on every tenant table, and a separate `derived` schema
-for rebuildable pgvector structures.
-Files: `migrations/0001_canonical_schema.sql`, `crates/server/src/control/schema/mod.rs`,
-`crates/server/tests/schema_bootstrap.rs`.
+TASK: CORE-003 — RuntimeEvent store and transactional outbox (`crates/events/`), delegated to a
+subagent in an isolated worktree. Acceptance: no committed state transition lacks its event; a
+publisher restart cannot duplicate an externally visible event; transaction rollback and cursor resume
+are proven.
+TASK: CORE-004 — WorkGraph/AgentGraph/StateGraph stores and GraphTransaction (`crates/graph/`),
+delegated in parallel. Acceptance: revision-checked atomic mutations, acyclic `depends_on`/`parent_of`
+enforcement, and narrowing-only child delegation.
 
 ## Exact next action
 
-Finish CORE-001 on `task/CORE-001-schema`: apply the migration through the shipped sqlx runner against
-the running dev stack (`QUANSIO_TEST_POSTGRES_URL=postgres://quansio:…@127.0.0.1:55440/quansio`), prove
-bootstrap-from-zero, tenant isolation (zero rows without context), forward-fix re-run and trigger/RLS
-presence, then collect evidence, set progress `PASS` and merge.
+Integrate the two subagent branches (review → merge → re-run their tests on `main` → set progress
+`PASS` with evidence and the merge commit), then take CORE-005 (GraphTransaction) which depends on
+both. `QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio` and
+`scripts/dev/up` are required for the database-backed suites.
 
 ## Ready queue
 
-1. `CORE-001` — authoritative persistence schema (M1, depends on GOV-004+GOV-007); unblocks all of M1–M7.
-2. `OPS-007` — supply-chain and dependency security (M7, depends on GOV-003+GOV-005).
+1. `CORE-003` — RuntimeEvent store and transactional outbox (in flight, delegated).
+2. `CORE-004` — graph stores and GraphTransaction (in flight, delegated).
+3. `CORE-005` — GraphTransaction (depends on CORE-003 + CORE-004).
+4. `CORE-006` — durable protocol state and checkpoints.
+5. `CORE-007` — artifact and evidence storage.
+6. `INT-001` — Python intelligence service and typed RPC boundary.
+7. `OPS-007` — supply-chain and dependency security (in flight, delegated).
 
 ## Blocked work
 
