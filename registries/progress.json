@@ -443,18 +443,29 @@
       "notes": "Authoritative runtime: Run/Turn/Step/Attempt transitions evaluated inside the event-emitting transaction (illegal transitions roll back state and events together), generation fencing before any write, attempts appended never overwritten, cancellation and suspension as authoritative transitions, and recovery that applies next_safe_action (a WAITING_* run is released only by its matching resolution, an unsettled effect is reconciled never retried) and is idempotent across repeated calls. Turn-loop seams (model proposal, tool dispatch, delegation, verification) return typed not-available errors naming INT-002/RUN-011/RUN-002/RUN-008 rather than fabricating success. Two deviations are recorded: the runtime commits through EventStore::commit_mutation_tx instead of crates/graph because graph depends on the server's schema module (consolidation steps in HANDOFF.md), and the parity of both state tables with the database constraints is enforced by tests/architecture/test_runtime_state_parity.py added during integration. Also fixed a real CORE-006 defect found by the recovery test: cancellation_at is TIMESTAMPTZ and was decoded as a String."
     },
     "RUN-002": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-run002",
+      "started_at": "2026-09-12T04:00:40Z",
+      "updated_at": "2026-09-12T04:00:40Z",
+      "git_commit": "cb75db2",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test agents",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "uv run --project python pytest tests/architecture/test_runtime_state_parity.py -q",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/RUN-002/2026-09-12T03-56-12Z/summary.json",
+        "crates/server/src/runtime/agents/store.rs",
+        "crates/server/src/runtime/agents/mod.rs",
+        "crates/server/tests/agents.rs",
+        "migrations/0006_agent_mailbox_handoff_join.sql"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "AgentThread lifecycle for teammates and workers on one primitive with a policy rule (teammates never JOIN, workers terminate only from JOINED), an exactly-once durable mailbox cursor, delegation that calls the narrowing check before any insert (a widening check writes nothing), handoff with a PENDING durable record that a restarted runtime can complete or roll back and that is idempotent when re-completed, and fanout join that parks the parent until the last child joins and never double-merges. During integration three follow-ups were added: the state-parity guard now covers AgentThreadStatus against the database constraint, DOMAIN \u00a79.2 gained the two mailbox event names additively (agent.mailbox_delivered, agent.mailbox_cursor_advanced) so authority matches the contract, and the dev-stack integration test now runs in its own compose project on offset ports so its reset/volume teardown can no longer destroy a stack shared by other agents."
     },
     "RUN-003": {
       "coverage": null,

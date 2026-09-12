@@ -1,0 +1,20 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test agents
+exit_code: 0
+
+--- stdout ---
+
+running 7 tests
+test capability_narrowing_accepts_only_narrowing_and_writes_nothing_on_widening ... ok
+test handoff_is_recoverable_across_a_pool_drop_and_idempotent ... ok
+test fanout_join_out_of_order_parks_parent_until_the_last_child_and_is_idempotent ... ok
+test generation_fencing_and_tenant_isolation_for_agent_mutations ... ok
+test mailbox_cursor_resumes_exactly_once_and_isolates_tenants_and_threads ... ok
+test lifecycle_transitions_for_teammate_and_worker_with_policy_negatives ... ok
+test delegating_proposal_creates_a_real_child_and_parks_the_run ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.20s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.42s
+     Running tests/agents.rs (target/debug/deps/agents-ad2cc0f73be70448)

@@ -1,0 +1,113 @@
+{
+  "task_id": "RUN-002",
+  "git_commit": "cb75db289184cd474e53e9bdaa5d1f9d5fd07e0b",
+  "recorded_at": "2026-09-12T04:00:28Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test agents",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-002/2026-09-12T03-56-12Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-002/2026-09-12T03-56-12Z/command-2.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-002/2026-09-12T03-56-12Z/command-3.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-002/2026-09-12T03-56-12Z/command-4.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture/test_runtime_state_parity.py tests/integration/test_dev_stack.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-002/2026-09-12T03-56-12Z/command-5.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-002/2026-09-12T03-56-12Z/command-6.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-002/2026-09-12T03-56-12Z/command-7.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test agents",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture/test_runtime_state_parity.py tests/integration/test_dev_stack.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/runtime/agents/store.rs",
+      "sha256": "ce503af6c35aa988d43f24a73d2ea171f0b07fbc084fd27e8857a838e0ed4ddc",
+      "bytes": 100497
+    },
+    {
+      "path": "crates/server/src/runtime/agents/mod.rs",
+      "sha256": "47e9d87dcf4dda935f736462bb8c2824270fdd6d81356879d1836baf4ef1d0f3",
+      "bytes": 8913
+    },
+    {
+      "path": "crates/server/src/runtime/agents/port.rs",
+      "sha256": "3c1fd888b53c8424368a0364a7153cc5e96eefb2604ed71b6f3c1395d906ba61",
+      "bytes": 4551
+    },
+    {
+      "path": "crates/server/tests/agents.rs",
+      "sha256": "a74f4bc5afdeaf4405225179a1e8488c00b227c2447b552b27c0cb2a01e24c27",
+      "bytes": 33711
+    },
+    {
+      "path": "migrations/0006_agent_mailbox_handoff_join.sql",
+      "sha256": "548d016801fd9e2f4abaf130e9091ab991b04ebb2add98be2c70a51fedb78aa1",
+      "bytes": 4819
+    }
+  ]
+}
