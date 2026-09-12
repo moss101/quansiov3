@@ -17,10 +17,10 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 
 Milestone: M2 — the runtime loop (M0/M1 complete)
 Current task: INT-003 — implement deterministic model selection, dlp and failover — `RECONCILING` (claimed, not started)
-Previous task: RUN-010 closed `PASS`
-Current task status: 31 tasks `PASS`, INT-003 `RECONCILING`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
+Previous task: INT-003 implemented and verified offline, `BLOCKED_EXTERNAL` on live provider credentials
+Current task status: 31 tasks `PASS`, INT-003 `BLOCKED_EXTERNAL` (implementation complete), INT-005 `RECONCILING`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
 Current owner: `agent:principal-1`
-Current component: `model-gateway` (`python/intelligence/model_gateway/routing/`, `python/intelligence/model_gateway/dlp/`)
+Current component: `context` (`python/intelligence/context/`, `crates/server/runtime/context_bridge/`)
 Current language: Python
 
 Resolved host incident: for part of this session the machine would not execute newly created
@@ -208,6 +208,32 @@ recorded under "Environment requirements".
   value. Evidence: `evidence/RUN-004/<ts>/`.
 
 ## What is currently being implemented
+
+**INT-003 — deterministic model selection, DLP and bounded failover — `BLOCKED_EXTERNAL` (implementation complete, merge `47365327f7ca`).**
+
+`model_gateway/routing/` holds the policy (the seven request classes, capability demand, cost/quality
+preference and bounded fallbacks) and `PolicyRouteSelector`, a pure I/O-free selector that records a
+rule id on every decision; `model_gateway/dlp/` holds the data-class guard that refuses a disallowed
+data/provider combination before anything is transmitted and redacts secret-shaped content from what
+is. Both acceptance statements are proven on the real path: with the selector injected, a normal call
+reaches exactly one provider (the conformance stub records one call naming the selected model), and a
+confidential request against a public-only provider raises `DLP_DENIED` with zero calls recorded while
+a secret-bearing request reaches the provider with the placeholder instead.
+
+Two integration decisions are recorded rather than guessed: routing deliberately does **not**
+re-litigate data clearance or output bounds (the DLP guard enforces the first before transmission and
+`prepare()` raises `VALIDATION_BOUNDS` for the second), and INT-002's gateway keeps its proven default
+selector and runs the guard only when one is installed — swapping the default broke 22 of INT-002's
+existing assertions about rule ids and eligibility, so INT-003's selector and guard stay injectable
+through the seams INT-002 left and wiring them as the deployment default belongs to APP-001. An
+explicit `route_hint` keeps INT-002's rule id `catalog.route_hint`.
+
+**Blocker:** `real_boundary: true`, and its provider path is INT-002's live suite, which is blocked for
+the same reason. **Unblock condition:** provider credentials in the environment (INT-002's
+`QUANSIO_TEST_*` provider variables); the routing, DLP and failover suites can then be run against a
+live provider. Evidence: `evidence/INT-003/2026-09-12T09-58-52Z/`.
+
+**INT-005 — claimed, not started.** Canonical owner: python/intelligence/context/, crates/server/runtime/context_bridge/.
 
 **RUN-010 — runtime budgets, quotas and capacity control — `PASS` (merge `a0568951c3fd`).**
 

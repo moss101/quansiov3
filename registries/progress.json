@@ -818,18 +818,18 @@
       "notes": "Derived exact/lexical/symbol SearchIndex over authoritative artifact text with typed SearchProgram filters (no free-form predicates), provenance (source, locator, snapshot), budgets with reported truncation, tenant isolation, incremental add/update/delete including idempotent re-application, and a rebuild from PostgreSQL that reproduces identical hits. Integrated and re-verified by the principal agent after the subagent was killed by a full disk."
     },
     "INT-005": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T10:01:29Z",
+      "updated_at": "2026-09-12T10:01:29Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "INT-005 claimed: Implement ContextProjection and typed SearchProgram (goal: Build bounded model-visible context from canonical sources.)"
     },
     "INT-006": {
       "coverage": null,
