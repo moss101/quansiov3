@@ -184,6 +184,31 @@ pub enum RuntimeError {
         /// The rejected value.
         value: String,
     },
+    /// The AgentThread lifecycle policy forbids a transition the DOMAIN.md §5.1 state
+    /// table would otherwise allow (RUN-002).
+    #[error("agent thread lifecycle policy {rule} forbids {from} -> {to}")]
+    LifecyclePolicy {
+        /// State the row held.
+        from: String,
+        /// Requested state.
+        to: String,
+        /// Named policy rule that refused it.
+        rule: &'static str,
+    },
+    /// A delegation would widen authority; nothing was written (DOMAIN.md §6.3, RUN-002).
+    #[error("delegation widens capability: {detail}")]
+    CapabilityWideningRejected {
+        /// Why the delegation was not a narrowing.
+        detail: String,
+    },
+    /// A handoff record cannot complete or roll back from the state it holds (RUN-002).
+    #[error("handoff {handoff_id} is {status}")]
+    HandoffNotRecoverable {
+        /// Handoff record id (`ahf_…`).
+        handoff_id: String,
+        /// Status the record held.
+        status: String,
+    },
     /// A caller-supplied argument is invalid.
     #[error("invalid runtime argument: {0}")]
     InvalidArgument(String),
@@ -200,9 +225,14 @@ impl RuntimeError {
     #[must_use]
     pub const fn code(&self) -> &'static str {
         match self {
-            Self::IllegalTransition { .. } => "RUNTIME_ILLEGAL_TRANSITION",
+            Self::IllegalTransition { .. } | Self::LifecyclePolicy { .. } => {
+                "RUNTIME_ILLEGAL_TRANSITION"
+            }
             Self::FencedStaleGeneration { .. } => "FENCED_STALE_GENERATION",
-            Self::WaitMismatch { .. } | Self::StateConflict { .. } => "CONFLICT_STATE",
+            Self::WaitMismatch { .. }
+            | Self::StateConflict { .. }
+            | Self::HandoffNotRecoverable { .. } => "CONFLICT_STATE",
+            Self::CapabilityWideningRejected { .. } => "CAPABILITY_DENIED",
             Self::NotFound { .. } => "NOT_FOUND",
             Self::InvalidArgument(_) | Self::Json(_) => "VALIDATION_SCHEMA",
             Self::Database(_)
