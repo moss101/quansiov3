@@ -1653,6 +1653,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
+ "quansio-capability",
  "quansio-core",
  "quansio-events",
  "quansio-server",
@@ -1699,6 +1700,7 @@ dependencies = [
  "chrono",
  "hex",
  "hmac",
+ "quansio-capability",
  "quansio-core",
  "quansio-events",
  "reqwest",
