@@ -557,7 +557,7 @@
       "claimed_by": "agent:subagent-int001",
       "started_at": "2026-09-12T02:51:00Z",
       "updated_at": "2026-09-12T02:51:00Z",
-      "git_commit": "2617c86",
+      "git_commit": "f1853b8a8a158ba21d363a79ba404ca33c0e91f6",
       "tests": [
         "(cd python && uv run --frozen pytest -q)",
         "(cd python && uv run --frozen ruff check . && uv run --frozen mypy intelligence)",
