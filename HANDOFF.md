@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0 complete; M1: CORE-001…CORE-004 PASS, 14 of 99 tasks complete)
+Updated: 2026-09-12 (M0 complete; M1: CORE-001…CORE-004, CORE-006, CORE-007 PASS; 15 of 99 tasks complete)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,9 +16,9 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M1 — canonical state, events and persistence
-Current task: CORE-005 (GraphTransaction), CORE-007 (artifact/evidence storage), CORE-009 (projections and
-streaming) delegated in isolated worktrees
-Current task status: 14 of 99 tasks `PASS`; the baseline pipeline is green on `main`
+Current task: CORE-005 (GraphTransaction), CORE-008 (scheduler and durable timers) and CORE-009
+(projections and resumable streaming) delegated in isolated worktrees
+Current task status: 15 of 99 tasks `PASS`; the baseline pipeline is green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
@@ -55,6 +55,10 @@ Current language: Rust + SQL
   `deny.toml` completeness, deterministic CycloneDX SBOM with drift verification, a real
   RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill quarantine-lifecycle checks; `cargo-deny` is an
   explicit informational result when absent. Evidence: `evidence/OPS-007/<ts>/`.
+- CORE-007 — artifact and evidence storage — `PASS` (`crates/server/src/artifacts/`): metadata authority
+  plus a SigV4 S3 client writing tenant-prefixed, content-addressed keys to the dev MinIO with multipart
+  upload and SSE-S3; evidence is insert-only with new identities per capture; grants fail closed;
+  retention and legal hold are recorded decisions, never silent deletes. Evidence: `evidence/CORE-007/<ts>/`.
 - GOV-001 — repository inventory and V8.1 reconciliation — `PASS`.
   Greenfield rule applied: **no legacy authority found**; every canonical owner `GENUINE_GAP`.
   Deliverables: `docs/review/2026-09-12-gov-001-reconciliation.md`, `scripts/ci/inventory.py`
@@ -76,19 +80,19 @@ Current language: Rust + SQL
 
 ## What is currently being implemented
 
-TASK: CORE-005 — GraphTransaction (`crates/graph` + `crates/events` seam): one atomic, revision-checked,
-event-emitting mutation across WorkGraph/AgentGraph/StateGraph, building on `crates/graph`'s
-`apply_batch` and `crates/events`' `commit_mutation`.
-TASK: CORE-007 — artifact and evidence storage (`crates/server/src/artifacts/`): metadata in PostgreSQL,
-bytes in MinIO with content digests, immutable evidence descriptors, scoped grants and retention.
-TASK: CORE-009 — projections and resumable event streaming (`crates/events` + `crates/server`):
-rebuildable read models and cursor-resumable streams with backpressure.
+TASK: CORE-005 — GraphTransaction: one atomic, revision-checked, event-emitting mutation across
+WorkGraph/AgentGraph/StateGraph, on top of `crates/graph::apply_batch` and
+`crates/events::EventStore::commit_mutation`.
+TASK: CORE-008 — scheduler, waits and durable timers (`crates/server/src/scheduler/`): persisted timers,
+wait registry, single-fire leasing and routine due-time computation.
+TASK: CORE-009 — projections and resumable streaming (`crates/events`): rebuildable read models with
+checkpoints, plus cursor-resumable channels with bounded backpressure.
 
 ## Exact next action
 
 Integrate each delegated branch as it completes (review → merge → re-run its tests on `main` → set
-progress `PASS` with evidence naming the merge commit). Then take CORE-008 (scheduler and durable
-timers) and INT-001 (Python intelligence service and typed RPC boundary).
+progress `PASS` with evidence naming the merge commit). Then take INT-001 (Python
+intelligence service and typed RPC boundary) and INT-004 (Rust indexer and SearchIndex API).
 Database-backed suites need `scripts/dev/up` plus
 `QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`; the baseline
 pipeline derives that URL from the generated `.env` automatically.
@@ -96,10 +100,10 @@ pipeline derives that URL from the generated `.env` automatically.
 ## Ready queue
 
 1. `CORE-005` — GraphTransaction (in flight, delegated).
-2. `CORE-007` — artifact and evidence storage (in flight, delegated).
+2. `CORE-008` — scheduler, waits and durable timers (in flight, delegated).
 3. `CORE-009` — projections and resumable event streaming (in flight, delegated).
-4. `CORE-008` — scheduler, waits and durable timers.
-5. `INT-001` — Python intelligence service and typed RPC boundary.
+4. `INT-001` — Python intelligence service and typed RPC boundary.
+5. `INT-004` — Rust indexer and SearchIndex API.
 
 ## Blocked work
 
@@ -163,7 +167,9 @@ Qualification: `scripts/ci/inventory.py --scan`, `check_authority.py --check`, `
 
 ## Environment requirements
 
-Services: the repository's own dev stack starts with `scripts/dev/up` (Docker Compose project
+Services: the repository's own dev stack starts with `scripts/dev/up` (idempotent: it now re-reads
+`config/dev.yaml` for images/ports/bucket while preserving credentials and the MinIO SSE key in the
+gitignored `.env`) (Docker Compose project
 `quansio-dev`): Postgres 17 + pgvector on 55440, NATS JetStream on 54230/54231, MinIO on 59010/59011,
 stub model provider on 59020, optional Qdrant on 59030. Dev-only credentials live in the gitignored
 `.env` generated by `scripts/dev/up`; the documented dev defaults are `quansio` / `quansio-dev-only`.
@@ -172,6 +178,10 @@ Credentials/handles: no production `QUANSIO_TEST_*` credentials are set; real-bo
 `BLOCKED_EXTERNAL` until provided. Database-backed tests read `QUANSIO_TEST_POSTGRES_URL`, for example
 `postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`. Never place raw secrets in this file.
 Ports: dev stack as above; product ports are fixed by later tasks.
+Concurrency caveat: several agents may run in parallel worktrees against this ONE shared dev stack
+(compose project `quansio-dev`). Never run `scripts/dev/down`, never delete its volumes, and never
+recreate its containers from a worktree-modified compose file — a divergent config silently changed the
+running MinIO (breaking SSE) once already.
 External dependencies: Rust 1.97.1 (+ rustfmt/clippy), Node 26 + pnpm 11.8, Python 3.12 + uv 0.12,
 protoc 36, Swift 6.3, Docker 29. All present.
 
