@@ -1,0 +1,425 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace
+exit_code: 0
+
+--- stdout ---
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 19 tests
+test sequence_must_be_positive ... ok
+test revision_check_and_bump_is_compare_and_set ... ok
+test generation_accepts_current_or_newer_and_rejects_stale ... ok
+test unknown_prefix_is_rejected ... ok
+test correlation_and_causation_ids_carry_the_right_shape ... ok
+test ulid_matches_the_published_spec_vector ... ok
+test ulid_rejects_malformed_input ... ok
+test ulid_ordering_follows_time_then_randomness ... ok
+test generator_advances_with_the_clock ... ok
+test canonical_ids_round_trip_with_their_prefix ... ok
+test duplicate_commands_replay_or_conflict ... ok
+test typed_ids_reject_the_wrong_prefix ... ok
+test fence_tokens_round_trip_and_reject_stale_leases ... ok
+test cursors_round_trip_and_stay_opaque ... ok
+test ids_serialize_as_their_canonical_string ... ok
+test idempotency_keys_are_stable_and_sensitive ... ok
+test prefix_table_matches_the_generated_contract_enum ... ok
+test ulid_round_trips_through_base32 ... ok
+test generator_is_monotonic_within_one_millisecond ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+test unknown_family_is_rejected_with_a_typed_error ... ok
+test malformed_types_are_rejected ... ok
+test known_types_parse_and_subjects_follow_domain_naming ... ok
+test canonical_families_match_the_generated_catalog ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test unavailable_transport_fails_closed_instead_of_dropping ... ok
+test crash_between_send_and_mark_cannot_duplicate_and_loses_no_event ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+
+running 3 tests
+test projections_do_not_write_rows_for_unrelated_events ... ok
+test reapplying_an_applied_event_neither_double_counts_nor_regresses ... ok
+test rebuild_is_byte_identical_to_incremental_application ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.67s
+
+
+running 1 test
+test checkpoint_resumes_after_a_crash_without_gaps_or_duplicates ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+
+running 6 tests
+test failing_mutation_rolls_back_state_event_and_outbox ... ok
+test committed_mutation_writes_state_event_and_outbox_together ... ok
+test committing_without_an_event_is_refused ... ok
+test consumer_resumes_exactly_after_the_stored_sequence ... ok
+test a_rolled_back_commit_releases_its_sequence_instead_of_burning_it ... ok
+test concurrent_writers_get_distinct_gap_free_sequences ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.01s
+
+
+running 1 test
+test a_slow_consumer_is_disconnected_without_blocking_the_publisher ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.38s
+
+
+running 3 tests
+test channel_and_subscription_validation_fails_closed ... ok
+test live_frames_are_transient_droppable_and_never_persisted ... ok
+test a_subscriber_receives_only_its_own_channel_and_tenant ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
+
+
+running 3 tests
+test a_cursor_from_another_stream_is_rejected ... ok
+test a_client_without_a_cursor_resumes_from_the_persisted_consumer_position ... ok
+test reconnecting_with_the_last_cursor_replays_exactly_the_missed_events ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.54s
+
+
+running 15 tests
+test state::tests::only_depends_on_and_parent_of_relations_must_be_acyclic ... ok
+test state::tests::run_reaches_success_only_through_verifying ... ok
+test state::tests::kinds_and_origins_round_trip_through_their_db_strings ... ok
+test state::tests::every_status_declares_a_round_tripping_db_string ... ok
+test state::tests::terminal_work_node_states_never_transition ... ok
+test state::tests::run_terminals_are_immutable ... ok
+test state::tests::step_and_attempt_transitions_fail_closed ... ok
+test transaction::event::tests::run_targets_use_domain_names ... ok
+test transaction::event::tests::agent_thread_targets_use_domain_names_and_refuse_the_un_named_states ... ok
+test state::tests::unknown_state_strings_fail_closed ... ok
+test transaction::event::tests::unmapped_change_kinds_are_refused ... ok
+test transaction::event::tests::mapped_change_kinds_are_accepted ... ok
+test transaction::plan::tests::an_empty_contract_is_absent_and_a_populated_one_is_present ... ok
+test transaction::event::tests::every_named_event_type_is_a_canonical_family_member ... ok
+test transaction::plan::tests::structural_narrowing_accepts_equal_and_rejects_wider_templates ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test the_narrowing_hook_is_invoked_and_rejection_writes_nothing ... ok
+test delegation_records_the_parent_capability_and_requires_the_parent ... ok
+test teammates_never_join_and_workers_do ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.39s
+
+
+running 3 tests
+test stale_batch_revision_applies_nothing ... ok
+test one_batch_mutates_work_agent_and_state_graphs_together ... ok
+test one_invalid_item_rolls_back_the_whole_batch ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.38s
+
+
+running 1 test
+test retries_append_attempts_and_never_overwrite_earlier_ones ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.29s
+
+
+running 1 test
+test graph_rejects_self_two_node_and_longer_cycles ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.29s
+
+
+running 5 tests
+test a_rejected_transaction_emits_no_event ... ok
+test a_stale_base_revision_rejects_the_whole_transaction ... ok
+test a_committed_transaction_writes_state_and_events_with_contiguous_sequences ... ok
+test an_invalid_last_change_rolls_back_every_row_and_event ... ok
+test events_carry_aggregate_identity_and_causal_metadata ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s
+
+
+running 4 tests
+test work_node_transitions_fail_closed ... ok
+test turn_transitions_fail_closed ... ok
+test step_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+test run_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.52s
+
+
+running 6 tests
+test an_accepted_plan_is_one_transaction_with_its_own_event ... ok
+test a_plan_node_without_a_contract_or_an_inheriting_parent_is_rejected ... ok
+test a_plan_above_the_policy_bound_is_rejected_and_writes_nothing ... ok
+test a_plan_whose_needs_exceed_the_proposer_is_rejected ... ok
+test a_plan_that_would_close_a_cycle_is_rejected ... ok
+test replaying_an_applied_plan_conflicts_instead_of_duplicating_work ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.95s
+
+
+running 1 test
+test stale_revision_conflicts_and_writes_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+
+running 4 tests
+test an_idle_tenant_tick_commits_no_event ... ok
+test timer_fire_resumes_the_run_through_the_graph_state_machine ... ok
+test queued_run_is_dispatched_through_the_graph_state_machine ... ok
+test routine_firing_creates_its_objective_through_the_command_path ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
+
+
+running 1 test
+test cross_tenant_reads_and_writes_return_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 10 tests
+test artifacts::object_store::tests::endpoint_split_preserves_port_and_rejects_bad_schemes ... ok
+test artifacts::object_store::tests::object_keys_are_tenant_prefixed_and_content_addressed ... ok
+test scheduler::routine::tests::event_triggers_have_no_due_time_and_intervals_advance ... ok
+test scheduler::routine::tests::absence_policies_round_trip_through_the_stored_form ... ok
+test scheduler::routine::tests::timezones_are_utc_or_fixed_offsets_and_fail_closed_otherwise ... ok
+test artifacts::object_store::tests::object_keys_reject_traversal_and_non_tenant_prefixes ... ok
+test scheduler::routine::tests::interval_specs_parse_to_positive_durations ... ok
+test artifacts::sigv4::tests::query_encoding_is_rfc3986_and_sorted ... ok
+test artifacts::sigv4::tests::matches_the_aws_documented_signing_example ... ok
+test scheduler::routine::tests::cron_next_due_respects_fields_and_timezone ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 8 tests
+test artifact_round_trip_verifies_the_recorded_digest_against_minio ... ok
+test new_bytes_get_a_new_version_identity ... ok
+test grant_scope_denies_ungranted_callers_and_read_cannot_write ... ok
+test legal_hold_and_retention_are_recorded_not_silently_deleted ... ok
+test evidence_is_insert_only_and_never_overwritten ... ok
+test digest_corruption_is_rejected_against_minio ... ok
+test evidence_bundle_records_claims_sources_and_verification ... ok
+test multipart_attachment_round_trips_against_minio ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.20s
+
+
+running 2 tests
+test duplicate_commands_replay_and_param_changes_conflict ... ok
+test stale_generations_are_rejected_before_mutation ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+
+running 5 tests
+test approval_and_question_waits_survive_restart ... ok
+test crash_restart_reconstructs_the_next_safe_action ... ok
+test protocol_state_is_tenant_scoped ... ok
+test checkpoints_are_generation_and_retention_fenced ... ok
+test partial_tool_call_recovery_reconciles_and_never_retries ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.51s
+
+
+running 10 tests
+test queued_run_is_offered_to_the_graph_dispatch_port ... ok
+test absence_policy_applies_skip_queue_and_catch_up_once ... ok
+test scheduled_timer_registers_a_wait_and_emits_run_waiting ... ok
+test stale_generation_timer_is_fenced_and_never_wakes_the_run ... ok
+test resolving_wait_a_cannot_resume_run_b ... ok
+test due_timer_fires_once_clears_the_wait_and_emits_one_event ... ok
+test two_concurrent_loops_fire_a_timer_exactly_once ... ok
+test fire_reports_a_lost_claim_without_emitting ... ok
+test saturated_due_queue_returns_a_typed_error_and_drops_nothing ... ok
+test durable_timer_survives_a_pool_drop_and_still_fires_at_its_due_time ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.42s
+
+
+running 5 tests
+test tenant_context_validation_rejects_non_canonical_ids ... ok
+test tenant_isolation_returns_zero_rows_without_context ... ok
+test unset_context_fails_closed_on_a_plain_connection ... ok
+test bootstrap_from_zero_creates_the_authoritative_schema ... ok
+test migrations_are_reapplied_safely_over_existing_data ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.50s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test crates/graph/src/transaction/mod.rs - transaction (line 21) - compile ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+--- stderr ---
+   Compiling quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/crates/events)
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+   Compiling quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/crates/graph)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.84s
+     Running unittests src/lib.rs (target/debug/deps/quansio_capability-f3e9a3d5a42c00e0)
+     Running unittests src/lib.rs (target/debug/deps/quansio_cli-c2b6ed63af2ff711)
+     Running unittests src/lib.rs (target/debug/deps/quansio_contracts-d8dc763884f14db1)
+     Running unittests src/lib.rs (target/debug/deps/quansio_core-f634f031af8709da)
+     Running tests/identity.rs (target/debug/deps/identity-592a3d4576a9d414)
+     Running unittests src/lib.rs (target/debug/deps/quansio_events-6ca46e9dd6716d18)
+     Running tests/event_families.rs (target/debug/deps/event_families-7f6789396add9450)
+     Running tests/outbox_publisher.rs (target/debug/deps/outbox_publisher-dcc7db056313d954)
+     Running tests/projection_determinism.rs (target/debug/deps/projection_determinism-00a752d4f039aee7)
+     Running tests/projection_resume.rs (target/debug/deps/projection_resume-ea32ac2e93cb1615)
+     Running tests/runtime_event_store.rs (target/debug/deps/runtime_event_store-11158be8ba3267d1)
+     Running tests/stream_backpressure.rs (target/debug/deps/stream_backpressure-6781e8b69b04f17b)
+     Running tests/stream_channels.rs (target/debug/deps/stream_channels-4d4aa916e74735f9)
+     Running tests/stream_resume.rs (target/debug/deps/stream_resume-9723a8f07b89586a)
+     Running unittests src/lib.rs (target/debug/deps/quansio_graph-fb58fbde9c7629b4)
+     Running tests/agent_graph.rs (target/debug/deps/agent_graph-b4cb971d77dcc445)
+     Running tests/atomic_batch.rs (target/debug/deps/atomic_batch-969dde0547198515)
+     Running tests/attempts_append_only.rs (target/debug/deps/attempts_append_only-61f5b4ef4710bb7b)
+     Running tests/cycle_rejection.rs (target/debug/deps/cycle_rejection-3ac72750442b8cf1)
+     Running tests/graph_transaction.rs (target/debug/deps/graph_transaction-209c35bb3f5588d6)
+     Running tests/illegal_transitions.rs (target/debug/deps/illegal_transitions-f1cf1cfcc391f6e3)
+     Running tests/plan_proposal.rs (target/debug/deps/plan_proposal-0b88b9bcabd05feb)
+     Running tests/revision_cas.rs (target/debug/deps/revision_cas-c4b22cfc994eac46)
+     Running tests/scheduler_dispatch.rs (target/debug/deps/scheduler_dispatch-a4ed6fb7a6d4a1e5)
+     Running tests/tenant_isolation.rs (target/debug/deps/tenant_isolation-a096809773c53820)
+     Running unittests src/lib.rs (target/debug/deps/quansio_indexer-b3857ad1691f1b1c)
+     Running unittests src/lib.rs (target/debug/deps/quansio_machine-5e9967b6689860bf)
+     Running unittests src/lib.rs (target/debug/deps/quansio_native_windows-e1490b7c610a548d)
+     Running unittests src/lib.rs (target/debug/deps/quansio_qworkerd-f1864637845a6c41)
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-d33a7a24191d26b9)
+     Running tests/artifacts.rs (target/debug/deps/artifacts-72a8c0de93b046d0)
+     Running tests/command_idempotency.rs (target/debug/deps/command_idempotency-3c2939065fe03af8)
+     Running tests/protocol_state.rs (target/debug/deps/protocol_state-9aeccf427ff44e50)
+     Running tests/scheduler.rs (target/debug/deps/scheduler-0737ade84b73544e)
+     Running tests/schema_bootstrap.rs (target/debug/deps/schema_bootstrap-f5454516a40db90b)
+     Running unittests src/lib.rs (target/debug/deps/quansio_tools-fab3adb1fc9aba55)
+   Doc-tests quansio_capability
+   Doc-tests quansio_cli
+   Doc-tests quansio_contracts
+   Doc-tests quansio_core
+   Doc-tests quansio_events
+   Doc-tests quansio_graph
+   Doc-tests quansio_indexer
+   Doc-tests quansio_machine
+   Doc-tests quansio_native_windows
+   Doc-tests quansio_qworkerd
+   Doc-tests quansio_server
+   Doc-tests quansio_tools

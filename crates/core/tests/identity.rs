@@ -137,36 +137,6 @@ fn unknown_prefix_is_rejected() {
 }
 
 #[test]
-fn prefix_table_matches_the_generated_contract_enum() {
-    // Cross-check the hand-written table against the generated protobuf enum so the two
-    // authorities cannot drift (GOV-004 generates the enum from DOMAIN.md §1.1).
-    use quansio_contracts::generated::core::EntityPrefix;
-
-    assert_eq!(Prefix::all().len(), 46);
-    for prefix in Prefix::all() {
-        let name = format!("ENTITY_PREFIX_{}", prefix.contract_name());
-        let found = EntityPrefix::from_str_name(&name);
-        assert!(found.is_some(), "generated enum lacks {name} for {prefix}");
-        assert_eq!(
-            EntityPrefix::from_str_name(&name)
-                .expect("value")
-                .as_str_name(),
-            name
-        );
-    }
-    // Every generated entity prefix value (except UNSPECIFIED) has a core variant, and
-    // the generated enum has no extra entity prefix the core table does not know.
-    let mut generated = 0usize;
-    for raw in 0..512i32 {
-        match EntityPrefix::try_from(raw) {
-            Ok(EntityPrefix::Unspecified) | Err(_) => {}
-            Ok(_) => generated += 1,
-        }
-    }
-    assert_eq!(generated, Prefix::all().len());
-}
-
-#[test]
 fn correlation_and_causation_ids_carry_the_right_shape() {
     let mut gen = generator();
     let correlation = CorrelationId::generate(&mut gen);

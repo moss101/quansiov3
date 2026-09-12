@@ -21,7 +21,6 @@ thiserror = "2"
 tokio = { version = "1", features = ["macros", "rt", "sync"] }
 
 [dev-dependencies]
-# Test-only: the integration tests apply the canonical migrations through the server
-# crate's schema runner so there is exactly one migration path in the repository.
-quansio-server = { path = "../server" }
+# The integration tests apply the canonical migrations with `sqlx::migrate!` directly
+# (see tests/common/mod.rs), so this crate has no dependency on any other owner.
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
