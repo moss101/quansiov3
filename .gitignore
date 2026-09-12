@@ -8,6 +8,11 @@ dist/
 .pnpm-store/
 *.tsbuildinfo
 
+# Swift
+.build/
+.swiftpm/
+*.xcodeproj
+
 # Python
 __pycache__/
 *.py[cod]

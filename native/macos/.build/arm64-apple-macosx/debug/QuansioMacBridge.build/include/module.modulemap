@@ -1,3 +1,0 @@
-module QuansioMacBridge {
-    header "/Users/mohsin/projects/quansiov3/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridge.build/include/QuansioMacBridge-Swift.h"
-}
