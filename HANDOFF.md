@@ -1,6 +1,7 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0/M1 complete; M2 complete through RUN-010; 31 PASS + 1 BLOCKED_EXTERNAL)
+Updated: 2026-09-13 (M0/M1/M2 complete; M3 in progress; 34 PASS + 2 BLOCKED_EXTERNAL; the
+container-runtime blocker is resolved and the dev stack is healthy)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -15,13 +16,20 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 
 ## Current position
 
-Milestone: M2 — the runtime loop (M0/M1 complete)
-Current task: INT-003 — implement deterministic model selection, dlp and failover — `RECONCILING` (claimed, not started)
-Previous task: INT-005 closed `PASS` (context projection, search program and the runtime bridge)
-Current task status: 32 tasks `PASS`, INT-002/INT-003 `BLOCKED_EXTERNAL` (implementation complete), INT-009 `RECONCILING`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
+Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
+Current task: `INT-011` — embedding pipeline and derived vector index (`--next` selected it; not started)
+Previous task: `INT-012` closed `PASS` (trust labelling, injection defense and the escalated
+approval path end to end), after `INT-009` closed `PASS` (skill registry, promotion ladder, resolver)
+Current task status: 34 tasks `PASS`, M2 complete, `INT-002`/`INT-003` `BLOCKED_EXTERNAL` on live
+provider credentials (implementation complete); every baseline gate green on `main`
 Current owner: `agent:principal-1`
-Current component: `context` (`python/intelligence/context/`, `crates/server/runtime/context_bridge/`)
-Current language: Python
+Current component: `embeddings` (`python/intelligence/embeddings/`, `migrations/derived/`)
+Current language: Python/SQL
+
+The container runtime came back at the start of this run (`docker info` → 29.7.2), so the previous
+run's terminal state was re-entered: `bash scripts/dev/up` brought the dev stack up healthy, the
+baseline pipeline is green again, and the blocker that had parked seven dependency-ready tasks was
+cleared in `registries/progress.json`.
 
 Resolved host incident: for part of this session the machine would not execute newly created
 binaries (a freshly compiled `cc` hello-world hung in `_dyld_start`), which blocked `cargo test`
@@ -365,37 +373,58 @@ verifier belongs to the RPC boundary and the composition root (INT-001/APP-001);
 not yet record its model route (INT-002/INT-003), the Rust verifier passes `claimant_model=None`, so a
 contract requiring `independent_model` is refused rather than self-certified until that route exists.
 
-**While the container runtime is down**, the DB-free ready work is INT-012's Python half
-(`python/intelligence/trust/`) — content trust labelling and injection defense are pure rules that
-pytest can verify without Postgres, exactly as INT-009's Python resolver and its §11.5 state machine
-were. The other ready tasks (INT-008, INT-011, EXEC-001, APP-001, OPS-004, OPS-005, QA-003) all need
-the database for their own tests, so they remain blocked behind the same restart.
+**INT-012 is now closed.** Its Python half (`python/intelligence/trust/`) landed while the runtime was
+down and its policy half was verified against the shipped guards; this run merged the remaining
+branch, added the end-to-end escalated approval path, and flipped the task to `PASS`.
 
 ## Exact next action
 
-Run `python3 scripts/validate_v81.py --next` and take what it selects; INT-003 and INT-005 are the next
-ready tasks. Before wiring the planner into the turn loop, apply the alias fix recorded under
-"Architecture decisions" so a plan can reference nodes it creates in the same batch.
-Wire the real `WorkGraphPort` (snapshot SQL + `GraphTransaction` apply) where both crates are visible
-when APP-001 composes the server.
+`python3 scripts/validate_v81.py --next` selects **`INT-011`** (embedding pipeline and derived vector
+index): `python/intelligence/embeddings/`, `migrations/derived/`, chunking and embedding through the
+model gateway's embedding request class, pgvector storage in the `derived` schema keyed by
+tenant/workspace, source ref, snapshot and content digest, incremental re-embedding on source change,
+deletion propagation, full rebuild from authoritative sources and object storage, and the semantic
+channel exposed to `SearchProgram` with provenance and snapshot metadata (INT-004 built the channel's
+consumer). Note that a task that consumes the live provider can only reach `PASS` once the live
+conformance runs (D-017); INT-011 is `real_boundary: false`, but its embedding calls go through
+INT-002's gateway, which is implemented and offline-verified.
+Do not forget the two recorded hardening steps before APP-001 composes the server: the plan-batch
+alias fix under "Architecture decisions" and the real `WorkGraphPort` wiring.
 Database-backed suites need `scripts/dev/up` plus
 `QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`; the baseline
 pipeline derives that URL from the generated `.env` automatically.
 
-## Ready queue — all blocked on the container runtime
+## Ready queue
 
-`docker ps` returns `500 Internal Server Error` and the dev Postgres port is closed, so every
-database-backed gate and test is unrunnable: `bash scripts/ci/ci.sh` fails on `toolchains` alone
-while every pure gate passes (`{SCRATCH}/ci.log`, `{SCRATCH}/runtime-blocker.log`). The unblock is one
-command the loop must not run for you: **`bash scripts/dev/up`** (the project forbids
-`scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`.
+`python3 scripts/validate_v81.py --ready` reports eight dependency-ready tasks; `--next` (lowest
+milestone, then most transitive dependents, then lowest id) selects **`INT-011`**.
 
-| Task | State | Verified now | First action after the runtime is back |
-|---|---|---|---|
-| INT-009 | verified on `task/INT-009-skills` (`13626c6374105f09bab1f6f699487119f8ce34e2`) | §11.5 state machine (4) + resolver (5) | merge the branch, then the DB-backed store operations |
-| INT-012 | verified on `task/INT-012-trust` (`f6c0e087fe307f3ad8ad1416188da0f1513ad798`) | labelling, boundaries, heuristics, corpus, propagation (20) + escalation/egress guard (6) + approval-preview origin (1) | merge the branch, then the approval path end to end and QA-007's corpus run |
-| INT-008, INT-011, EXEC-001, APP-001, OPS-004, OPS-005, QA-003 | dependency-ready, not started | nothing (starting would only produce unverifiable code) | run `--next`, claim and implement |
-| INT-002, INT-003 | `BLOCKED_EXTERNAL` (live provider credentials) | offline evidence only | provider credentials, then their live suites |
+| Task | State | Note |
+|---|---|---|
+| INT-011 | selected by `--next` | embedding pipeline and derived vector index (`python/intelligence/embeddings/`, `migrations/derived/`) |
+| INT-008 | ready | compaction epochs and the bounded conversation projection |
+| INT-010 | ready | intelligence evaluation harness (unblocked by INT-009) |
+| EXEC-001 | ready | machine control and execution-target lifecycle |
+| APP-001 | ready | server API/control composition and the walking skeleton |
+| OPS-004 | ready | usage, budget, quota and entitlement projections |
+| OPS-005 | ready | backup, restore and disaster-recovery consistency (real boundary) |
+| QA-003 | ready | runtime concurrency, crash recovery and replay qualification (real boundary) |
+
+## Completed this run
+
+- **INT-009 — Skill registry and task-scoped resolver — `PASS`.** `crates/server/src/control/skills/`
+  now owns the rows: `state.rs` is the §11.5 ladder as a fail-closed state machine and `store.rs` is
+  the durable registry (create a skill, add a `DRAFT` version, promote along the ladder). Every
+  mutation commits its `skill.*` RuntimeEvent in the same transaction, so a refused promotion writes
+  neither state nor event. The store also holds the invariant the ladder cannot express: one `ACTIVE`
+  version per skill, with `skills.current_active_version_id` naming exactly it — promoting to `ACTIVE`
+  is refused while another version is active, leaving `ACTIVE` clears the pointer, and the view the
+  resolver consumes requires both to agree. `crates/server/tests/skills.rs` (6 tests).
+- **INT-012 — content trust and injection defense — `PASS`.** Closed the gap the task left open: the
+  escalation test used to stop at the park, so the operator-facing half was only unit-tested. The new
+  end-to-end test carries an escalated tier 2 egress call through the whole path — the approval request
+  the operator loads carries the untrusted origin and its refs, the effect waits at `PROPOSED`, and
+  after the receipt the resumed call dispatches exactly once and settles.
 
 ## Ready queue (historical)
 
@@ -496,16 +525,17 @@ rather than fabricated.
 
 ## Tests
 
-Last successful (RUN-011, this session): `bash scripts/ci/ci.sh` — all eleven baseline gates PASS
-(authority, dossier consistency, architecture, authority pointers, workspace, supply-chain, legacy
-map, contract drift, contract lint/compat, toolchains, repository tests) at the RUN-011 merge
-(`69a7d20f4c7f`), plus all 15 `quansio-server` and `quansio-tools` test binaries — 181 tests, 0
-failures — including the new `turn_loop` conformance suite (11 tests), plus
-`cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`,
+Last successful (INT-009 + INT-012 close-out, this session): `bash scripts/ci/ci.sh` — all eleven
+baseline gates PASS (authority, dossier consistency, architecture, authority pointers, workspace,
+supply-chain, legacy map, contract drift, contract lint/compat, toolchains, repository tests) at
+`3914fc5`, plus `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`,
+`cargo test -p quansio-server --test skills` (6), `--test turn_loop` (12), `--test trust_policy` (6),
 `uv run --project python pytest tests -q` → 188 passed, `(cd python && uv run --frozen pytest -q)` →
-173 passed / 6 skipped (INT-002's live-provider cases), `pnpm build/typecheck/test/lint` green,
-`python3 scripts/validate_v81.py` PASS and `python3.12 scripts/ci/arch_check.py` CLEAN.
-Last failed: none.
+241 passed / 6 skipped (INT-002's live-provider cases), and `(cd python && ruff check . && ruff format
+--check . && mypy intelligence)` clean. Evidence: `evidence/INT-009/2026-09-12T21-51-59Z/`,
+`evidence/INT-012/2026-09-12T21-51-59Z/`.
+Last failed: none after the format fix (the first sweep failed on `cargo fmt --all --check` and
+`ruff format --check` for the new files; both were reformatted and the whole sweep re-run green).
 Tests still required: GOV-005 CI negative tests; the per-task tests of the remaining registry tasks.
 
 ## Runtime/recovery state
@@ -524,8 +554,8 @@ Generation/lease concerns: none.
 
 ## Working tree
 
-Modified: none on `main` after the RUN-008 close.
-Untracked: none.
+Modified: none on `main` after the INT-009/INT-012 close-out commit.
+Untracked: none (the two merged task branches carry no unmerged work).
 Generated (never hand-edit): `TASKS.md`, `registries/task-graph.json`, `MANIFEST.json` —
 regenerate with `python3 scripts/validate_v81.py --write`. Contract bindings are generated by GOV-004
 tooling; regenerate, never hand-edit.

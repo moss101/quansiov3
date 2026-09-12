@@ -1,0 +1,14 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.04s
+     Running tests/skills.rs (target/debug/deps/skills-69dd8cca0fb99e4a)
+
+running 6 tests
+test an_unknown_skill_or_version_is_refused_without_writing ... ok
+test promotion_follows_the_ladder_and_only_active_resolves ... ok
+test an_unapproved_version_cannot_enter_production_context ... ok
+test a_skill_and_its_first_version_start_in_draft ... ok
+test a_skill_has_at_most_one_active_version ... ok
+test the_active_view_is_tenant_scoped_and_ordered ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.79s
+

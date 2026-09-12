@@ -1,0 +1,160 @@
+{
+  "task_id": "INT-012",
+  "git_commit": "3914fc53ffa71a847e7f30ca2ac3a965f2468c08",
+  "recorded_at": "2026-09-12T22:03:23Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-012/2026-09-12T21-51-59Z/command-1.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-012/2026-09-12T21-51-59Z/command-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test skills",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-012/2026-09-12T21-51-59Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test turn_loop",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-012/2026-09-12T21-51-59Z/command-4.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test trust_policy",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-012/2026-09-12T21-51-59Z/command-5.log"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-012/2026-09-12T21-51-59Z/command-6.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-012/2026-09-12T21-51-59Z/command-7.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-012/2026-09-12T21-51-59Z/command-8.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-012/2026-09-12T21-51-59Z/command-9.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test skills",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test turn_loop",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test trust_policy",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/policy/escalation.rs",
+      "sha256": "0e4b31cc50435da42c6c0301b24c41a7e35774eabaff47bcd54c83860898261e",
+      "bytes": 9457
+    },
+    {
+      "path": "crates/server/src/runtime/turn_loop/dispatch.rs",
+      "sha256": "1a0ac6a1efbc1d944a218b62d3a5f5c1ce12443a61c9528c340a8d50bc8461c0",
+      "bytes": 66267
+    },
+    {
+      "path": "crates/server/tests/turn_loop.rs",
+      "sha256": "b37bcc547d0fcf615c08b52f3175dab4afcf5410d975759dd69196f3c0656021",
+      "bytes": 50772
+    },
+    {
+      "path": "crates/server/tests/trust_policy.rs",
+      "sha256": "6f9db3ec7b373801ac725921b7dc2718418025066b6fb3a3211349f55fe5b949",
+      "bytes": 5924
+    },
+    {
+      "path": "python/intelligence/trust/injection.py",
+      "sha256": "2461061e2f23f90ee24e7d5fe14e8ca1983f50a49665cd99a3bce34b294c6c82",
+      "bytes": 6161
+    },
+    {
+      "path": "python/intelligence/trust/labelling.py",
+      "sha256": "0fd384061c9d141e29444989e3bc0cdc608c3bce2be9cba983eb9ed0fb2782a6",
+      "bytes": 3970
+    },
+    {
+      "path": "python/intelligence/trust/propagation.py",
+      "sha256": "9202dd08f1464c4ec17f6f0211174bc850cd78a227592757407c00dec13830db",
+      "bytes": 3465
+    },
+    {
+      "path": "python/tests/intelligence/test_trust_labelling.py",
+      "sha256": "c1c949d611e61ff51cd9e3277139f4a520841576ee710f6c52cac256e8620186",
+      "bytes": 5255
+    },
+    {
+      "path": "python/tests/intelligence/test_trust_propagation.py",
+      "sha256": "dbe4f306e63bff1b0efdda06bb7ff12f09ff37cc3ef3fdc5d3c4dcc8cde948fe",
+      "bytes": 2973
+    },
+    {
+      "path": "tests/security/injection/corpus.json",
+      "sha256": "bdbb58d95bb424afea5b268a955f61fe816392b5f53f94d703e155761d30f0ad",
+      "bytes": 2377
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "task_id": "INT-009",
+  "git_commit": "3914fc53ffa71a847e7f30ca2ac3a965f2468c08",
+  "recorded_at": "2026-09-12T22:03:23Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-12T21-51-59Z/command-1.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-12T21-51-59Z/command-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test skills",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-12T21-51-59Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test turn_loop",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-12T21-51-59Z/command-4.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test trust_policy",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-12T21-51-59Z/command-5.log"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-12T21-51-59Z/command-6.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-12T21-51-59Z/command-7.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-12T21-51-59Z/command-8.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-12T21-51-59Z/command-9.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test skills",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test turn_loop",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test trust_policy",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/control/skills/mod.rs",
+      "sha256": "e2bc834d32247a6c8b58f4a22f64ec326d113609d244dff36eb829490167c264",
+      "bytes": 3006
+    },
+    {
+      "path": "crates/server/src/control/skills/state.rs",
+      "sha256": "753a3c68a94c96867b852927ee0f3b5654ebfa519b4d36fc51203003eed7b63f",
+      "bytes": 7631
+    },
+    {
+      "path": "crates/server/src/control/skills/store.rs",
+      "sha256": "9939da60c6c5c8395c0b93e5f384d472e127fb6a732e81e0bac2457fe1a4d7ae",
+      "bytes": 22403
+    },
+    {
+      "path": "crates/server/tests/skills.rs",
+      "sha256": "d8db3a3609681eff933eb7041ccebdf072020bba6d7c4c2b7f17a66c0a7a4879",
+      "bytes": 16984
+    },
+    {
+      "path": "python/intelligence/skills/models.py",
+      "sha256": "3f0c42e79bb79656899aa30304cdf43cc0035c6f2fbfa57045e54d5a9adc2ce8",
+      "bytes": 8458
+    },
+    {
+      "path": "python/intelligence/skills/resolver.py",
+      "sha256": "2e6addc4c7c34967e6e86d582406560b3008bdebc38f0e81d236fd7ecc6fd79a",
+      "bytes": 6360
+    },
+    {
+      "path": "python/tests/intelligence/test_skill_resolver.py",
+      "sha256": "33509207cb58b4a6caad63c75ebb4055a02d3d0551b467442729baa2804c0464",
+      "bytes": 7170
+    }
+  ]
+}

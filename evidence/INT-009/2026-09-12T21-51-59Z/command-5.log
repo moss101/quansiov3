@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running tests/trust_policy.rs (target/debug/deps/trust_policy-e121a0a46accb26a)
+
+running 6 tests
+test a_trusted_proposal_is_not_escalated ... ok
+test tier_zero_and_one_are_not_escalated_but_tier_four_is_capped ... ok
+test untrusted_derived_tier_two_escalates_one_tier_and_cannot_use_always ... ok
+test movement_within_the_grant_set_is_permitted_and_no_movement_is_not_guarded ... ok
+test an_instruction_from_a_fetched_page_cannot_redirect_output ... ok
+test protected_content_cannot_leave_the_egress_grant_set ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

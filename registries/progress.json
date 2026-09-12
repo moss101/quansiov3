@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-12",
+  "updated_at": "2026-09-12T22:04:02Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -877,32 +877,49 @@
       "notes": ""
     },
     "INT-008": {
-      "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
-      "claimed_by": "agent:principal-1",
-      "started_at": "2026-09-12T19:14:38Z",
-      "updated_at": "2026-09-12T19:14:38Z",
+      "coverage": null,
+      "status": "NOT_STARTED",
+      "claimed_by": null,
+      "started_at": null,
+      "updated_at": null,
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Claimed for assessment only \u2014 NO code was written for INT-008 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
+      "blocker": null,
+      "notes": ""
     },
     "INT-009": {
       "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T11:49:49Z",
-      "updated_at": "2026-09-12T19:14:06Z",
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "updated_at": "2026-09-12T22:03:35Z",
+      "git_commit": "3914fc53ffa71a847e7f30ca2ac3a965f2468c08",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test skills (6 tests: draft start, unapproved versions refused with no event written, the full ladder with only ACTIVE resolving, one active version per skill with the pointer moving after a deprecation, the tenant-scoped ordered active view, unknown skill/version refused)",
+        "cargo test -p quansio-server --lib control::skills (4 unit tests: the \u00a711.5 ladder and its terminal states, only ACTIVE resolving, an illegal promotion named at both ends, an unknown state refused)",
+        "(cd python && uv run --frozen pytest tests/intelligence/test_skill_resolver.py -q) (5 tests: only ACTIVE resolves, a version needing an unavailable tool or capability is excluded rather than granted, budget bound, determinism over input order, every candidate accounted for)",
+        "(cd python && uv run --frozen pytest -q) (241 passed, 6 skipped live-provider cases)",
+        "uv run --project python pytest tests -q (188 passed)",
+        "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && (cd python && ruff check . && ruff format --check . && mypy intelligence)",
+        "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh (11 gates PASS)"
+      ],
+      "artifacts": [
+        "evidence/INT-009/2026-09-12T21-51-59Z/summary.json",
+        "crates/server/src/control/skills/mod.rs",
+        "crates/server/src/control/skills/state.rs",
+        "crates/server/src/control/skills/store.rs",
+        "crates/server/tests/skills.rs",
+        "python/intelligence/skills/models.py",
+        "python/intelligence/skills/resolver.py",
+        "python/tests/intelligence/test_skill_resolver.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": "The container runtime is down (docker API returns 500 and the dev Postgres port is closed), so the DB-backed gates in `bash scripts/dev/ci.sh` (toolchains/tests) cannot run. Unblock: bring the runtime back (`bash scripts/dev/up`, never `down`) and re-run the pipeline; the slice is otherwise verified. the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch. Branch: task/INT-009-skills at 13626c6374105f09bab1f6f699487119f8ce34e2 (merges cleanly).",
-      "notes": "IN PROGRESS \u2014 both halves are written and the pure parts are verified, on branch task/INT-009-skills (tip 13626c6374105f09bab1f6f699487119f8ce34e2), awaiting a healthy container runtime before the DB-backed gates can run and the branch can merge. PYTHON (python/intelligence/skills): \u00a711.5's skill model and the task-scoped resolver \u2014 only ACTIVE versions resolve (every other state, including APPROVED, is excluded with the rule that excluded it), a version whose tool_needs or capability_needs exceed the caller's snapshot is excluded rather than granted (the resolution carries the caller's snapshot unchanged, so a skill can never widen authority), resolution is bounded by max_skills and is a pure function of (task, snapshot, candidates) with every non-resolved candidate accounted for, and the manifest vocabulary is closed with provenance as a version field. 5 tests; the plane passed 221/221 (6 skipped live-provider) with ruff/format/mypy clean \u2014 captured in evidence/INT-009/2026-09-12T12-30-38Z/ before the runtime went down. RUST (crates/server/src/control/skills): the \u00a711.5 promotion ladder as a fail-closed state machine \u2014 every state documented, only ACTIVE resolving, every illegal edge refused and named (draft cannot jump to active; a retired or rejected version cannot be revived; evaluating must pass through approved), with 4 unit tests that pass without a database plus clean fmt/clippy. REMAINING: the DB-backed store operations (create skill and version, apply a legal promotion, and set skills.current_active_version_id on promotion) and their integration tests; the skills/skill_versions tables already exist, so no migration is needed. Verified on the branch: the \u00a711.5 promotion state machine (4 tests) and the Python resolver (5 tests). Remaining: the DB-backed store operations."
+      "implementation_complete": true,
+      "blocker": null,
+      "notes": "Skill registry, promotion ladder and task-scoped resolver, both halves, unblocked by the container runtime coming back. The control plane (crates/server/src/control/skills) owns the rows: `state.rs` is the \u00a711.5 ladder as a fail-closed state machine (DRAFT \u2192 CANDIDATE \u2192 EVALUATING \u2192 APPROVED \u2192 ACTIVE \u2192 DEPRECATED \u2192 RETIRED, with EVALUATING \u2192 REJECTED; only ACTIVE resolves), and `store.rs` is the durable registry \u2014 create a skill, add a DRAFT version, promote along the ladder. Every mutation is one transaction that stages its `skill.*` RuntimeEvent (`skill.created`, `skill.version_created`, `skill.version_promoted`) at the aggregate's next version, so a refused promotion writes neither the state nor the event; the refusal travels out of band as `MutationRejected` and comes back typed (VALIDATION_SCHEMA / RUNTIME_ILLEGAL_TRANSITION / NOT_FOUND / CONFLICT_STATE / INTERNAL). One invariant is the store's rather than the ladder's: a skill has at most one ACTIVE version and `skills.current_active_version_id` names exactly that version \u2014 promoting to ACTIVE is refused while a different version is active (deprecate it first, which is the ladder's own ACTIVE \u2192 DEPRECATED edge), leaving ACTIVE clears the pointer, and `active_versions` (the view the resolver consumes) requires the state and the pointer to agree, ordered by name so the resolver's input order is deterministic. The Python resolver (python/intelligence/skills) resolves at most `max_skills` ACTIVE versions relevant to the task, excluding any candidate whose tool_needs or capability_needs exceed the caller's snapshot rather than granting them, and accounting for every candidate it excludes with the rule that excluded it. Verified on main: the full verification sweep and `bash scripts/ci/ci.sh` (11 gates) are green at 3914fc53ffa7."
     },
     "INT-010": {
       "coverage": null,
@@ -919,59 +936,66 @@
       "notes": ""
     },
     "INT-011": {
-      "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
-      "claimed_by": "agent:principal-1",
-      "started_at": "2026-09-12T19:14:38Z",
-      "updated_at": "2026-09-12T19:14:38Z",
+      "coverage": null,
+      "status": "NOT_STARTED",
+      "claimed_by": null,
+      "started_at": null,
+      "updated_at": null,
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Claimed for assessment only \u2014 NO code was written for INT-011 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
+      "blocker": null,
+      "notes": ""
     },
     "INT-012": {
       "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T16:19:38Z",
-      "updated_at": "2026-09-12T19:14:06Z",
-      "git_commit": null,
+      "updated_at": "2026-09-12T22:03:35Z",
+      "git_commit": "3914fc53ffa71a847e7f30ca2ac3a965f2468c08",
       "tests": [
-        "(cd python && uv run --frozen pytest tests/intelligence/test_trust_labelling.py tests/intelligence/test_trust_propagation.py -q) (20 tests)",
-        "cargo test -p quansio-server --test trust_policy (6 tests: escalation and the egress guard)",
-        "cargo test -p quansio-server --lib (110 tests, including the approval-preview origin rule)",
-        "(cd python && uv run --frozen pytest -q) (236 passed, 6 skipped live-provider cases)"
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test turn_loop (12 tests, including the new end-to-end escalated-approval path and the escalation park)",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test trust_policy (6 tests: escalation one tier and no `always`, trusted proposals not escalated, tiers 0/1 and the tier 4 cap, the egress guard, an injected destination denied until a grant covers it, movement within the grant set permitted)",
+        "(cd python && uv run --frozen pytest tests/intelligence/test_trust_labelling.py tests/intelligence/test_trust_propagation.py -q) (20 tests: labelling by source, typed boundaries, the injection corpus and propagation)",
+        "(cd python && uv run --frozen pytest -q) (241 passed, 6 skipped live-provider cases)",
+        "uv run --project python pytest tests -q (188 passed)",
+        "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && (cd python && ruff check . && ruff format --check . && mypy intelligence)",
+        "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh (11 gates PASS)"
       ],
       "artifacts": [
-        "python/intelligence/trust/labelling.py",
+        "evidence/INT-012/2026-09-12T21-51-59Z/summary.json",
+        "crates/server/src/policy/escalation.rs",
+        "crates/server/src/runtime/turn_loop/dispatch.rs",
+        "crates/server/tests/turn_loop.rs",
+        "crates/server/tests/trust_policy.rs",
         "python/intelligence/trust/injection.py",
+        "python/intelligence/trust/labelling.py",
         "python/intelligence/trust/propagation.py",
         "python/tests/intelligence/test_trust_labelling.py",
         "python/tests/intelligence/test_trust_propagation.py",
-        "tests/security/injection/corpus.json",
-        "crates/server/tests/trust_policy.rs"
+        "tests/security/injection/corpus.json"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": "The container runtime is down (docker API 500s, dev Postgres port closed), so the DB-backed gates and the branch pipeline cannot run. Unblock: `bash scripts/dev/up`, then `bash scripts/ci/ci.sh` and merge task/INT-012-trust. INT-012's own slice is DB-free and already verified. the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch. Branch: task/INT-012-trust at f6c0e087fe307f3ad8ad1416188da0f1513ad798 (merges cleanly).",
-      "notes": "IN PROGRESS \u2014 the labelling and injection half is implemented and verified on branch task/INT-012-trust (tip e3d47e88243f573d87ff918f7f7baa73fb5353c0), awaiting a healthy container runtime before merging. DONE (all DB-free): python/intelligence/trust/labelling.py labels every segment by its SOURCE (system/policy/tool_definition \u2192 trusted_system, user \u2192 trusted_user, knowledge/skill \u2192 verified_knowledge, agent/assistant/worker \u2192 agent_generated, web/email/document/file/tool_output/connector \u2192 untrusted_external) with an unrecognised source failing closed to untrusted_external, and renders untrusted content inside a typed boundary carrying the data-only instruction while trusted content renders as itself (wrapping it would blur the signal). injection.py implements deterministic, non-LLM heuristics \u2014 instruction override, role play, imperative tool call, exfiltration URL, encoded blob, hidden markup \u2014 that tag a suspect segment, replace its text in context with an evidence reference, and expose the rules and reasons so a person can look; being suspected is not being wrong, so nothing is dropped silently. tests/security/injection/corpus.json pins 7 malicious shapes and 4 benign ones; the suite asserts every malicious sample fires its expected rules, every benign sample passes through untouched, the assessment is deterministic and total, and the corpus is non-vacuous. One heuristic was corrected because the benign sample caught a false positive: the tool-imperative rule now requires the tool noun to follow the verb directly, so 'run the shell tool' is flagged while 'run the project's own test command' is not. Verified: 15 tests, the plane passes 231/231 (6 skipped live-provider), ruff/format/mypy clean. POLICY SIDE VERIFIED AGAINST THE SHIPPED GUARDS: escalation and the egress guard already exist in the policy layer (RUN-006), so rather than add a second guard, crates/server/tests/trust_policy.rs holds them to \u00a712's rules with 6 DB-free tests \u2014 an untrusted-derived tier-2 proposal escalates exactly one tier, requires a receipt and can never be remembered as `always`; a trusted proposal is not escalated; tiers 0/1 stay put and tier 4 is capped; protected content to a destination outside the grant set is denied (privacy_protected_egress_denied); a destination an injected page supplied is denied while the same movement is permitted once a grant covers it. BUILD ITEM 3 COMPLETE: `ConsequencePreview` already carried an `untrusted_origin` field, but the approval path passed `::default()`, so an escalated proposal was presented to an operator as an ordinary request. `turn_loop::dispatch::approval_preview` now builds the preview from the policy outcome \u2014 the origin is present if and only if policy escalated \u2014 and `park_for_approval` uses it, with a DB-free unit test asserting both directions (an escalated proposal shows its origin and refs; an ordinary one claims none). Also verified against the shipped policy: escalation and the egress guard (crates/server/tests/trust_policy.rs). REMAINING: exercising the approval path end to end once the database is reachable, and QA-007 consuming the pinned corpus. BUILD ITEM 2 COMPLETE: python/intelligence/trust/propagation.py derives an element's trust as the weakest label among the segments it references; an unknown segment fails closed to untrusted_external and an element referencing nothing is refused rather than assumed trusted (5 unit tests). SEPARATE FINDING: the intelligence plane is intermittently flaky \u2014 2 of 9 full-suite runs reported '1 failed, 235 passed'; the failing test was never identified and six follow-up runs were clean. Recorded as a known defect in HANDOFF.md. Verified on the branch: labelling, typed boundaries, injection heuristics, the pinned corpus and trust propagation (20 tests), the shipped escalation and egress guard (6 tests) and the approval-preview origin rule (1 test). Remaining: exercising the approval path end to end, and QA-007 consuming the corpus."
+      "implementation_complete": true,
+      "blocker": null,
+      "notes": "Content trust and injection defense, complete and exercised end to end now that the database is reachable. python/intelligence/trust labels every context segment by its source (an unrecognised source fails closed to UNTRUSTED_EXTERNAL), renders untrusted content inside a typed boundary carrying the data-only instruction, runs deterministic non-LLM injection heuristics that tag a suspect segment and replace it in context with an evidence reference, and derives an element's trust as the weakest label among the segments it references (an element referencing nothing is refused rather than assumed trusted). The policy side reuses the shipped guards rather than adding a second one: `escalate` raises a tier \u2265 2 proposal one tier when its chain reaches UNTRUSTED_EXTERNAL, forbids `always`, and `requires_receipt` at tier \u2265 3 makes the call park. The new end-to-end test closes the gap the task left open: an unprovable chain escalates a tier 2 egress call, the approval request the operator loads carries the untrusted origin and its refs (present if and only if policy escalated), the effect waits at PROPOSED, and after the receipt the resumed call dispatches exactly once and settles. The pinned corpus (7 malicious shapes, 4 benign) is what QA-007 will consume."
     },
     "EXEC-001": {
-      "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
-      "claimed_by": "agent:principal-1",
-      "started_at": "2026-09-12T19:14:38Z",
-      "updated_at": "2026-09-12T19:14:38Z",
+      "coverage": null,
+      "status": "NOT_STARTED",
+      "claimed_by": null,
+      "started_at": null,
+      "updated_at": null,
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Claimed for assessment only \u2014 NO code was written for EXEC-001 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
+      "blocker": null,
+      "notes": ""
     },
     "EXEC-002": {
       "coverage": null,
@@ -1128,18 +1152,18 @@
       "notes": ""
     },
     "APP-001": {
-      "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
-      "claimed_by": "agent:principal-1",
-      "started_at": "2026-09-12T19:14:38Z",
-      "updated_at": "2026-09-12T19:14:38Z",
+      "coverage": null,
+      "status": "NOT_STARTED",
+      "claimed_by": null,
+      "started_at": null,
+      "updated_at": null,
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Claimed for assessment only \u2014 NO code was written for APP-001 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
+      "blocker": null,
+      "notes": ""
     },
     "APP-002": {
       "coverage": null,
@@ -1492,32 +1516,32 @@
       "notes": ""
     },
     "OPS-004": {
-      "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
-      "claimed_by": "agent:principal-1",
-      "started_at": "2026-09-12T19:14:38Z",
-      "updated_at": "2026-09-12T19:14:38Z",
+      "coverage": null,
+      "status": "NOT_STARTED",
+      "claimed_by": null,
+      "started_at": null,
+      "updated_at": null,
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Claimed for assessment only \u2014 NO code was written for OPS-004 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
+      "blocker": null,
+      "notes": ""
     },
     "OPS-005": {
-      "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
-      "claimed_by": "agent:principal-1",
-      "started_at": "2026-09-12T19:14:38Z",
-      "updated_at": "2026-09-12T19:14:38Z",
+      "coverage": null,
+      "status": "NOT_STARTED",
+      "claimed_by": null,
+      "started_at": null,
+      "updated_at": null,
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Claimed for assessment only \u2014 NO code was written for OPS-005 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
+      "blocker": null,
+      "notes": ""
     },
     "OPS-006": {
       "coverage": null,
@@ -1599,18 +1623,18 @@
       "notes": ""
     },
     "QA-003": {
-      "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
-      "claimed_by": "agent:principal-1",
-      "started_at": "2026-09-12T19:14:38Z",
-      "updated_at": "2026-09-12T19:14:38Z",
+      "coverage": null,
+      "status": "NOT_STARTED",
+      "claimed_by": null,
+      "started_at": null,
+      "updated_at": null,
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Claimed for assessment only \u2014 NO code was written for QA-003 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
+      "blocker": null,
+      "notes": ""
     },
     "QA-004": {
       "coverage": null,
