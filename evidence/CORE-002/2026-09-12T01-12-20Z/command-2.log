@@ -1,0 +1,40 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server
+exit_code: 0
+
+--- stdout ---
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test duplicate_commands_replay_and_param_changes_conflict ... ok
+test stale_generations_are_rejected_before_mutation ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+
+
+running 5 tests
+test tenant_context_validation_rejects_non_canonical_ids ... ok
+test tenant_isolation_returns_zero_rows_without_context ... ok
+test migrations_are_reapplied_safely_over_existing_data ... ok
+test bootstrap_from_zero_creates_the_authoritative_schema ... ok
+test unset_context_fails_closed_on_a_plain_connection ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.60s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+--- stderr ---
+   Compiling quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/crates/core)
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.54s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-5bd36e555b45c75d)
+     Running tests/command_idempotency.rs (target/debug/deps/command_idempotency-cd75c07775930943)
+     Running tests/schema_bootstrap.rs (target/debug/deps/schema_bootstrap-93339f1a2054d91c)
+   Doc-tests quansio_server

@@ -1,0 +1,45 @@
+$ cargo test -p quansio-core
+exit_code: 0
+
+--- stdout ---
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 19 tests
+test correlation_and_causation_ids_carry_the_right_shape ... ok
+test canonical_ids_round_trip_with_their_prefix ... ok
+test cursors_round_trip_and_stay_opaque ... ok
+test duplicate_commands_replay_or_conflict ... ok
+test generation_accepts_current_or_newer_and_rejects_stale ... ok
+test fence_tokens_round_trip_and_reject_stale_leases ... ok
+test generator_advances_with_the_clock ... ok
+test idempotency_keys_are_stable_and_sensitive ... ok
+test ids_serialize_as_their_canonical_string ... ok
+test prefix_table_matches_the_generated_contract_enum ... ok
+test revision_check_and_bump_is_compare_and_set ... ok
+test sequence_must_be_positive ... ok
+test typed_ids_reject_the_wrong_prefix ... ok
+test ulid_matches_the_published_spec_vector ... ok
+test ulid_ordering_follows_time_then_randomness ... ok
+test ulid_rejects_malformed_input ... ok
+test unknown_prefix_is_rejected ... ok
+test ulid_round_trips_through_base32 ... ok
+test generator_is_monotonic_within_one_millisecond ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+--- stderr ---
+   Compiling quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/crates/core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.07s
+     Running unittests src/lib.rs (target/debug/deps/quansio_core-ce5a8486355d53e5)
+     Running tests/identity.rs (target/debug/deps/identity-f2ce3f3ada7631af)
+   Doc-tests quansio_core
