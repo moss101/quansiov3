@@ -1,0 +1,112 @@
+# Quansio V8.1 effect taxonomy (DOMAIN.md §7.1).
+#
+# One row per consequential effect class: the consequence `tier`, the default policy
+# `decision` applied before a reservation, and the `reconciliation` strategy the Effect
+# Ledger must follow when the external outcome is unknown.
+#
+# `crates/server/src/effects` loads this file, validates it against the generated
+# taxonomy in `schemas/catalog/effect-classes.yaml`, and fails closed on a missing or
+# unknown class, an out-of-range tier or an unparseable strategy. DOMAIN.md remains the
+# authority; this file never widens a tier or a policy decision.
+version: 1
+effect_classes:
+  - effect_class: read.internal
+    tier: 0
+    default_decision: allow
+    reconciliation: none
+  - effect_class: read.external
+    tier: 0
+    default_decision: allow
+    reconciliation: none
+  - effect_class: fs.write.workspace
+    tier: 1
+    default_decision: allow
+    reconciliation: idempotent (content digest)
+  - effect_class: fs.write.host
+    tier: 3
+    default_decision: ask
+    reconciliation: query (stat/digest)
+  - effect_class: process.exec.sandboxed
+    tier: 1
+    default_decision: allow
+    reconciliation: none (evidence only)
+  - effect_class: process.exec.host
+    tier: 3
+    default_decision: ask
+    reconciliation: manual
+  - effect_class: network.egress.new_destination
+    tier: 2
+    default_decision: ask (grant then allow)
+    reconciliation: none
+  - effect_class: content.upload
+    tier: 1
+    default_decision: allow
+    reconciliation: idempotent (digest)
+  - effect_class: record.create
+    tier: 2
+    default_decision: allow+log (policy may raise)
+    reconciliation: query by correlation key
+  - effect_class: record.update
+    tier: 2
+    default_decision: allow+log
+    reconciliation: query by id + version
+  - effect_class: record.delete
+    tier: 3
+    default_decision: ask
+    reconciliation: query by id
+  - effect_class: message.send
+    tier: 3
+    default_decision: ask
+    reconciliation: query by idempotency/thread
+  - effect_class: content.publish
+    tier: 3
+    default_decision: ask
+    reconciliation: query by id
+  - effect_class: scm.remote.write
+    tier: 3
+    default_decision: 'ask (push to own branch: allow+log)'
+    reconciliation: query by ref/PR
+  - effect_class: computer.input.privileged
+    tier: 3
+    default_decision: ask
+    reconciliation: manual
+  - effect_class: browser.session.import
+    tier: 4
+    default_decision: 'ask (never `always`)'
+    reconciliation: none
+  - effect_class: payment.execute
+    tier: 4
+    default_decision: 'ask (never `always`)'
+    reconciliation: query by transaction id; manual fallback
+  - effect_class: data.upload.protected
+    tier: 4
+    default_decision: 'ask (never `always`)'
+    reconciliation: manual
+  - effect_class: credential.access
+    tier: 4
+    default_decision: 'policy-gated, always audited'
+    reconciliation: none
+  - effect_class: identity.change
+    tier: 4
+    default_decision: ask (admin only)
+    reconciliation: query
+  - effect_class: memory.write
+    tier: 1
+    default_decision: allow (governed by INT-007)
+    reconciliation: idempotent
+  - effect_class: knowledge.write
+    tier: 1
+    default_decision: allow (governed by INT-006)
+    reconciliation: idempotent
+  - effect_class: skill.promote
+    tier: 3
+    default_decision: ask (admin)
+    reconciliation: query
+  - effect_class: pack.publish
+    tier: 3
+    default_decision: ask (admin)
+    reconciliation: query
+  - effect_class: runtime.control
+    tier: 3
+    default_decision: 'admin only, audited'
+    reconciliation: query
