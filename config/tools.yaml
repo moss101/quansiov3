@@ -1,0 +1,676 @@
+# Tool Registry declarations (DOMAIN.md §7.5). Control-plane data, not source constants
+# (AGENTS.md invariant 18). The registry is validated against the generated tool catalog
+# `schemas/catalog/tools.yaml`; a declared tool that is not in the catalog, or a catalog
+# tool with no declaration, fails the contract test.
+#
+# Every `input_schema`/`output_schema` uses only the vocabulary in crates/tools/src/schema.rs
+# and closes every object with `additionalProperties: false`, so an unknown argument field
+# is always rejected before dispatch.
+#
+# `grant_templates` state the minimum authority that exposes the tool to a model; the
+# capability projection must hold a grant of the same effect class whose resource region
+# overlaps the template.
+version: 1
+
+# Catalog families reserved for later materialization. These names appear in the generated
+# catalog (DOMAIN.md §7.5) but have no callable declaration yet, so a call naming one (or a
+# concrete operation under one) is rejected as an unregistered tool. CAP-*/EXEC-* register
+# the concrete operations with their own schemas.
+families:
+  - name: connector.<id>.<op>
+    materialized_by: CAP-003
+  - name: scm.git.<op>
+    materialized_by: EXEC-009
+  - name: scm.pr.<op>
+    materialized_by: EXEC-009
+
+tools:
+  - name: fs.read
+    version: 1
+    description: Read a file inside the run's execution-target root.
+    host: qworkerd
+    source_trust: untrusted_external
+    effect_class: read.internal
+    resource: { kind: fs, arg: path }
+    idempotency: { digest_args: [path] }
+    max_output_bytes: 1048576
+    timeout_ms: 30000
+    cancellable: true
+    evidence: { kinds: [file_read], redact: [] }
+    grant_templates:
+      - effect_class: read.internal
+        resource: { kind: fs, selector: "**" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        path: { type: string, minLength: 1 }
+      required: [path]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        content: { type: string }
+        bytes: { type: integer }
+        truncated: { type: boolean }
+      required: [content, bytes, truncated]
+
+  - name: fs.write
+    version: 1
+    description: Write a file, inside the execution-target root or on the host, at the scope the runtime derives.
+    host: qworkerd
+    source_trust: untrusted_external
+    effect_class: fs_write_scope
+    resource: { kind: fs, arg: path }
+    idempotency: { digest_args: [path, content_digest] }
+    max_output_bytes: 65536
+    timeout_ms: 30000
+    cancellable: false
+    evidence: { kinds: [file_write], redact: [] }
+    grant_templates:
+      - effect_class: fs.write.workspace
+        resource: { kind: fs, selector: "**" }
+        constraints: {}
+      - effect_class: fs.write.host
+        resource: { kind: fs, selector: "**" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        path: { type: string, minLength: 1 }
+        content: { type: string }
+        content_digest: { type: string, minLength: 1 }
+      required: [path, content, content_digest]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        bytes: { type: integer }
+      required: [bytes]
+
+  - name: fs.patch
+    version: 1
+    description: Apply a patch to a file at the scope the runtime derives.
+    host: qworkerd
+    source_trust: untrusted_external
+    effect_class: fs_write_scope
+    resource: { kind: fs, arg: path }
+    idempotency: { digest_args: [path, patch] }
+    max_output_bytes: 65536
+    timeout_ms: 30000
+    cancellable: false
+    evidence: { kinds: [file_patch], redact: [] }
+    grant_templates:
+      - effect_class: fs.write.workspace
+        resource: { kind: fs, selector: "**" }
+        constraints: {}
+      - effect_class: fs.write.host
+        resource: { kind: fs, selector: "**" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        path: { type: string, minLength: 1 }
+        patch: { type: string, minLength: 1 }
+      required: [path, patch]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        applied: { type: boolean }
+      required: [applied]
+
+  - name: terminal.exec
+    version: 1
+    description: Run one command in the run's execution target and return bounded output.
+    host: qworkerd
+    source_trust: untrusted_external
+    effect_class: process.exec.sandboxed
+    resource: { kind: target, selector: "*" }
+    idempotency: { digest_args: [command, cwd] }
+    max_output_bytes: 262144
+    timeout_ms: 120000
+    cancellable: true
+    evidence: { kinds: [terminal_output, exit_status], redact: [] }
+    grant_templates:
+      - effect_class: process.exec.sandboxed
+        resource: { kind: target, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        command: { type: string, minLength: 1 }
+        cwd: { type: string, minLength: 1 }
+      required: [command]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        stdout: { type: string }
+        stderr: { type: string }
+        exit_code: { type: integer }
+      required: [stdout, exit_code]
+
+  - name: process.spawn
+    version: 1
+    description: Start a long-running process in the run's execution target.
+    host: qworkerd
+    source_trust: untrusted_external
+    effect_class: process.exec.sandboxed
+    resource: { kind: target, selector: "*" }
+    idempotency: { digest_args: [command, cwd] }
+    max_output_bytes: 65536
+    timeout_ms: 30000
+    cancellable: true
+    evidence: { kinds: [process_started], redact: [] }
+    grant_templates:
+      - effect_class: process.exec.sandboxed
+        resource: { kind: target, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        command: { type: string, minLength: 1 }
+        cwd: { type: string, minLength: 1 }
+      required: [command]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        process_id: { type: string }
+      required: [process_id]
+
+  - name: browser.navigate
+    version: 1
+    description: Navigate a browser session to a destination, an egress to a new host.
+    host: browser
+    source_trust: untrusted_external
+    effect_class: network.egress.new_destination
+    resource: { kind: domain, arg: url }
+    idempotency: { digest_args: [url, session_id] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: true
+    evidence: { kinds: [page_navigation], redact: [] }
+    grant_templates:
+      - effect_class: network.egress.new_destination
+        resource: { kind: domain, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        url: { type: string, minLength: 1 }
+        session_id: { type: string, minLength: 1 }
+      required: [url, session_id]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        url: { type: string }
+        title: { type: string }
+      required: [url]
+
+  - name: browser.click
+    version: 1
+    description: Click an element in a browser session; the consequence class is the privileged-input tier.
+    host: browser
+    source_trust: untrusted_external
+    effect_class: computer.input.privileged
+    resource: { kind: domain, selector: "*" }
+    idempotency: { digest_args: [selector, session_id] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: true
+    evidence: { kinds: [browser_action], redact: [] }
+    grant_templates:
+      - effect_class: computer.input.privileged
+        resource: { kind: domain, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        selector: { type: string, minLength: 1 }
+        session_id: { type: string, minLength: 1 }
+      required: [selector, session_id]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        clicked: { type: boolean }
+      required: [clicked]
+
+  - name: browser.type
+    version: 1
+    description: Type text into an element in a browser session.
+    host: browser
+    source_trust: untrusted_external
+    effect_class: computer.input.privileged
+    resource: { kind: domain, selector: "*" }
+    idempotency: { digest_args: [selector, text, session_id] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: true
+    evidence: { kinds: [browser_action], redact: [text] }
+    grant_templates:
+      - effect_class: computer.input.privileged
+        resource: { kind: domain, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        selector: { type: string, minLength: 1 }
+        text: { type: string }
+        session_id: { type: string, minLength: 1 }
+      required: [selector, text, session_id]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        typed: { type: boolean }
+      required: [typed]
+
+  - name: browser.extract
+    version: 1
+    description: Extract text, HTML or JSON from the current page.
+    host: browser
+    source_trust: untrusted_external
+    effect_class: read.external
+    resource: { kind: domain, selector: "*" }
+    idempotency: { digest_args: [selector, format, session_id] }
+    max_output_bytes: 1048576
+    timeout_ms: 60000
+    cancellable: true
+    evidence: { kinds: [page_extract], redact: [] }
+    grant_templates:
+      - effect_class: read.external
+        resource: { kind: domain, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        selector: { type: string, minLength: 1 }
+        format: { type: string, enum: [text, html, json] }
+        session_id: { type: string, minLength: 1 }
+      required: [selector, session_id]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        content: { type: string }
+      required: [content]
+
+  - name: browser.screenshot
+    version: 1
+    description: Capture the current browser viewport as an evidence artifact.
+    host: browser
+    source_trust: untrusted_external
+    effect_class: read.internal
+    resource: { kind: target, selector: "browser" }
+    idempotency: { digest_args: [session_id] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: true
+    evidence: { kinds: [screenshot], redact: [] }
+    grant_templates:
+      - effect_class: read.internal
+        resource: { kind: target, selector: "browser" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        session_id: { type: string, minLength: 1 }
+      required: [session_id]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        artifact_id: { type: string }
+      required: [artifact_id]
+
+  - name: web.search
+    version: 1
+    description: Search the configured provider within the granted egress region.
+    host: adapter
+    source_trust: untrusted_external
+    effect_class: read.external
+    resource: { kind: domain, selector: "*" }
+    idempotency: { digest_args: [query, limit] }
+    max_output_bytes: 262144
+    timeout_ms: 60000
+    cancellable: true
+    evidence: { kinds: [search_results], redact: [] }
+    grant_templates:
+      - effect_class: read.external
+        resource: { kind: domain, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        query: { type: string, minLength: 1 }
+        limit: { type: integer, minimum: 1, maximum: 50 }
+      required: [query]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        results: { type: array, items: { type: object, additionalProperties: false, properties: { title: { type: string }, url: { type: string } } } }
+      required: [results]
+
+  - name: web.fetch
+    version: 1
+    description: Fetch a URL through the egress boundary and return bounded content.
+    host: adapter
+    source_trust: untrusted_external
+    effect_class: read.external
+    resource: { kind: domain, arg: url }
+    idempotency: { digest_args: [url] }
+    max_output_bytes: 1048576
+    timeout_ms: 60000
+    cancellable: true
+    evidence: { kinds: [http_response], redact: [] }
+    grant_templates:
+      - effect_class: read.external
+        resource: { kind: domain, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        url: { type: string, minLength: 1 }
+      required: [url]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        status: { type: integer }
+        content: { type: string }
+      required: [status, content]
+
+  - name: computer.click
+    version: 1
+    description: Click at absolute coordinates on the execution target's desktop.
+    host: qworkerd
+    source_trust: untrusted_external
+    effect_class: computer.input.privileged
+    resource: { kind: app, selector: "*" }
+    idempotency: { digest_args: [x, y, button] }
+    max_output_bytes: 65536
+    timeout_ms: 30000
+    cancellable: true
+    evidence: { kinds: [computer_action], redact: [] }
+    grant_templates:
+      - effect_class: computer.input.privileged
+        resource: { kind: app, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        x: { type: integer }
+        y: { type: integer }
+        button: { type: string, enum: [left, right, middle] }
+      required: [x, y]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        clicked: { type: boolean }
+      required: [clicked]
+
+  - name: computer.type
+    version: 1
+    description: Type text into the focused application on the execution target.
+    host: qworkerd
+    source_trust: untrusted_external
+    effect_class: computer.input.privileged
+    resource: { kind: app, selector: "*" }
+    idempotency: { digest_args: [text, application] }
+    max_output_bytes: 65536
+    timeout_ms: 30000
+    cancellable: true
+    evidence: { kinds: [computer_action], redact: [text] }
+    grant_templates:
+      - effect_class: computer.input.privileged
+        resource: { kind: app, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        text: { type: string }
+        application: { type: string, minLength: 1 }
+      required: [text, application]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        typed: { type: boolean }
+      required: [typed]
+
+  - name: artifact.create
+    version: 1
+    description: Create an artifact version in the workspace from content the run produced.
+    host: server
+    source_trust: untrusted_external
+    effect_class: content.upload
+    resource: { kind: artifact, arg: role }
+    idempotency: { digest_args: [role, content_digest] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: false
+    evidence: { kinds: [artifact_ref], redact: [] }
+    grant_templates:
+      - effect_class: content.upload
+        resource: { kind: artifact, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        role: { type: string, minLength: 1 }
+        content_digest: { type: string, minLength: 1 }
+        media_type: { type: string, minLength: 1 }
+      required: [role, content_digest]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        artifact_id: { type: string }
+      required: [artifact_id]
+
+  - name: artifact.update
+    version: 1
+    description: Add a version to an existing artifact.
+    host: server
+    source_trust: untrusted_external
+    effect_class: content.upload
+    resource: { kind: artifact, selector: "*" }
+    idempotency: { digest_args: [artifact_id, content_digest] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: false
+    evidence: { kinds: [artifact_ref], redact: [] }
+    grant_templates:
+      - effect_class: content.upload
+        resource: { kind: artifact, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        artifact_id: { type: string, minLength: 1 }
+        content_digest: { type: string, minLength: 1 }
+        media_type: { type: string, minLength: 1 }
+      required: [artifact_id, content_digest]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        version: { type: integer }
+      required: [version]
+
+  - name: work.propose_plan
+    version: 1
+    description: Submit a PlanProposal for compilation; RUN-003 owns the proposal schema and validates it.
+    host: server
+    source_trust: untrusted_external
+    effect_class: record.create
+    resource: { kind: work, selector: "*" }
+    idempotency: { digest_args: [proposal_id] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: false
+    evidence: { kinds: [plan_verdict], redact: [] }
+    grant_templates:
+      - effect_class: record.create
+        resource: { kind: work, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        proposal_id: { type: string, minLength: 1 }
+        proposal_json: { type: string, minLength: 1 }
+      required: [proposal_id, proposal_json]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        accepted: { type: boolean }
+      required: [accepted]
+
+  - name: work.delegate
+    version: 1
+    description: Delegate a scoped instruction to a child worker with narrowed capability.
+    host: server
+    source_trust: untrusted_external
+    effect_class: record.create
+    resource: { kind: work, selector: "*" }
+    idempotency: { digest_args: [instruction, work_node_id] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: false
+    evidence: { kinds: [delegation_ref], redact: [] }
+    grant_templates:
+      - effect_class: record.create
+        resource: { kind: work, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        instruction: { type: string, minLength: 1 }
+        work_node_id: { type: string, minLength: 1 }
+      required: [instruction]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        child_agent_thread_id: { type: string }
+      required: [child_agent_thread_id]
+
+  - name: user.ask
+    version: 1
+    description: Ask a human a question; the run parks in WAITING_QUESTION until it is answered or expires.
+    host: server
+    source_trust: untrusted_external
+    effect_class: record.create
+    resource: { kind: work, selector: "*" }
+    idempotency: { digest_args: [kind, prompt] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: false
+    evidence: { kinds: [question_ref], redact: [] }
+    grant_templates:
+      - effect_class: record.create
+        resource: { kind: work, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        kind: { type: string, enum: [free_text, single_choice, multi_choice, confirm] }
+        prompt: { type: string, minLength: 1 }
+        choices:
+          type: array
+          maxItems: 20
+          items: { type: string, minLength: 1 }
+        required: { type: boolean }
+      required: [kind, prompt]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        question_id: { type: string }
+        status: { type: string }
+      required: [question_id, status]
+
+  - name: memory.propose
+    version: 1
+    description: Propose a memory candidate for INT-007's gated write path; never a direct write.
+    host: server
+    source_trust: untrusted_external
+    effect_class: memory.write
+    resource: { kind: work, selector: "*" }
+    idempotency: { digest_args: [candidate_json] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: false
+    evidence: { kinds: [memory_candidate], redact: [] }
+    grant_templates:
+      - effect_class: memory.write
+        resource: { kind: work, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        candidate_json: { type: string, minLength: 1 }
+        scope: { type: string, minLength: 1 }
+      required: [candidate_json]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        accepted: { type: boolean }
+      required: [accepted]
+
+  - name: knowledge.cite
+    version: 1
+    description: Cite an ACTIVE knowledge entry in the run's output.
+    host: server
+    source_trust: verified_knowledge
+    effect_class: read.internal
+    resource: { kind: work, selector: "*" }
+    idempotency: { digest_args: [entry_id] }
+    max_output_bytes: 65536
+    timeout_ms: 30000
+    cancellable: true
+    evidence: { kinds: [citation], redact: [] }
+    grant_templates:
+      - effect_class: read.internal
+        resource: { kind: work, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        entry_id: { type: string, minLength: 1 }
+      required: [entry_id]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        title: { type: string }
+      required: [title]

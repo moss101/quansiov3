@@ -1,0 +1,21 @@
+
+running 16 tests
+test attempts_are_appended_never_overwritten ... ok
+test budget_exhaustion_stops_the_loop_without_further_model_calls ... ok
+test cancellation_during_running_ends_cancelled_with_one_event ... ok
+test cancellation_during_waiting_ends_cancelled_with_one_event ... ok
+test canonical_ownership_and_tenant_isolation_hold ... ok
+test happy_path_emits_every_event_in_order_with_contiguous_sequences ... ok
+test illegal_transitions_of_each_family_leave_state_and_events_untouched ... ok
+test parked_run_is_not_released_by_a_mismatched_wait_state ... ok
+test protocol_state_round_trips_for_recovery ... ok
+test recovery_honours_a_cancellation_requested_before_the_crash_once ... ok
+test recovery_never_retries_an_unsettled_effect ... ok
+test recovery_waits_for_the_matching_approval_and_is_idempotent ... ok
+test stale_generation_is_fenced_before_any_write ... ok
+test suspended_run_resumes_only_with_the_current_generation ... ok
+test unavailable_seams_name_the_task_that_owns_them ... ok
+test unknown_tool_outcome_suspends_for_reconciliation_never_retry ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.03s
+

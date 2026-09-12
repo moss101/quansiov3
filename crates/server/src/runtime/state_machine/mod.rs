@@ -36,11 +36,11 @@ pub use store::{
 pub use turn_loop::{
     CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort, DelegationRequest,
     ModelCallRequest, ModelProposal, ModelProposalSource, ProposedQuestion, ProposedToolCall,
-    ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest, TurnOutcome, UnavailableDelegation,
-    UnavailableModelProposalSource, UnavailableToolDispatch, UnavailableVerification,
-    VerificationContext, VerificationOutcome, VerificationPort, DELEGATION_OWNER, MEMORY_OWNER,
-    MODEL_GATEWAY_OWNER, PLAN_VALIDATION_OWNER, QUESTION_OWNER, TOOL_DISPATCH_OWNER,
-    VERIFICATION_OWNER,
+    QuestionContext, QuestionOutcome, QuestionPort, ToolDispatchOutcome, ToolDispatchPort,
+    ToolDispatchRequest, TurnOutcome, UnavailableDelegation, UnavailableModelProposalSource,
+    UnavailableQuestions, UnavailableToolDispatch, UnavailableVerification, VerificationContext,
+    VerificationOutcome, VerificationPort, DELEGATION_OWNER, MEMORY_OWNER, MODEL_GATEWAY_OWNER,
+    PLAN_VALIDATION_OWNER, QUESTION_OWNER, TOOL_DISPATCH_OWNER, VERIFICATION_OWNER,
 };
 
 /// Identity and replay-safety metadata stamped on every RuntimeEvent a runtime mutation
