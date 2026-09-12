@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0 complete; M1: CORE-001…CORE-007 PASS; 16 of 99 tasks complete)
+Updated: 2026-09-12 (M0 complete; M1: CORE-001…CORE-007 PASS; M3 started: INT-001 PASS; 17 of 99 tasks complete)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,9 +16,9 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M1 — canonical state, events and persistence
-Current task: CORE-008 (scheduler and durable timers), CORE-009 (projections and resumable streaming),
-INT-001 (Python intelligence service) and INT-004 (Rust indexer) delegated in isolated worktrees
-Current task status: 16 of 99 tasks `PASS`; the baseline pipeline is green on `main`
+Current task: CORE-008 (scheduler and durable timers), CORE-009 (projections and resumable streaming)
+and INT-004 (Rust indexer) delegated in isolated worktrees
+Current task status: 17 of 99 tasks `PASS`; the baseline pipeline is green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
@@ -55,6 +55,13 @@ Current language: Rust + SQL
   `deny.toml` completeness, deterministic CycloneDX SBOM with drift verification, a real
   RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill quarantine-lifecycle checks; `cargo-deny` is an
   explicit informational result when absent. Evidence: `evidence/OPS-007/<ts>/`.
+- INT-001 — Python intelligence service and typed RPC boundary — `PASS`
+  (`python/intelligence/server/`): `IntelligenceGateway` over loopback TCP or a unix socket, one
+  scope/deadline gate (tenant, workspace, correlation id, capability projection id) that aborts before any
+  handler runs, a real deterministic non-LLM `ClassifyTrust`, typed unimplemented failures naming the
+  owning task for every later RPC, and a reproducible generated-binding boundary test. The delegating
+  subagent died on a full disk after committing, so the principal agent re-ran the full verification on
+  `main` before `PASS`. Evidence: `evidence/INT-001/<ts>/`.
 - CORE-005 — GraphTransaction — `PASS` (`crates/graph/src/transaction/`): one transaction applies the graph
   batch under a single `graph_heads` compare-and-set and stages every RuntimeEvent (tenant sequence +
   outbox row) before one commit, so a rejected change rolls back state and events together; `PlanProposal`
@@ -86,9 +93,6 @@ Current language: Rust + SQL
 
 ## What is currently being implemented
 
-TASK: INT-001 — Python intelligence service over the generated `IntelligenceGateway` gRPC contract
-(`python/intelligence/`): typed scope/deadline enforcement, a real deterministic `ClassifyTrust`, and
-typed unimplemented failures for behaviour owned by later tasks.
 TASK: INT-004 — Rust indexer and `SearchIndex` API (`crates/indexer/`): exact/lexical/symbol channels over
 artifact text, typed SearchProgram filters, rebuildability, tenant isolation and budgets.
 TASK: CORE-008 — scheduler, waits and durable timers (`crates/server/src/scheduler/`): persisted timers,
@@ -186,6 +190,9 @@ Credentials/handles: no production `QUANSIO_TEST_*` credentials are set; real-bo
 `BLOCKED_EXTERNAL` until provided. Database-backed tests read `QUANSIO_TEST_POSTGRES_URL`, for example
 `postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`. Never place raw secrets in this file.
 Ports: dev stack as above; product ports are fixed by later tasks.
+Disk caveat: the volume hosting this work is nearly full. Keep at most three concurrent worktrees, and
+delete a finished worktree's `target/` directory (`rm -rf <worktree>/target`) after its task is closed —
+a full disk aborted one subagent mid-run.
 Concurrency caveat: several agents may run in parallel worktrees against this ONE shared dev stack
 (compose project `quansio-dev`). Never run `scripts/dev/down`, never delete its volumes, and never
 recreate its containers from a worktree-modified compose file — a divergent config silently changed the
