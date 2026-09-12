@@ -502,6 +502,9 @@ Generation/lease concerns: none.
 
 ## Known defects
 
+**Determinism audit (post-fix).** After fixing the route-id clock dependency, the same class of defect was swept for: in the intelligence plane `time`/`urandom` appear only in `model_gateway/ids.py` (documented ULID behaviour), and in Rust product code every `Utc::now()` is a timestamp — event `occurred_at`, an expiry, or the authorization evaluation instant — with no digest, idempotency key or ordering derived from it. No further leaks found.
+
+
 **Intermittent intelligence-plane failure — FIXED.** Found while verifying INT-012: 2 of 9 full-suite runs failed. The culprit was `PolicyRouteSelector`: `new_ulid(seed=…)` makes the *random field* reproducible but still stamps the current millisecond, so a route id changed whenever two selections straddled a millisecond boundary (observed as `…A655…` vs `…A654…`) — breaking the INT-002 property that a route id is a pure function of the decision. Fixed by pinning `timestamp_ms=0` for seeded route ids, and the regression test now sleeps 10 ms between the two selections so it fails deterministically without the fix (verified: fails without, passes with). Before: 2 failures in 9 runs. After: 0 failures in 10 runs.
 
 ## Working tree
