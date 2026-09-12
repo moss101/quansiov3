@@ -16,9 +16,9 @@ from collections.abc import Iterator
 import pytest
 
 from intelligence.evaluation.semantic_verifier import (
-    VERDICT_MALFORMED,
     INDEPENDENCE_UNPROVABLE,
     REQUEST_INVALID,
+    VERDICT_MALFORMED,
     GatewaySemanticVerifier,
     SemanticVerificationError,
     VerificationRequest,
@@ -27,12 +27,12 @@ from intelligence.evaluation.semantic_verifier import (
 )
 from intelligence.model_gateway import ModelGateway
 from intelligence.model_gateway.conformance import (
+    STUB_PROVIDER_KINDS,
     StubProvider,
     catalog_model_for_kind,
     credential_environ,
     stub_catalog,
 )
-from intelligence.model_gateway.conformance import STUB_PROVIDER_KINDS
 
 
 def request(**overrides: object) -> VerificationRequest:
@@ -52,6 +52,7 @@ def request(**overrides: object) -> VerificationRequest:
 # ---------------------------------------------------------------------------------------
 # The strict verdict contract
 # ---------------------------------------------------------------------------------------
+
 
 def test_a_well_formed_verdict_is_parsed() -> None:
     verdict = parse_verdict(
@@ -121,6 +122,7 @@ def test_the_prompt_quotes_the_claim_as_data() -> None:
 # The shipped path, with only the transport replaced
 # ---------------------------------------------------------------------------------------
 
+
 class _Delta:
     def __init__(self, text: str) -> None:
         self.text_delta = text
@@ -172,6 +174,7 @@ def test_a_gateway_failure_is_a_refusal_not_agreement() -> None:
 # ---------------------------------------------------------------------------------------
 # The real gateway path, over loopback against the conformance stub provider
 # ---------------------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def stub() -> Iterator[StubProvider]:

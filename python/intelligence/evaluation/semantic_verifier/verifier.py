@@ -15,9 +15,30 @@ claim with the critique as feedback.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
+from typing import Protocol
 
 from quansio.v1.intelligence import intelligence_pb2
+
+
+class ModelEventLike(Protocol):
+    """The part of a `ModelEvent` the verifier reads: the streamed text delta."""
+
+    text_delta: str
+
+
+class GatewayFulfiller(Protocol):
+    """The part of the model gateway the verifier uses.
+
+    `python/intelligence/model_gateway.ModelGateway` satisfies this structurally: the verifier
+    needs one fulfillment and nothing else, which keeps the seam injectable for the conformance
+    stub provider without depending on the gateway's concrete type.
+    """
+
+    def fulfill(
+        self, request: intelligence_pb2.ModelCallRequest
+    ) -> Iterator[ModelEventLike]: ...
 
 #: The exact keys a verdict may carry. Anything else is a refusal (fail closed).
 VERDICT_KEYS: frozenset[str] = frozenset({"agrees", "critique"})
@@ -90,7 +111,7 @@ def verifier_prompt(request: VerificationRequest) -> str:
         f"Rubric: {rubric}\n"
         f"Cited evidence: {evidence}\n"
         f"Claim: {request.claim_summary}\n\n"
-        'Answer with exactly one JSON object and nothing else: '
+        "Answer with exactly one JSON object and nothing else: "
         '{"agrees": true|false, "critique": "<why, in one or two sentences>"}'
     )
 
@@ -131,9 +152,7 @@ def parse_verdict(text: str, *, model: str) -> SemanticVerdict:
         raise SemanticVerificationError(VERDICT_MALFORMED, "the verdict needs a boolean 'agrees'")
     critique = payload.get("critique")
     if not isinstance(critique, str) or not critique.strip():
-        raise SemanticVerificationError(
-            VERDICT_MALFORMED, "the verdict needs a non-empty 'critique'"
-        )
+        raise SemanticVerificationError(VERDICT_MALFORMED, "the verdict needs a non-empty 'critique'")
     return SemanticVerdict(agrees=agrees, critique=critique.strip(), model=model)
 
 
@@ -146,7 +165,7 @@ class GatewaySemanticVerifier:
 
     def __init__(
         self,
-        gateway: object,
+        gateway: GatewayFulfiller,
         *,
         model_catalog_id: str,
         timeout_ms: int = 30_000,
@@ -156,7 +175,7 @@ class GatewaySemanticVerifier:
             raise SemanticVerificationError(
                 REQUEST_INVALID, "the verifier needs a catalog model id (D-018: no source constants)"
             )
-        self._gateway = gateway
+        self._gateway: GatewayFulfiller = gateway
         self._model_catalog_id = model_catalog_id
         self._timeout_ms = timeout_ms
         self._max_output_tokens = max_output_tokens
@@ -224,7 +243,7 @@ class GatewaySemanticVerifier:
         try:
             fulfillment = self._gateway.fulfill(call)
             text = "".join(event.text_delta for event in fulfillment)
-        except Exception as error:  # noqa: BLE001 - any gateway failure is a refusal, never agreement
+        except Exception as error:
             raise SemanticVerificationError(
                 VERIFIER_UNAVAILABLE, f"the model gateway could not answer: {error}"
             ) from error
