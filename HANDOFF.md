@@ -341,6 +341,12 @@ verifier belongs to the RPC boundary and the composition root (INT-001/APP-001);
 not yet record its model route (INT-002/INT-003), the Rust verifier passes `claimant_model=None`, so a
 contract requiring `independent_model` is refused rather than self-certified until that route exists.
 
+**While the container runtime is down**, the DB-free ready work is INT-012's Python half
+(`python/intelligence/trust/`) — content trust labelling and injection defense are pure rules that
+pytest can verify without Postgres, exactly as INT-009's Python resolver and its §11.5 state machine
+were. The other ready tasks (INT-008, INT-011, EXEC-001, APP-001, OPS-004, OPS-005, QA-003) all need
+the database for their own tests, so they remain blocked behind the same restart.
+
 ## Exact next action
 
 Run `python3 scripts/validate_v81.py --next` and take what it selects; INT-003 and INT-005 are the next
