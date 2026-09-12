@@ -1,0 +1,95 @@
+{
+  "task_id": "GOV-003",
+  "git_commit": "5a09f4f4d5a311ee3ced1f5e0b23eb671e601f19",
+  "recorded_at": "2026-09-12T00:25:03Z",
+  "commands": [
+    {
+      "command": "bash scripts/dev/bootstrap.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-003/2026-09-12T00-24-44Z/command-1.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-003/2026-09-12T00-24-44Z/command-2.log"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-003/2026-09-12T00-24-44Z/command-3.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-003/2026-09-12T00-24-44Z/command-4.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "bash scripts/dev/bootstrap.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "36eb8de75783a8a6658c18305e62b7d5045f3fb9d95bc9b722fd6d0ab94e73e3",
+      "bytes": 543
+    },
+    {
+      "path": "python/pyproject.toml",
+      "sha256": "e166a075e97cb6805af8abe6f9778f0ae09147014df8a5a7dbe4ba540624f900",
+      "bytes": 1172
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "sha256": "dee683a2909d53c485ad4fa6a04aa272b69d4a265e46e999a6fe3b92a357e8d6",
+      "bytes": 220
+    },
+    {
+      "path": "scripts/ci/workspace_check.py",
+      "sha256": "def7b17b8be980d1f84498fb46ed4730b7699208ab1fca4526829b1e07843210",
+      "bytes": 12421
+    },
+    {
+      "path": "config/models.yaml",
+      "sha256": "1240a89bdce0ceb09ae3199e0aa02c783493f7da2bb590c002b508b263ff5ca5",
+      "bytes": 2189
+    },
+    {
+      "path": "native/macos/Package.swift",
+      "sha256": "96a787c1130c6a515bee74d0ebff245b2aa956e15dc17211323408ecb0acc777",
+      "bytes": 619
+    },
+    {
+      "path": "evidence/GOV-003/2026-09-12T00-24-44Z/bootstrap.log",
+      "sha256": "82242c3a2729d3eb54691dcc18944ccfb720851c6e7f1b0c2a6acc254f97fc43",
+      "bytes": 8584
+    },
+    {
+      "path": "evidence/GOV-003/2026-09-12T00-24-44Z/owner-map.txt",
+      "sha256": "5ca6d1e302428ff47fe2eff182aed8b0506159ed78dfa60d7ff0066bbb3153dd",
+      "bytes": 660
+    }
+  ]
+}

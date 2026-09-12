@@ -1,0 +1,13 @@
+[package]
+name = "quansio-contracts"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Generated Rust bindings for Quansio contracts; generated from schemas/, never hand edited."
+
+[lints]
+workspace = true
+
+[dependencies]

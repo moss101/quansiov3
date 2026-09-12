@@ -1,0 +1,13 @@
+[package]
+name = "quansio-qworkerd"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Worker daemon: tool host, terminal, checkpoints and managed browser (CDP)."
+
+[lints]
+workspace = true
+
+[dependencies]

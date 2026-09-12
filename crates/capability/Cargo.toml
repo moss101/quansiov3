@@ -1,0 +1,13 @@
+[package]
+name = "quansio-capability"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Capability Projection: effective authority derivation and narrowing."
+
+[lints]
+workspace = true
+
+[dependencies]

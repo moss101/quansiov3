@@ -1,0 +1,13 @@
+[package]
+name = "quansio-events"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "RuntimeEvent store, transactional outbox and resumable projections."
+
+[lints]
+workspace = true
+
+[dependencies]

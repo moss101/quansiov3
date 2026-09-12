@@ -1,0 +1,8 @@
+$ uv run --project python pytest tests -q
+exit_code: 0
+
+--- stdout ---
+.....................................................                    [100%]
+53 passed in 0.38s
+
+--- stderr ---

@@ -1,0 +1,13 @@
+[package]
+name = "quansio-native-windows"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Windows native broker bridging UI Automation and the credential store to the Rust machine module."
+
+[lints]
+workspace = true
+
+[dependencies]

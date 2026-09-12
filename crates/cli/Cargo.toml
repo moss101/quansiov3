@@ -1,0 +1,13 @@
+[package]
+name = "quansio-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "quansio CLI over the public API v1."
+
+[lints]
+workspace = true
+
+[dependencies]

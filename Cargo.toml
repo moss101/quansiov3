@@ -1,0 +1,30 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/contracts",
+    "crates/events",
+    "crates/graph",
+    "crates/capability",
+    "crates/tools",
+    "crates/indexer",
+    "crates/machine",
+    "crates/qworkerd",
+    "crates/server",
+    "crates/cli",
+    "native/windows",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "LicenseRef-Quansio-Proprietary"
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = "warn"

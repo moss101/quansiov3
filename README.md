@@ -48,12 +48,18 @@ contracts), `python/intelligence/`, `apps/desktop`, `apps/web`, `native/macos`, 
 ## Working on this repository
 
 ```bash
+bash scripts/dev/bootstrap.sh              # every gate below, in order
 python3 scripts/validate_v81.py            # authority gate; must PASS before and after changes
 python3 scripts/validate_v81.py --ready    # dependency-ready tasks
 python3 scripts/validate_v81.py --next     # next task to claim
 python3 scripts/ci/inventory.py --scan     # duplicate-authority / language-boundary scan
 python3 scripts/ci/check_authority.py --check
-uv run --python 3.12 --with pytest pytest tests -q
+python3.12 scripts/ci/workspace_check.py   # canonical owner ↔ package conformance
+cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace
+(cd python && uv sync --frozen && uv run --frozen ruff check . && uv run --frozen mypy intelligence && uv run --frozen pytest -q)
+uv run --project python pytest tests -q    # repository-level architecture tests
+pnpm install --frozen-lockfile && pnpm build && pnpm typecheck && pnpm test && pnpm lint
+swift test --package-path native/macos     # macOS bridge (macOS only)
 ```
 
 Task loop (`AGENTS.md`): `CLAIM → RECONCILE → PLAN → IMPLEMENT → MIGRATE → TEST → NEGATIVE TEST →

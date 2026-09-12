@@ -1,0 +1,62 @@
+# Quansio V8.1 model catalog (DOSSIER.md §7, D-018).
+# Model identifiers live here, never as source constants. The model gateway
+# (python/intelligence/model_gateway, INT-002/INT-003) is the only consumer and the
+# only place provider credentials exist.
+#
+# cost_class: relative spend band used for budget routing (OPS-004).
+# dlp_eligible: whether the provider may receive content classified above the default
+#               data-handling class (DOSSIER.md §16); false means the runtime must not
+#               route protected content here.
+
+version: 1
+providers:
+  anthropic:
+    kind: anthropic
+    base_url: https://api.anthropic.com
+    credential_handle: provider/anthropic
+  openai:
+    kind: openai
+    base_url: https://api.openai.com/v1
+    credential_handle: provider/openai
+  openai-compatible:
+    # Self-hosted / local inference endpoints use the OpenAI-compatible adapter (OD-004).
+    kind: openai_compatible
+    base_url_env: QUANSIO_OPENAI_COMPATIBLE_BASE_URL
+    credential_handle_env: QUANSIO_OPENAI_COMPATIBLE_KEY_HANDLE
+
+routing:
+  # Pre-call routing is deterministic: no router/planner/judge model call may be
+  # inserted before the selected primary model (DOSSIER.md §7).
+  strategy: deterministic
+  primary: anthropic-sonnet
+  fallback_order: [openai-gpt, openai-compatible-local]
+
+models:
+  - id: anthropic-sonnet
+    provider: anthropic
+    model_id: claude-sonnet-4-5
+    capabilities: [tools, vision, streaming, structured_output, prompt_caching]
+    context_window: 200000
+    cost_class: standard
+    dlp_eligible: true
+  - id: anthropic-opus
+    provider: anthropic
+    model_id: claude-opus-4-1
+    capabilities: [tools, vision, streaming, structured_output, prompt_caching]
+    context_window: 200000
+    cost_class: premium
+    dlp_eligible: true
+  - id: openai-gpt
+    provider: openai
+    model_id: gpt-5.2
+    capabilities: [tools, vision, streaming, structured_output]
+    context_window: 128000
+    cost_class: standard
+    dlp_eligible: true
+  - id: openai-compatible-local
+    provider: openai-compatible
+    model_id: local-instruct
+    capabilities: [tools, streaming]
+    context_window: 32768
+    cost_class: low
+    dlp_eligible: false

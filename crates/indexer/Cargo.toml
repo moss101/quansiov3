@@ -1,0 +1,13 @@
+[package]
+name = "quansio-indexer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "quansio-indexer: exact, lexical and symbol indexes over authoritative sources."
+
+[lints]
+workspace = true
+
+[dependencies]
