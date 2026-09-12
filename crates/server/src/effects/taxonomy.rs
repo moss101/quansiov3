@@ -203,7 +203,6 @@ impl EffectTaxonomy {
     }
 
     /// Every registered entry, ordered by class.
-    #[must_use]
     pub fn entries(&self) -> impl Iterator<Item = &EffectTaxonomyEntry> {
         self.entries.values()
     }
