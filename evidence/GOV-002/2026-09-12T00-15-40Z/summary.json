@@ -1,0 +1,75 @@
+{
+  "task_id": "GOV-002",
+  "git_commit": "3476fd7f0640e78c1d1e8b6c727823acd1fbcfd9",
+  "recorded_at": "2026-09-12T00:15:42Z",
+  "commands": [
+    {
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-002/2026-09-12T00-15-40Z/command-1.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/inventory.py --scan",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-002/2026-09-12T00-15-40Z/command-2.log"
+    },
+    {
+      "command": "uv run --python 3.12 --with pytest pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-002/2026-09-12T00-15-40Z/command-3.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-002/2026-09-12T00-15-40Z/command-4.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/inventory.py --scan",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --python 3.12 --with pytest pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "README.md",
+      "sha256": "9934a296c3661c471d959494157b6740614d9751ed6ed57a8b8d656da9b84cd9",
+      "bytes": 3364
+    },
+    {
+      "path": "docs/archive/README.md",
+      "sha256": "cbc669fc2dcebef5eba0bacbc545ffbefb96979c99ab503bf8a3d117602356e9",
+      "bytes": 1081
+    },
+    {
+      "path": "scripts/ci/check_authority.py",
+      "sha256": "b6a576c06230004d4415d346a46131790850310671300c0891c33491c1a46d2e",
+      "bytes": 4263
+    },
+    {
+      "path": "tests/architecture/test_authority_check.py",
+      "sha256": "248eedc43f67e80db4bf42df838858e46acf50a81d197e25ff80e143d0803576",
+      "bytes": 3005
+    }
+  ]
+}

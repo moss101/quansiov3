@@ -1,0 +1,51 @@
+{
+  "authority_files": [
+    "DOSSIER.md",
+    "DOMAIN.md",
+    "AGENTS.md",
+    "IMPLEMENTATION_MASTER_PROMPT.md",
+    "TASKS.md",
+    "MANIFEST.json",
+    "registries/tasks.json",
+    "registries/task-graph.json",
+    "registries/progress.json",
+    "scripts/validate_v81.py"
+  ],
+  "authority_files_missing": [],
+  "git": {
+    "is_repository": true,
+    "branch": "task/GOV-002-authority-install",
+    "head": "3476fd7f0640e78c1d1e8b6c727823acd1fbcfd9",
+    "commits": 10,
+    "dirty": true
+  },
+  "tracked_files": 34,
+  "product_code_files": 5,
+  "product_code_by_language": {
+    "python": 5
+  },
+  "product_code_by_owner": {
+    "tests": 5
+  },
+  "files_without_canonical_owner": [],
+  "canonical_owner_dirs_present": {
+    "crates": [],
+    "python": [],
+    "apps": [],
+    "native": [],
+    "schemas": [],
+    "migrations": [],
+    "packs": [],
+    "sdk": [],
+    "config": [],
+    "infra": [],
+    "tests": [
+      "tests/__pycache__/",
+      "tests/architecture/",
+      "tests/ci/",
+      "tests/conftest.py"
+    ],
+    "ci_workflows": []
+  },
+  "deployables": []
+}
