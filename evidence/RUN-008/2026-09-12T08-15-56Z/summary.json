@@ -44,6 +44,12 @@
       "exit_code": 0,
       "result": "PASS",
       "log": "evidence/RUN-008/2026-09-12T08-15-56Z/command-7.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-12T08-15-56Z/command-8.log"
     }
   ],
   "results": [
@@ -81,6 +87,11 @@
       "command": "(cd python && uv run --frozen pytest -q)",
       "exit_code": 0,
       "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
     }
   ],
   "artifacts": [
@@ -116,13 +127,13 @@
     },
     {
       "path": "python/intelligence/evaluation/semantic_verifier/verifier.py",
-      "sha256": "66e796017ba028fef4e380bed0eaa29e447e350df1a8018b39c18a9d30c43a05",
-      "bytes": 9626
+      "sha256": "647d1af88f5314d2d5d5caa4b011cde8073e0990ed953a729febf958137c3f12",
+      "bytes": 10227
     },
     {
       "path": "python/tests/intelligence/test_semantic_verifier.py",
-      "sha256": "668d124161d5d7f04d964d4f270c357e3396ed7feb9c4c815e4620412aa2bff1",
-      "bytes": 7830
+      "sha256": "6cfc0e56395ae9b6bb59662e7d6f54abd8b0e6d740bc353e2ec747ff4dfe24db",
+      "bytes": 7787
     }
   ]
 }

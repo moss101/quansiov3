@@ -36,9 +36,8 @@ class GatewayFulfiller(Protocol):
     stub provider without depending on the gateway's concrete type.
     """
 
-    def fulfill(
-        self, request: intelligence_pb2.ModelCallRequest
-    ) -> Iterator[ModelEventLike]: ...
+    def fulfill(self, request: intelligence_pb2.ModelCallRequest) -> Iterator[ModelEventLike]: ...
+
 
 #: The exact keys a verdict may carry. Anything else is a refusal (fail closed).
 VERDICT_KEYS: frozenset[str] = frozenset({"agrees", "critique"})

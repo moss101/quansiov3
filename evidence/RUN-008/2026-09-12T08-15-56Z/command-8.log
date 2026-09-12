@@ -7,8 +7,8 @@ PASS             supply-chain           python3.12 scripts/ci/supply_chain/check
 PASS             legacy-map             python3.12 scripts/ci/legacy_map_check.py
 PASS             contract-drift         uv run --project python python scripts/ci/gen_contracts.py --check
 PASS             contract-lint-compat   uv run --project python python scripts/ci/contract_compat.py
-FAIL             toolchains             bash scripts/dev/bootstrap.sh
+PASS             toolchains             bash scripts/dev/bootstrap.sh
 PASS             tests                  uv run --project python pytest tests -q
-summary: /Users/mohsin/projects/quansiov3/artifacts/ci/summary-b5b0b35cdf69.json
-pipeline: FAIL
-ci exit=1
+summary: /Users/mohsin/projects/quansiov3/artifacts/ci/summary-99761f56b6a3.json
+pipeline: PASS
+ci exit=0
