@@ -473,7 +473,7 @@
       "claimed_by": "agent:subagent-run003",
       "started_at": "2026-09-12T04:52:14Z",
       "updated_at": "2026-09-12T04:52:14Z",
-      "git_commit": "d825c65",
+      "git_commit": "0a48bbee64d3ce391424c07976a71972fcc949b6",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test planning",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-graph --test planning",
