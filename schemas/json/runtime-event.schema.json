@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/runtime-event.schema.json",
+  "title": "Quansio RuntimeEvent envelope",
+  "description": "Durable, ordered record of a committed state transition (DOMAIN.md 9.1). Written in the same PostgreSQL transaction as the mutation, plus a transactional outbox row.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "tenant_id",
+    "sequence",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "type",
+    "schema_version",
+    "occurred_at",
+    "actor"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "pattern": "^evt_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "tenant_id": { "type": "string", "pattern": "^tn_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "workspace_id": { "type": "string", "pattern": "^ws_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "aggregate_type": { "type": "string", "minLength": 1 },
+    "aggregate_id": { "type": "string", "minLength": 1 },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "type": {
+      "type": "string",
+      "pattern": "^(tenant|workspace|member|thread|work|agent|run|turn|step|model|tool|effect|approval|question|target|lease|browser|terminal|checkpoint|artifact|evidence|knowledge|memory|skill|pack|routine|notification|connector|policy|audit|usage|capability|compaction|ops)\\.[a-z_]+$"
+    },
+    "schema_version": { "type": "string", "minLength": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "command_id": { "type": "string", "pattern": "^cmd_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "correlation_id": { "type": "string", "minLength": 1 },
+    "causation_id": { "type": "string" },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "enum": ["user", "agent", "system", "service"] },
+        "id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "generation": { "type": "integer", "minimum": 0 },
+    "payload": { "type": "object" }
+  }
+}

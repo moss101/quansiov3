@@ -1,0 +1,143 @@
+// Quansio artifact and evidence contracts (DOMAIN.md §10).
+syntax = "proto3";
+
+package quansio.v1.artifacts;
+
+message Artifact {
+  string schema_version = 100;
+  string id = 1;
+  string workspace_id = 2;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_DOCUMENT = 1;
+    KIND_SPREADSHEET = 2;
+    KIND_PRESENTATION = 3;
+    KIND_CODE = 4;
+    KIND_DATA = 5;
+    KIND_IMAGE = 6;
+    KIND_AUDIO = 7;
+    KIND_VIDEO = 8;
+    KIND_ARCHIVE = 9;
+    KIND_OTHER = 10;
+  }
+  Kind kind = 3;
+  string title = 4;
+  string role = 5;  // report | source | attachment | ...
+  Origin origin = 6;
+  string current_version_id = 7;
+  repeated ArtifactGrant grants = 8;
+  Retention retention = 9;
+  string deleted_at = 10;
+}
+
+message Origin {
+  string schema_version = 100;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_MESSAGE = 1;
+    KIND_RUN = 2;
+    KIND_ROUTINE = 3;
+    KIND_UPLOAD = 4;
+    KIND_CONNECTOR = 5;
+  }
+  Kind kind = 1;
+  string ref = 2;
+}
+
+message ArtifactGrant {
+  string schema_version = 100;
+  string principal = 1;
+  enum Level {
+    LEVEL_UNSPECIFIED = 0;
+    LEVEL_READ = 1;
+    LEVEL_WRITE = 2;
+  }
+  Level level = 2;
+}
+
+message Retention {
+  string schema_version = 100;
+  string retention_class = 1;
+  string expires_at = 2;
+}
+
+message ArtifactVersion {
+  string schema_version = 100;
+  string id = 1;
+  string artifact_id = 2;
+  uint32 seq = 3;
+  string content_digest = 4;  // sha256
+  uint64 size_bytes = 5;
+  string media_type = 6;
+  string object_key = 7;
+  string produced_by_run_id = 8;
+  string produced_by_step_id = 9;
+  string produced_by_user_id = 10;
+  string parent_version_id = 11;
+  string created_at = 12;
+}
+
+message Evidence {
+  string schema_version = 100;
+  string id = 1;
+  string workspace_id = 2;
+  string run_id = 3;
+  string step_id = 4;
+  string effect_id = 5;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_TOOL_OUTPUT = 1;
+    KIND_SCREENSHOT = 2;
+    KIND_DOM_SNAPSHOT = 3;
+    KIND_LOG = 4;
+    KIND_TEST_RESULT = 5;
+    KIND_HTTP_EXCHANGE = 6;
+    KIND_DIFF = 7;
+    KIND_DIGEST = 8;
+    KIND_EXTERNAL_REF = 9;
+  }
+  Kind kind = 6;
+  string content_digest = 7;
+  string object_key = 8;
+  string inline_summary = 9;
+  string captured_at = 10;
+  string captured_by_kind = 11;
+  string captured_by_id = 12;
+  bool redaction_applied = 13;
+}
+
+message EvidenceBundle {
+  string schema_version = 100;
+  string id = 1;
+  string run_id = 2;
+  string artifact_version_id = 3;
+  repeated Claim claims = 4;
+  repeated Source sources = 5;
+  double coverage = 6;
+  Verification verification = 7;
+}
+
+message Claim {
+  string schema_version = 100;
+  string claim_id = 1;
+  string text_span = 2;
+  repeated string evidence_ids = 3;
+  double support_score = 4;
+}
+
+message Source {
+  string schema_version = 100;
+  string source_id = 1;
+  string uri = 2;
+  string artifact_ref = 3;
+  string retrieved_at = 4;
+  string excerpt_locator = 5;
+  string excerpt_digest = 6;
+}
+
+message Verification {
+  string schema_version = 100;
+  bool deterministic_passed = 1;
+  double semantic_score = 2;
+  string verified_at = 3;
+}

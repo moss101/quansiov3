@@ -1,0 +1,58 @@
+# GENERATED from DOMAIN.md by scripts/ci/gen_contracts.py --catalog.
+# Do not hand edit: regenerate instead. DOMAIN.md is the naming/shape authority.
+glossary:
+- Tenant
+- Workspace
+- Member
+- Teammate
+- Worker
+- AgentThread
+- Thread
+- Message
+- Attachment
+- Objective
+- WorkGraph / WorkNode / WorkEdge
+- AgentGraph
+- StateGraph
+- GraphTransaction
+- Run
+- Turn
+- Step
+- Attempt
+- Command
+- RuntimeEvent
+- LiveFrame
+- ProtocolState
+- Checkpoint
+- CompactionEpoch
+- CapabilityProjection
+- Policy
+- UserRule
+- ApprovalRequest / ApprovalReceipt
+- EffectRecord
+- Effect class
+- Tool
+- ToolCall
+- ExecutionTarget
+- Substrate
+- Lease
+- Generation
+- qworkerd
+- Artifact
+- Evidence
+- EvidenceBundle
+- ContextProjection
+- SearchProgram
+- KnowledgeEntry
+- MemoryEntry
+- Skill
+- Business Capability Pack
+- CompletionContract
+- PlanProposal
+- Routine
+- Notification
+- Connector
+- SecretHandle
+- ModelRoute
+- UsageRecord
+- AuditEntry

@@ -1,0 +1,257 @@
+// Quansio runtime model (DOMAIN.md §5): Run/Turn/Step/Attempt, protocol state, checkpoints.
+syntax = "proto3";
+
+package quansio.v1.runtime;
+
+import "quansio/v1/core/errors.proto";
+import "quansio/v1/work/work.proto";
+
+enum AgentThreadStatus {
+  AGENT_THREAD_STATUS_UNSPECIFIED = 0;
+  AGENT_THREAD_STATUS_PROVISIONED = 1;
+  AGENT_THREAD_STATUS_ACTIVE = 2;
+  AGENT_THREAD_STATUS_SUSPENDED = 3;
+  AGENT_THREAD_STATUS_HANDING_OFF = 4;
+  AGENT_THREAD_STATUS_HANDED_OFF = 5;
+  AGENT_THREAD_STATUS_JOINING = 6;
+  AGENT_THREAD_STATUS_JOINED = 7;
+  AGENT_THREAD_STATUS_TERMINATED = 8;
+}
+
+message AgentThread {
+  string schema_version = 100;
+  string id = 1;
+  string workspace_id = 2;
+  enum AgentKind {
+    AGENT_KIND_UNSPECIFIED = 0;
+    AGENT_KIND_TEAMMATE = 1;
+    AGENT_KIND_WORKER = 2;
+  }
+  AgentKind agent_kind = 3;
+  string definition_id = 4;
+  string parent_id = 5;
+  string work_node_id = 6;
+  string capability_projection_id = 7;
+  uint64 generation = 8;
+  AgentThreadStatus status = 9;
+  string mailbox_cursor = 10;
+  string execution_target_id = 11;
+  string budget_id = 12;
+  string suspended_reason = 13;
+  string handoff_to_agent_thread_id = 14;
+  string handoff_at = 15;
+}
+
+enum RunStatus {
+  RUN_STATUS_UNSPECIFIED = 0;
+  RUN_STATUS_CREATED = 1;
+  RUN_STATUS_QUEUED = 2;
+  RUN_STATUS_RUNNING = 3;
+  RUN_STATUS_WAITING_APPROVAL = 4;
+  RUN_STATUS_WAITING_QUESTION = 5;
+  RUN_STATUS_WAITING_EVENT = 6;
+  RUN_STATUS_WAITING_TIMER = 7;
+  RUN_STATUS_WAITING_CHILD = 8;
+  RUN_STATUS_WAITING_TAKEOVER = 9;
+  RUN_STATUS_VERIFYING = 10;
+  RUN_STATUS_SUCCEEDED = 11;
+  RUN_STATUS_FAILED = 12;
+  RUN_STATUS_CANCELLED = 13;
+  RUN_STATUS_BLOCKED_UNRECOVERABLE = 14;
+  RUN_STATUS_SUSPENDED = 15;
+}
+
+message Run {
+  string schema_version = 100;
+  string id = 1;
+  string workspace_id = 2;
+  string work_node_id = 3;
+  string agent_thread_id = 4;
+  uint64 generation = 5;
+  RunStatus status = 6;
+  enum TriggerKind {
+    TRIGGER_KIND_UNSPECIFIED = 0;
+    TRIGGER_KIND_MESSAGE = 1;
+    TRIGGER_KIND_ROUTINE = 2;
+    TRIGGER_KIND_WAKE = 3;
+    TRIGGER_KIND_CHILD_RESULT = 4;
+    TRIGGER_KIND_MANUAL = 5;
+  }
+  TriggerKind trigger_kind = 7;
+  string trigger_ref = 8;
+  string current_turn_id = 9;
+  work.Budget budget_snapshot = 10;
+  string started_at = 11;
+  string ended_at = 12;
+  string terminal_reason = 13;
+  string execution_target_id = 14;
+}
+
+enum StepKind {
+  STEP_KIND_UNSPECIFIED = 0;
+  STEP_KIND_MODEL_CALL = 1;
+  STEP_KIND_TOOL_CALL = 2;
+  STEP_KIND_DELEGATE = 3;
+  STEP_KIND_WAIT = 4;
+  STEP_KIND_VERIFY = 5;
+  STEP_KIND_CHECKPOINT = 6;
+  STEP_KIND_COMPACT = 7;
+}
+
+enum StepStatus {
+  STEP_STATUS_UNSPECIFIED = 0;
+  STEP_STATUS_PENDING = 1;
+  STEP_STATUS_DISPATCHED = 2;
+  STEP_STATUS_COMPLETED = 3;
+  STEP_STATUS_FAILED = 4;
+  STEP_STATUS_CANCELLED = 5;
+  STEP_STATUS_UNKNOWN = 6;
+}
+
+message Turn {
+  string schema_version = 100;
+  string id = 1;
+  string run_id = 2;
+  uint32 seq = 3;
+  string input_kind = 4;
+  string input_ref = 5;
+  string context_projection_id = 6;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_ACTIVE = 1;
+    STATUS_COMPLETED = 2;
+    STATUS_ABORTED = 3;
+  }
+  Status status = 7;
+  uint32 step_count = 8;
+  string started_at = 9;
+  string ended_at = 10;
+}
+
+message Step {
+  string schema_version = 100;
+  string id = 1;
+  string turn_id = 2;
+  uint32 seq = 3;
+  StepKind kind = 4;
+  StepStatus status = 5;
+  string ref = 6;
+  repeated string evidence_ids = 7;
+  string effect_id = 8;
+}
+
+message Attempt {
+  string schema_version = 100;
+  string id = 1;
+  string step_id = 2;
+  uint32 seq = 3;
+  uint64 generation = 4;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_STARTED = 1;
+    STATUS_SUCCEEDED = 2;
+    STATUS_FAILED = 3;
+    STATUS_TIMED_OUT = 4;
+    STATUS_FENCED = 5;
+  }
+  Status status = 5;
+  string dispatched_at = 6;
+  string finished_at = 7;
+  core.Error error = 8;
+}
+
+// Durable per-Run in-flight lifecycle needed for exact resume (DOMAIN.md §5.7).
+message ProtocolState {
+  string schema_version = 100;
+  string run_id = 1;
+  uint64 generation = 2;
+  string pending_model_call_json = 3;
+  repeated string pending_tool_calls_json = 4;
+  repeated string pending_approvals = 5;
+  repeated string open_questions = 6;
+  repeated Wait waits = 7;
+  BrowserControl browser_control = 8;
+  repeated TerminalSessionRef terminal_sessions = 9;
+  repeated string child_agent_threads = 10;
+  bool cancellation_requested = 11;
+  string cancellation_at = 12;
+  string last_compaction_epoch_id = 13;
+  string updated_at = 14;
+}
+
+message Wait {
+  string schema_version = 100;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_APPROVAL = 1;
+    KIND_QUESTION = 2;
+    KIND_EVENT = 3;
+    KIND_TIMER = 4;
+    KIND_CHILD = 5;
+    KIND_TAKEOVER = 6;
+  }
+  Kind kind = 1;
+  string key = 2;
+  string expires_at = 3;
+}
+
+message BrowserControl {
+  string schema_version = 100;
+  string session_id = 1;
+  enum Holder {
+    HOLDER_UNSPECIFIED = 0;
+    HOLDER_AGENT = 1;
+    HOLDER_USER = 2;
+  }
+  Holder holder = 2;
+  string since = 3;
+}
+
+message TerminalSessionRef {
+  string schema_version = 100;
+  string id = 1;
+  string cursor = 2;
+}
+
+// Recoverable snapshot metadata for an execution target (DOMAIN.md §5.8).
+message Checkpoint {
+  string schema_version = 100;
+  string id = 1;
+  string execution_target_id = 2;
+  string run_id = 3;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_WORKSPACE_FILES = 1;
+    KIND_BROWSER_SESSION = 2;
+    KIND_TERMINAL = 3;
+    KIND_FULL = 4;
+  }
+  Kind kind = 4;
+  string storage_ref = 5;
+  uint64 generation = 6;
+  uint64 size_bytes = 7;
+  string created_at = 8;
+  string expires_at = 9;
+  string restore_policy = 10;
+}
+
+// Versioned compressed conversational history (DOMAIN.md §5.9).
+message CompactionEpoch {
+  string schema_version = 100;
+  string id = 1;
+  string thread_id = 2;
+  string run_id = 3;
+  uint32 seq = 4;
+  uint64 source_from_sequence = 5;
+  uint64 source_to_sequence = 6;
+  string summary_artifact_id = 7;
+  uint64 token_estimate = 8;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_PENDING = 1;
+    STATUS_INSTALLED = 2;
+    STATUS_REJECTED_STALE = 3;
+  }
+  Status status = 9;
+  string created_by_model_route_id = 10;
+}

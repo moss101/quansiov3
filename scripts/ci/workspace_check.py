@@ -243,18 +243,27 @@ def check(root: Optional[Path] = None, require_all_owners: bool = True) -> List[
         add("missing-python-workspace", "python/pyproject.toml", "Python workspace manifest is missing")
     else:
         manifest = _load_toml(pyproject)
-        packages = (
+        wheel = (
             manifest.get("tool", {})  # type: ignore[union-attr]
             .get("hatch", {})
             .get("build", {})
             .get("targets", {})
             .get("wheel", {})
-            .get("packages", [])
         )
+        packages = wheel.get("packages", [])
+        sources = wheel.get("sources", {}) or {}
         if not packages:
             add("python-packages-undeclared", "python/pyproject.toml", "wheel packages must be declared")
         for pkg in packages:
-            if not (root / "python" / pkg).is_dir():
+            if (root / "python" / pkg).is_dir():
+                continue
+            # A declared package may be produced by a build `sources` mapping, e.g. the
+            # protoc-generated tree that must import as a top-level package.
+            mapped = any(
+                (root / "python" / src / (pkg if target == "" else target)).is_dir()
+                for src, target in sources.items()
+            )
+            if not mapped:
                 add("python-package-missing", f"python/{pkg}", "declared Python package directory does not exist")
         require = manifest.get("project", {}).get("requires-python", "")  # type: ignore[union-attr]
         if "3.12" not in str(require):

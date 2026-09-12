@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/evidence-summary.schema.json",
+  "title": "Quansio task evidence bundle summary",
+  "description": "evidence/<TASK-ID>/<UTC timestamp>/summary.json (DOSSIER.md 19). Records the exact commit, commands and artifacts of one task.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_id", "git_commit", "commands", "results", "artifacts"],
+  "properties": {
+    "task_id": { "type": "string", "pattern": "^[A-Z]{2,4}-[0-9]{3}$" },
+    "git_commit": { "type": ["string", "null"], "pattern": "^[0-9a-f]{7,40}$" },
+    "recorded_at": { "type": "string", "format": "date-time" },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "exit_code", "result"],
+        "properties": {
+          "command": { "type": "string", "minLength": 1 },
+          "exit_code": { "type": "integer" },
+          "result": { "enum": ["PASS", "FAIL", "BLOCKED_EXTERNAL"] },
+          "log": { "type": "string" }
+        }
+      }
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "exit_code", "result"],
+        "properties": {
+          "command": { "type": "string" },
+          "exit_code": { "type": "integer" },
+          "result": { "enum": ["PASS", "FAIL", "BLOCKED_EXTERNAL"] }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+          "bytes": { "type": ["integer", "null"] }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+# GENERATED from DOMAIN.md by scripts/ci/gen_contracts.py --catalog.
+# Do not hand edit: regenerate instead. DOMAIN.md is the naming/shape authority.
+ids:
+  Tenant: tn_
+  ToolCall: tc_
+  Workspace: ws_
+  EffectRecord: eff_
+  User: usr_
+  ApprovalRequest: apr_
+  ServicePrincipal: sp_
+  ApprovalReceipt: rcp_
+  Teammate: agt_
+  UserRule: rule_
+  AgentThread: ath_
+  CapabilityProjection: cap_
+  Thread: thr_
+  Policy: pol_
+  Message: msg_
+  ExecutionTarget: tgt_
+  WorkNode: wn_
+  Lease: lse_
+  WorkEdge: we_
+  Checkpoint: ckp_
+  Run: run_
+  CompactionEpoch: cep_
+  Turn: trn_
+  Artifact: art_
+  Step: stp_
+  ArtifactVersion: artv_
+  Attempt: att_
+  Evidence: evd_
+  Command: cmd_
+  EvidenceBundle: evb_
+  RuntimeEvent: evt_
+  KnowledgeEntry: kn_
+  MemoryEntry: mem_
+  Skill: skl_
+  SkillVersion: sklv_
+  Routine: rtn_
+  CapabilityPack: pck_
+  CapabilityPackVersion: pckv_
+  Notification: ntf_
+  Connector: cnx_
+  SecretHandle: sec_
+  ModelRoute: mr_
+  UsageRecord: use_
+  AuditEntry: aud_
+  Webhook subscription: whk_

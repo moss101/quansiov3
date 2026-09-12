@@ -55,6 +55,9 @@ python3 scripts/validate_v81.py --next     # next task to claim
 python3 scripts/ci/inventory.py --scan     # duplicate-authority / language-boundary scan
 python3 scripts/ci/check_authority.py --check
 python3.12 scripts/ci/workspace_check.py   # canonical owner ↔ package conformance
+python3.12 scripts/ci/legacy_map_check.py  # legacy migration-map completeness
+uv run --project python python scripts/ci/gen_contracts.py --check   # contract regeneration diff
+uv run --project python python scripts/ci/contract_compat.py         # proto lint + additive-only compat
 cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace
 (cd python && uv sync --frozen && uv run --frozen ruff check . && uv run --frozen mypy intelligence && uv run --frozen pytest -q)
 uv run --project python pytest tests -q    # repository-level architecture tests
@@ -66,5 +69,23 @@ Task loop (`AGENTS.md`): `CLAIM → RECONCILE → PLAN → IMPLEMENT → MIGRATE
 RECOVERY TEST → EVIDENCE → VALIDATE → UPDATE PROGRESS → NEXT`, one task per
 `task/<TASK-ID>-<slug>` branch merged to `main` with a merge commit recorded in
 `registries/progress.json`.
+
+## Contracts
+
+`DOMAIN.md` is the naming/shape authority. Contracts derive from it mechanically:
+
+```text
+DOMAIN.md ─► schemas/catalog/*.yaml ─► schemas/openapi/public-api-v1.yaml ─► sdk/typescript/src/generated
+schemas/proto/**/*.proto ─► crates/contracts/src/generated (prost/tonic)
+                        └─► python/intelligence/contracts/generated (protoc; imports as quansio.v1.*)
+```
+
+Never hand-edit anything under `schemas/catalog/`, `schemas/openapi/`, `*/generated/` or
+`sdk/typescript/src/generated/`: regenerate with
+`uv run --project python python scripts/ci/gen_contracts.py --all`. CI fails on any
+regeneration diff, `scripts/ci/contract_compat.py` enforces additive-only protobuf changes
+against `tests/contract/compat/descriptor.baseline.pb`, and JSON Schemas under `schemas/json/`
+validate persisted/config artifacts (`config/models.yaml`, `config/flags.yaml`, evidence summaries,
+RuntimeEvent envelopes).
 
 Current position, ready queue and resume instructions live in `HANDOFF.md`.

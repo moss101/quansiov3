@@ -15,6 +15,10 @@ members = [
     "native/windows",
 ]
 
+# Contract codegen is repository tooling, not a product package: it lives under
+# scripts/dev and is deliberately outside the product workspace (GOV-004).
+exclude = ["scripts/dev/contract-gen"]
+
 [workspace.package]
 version = "0.1.0"
 edition = "2021"

@@ -1,0 +1,8 @@
+# GENERATED from DOMAIN.md by scripts/ci/gen_contracts.py --catalog.
+# Do not hand edit: regenerate instead. DOMAIN.md is the naming/shape authority.
+trust_levels:
+- TRUSTED_SYSTEM
+- TRUSTED_USER
+- VERIFIED_KNOWLEDGE
+- AGENT_GENERATED
+- UNTRUSTED_EXTERNAL

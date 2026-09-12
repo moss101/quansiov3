@@ -1,0 +1,152 @@
+// Quansio execution fabric contracts (DOMAIN.md §8): targets, leases, browser, terminal.
+syntax = "proto3";
+
+package quansio.v1.execution;
+
+enum TargetClass {
+  TARGET_CLASS_UNSPECIFIED = 0;
+  // Durable environment per workspace (files, browser profile, tooling).
+  TARGET_CLASS_PERSISTENT_WORKSPACE_COMPUTER = 1;
+  // Disposable environment for one Run/WorkNode.
+  TARGET_CLASS_ISOLATED_TASK_RUNTIME = 2;
+}
+
+enum Substrate {
+  SUBSTRATE_UNSPECIFIED = 0;
+  SUBSTRATE_CLOUD_MICROVM = 1;
+  SUBSTRATE_LOCAL_CAPSULE_MACOS = 2;
+  SUBSTRATE_LOCAL_CAPSULE_WINDOWS = 3;
+  SUBSTRATE_WINDOWS_NATIVE = 4;
+  SUBSTRATE_CUSTOMER_PRIVATE_WORKER = 5;
+}
+
+enum TargetStatus {
+  TARGET_STATUS_UNSPECIFIED = 0;
+  TARGET_STATUS_REQUESTED = 1;
+  TARGET_STATUS_PROVISIONING = 2;
+  TARGET_STATUS_READY = 3;
+  TARGET_STATUS_BUSY = 4;
+  TARGET_STATUS_DRAINING = 5;
+  TARGET_STATUS_STOPPED = 6;
+  TARGET_STATUS_SNAPSHOTTED = 7;
+  TARGET_STATUS_DESTROYED = 8;
+  TARGET_STATUS_FAILED = 9;
+  TARGET_STATUS_REPLACING = 10;
+}
+
+message TargetResources {
+  string schema_version = 100;
+  uint32 cpu = 1;
+  uint64 mem_mb = 2;
+  uint64 disk_mb = 3;
+}
+
+message ExecutionTarget {
+  string schema_version = 100;
+  string id = 1;
+  string workspace_id = 2;
+  TargetClass target_class = 3;
+  Substrate substrate = 4;
+  TargetStatus status = 5;
+  string desired_state = 6;
+  string observed_state = 7;
+  string image_digest = 8;
+  string lease_id = 9;
+  uint64 generation = 10;
+  string network_policy_id = 11;
+  TargetResources resources = 12;
+  string endpoint_ref = 13;
+  string last_heartbeat_at = 14;
+  repeated string checkpoint_ids = 15;
+  string owner_kind = 16;  // workspace | user | run
+  string owner_ref = 17;
+}
+
+message Lease {
+  string schema_version = 100;
+  string id = 1;
+  string target_id = 2;
+  string holder_controller_id = 3;
+  uint64 holder_generation = 4;
+  string acquired_at = 5;
+  string expires_at = 6;
+  string renewed_at = 7;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_HELD = 1;
+    STATUS_RELEASED = 2;
+    STATUS_EXPIRED = 3;
+    STATUS_REVOKED = 4;
+  }
+  Status status = 8;
+}
+
+// One managed browser session; takeover never creates a second session.
+message BrowserSession {
+  string schema_version = 100;
+  string id = 1;
+  string target_id = 2;
+  string run_id = 3;
+  string profile_ref = 4;
+  enum ControlHolder {
+    CONTROL_HOLDER_UNSPECIFIED = 0;
+    CONTROL_HOLDER_AGENT = 1;
+    CONTROL_HOLDER_USER = 2;
+    CONTROL_HOLDER_NONE = 3;
+  }
+  ControlHolder control_holder = 5;
+  string control_since = 6;
+  string current_url = 7;
+  repeated BrowserTab tabs = 8;
+  Screencast screencast = 9;
+  string checkpoint_id = 10;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_ACTIVE = 1;
+    STATUS_PAUSED_TAKEOVER = 2;
+    STATUS_PAUSED_POLICY = 3;
+    STATUS_CLOSED = 4;
+  }
+  Status status = 11;
+}
+
+message BrowserTab {
+  string schema_version = 100;
+  string id = 1;
+  string url = 2;
+  string title = 3;
+}
+
+message Screencast {
+  string schema_version = 100;
+  bool enabled = 1;
+  string stream_ref = 2;
+}
+
+message TerminalSession {
+  string schema_version = 100;
+  string id = 1;
+  string target_id = 2;
+  string run_id = 3;
+  string pty_ref = 4;
+  string cursor = 5;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_OPEN = 1;
+    STATUS_CLOSED = 2;
+    STATUS_LOST = 3;
+  }
+  Status status = 6;
+  string last_command_id = 7;
+}
+
+// Typed worker protocol message; every field is fenced by (lease_id, generation).
+message WorkerEnvelope {
+  string schema_version = 100;
+  string lease_id = 1;
+  uint64 generation = 2;
+  string fence_token = 3;
+  string correlation_id = 4;
+  string kind = 5;
+  string payload_json = 6;
+}

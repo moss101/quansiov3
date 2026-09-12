@@ -1,0 +1,337 @@
+// Quansio intelligence-plane contracts (DOMAIN.md §11): model gateway, context,
+// search, knowledge, memory, skills and packs. Rust is the caller for authority
+// flows; Python may only return proposals.
+syntax = "proto3";
+
+package quansio.v1.intelligence;
+
+enum ModelStopReason {
+  MODEL_STOP_REASON_UNSPECIFIED = 0;
+  MODEL_STOP_REASON_END_TURN = 1;
+  MODEL_STOP_REASON_TOOL_USE = 2;
+  MODEL_STOP_REASON_MAX_TOKENS = 3;
+  MODEL_STOP_REASON_REFUSAL = 4;
+  MODEL_STOP_REASON_CANCELLED = 5;
+  MODEL_STOP_REASON_ERROR = 6;
+}
+
+message ModelCallRequest {
+  string schema_version = 100;
+  string call_id = 1;
+  string run_id = 2;
+  string turn_id = 3;
+  string route_hint = 4;
+  string capability_projection_id = 5;
+  string context_projection_id = 6;
+  repeated RenderedMessage messages = 7;
+  repeated string tools = 8;
+  string output_constraints_json = 9;
+  string effort = 10;
+  uint32 max_output_tokens = 11;
+  bool stream = 12;
+  string dlp_profile = 13;
+  uint64 timeout_ms = 14;
+  string cancellation_token = 15;
+}
+
+message RenderedMessage {
+  string schema_version = 100;
+  enum Role {
+    ROLE_UNSPECIFIED = 0;
+    ROLE_SYSTEM = 1;
+    ROLE_OPERATOR = 2;
+    ROLE_USER = 3;
+    ROLE_ASSISTANT = 4;
+    ROLE_TOOL = 5;
+  }
+  Role role = 1;
+  string trust_level = 2;
+  string content_json = 3;
+  string cache_hint = 4;
+}
+
+// Normalized provider stream. Every adapter must emit exactly these.
+message ModelEvent {
+  string schema_version = 100;
+  string call_id = 1;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_CALL_STARTED = 1;
+    KIND_DELTA = 2;
+    KIND_TOOL_CALL = 3;
+    KIND_THINKING_SUMMARY = 4;
+    KIND_USAGE = 5;
+    KIND_STOP = 6;
+    KIND_ERROR = 7;
+    KIND_CALL_COMPLETED = 8;
+  }
+  Kind kind = 2;
+  string route_id = 3;
+  string text_delta = 4;
+  string tool_call_id = 5;
+  string tool_name = 6;
+  string tool_args_json = 7;
+  ModelStopReason stop_reason = 8;
+  ModelError error = 9;
+  Usage usage = 10;
+  uint64 latency_ms = 11;
+  int64 cost_estimate_minor_units = 12;
+}
+
+message Usage {
+  string schema_version = 100;
+  uint64 input_tokens = 1;
+  uint64 output_tokens = 2;
+  uint64 cache_read_tokens = 3;
+  uint64 cache_write_tokens = 4;
+}
+
+message ModelError {
+  string schema_version = 100;
+  string code = 1;
+  bool retryable = 2;
+}
+
+// Deterministic route resolution: no LLM call may precede the primary model.
+message ModelRoute {
+  string schema_version = 100;
+  string id = 1;
+  enum RequestClass {
+    REQUEST_CLASS_UNSPECIFIED = 0;
+    REQUEST_CLASS_CHAT = 1;
+    REQUEST_CLASS_PLANNING = 2;
+    REQUEST_CLASS_TOOL_HEAVY = 3;
+    REQUEST_CLASS_SYNTHESIS = 4;
+    REQUEST_CLASS_VERIFICATION = 5;
+    REQUEST_CLASS_EMBEDDING = 6;
+    REQUEST_CLASS_CHEAP_WORKER = 7;
+  }
+  RequestClass request_class = 2;
+  string provider = 3;
+  string model_id = 4;  // from config/models.yaml, never hard-coded
+  string config_json = 5;
+  string dlp_profile = 6;
+  repeated string fallbacks = 7;
+  string cost_class = 8;
+  string chosen_by = 9;  // deterministic rule id
+  string selected_at = 10;
+}
+
+message ContextProjection {
+  string schema_version = 100;
+  string id = 1;
+  string run_id = 2;
+  string turn_id = 3;
+  repeated ContextSegment segments = 4;
+  TokenLedger token_ledger = 5;
+  repeated string degradation_json = 6;
+  string search_program_id = 7;
+  string policy_snapshot_digest = 8;
+  string created_at = 9;
+}
+
+message ContextSegment {
+  string schema_version = 100;
+  uint32 seq = 1;
+  string source_kind = 2;
+  string source_ref = 3;
+  string trust_level = 4;
+  uint64 token_estimate = 5;
+  string snapshot_ref = 6;
+  repeated string redactions = 7;
+}
+
+message TokenLedger {
+  string schema_version = 100;
+  uint64 budget = 1;
+  uint64 used = 2;
+  string by_source_json = 3;
+}
+
+// Typed retrieval IR; executable arbitrary predicates are never accepted.
+message SearchProgram {
+  string schema_version = 100;
+  repeated Channel channels = 1;
+  string filters_json = 2;
+  uint32 max_results = 3;
+  uint64 max_tokens = 4;
+  string snapshot = 5;
+  enum Scope {
+    SCOPE_UNSPECIFIED = 0;
+    SCOPE_TENANT = 1;
+    SCOPE_WORKSPACE = 2;
+    SCOPE_TARGET = 3;
+  }
+  Scope scope = 6;
+  string scope_ref = 7;
+
+  enum Channel {
+    CHANNEL_UNSPECIFIED = 0;
+    CHANNEL_EXACT = 1;
+    CHANNEL_LEXICAL = 2;
+    CHANNEL_SEMANTIC = 3;
+    CHANNEL_GRAPH = 4;
+    CHANNEL_HISTORY = 5;
+    CHANNEL_MEMORY = 6;
+  }
+}
+
+message SearchResult {
+  string schema_version = 100;
+  string source_id = 1;
+  string locator = 2;
+  string snapshot = 3;
+  double score = 4;
+}
+
+message KnowledgeEntry {
+  string schema_version = 100;
+  string id = 1;
+  enum Scope {
+    SCOPE_UNSPECIFIED = 0;
+    SCOPE_TENANT = 1;
+    SCOPE_WORKSPACE = 2;
+    SCOPE_PACK = 3;
+  }
+  Scope scope = 2;
+  string kind = 3;
+  string content_ref = 4;
+  repeated Provenance provenance = 5;
+  double confidence = 6;
+  uint32 version = 7;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_CANDIDATE = 1;
+    STATUS_VERIFIED = 2;
+    STATUS_ACTIVE = 3;
+    STATUS_SUPERSEDED = 4;
+    STATUS_QUARANTINED = 5;
+    STATUS_DELETED = 6;
+  }
+  Status status = 8;
+  string superseded_by = 9;
+  string embedding_ref = 10;
+}
+
+message Provenance {
+  string schema_version = 100;
+  string source_kind = 1;
+  string ref = 2;
+  string digest = 3;
+  string retrieved_at = 4;
+}
+
+message MemoryEntry {
+  string schema_version = 100;
+  string id = 1;
+  enum Scope {
+    SCOPE_UNSPECIFIED = 0;
+    SCOPE_USER = 1;
+    SCOPE_WORKSPACE = 2;
+    SCOPE_TEAMMATE = 3;
+  }
+  Scope scope = 2;
+  string subject_ref = 3;
+  string content = 4;
+  enum ProvenanceKind {
+    PROVENANCE_KIND_UNSPECIFIED = 0;
+    PROVENANCE_KIND_EXPLICIT_USER = 1;
+    PROVENANCE_KIND_VERIFIED_RUN = 2;
+  }
+  ProvenanceKind provenance_kind = 5;
+  string provenance_ref = 6;
+  double confidence = 7;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_CANDIDATE = 1;
+    STATUS_ACTIVE = 2;
+    STATUS_DELETED = 3;
+  }
+  Status status = 8;
+  string last_used_at = 9;
+  string expires_at = 10;
+}
+
+message Skill {
+  string schema_version = 100;
+  string id = 1;
+  string scope = 2;
+  string name = 3;
+  string owner = 4;
+  string current_active_version_id = 5;
+}
+
+message SkillVersion {
+  string schema_version = 100;
+  string id = 1;
+  string skill_id = 2;
+  string semver = 3;
+  SkillManifest manifest = 4;
+  string provenance = 5;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_DRAFT = 1;
+    STATUS_CANDIDATE = 2;
+    STATUS_EVALUATING = 3;
+    STATUS_APPROVED = 4;
+    STATUS_ACTIVE = 5;
+    STATUS_DEPRECATED = 6;
+    STATUS_RETIRED = 7;
+    STATUS_REJECTED = 8;
+  }
+  Status status = 6;
+}
+
+message SkillManifest {
+  string schema_version = 100;
+  string instructions = 1;
+  repeated string examples = 2;
+  repeated string tool_needs = 3;
+  repeated string capability_needs = 4;
+  string eval_suite_id = 5;
+  string compatibility = 6;
+  string recovery_guidance = 7;
+}
+
+message CapabilityPack {
+  string schema_version = 100;
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string current_published_version_id = 4;
+}
+
+message CapabilityPackVersion {
+  string schema_version = 100;
+  string id = 1;
+  string semver = 2;
+  PackContents contents = 3;
+  string provenance = 4;
+  repeated string evidence_requirements = 5;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_DRAFT = 1;
+    STATUS_CANDIDATE = 2;
+    STATUS_QUALIFYING = 3;
+    STATUS_QUALIFIED = 4;
+    STATUS_PUBLISHED = 5;
+    STATUS_DEPRECATED = 6;
+    STATUS_WITHDRAWN = 7;
+  }
+  Status status = 6;
+}
+
+message PackContents {
+  string schema_version = 100;
+  repeated string knowledge_ids = 1;
+  repeated string skill_version_ids = 2;
+  repeated string tool_names = 3;
+  repeated string connector_requirements = 4;
+  repeated string policy_requirements = 5;
+  repeated string rbac_requirements = 6;
+  repeated string approval_requirements = 7;
+  repeated string workflow_templates = 8;
+  repeated string examples = 9;
+  string eval_suite_id = 10;
+  string compatibility = 11;
+}

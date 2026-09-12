@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/models-config.schema.json",
+  "title": "Quansio model catalog (config/models.yaml)",
+  "description": "Model identifiers, provider kinds and DLP eligibility live here, never as source constants (D-018, DOSSIER.md 7).",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "providers", "routing", "models"],
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "providers": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[a-z0-9-]+$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "enum": ["anthropic", "openai", "openai_compatible"] },
+            "base_url": { "type": "string", "format": "uri" },
+            "base_url_env": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+            "credential_handle": { "type": "string" },
+            "credential_handle_env": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }
+          }
+        }
+      }
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "primary", "fallback_order"],
+      "properties": {
+        "strategy": { "const": "deterministic" },
+        "primary": { "type": "string" },
+        "fallback_order": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "models": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "provider", "model_id", "capabilities", "context_window", "cost_class", "dlp_eligible"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "provider": { "type": "string" },
+          "model_id": { "type": "string", "minLength": 1 },
+          "capabilities": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "context_window": { "type": "integer", "minimum": 1 },
+          "cost_class": { "enum": ["low", "standard", "premium"] },
+          "dlp_eligible": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

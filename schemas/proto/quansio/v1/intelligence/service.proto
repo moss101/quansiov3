@@ -1,0 +1,111 @@
+// Rust <-> Python intelligence boundary (DOSSIER.md §4.2, D-016).
+// Rust is always the caller for authority-affecting flows; Python returns
+// proposals only. Every request carries tenant/workspace scope, correlation id,
+// deadline and capability projection id where applicable.
+syntax = "proto3";
+
+package quansio.v1.intelligence;
+
+import "quansio/v1/intelligence/intelligence.proto";
+
+message ScopeContext {
+  string schema_version = 100;
+  string tenant_id = 1;
+  string workspace_id = 2;
+  string correlation_id = 3;
+  uint64 deadline_ms = 4;
+  string capability_projection_id = 5;
+}
+
+message ContextBuildRequest {
+  string schema_version = 100;
+  ScopeContext scope = 1;
+  string run_id = 2;
+  string turn_id = 3;
+  repeated string segment_requests_json = 4;
+  uint64 token_budget = 5;
+  string policy_snapshot_digest = 6;
+}
+
+message SearchResultSet {
+  string schema_version = 100;
+  repeated SearchResult results = 1;
+  string snapshot = 2;
+}
+
+message MemoryCandidate {
+  string schema_version = 100;
+  ScopeContext scope = 1;
+  string subject_ref = 2;
+  string content = 3;
+  string provenance_kind = 4;
+  string provenance_ref = 5;
+  double confidence = 6;
+}
+
+message ProposalAck {
+  string schema_version = 100;
+  bool accepted = 1;
+  string proposal_id = 2;
+  string reason = 3;
+}
+
+message EmbedRequest {
+  string schema_version = 100;
+  ScopeContext scope = 1;
+  repeated string texts = 2;
+  string embedding_model = 3;
+}
+
+message Embedding {
+  string schema_version = 100;
+  uint32 index = 1;
+  repeated float vector = 2;
+}
+
+message EmbedResponse {
+  string schema_version = 100;
+  repeated Embedding embeddings = 1;
+  string model_id = 2;
+  uint32 dimensions = 3;
+}
+
+message TrustClassifyRequest {
+  string schema_version = 100;
+  ScopeContext scope = 1;
+  string source_kind = 2;
+  string content = 3;
+}
+
+message TrustClassifyResponse {
+  string schema_version = 100;
+  int32 trust_level = 1;
+  bool injection_suspected = 2;
+  repeated string matched_patterns = 3;
+}
+
+message EvaluationRequest {
+  string schema_version = 100;
+  ScopeContext scope = 1;
+  string suite_id = 2;
+  string cases_json = 3;
+}
+
+message EvaluationReport {
+  string schema_version = 100;
+  string suite_id = 1;
+  uint32 passed = 2;
+  uint32 failed = 3;
+  string details_json = 4;
+}
+
+// Served by python/intelligence. Rust is the only caller.
+service IntelligenceGateway {
+  rpc FulfillModel(ModelCallRequest) returns (stream ModelEvent);
+  rpc BuildContext(ContextBuildRequest) returns (ContextProjection);
+  rpc Search(SearchProgram) returns (SearchResultSet);
+  rpc ProposeMemory(MemoryCandidate) returns (ProposalAck);
+  rpc Embed(EmbedRequest) returns (EmbedResponse);
+  rpc ClassifyTrust(TrustClassifyRequest) returns (TrustClassifyResponse);
+  rpc Evaluate(EvaluationRequest) returns (EvaluationReport);
+}
