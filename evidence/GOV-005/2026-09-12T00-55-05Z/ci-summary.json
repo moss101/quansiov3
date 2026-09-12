@@ -1,0 +1,93 @@
+{
+  "commit": "f25bda8cefc67dd40616d7da1de62d5f7558c4ba",
+  "recorded_at": "2026-09-12T00:55:42Z",
+  "results": [
+    {
+      "gate": "authority",
+      "command": "python3.12 scripts/validate_v81.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.053,
+      "tail": "V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 6 PASS, 3 ready)"
+    },
+    {
+      "gate": "dossier-consistency",
+      "command": "uv run --project python python scripts/ci/dossier_consistency.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "duration_s": 0.843,
+      "tail": "unreachable-evidence-commit: evidence/GOV-007/2026-09-12T00-53-23Z/summary.json: evidence commit 1917d2e9b25ef4e32ae1469f609cb841e0ebe9c3 is not reachable from main\ndossier consistency: 1 finding(s)"
+    },
+    {
+      "gate": "architecture",
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "status": "SKIPPED_PENDING",
+      "exit_code": null,
+      "duration_s": 0.0,
+      "tail": "scripts/ci/arch_check.py not present yet"
+    },
+    {
+      "gate": "authority-pointers",
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.043,
+      "tail": "authority check: CLEAN (0 findings)"
+    },
+    {
+      "gate": "workspace",
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.065,
+      "tail": "workspace check: CLEAN (0 findings)"
+    },
+    {
+      "gate": "legacy-map",
+      "command": "python3.12 scripts/ci/legacy_map_check.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "duration_s": 0.22,
+      "tail": "legacy-without-disposition: infra/compose/stub-provider/server.py: legacy/parallel-authority artifact has no disposition row in the migration map\nlegacy map check: 1 finding(s)"
+    },
+    {
+      "gate": "contract-drift",
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 2.906,
+      "tail": "contract regeneration check: CLEAN (catalog,openapi,rust,python,ts)"
+    },
+    {
+      "gate": "contract-lint-compat",
+      "command": "uv run --project python python scripts/ci/contract_compat.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.208,
+      "tail": "contract check: CLEAN (lint + compatibility)"
+    },
+    {
+      "gate": "toolchains",
+      "command": "bash scripts/dev/bootstrap.sh",
+      "status": "FAIL",
+      "exit_code": 1,
+      "duration_s": 0.436,
+      "tail": "== authority gate ==\nV8.1 VALIDATION: PASS (99 tasks, 10 milestones, 6 PASS, 3 ready)\n== architecture gates ==\nduplicate-authority scan: CLEAN (0 findings)\nauthority check: CLEAN (0 findings)\nworkspace check: CLEAN (0 findings)\nlegacy-without-disposition: infra/compose/stub-provider/server.py: legacy/parallel-authority artifact has no disposition row in the migration map\nlegacy map check: 1 finding(s)"
+    },
+    {
+      "gate": "tests",
+      "command": "uv run --project python pytest tests -q",
+      "status": "FAIL",
+      "exit_code": 1,
+      "duration_s": 32.821,
+      "tail": "\ntests/architecture/test_legacy_map_check.py:106: AssertionError\n----------------------------- Captured stdout call -----------------------------\n[\n  {\n    \"rule\": \"legacy-without-disposition\",\n    \"path\": \"infra/compose/stub-provider/server.py\",\n    \"detail\": \"legacy/parallel-authority artifact has no disposition row in the migration map\"\n  }\n]\n__________________ test_real_repository_is_dossier_consistent __________________\n\n    def test_real_repository_is_dossier_consistent():\n>       assert dossier_consistency.check() == []\nE       AssertionError: assert [{'rule': 'un...e from main'}] == []\nE         \nE         Left contains one more item: {'rule': 'unreachable-evidence-commit', 'path': 'evidence/GOV-007/2026-09-12T00-53-23Z/summary.json', 'detail': 'evidence commit 1917d2e9b25ef4e32ae1469f609cb841e0ebe9c3 is not reachable from main'}\nE         Use -v to get more diff\n\ntests/ci/test_dossier_consistency.py:145: AssertionError\n=========================== short test summary info ============================\nFAILED tests/architecture/test_legacy_map_check.py::test_real_repository_has_no_legacy_authority\nFAILED tests/architecture/test_legacy_map_check.py::test_cli_exit_codes - Ass...\nFAILED tests/ci/test_dossier_consistency.py::test_real_repository_is_dossier_consistent\n3 failed, 100 passed in 32.50s"
+    }
+  ],
+  "artifacts": {
+    "registries/progress.json": "91c8ce35e6af297d3f26c3b74e8e4149f3e3a1c1d46bab0c442f84b8e76a262f",
+    "TASKS.md": "e5f0d293dc9af2a836638a447db509121a50db6da1852faa65d5d5d005ef3915",
+    "MANIFEST.json": "99a4f4b467844bac39d4b993f3e60674df9e64def2bf58f23f280201e98400b5"
+  },
+  "status": "FAIL",
+  "summary_path": "/Users/mohsin/projects/quansiov3/artifacts/ci/summary-f25bda8cefc6.json"
+}
