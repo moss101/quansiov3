@@ -1,0 +1,114 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-graph
+exit_code: 0
+
+--- stdout ---
+
+running 15 tests
+test state::tests::every_status_declares_a_round_tripping_db_string ... ok
+test state::tests::kinds_and_origins_round_trip_through_their_db_strings ... ok
+test state::tests::run_reaches_success_only_through_verifying ... ok
+test state::tests::only_depends_on_and_parent_of_relations_must_be_acyclic ... ok
+test state::tests::step_and_attempt_transitions_fail_closed ... ok
+test state::tests::terminal_work_node_states_never_transition ... ok
+test state::tests::run_terminals_are_immutable ... ok
+test state::tests::unknown_state_strings_fail_closed ... ok
+test transaction::event::tests::agent_thread_targets_use_domain_names_and_refuse_the_un_named_states ... ok
+test transaction::event::tests::run_targets_use_domain_names ... ok
+test transaction::event::tests::every_named_event_type_is_a_canonical_family_member ... ok
+test transaction::event::tests::mapped_change_kinds_are_accepted ... ok
+test transaction::event::tests::unmapped_change_kinds_are_refused ... ok
+test transaction::plan::tests::an_empty_contract_is_absent_and_a_populated_one_is_present ... ok
+test transaction::plan::tests::structural_narrowing_accepts_equal_and_rejects_wider_templates ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test delegation_records_the_parent_capability_and_requires_the_parent ... ok
+test the_narrowing_hook_is_invoked_and_rejection_writes_nothing ... ok
+test teammates_never_join_and_workers_do ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+
+running 3 tests
+test one_invalid_item_rolls_back_the_whole_batch ... ok
+test stale_batch_revision_applies_nothing ... ok
+test one_batch_mutates_work_agent_and_state_graphs_together ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.43s
+
+
+running 1 test
+test retries_append_attempts_and_never_overwrite_earlier_ones ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+
+
+running 1 test
+test graph_rejects_self_two_node_and_longer_cycles ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+
+running 5 tests
+test a_stale_base_revision_rejects_the_whole_transaction ... ok
+test a_committed_transaction_writes_state_and_events_with_contiguous_sequences ... ok
+test an_invalid_last_change_rolls_back_every_row_and_event ... ok
+test a_rejected_transaction_emits_no_event ... ok
+test events_carry_aggregate_identity_and_causal_metadata ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.80s
+
+
+running 4 tests
+test step_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+test turn_transitions_fail_closed ... ok
+test run_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+test work_node_transitions_fail_closed ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.14s
+
+
+running 6 tests
+test a_plan_whose_needs_exceed_the_proposer_is_rejected ... ok
+test a_plan_that_would_close_a_cycle_is_rejected ... ok
+test an_accepted_plan_is_one_transaction_with_its_own_event ... ok
+test a_plan_node_without_a_contract_or_an_inheriting_parent_is_rejected ... ok
+test a_plan_above_the_policy_bound_is_rejected_and_writes_nothing ... ok
+test replaying_an_applied_plan_conflicts_instead_of_duplicating_work ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.92s
+
+
+running 1 test
+test stale_revision_conflicts_and_writes_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+
+running 1 test
+test cross_tenant_reads_and_writes_return_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+
+running 1 test
+test crates/graph/src/transaction/mod.rs - transaction (line 21) - compile ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.43s
+     Running unittests src/lib.rs (target/debug/deps/quansio_graph-51d386659edb5590)
+     Running tests/agent_graph.rs (target/debug/deps/agent_graph-b916f95336425b6a)
+     Running tests/atomic_batch.rs (target/debug/deps/atomic_batch-19d7bbb45e36e241)
+     Running tests/attempts_append_only.rs (target/debug/deps/attempts_append_only-8d529752cb5799a4)
+     Running tests/cycle_rejection.rs (target/debug/deps/cycle_rejection-b98a16d301aeeb27)
+     Running tests/graph_transaction.rs (target/debug/deps/graph_transaction-c6ab3b1f33df0734)
+     Running tests/illegal_transitions.rs (target/debug/deps/illegal_transitions-f4183a2066861725)
+     Running tests/plan_proposal.rs (target/debug/deps/plan_proposal-f905cde18caa3699)
+     Running tests/revision_cas.rs (target/debug/deps/revision_cas-8cae797bb7352c82)
+     Running tests/tenant_isolation.rs (target/debug/deps/tenant_isolation-24b7a2909403318a)
+   Doc-tests quansio_graph

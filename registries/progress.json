@@ -300,18 +300,28 @@
       "notes": "WorkGraph/AgentGraph/StateGraph stores with cycle rejection (recursive reachability including parent_id), state-transition tables, revision compare-and-set, done only via mark_verification_passed, append-only attempts, and one atomic batch under a single graph revision. The delegation narrowing hook is a trait for RUN-005 rather than a second capability engine. Migration renumbered to 0003_graph_heads.sql during integration so migration versions stay unique; crate README trimmed to the documented length after the pipeline caught it."
     },
     "CORE-005": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-core005",
+      "started_at": "2026-09-12T02:09:40Z",
+      "updated_at": "2026-09-12T02:09:40Z",
+      "git_commit": "5c2de5c",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-graph",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/CORE-005/2026-09-12T02-07-44Z/summary.json",
+        "crates/graph/src/transaction/mod.rs",
+        "crates/graph/src/transaction/event.rs",
+        "crates/graph/src/transaction/plan.rs",
+        "crates/graph/tests/graph_transaction.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "One transaction applies the graph batch under a single graph_heads compare-and-set and stages every RuntimeEvent (with tenant sequences and outbox rows) before one commit; a rejected change rolls back state and events together. Event mapping covers the DOMAIN \u00a79.2 work/agent/run events named today and rejects unnamed change kinds with VALIDATION_SCHEMA before opening a transaction. PlanProposal application enforces base_revision, bounded size, acyclicity and the RUN-005 narrowing hook. One additive change in crates/events (commit_mutation_tx sharing the commit tail) so the two entry points cannot drift."
     },
     "CORE-006": {
       "coverage": "GENUINE_GAP",
