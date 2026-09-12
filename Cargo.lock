@@ -1197,6 +1197,14 @@ dependencies = [
 [[package]]
 name = "quansio-graph"
 version = "0.1.0"
+dependencies = [
+ "quansio-core",
+ "quansio-server",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "tokio",
+]
 
 [[package]]
 name = "quansio-indexer"
