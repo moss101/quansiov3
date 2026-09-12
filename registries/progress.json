@@ -655,18 +655,18 @@
       "notes": "Recovery, generation fencing and effect reconciliation. crates/server/src/runtime/recovery rebuilds a run's position from durable state only: plan.rs holds the pure decisions (the safe action for a durable position, and the generation fence) and service.rs applies them over the canonical stores. The precedence is the runtime's: honour a cancellation requested before the crash, reconcile an uncertain effect before any further work, stay parked on a wait the run itself owns, and only then resume. Fencing mirrors the runtime's own rule (`Generation::accept`): an actor behind the run's generation is stale and its output is discarded, while a newer generation supersedes the run's \u2014 refusing a newer generation would refuse recovery itself, which is why the earlier stricter rule was corrected. Reconciliation is applied from evidence (`ReconciliationEvidence::Determined` when the class has a deterministic check, `Manual` otherwise) and never by dispatching again; a `run.stale_worker_fenced` event records discarded work. `RECOVERY_READ_TABLES` declares the complete read set (runs, turns, steps, attempts, protocol_states via the store, runtime_events, checkpoints, effect_records, evidence, work_nodes) and a structural test scans the module's SQL literals and fails if any other table is referenced \u2014 memory tables above all \u2014 so 'recovery is not memory' is enforced, not merely intended. Tests: five integration tests drive the shipped Recoverer over real runs, ProtocolState, attempts and EffectRecords \u2014 the kill/restart matrix (a run with no pending work resumes, a parked run stays on its own key, a pre-crash cancellation is honoured exactly once and the restart reaches the same logical point), the stale-worker test (recovery refuses a behind generation, the engine refuses its mutation and the run is untouched), the uncertain-effect test (reconciliation is required and named, evidence settles it, exactly one effect row exists and only then does the run resume), and the durable-only and memory-table gates \u2014 plus four unit tests over the pure decisions."
     },
     "RUN-010": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T09:34:41Z",
+      "updated_at": "2026-09-12T09:34:41Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "RUN-010 claimed: runtime budgets, quotas and capacity control (DOMAIN.md \u00a713.2). Takes over the concurrency limit RUN-004's CapacityGate expects from its caller, and adds budget limits, consumed accounting and child <= parent remaining."
     },
     "RUN-011": {
       "coverage": "GENUINE_GAP",

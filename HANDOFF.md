@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0/M1 complete; M2 in progress; 29 PASS + 1 BLOCKED_EXTERNAL)
+Updated: 2026-09-12 (M0/M1 complete; M2 in progress; 30 PASS + 1 BLOCKED_EXTERNAL)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,11 +16,12 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M2 — the runtime loop (M0/M1 complete)
-Current task: none in flight — RUN-008 closed `PASS`
-Current task status: 29 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
+Current task: RUN-010 — runtime budgets, quotas and capacity control — `RECONCILING` (claimed, not started)
+Previous task: RUN-008 closed `PASS`
+Current task status: 30 tasks `PASS`, RUN-010 `RECONCILING`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
 Current owner: `agent:principal-1`
-Current component: `verification` (`crates/server/src/runtime/verification/`, `python/intelligence/evaluation/semantic_verifier/`)
-Current language: Rust + Python
+Current component: `budgets` (`crates/server/src/runtime/budgets/`)
+Current language: Rust + SQL
 
 Resolved host incident: for part of this session the machine would not execute newly created
 binaries (a freshly compiled `cc` hello-world hung in `_dyld_start`), which blocked `cargo test`
@@ -207,6 +208,28 @@ recorded under "Environment requirements".
   value. Evidence: `evidence/RUN-004/<ts>/`.
 
 ## What is currently being implemented
+
+**RUN-009 — recovery, generation fencing and effect reconciliation — `PASS` (merge `e5293f658205`).**
+
+`crates/server/src/runtime/recovery/` rebuilds a run's position from durable state alone.
+`plan.rs` holds the pure decisions — the safe action for a durable position and the generation
+fence — and `service.rs` applies them over the canonical stores. Precedence is the runtime's:
+honour a cancellation requested before the crash, reconcile an uncertain effect before any further
+work, stay parked on a wait the run owns, then resume. Fencing mirrors the runtime's own rule
+(`Generation::accept`): behind is stale and discarded, a newer generation supersedes — refusing a
+newer generation would refuse recovery itself, which is why the first, stricter rule was corrected
+against the authority. Reconciliation is applied from evidence and never by dispatching again, and a
+`run.stale_worker_fenced` event records discarded work. `RECOVERY_READ_TABLES` declares recovery's
+complete read set and a structural test scans the module's SQL literals and fails on any other
+table, memory tables above all. Evidence: `evidence/RUN-009/2026-09-12T09-27-22Z/` — five
+integration tests (kill/restart matrix, stale worker, uncertain effect, durable-only decisions,
+memory-table gate) plus four unit tests; `bash scripts/ci/ci.sh` green on all eleven gates.
+
+**RUN-010 — claimed, not started.** Its canonical owner is `crates/server/src/runtime/budgets/`;
+the capacity gate RUN-004 added takes its limit from the caller precisely because this task owns
+turning a run's budget into that limit, so the two fit together: budget limits (`tokens`,
+`cost_minor_units`, `wall_time_ms`, `tool_calls`, `concurrency`, `machine_minutes`, `max_steps`)
+with `consumed` accounting and child ≤ parent remaining (DOMAIN.md §13.2).
 
 **RUN-008 — CompletionContract verification — `PASS`.**
 
