@@ -1,0 +1,70 @@
+{
+  "task_id": "GOV-007",
+  "git_commit": "a150214089e61bc8eb53876ea8b5f103f3effa33",
+  "recorded_at": "2026-09-12T00:56:39Z",
+  "commands": [
+    {
+      "command": "bash scripts/dev/up",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-12T00-56-09Z/command-1.log"
+    },
+    {
+      "command": "bash scripts/dev/healthcheck",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-12T00-56-09Z/command-2.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-12T00-56-09Z/command-3.log"
+    },
+    {
+      "command": "bash scripts/dev/down",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-12T00-56-09Z/command-4.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "bash scripts/dev/up",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/dev/healthcheck",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/dev/down",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "scripts/dev/_common.sh",
+      "sha256": "2b1d7bbd6777ea50ad2c829429bb29f2604f0e134821d572528d378bdcd0318e",
+      "bytes": 7075
+    },
+    {
+      "path": "config/dev.yaml",
+      "sha256": "50b71422b3879ef270b494b8e7a15c1f31df4affbb3c4e6a70bf611c07106a23",
+      "bytes": 2101
+    },
+    {
+      "path": "infra/compose/compose.yaml",
+      "sha256": "843d1567d67377d06d9aa176148f651fa636f8db2a395a628b30d5a4ffa7bd17",
+      "bytes": 4302
+    }
+  ]
+}
