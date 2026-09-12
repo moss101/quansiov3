@@ -1,0 +1,112 @@
+{
+  "task_id": "CORE-004",
+  "git_commit": "a95a38015473c025fbfa0d99f48033083771f9e0",
+  "recorded_at": "2026-09-12T01:37:28Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL= cargo test -p quansio-graph",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-004/2026-09-12T01-36-16Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-004/2026-09-12T01-36-16Z/command-2.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-004/2026-09-12T01-36-16Z/command-3.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-004/2026-09-12T01-36-16Z/command-4.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/CORE-004/2026-09-12T01-36-16Z/command-5.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-004/2026-09-12T01-36-16Z/command-6.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL= cargo test -p quansio-graph",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/graph/src/work.rs",
+      "sha256": "7f2bbf6428731d3bfaa7914e7667e5abcddaa515bcb8e49fc1c9d4776557382b",
+      "bytes": 25875
+    },
+    {
+      "path": "crates/graph/src/agent.rs",
+      "sha256": "5e4919b63622d56536f9b2e7114abb4c3c969f7ac5eec783ca11ff2fa75c1dd5",
+      "bytes": 25664
+    },
+    {
+      "path": "crates/graph/src/runtime.rs",
+      "sha256": "5c5c0ae29e50553dfb9c5bae16181b2bdcc778e12a1787212e21d2e1f531e663",
+      "bytes": 41072
+    },
+    {
+      "path": "crates/graph/src/batch.rs",
+      "sha256": "83bdd615fd8979d97c0c25b849a6880eced75a556343e5e7644c5fab09d99b9f",
+      "bytes": 11129
+    },
+    {
+      "path": "crates/graph/src/state.rs",
+      "sha256": "263b1e92fde0e2857310a85920c01b253d555f5b231c68d0e148df298664e71a",
+      "bytes": 33817
+    },
+    {
+      "path": "migrations/0003_graph_heads.sql",
+      "sha256": "e59b4b7b8e08386f7956f21e2fb8e06cf13160f15f0938511f4ba9e8829c2e3b",
+      "bytes": 1601
+    },
+    {
+      "path": "crates/graph/tests/cycle_rejection.rs",
+      "sha256": "01c8a61b10c6c1322597925b93cd4d9617d0c809eec7a250b055a0a119124f7e",
+      "bytes": 4142
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+$ QUANSIO_TEST_POSTGRES_URL= cargo test -p quansio-graph
+exit_code: 0
+
+--- stdout ---
+
+running 8 tests
+test state::tests::every_status_declares_a_round_tripping_db_string ... ok
+test state::tests::kinds_and_origins_round_trip_through_their_db_strings ... ok
+test state::tests::run_reaches_success_only_through_verifying ... ok
+test state::tests::only_depends_on_and_parent_of_relations_must_be_acyclic ... ok
+test state::tests::run_terminals_are_immutable ... ok
+test state::tests::step_and_attempt_transitions_fail_closed ... ok
+test state::tests::terminal_work_node_states_never_transition ... ok
+test state::tests::unknown_state_strings_fail_closed ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test the_narrowing_hook_is_invoked_and_rejection_writes_nothing ... ok
+test teammates_never_join_and_workers_do ... ok
+test delegation_records_the_parent_capability_and_requires_the_parent ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test stale_batch_revision_applies_nothing ... ok
+test one_invalid_item_rolls_back_the_whole_batch ... ok
+test one_batch_mutates_work_agent_and_state_graphs_together ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test retries_append_attempts_and_never_overwrite_earlier_ones ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test graph_rejects_self_two_node_and_longer_cycles ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+test run_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+test turn_transitions_fail_closed ... ok
+test work_node_transitions_fail_closed ... ok
+test step_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test stale_revision_conflicts_and_writes_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test cross_tenant_reads_and_writes_return_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
+     Running unittests src/lib.rs (target/debug/deps/quansio_graph-533a6680fbb903ec)
+     Running tests/agent_graph.rs (target/debug/deps/agent_graph-3f1b1d4dfc26c8d7)
+     Running tests/atomic_batch.rs (target/debug/deps/atomic_batch-21e2f666f9b38866)
+     Running tests/attempts_append_only.rs (target/debug/deps/attempts_append_only-b79a8e15624618a3)
+     Running tests/cycle_rejection.rs (target/debug/deps/cycle_rejection-fed5d5595beedbbe)
+     Running tests/illegal_transitions.rs (target/debug/deps/illegal_transitions-3fd1a618ae178bbc)
+     Running tests/revision_cas.rs (target/debug/deps/revision_cas-af1802b88616e4a1)
+     Running tests/tenant_isolation.rs (target/debug/deps/tenant_isolation-6b3c113066dffd49)
+   Doc-tests quansio_graph
