@@ -6,3 +6,4 @@
 
 pub mod checkpoints;
 pub mod protocol_state;
+pub mod state_machine;
