@@ -6,7 +6,7 @@
 //!
 //! Environment: `QUANSIO_TEST_POSTGRES_URL`; absent → `BLOCKED_EXTERNAL` marker.
 
-use quansio_core::{CorrelationId, Cursor, EventId, Sequence, UlidGenerator};
+use quansio_core::{CorrelationId, Cursor, EventId, Sequence, TypedId, UlidGenerator};
 use quansio_events::{Actor, EventDraft, EventError, EventStore, EventType};
 use sqlx::PgPool;
 
@@ -287,6 +287,79 @@ async fn concurrent_writers_get_distinct_gap_free_sequences() {
     ids.sort();
     ids.dedup();
     assert_eq!(ids.len(), total as usize, "distinct event identities");
+
+    drop_pool(&pool, &name).await;
+}
+
+#[tokio::test]
+async fn a_rolled_back_commit_releases_its_sequence_instead_of_burning_it() {
+    let Some((name, pool)) = prepare("seqrollback").await else {
+        blocked_marker();
+        return;
+    };
+    let store = EventStore::new(pool.clone());
+
+    // Two staged events that share an event id: the second insert violates the primary
+    // key after both sequence values were assigned, so the transaction fails and both
+    // increments roll back with it.
+    let mut generator = UlidGenerator::new();
+    let duplicate_id = EventId::generate(&mut generator);
+    let first = draft(1, serde_json::json!({"kind": "duplicate"})).with_event_id(duplicate_id);
+    let second = draft(2, serde_json::json!({"kind": "duplicate"})).with_event_id(duplicate_id);
+    let result: Result<(), EventError> = store
+        .commit_mutation(TENANT, move |conn, batch| {
+            Box::pin(async move {
+                sqlx::query("UPDATE tenants SET name = $2 WHERE id = $1")
+                    .bind(TENANT)
+                    .bind("sequence-rollback")
+                    .execute(&mut *conn)
+                    .await?;
+                batch.emit(first);
+                batch.emit(second);
+                Ok(())
+            })
+        })
+        .await;
+    assert!(matches!(result, Err(EventError::Database(_))));
+    assert_eq!(
+        count(
+            &pool,
+            &format!("SELECT count(*) FROM runtime_events WHERE tenant_id = '{TENANT}'")
+        )
+        .await,
+        0,
+        "a failed commit writes no event"
+    );
+
+    // The next successful commit starts at sequence 1: the failed attempt did not burn
+    // a value, so the tenant stream stays gap-free.
+    let staged = draft(1, serde_json::json!({"kind": "after-rollback"}));
+    store
+        .commit_mutation(TENANT, move |conn, batch| {
+            Box::pin(async move {
+                sqlx::query("UPDATE tenants SET name = $2 WHERE id = $1")
+                    .bind(TENANT)
+                    .bind("after-rollback")
+                    .execute(&mut *conn)
+                    .await?;
+                batch.emit(staged);
+                Ok(())
+            })
+        })
+        .await
+        .expect("commit after rollback");
+    let events = store
+        .read_events_after(TENANT, None, 10)
+        .await
+        .expect("read events");
+    assert_eq!(
+        events
+            .iter()
+            .map(|event| event.sequence.get())
+            .collect::<Vec<_>>(),
+        vec![1],
+        "the rolled-back sequence is reused, not skipped"
+    );
 
     drop_pool(&pool, &name).await;
 }
