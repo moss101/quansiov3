@@ -594,18 +594,31 @@
       "notes": "Universal Effect Ledger: reservation derives the idempotency key from effect class, resource and params digest and leans on the schema's partial unique in-flight index, so racing dispatchers reserve exactly one action and an in-flight duplicate is a typed conflict; every transition is one event-emitting transaction with exactly one effect.* event and contiguous aggregate versions; settlement is terminal and re-settlement refuses before writing; an OUTCOME_UNKNOWN record cannot be retried (typed refusal) and is resolved only by reconciliation matching the class strategy from config/effects.yaml (validated against the generated catalog and failing closed on any divergence); a retry creates a new identity sharing the key and never touches the old row; approval-required actions cannot bypass the receipt; protocol state keeps next_safe_action on ReconcileEffect until settled; all reads are tenant-scoped."
     },
     "RUN-008": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "IN_PROGRESS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T08:02:19Z",
+      "updated_at": "2026-09-12T08:16:39Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test verification (6 tests)",
+        "cargo test -p quansio-server --lib (93 unit tests, 8 new for verification)",
+        "cargo test -p quansio-server -p quansio-tools -p quansio-graph (33 suites, 267 tests)",
+        "cargo fmt --all --check",
+        "cargo clippy --workspace --all-targets -- -D warnings"
+      ],
+      "artifacts": [
+        "evidence/RUN-008/2026-09-12T08-15-56Z/summary.json",
+        "crates/server/src/runtime/verification/mod.rs",
+        "crates/server/src/runtime/verification/contract.rs",
+        "crates/server/src/runtime/verification/checks.rs",
+        "crates/server/src/runtime/verification/service.rs",
+        "crates/server/tests/verification.rs"
+      ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "IN PROGRESS \u2014 the deterministic half is implemented and verified; the Python semantic verifier remains. DONE: crates/server/src/runtime/verification implements DOMAIN.md \u00a74.4. contract.rs parses a WorkNode's CompletionContract fail-closed (an unknown check kind is refused, not skipped; a malformed bound is refused; a contract that binds nothing is recognised and can never certify). checks.rs implements the checks the runtime can prove today \u2014 artifact_exists over real artifact metadata (role + min_versions) and effects_settled over the run's EffectRecords (a named class must be settled; an unsettled record means the external outcome is unknown, so nothing is certified) \u2014 and fails closed naming the owner for test_command (EXEC-006), assertion (no predicate registry yet) and citations_valid (CAP-002), so an unimplemented check can never become a silent pass. service.rs is the ContractVerifier plugged into the engine's VerificationPort: the model's completion claim reaches SUCCEEDED only after every deterministic check passes, human signoff is respected as a human's (a model may not sign off), and a required independent semantic verification that is unavailable or disagrees rejects the claim with its critique as feedback. Evidence: crates/server/tests/verification.rs drives the real turn loop, the real verifier and real database state: a claim without its artifact does not succeed the run (verify step failed with actionable feedback naming the check and role), the same claim verifies once the contract is satisfied, an unimplemented check kind fails closed naming EXEC-006, a disagreeing semantic verifier keeps the work incomplete while an agreeing one completes it, an empty contract certifies nothing, and an unsettled effect keeps the run incomplete until it is settled. REMAINING: python/intelligence/evaluation/semantic_verifier/ \u2014 the gateway-backed implementation of the SemanticVerifierPort seam (Rust side already defined and tested with an injected verifier); it must produce an independent verdict through python/intelligence/model_gateway (INT-002's ModelGateway, offline testable via its conformance stub provider) and be covered by a test that a verdict disagreeing with the claimant rejects the claim. The Rust half deliberately loads no new policy value and adds no second verification path."
     },
     "RUN-009": {
       "coverage": null,
