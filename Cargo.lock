@@ -1166,6 +1166,15 @@ dependencies = [
 [[package]]
 name = "quansio-core"
 version = "0.1.0"
+dependencies = [
+ "base64",
+ "getrandom",
+ "quansio-contracts",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+]
 
 [[package]]
 name = "quansio-events"
@@ -1195,6 +1204,7 @@ version = "0.1.0"
 name = "quansio-server"
 version = "0.1.0"
 dependencies = [
+ "quansio-core",
  "sqlx",
  "thiserror",
  "tokio",

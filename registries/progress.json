@@ -228,18 +228,30 @@
       "notes": "61 public + 2 derived tables for DOMAIN.md \u00a72\u2013\u00a713; RLS enabled and forced on every tenant table (no-context queries return zero rows, inserts are refused); derived embeddings/index epochs carry tenant RLS too; forward-fix re-run preserves data; quansio_app role is idempotent under concurrent migration. Dev-only DSN appears in the recorded command: it is the documented dev default, never a production credential."
     },
     "CORE-002": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T01:07:10Z",
+      "updated_at": "2026-09-12T01:13:27Z",
+      "git_commit": "3c6b51b",
+      "tests": [
+        "cargo test -p quansio-core",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/CORE-002/2026-09-12T01-12-20Z/summary.json",
+        "crates/core/src/id.rs",
+        "crates/core/src/ulid.rs",
+        "crates/core/src/generation.rs",
+        "crates/core/src/idempotency.rs",
+        "crates/core/src/cursor.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Typed prefixed ULID with a spec-vector fixture and monotonic same-millisecond generation; 46-entry prefix table cross-checked against the generated EntityPrefix enum; generation/revision/fence/cursor primitives; effect idempotency keys and command duplicate classification. Database-backed tests prove duplicate commands replay (unique constraint) or conflict on parameter drift, and that stale generations update zero rows. Also hardened the CORE-001 migration: concurrent CREATE ROLE can surface unique_violation as well as duplicate_object."
     },
     "CORE-003": {
       "coverage": null,

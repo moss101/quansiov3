@@ -11,3 +11,12 @@ description = "IDs, generation counters, idempotency keys and typed errors share
 workspace = true
 
 [dependencies]
+base64 = "0.22"
+getrandom = "0.2"
+serde = { version = "1", features = ["derive"] }
+sha2 = "0.10"
+thiserror = "2"
+
+[dev-dependencies]
+quansio-contracts = { path = "../contracts" }
+serde_json = "1"

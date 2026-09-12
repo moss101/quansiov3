@@ -2,21 +2,21 @@
 //!
 //! These tests drive the shipped migration set (`migrations/`) through the shipped
 //! runner (`quansio_server::control::schema`) against a real PostgreSQL server. They
-//! create and drop a scratch database, so they never touch a development database.
+//! create and drop their own scratch databases, so they never touch a development
+//! database.
 //!
 //! Environment (documented per AGENTS.md "Real boundaries"):
 //!   `QUANSIO_TEST_POSTGRES_URL` — superuser DSN used to create the scratch database,
-//!   for example `postgres://quansio:…@127.0.0.1:55440/postgres`. When it is absent the
+//!   for example `postgres://quansio:…@127.0.0.1:55440/quansio`. When it is absent the
 //!   tests print an explicit `BLOCKED_EXTERNAL` marker and return, because the local
 //!   development stack (`scripts/dev/up`) is not running.
-//!
-//! The `derived` schema, RLS policies and updated_at triggers are asserted directly:
-//! a schema that silently loses them would otherwise only fail much later.
 
-use sqlx::postgres::PgPoolOptions;
-use sqlx::{Executor, PgPool, Row};
+use sqlx::{PgPool, Row};
 
 use quansio_server::control::schema;
+
+mod common;
+use common::{admin_url, blocked_marker, drop_pool, fresh_database, scratch_name, seed_tenant};
 
 const TENANT_A: &str = "tn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
 const TENANT_B: &str = "tn_01J8Z3K6F1N8VQ2X5W9Y0BBBBB";
@@ -25,102 +25,18 @@ const WORKSPACE_A: &str = "ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
 const WORK_NODE_A: &str = "wn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
 const WORK_NODE_B: &str = "wn_01J8Z3K6F1N8VQ2X5W9Y0BBBBB";
 
-fn admin_url() -> Option<String> {
-    std::env::var("QUANSIO_TEST_POSTGRES_URL")
-        .ok()
-        .filter(|v| !v.is_empty())
-}
-
-fn scratch_url(admin: &str, database: &str) -> String {
-    match admin.rsplit_once('/') {
-        Some((base, _)) => format!("{base}/{database}"),
-        None => format!("{admin}/{database}"),
-    }
-}
-
-async fn admin_pool(admin: &str) -> PgPool {
-    PgPoolOptions::new()
-        .max_connections(2)
-        .connect(admin)
-        .await
-        .expect("connect to the admin database")
-}
-
-/// Create an empty scratch database and return a pool bound to it.
-async fn fresh_database(name: &str) -> Option<PgPool> {
-    let admin = admin_url()?;
-    let admin = admin_pool(&admin).await;
-    admin
-        .execute(format!("DROP DATABASE IF EXISTS {name} WITH (FORCE)").as_str())
-        .await
-        .expect("drop scratch database");
-    admin
-        .execute(format!("CREATE DATABASE {name}").as_str())
-        .await
-        .expect("create scratch database");
-    let url = scratch_url(&admin_url().expect("admin url"), name);
-    Some(
-        PgPoolOptions::new()
-            .max_connections(4)
-            .connect(&url)
-            .await
-            .expect("connect scratch db"),
-    )
-}
-
-async fn drop_pool(pool: &PgPool, name: &str) {
-    let admin = admin_url().expect("admin url");
-    pool.close().await;
-    let admin = admin_pool(&admin).await;
-    let _ = admin
-        .execute(format!("DROP DATABASE IF EXISTS {name} WITH (FORCE)").as_str())
-        .await;
-}
-
 async fn seed_tenant_a(pool: &PgPool) {
-    let mut tx = pool.begin().await.expect("begin");
-    sqlx::query("INSERT INTO tenants (id, name) VALUES ($1, 'A')")
-        .bind(TENANT_A)
-        .execute(&mut *tx)
-        .await
-        .expect("insert tenant A");
-    sqlx::query(
-        "INSERT INTO users (id, primary_email, display_name) VALUES ($1, 'a@example.com', 'A')",
-    )
-    .bind(USER_A)
-    .execute(&mut *tx)
-    .await
-    .expect("insert user A");
-    sqlx::query("INSERT INTO workspaces (id, tenant_id, name) VALUES ($1, $2, 'WS')")
-        .bind(WORKSPACE_A)
-        .bind(TENANT_A)
-        .execute(&mut *tx)
-        .await
-        .expect("insert workspace");
-    schema::set_tenant_context(&mut tx, TENANT_A)
-        .await
-        .expect("tenant context");
-    sqlx::query(
-        "INSERT INTO work_nodes (id, tenant_id, workspace_id, kind, title, created_by) \
-         VALUES ($1, $2, $3, 'objective', 'node A', '{\"kind\":\"user\",\"id\":\"usr_x\"}'::jsonb)",
-    )
-    .bind(WORK_NODE_A)
-    .bind(TENANT_A)
-    .bind(WORKSPACE_A)
-    .execute(&mut *tx)
-    .await
-    .expect("insert work node");
-    tx.commit().await.expect("commit");
+    seed_tenant(pool, TENANT_A, USER_A, WORKSPACE_A, WORK_NODE_A).await;
 }
 
 #[tokio::test]
 async fn bootstrap_from_zero_creates_the_authoritative_schema() {
-    let Some(name) = admin_url().map(|_| format!("quansio_schema_{}", std::process::id())) else {
-        eprintln!("BLOCKED_EXTERNAL: QUANSIO_TEST_POSTGRES_URL is not set; dev stack not running");
+    let Some(name) = admin_url().map(|_| scratch_name("schema")) else {
+        blocked_marker();
         return;
     };
     let Some(pool) = fresh_database(&name).await else {
-        eprintln!("BLOCKED_EXTERNAL: QUANSIO_TEST_POSTGRES_URL is not set");
+        blocked_marker();
         return;
     };
 
@@ -129,7 +45,8 @@ async fn bootstrap_from_zero_creates_the_authoritative_schema() {
     // Every canonical table exists.
     for table in schema::AUTHORITATIVE_TABLES {
         let exists: bool = sqlx::query_scalar(
-            "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1)",
+            "SELECT EXISTS (SELECT 1 FROM information_schema.tables \
+             WHERE table_schema = 'public' AND table_name = $1)",
         )
         .bind(table)
         .fetch_one(&pool)
@@ -162,6 +79,17 @@ async fn bootstrap_from_zero_creates_the_authoritative_schema() {
     .expect("rls check");
     assert_eq!(unforced, 0, "every table must have RLS enabled and forced");
 
+    let policies: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM pg_policies WHERE schemaname IN ('public', 'derived')",
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("policies");
+    assert!(
+        policies >= 60,
+        "tenant tables need their isolation policy: {policies}"
+    );
+
     // updated_at is maintained by triggers, not by application code.
     let triggers: i64 =
         sqlx::query_scalar("SELECT count(*) FROM pg_trigger WHERE NOT tgisinternal")
@@ -173,17 +101,28 @@ async fn bootstrap_from_zero_creates_the_authoritative_schema() {
         "updated_at triggers are missing: {triggers}"
     );
 
+    // The application role exists and is not a superuser.
+    let superuser: bool =
+        sqlx::query_scalar("SELECT rolsuper FROM pg_roles WHERE rolname = 'quansio_app'")
+            .fetch_one(&pool)
+            .await
+            .expect("quansio_app role must exist");
+    assert!(
+        !superuser,
+        "the application role must not bypass row-level security"
+    );
+
     drop_pool(&pool, &name).await;
 }
 
 #[tokio::test]
 async fn tenant_isolation_returns_zero_rows_without_context() {
-    let Some(name) = admin_url().map(|_| format!("quansio_isolation_{}", std::process::id()))
-    else {
-        eprintln!("BLOCKED_EXTERNAL: QUANSIO_TEST_POSTGRES_URL is not set; dev stack not running");
+    let Some(name) = admin_url().map(|_| scratch_name("isolation")) else {
+        blocked_marker();
         return;
     };
     let Some(pool) = fresh_database(&name).await else {
+        blocked_marker();
         return;
     };
     schema::migrate(&pool).await.expect("migrate");
@@ -196,7 +135,6 @@ async fn tenant_isolation_returns_zero_rows_without_context() {
         .await
         .expect("set role");
 
-    // With the tenant context set, the row is visible.
     schema::set_tenant_context(&mut tx, TENANT_A)
         .await
         .expect("context A");
@@ -206,7 +144,6 @@ async fn tenant_isolation_returns_zero_rows_without_context() {
         .expect("count with context");
     assert_eq!(visible, 1, "tenant A must see its own work node");
 
-    // A different tenant sees nothing.
     schema::set_tenant_context(&mut tx, TENANT_B)
         .await
         .expect("context B");
@@ -216,7 +153,6 @@ async fn tenant_isolation_returns_zero_rows_without_context() {
         .expect("count as tenant B");
     assert_eq!(other, 0, "tenant B must not see tenant A rows");
 
-    // No context fails closed.
     schema::clear_tenant_context(&mut tx)
         .await
         .expect("clear context");
@@ -229,7 +165,6 @@ async fn tenant_isolation_returns_zero_rows_without_context() {
         "a query without tenant context must return zero rows"
     );
 
-    // Writing without context is refused by the WITH CHECK clause.
     let refused = sqlx::query(
         "INSERT INTO work_nodes (id, tenant_id, workspace_id, kind, title, created_by) \
          VALUES ($1, $2, $3, 'task', 'smuggled', '{}'::jsonb)",
@@ -250,12 +185,12 @@ async fn tenant_isolation_returns_zero_rows_without_context() {
 
 #[tokio::test]
 async fn migrations_are_reapplied_safely_over_existing_data() {
-    let Some(name) = admin_url().map(|_| format!("quansio_forwardfix_{}", std::process::id()))
-    else {
-        eprintln!("BLOCKED_EXTERNAL: QUANSIO_TEST_POSTGRES_URL is not set; dev stack not running");
+    let Some(name) = admin_url().map(|_| scratch_name("forwardfix")) else {
+        blocked_marker();
         return;
     };
     let Some(pool) = fresh_database(&name).await else {
+        blocked_marker();
         return;
     };
 
@@ -298,12 +233,12 @@ async fn tenant_context_validation_rejects_non_canonical_ids() {
 
 #[tokio::test]
 async fn unset_context_fails_closed_on_a_plain_connection() {
-    let Some(name) = admin_url().map(|_| format!("quansio_failclosed_{}", std::process::id()))
-    else {
-        eprintln!("BLOCKED_EXTERNAL: QUANSIO_TEST_POSTGRES_URL is not set; dev stack not running");
+    let Some(name) = admin_url().map(|_| scratch_name("failclosed")) else {
+        blocked_marker();
         return;
     };
     let Some(pool) = fresh_database(&name).await else {
+        blocked_marker();
         return;
     };
     schema::migrate(&pool).await.expect("migrate");
@@ -311,7 +246,8 @@ async fn unset_context_fails_closed_on_a_plain_connection() {
 
     // Even outside an explicit transaction, forgetting the context is fail-closed.
     let mut conn = pool.acquire().await.expect("acquire");
-    conn.execute("SET ROLE quansio_app")
+    sqlx::query("SET ROLE quansio_app")
+        .execute(&mut *conn)
         .await
         .expect("set role");
     let row = sqlx::query("SELECT count(*) AS n FROM work_nodes")

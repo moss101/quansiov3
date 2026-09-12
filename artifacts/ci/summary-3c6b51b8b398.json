@@ -1,0 +1,93 @@
+{
+  "commit": "3c6b51b8b398555881016b0b1ec4ea2606380627",
+  "recorded_at": "2026-09-12T01:13:19Z",
+  "results": [
+    {
+      "gate": "authority",
+      "command": "python3.12 scripts/validate_v81.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.038,
+      "tail": "V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 9 PASS, 1 ready)"
+    },
+    {
+      "gate": "dossier-consistency",
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.822,
+      "tail": "dossier consistency: CLEAN (0 findings)"
+    },
+    {
+      "gate": "architecture",
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.144,
+      "tail": "architecture check: CLEAN (0 findings)"
+    },
+    {
+      "gate": "authority-pointers",
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.03,
+      "tail": "authority check: CLEAN (0 findings)"
+    },
+    {
+      "gate": "workspace",
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.041,
+      "tail": "workspace check: CLEAN (0 findings)"
+    },
+    {
+      "gate": "legacy-map",
+      "command": "python3.12 scripts/ci/legacy_map_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.097,
+      "tail": "legacy map check: CLEAN (0 findings)"
+    },
+    {
+      "gate": "contract-drift",
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 1.977,
+      "tail": "contract regeneration check: CLEAN (catalog,openapi,rust,python,ts)"
+    },
+    {
+      "gate": "contract-lint-compat",
+      "command": "uv run --project python python scripts/ci/contract_compat.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.145,
+      "tail": "contract check: CLEAN (lint + compatibility)"
+    },
+    {
+      "gate": "toolchains",
+      "command": "bash scripts/dev/bootstrap.sh",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 13.425,
+      "tail": "     Running unittests src/lib.rs (target/debug/deps/quansio_native_windows-e1490b7c610a548d)\n     Running unittests src/lib.rs (target/debug/deps/quansio_qworkerd-f1864637845a6c41)\n     Running unittests src/lib.rs (target/debug/deps/quansio_server-05a3d8a41e6d560f)\n     Running tests/command_idempotency.rs (target/debug/deps/command_idempotency-54888398afefdd0b)\n     Running tests/schema_bootstrap.rs (target/debug/deps/schema_bootstrap-26694fd55f4887d2)\n     Running unittests src/lib.rs (target/debug/deps/quansio_tools-fab3adb1fc9aba55)\n   Doc-tests quansio_capability\n   Doc-tests quansio_cli\n   Doc-tests quansio_contracts\n   Doc-tests quansio_core\n   Doc-tests quansio_events\n   Doc-tests quansio_graph\n   Doc-tests quansio_indexer\n   Doc-tests quansio_machine\n   Doc-tests quansio_native_windows\n   Doc-tests quansio_qworkerd\n   Doc-tests quansio_server\n   Doc-tests quansio_tools\n$ pnpm -r --if-present build\n$ pnpm -r --if-present typecheck\n$ pnpm -r --if-present test\n$ eslint .\nBuilding for debugging...\n[0/2] Write swift-version--58304C5D6DBC2206.txt\nBuild complete! (0.12s)"
+    },
+    {
+      "gate": "tests",
+      "command": "uv run --project python pytest tests -q",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 23.943,
+      "tail": "........................................................................ [ 47%]\n........................................................................ [ 94%]\n.........                                                                [100%]\n153 passed in 23.73s"
+    }
+  ],
+  "artifacts": {
+    "registries/progress.json": "e88fd280ddb646db595655b0ad2df8eb33027e22f12ffc439620c964a117d558",
+    "TASKS.md": "e5f0d293dc9af2a836638a447db509121a50db6da1852faa65d5d5d005ef3915",
+    "MANIFEST.json": "17b107c1a0f2bc504047b9ee4f7805e5514915cbb9c6fe457f3b7cad423d1d99"
+  },
+  "status": "PASS",
+  "database_backed_tests": true
+}

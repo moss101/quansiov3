@@ -1,0 +1,123 @@
+{
+  "task_id": "CORE-002",
+  "git_commit": "3c6b51b8b398555881016b0b1ec4ea2606380627",
+  "recorded_at": "2026-09-12T01:13:19Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-core",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-002/2026-09-12T01-12-20Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-002/2026-09-12T01-12-20Z/command-2.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-002/2026-09-12T01-12-20Z/command-3.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-002/2026-09-12T01-12-20Z/command-4.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-002/2026-09-12T01-12-20Z/command-5.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-002/2026-09-12T01-12-20Z/command-6.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-002/2026-09-12T01-12-20Z/command-7.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-core",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/core/src/id.rs",
+      "sha256": "1666242af8822e3894e10996e98ce79f7cf1eefa114e387fb0f3b9c71d294360",
+      "bytes": 17613
+    },
+    {
+      "path": "crates/core/src/ulid.rs",
+      "sha256": "3ff3cb4034559139c36a5156fb7ed0130031c710871f1b83783643b502b78dcc",
+      "bytes": 7652
+    },
+    {
+      "path": "crates/core/src/generation.rs",
+      "sha256": "a1dc6b58c54b15833ba40941c3e2843c45e9bc34688eb166404e67c9aa5281d9",
+      "bytes": 6903
+    },
+    {
+      "path": "crates/core/src/idempotency.rs",
+      "sha256": "dc5eb4333b5f00d15925c6e280f24fef1b02b1941e409e2d54135d4296f5af02",
+      "bytes": 5126
+    },
+    {
+      "path": "crates/core/src/cursor.rs",
+      "sha256": "c61cd59d665656a2d46bd3f57c3e134a53bf1dccc4c9737262b6d833aed9ad4d",
+      "bytes": 2408
+    },
+    {
+      "path": "crates/core/tests/identity.rs",
+      "sha256": "93c60442f660ef44e0dfdf6358897a44aa2dddba51048028702b024c22058721",
+      "bytes": 12164
+    },
+    {
+      "path": "crates/server/tests/command_idempotency.rs",
+      "sha256": "8780573982601c3f547001ddc833fd679fdf266e709ab13da13580af2044c04e",
+      "bytes": 8606
+    }
+  ]
+}
