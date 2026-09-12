@@ -1,0 +1,8 @@
+$ uv run --project python pytest tests/integration/test_dev_stack.py -q
+exit_code: 0
+
+--- stdout ---
+..                                                                       [100%]
+2 passed in 22.59s
+
+--- stderr ---

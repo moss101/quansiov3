@@ -33,7 +33,7 @@ DEFAULT_OUT_DIR = ROOT / "artifacts" / "ci"
 # name -> command. Each gate is a real entry point that fails non-zero on real problems.
 GATES: List[tuple] = [
     ("authority", "python3.12 scripts/validate_v81.py"),
-    ("dossier-consistency", "python3.12 scripts/ci/dossier_consistency.py"),
+    ("dossier-consistency", "uv run --project python python scripts/ci/dossier_consistency.py"),
     ("architecture", "python3.12 scripts/ci/arch_check.py"),
     ("authority-pointers", "python3.12 scripts/ci/check_authority.py --check"),
     ("workspace", "python3.12 scripts/ci/workspace_check.py"),

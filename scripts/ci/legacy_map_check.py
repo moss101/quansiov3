@@ -37,15 +37,10 @@ DISPOSITIONS = {"KEEP_BEHIND_BOUNDARY", "PORT", "REPLACE", "DELETE"}
 
 # Artifacts that indicate legacy or parallel-authority code, by path or suffix.
 LEGACY_PATTERNS = (
-    # A legacy/old source tree.
     re.compile(r"^(?:legacy|old|src/legacy)/"),
-    # Go is migration input only (D-011).
     re.compile(r"\.go$"),
-    # Versioned parallel orchestrators/runtimes.
     re.compile(r"(?:^|/)(?:orchestrator|scheduler_v1|runtime_v1)\.(?:py|ts|tsx|go|rs|js)$"),
-    # Legacy FastAPI-style service entry point at the repository or app root only
-    # (`infra/compose/stub-provider/server.py` is a dev fixture, not legacy authority).
-    re.compile(r"^(?:server\.py|(?:src|app)/server\.py)$"),
+    re.compile(r"(?:^|/)server\.py$"),  # legacy FastAPI-style entry point
 )
 
 ROW_RE = re.compile(r"^\|\s*`?([^|`]+?)`?\s*\|\s*([A-Z_]+)\s*\|\s*`?([^|`]+?)`?\s*\|\s*$", re.MULTILINE)

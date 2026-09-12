@@ -21,7 +21,20 @@ cfg() {
   sed -n -E "s/^[[:space:]]*$1:[[:space:]]*(.*)$/\1/p" "$CONFIG" | head -1
 }
 
+# Docker Desktop ships its credential helper outside the default PATH on macOS.
+# Without it, `docker compose up` fails with `error getting credentials`, so image
+# pulls (and therefore a fresh dev stack) break in a plain shell/CI environment.
+ensure_docker_credential_helper() {
+  if [[ -d /Applications/Docker.app/Contents/Resources/bin ]]; then
+    case ":$PATH:" in
+      *":/Applications/Docker.app/Contents/Resources/bin:"*) ;;
+      *) export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH" ;;
+    esac
+  fi
+}
+
 require_docker() {
+  ensure_docker_credential_helper
   if ! command -v docker >/dev/null 2>&1; then
     echo "dev stack: docker CLI not found" >&2
     exit 2
