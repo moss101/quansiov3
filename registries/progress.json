@@ -618,18 +618,18 @@
       "notes": ""
     },
     "RUN-011": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T05:44:48Z",
+      "updated_at": "2026-09-12T05:44:48Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "RUN-011 claimed: agent turn loop, Tool contract and Tool Registry (DOMAIN.md \u00a75.6, \u00a77.4, \u00a77.5)."
     },
     "INT-001": {
       "coverage": "GENUINE_GAP",
