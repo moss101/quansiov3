@@ -1,0 +1,233 @@
+== authority gate ==
+V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 2 PASS, 0 ready)
+== architecture gates ==
+duplicate-authority scan: CLEAN (0 findings)
+authority check: CLEAN (0 findings)
+workspace check: CLEAN (0 findings)
+== rust workspace ==
+    Blocking waiting for file lock on package cache
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.14s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src/lib.rs (target/debug/deps/quansio_capability-f3e9a3d5a42c00e0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_cli-c2b6ed63af2ff711)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_contracts-d2e35c8fae170484)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_core-1f666a33fa149530)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_events-4eeea4ec6073b2f1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_graph-2f09d994368ffa72)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_indexer-b3857ad1691f1b1c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_machine-5e9967b6689860bf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_native_windows-e1490b7c610a548d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_qworkerd-f1864637845a6c41)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-0e7e45a126b6927d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_tools-fab3adb1fc9aba55)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_capability
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_cli
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_contracts
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_events
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_graph
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_indexer
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_machine
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_native_windows
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_qworkerd
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_server
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_tools
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+== python intelligence plane ==
+[1;32mAll checks passed![0m
+16 files already formatted
+Success: no issues found in 13 source files
+...............                                                          [100%]
+15 passed in 0.01s
+== typescript workspace ==
+Scope: all 4 workspace projects
+Already up to date
+Done in 168ms using pnpm v11.8.0
+$ pnpm -r --if-present build
+Scope: 3 of 4 workspace projects
+apps/desktop build$ tsc -p tsconfig.build.json
+apps/web build$ tsc -p tsconfig.build.json
+sdk/typescript build$ tsc -p tsconfig.build.json
+sdk/typescript build: Done
+apps/desktop build: Done
+apps/web build: Done
+$ pnpm -r --if-present typecheck
+Scope: 3 of 4 workspace projects
+apps/desktop typecheck$ tsc -p tsconfig.json
+apps/web typecheck$ tsc -p tsconfig.json
+sdk/typescript typecheck$ tsc -p tsconfig.json
+sdk/typescript typecheck: Done
+apps/desktop typecheck: Done
+apps/web typecheck: Done
+$ pnpm -r --if-present test
+Scope: 3 of 4 workspace projects
+apps/desktop test$ vitest run
+apps/web test$ vitest run
+sdk/typescript test$ vitest run
+apps/web test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/web
+sdk/typescript test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/sdk/typescript
+apps/desktop test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+sdk/typescript test:  ✓ tests/client.test.ts (2 tests) 2ms
+sdk/typescript test:  Test Files  1 passed (1)
+sdk/typescript test:       Tests  2 passed (2)
+sdk/typescript test:    Start at  03:24:48
+sdk/typescript test:    Duration  533ms (transform 44ms, setup 0ms, collect 30ms, tests 2ms, environment 0ms, prepare 109ms)
+apps/web test:  ✓ tests/surfaces.test.ts (3 tests) 1ms
+apps/web test:  Test Files  1 passed (1)
+apps/web test:       Tests  3 passed (3)
+apps/web test:    Start at  03:24:48
+apps/web test:    Duration  532ms (transform 38ms, setup 0ms, collect 21ms, tests 1ms, environment 0ms, prepare 119ms)
+apps/desktop test:  ✓ tests/surfaces.test.ts (3 tests) 2ms
+apps/desktop test:  Test Files  1 passed (1)
+apps/desktop test:       Tests  3 passed (3)
+apps/desktop test:    Start at  03:24:48
+apps/desktop test:    Duration  533ms (transform 46ms, setup 0ms, collect 31ms, tests 2ms, environment 0ms, prepare 121ms)
+sdk/typescript test: Done
+apps/desktop test: Done
+apps/web test: Done
+$ eslint .
+== native bridges (macos, optional) ==
+Building for debugging...
+[0/2] Write swift-version--58304C5D6DBC2206.txt
+Build complete! (0.08s)
+Test Suite 'All tests' started at 2026-09-12 03:24:51.086.
+Test Suite 'QuansioMacBridgePackageTests.xctest' started at 2026-09-12 03:24:51.087.
+Test Suite 'MacBridgeTests' started at 2026-09-12 03:24:51.087.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testAppleSiliconIsSupported]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testAppleSiliconIsSupported]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testIntelIsBestEffort]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testIntelIsBestEffort]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testRequireSupportPassesOnArm64]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testRequireSupportPassesOnArm64]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testUnknownArchitectureFailsClosed]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testUnknownArchitectureFailsClosed]' passed (0.000 seconds).
+Test Suite 'MacBridgeTests' passed at 2026-09-12 03:24:51.088.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'QuansioMacBridgePackageTests.xctest' passed at 2026-09-12 03:24:51.088.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'All tests' passed at 2026-09-12 03:24:51.088.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
+bootstrap: OK

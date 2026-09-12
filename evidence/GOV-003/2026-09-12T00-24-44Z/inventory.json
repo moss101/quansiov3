@@ -1,0 +1,136 @@
+{
+  "authority_files": [
+    "DOSSIER.md",
+    "DOMAIN.md",
+    "AGENTS.md",
+    "IMPLEMENTATION_MASTER_PROMPT.md",
+    "TASKS.md",
+    "MANIFEST.json",
+    "registries/tasks.json",
+    "registries/task-graph.json",
+    "registries/progress.json",
+    "scripts/validate_v81.py"
+  ],
+  "authority_files_missing": [],
+  "git": {
+    "is_repository": true,
+    "branch": "task/GOV-003-monorepo",
+    "head": "5a09f4f4d5a311ee3ced1f5e0b23eb671e601f19",
+    "commits": 16,
+    "dirty": true
+  },
+  "tracked_files": 162,
+  "product_code_files": 57,
+  "product_code_by_language": {
+    "python": 22,
+    "rust": 22,
+    "swift": 3,
+    "typescript": 8,
+    "yaml": 2
+  },
+  "product_code_by_owner": {
+    "artifacts-adapter": 1,
+    "capability": 1,
+    "capability-compiler": 1,
+    "cli": 1,
+    "config": 2,
+    "context": 1,
+    "contracts": 1,
+    "core": 1,
+    "desktop": 3,
+    "embeddings": 1,
+    "evaluation": 1,
+    "events": 1,
+    "graph": 1,
+    "indexer": 1,
+    "intelligence": 3,
+    "intelligence-tests": 2,
+    "knowledge": 1,
+    "machine-control": 1,
+    "memory": 1,
+    "model-gateway": 1,
+    "native-macos": 3,
+    "native-windows": 1,
+    "quansio-server": 11,
+    "qworkerd": 1,
+    "sdk": 2,
+    "skills": 1,
+    "tests": 7,
+    "tools": 1,
+    "trust": 1,
+    "web": 3
+  },
+  "files_without_canonical_owner": [],
+  "canonical_owner_dirs_present": {
+    "crates": [
+      "crates/capability/",
+      "crates/cli/",
+      "crates/contracts/",
+      "crates/core/",
+      "crates/events/",
+      "crates/graph/",
+      "crates/indexer/",
+      "crates/machine/",
+      "crates/qworkerd/",
+      "crates/server/",
+      "crates/tools/"
+    ],
+    "python": [
+      "python/.mypy_cache/",
+      "python/.pytest_cache/",
+      "python/.python-version",
+      "python/.ruff_cache/",
+      "python/.venv/",
+      "python/intelligence/",
+      "python/pyproject.toml",
+      "python/tests/",
+      "python/uv.lock"
+    ],
+    "apps": [
+      "apps/desktop/",
+      "apps/web/"
+    ],
+    "native": [
+      "native/macos/",
+      "native/windows/"
+    ],
+    "schemas": [
+      "schemas/.gitkeep"
+    ],
+    "migrations": [
+      "migrations/.gitkeep"
+    ],
+    "packs": [
+      "packs/capabilities/",
+      "packs/skills/"
+    ],
+    "sdk": [
+      "sdk/python/",
+      "sdk/typescript/"
+    ],
+    "config": [
+      "config/flags.yaml",
+      "config/models.yaml"
+    ],
+    "infra": [
+      "infra/compose/"
+    ],
+    "tests": [
+      "tests/__pycache__/",
+      "tests/architecture/",
+      "tests/ci/",
+      "tests/conftest.py",
+      "tests/contract/",
+      "tests/e2e/",
+      "tests/evaluation/",
+      "tests/integration/",
+      "tests/performance/",
+      "tests/recovery/",
+      "tests/security/"
+    ],
+    "ci_workflows": []
+  },
+  "deployables": [
+    "infra/compose/.gitkeep"
+  ]
+}

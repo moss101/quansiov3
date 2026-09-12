@@ -1,0 +1,7 @@
+$ python3.12 scripts/ci/workspace_check.py
+exit_code: 0
+
+--- stdout ---
+workspace check: CLEAN (0 findings)
+
+--- stderr ---

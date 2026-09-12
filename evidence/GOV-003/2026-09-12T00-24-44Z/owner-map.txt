@@ -1,0 +1,14 @@
+# Canonical owner → package mapping
+
+crates/capability -> quansio-capability (owner: capability)
+crates/cli -> quansio-cli (owner: cli)
+crates/contracts -> quansio-contracts (owner: contracts)
+crates/core -> quansio-core (owner: core)
+crates/events -> quansio-events (owner: events)
+crates/graph -> quansio-graph (owner: graph)
+crates/indexer -> quansio-indexer (owner: indexer)
+crates/machine -> quansio-machine (owner: machine-control)
+crates/qworkerd -> quansio-qworkerd (owner: qworkerd)
+crates/server -> quansio-server (owner: quansio-server)
+crates/tools -> quansio-tools (owner: tools)
+native/windows -> quansio-native-windows (owner: native-windows)
