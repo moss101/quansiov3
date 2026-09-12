@@ -35,14 +35,14 @@ models:
   - id: anthropic-sonnet
     provider: anthropic
     model_id: claude-sonnet-4-5
-    capabilities: [tools, vision, streaming, structured_output, prompt_caching]
+    capabilities: [tools, vision, documents, streaming, structured_output, prompt_caching]
     context_window: 200000
     cost_class: standard
     dlp_eligible: true
   - id: anthropic-opus
     provider: anthropic
     model_id: claude-opus-4-1
-    capabilities: [tools, vision, streaming, structured_output, prompt_caching]
+    capabilities: [tools, vision, documents, streaming, structured_output, prompt_caching]
     context_window: 200000
     cost_class: premium
     dlp_eligible: true

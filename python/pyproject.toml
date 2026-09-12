@@ -70,6 +70,13 @@ disallow_untyped_defs = false
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+# PyYAML ships no inline type information and the distribution does not pin types-PyYAML.
+# Catalog data is cast at the boundary in `intelligence.model_gateway.catalog`.
+module = ["yaml"]
+ignore_missing_imports = true
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
 
