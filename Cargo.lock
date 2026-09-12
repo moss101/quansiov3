@@ -1259,7 +1259,6 @@ dependencies = [
  "async-trait",
  "chrono",
  "quansio-core",
- "quansio-server",
  "serde",
  "serde_json",
  "sqlx",
@@ -1271,7 +1270,10 @@ dependencies = [
 name = "quansio-graph"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "chrono",
  "quansio-core",
+ "quansio-events",
  "quansio-server",
  "serde_json",
  "sqlx",
@@ -1304,6 +1306,7 @@ dependencies = [
  "hex",
  "hmac",
  "quansio-core",
+ "quansio-events",
  "reqwest",
  "serde",
  "serde_json",
