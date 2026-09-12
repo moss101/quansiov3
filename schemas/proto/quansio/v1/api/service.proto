@@ -1,0 +1,53 @@
+// Quansio public API v1 and internal worker transport (DOMAIN.md §14, §8.3).
+syntax = "proto3";
+
+package quansio.v1.api;
+
+import "quansio/v1/core/errors.proto";
+import "quansio/v1/execution/execution.proto";
+
+// A validated intent submitted with idempotency. HTTP commands are
+// POST /v1/commands/<Name>; this envelope carries the same semantics for
+// internal callers (routines, workers, agents).
+message CommandRequest {
+  string schema_version = 100;
+  string command_id = 1;
+  string command_name = 2;  // e.g. "CreateObjective"
+  string tenant_id = 3;
+  string workspace_id = 4;
+  string params_json = 5;
+  string correlation_id = 6;
+}
+
+message CommandResponse {
+  string schema_version = 100;
+  core.CommandResult result = 1;
+}
+
+// Read projections are GET /v1/... ; this envelope carries cursor-paged results.
+message ProjectionRequest {
+  string schema_version = 100;
+  string resource = 1;  // threads | workgraph | runs | effects | artifacts | ...
+  string resource_id = 2;
+  uint32 limit = 3;
+  string cursor = 4;
+  string filter_json = 5;
+}
+
+message ProjectionResponse {
+  string schema_version = 100;
+  string json = 1;
+  string next_cursor = 2;
+}
+
+// Authoritative API composition (crates/server). Only the Rust runtime serves this.
+service QuansioApi {
+  rpc SubmitCommand(CommandRequest) returns (CommandResponse);
+  rpc ReadProjection(ProjectionRequest) returns (ProjectionResponse);
+}
+
+// Machine/worker control channel. Every envelope is fenced by (lease_id, generation);
+// a stale generation is rejected by qworkerd (DOMAIN.md §8.3).
+service WorkerGateway {
+  rpc Control(stream execution.WorkerEnvelope) returns (stream execution.WorkerEnvelope);
+}

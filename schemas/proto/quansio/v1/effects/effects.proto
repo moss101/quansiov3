@@ -1,0 +1,129 @@
+// Quansio Universal Effect Ledger (DOMAIN.md §7): effect classes, tiers and records.
+syntax = "proto3";
+
+package quansio.v1.effects;
+
+// Semantic category of consequence, independent of mechanism: a browser click, a
+// connector call and a terminal command with the same consequence share a class.
+enum EffectClass {
+  EFFECT_CLASS_UNSPECIFIED = 0;
+  EFFECT_CLASS_READ_INTERNAL = 1;
+  EFFECT_CLASS_READ_EXTERNAL = 2;
+  EFFECT_CLASS_FS_WRITE_WORKSPACE = 3;
+  EFFECT_CLASS_FS_WRITE_HOST = 4;
+  EFFECT_CLASS_PROCESS_EXEC_SANDBOXED = 5;
+  EFFECT_CLASS_PROCESS_EXEC_HOST = 6;
+  EFFECT_CLASS_NETWORK_EGRESS_NEW_DESTINATION = 7;
+  EFFECT_CLASS_CONTENT_UPLOAD = 8;
+  EFFECT_CLASS_RECORD_CREATE = 9;
+  EFFECT_CLASS_RECORD_UPDATE = 10;
+  EFFECT_CLASS_RECORD_DELETE = 11;
+  EFFECT_CLASS_MESSAGE_SEND = 12;
+  EFFECT_CLASS_CONTENT_PUBLISH = 13;
+  EFFECT_CLASS_SCM_REMOTE_WRITE = 14;
+  EFFECT_CLASS_COMPUTER_INPUT_PRIVILEGED = 15;
+  EFFECT_CLASS_BROWSER_SESSION_IMPORT = 16;
+  EFFECT_CLASS_PAYMENT_EXECUTE = 17;
+  EFFECT_CLASS_DATA_UPLOAD_PROTECTED = 18;
+  EFFECT_CLASS_CREDENTIAL_ACCESS = 19;
+  EFFECT_CLASS_IDENTITY_CHANGE = 20;
+  EFFECT_CLASS_MEMORY_WRITE = 21;
+  EFFECT_CLASS_KNOWLEDGE_WRITE = 22;
+  EFFECT_CLASS_SKILL_PROMOTE = 23;
+  EFFECT_CLASS_PACK_PUBLISH = 24;
+  EFFECT_CLASS_RUNTIME_CONTROL = 25;
+}
+
+// Consequence tier: 0 read, 1 internal/reversible, 2 external/reversible,
+// 3 external/irreversible, 4 financial/identity/protected data.
+enum EffectTier {
+  EFFECT_TIER_UNSPECIFIED = 0;
+  EFFECT_TIER_0_READ = 1;
+  EFFECT_TIER_1_INTERNAL_REVERSIBLE = 2;
+  EFFECT_TIER_2_EXTERNAL_REVERSIBLE = 3;
+  EFFECT_TIER_3_EXTERNAL_IRREVERSIBLE = 4;
+  EFFECT_TIER_4_PROTECTED = 5;
+}
+
+enum EffectStatus {
+  EFFECT_STATUS_UNSPECIFIED = 0;
+  EFFECT_STATUS_PROPOSED = 1;
+  EFFECT_STATUS_AUTHORIZED = 2;
+  EFFECT_STATUS_RESERVED = 3;
+  EFFECT_STATUS_DISPATCHED = 4;
+  EFFECT_STATUS_SETTLED_SUCCESS = 5;
+  EFFECT_STATUS_SETTLED_FAILED = 6;
+  EFFECT_STATUS_OUTCOME_UNKNOWN = 7;
+  EFFECT_STATUS_RECONCILING = 8;
+  EFFECT_STATUS_RECONCILED_SUCCESS = 9;
+  EFFECT_STATUS_RECONCILED_FAILED = 10;
+  EFFECT_STATUS_RECONCILIATION_MANUAL = 11;
+  EFFECT_STATUS_DENIED = 12;
+  EFFECT_STATUS_EXPIRED = 13;
+  EFFECT_STATUS_CANCELLED = 14;
+}
+
+enum ReconciliationStrategy {
+  RECONCILIATION_STRATEGY_UNSPECIFIED = 0;
+  RECONCILIATION_STRATEGY_NONE = 1;
+  RECONCILIATION_STRATEGY_IDEMPOTENT = 2;
+  RECONCILIATION_STRATEGY_QUERY = 3;
+  RECONCILIATION_STRATEGY_MANUAL = 4;
+}
+
+message Resource {
+  string schema_version = 100;
+  // fs | domain | connector | app | artifact | model | work | secret | target
+  string kind = 1;
+  string selector = 2;
+}
+
+message EffectOutcome {
+  string schema_version = 100;
+  string kind = 1;
+  string remote_ref = 2;
+  repeated string evidence_ids = 3;
+}
+
+message Reconciliation {
+  string schema_version = 100;
+  ReconciliationStrategy strategy = 1;
+  uint32 attempts = 2;
+  string last_at = 3;
+  string result = 4;
+}
+
+// One consequential action: reservation -> dispatch -> settlement/reconciliation.
+message EffectRecord {
+  string schema_version = 100;
+  string id = 1;
+  string workspace_id = 2;
+  string run_id = 3;
+  string step_id = 4;
+  string tool_call_id = 5;
+  EffectClass effect_class = 6;
+  EffectTier tier = 7;
+  Resource resource = 8;
+  string params_digest = 9;
+  string idempotency_key = 10;
+  string capability_projection_id = 11;
+  string policy_decision_id = 12;
+  string approval_receipt_id = 13;
+  EffectStatus status = 14;
+  string dispatch_token = 15;
+  enum TargetKind {
+    TARGET_KIND_UNSPECIFIED = 0;
+    TARGET_KIND_SERVER = 1;
+    TARGET_KIND_QWORKERD = 2;
+    TARGET_KIND_BROWSER = 3;
+    TARGET_KIND_ADAPTER = 4;
+  }
+  TargetKind target_kind = 16;
+  string target_id = 17;
+  string reserved_at = 18;
+  string dispatched_at = 19;
+  string settled_at = 20;
+  EffectOutcome outcome = 21;
+  Reconciliation reconciliation = 22;
+  uint64 generation = 23;
+}

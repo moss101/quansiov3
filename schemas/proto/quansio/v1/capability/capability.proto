@@ -1,0 +1,168 @@
+// Quansio capability model (DOMAIN.md §6): authority may only narrow.
+syntax = "proto3";
+
+package quansio.v1.capability;
+
+// A grant: effect class + resource selector + constraints (DOMAIN.md §6.1).
+message Grant {
+  string schema_version = 100;
+  string effect_class = 1;
+  ResourceSelector resource = 2;
+  Constraints constraints = 3;
+}
+
+message ResourceSelector {
+  string schema_version = 100;
+  // fs | domain | connector | app | artifact | model | work | secret | target
+  string kind = 1;
+  string selector = 2;
+  // Port set for `domain` selectors.
+  repeated uint32 ports = 3;
+}
+
+message Constraints {
+  string schema_version = 100;
+  uint32 max_tier = 1;
+  enum Approval {
+    APPROVAL_UNSPECIFIED = 0;
+    APPROVAL_ASK = 1;
+    APPROVAL_ALWAYS = 2;
+    APPROVAL_NEVER = 3;
+  }
+  Approval approval = 2;
+  string expires_at = 3;
+  string budget_ref = 4;
+}
+
+// A layer contributing to a projection; order is fixed in DOMAIN.md §6.2.
+message ProjectionInput {
+  string schema_version = 100;
+  enum Layer {
+    LAYER_UNSPECIFIED = 0;
+    LAYER_PLATFORM = 1;
+    LAYER_TENANT_POLICY = 2;
+    LAYER_WORKSPACE_POLICY = 3;
+    LAYER_USER_ROLE = 4;
+    LAYER_AGENT_DEFINITION = 5;
+    LAYER_DELEGATION = 6;
+    LAYER_ACTIVE_SKILLS = 7;
+    LAYER_TOOL_DECLARATION = 8;
+    LAYER_EXECUTION_TARGET_CLASS = 9;
+    LAYER_USER_RULES = 10;
+  }
+  Layer layer = 1;
+  string ref = 2;
+  string digest = 3;
+}
+
+// The exact authority available to a Run/AgentThread/ToolCall.
+message CapabilityProjection {
+  string schema_version = 100;
+  string id = 1;
+  enum SubjectKind {
+    SUBJECT_KIND_UNSPECIFIED = 0;
+    SUBJECT_KIND_RUN = 1;
+    SUBJECT_KIND_AGENT_THREAD = 2;
+    SUBJECT_KIND_TOOL_CALL = 3;
+  }
+  SubjectKind subject_kind = 2;
+  string subject_id = 3;
+  repeated ProjectionInput inputs = 4;
+  repeated Grant grants = 5;
+  string computed_at = 6;
+  string expires_at = 7;
+  string inputs_digest = 8;
+}
+
+message UserRule {
+  string schema_version = 100;
+  string id = 1;
+  string user_id = 2;
+  string workspace_id = 3;
+  string effect_class = 4;
+  ResourceSelector resource = 5;
+  enum Decision {
+    DECISION_UNSPECIFIED = 0;
+    DECISION_ASK = 1;
+    DECISION_ALWAYS = 2;
+    DECISION_NEVER = 3;
+  }
+  Decision decision = 6;
+  string expires_at = 7;
+}
+
+message Policy {
+  string schema_version = 100;
+  string id = 1;
+  enum Scope {
+    SCOPE_UNSPECIFIED = 0;
+    SCOPE_TENANT = 1;
+    SCOPE_WORKSPACE = 2;
+  }
+  Scope scope = 2;
+  repeated PolicyRule rules = 3;
+  uint64 question_default_ttl_seconds = 4;
+  uint64 approval_default_ttl_seconds = 5;
+  uint32 max_plan_nodes = 6;
+  uint32 version = 7;
+}
+
+message PolicyRule {
+  string schema_version = 100;
+  string effect_class = 1;
+  ResourceSelector resource = 2;
+  enum Decision {
+    DECISION_UNSPECIFIED = 0;
+    DECISION_ALLOW = 1;
+    DECISION_ASK = 2;
+    DECISION_DENY = 3;
+  }
+  Decision decision = 3;
+  repeated string trust_max = 4;
+  uint32 tier_max = 5;
+  repeated string data_classes = 6;
+  string time_window = 7;
+  repeated string sequence_guards = 8;
+}
+
+message ApprovalRequest {
+  string schema_version = 100;
+  string id = 1;
+  string run_id = 2;
+  string effect_id = 3;
+  repeated string requested_of = 4;
+  string summary = 5;
+  // Typed consequence preview: recipients, amounts, targets, data classes.
+  string consequence_preview_json = 6;
+  string params_digest = 7;
+  string capability_projection_id = 8;
+  string expires_at = 9;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_REQUESTED = 1;
+    STATUS_GRANTED = 2;
+    STATUS_DENIED = 3;
+    STATUS_EXPIRED = 4;
+    STATUS_SUPERSEDED = 5;
+  }
+  Status status = 10;
+}
+
+// Bound receipt: single use, signed over the exact params and generation.
+message ApprovalReceipt {
+  string schema_version = 100;
+  string id = 1;
+  string request_id = 2;
+  string effect_id = 3;
+  string approver_user_id = 4;
+  string params_digest = 5;
+  enum Scope {
+    SCOPE_UNSPECIFIED = 0;
+    SCOPE_SINGLE_USE = 1;
+  }
+  Scope scope = 6;
+  uint64 generation = 7;
+  string granted_at = 8;
+  string expires_at = 9;
+  string signature = 10;
+}

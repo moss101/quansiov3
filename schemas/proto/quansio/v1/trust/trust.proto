@@ -1,0 +1,41 @@
+// Quansio content trust model (DOMAIN.md §12, D-015).
+syntax = "proto3";
+
+package quansio.v1.trust;
+
+enum TrustLevel {
+  TRUST_LEVEL_UNSPECIFIED = 0;
+  // Runtime-rendered system/policy/tool definitions: instructions honoured.
+  TRUST_LEVEL_TRUSTED_SYSTEM = 1;
+  // Messages authored by authenticated workspace members in-thread.
+  TRUST_LEVEL_TRUSTED_USER = 2;
+  // ACTIVE KnowledgeEntry / ACTIVE Skill: guidance honoured; cannot grant.
+  TRUST_LEVEL_VERIFIED_KNOWLEDGE = 3;
+  // Prior assistant/worker output: context only.
+  TRUST_LEVEL_AGENT_GENERATED = 4;
+  // Web pages, fetched documents, emails, connector payloads, tool outputs,
+  // uploaded/attachment files: DATA ONLY, never intent.
+  TRUST_LEVEL_UNTRUSTED_EXTERNAL = 5;
+}
+
+// A labelled context segment (DOMAIN.md §11.2).
+message ContentSegment {
+  string schema_version = 100;
+  uint32 seq = 1;
+  string source_kind = 2;  // system|policy|thread|work|tool_result|knowledge|memory|artifact|search
+  string source_ref = 3;
+  TrustLevel trust_level = 4;
+  uint64 token_estimate = 5;
+  string snapshot_ref = 6;
+  repeated string redactions = 7;
+  bool injection_suspected = 8;
+}
+
+message TrustEscalation {
+  string schema_version = 100;
+  TrustLevel derived_from_trust = 1;
+  uint32 original_tier = 2;
+  uint32 escalated_tier = 3;
+  bool always_rules_allowed = 4;
+  bool approval_required = 5;
+}

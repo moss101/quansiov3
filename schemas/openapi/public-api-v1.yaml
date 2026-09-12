@@ -1,0 +1,4914 @@
+openapi: 3.1.0
+info:
+  title: Quansio Public API
+  version: v1
+  description: Generated from DOMAIN.md by scripts/ci/gen_contracts.py. Commands are POST /v1/commands/<Name> with idempotent
+    command_id; reads are GET projections. Additive changes only within v1 (DOMAIN.md §17). The WebSocket stream (GET /v1/stream)
+    is described in DOMAIN.md §9.3 and is not an OpenAPI path.
+servers:
+- url: https://{host}/v1
+  variables:
+    host:
+      default: localhost:8443
+security:
+- bearerAuth: []
+tags:
+- name: Identity
+- name: Teammates
+- name: Conversation
+- name: Work
+- name: Trust
+- name: Execution
+- name: Browser/computer
+- name: Artifacts
+- name: Knowledge & memory
+- name: Skills & packs
+- name: Routines
+- name: Connectors
+- name: Notifications
+- name: Admin/ops
+- name: Read projections
+paths:
+  /v1/commands/CreateWorkspace:
+    post:
+      operationId: CreateWorkspace
+      summary: 'Identity: CreateWorkspace'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/UpdateWorkspace:
+    post:
+      operationId: UpdateWorkspace
+      summary: 'Identity: UpdateWorkspace'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/InviteMember:
+    post:
+      operationId: InviteMember
+      summary: 'Identity: InviteMember'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/UpdateMembership:
+    post:
+      operationId: UpdateMembership
+      summary: 'Identity: UpdateMembership'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RemoveMember:
+    post:
+      operationId: RemoveMember
+      summary: 'Identity: RemoveMember'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CreateServicePrincipal:
+    post:
+      operationId: CreateServicePrincipal
+      summary: 'Identity: CreateServicePrincipal'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RevokeServicePrincipal:
+    post:
+      operationId: RevokeServicePrincipal
+      summary: 'Identity: RevokeServicePrincipal'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/UpdateUserSettings:
+    post:
+      operationId: UpdateUserSettings
+      summary: 'Identity: UpdateUserSettings'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CreateTeammate:
+    post:
+      operationId: CreateTeammate
+      summary: 'Teammates: CreateTeammate'
+      tags:
+      - Teammates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/UpdateTeammate:
+    post:
+      operationId: UpdateTeammate
+      summary: 'Teammates: UpdateTeammate'
+      tags:
+      - Teammates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/ArchiveTeammate:
+    post:
+      operationId: ArchiveTeammate
+      summary: 'Teammates: ArchiveTeammate'
+      tags:
+      - Teammates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CreateThread:
+    post:
+      operationId: CreateThread
+      summary: 'Conversation: CreateThread'
+      tags:
+      - Conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/PostMessage:
+    post:
+      operationId: PostMessage
+      summary: 'Conversation: PostMessage'
+      tags:
+      - Conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/EditMessage:
+    post:
+      operationId: EditMessage
+      summary: 'Conversation: EditMessage'
+      tags:
+      - Conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DeleteMessage:
+    post:
+      operationId: DeleteMessage
+      summary: 'Conversation: DeleteMessage'
+      tags:
+      - Conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/ReactToMessage:
+    post:
+      operationId: ReactToMessage
+      summary: 'Conversation: ReactToMessage'
+      tags:
+      - Conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/AddParticipant:
+    post:
+      operationId: AddParticipant
+      summary: 'Conversation: AddParticipant'
+      tags:
+      - Conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RemoveParticipant:
+    post:
+      operationId: RemoveParticipant
+      summary: 'Conversation: RemoveParticipant'
+      tags:
+      - Conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/AnswerQuestion:
+    post:
+      operationId: AnswerQuestion
+      summary: 'Conversation: AnswerQuestion'
+      tags:
+      - Conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CancelTurn:
+    post:
+      operationId: CancelTurn
+      summary: 'Conversation: CancelTurn'
+      tags:
+      - Conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CreateObjective:
+    post:
+      operationId: CreateObjective
+      summary: 'Work: CreateObjective'
+      tags:
+      - Work
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/ProposeGraphEdit:
+    post:
+      operationId: ProposeGraphEdit
+      summary: 'Work: ProposeGraphEdit'
+      tags:
+      - Work
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CancelRun:
+    post:
+      operationId: CancelRun
+      summary: 'Work: CancelRun'
+      tags:
+      - Work
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RetryRun:
+    post:
+      operationId: RetryRun
+      summary: 'Work: RetryRun'
+      tags:
+      - Work
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/PauseRun:
+    post:
+      operationId: PauseRun
+      summary: 'Work: PauseRun'
+      tags:
+      - Work
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/ResumeRun:
+    post:
+      operationId: ResumeRun
+      summary: 'Work: ResumeRun'
+      tags:
+      - Work
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RequestVerification:
+    post:
+      operationId: RequestVerification
+      summary: 'Work: RequestVerification'
+      tags:
+      - Work
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/ApproveEffect:
+    post:
+      operationId: ApproveEffect
+      summary: 'Trust: ApproveEffect'
+      tags:
+      - Trust
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DenyEffect:
+    post:
+      operationId: DenyEffect
+      summary: 'Trust: DenyEffect'
+      tags:
+      - Trust
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/SetUserRule:
+    post:
+      operationId: SetUserRule
+      summary: 'Trust: SetUserRule'
+      tags:
+      - Trust
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RevokeUserRule:
+    post:
+      operationId: RevokeUserRule
+      summary: 'Trust: RevokeUserRule'
+      tags:
+      - Trust
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/ProvisionTarget:
+    post:
+      operationId: ProvisionTarget
+      summary: 'Execution: ProvisionTarget'
+      tags:
+      - Execution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/StopTarget:
+    post:
+      operationId: StopTarget
+      summary: 'Execution: StopTarget'
+      tags:
+      - Execution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/ResetTarget:
+    post:
+      operationId: ResetTarget
+      summary: 'Execution: ResetTarget'
+      tags:
+      - Execution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CreateCheckpoint:
+    post:
+      operationId: CreateCheckpoint
+      summary: 'Execution: CreateCheckpoint'
+      tags:
+      - Execution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RestoreCheckpoint:
+    post:
+      operationId: RestoreCheckpoint
+      summary: 'Execution: RestoreCheckpoint'
+      tags:
+      - Execution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RequestTakeover:
+    post:
+      operationId: RequestTakeover
+      summary: 'Browser/computer: RequestTakeover'
+      tags:
+      - Browser/computer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/Handback:
+    post:
+      operationId: Handback
+      summary: 'Browser/computer: Handback'
+      tags:
+      - Browser/computer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/ImportBrowserSession:
+    post:
+      operationId: ImportBrowserSession
+      summary: 'Browser/computer: ImportBrowserSession'
+      tags:
+      - Browser/computer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/GrantComputerTier:
+    post:
+      operationId: GrantComputerTier
+      summary: 'Browser/computer: GrantComputerTier'
+      tags:
+      - Browser/computer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CreateArtifact:
+    post:
+      operationId: CreateArtifact
+      summary: 'Artifacts: CreateArtifact'
+      tags:
+      - Artifacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/AddArtifactVersion:
+    post:
+      operationId: AddArtifactVersion
+      summary: 'Artifacts: AddArtifactVersion'
+      tags:
+      - Artifacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/GrantArtifactAccess:
+    post:
+      operationId: GrantArtifactAccess
+      summary: 'Artifacts: GrantArtifactAccess'
+      tags:
+      - Artifacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DeleteArtifact:
+    post:
+      operationId: DeleteArtifact
+      summary: 'Artifacts: DeleteArtifact'
+      tags:
+      - Artifacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/IngestSource:
+    post:
+      operationId: IngestSource
+      summary: 'Knowledge & memory: IngestSource'
+      tags:
+      - Knowledge & memory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DeleteKnowledge:
+    post:
+      operationId: DeleteKnowledge
+      summary: 'Knowledge & memory: DeleteKnowledge'
+      tags:
+      - Knowledge & memory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/SupersedeKnowledge:
+    post:
+      operationId: SupersedeKnowledge
+      summary: 'Knowledge & memory: SupersedeKnowledge'
+      tags:
+      - Knowledge & memory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CreateMemory:
+    post:
+      operationId: CreateMemory
+      summary: 'Knowledge & memory: CreateMemory'
+      tags:
+      - Knowledge & memory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DeleteMemory:
+    post:
+      operationId: DeleteMemory
+      summary: 'Knowledge & memory: DeleteMemory'
+      tags:
+      - Knowledge & memory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/InstallSkill:
+    post:
+      operationId: InstallSkill
+      summary: 'Skills & packs: InstallSkill'
+      tags:
+      - Skills & packs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/PromoteSkillVersion:
+    post:
+      operationId: PromoteSkillVersion
+      summary: 'Skills & packs: PromoteSkillVersion'
+      tags:
+      - Skills & packs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DisableSkill:
+    post:
+      operationId: DisableSkill
+      summary: 'Skills & packs: DisableSkill'
+      tags:
+      - Skills & packs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/SubmitPack:
+    post:
+      operationId: SubmitPack
+      summary: 'Skills & packs: SubmitPack'
+      tags:
+      - Skills & packs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/QualifyPack:
+    post:
+      operationId: QualifyPack
+      summary: 'Skills & packs: QualifyPack'
+      tags:
+      - Skills & packs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/PublishPack:
+    post:
+      operationId: PublishPack
+      summary: 'Skills & packs: PublishPack'
+      tags:
+      - Skills & packs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RollbackPack:
+    post:
+      operationId: RollbackPack
+      summary: 'Skills & packs: RollbackPack'
+      tags:
+      - Skills & packs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CreateRoutine:
+    post:
+      operationId: CreateRoutine
+      summary: 'Routines: CreateRoutine'
+      tags:
+      - Routines
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/UpdateRoutine:
+    post:
+      operationId: UpdateRoutine
+      summary: 'Routines: UpdateRoutine'
+      tags:
+      - Routines
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/PauseRoutine:
+    post:
+      operationId: PauseRoutine
+      summary: 'Routines: PauseRoutine'
+      tags:
+      - Routines
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/ResumeRoutine:
+    post:
+      operationId: ResumeRoutine
+      summary: 'Routines: ResumeRoutine'
+      tags:
+      - Routines
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/TriggerRoutineNow:
+    post:
+      operationId: TriggerRoutineNow
+      summary: 'Routines: TriggerRoutineNow'
+      tags:
+      - Routines
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DeleteRoutine:
+    post:
+      operationId: DeleteRoutine
+      summary: 'Routines: DeleteRoutine'
+      tags:
+      - Routines
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/BeginConnectorAuth:
+    post:
+      operationId: BeginConnectorAuth
+      summary: 'Connectors: BeginConnectorAuth'
+      tags:
+      - Connectors
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CompleteConnectorAuth:
+    post:
+      operationId: CompleteConnectorAuth
+      summary: 'Connectors: CompleteConnectorAuth'
+      tags:
+      - Connectors
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RevokeConnector:
+    post:
+      operationId: RevokeConnector
+      summary: 'Connectors: RevokeConnector'
+      tags:
+      - Connectors
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CreateWebhookSubscription:
+    post:
+      operationId: CreateWebhookSubscription
+      summary: 'Connectors: CreateWebhookSubscription'
+      tags:
+      - Connectors
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DeleteWebhookSubscription:
+    post:
+      operationId: DeleteWebhookSubscription
+      summary: 'Connectors: DeleteWebhookSubscription'
+      tags:
+      - Connectors
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/UpdateNotificationPreferences:
+    post:
+      operationId: UpdateNotificationPreferences
+      summary: 'Notifications: UpdateNotificationPreferences'
+      tags:
+      - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/MarkNotificationRead:
+    post:
+      operationId: MarkNotificationRead
+      summary: 'Notifications: MarkNotificationRead'
+      tags:
+      - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/SetPolicy:
+    post:
+      operationId: SetPolicy
+      summary: 'Admin/ops: SetPolicy'
+      tags:
+      - Admin/ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/FreezeEffects:
+    post:
+      operationId: FreezeEffects
+      summary: 'Admin/ops: FreezeEffects'
+      tags:
+      - Admin/ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/UnfreezeEffects:
+    post:
+      operationId: UnfreezeEffects
+      summary: 'Admin/ops: UnfreezeEffects'
+      tags:
+      - Admin/ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DisableProvider:
+    post:
+      operationId: DisableProvider
+      summary: 'Admin/ops: DisableProvider'
+      tags:
+      - Admin/ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/EnableProvider:
+    post:
+      operationId: EnableProvider
+      summary: 'Admin/ops: EnableProvider'
+      tags:
+      - Admin/ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/QuarantineWorker:
+    post:
+      operationId: QuarantineWorker
+      summary: 'Admin/ops: QuarantineWorker'
+      tags:
+      - Admin/ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DrainTarget:
+    post:
+      operationId: DrainTarget
+      summary: 'Admin/ops: DrainTarget'
+      tags:
+      - Admin/ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/ExportTenantData:
+    post:
+      operationId: ExportTenantData
+      summary: 'Admin/ops: ExportTenantData'
+      tags:
+      - Admin/ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DeleteUserData:
+    post:
+      operationId: DeleteUserData
+      summary: 'Admin/ops: DeleteUserData'
+      tags:
+      - Admin/ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/threads/{id}:
+    get:
+      operationId: ReadV1Threads{Id}
+      summary: Read projection /v1/threads/{id} (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/messages:
+    get:
+      operationId: ReadV1Messages
+      summary: Read projection /v1/messages (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/workgraph:
+    get:
+      operationId: ReadV1Workgraph
+      summary: Read projection /v1/workgraph (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/runs/{id}:
+    get:
+      operationId: ReadV1Runs{Id}
+      summary: Read projection /v1/runs/{id} (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/runs/{id}/timeline:
+    get:
+      operationId: ReadV1Runs{Id}Timeline
+      summary: Read projection /v1/runs/{id}/timeline (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/effects:
+    get:
+      operationId: ReadV1Effects
+      summary: Read projection /v1/effects (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/approvals:
+    get:
+      operationId: ReadV1Approvals
+      summary: Read projection /v1/approvals (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/questions:
+    get:
+      operationId: ReadV1Questions
+      summary: Read projection /v1/questions (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/artifacts:
+    get:
+      operationId: ReadV1Artifacts
+      summary: Read projection /v1/artifacts (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/artifacts/{id}/versions:
+    get:
+      operationId: ReadV1Artifacts{Id}Versions
+      summary: Read projection /v1/artifacts/{id}/versions (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/evidence/{id}:
+    get:
+      operationId: ReadV1Evidence{Id}
+      summary: Read projection /v1/evidence/{id} (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/targets:
+    get:
+      operationId: ReadV1Targets
+      summary: Read projection /v1/targets (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/browser-sessions/{id}:
+    get:
+      operationId: ReadV1Browser-Sessions{Id}
+      summary: Read projection /v1/browser-sessions/{id} (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/knowledge:
+    get:
+      operationId: ReadV1Knowledge
+      summary: Read projection /v1/knowledge (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/memory:
+    get:
+      operationId: ReadV1Memory
+      summary: Read projection /v1/memory (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/skills:
+    get:
+      operationId: ReadV1Skills
+      summary: Read projection /v1/skills (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/packs:
+    get:
+      operationId: ReadV1Packs
+      summary: Read projection /v1/packs (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/routines:
+    get:
+      operationId: ReadV1Routines
+      summary: Read projection /v1/routines (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/connectors:
+    get:
+      operationId: ReadV1Connectors
+      summary: Read projection /v1/connectors (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/notifications:
+    get:
+      operationId: ReadV1Notifications
+      summary: Read projection /v1/notifications (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/usage:
+    get:
+      operationId: ReadV1Usage
+      summary: Read projection /v1/usage (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/audit:
+    get:
+      operationId: ReadV1Audit
+      summary: Read projection /v1/audit (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/search?q=:
+    get:
+      operationId: ReadV1Search?Q=
+      summary: Read projection /v1/search?q= (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: ES256 JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: q_refresh
+  schemas:
+    Error:
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      - message
+      - correlation_id
+      - retryable
+      properties:
+        code:
+          type: string
+          enum:
+          - AUTH_REQUIRED
+          - AUTH_INVALID_TOKEN
+          - AUTH_EXPIRED
+          - SCOPE_FORBIDDEN
+          - TENANT_MISMATCH
+          - VALIDATION_SCHEMA
+          - VALIDATION_UNKNOWN_FIELD
+          - VALIDATION_BOUNDS
+          - CONFLICT_REVISION
+          - CONFLICT_IDEMPOTENCY_MISMATCH
+          - CONFLICT_STATE
+          - CAPABILITY_DENIED
+          - CAPABILITY_INPUTS_UNAVAILABLE
+          - POLICY_DENIED
+          - APPROVAL_REQUIRED
+          - APPROVAL_INVALID
+          - APPROVAL_EXPIRED
+          - APPROVAL_SUPERSEDED
+          - RUNTIME_ILLEGAL_TRANSITION
+          - FENCED_STALE_GENERATION
+          - LEASE_LOST
+          - EFFECT_UNKNOWN_PENDING_RECONCILIATION
+          - BUDGET_EXHAUSTED
+          - EFFECTS_FROZEN
+          - TARGET_UNAVAILABLE
+          - TARGET_PROVISION_FAILED
+          - TOOL_TIMEOUT
+          - TOOL_OUTPUT_TRUNCATED
+          - EGRESS_DENIED
+          - PROVIDER_UNAVAILABLE
+          - PROVIDER_RATE_LIMITED
+          - PROVIDER_REFUSAL
+          - ROUTE_UNAVAILABLE
+          - DLP_DENIED
+          - NOT_FOUND
+          - RATE_LIMITED
+          - STREAM_BACKPRESSURE
+          - INTERNAL
+          description: DOMAIN.md §15 error taxonomy.
+        message:
+          type: string
+        correlation_id:
+          type: string
+        retryable:
+          type: boolean
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+    CommandEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+      - command_id
+      properties:
+        command_id:
+          type: string
+          description: Client-generated ULID; idempotent per tenant (DOMAIN.md §1.2).
+        params:
+          type: object
+    CreateWorkspaceParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command CreateWorkspace. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    UpdateWorkspaceParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command UpdateWorkspace. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    InviteMemberParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command InviteMember. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    UpdateMembershipParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command UpdateMembership. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RemoveMemberParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command RemoveMember. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    CreateServicePrincipalParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command CreateServicePrincipal. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RevokeServicePrincipalParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command RevokeServicePrincipal. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    UpdateUserSettingsParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command UpdateUserSettings. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    CreateTeammateParams:
+      type: object
+      additionalProperties: true
+      description: 'Teammates command CreateTeammate. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    UpdateTeammateParams:
+      type: object
+      additionalProperties: true
+      description: 'Teammates command UpdateTeammate. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ArchiveTeammateParams:
+      type: object
+      additionalProperties: true
+      description: 'Teammates command ArchiveTeammate. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    CreateThreadParams:
+      type: object
+      additionalProperties: true
+      description: 'Conversation command CreateThread. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    PostMessageParams:
+      type: object
+      additionalProperties: true
+      description: 'Conversation command PostMessage. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    EditMessageParams:
+      type: object
+      additionalProperties: true
+      description: 'Conversation command EditMessage. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    DeleteMessageParams:
+      type: object
+      additionalProperties: true
+      description: 'Conversation command DeleteMessage. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ReactToMessageParams:
+      type: object
+      additionalProperties: true
+      description: 'Conversation command ReactToMessage. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    AddParticipantParams:
+      type: object
+      additionalProperties: true
+      description: 'Conversation command AddParticipant. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RemoveParticipantParams:
+      type: object
+      additionalProperties: true
+      description: 'Conversation command RemoveParticipant. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    AnswerQuestionParams:
+      type: object
+      additionalProperties: true
+      description: 'Conversation command AnswerQuestion. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    CancelTurnParams:
+      type: object
+      additionalProperties: true
+      description: 'Conversation command CancelTurn. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    CreateObjectiveParams:
+      type: object
+      additionalProperties: true
+      description: 'Work command CreateObjective. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ProposeGraphEditParams:
+      type: object
+      additionalProperties: true
+      description: 'Work command ProposeGraphEdit. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    CancelRunParams:
+      type: object
+      additionalProperties: true
+      description: 'Work command CancelRun. The concrete parameter schema is owned by the implementing task and must be added
+        additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RetryRunParams:
+      type: object
+      additionalProperties: true
+      description: 'Work command RetryRun. The concrete parameter schema is owned by the implementing task and must be added
+        additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    PauseRunParams:
+      type: object
+      additionalProperties: true
+      description: 'Work command PauseRun. The concrete parameter schema is owned by the implementing task and must be added
+        additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ResumeRunParams:
+      type: object
+      additionalProperties: true
+      description: 'Work command ResumeRun. The concrete parameter schema is owned by the implementing task and must be added
+        additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RequestVerificationParams:
+      type: object
+      additionalProperties: true
+      description: 'Work command RequestVerification. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ApproveEffectParams:
+      type: object
+      additionalProperties: true
+      description: 'Trust command ApproveEffect. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    DenyEffectParams:
+      type: object
+      additionalProperties: true
+      description: 'Trust command DenyEffect. The concrete parameter schema is owned by the implementing task and must be
+        added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    SetUserRuleParams:
+      type: object
+      additionalProperties: true
+      description: 'Trust command SetUserRule. The concrete parameter schema is owned by the implementing task and must be
+        added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RevokeUserRuleParams:
+      type: object
+      additionalProperties: true
+      description: 'Trust command RevokeUserRule. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ProvisionTargetParams:
+      type: object
+      additionalProperties: true
+      description: 'Execution command ProvisionTarget. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    StopTargetParams:
+      type: object
+      additionalProperties: true
+      description: 'Execution command StopTarget. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ResetTargetParams:
+      type: object
+      additionalProperties: true
+      description: 'Execution command ResetTarget. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    CreateCheckpointParams:
+      type: object
+      additionalProperties: true
+      description: 'Execution command CreateCheckpoint. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RestoreCheckpointParams:
+      type: object
+      additionalProperties: true
+      description: 'Execution command RestoreCheckpoint. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RequestTakeoverParams:
+      type: object
+      additionalProperties: true
+      description: 'Browser/computer command RequestTakeover. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    HandbackParams:
+      type: object
+      additionalProperties: true
+      description: 'Browser/computer command Handback. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ImportBrowserSessionParams:
+      type: object
+      additionalProperties: true
+      description: 'Browser/computer command ImportBrowserSession. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    GrantComputerTierParams:
+      type: object
+      additionalProperties: true
+      description: 'Browser/computer command GrantComputerTier. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    CreateArtifactParams:
+      type: object
+      additionalProperties: true
+      description: 'Artifacts command CreateArtifact. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    AddArtifactVersionParams:
+      type: object
+      additionalProperties: true
+      description: 'Artifacts command AddArtifactVersion. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    GrantArtifactAccessParams:
+      type: object
+      additionalProperties: true
+      description: 'Artifacts command GrantArtifactAccess. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    DeleteArtifactParams:
+      type: object
+      additionalProperties: true
+      description: 'Artifacts command DeleteArtifact. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    IngestSourceParams:
+      type: object
+      additionalProperties: true
+      description: 'Knowledge & memory command IngestSource. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    DeleteKnowledgeParams:
+      type: object
+      additionalProperties: true
+      description: 'Knowledge & memory command DeleteKnowledge. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    SupersedeKnowledgeParams:
+      type: object
+      additionalProperties: true
+      description: 'Knowledge & memory command SupersedeKnowledge. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    CreateMemoryParams:
+      type: object
+      additionalProperties: true
+      description: 'Knowledge & memory command CreateMemory. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    DeleteMemoryParams:
+      type: object
+      additionalProperties: true
+      description: 'Knowledge & memory command DeleteMemory. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    InstallSkillParams:
+      type: object
+      additionalProperties: true
+      description: 'Skills & packs command InstallSkill. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    PromoteSkillVersionParams:
+      type: object
+      additionalProperties: true
+      description: 'Skills & packs command PromoteSkillVersion. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    DisableSkillParams:
+      type: object
+      additionalProperties: true
+      description: 'Skills & packs command DisableSkill. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    SubmitPackParams:
+      type: object
+      additionalProperties: true
+      description: 'Skills & packs command SubmitPack. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    QualifyPackParams:
+      type: object
+      additionalProperties: true
+      description: 'Skills & packs command QualifyPack. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    PublishPackParams:
+      type: object
+      additionalProperties: true
+      description: 'Skills & packs command PublishPack. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RollbackPackParams:
+      type: object
+      additionalProperties: true
+      description: 'Skills & packs command RollbackPack. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    CreateRoutineParams:
+      type: object
+      additionalProperties: true
+      description: 'Routines command CreateRoutine. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    UpdateRoutineParams:
+      type: object
+      additionalProperties: true
+      description: 'Routines command UpdateRoutine. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    PauseRoutineParams:
+      type: object
+      additionalProperties: true
+      description: 'Routines command PauseRoutine. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ResumeRoutineParams:
+      type: object
+      additionalProperties: true
+      description: 'Routines command ResumeRoutine. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    TriggerRoutineNowParams:
+      type: object
+      additionalProperties: true
+      description: 'Routines command TriggerRoutineNow. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    DeleteRoutineParams:
+      type: object
+      additionalProperties: true
+      description: 'Routines command DeleteRoutine. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    BeginConnectorAuthParams:
+      type: object
+      additionalProperties: true
+      description: 'Connectors command BeginConnectorAuth. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    CompleteConnectorAuthParams:
+      type: object
+      additionalProperties: true
+      description: 'Connectors command CompleteConnectorAuth. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RevokeConnectorParams:
+      type: object
+      additionalProperties: true
+      description: 'Connectors command RevokeConnector. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    CreateWebhookSubscriptionParams:
+      type: object
+      additionalProperties: true
+      description: 'Connectors command CreateWebhookSubscription. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    DeleteWebhookSubscriptionParams:
+      type: object
+      additionalProperties: true
+      description: 'Connectors command DeleteWebhookSubscription. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    UpdateNotificationPreferencesParams:
+      type: object
+      additionalProperties: true
+      description: 'Notifications command UpdateNotificationPreferences. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    MarkNotificationReadParams:
+      type: object
+      additionalProperties: true
+      description: 'Notifications command MarkNotificationRead. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    SetPolicyParams:
+      type: object
+      additionalProperties: true
+      description: 'Admin/ops command SetPolicy. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    FreezeEffectsParams:
+      type: object
+      additionalProperties: true
+      description: 'Admin/ops command FreezeEffects. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    UnfreezeEffectsParams:
+      type: object
+      additionalProperties: true
+      description: 'Admin/ops command UnfreezeEffects. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    DisableProviderParams:
+      type: object
+      additionalProperties: true
+      description: 'Admin/ops command DisableProvider. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    EnableProviderParams:
+      type: object
+      additionalProperties: true
+      description: 'Admin/ops command EnableProvider. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    QuarantineWorkerParams:
+      type: object
+      additionalProperties: true
+      description: 'Admin/ops command QuarantineWorker. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    DrainTargetParams:
+      type: object
+      additionalProperties: true
+      description: 'Admin/ops command DrainTarget. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ExportTenantDataParams:
+      type: object
+      additionalProperties: true
+      description: 'Admin/ops command ExportTenantData. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    DeleteUserDataParams:
+      type: object
+      additionalProperties: true
+      description: 'Admin/ops command DeleteUserData. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+x-quansio-error-http-map:
+  AUTH_REQUIRED: 401/403
+  AUTH_INVALID_TOKEN: 401/403
+  AUTH_EXPIRED: 401/403
+  SCOPE_FORBIDDEN: 401/403
+  TENANT_MISMATCH: 401/403
+  VALIDATION_SCHEMA: '400'
+  VALIDATION_UNKNOWN_FIELD: '400'
+  VALIDATION_BOUNDS: '400'
+  CONFLICT_REVISION: '409'
+  CONFLICT_IDEMPOTENCY_MISMATCH: '409'
+  CONFLICT_STATE: '409'
+  CAPABILITY_DENIED: '403'
+  CAPABILITY_INPUTS_UNAVAILABLE: '403'
+  POLICY_DENIED: '403'
+  APPROVAL_REQUIRED: '403'
+  APPROVAL_INVALID: '403'
+  APPROVAL_EXPIRED: '403'
+  APPROVAL_SUPERSEDED: '403'
+  RUNTIME_ILLEGAL_TRANSITION: 409/422
+  FENCED_STALE_GENERATION: 409/422
+  LEASE_LOST: 409/422
+  EFFECT_UNKNOWN_PENDING_RECONCILIATION: 409/422
+  BUDGET_EXHAUSTED: 409/422
+  EFFECTS_FROZEN: 409/422
+  TARGET_UNAVAILABLE: 503/504
+  TARGET_PROVISION_FAILED: 503/504
+  TOOL_TIMEOUT: 503/504
+  TOOL_OUTPUT_TRUNCATED: 503/504
+  EGRESS_DENIED: 503/504
+  PROVIDER_UNAVAILABLE: 502/503
+  PROVIDER_RATE_LIMITED: 502/503
+  PROVIDER_REFUSAL: 502/503
+  ROUTE_UNAVAILABLE: 502/503
+  DLP_DENIED: 502/503
+  NOT_FOUND: '404'
+  RATE_LIMITED: '429'
+  STREAM_BACKPRESSURE: WS close
+  INTERNAL: '500'
+x-quansio-event-families:
+- tenant
+- workspace
+- member
+- thread
+- work
+- agent
+- run
+- turn
+- step
+- model
+- tool
+- effect
+- approval
+- question
+- target
+- lease
+- browser
+- terminal
+- checkpoint
+- artifact
+- evidence
+- knowledge
+- memory
+- skill
+- pack
+- routine
+- notification
+- connector
+- policy
+- audit
+- usage
+- capability
+- compaction
+- ops
+x-quansio-effect-classes:
+- read.internal
+- read.external
+- fs.write.workspace
+- fs.write.host
+- process.exec.sandboxed
+- process.exec.host
+- network.egress.new_destination
+- content.upload
+- record.create
+- record.update
+- record.delete
+- message.send
+- content.publish
+- scm.remote.write
+- computer.input.privileged
+- browser.session.import
+- payment.execute
+- data.upload.protected
+- credential.access
+- identity.change
+- memory.write
+- knowledge.write
+- runtime.control

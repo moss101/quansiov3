@@ -1,0 +1,12 @@
+[package]
+name = "quansio-contract-gen"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "LicenseRef-Quansio-Proprietary"
+publish = false
+description = "Generates Rust bindings for Quansio contracts from schemas/proto with prost/tonic."
+
+[dependencies]
+prost-build = "0.13"
+tonic-build = { version = "0.12", features = ["prost"] }

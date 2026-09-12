@@ -1,0 +1,144 @@
+// Quansio automation, notification and usage contracts (DOMAIN.md §13).
+syntax = "proto3";
+
+package quansio.v1.automation;
+
+message RoutineTrigger {
+  string schema_version = 100;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_CRON = 1;
+    KIND_INTERVAL = 2;
+    KIND_EVENT = 3;
+  }
+  Kind kind = 1;
+  string spec = 2;
+  string timezone = 3;
+}
+
+message Routine {
+  string schema_version = 100;
+  string id = 1;
+  string workspace_id = 2;
+  string owner_user_id = 3;
+  string teammate_id = 4;
+  RoutineTrigger trigger = 5;
+  // WorkNode template + CompletionContract, JSON-encoded.
+  string objective_template_json = 6;
+  string budget_json = 7;
+  string notification_prefs_json = 8;
+  enum AbsencePolicy {
+    ABSENCE_POLICY_UNSPECIFIED = 0;
+    ABSENCE_POLICY_SKIP = 1;
+    ABSENCE_POLICY_QUEUE = 2;
+    ABSENCE_POLICY_CATCH_UP_ONCE = 3;
+  }
+  AbsencePolicy absence_policy = 9;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_ACTIVE = 1;
+    STATUS_PAUSED = 2;
+    STATUS_DELETED = 3;
+  }
+  Status status = 10;
+  string last_fired_at = 11;
+  string next_due_at = 12;
+}
+
+message Notification {
+  string schema_version = 100;
+  string id = 1;
+  string user_id = 2;
+  string workspace_id = 3;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_NEEDS_APPROVAL = 1;
+    KIND_NEEDS_ANSWER = 2;
+    KIND_BLOCKED = 3;
+    KIND_COMPLETED = 4;
+    KIND_FAILED = 5;
+    KIND_MENTION = 6;
+    KIND_ATTENTION = 7;
+    KIND_SYSTEM = 8;
+  }
+  Kind kind = 4;
+  string ref_json = 5;
+  repeated string channels_delivered = 6;  // in_app | desktop | email | webhook
+  string read_at = 7;
+  string created_at = 8;
+}
+
+message UsageRecord {
+  string schema_version = 100;
+  string id = 1;
+  string tenant_id = 2;
+  string workspace_id = 3;
+  string scope_refs_json = 4;
+  enum Meter {
+    METER_UNSPECIFIED = 0;
+    METER_MODEL_INPUT_TOKENS = 1;
+    METER_MODEL_OUTPUT_TOKENS = 2;
+    METER_MODEL_CACHE_TOKENS = 3;
+    METER_MODEL_COST = 4;
+    METER_MACHINE_SECONDS = 5;
+    METER_STORAGE_BYTES = 6;
+    METER_CONNECTOR_CALLS = 7;
+    METER_BROWSER_SECONDS = 8;
+  }
+  Meter meter = 5;
+  double quantity = 6;
+  string unit = 7;
+  int64 cost_minor_units = 8;
+  string source_event_id = 9;
+  string occurred_at = 10;
+}
+
+message WebhookSubscription {
+  string schema_version = 100;
+  string id = 1;
+  string tenant_id = 2;
+  string workspace_id = 3;
+  string url = 4;
+  string secret_handle_id = 5;
+  repeated string event_types = 6;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_ACTIVE = 1;
+    STATUS_PAUSED = 2;
+    STATUS_FAILING = 3;
+  }
+  Status status = 7;
+  string delivery_json = 8;
+}
+
+message AuditEntry {
+  string schema_version = 100;
+  string id = 1;
+  string tenant_id = 2;
+  string workspace_id = 3;
+  string actor_json = 4;
+  string action = 5;
+  string target_ref = 6;
+  string decision = 7;
+  string reason = 8;
+  string correlation_id = 9;
+  string occurred_at = 10;
+  string prev_hash = 11;
+  string hash = 12;
+}
+
+message SecretHandle {
+  string schema_version = 100;
+  string id = 1;
+  string tenant_id = 2;
+  string provider = 3;
+  string label = 4;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_ACTIVE = 1;
+    STATUS_REVOKED = 2;
+    STATUS_EXPIRED = 3;
+  }
+  Status status = 5;
+  string last_used_at = 6;
+}

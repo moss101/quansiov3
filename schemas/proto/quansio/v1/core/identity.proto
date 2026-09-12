@@ -1,0 +1,183 @@
+// Quansio canonical identity contract (DOMAIN.md §1, §2).
+// Package naming and conventions: DOMAIN.md §17.
+syntax = "proto3";
+
+package quansio.v1.core;
+
+// Typed, prefixed, time-sortable canonical identifier (DOMAIN.md §1.1).
+message CanonicalId {
+  string schema_version = 100;
+  // Prefix from the canonical prefix table, e.g. "run".
+  string prefix = 1;
+  // 26-character Crockford base32 ULID, uppercase.
+  string ulid = 2;
+}
+
+// Entity families carrying a canonical id prefix (DOMAIN.md §1.1).
+enum EntityPrefix {
+  ENTITY_PREFIX_UNSPECIFIED = 0;
+  ENTITY_PREFIX_TENANT = 1;  // tn_
+  ENTITY_PREFIX_WORKSPACE = 2;  // ws_
+  ENTITY_PREFIX_USER = 3;  // usr_
+  ENTITY_PREFIX_SERVICE_PRINCIPAL = 4;  // sp_
+  ENTITY_PREFIX_TEAMMATE = 5;  // agt_
+  ENTITY_PREFIX_AGENT_THREAD = 6;  // ath_
+  ENTITY_PREFIX_THREAD = 7;  // thr_
+  ENTITY_PREFIX_MESSAGE = 8;  // msg_
+  ENTITY_PREFIX_WORK_NODE = 9;  // wn_
+  ENTITY_PREFIX_WORK_EDGE = 10;  // we_
+  ENTITY_PREFIX_RUN = 11;  // run_
+  ENTITY_PREFIX_TURN = 12;  // trn_
+  ENTITY_PREFIX_STEP = 13;  // stp_
+  ENTITY_PREFIX_ATTEMPT = 14;  // att_
+  ENTITY_PREFIX_COMMAND = 15;  // cmd_
+  ENTITY_PREFIX_RUNTIME_EVENT = 16;  // evt_
+  ENTITY_PREFIX_QUESTION = 17;  // q_
+  ENTITY_PREFIX_SKILL = 18;  // skl_
+  ENTITY_PREFIX_SKILL_VERSION = 19;  // sklv_
+  ENTITY_PREFIX_CAPABILITY_PACK = 20;  // pck_
+  ENTITY_PREFIX_CAPABILITY_PACK_VERSION = 21;  // pckv_
+  ENTITY_PREFIX_CONNECTOR = 22;  // cnx_
+  ENTITY_PREFIX_MODEL_ROUTE = 23;  // mr_
+  ENTITY_PREFIX_AUDIT_ENTRY = 24;  // aud_
+  ENTITY_PREFIX_TOOL_CALL = 25;  // tc_
+  ENTITY_PREFIX_EFFECT_RECORD = 26;  // eff_
+  ENTITY_PREFIX_APPROVAL_REQUEST = 27;  // apr_
+  ENTITY_PREFIX_APPROVAL_RECEIPT = 28;  // rcp_
+  ENTITY_PREFIX_USER_RULE = 29;  // rule_
+  ENTITY_PREFIX_CAPABILITY_PROJECTION = 30;  // cap_
+  ENTITY_PREFIX_POLICY = 31;  // pol_
+  ENTITY_PREFIX_EXECUTION_TARGET = 32;  // tgt_
+  ENTITY_PREFIX_LEASE = 33;  // lse_
+  ENTITY_PREFIX_CHECKPOINT = 34;  // ckp_
+  ENTITY_PREFIX_COMPACTION_EPOCH = 35;  // cep_
+  ENTITY_PREFIX_ARTIFACT = 36;  // art_
+  ENTITY_PREFIX_ARTIFACT_VERSION = 37;  // artv_
+  ENTITY_PREFIX_EVIDENCE = 38;  // evd_
+  ENTITY_PREFIX_EVIDENCE_BUNDLE = 39;  // evb_
+  ENTITY_PREFIX_KNOWLEDGE_ENTRY = 40;  // kn_
+  ENTITY_PREFIX_MEMORY_ENTRY = 41;  // mem_
+  ENTITY_PREFIX_ROUTINE = 42;  // rtn_
+  ENTITY_PREFIX_NOTIFICATION = 43;  // ntf_
+  ENTITY_PREFIX_SECRET_HANDLE = 44;  // sec_
+  ENTITY_PREFIX_USAGE_RECORD = 45;  // use_
+  ENTITY_PREFIX_WEBHOOK_SUBSCRIPTION = 46;  // whk_
+}
+
+// Tenant/workspace scope carried by every tenant-scoped contract.
+message ScopeRef {
+  string schema_version = 100;
+  string tenant_id = 1;
+  string workspace_id = 2;
+}
+
+// Who caused a transition (DOMAIN.md §9.1).
+message Actor {
+  string schema_version = 100;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_USER = 1;
+    KIND_AGENT = 2;
+    KIND_SYSTEM = 3;
+    KIND_SERVICE = 4;
+  }
+  Kind kind = 1;
+  string id = 2;
+}
+
+// Replay-safety primitives shared by every mutation (DOMAIN.md §1.2).
+message ReplayContext {
+  string schema_version = 100;
+  string command_id = 1;
+  string idempotency_key = 2;
+  uint64 generation = 3;
+  string correlation_id = 4;
+  string causation_id = 5;
+}
+
+message Tenant {
+  string schema_version = 100;
+  string id = 1;
+  string name = 2;
+  bool personal = 3;
+  string created_at = 4;
+  string updated_at = 5;
+}
+
+message Workspace {
+  string schema_version = 100;
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string created_at = 4;
+  string updated_at = 5;
+}
+
+enum MembershipStatus {
+  MEMBERSHIP_STATUS_UNSPECIFIED = 0;
+  MEMBERSHIP_STATUS_INVITED = 1;
+  MEMBERSHIP_STATUS_ACTIVE = 2;
+  MEMBERSHIP_STATUS_SUSPENDED = 3;
+  MEMBERSHIP_STATUS_REMOVED = 4;
+}
+
+enum TenantRole {
+  TENANT_ROLE_UNSPECIFIED = 0;
+  TENANT_ROLE_OWNER = 1;
+  TENANT_ROLE_ADMIN = 2;
+  TENANT_ROLE_BILLING = 3;
+  TENANT_ROLE_MEMBER = 4;
+}
+
+enum WorkspaceRole {
+  WORKSPACE_ROLE_UNSPECIFIED = 0;
+  WORKSPACE_ROLE_ADMIN = 1;
+  WORKSPACE_ROLE_EDITOR = 2;
+  WORKSPACE_ROLE_APPROVER = 3;
+  WORKSPACE_ROLE_VIEWER = 4;
+}
+
+message User {
+  string schema_version = 100;
+  string id = 1;
+  string primary_email = 2;
+  string display_name = 3;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_ACTIVE = 1;
+    STATUS_SUSPENDED = 2;
+    STATUS_DELETED = 3;
+  }
+  Status status = 4;
+  repeated string auth_methods = 5;
+  string created_at = 6;
+}
+
+message TenantMembership {
+  string schema_version = 100;
+  string tenant_id = 1;
+  string user_id = 2;
+  TenantRole role = 3;
+  MembershipStatus status = 4;
+  string invited_by = 5;
+}
+
+message WorkspaceMembership {
+  string schema_version = 100;
+  string workspace_id = 1;
+  string user_id = 2;
+  WorkspaceRole role = 3;
+  MembershipStatus status = 4;
+}
+
+message ServicePrincipal {
+  string schema_version = 100;
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  // Explicit command families; never a wildcard.
+  repeated string scopes = 4;
+  string key_hash = 5;
+  MembershipStatus status = 6;
+  string last_used_at = 7;
+}

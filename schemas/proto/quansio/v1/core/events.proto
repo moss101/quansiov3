@@ -1,0 +1,98 @@
+// Quansio RuntimeEvent envelope (DOMAIN.md §9).
+syntax = "proto3";
+
+package quansio.v1.core;
+
+import "quansio/v1/core/identity.proto";
+
+// Durable, ordered record of a committed state transition. Written in the same
+// PostgreSQL transaction as the mutation, plus a transactional outbox row.
+message RuntimeEvent {
+  string schema_version = 100;
+  string event_id = 1;  // evt_
+  string tenant_id = 2;
+  string workspace_id = 3;
+  int64 sequence = 4;  // tenant-monotonic, assigned inside the commit transaction
+  string aggregate_type = 5;
+  string aggregate_id = 6;
+  uint64 aggregate_version = 7;
+  string type = 8;  // e.g. "run.verification_passed"
+  string occurred_at = 9;  // RFC 3339 UTC
+  string command_id = 10;
+  string correlation_id = 11;
+  string causation_id = 12;
+  Actor actor = 13;
+  uint64 generation = 14;
+  // Typed by `type`; encoded as canonical JSON until an area-specific payload is defined.
+  string payload_json = 15;
+}
+
+// Event families that must exist (DOMAIN.md §9.2). The value is the family prefix;
+// concrete event types are `<family>.<event>`.
+enum EventFamily {
+  EVENT_FAMILY_UNSPECIFIED = 0;
+  EVENT_FAMILY_TENANT = 1;
+  EVENT_FAMILY_WORKSPACE = 2;
+  EVENT_FAMILY_MEMBER = 3;
+  EVENT_FAMILY_THREAD = 4;
+  EVENT_FAMILY_WORK = 5;
+  EVENT_FAMILY_AGENT = 6;
+  EVENT_FAMILY_RUN = 7;
+  EVENT_FAMILY_TURN = 8;
+  EVENT_FAMILY_STEP = 9;
+  EVENT_FAMILY_MODEL = 10;
+  EVENT_FAMILY_TOOL = 11;
+  EVENT_FAMILY_EFFECT = 12;
+  EVENT_FAMILY_APPROVAL = 13;
+  EVENT_FAMILY_QUESTION = 14;
+  EVENT_FAMILY_TARGET = 15;
+  EVENT_FAMILY_LEASE = 16;
+  EVENT_FAMILY_BROWSER = 17;
+  EVENT_FAMILY_TERMINAL = 18;
+  EVENT_FAMILY_CHECKPOINT = 19;
+  EVENT_FAMILY_ARTIFACT = 20;
+  EVENT_FAMILY_EVIDENCE = 21;
+  EVENT_FAMILY_KNOWLEDGE = 22;
+  EVENT_FAMILY_MEMORY = 23;
+  EVENT_FAMILY_SKILL = 24;
+  EVENT_FAMILY_PACK = 25;
+  EVENT_FAMILY_ROUTINE = 26;
+  EVENT_FAMILY_NOTIFICATION = 27;
+  EVENT_FAMILY_CONNECTOR = 28;
+  EVENT_FAMILY_POLICY = 29;
+  EVENT_FAMILY_AUDIT = 30;
+  EVENT_FAMILY_USAGE = 31;
+  EVENT_FAMILY_CAPABILITY = 32;
+  EVENT_FAMILY_COMPACTION = 33;
+  EVENT_FAMILY_OPS = 34;
+}
+
+// Client stream frames (DOMAIN.md §9.3).
+message StreamFrame {
+  string schema_version = 100;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_EVENT = 1;  // durable, replayable
+    KIND_LIVE = 2;  // transient; never persisted
+  }
+  Kind kind = 1;
+  string cursor = 2;
+  string channel = 3;
+  RuntimeEvent event = 4;
+  LiveFrame live = 5;
+}
+
+// Transient stream data: model token deltas, screencast frames, terminal bytes.
+message LiveFrame {
+  string schema_version = 100;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_MODEL_DELTA = 1;
+    KIND_TERMINAL_BYTES = 2;
+    KIND_BROWSER_FRAME = 3;
+    KIND_PROGRESS = 4;
+  }
+  Kind kind = 1;
+  bytes payload = 2;
+  string stream_ref = 3;
+}

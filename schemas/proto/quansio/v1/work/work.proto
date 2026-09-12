@@ -1,0 +1,166 @@
+// Quansio work model (DOMAIN.md §4): WorkGraph definition, plan proposals and completion.
+syntax = "proto3";
+
+package quansio.v1.work;
+
+import "quansio/v1/core/identity.proto";
+
+enum WorkNodeKind {
+  WORK_NODE_KIND_UNSPECIFIED = 0;
+  WORK_NODE_KIND_OBJECTIVE = 1;
+  WORK_NODE_KIND_TASK = 2;
+  WORK_NODE_KIND_SUBTASK = 3;
+  WORK_NODE_KIND_WAIT = 4;
+  WORK_NODE_KIND_MILESTONE = 5;
+}
+
+enum WorkNodeStatus {
+  WORK_NODE_STATUS_UNSPECIFIED = 0;
+  WORK_NODE_STATUS_DRAFT = 1;
+  WORK_NODE_STATUS_READY = 2;
+  WORK_NODE_STATUS_BLOCKED = 3;
+  WORK_NODE_STATUS_IN_PROGRESS = 4;
+  WORK_NODE_STATUS_WAITING = 5;
+  WORK_NODE_STATUS_VERIFYING = 6;
+  WORK_NODE_STATUS_DONE = 7;
+  WORK_NODE_STATUS_FAILED = 8;
+  WORK_NODE_STATUS_CANCELLED = 9;
+}
+
+enum Origin {
+  ORIGIN_UNSPECIFIED = 0;
+  ORIGIN_USER = 1;
+  ORIGIN_PLAN_PROPOSAL = 2;
+  ORIGIN_ROUTINE = 3;
+  ORIGIN_PACK = 4;
+}
+
+message CompletionCheck {
+  string schema_version = 100;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_ARTIFACT_EXISTS = 1;
+    KIND_TEST_COMMAND = 2;
+    KIND_ASSERTION = 3;
+    KIND_EFFECTS_SETTLED = 4;
+    KIND_CITATIONS_VALID = 5;
+  }
+  Kind kind = 1;
+  string artifact_role = 2;
+  int32 min_versions = 3;
+  string command = 4;
+  int32 expect_exit = 5;
+  string expr = 6;
+  repeated string effect_classes = 7;
+  double min_coverage = 8;
+}
+
+message SemanticVerification {
+  string schema_version = 100;
+  bool required = 1;
+  string rubric_id = 2;
+  bool independent_model = 3;
+}
+
+// Deterministic definition of done (DOMAIN.md §4.4). A node reaches DONE only via
+// run.verification_passed, never from a model completion claim.
+message CompletionContract {
+  string schema_version = 100;
+  repeated CompletionCheck deterministic_checks = 1;
+  SemanticVerification semantic_verification = 2;
+  bool human_signoff_required = 3;
+}
+
+// Grant templates a node needs; runtime resolves them through the capability algebra.
+message CapabilityNeed {
+  string schema_version = 100;
+  string effect_class = 1;
+  string resource_kind = 2;
+  string resource_selector = 3;
+  uint32 max_tier = 4;
+}
+
+message Budget {
+  string schema_version = 100;
+  string id = 1;
+  enum Scope {
+    SCOPE_UNSPECIFIED = 0;
+    SCOPE_TENANT = 1;
+    SCOPE_WORKSPACE = 2;
+    SCOPE_RUN = 3;
+    SCOPE_AGENT_THREAD = 4;
+  }
+  Scope scope = 2;
+  string scope_ref = 3;
+  uint64 tokens = 4;
+  int64 cost_minor_units = 5;
+  uint64 wall_time_ms = 6;
+  uint32 tool_calls = 7;
+  uint32 concurrency = 8;
+  uint64 machine_minutes = 9;
+  uint32 max_steps = 10;
+  uint64 consumed_tokens = 11;
+  int64 consumed_cost_minor_units = 12;
+  uint64 consumed_wall_time_ms = 13;
+  uint32 consumed_tool_calls = 14;
+  string parent_budget_id = 15;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_ACTIVE = 1;
+    STATUS_EXHAUSTED = 2;
+    STATUS_SUSPENDED = 3;
+  }
+  Status status = 16;
+}
+
+message WorkNode {
+  string schema_version = 100;
+  string id = 1;
+  string workspace_id = 2;
+  WorkNodeKind kind = 3;
+  string title = 4;
+  string description = 5;
+  string parent_id = 6;
+  WorkNodeStatus status = 7;
+  string owner_agent_thread_id = 8;
+  core.Actor created_by = 9;
+  CompletionContract completion_contract = 10;
+  repeated CapabilityNeed capability_needs = 11;
+  Budget budget = 12;
+  uint32 priority = 13;
+  uint64 revision = 14;
+  string thread_id = 15;
+  Origin origin = 16;
+}
+
+message WorkEdge {
+  string schema_version = 100;
+  string id = 1;
+  string workspace_id = 2;
+  string from_node_id = 3;
+  string to_node_id = 4;
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_DEPENDS_ON = 1;
+    KIND_PARENT_OF = 2;
+    KIND_PRODUCES_ARTIFACT = 3;
+    KIND_VERIFIED_BY = 4;
+    KIND_BLOCKED_BY = 5;
+  }
+  Kind kind = 5;
+  uint64 revision = 6;
+}
+
+// Model-proposed WorkGraph mutation awaiting validation (DOMAIN.md §4.5).
+message PlanProposal {
+  string schema_version = 100;
+  string proposal_id = 1;
+  string run_id = 2;
+  uint64 base_revision = 3;
+  repeated WorkNode nodes_add = 4;
+  repeated WorkNode nodes_update = 5;
+  repeated WorkEdge edges_add = 6;
+  repeated string edges_remove = 7;
+  string rationale = 8;
+  repeated CapabilityNeed capability_needs = 9;
+}

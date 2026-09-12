@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/flags-config.schema.json",
+  "title": "Quansio feature flags (config/flags.yaml)",
+  "description": "Flags gate rollout, never authority: no flag may widen capability or bypass policy, approval or the Effect Ledger (DOSSIER.md 18).",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "flags"],
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "flags": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[a-z][a-z0-9._-]+$": { "type": ["boolean", "string", "number"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

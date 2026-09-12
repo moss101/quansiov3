@@ -1,0 +1,27 @@
+# GENERATED from DOMAIN.md by scripts/ci/gen_contracts.py --catalog.
+# Do not hand edit: regenerate instead. DOMAIN.md is the naming/shape authority.
+read_projections:
+- /v1/threads/{id}
+- /v1/messages
+- /v1/workgraph
+- /v1/runs/{id}
+- /v1/runs/{id}/timeline
+- /v1/effects
+- /v1/approvals
+- /v1/questions
+- /v1/artifacts
+- /v1/artifacts/{id}/versions
+- /v1/evidence/{id}
+- /v1/targets
+- /v1/browser-sessions/{id}
+- /v1/knowledge
+- /v1/memory
+- /v1/skills
+- /v1/packs
+- /v1/routines
+- /v1/connectors
+- /v1/notifications
+- /v1/usage
+- /v1/audit
+- /v1/search?q=
+- /v1/stream

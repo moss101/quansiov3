@@ -1,0 +1,37 @@
+# GENERATED from DOMAIN.md by scripts/ci/gen_contracts.py --catalog.
+# Do not hand edit: regenerate instead. DOMAIN.md is the naming/shape authority.
+event_families:
+- tenant
+- workspace
+- member
+- thread
+- work
+- agent
+- run
+- turn
+- step
+- model
+- tool
+- effect
+- approval
+- question
+- target
+- lease
+- browser
+- terminal
+- checkpoint
+- artifact
+- evidence
+- knowledge
+- memory
+- skill
+- pack
+- routine
+- notification
+- connector
+- policy
+- audit
+- usage
+- capability
+- compaction
+- ops

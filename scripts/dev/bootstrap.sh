@@ -24,6 +24,8 @@ echo "== architecture gates =="
 "$PYTHON" scripts/ci/check_authority.py --check
 "$PYTHON" scripts/ci/workspace_check.py
 "$PYTHON" scripts/ci/legacy_map_check.py
+"$PYTHON" scripts/ci/gen_contracts.py --check
+"$PYTHON" scripts/ci/contract_compat.py
 
 echo "== rust workspace =="
 cargo fmt --all --check
