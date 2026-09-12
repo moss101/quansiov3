@@ -594,18 +594,18 @@
       "notes": "Universal Effect Ledger: reservation derives the idempotency key from effect class, resource and params digest and leans on the schema's partial unique in-flight index, so racing dispatchers reserve exactly one action and an in-flight duplicate is a typed conflict; every transition is one event-emitting transaction with exactly one effect.* event and contiguous aggregate versions; settlement is terminal and re-settlement refuses before writing; an OUTCOME_UNKNOWN record cannot be retried (typed refusal) and is resolved only by reconciliation matching the class strategy from config/effects.yaml (validated against the generated catalog and failing closed on any divergence); a retry creates a new identity sharing the key and never touches the old row; approval-required actions cannot bypass the receipt; protocol state keeps next_safe_action on ReconcileEffect until settled; all reads are tenant-scoped."
     },
     "RUN-008": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T08:02:19Z",
+      "updated_at": "2026-09-12T08:02:19Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "RUN-008 claimed: CompletionContract verification (DOMAIN.md \u00a74.4), deterministic checks first, optional independent semantic verification."
     },
     "RUN-009": {
       "coverage": null,
