@@ -1,0 +1,47 @@
+$ pnpm -r --if-present build
+Scope: 3 of 4 workspace projects
+apps/desktop build$ tsc -p tsconfig.build.json
+apps/web build$ tsc -p tsconfig.build.json
+sdk/typescript build$ tsc -p tsconfig.build.json
+sdk/typescript build: Done
+apps/web build: Done
+apps/desktop build: Done
+exit=0
+$ pnpm -r --if-present typecheck
+Scope: 3 of 4 workspace projects
+apps/desktop typecheck$ tsc -p tsconfig.json
+apps/web typecheck$ tsc -p tsconfig.json
+sdk/typescript typecheck$ tsc -p tsconfig.json
+apps/web typecheck: Done
+sdk/typescript typecheck: Done
+apps/desktop typecheck: Done
+typecheck exit=0
+$ pnpm -r --if-present test
+Scope: 3 of 4 workspace projects
+apps/desktop test$ vitest run
+sdk/typescript test$ vitest run
+apps/web test$ vitest run
+apps/web test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/web
+apps/desktop test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+sdk/typescript test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/sdk/typescript
+sdk/typescript test:  ✓ tests/client.test.ts (2 tests) 2ms
+sdk/typescript test:  Test Files  1 passed (1)
+sdk/typescript test:       Tests  2 passed (2)
+sdk/typescript test:    Start at  10:01:29
+sdk/typescript test:    Duration  566ms (transform 28ms, setup 0ms, collect 20ms, tests 2ms, environment 0ms, prepare 83ms)
+apps/web test:  ✓ tests/surfaces.test.ts (3 tests) 2ms
+apps/web test:  Test Files  1 passed (1)
+apps/web test:       Tests  3 passed (3)
+apps/web test:    Start at  10:01:29
+apps/web test:    Duration  566ms (transform 30ms, setup 0ms, collect 21ms, tests 2ms, environment 0ms, prepare 84ms)
+apps/desktop test:  ✓ tests/surfaces.test.ts (3 tests) 2ms
+apps/desktop test:  Test Files  1 passed (1)
+apps/desktop test:       Tests  3 passed (3)
+apps/desktop test:    Start at  10:01:29
+apps/desktop test:    Duration  566ms (transform 38ms, setup 0ms, collect 21ms, tests 2ms, environment 0ms, prepare 74ms)
+apps/desktop test: Done
+sdk/typescript test: Done
+apps/web test: Done
+test exit=0
+$ eslint .
+lint exit=0

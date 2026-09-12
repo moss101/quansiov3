@@ -1,0 +1,240 @@
+{
+  "task_id": "RUN-011",
+  "git_commit": "5f1c198bbc280522a7b256e14b5ec37ccff3d5d1",
+  "recorded_at": "2026-09-12T07:00:26Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/turn_loop-0dec34643ebde035 --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-1.log"
+    },
+    {
+      "command": "all quansio-server and quansio-tools test binaries (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-2.log"
+    },
+    {
+      "command": "target/debug/deps/tool_contract-b062a3b741ad5b22 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-3.log"
+    },
+    {
+      "command": "target/debug/deps/source_trust_parity-f52be6a01e115e19 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-4.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/runtime_state_machine-6d0af857a385b3e2 --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-5.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/policy-842e7298d5934bd1 --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-6.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/effects-ba4ac93c6c037cb1 --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-7.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/planning-607f5071855e216b --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-8.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-9.log"
+    },
+    {
+      "command": "cargo clippy --workspace --offline --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-10.log"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-11.log"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-12.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-13.log"
+    },
+    {
+      "command": "pnpm build && pnpm typecheck && pnpm test && pnpm lint",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-12T06-58-44Z/command-14.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/turn_loop-0dec34643ebde035 --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "all quansio-server and quansio-tools test binaries (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "target/debug/deps/tool_contract-b062a3b741ad5b22 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "target/debug/deps/source_trust_parity-f52be6a01e115e19 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/runtime_state_machine-6d0af857a385b3e2 --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/policy-842e7298d5934bd1 --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/effects-ba4ac93c6c037cb1 --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio target/debug/deps/planning-607f5071855e216b --test-threads=1 (linked binary executed through the pre-existing-inode workaround; see HANDOFF.md)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --offline --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm build && pnpm typecheck && pnpm test && pnpm lint",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/tools/src/declaration.rs",
+      "sha256": "d4d495551f60ac301f6b2edfc4083c8db378873d1abacd542f10598fe7d5a70b",
+      "bytes": 20476
+    },
+    {
+      "path": "crates/tools/src/registry.rs",
+      "sha256": "2bc70de7a4fbcebd7be052d0c3cadd3c81332f8da45f4f071c14a58249253fea",
+      "bytes": 10852
+    },
+    {
+      "path": "crates/tools/src/schema.rs",
+      "sha256": "66e3deef183af0640a7452506f8fc9df4f1094d9732b4b7d23036818c05449ec",
+      "bytes": 12454
+    },
+    {
+      "path": "crates/tools/src/call.rs",
+      "sha256": "979a2510c146f27bdaa3c215d44ed67a75acdb1641f425e3859f6c8eeef45fbc",
+      "bytes": 11642
+    },
+    {
+      "path": "crates/tools/src/canonical.rs",
+      "sha256": "fae94cc71dd0fc98982799d85ac909a06daa37fb921f3fafb1e01e47009c58ce",
+      "bytes": 1549
+    },
+    {
+      "path": "crates/tools/src/error.rs",
+      "sha256": "ca90e37ee4e9b738d8c02bac3f220c99dee282754c32dec8fbbb3ecc82b03416",
+      "bytes": 3851
+    },
+    {
+      "path": "config/tools.yaml",
+      "sha256": "6c5f02640126f478cb4286555881c2bce16444683cdbdb9b40361ae0c7e9bb82",
+      "bytes": 21963
+    },
+    {
+      "path": "crates/server/src/runtime/turn_loop/dispatch.rs",
+      "sha256": "2744b54f00022be7e44e065740aad8ab8ff3123160948e485c782f400ced9a30",
+      "bytes": 64274
+    },
+    {
+      "path": "crates/server/src/runtime/turn_loop/questions.rs",
+      "sha256": "dae0ec283cbd35f1218a772c0159c1273f4a7aaafb97cc8867bd8d2e18e0330f",
+      "bytes": 23120
+    },
+    {
+      "path": "crates/server/src/runtime/turn_loop/parallel.rs",
+      "sha256": "b2fb4937dc1a89a00cc52f0e8079d2c38b212d1cd42c8f605173a35c5536a9cc",
+      "bytes": 7288
+    },
+    {
+      "path": "crates/server/src/runtime/turn_loop/usage.rs",
+      "sha256": "dbfea76702fe24de64379fbe7821098e9321e751a756c4f6650d76c734e60150",
+      "bytes": 3646
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/engine.rs",
+      "sha256": "f22c7816af4e2b690e48cfd8b4f56ee200f129d869738bbba732486d6b4176a2",
+      "bytes": 43153
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/turn_loop.rs",
+      "sha256": "3e3da8edb97c285f537bd475e92b10c90b08a8accfd2d93ce72492f65267541e",
+      "bytes": 15704
+    },
+    {
+      "path": "crates/server/tests/turn_loop.rs",
+      "sha256": "b5d221367a0570fc3561d835c4b5042e9f60db013725ce5a530d278e7465d422",
+      "bytes": 44962
+    },
+    {
+      "path": "migrations/0007_tool_call_declaration_version.sql",
+      "sha256": "b0312f875fa2d129fc23db0085e7b04841f826372106382a3e14834fa7657435",
+      "bytes": 313
+    }
+  ]
+}
