@@ -1,0 +1,208 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace
+exit_code: 0
+
+--- stdout ---
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 19 tests
+test generation_accepts_current_or_newer_and_rejects_stale ... ok
+test generator_advances_with_the_clock ... ok
+test canonical_ids_round_trip_with_their_prefix ... ok
+test cursors_round_trip_and_stay_opaque ... ok
+test correlation_and_causation_ids_carry_the_right_shape ... ok
+test duplicate_commands_replay_or_conflict ... ok
+test revision_check_and_bump_is_compare_and_set ... ok
+test ids_serialize_as_their_canonical_string ... ok
+test sequence_must_be_positive ... ok
+test idempotency_keys_are_stable_and_sensitive ... ok
+test fence_tokens_round_trip_and_reject_stale_leases ... ok
+test typed_ids_reject_the_wrong_prefix ... ok
+test prefix_table_matches_the_generated_contract_enum ... ok
+test ulid_matches_the_published_spec_vector ... ok
+test ulid_ordering_follows_time_then_randomness ... ok
+test ulid_rejects_malformed_input ... ok
+test unknown_prefix_is_rejected ... ok
+test ulid_round_trips_through_base32 ... ok
+test generator_is_monotonic_within_one_millisecond ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test duplicate_commands_replay_and_param_changes_conflict ... ok
+test stale_generations_are_rejected_before_mutation ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+
+running 5 tests
+test partial_tool_call_recovery_reconciles_and_never_retries ... ok
+test checkpoints_are_generation_and_retention_fenced ... ok
+test crash_restart_reconstructs_the_next_safe_action ... ok
+test approval_and_question_waits_survive_restart ... ok
+test protocol_state_is_tenant_scoped ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.71s
+
+
+running 5 tests
+test tenant_context_validation_rejects_non_canonical_ids ... ok
+test tenant_isolation_returns_zero_rows_without_context ... ok
+test unset_context_fails_closed_on_a_plain_connection ... ok
+test migrations_are_reapplied_safely_over_existing_data ... ok
+test bootstrap_from_zero_creates_the_authoritative_schema ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+--- stderr ---
+   Compiling quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/crates/core)
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.48s
+     Running unittests src/lib.rs (target/debug/deps/quansio_capability-f3e9a3d5a42c00e0)
+     Running unittests src/lib.rs (target/debug/deps/quansio_cli-c2b6ed63af2ff711)
+     Running unittests src/lib.rs (target/debug/deps/quansio_contracts-f8edde6c39c0608a)
+     Running unittests src/lib.rs (target/debug/deps/quansio_core-b5bf01f2607566df)
+     Running tests/identity.rs (target/debug/deps/identity-1562b56c90e33698)
+     Running unittests src/lib.rs (target/debug/deps/quansio_events-4eeea4ec6073b2f1)
+     Running unittests src/lib.rs (target/debug/deps/quansio_graph-2f09d994368ffa72)
+     Running unittests src/lib.rs (target/debug/deps/quansio_indexer-b3857ad1691f1b1c)
+     Running unittests src/lib.rs (target/debug/deps/quansio_machine-5e9967b6689860bf)
+     Running unittests src/lib.rs (target/debug/deps/quansio_native_windows-e1490b7c610a548d)
+     Running unittests src/lib.rs (target/debug/deps/quansio_qworkerd-f1864637845a6c41)
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-3b879eccd097b9cc)
+     Running tests/command_idempotency.rs (target/debug/deps/command_idempotency-9960e33337d8ea64)
+     Running tests/protocol_state.rs (target/debug/deps/protocol_state-86cf7f2202c8e053)
+     Running tests/schema_bootstrap.rs (target/debug/deps/schema_bootstrap-9173df8d095cdda3)
+     Running unittests src/lib.rs (target/debug/deps/quansio_tools-fab3adb1fc9aba55)
+   Doc-tests quansio_capability
+   Doc-tests quansio_cli
+   Doc-tests quansio_contracts
+   Doc-tests quansio_core
+   Doc-tests quansio_events
+   Doc-tests quansio_graph
+   Doc-tests quansio_indexer
+   Doc-tests quansio_machine
+   Doc-tests quansio_native_windows
+   Doc-tests quansio_qworkerd
+   Doc-tests quansio_server
+   Doc-tests quansio_tools

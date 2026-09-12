@@ -1,0 +1,19 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test protocol_state
+exit_code: 0
+
+--- stdout ---
+
+running 5 tests
+test protocol_state_is_tenant_scoped ... ok
+test approval_and_question_waits_survive_restart ... ok
+test partial_tool_call_recovery_reconciles_and_never_retries ... ok
+test checkpoints_are_generation_and_retention_fenced ... ok
+test crash_restart_reconstructs_the_next_safe_action ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.66s
+
+
+--- stderr ---
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.52s
+     Running tests/protocol_state.rs (target/debug/deps/protocol_state-cd5c4ff94f99d239)

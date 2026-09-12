@@ -296,18 +296,27 @@
       "notes": ""
     },
     "CORE-006": {
-      "coverage": null,
-      "status": "RECONCILING",
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T01:14:33Z",
-      "updated_at": "2026-09-12T01:14:33Z",
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "updated_at": "2026-09-12T01:29:31Z",
+      "git_commit": "2b66370",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test protocol_state",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/CORE-006/2026-09-12T01-28-12Z/summary.json",
+        "crates/server/src/runtime/protocol_state/mod.rs",
+        "crates/server/src/runtime/checkpoints/mod.rs",
+        "crates/server/tests/protocol_state.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "ProtocolState per DOMAIN.md \u00a75.7 with a pure next_safe_action precedence (cancel > reconcile unknown effect > approval > question > takeover handback > child > waits > continue); an unknown effect outcome is reconciled, never retried. Checkpoint metadata with generation and retention fencing. Stores take a caller-owned PgConnection so several writes compose into one transaction (the seam CORE-005 needs). Paths implemented as crates/server/src/runtime/{protocol_state,checkpoints}/ \u2014 equivalent to the task's crates/server/runtime/... mapping under this repository's src/ layout."
     },
     "CORE-007": {
       "coverage": null,

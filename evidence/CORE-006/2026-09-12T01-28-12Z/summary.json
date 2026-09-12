@@ -1,0 +1,97 @@
+{
+  "task_id": "CORE-006",
+  "git_commit": "4902cb45e1f96c4d0b2a6d2a2355fd82e46bcab9",
+  "recorded_at": "2026-09-12T01:29:05Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test protocol_state",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-006/2026-09-12T01-28-12Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-006/2026-09-12T01-28-12Z/command-2.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-006/2026-09-12T01-28-12Z/command-3.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-006/2026-09-12T01-28-12Z/command-4.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-006/2026-09-12T01-28-12Z/command-5.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-006/2026-09-12T01-28-12Z/command-6.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test protocol_state",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/runtime/protocol_state/mod.rs",
+      "sha256": "d2855d1d1093973312faa1b0f61f0e694120b788debb18439128a17fa0a9f6f8",
+      "bytes": 15595
+    },
+    {
+      "path": "crates/server/src/runtime/checkpoints/mod.rs",
+      "sha256": "eb96df63cfed037135db5f7718af151b26e50eba69ff89ec0fd2b5f5ed01667c",
+      "bytes": 9210
+    },
+    {
+      "path": "crates/server/tests/protocol_state.rs",
+      "sha256": "e30fb9e08868d50cea9d83861bbe1e854b06f51bae7966df226406d4bb112c41",
+      "bytes": 13954
+    },
+    {
+      "path": "crates/server/src/control/schema/mod.rs",
+      "sha256": "7129daed8e52c3dab92e3f18dbf32ddfdf39b82d025b7c52e9951923d67b3cf5",
+      "bytes": 4834
+    }
+  ]
+}
