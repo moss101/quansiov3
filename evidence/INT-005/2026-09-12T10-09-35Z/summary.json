@@ -1,0 +1,65 @@
+{
+  "task_id": "INT-005",
+  "git_commit": "b6d620de675608303b493931a01a7a17911a57ab",
+  "recorded_at": "2026-09-12T10:09:45Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_search_program.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T10-09-35Z/command-1.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T10-09-35Z/command-2.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T10-09-35Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T10-09-35Z/command-4.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_search_program.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/context/search.py",
+      "sha256": "ac44312f668cab528fde20934e43c508163b6bec6d6ebc09eda090fac690f7d9",
+      "bytes": 12102
+    },
+    {
+      "path": "python/tests/intelligence/test_search_program.py",
+      "sha256": "c7f24b112551cac76dda22b8075c3fa13168242149e6691f8b2b63ce3a5b54c1",
+      "bytes": 7603
+    }
+  ]
+}
