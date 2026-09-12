@@ -557,7 +557,7 @@
       "claimed_by": "agent:subagent-run007",
       "started_at": "2026-09-12T05:16:05Z",
       "updated_at": "2026-09-12T05:16:05Z",
-      "git_commit": "f70e94c",
+      "git_commit": "664acba315a867aaf380f2815b5387af7c8d0e7f",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test effects",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server",
