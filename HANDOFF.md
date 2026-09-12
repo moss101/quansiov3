@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0 complete; M1 started: CORE-001, CORE-002 PASS)
+Updated: 2026-09-12 (M0 complete; M1: CORE-001…CORE-004 PASS, 14 of 99 tasks complete)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,8 +16,9 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M1 — canonical state, events and persistence
-Current task: CORE-003 (RuntimeEvent store and outbox) and CORE-004 (graph stores) delegated in parallel
-Current task status: 10 of 99 tasks `PASS`; the baseline pipeline is green on `main`
+Current task: CORE-005 (GraphTransaction), CORE-007 (artifact/evidence storage), CORE-009 (projections and
+streaming) delegated in isolated worktrees
+Current task status: 14 of 99 tasks `PASS`; the baseline pipeline is green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
@@ -36,6 +37,24 @@ Current language: Rust + SQL
   tokens, resumable cursors, effect idempotency keys and duplicate-command classification.
   Proof: `crates/core/tests/identity.rs` (19 tests) and `crates/server/tests/command_idempotency.rs`
   (duplicate command replay/conflict, stale generation updates zero rows).
+- CORE-003 — RuntimeEvent store and transactional outbox — `PASS` (`crates/events`): envelope and the 34
+  DOMAIN §9.2 event families, state mutation + event + outbox in one transaction, per-tenant sequence
+  counter assigned inside that transaction (race-free, gap-free), outbox publishing behind an
+  `EventTransport` trait with an explicit `UnavailableTransport` that never silently drops events, and
+  durable consumer cursors with resume. Evidence: `evidence/CORE-003/<ts>/`.
+- CORE-004 — graph stores — `PASS` (`crates/graph`): WorkGraph/AgentGraph/StateGraph with cycle rejection,
+  transition tables, revision compare-and-set, `done` only through verification, append-only attempts and
+  one atomic batch under a single graph revision (`migrations/0003_graph_heads.sql`). The delegation
+  narrowing check is a trait for RUN-005. Evidence: `evidence/CORE-004/<ts>/`.
+- CORE-006 — durable protocol state and checkpoints — `PASS` (`crates/server/src/runtime/`):
+  protocol state per DOMAIN §5.7, a pure `next_safe_action` (cancel > reconcile unknown effect >
+  approval > question > takeover > child > waits > continue) so an unknown effect outcome is reconciled
+  rather than retried, checkpoint metadata with generation/retention fencing, and caller-owned
+  connections so several stores compose into one transaction. Evidence: `evidence/CORE-006/<ts>/`.
+- OPS-007 — supply-chain and dependency security — `PASS` (`scripts/ci/supply_chain/`): lockfile pinning,
+  `deny.toml` completeness, deterministic CycloneDX SBOM with drift verification, a real
+  RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill quarantine-lifecycle checks; `cargo-deny` is an
+  explicit informational result when absent. Evidence: `evidence/OPS-007/<ts>/`.
 - GOV-001 — repository inventory and V8.1 reconciliation — `PASS`.
   Greenfield rule applied: **no legacy authority found**; every canonical owner `GENUINE_GAP`.
   Deliverables: `docs/review/2026-09-12-gov-001-reconciliation.md`, `scripts/ci/inventory.py`
@@ -57,30 +76,30 @@ Current language: Rust + SQL
 
 ## What is currently being implemented
 
-TASK: CORE-003 — RuntimeEvent store and transactional outbox (`crates/events/`), delegated to a
-subagent in an isolated worktree. Acceptance: no committed state transition lacks its event; a
-publisher restart cannot duplicate an externally visible event; transaction rollback and cursor resume
-are proven.
-TASK: CORE-004 — WorkGraph/AgentGraph/StateGraph stores and GraphTransaction (`crates/graph/`),
-delegated in parallel. Acceptance: revision-checked atomic mutations, acyclic `depends_on`/`parent_of`
-enforcement, and narrowing-only child delegation.
+TASK: CORE-005 — GraphTransaction (`crates/graph` + `crates/events` seam): one atomic, revision-checked,
+event-emitting mutation across WorkGraph/AgentGraph/StateGraph, building on `crates/graph`'s
+`apply_batch` and `crates/events`' `commit_mutation`.
+TASK: CORE-007 — artifact and evidence storage (`crates/server/src/artifacts/`): metadata in PostgreSQL,
+bytes in MinIO with content digests, immutable evidence descriptors, scoped grants and retention.
+TASK: CORE-009 — projections and resumable event streaming (`crates/events` + `crates/server`):
+rebuildable read models and cursor-resumable streams with backpressure.
 
 ## Exact next action
 
-Integrate the two subagent branches (review → merge → re-run their tests on `main` → set progress
-`PASS` with evidence and the merge commit), then take CORE-005 (GraphTransaction) which depends on
-both. `QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio` and
-`scripts/dev/up` are required for the database-backed suites.
+Integrate each delegated branch as it completes (review → merge → re-run its tests on `main` → set
+progress `PASS` with evidence naming the merge commit). Then take CORE-008 (scheduler and durable
+timers) and INT-001 (Python intelligence service and typed RPC boundary).
+Database-backed suites need `scripts/dev/up` plus
+`QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`; the baseline
+pipeline derives that URL from the generated `.env` automatically.
 
 ## Ready queue
 
-1. `CORE-003` — RuntimeEvent store and transactional outbox (in flight, delegated).
-2. `CORE-004` — graph stores and GraphTransaction (in flight, delegated).
-3. `CORE-005` — GraphTransaction (depends on CORE-003 + CORE-004).
-4. `CORE-006` — durable protocol state and checkpoints.
-5. `CORE-007` — artifact and evidence storage.
-6. `INT-001` — Python intelligence service and typed RPC boundary.
-7. `OPS-007` — supply-chain and dependency security (in flight, delegated).
+1. `CORE-005` — GraphTransaction (in flight, delegated).
+2. `CORE-007` — artifact and evidence storage (in flight, delegated).
+3. `CORE-009` — projections and resumable event streaming (in flight, delegated).
+4. `CORE-008` — scheduler, waits and durable timers.
+5. `INT-001` — Python intelligence service and typed RPC boundary.
 
 ## Blocked work
 
