@@ -47,13 +47,21 @@ impl SkillStateError {
 /// The state of one skill version.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SkillStatus {
+    /// Authored, not yet submitted for review.
     Draft,
+    /// Submitted as a review candidate.
     Candidate,
+    /// Under evaluation by its declared eval suite.
     Evaluating,
+    /// Review passed; not yet promoted to production.
     Approved,
+    /// Promoted: the only state whose versions resolve into production context.
     Active,
+    /// Superseded; still visible, no longer resolving.
     Deprecated,
+    /// Withdrawn from use.
     Retired,
+    /// Evaluation found it unfit.
     Rejected,
 }
 
