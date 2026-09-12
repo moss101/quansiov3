@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Stop the local development stack. Data volumes are preserved unless
+# --volumes is passed. Idempotent: succeeds even when nothing is running.
+#
+# Usage: scripts/dev/down [--volumes]
+set -euo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
+
+VOLUMES=()
+for arg in "$@"; do
+  case "$arg" in
+    --volumes) VOLUMES+=(--volumes) ;;
+    *)
+      echo "usage: scripts/dev/down [--volumes]" >&2
+      exit 2
+      ;;
+  esac
+done
+
+require_docker
+
+# Enable the optional profile so its containers are removed too.
+if ((${#VOLUMES[@]})); then
+  compose --profile "$(cfg vector_adapter_profile)" down --remove-orphans --volumes
+else
+  compose --profile "$(cfg vector_adapter_profile)" down --remove-orphans
+fi

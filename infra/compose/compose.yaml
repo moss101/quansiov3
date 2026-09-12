@@ -1,0 +1,111 @@
+# Quansio V8.1 local development stack (GOV-007).
+#
+# Deterministic, offline-capable dependencies for local development and CI:
+#   postgres  PostgreSQL 16+ with pgvector (authoritative server/control/runtime DB)
+#   nats      JetStream event transport
+#   minio     S3-compatible object storage for artifact/evidence/checkpoint bytes
+#   minio-init  creates the tenant-prefixed dev bucket idempotently
+#   stub-provider  deterministic OpenAI-compatible endpoint for offline model calls
+#
+# Start it with `scripts/dev/up` (generates the gitignored .env and waits for
+# readiness); see infra/compose/README.md. Never point this stack at real data.
+name: ${QUANSIO_DEV_COMPOSE_PROJECT:-quansio-dev}
+
+services:
+  postgres:
+    image: ${QUANSIO_DEV_POSTGRES_IMAGE:-pgvector/pgvector:pg17}
+    environment:
+      POSTGRES_USER: ${QUANSIO_DEV_POSTGRES_USER:-quansio}
+      POSTGRES_PASSWORD: ${QUANSIO_DEV_POSTGRES_PASSWORD:?run scripts/dev/up to provide dev credentials}
+      POSTGRES_DB: ${QUANSIO_DEV_POSTGRES_DB:-quansio}
+    ports:
+      - "127.0.0.1:${QUANSIO_DEV_POSTGRES_PORT:-55440}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # pgvector is enabled by an init script on first start (DOSSIER.md §9).
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  nats:
+    image: ${QUANSIO_DEV_NATS_IMAGE:-nats:2.11-alpine}
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    ports:
+      - "127.0.0.1:${QUANSIO_DEV_NATS_PORT:-54230}:4222"
+      - "127.0.0.1:${QUANSIO_DEV_NATS_MONITOR_PORT:-54231}:8222"
+    volumes:
+      - nats-data:/data
+
+  minio:
+    image: ${QUANSIO_DEV_MINIO_IMAGE:-quay.io/minio/minio:latest}
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${QUANSIO_DEV_MINIO_ROOT_USER:-quansio-dev}
+      MINIO_ROOT_PASSWORD: ${QUANSIO_DEV_MINIO_ROOT_PASSWORD:?run scripts/dev/up to provide dev credentials}
+    ports:
+      - "127.0.0.1:${QUANSIO_DEV_MINIO_PORT:-59010}:9000"
+      - "127.0.0.1:${QUANSIO_DEV_MINIO_CONSOLE_PORT:-59011}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/ready"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  minio-init:
+    image: ${QUANSIO_DEV_MINIO_MC_IMAGE:-minio/mc:RELEASE.2024-01-13T08-44-48Z}
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${QUANSIO_DEV_MINIO_ROOT_USER:-quansio-dev}
+      MINIO_ROOT_PASSWORD: ${QUANSIO_DEV_MINIO_ROOT_PASSWORD:?run scripts/dev/up to provide dev credentials}
+      QUANSIO_DEV_MINIO_BUCKET: ${QUANSIO_DEV_MINIO_BUCKET:-quansio-dev}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        until mc alias set local "http://minio:9000" "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null 2>&1; do
+          sleep 1
+        done
+        mc mb --ignore-existing "local/$$QUANSIO_DEV_MINIO_BUCKET"
+        mc anonymous set none "local/$$QUANSIO_DEV_MINIO_BUCKET" >/dev/null
+
+  stub-provider:
+    image: ${QUANSIO_DEV_STUB_PROVIDER_IMAGE:-python:3.12-slim}
+    command: ["python", "/app/server.py"]
+    environment:
+      QUANSIO_STUB_PROVIDER_PORT: "59020"
+    volumes:
+      - ./stub-provider:/app:ro
+    ports:
+      - "127.0.0.1:${QUANSIO_DEV_STUB_PROVIDER_PORT:-59020}:59020"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:59020/healthz', timeout=2)"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 3s
+
+  # Optional external vector adapter (profile `vector`, off by default). The
+  # default vector index is pgvector in the postgres service (DOSSIER.md §9);
+  # this adapter is an opt-in, derived, rebuildable dev convenience only.
+  vector-adapter:
+    profiles: ["vector"]
+    image: ${QUANSIO_DEV_VECTOR_ADAPTER_IMAGE:-qdrant/qdrant:v1.12.4}
+    ports:
+      - "127.0.0.1:${QUANSIO_DEV_VECTOR_ADAPTER_PORT:-59030}:6333"
+    volumes:
+      - vector-adapter-data:/qdrant/storage
+
+volumes:
+  postgres-data:
+  nats-data:
+  minio-data:
+  vector-adapter-data:

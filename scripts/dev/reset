@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Reset the local development stack to a deterministic empty baseline: destroy
+# all data volumes, start the stack again and wait for health-ready. Idempotent.
+#
+# Usage: scripts/dev/reset
+set -euo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
+
+require_docker
+
+"$ROOT/scripts/dev/down" --volumes
+"$ROOT/scripts/dev/up"
+
+echo "dev stack: reset complete (empty baseline; run scripts/dev/seed for fixtures)"

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Health-ready check for the local development stack, used by scripts/dev/up and
+# CI. Polls until Postgres (with pgvector), NATS JetStream and MinIO respond,
+# then exits 0; exits non-zero if they are not ready within the timeout.
+#
+# Usage: scripts/dev/healthcheck
+set -euo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
+
+require_docker
+
+timeout="${QUANSIO_DEV_HEALTH_TIMEOUT:-$(cfg health_timeout_seconds)}"
+deadline=$((SECONDS + timeout))
+
+while :; do
+  ready=1
+  check_postgres || ready=0
+  check_nats || ready=0
+  check_minio || ready=0
+  if ((ready == 1)); then
+    echo "dev stack: HEALTHY (postgres+pgvector, nats jetstream, minio)"
+    exit 0
+  fi
+  if ((SECONDS >= deadline)); then
+    echo "dev stack: NOT READY after ${timeout}s" >&2
+    compose ps >&2 || true
+    exit 1
+  fi
+  sleep 2
+done
