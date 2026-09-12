@@ -143,13 +143,19 @@ impl MeterUsage {
         let Some(object) = value.as_object() else {
             return Err(malformed("meter sets must be JSON objects".to_string()));
         };
+        // Every key must be a meter, then the set is built in canonical order so two parsed sets
+        // that describe the same usage compare equal whatever order the JSON happened to store.
+        for key in object.keys() {
+            Meter::parse(key).map_err(malformed)?;
+        }
         let mut usage = Self::new();
-        for (key, raw) in object {
-            let meter = Meter::parse(key).map_err(malformed)?;
-            let amount = raw
-                .as_u64()
-                .ok_or_else(|| malformed(format!("{key} must be a non-negative integer")))?;
-            usage.set(meter, amount);
+        for meter in Meter::ALL {
+            if let Some(raw) = object.get(meter.as_str()) {
+                let amount = raw.as_u64().ok_or_else(|| {
+                    malformed(format!("{} must be a non-negative integer", meter.as_str()))
+                })?;
+                usage.set(meter, amount);
+            }
         }
         Ok(usage)
     }
