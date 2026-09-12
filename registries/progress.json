@@ -595,17 +595,20 @@
     },
     "RUN-008": {
       "coverage": "GENUINE_GAP",
-      "status": "IN_PROGRESS",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T08:02:19Z",
-      "updated_at": "2026-09-12T08:16:39Z",
+      "updated_at": "2026-09-12T08:37:48Z",
       "git_commit": "9eddaa899872235da5337db8fbb2c05ec1180727",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test verification (6 tests)",
         "cargo test -p quansio-server --lib (93 unit tests, 8 new for verification)",
         "cargo test -p quansio-server -p quansio-tools -p quansio-graph (33 suites, 267 tests)",
+        "(cd python && uv run --frozen pytest tests/intelligence/test_semantic_verifier.py -q) (15 tests)",
+        "(cd python && uv run --frozen pytest -q) (188 passed, 6 skipped live-provider cases)",
         "cargo fmt --all --check",
-        "cargo clippy --workspace --all-targets -- -D warnings"
+        "cargo clippy --workspace --all-targets -- -D warnings",
+        "bash scripts/ci/ci.sh"
       ],
       "artifacts": [
         "evidence/RUN-008/2026-09-12T08-15-56Z/summary.json",
@@ -613,12 +616,15 @@
         "crates/server/src/runtime/verification/contract.rs",
         "crates/server/src/runtime/verification/checks.rs",
         "crates/server/src/runtime/verification/service.rs",
-        "crates/server/tests/verification.rs"
+        "crates/server/tests/verification.rs",
+        "python/intelligence/evaluation/semantic_verifier/__init__.py",
+        "python/intelligence/evaluation/semantic_verifier/verifier.py",
+        "python/tests/intelligence/test_semantic_verifier.py"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "IN PROGRESS \u2014 the deterministic half is implemented and verified; the Python semantic verifier remains. DONE: crates/server/src/runtime/verification implements DOMAIN.md \u00a74.4. contract.rs parses a WorkNode's CompletionContract fail-closed (an unknown check kind is refused, not skipped; a malformed bound is refused; a contract that binds nothing is recognised and can never certify). checks.rs implements the checks the runtime can prove today \u2014 artifact_exists over real artifact metadata (role + min_versions) and effects_settled over the run's EffectRecords (a named class must be settled; an unsettled record means the external outcome is unknown, so nothing is certified) \u2014 and fails closed naming the owner for test_command (EXEC-006), assertion (no predicate registry yet) and citations_valid (CAP-002), so an unimplemented check can never become a silent pass. service.rs is the ContractVerifier plugged into the engine's VerificationPort: the model's completion claim reaches SUCCEEDED only after every deterministic check passes, human signoff is respected as a human's (a model may not sign off), and a required independent semantic verification that is unavailable or disagrees rejects the claim with its critique as feedback. Evidence: crates/server/tests/verification.rs drives the real turn loop, the real verifier and real database state: a claim without its artifact does not succeed the run (verify step failed with actionable feedback naming the check and role), the same claim verifies once the contract is satisfied, an unimplemented check kind fails closed naming EXEC-006, a disagreeing semantic verifier keeps the work incomplete while an agreeing one completes it, an empty contract certifies nothing, and an unsettled effect keeps the run incomplete until it is settled. REMAINING: python/intelligence/evaluation/semantic_verifier/ \u2014 the gateway-backed implementation of the SemanticVerifierPort seam (Rust side already defined and tested with an injected verifier); it must produce an independent verdict through python/intelligence/model_gateway (INT-002's ModelGateway, offline testable via its conformance stub provider) and be covered by a test that a verdict disagreeing with the claimant rejects the claim. The Rust half deliberately loads no new policy value and adds no second verification path."
+      "notes": "CompletionContract verification on both sides of the seam. Rust (crates/server/src/runtime/verification) implements DOMAIN.md \u00a74.4: contract.rs parses a WorkNode's contract fail-closed (unknown check kind refused, malformed bound refused, a contract that binds nothing recognised as certifying nothing); checks.rs implements artifact_exists over real artifact metadata (role + min_versions) and effects_settled over the run's EffectRecords, and fails closed naming the owner for test_command (EXEC-006), assertion (no predicate registry yet) and citations_valid (CAP-002), so an unimplemented check can never become a silent pass; service.rs is the ContractVerifier swapped into the engine's existing VerificationPort, so a model claim reaches SUCCEEDED only after every deterministic check passes, human_signoff_required stays a human's decision, and a required semantic verification that is unavailable or disagrees rejects the claim with the verifier's critique as feedback. Python (python/intelligence/evaluation/semantic_verifier) implements the independent verifier itself: GatewaySemanticVerifier builds the verifier call (claim and evidence quoted as data with explicit no-follow instructions), fulfils it through ModelGateway (INT-002) and reads a strict verdict \u2014 a response that is not exactly {agrees: bool, critique: non-empty string} is refused, never read as agreement, and a gateway failure is a refusal. Independence is a proof obligation: when the contract requires an independent model and the claimant's model is unnamed, or names this verifier's own model, the verifier refuses. Evidence: six Rust tests drive the real turn loop, verifier and database (false-done, missing artifact then satisfied, unimplemented check fails closed naming EXEC-006, semantic disagreement versus agreement, empty contract, unsettled effect until settled); fifteen Python tests cover the strict verdict contract and independence, drive the shipped verifier with only the transport replaced, and drive the real gateway over loopback against the conformance stub provider (the call is recorded and a non-verdict answer is refused). Recorded limits, not papered over: the cross-process binding between the Rust port and this Python verifier is the RPC boundary's and the composition root's job (INT-001/APP-001), and because a run does not yet record its model route (INT-002/INT-003), the Rust verifier passes claimant_model=None, so a contract requiring independent_model is refused rather than self-certified until that route is recorded."
     },
     "RUN-009": {
       "coverage": null,

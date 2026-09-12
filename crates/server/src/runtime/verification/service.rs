@@ -37,6 +37,13 @@ pub struct SemanticVerificationRequest {
     pub independent_model: bool,
     /// Evidence the claimant cites.
     pub evidence_ids: Vec<String>,
+    /// The model that produced the claim, when the runtime knows its route.
+    ///
+    /// The route belongs to the gateway (INT-002/INT-003). Until the run records it, a contract
+    /// that requires `independent_model` is refused rather than verified by the claimant's own
+    /// model; the verifier treats an unnamed claimant as unprovable independence, never as
+    /// agreement.
+    pub claimant_model: Option<String>,
 }
 
 /// An independent semantic verdict.
@@ -244,6 +251,9 @@ impl VerificationPort for ContractVerifier {
                 rubric_id: contract.semantic_verification.rubric_id.clone(),
                 independent_model: contract.semantic_verification.independent_model,
                 evidence_ids: claim.evidence_ids.clone(),
+                // The run does not record its model route yet (INT-002/INT-003 own it), so a
+                // contract demanding an independent model is refused rather than self-certified.
+                claimant_model: None,
             };
             match self.semantic.verify(request).await {
                 Ok(verdict) if verdict.agrees => {}

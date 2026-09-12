@@ -1,7 +1,7 @@
 {
   "task_id": "RUN-008",
   "git_commit": "9eddaa899872235da5337db8fbb2c05ec1180727",
-  "recorded_at": "2026-09-12T08:16:39Z",
+  "recorded_at": "2026-09-12T08:37:31Z",
   "commands": [
     {
       "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test verification",
@@ -32,6 +32,18 @@
       "exit_code": 0,
       "result": "PASS",
       "log": "evidence/RUN-008/2026-09-12T08-15-56Z/command-5.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_semantic_verifier.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-12T08-15-56Z/command-6.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-12T08-15-56Z/command-7.log"
     }
   ],
   "results": [
@@ -59,6 +71,16 @@
       "command": "cargo clippy --workspace --offline --all-targets -- -D warnings",
       "exit_code": 0,
       "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_semantic_verifier.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
     }
   ],
   "artifacts": [
@@ -79,13 +101,28 @@
     },
     {
       "path": "crates/server/src/runtime/verification/service.rs",
-      "sha256": "552e3b2c84a59460046d0b306acf58607e919044e3c128a5370f302015f995be",
-      "bytes": 10423
+      "sha256": "4eaf305774dc712bf38f73aeafa2d01700244517af84b26b1daf495da62590d3",
+      "bytes": 11082
     },
     {
       "path": "crates/server/tests/verification.rs",
       "sha256": "23296ef98afebe50a0100798393fd3dc29e7cff1d7222a9be9a8427fa1b1e4ab",
       "bytes": 20579
+    },
+    {
+      "path": "python/intelligence/evaluation/semantic_verifier/__init__.py",
+      "sha256": "6cbf36567e2764c67045f25f077090d90aa2e1ecb5083ca868aa05bf1183f064",
+      "bytes": 1537
+    },
+    {
+      "path": "python/intelligence/evaluation/semantic_verifier/verifier.py",
+      "sha256": "66e796017ba028fef4e380bed0eaa29e447e350df1a8018b39c18a9d30c43a05",
+      "bytes": 9626
+    },
+    {
+      "path": "python/tests/intelligence/test_semantic_verifier.py",
+      "sha256": "668d124161d5d7f04d964d4f270c357e3396ed7feb9c4c815e4620412aa2bff1",
+      "bytes": 7830
     }
   ]
 }
