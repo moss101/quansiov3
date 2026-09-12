@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0/M1 complete; M2/M3 in progress; 21 PASS + 1 BLOCKED_EXTERNAL)
+Updated: 2026-09-12 (M0/M1 complete; M2/M3 in progress; 22 PASS + 1 BLOCKED_EXTERNAL)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,8 +16,8 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M1 — canonical state, events and persistence
-Current task: RUN-002 — AgentThread, delegation and handoff lifecycle (M2), delegated in an isolated worktree
-Current task status: 21 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; pipeline green on `main`
+Current task: RUN-005 — Capability Projection (M2), delegated in an isolated worktree
+Current task status: 22 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; pipeline green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
@@ -54,6 +54,14 @@ Current language: Rust + SQL
   `deny.toml` completeness, deterministic CycloneDX SBOM with drift verification, a real
   RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill quarantine-lifecycle checks; `cargo-deny` is an
   explicit informational result when absent. Evidence: `evidence/OPS-007/<ts>/`.
+- RUN-002 — AgentThread, delegation, handoff and join — `PASS`
+  (`crates/server/src/runtime/agents/`, migration `0006_agent_mailbox_handoff_join.sql`): one primitive
+  serves persistent teammates and ephemeral workers with a separate lifecycle policy (teammates never JOIN,
+  workers terminate only from JOINED); the durable mailbox cursor delivers each item exactly once across a
+  crash; delegation calls the narrowing check **before** any insert, so a widening check writes nothing;
+  handoff writes a PENDING durable record a restarted runtime can complete or roll back, idempotently; and
+  fanout join parks the parent until the last child joins without ever double-merging. Evidence:
+  `evidence/RUN-002/<ts>/`.
 - RUN-001 — authoritative Rust runtime state machine — `PASS`
   (`crates/server/src/runtime/state_machine/`): Run/Turn/Step/Attempt transitions are evaluated inside the
   event-emitting transaction, so an illegal transition rolls back state and events together; every
@@ -129,7 +137,8 @@ pipeline derives that URL from the generated `.env` automatically.
 
 ## Ready queue
 
-1. `RUN-002` — AgentThread, delegation and handoff lifecycle (in flight, delegated).
+1. `RUN-005` — Capability Projection (in flight, delegated); it unblocks RUN-006 (policy), RUN-007 (Effect
+   Ledger), RUN-011 (tool dispatch) and the delegation narrowing hook RUN-002 left open.
 2. `RUN-003` — compile model plans into validated WorkGraph mutations.
 3. `INT-011` — embedding pipeline and derived vector index (ready because INT-002 is
    `BLOCKED_EXTERNAL` with implementation complete; per D-017 it may start but a task that depends on it
@@ -227,13 +236,16 @@ Credentials/handles: no production `QUANSIO_TEST_*` credentials are set; real-bo
 `BLOCKED_EXTERNAL` until provided. Database-backed tests read `QUANSIO_TEST_POSTGRES_URL`, for example
 `postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`. Never place raw secrets in this file.
 Ports: dev stack as above; product ports are fixed by later tasks.
-Disk caveat: the volume hosting this work is nearly full. Keep at most three concurrent worktrees, and
-delete a finished worktree's `target/` directory (`rm -rf <worktree>/target`) after its task is closed —
-a full disk aborted one subagent mid-run.
+Disk caveat: the volume hosting this work is nearly full. Keep at most two concurrent Rust worktrees,
+delete a finished worktree's `target/` directory (`rm -rf <worktree>/target`) after its task is closed, and
+`rm -rf target/debug/incremental` in the main workspace when space is needed (it holds ~6 GB and is
+regenerated) — a full disk aborted subagents mid-run once already.
 Concurrency caveat: several agents may run in parallel worktrees against this ONE shared dev stack
 (compose project `quansio-dev`). Never run `scripts/dev/down`, never delete its volumes, and never
 recreate its containers from a worktree-modified compose file — a divergent config silently changed the
-running MinIO (breaking SSE) once already.
+running MinIO (breaking SSE) once already. The dev-stack integration suite now exercises its own compose
+project (`quansio-dev-test`) on offset ports, so its reset/volume teardown can no longer destroy the
+shared stack.
 External dependencies: Rust 1.97.1 (+ rustfmt/clippy), Node 26 + pnpm 11.8, Python 3.12 + uv 0.12,
 protoc 36, Swift 6.3, Docker 29. All present.
 
