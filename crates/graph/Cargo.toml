@@ -19,4 +19,7 @@ sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio",
 thiserror = "2"
 
 [dev-dependencies]
+async-trait = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+quansio-events = { path = "../events" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

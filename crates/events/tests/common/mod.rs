@@ -5,8 +5,9 @@
 //! scratch database; when it is unset the tests report `BLOCKED_EXTERNAL` and return,
 //! because the local development stack (`scripts/dev/up`) is not running.
 //!
-//! Migrations are applied only through the canonical runner
-//! (`quansio_server::control::schema::migrate`), never by a second migrator.
+//! Migrations are applied from the canonical `migrations/` set through the same
+//! `sqlx::migrate!` runner the control module uses, so this crate does not depend on a
+//! second migrator (nor on `quansio-server`, which depends on this crate at runtime).
 #![allow(dead_code)]
 
 use sqlx::postgres::PgPoolOptions;
@@ -54,7 +55,8 @@ pub async fn fresh_migrated_database(name: &str) -> Option<PgPool> {
         .connect(&url)
         .await
         .expect("connect to the scratch database");
-    quansio_server::control::schema::migrate(&pool)
+    sqlx::migrate!("../../migrations")
+        .run(&pool)
         .await
         .expect("apply canonical migrations");
     Some(pool)
