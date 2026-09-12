@@ -1,0 +1,8 @@
+$ (cd python && uv run --frozen pytest -q)
+exit_code: 0
+
+--- stdout ---
+.......................................................................  [100%]
+71 passed in 1.89s
+
+--- stderr ---

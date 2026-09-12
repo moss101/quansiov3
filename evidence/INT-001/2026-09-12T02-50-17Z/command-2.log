@@ -1,0 +1,9 @@
+$ (cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)
+exit_code: 0
+
+--- stdout ---
+[1;32mAll checks passed![0m
+26 files already formatted
+Success: no issues found in 20 source files
+
+--- stderr ---

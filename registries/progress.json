@@ -552,18 +552,27 @@
       "notes": ""
     },
     "INT-001": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-int001",
+      "started_at": "2026-09-12T02:51:00Z",
+      "updated_at": "2026-09-12T02:51:00Z",
+      "git_commit": "2617c86",
+      "tests": [
+        "(cd python && uv run --frozen pytest -q)",
+        "(cd python && uv run --frozen ruff check . && uv run --frozen mypy intelligence)",
+        "uv run --project python pytest tests -q"
+      ],
+      "artifacts": [
+        "evidence/INT-001/2026-09-12T02-50-17Z/summary.json",
+        "python/intelligence/server/servicer.py",
+        "python/intelligence/server/scope.py",
+        "python/intelligence/trust/classifier.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "gRPC service over the generated IntelligenceGateway contract on loopback TCP or a unix socket, with a single scope/deadline gate (tenant, workspace, correlation id, capability projection id, deadline) that aborts before any handler logic; ClassifyTrust is genuinely implemented as deterministic non-LLM labelling plus injection heuristics; every behaviour owned by a later task returns a typed unimplemented failure naming the owner; graceful SIGTERM drain and no payload logging. Verified on main after the subagent was interrupted by a full disk: 71 Python-plane tests, ruff/format/mypy strict, 181 repository tests, architecture and duplicate-authority gates clean."
     },
     "INT-002": {
       "coverage": null,

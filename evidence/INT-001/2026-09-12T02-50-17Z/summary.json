@@ -1,0 +1,96 @@
+{
+  "task_id": "INT-001",
+  "git_commit": "2617c863c7de698336f256535c5bd1349698c745",
+  "recorded_at": "2026-09-12T02:50:50Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-001/2026-09-12T02-50-17Z/command-1.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-001/2026-09-12T02-50-17Z/command-2.log"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-001/2026-09-12T02-50-17Z/command-3.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-001/2026-09-12T02-50-17Z/command-4.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-001/2026-09-12T02-50-17Z/command-5.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/server/servicer.py",
+      "sha256": "6b0a7e15a6a86da9e4891c07fb8e5249c0aadc717b386674558b0a608d47674d",
+      "bytes": 10005
+    },
+    {
+      "path": "python/intelligence/server/scope.py",
+      "sha256": "9e4793d979096d4af969759f065f03dc930c06d87325d546ba2708c09695b103",
+      "bytes": 6820
+    },
+    {
+      "path": "python/intelligence/server/app.py",
+      "sha256": "0ace9d44e497b3424154444328e80d9955b6b060a98ccbc4a3e7a8aa073d7bce",
+      "bytes": 9436
+    },
+    {
+      "path": "python/intelligence/trust/classifier.py",
+      "sha256": "a55322f054923c8e87524931029576b7f8a69a26927572bfc44cebdc14216856",
+      "bytes": 7070
+    },
+    {
+      "path": "python/tests/intelligence/test_server_boundary.py",
+      "sha256": "f138f3e49873152a1e0e5feb11e97053ceb7e9a3e8ddb27fea5b2a8f60005ff3",
+      "bytes": 21598
+    },
+    {
+      "path": "python/tests/intelligence/test_trust_classifier.py",
+      "sha256": "a812126f61d6128e80f8f0dbdb8ad611fc04ad2fbdc533bd15fd00a4035db908",
+      "bytes": 3958
+    }
+  ]
+}
