@@ -502,6 +502,9 @@ Generation/lease concerns: none.
 
 ## Known defects
 
+**Intermittent intelligence-plane failure (unidentified).** Across 9 full-suite runs while verifying INT-012, 2 reported `1 failed, 235 passed, 6 skipped` and 7 reported `236 passed` — roughly one run in five. The failing test was never identified (the first failure's output was filtered away and six follow-up runs were clean). Most likely the suites that start a loopback conformance stub provider. Treat a green plane run as necessary but not sufficient until this is pinned down.
+
+
 Release-quality placeholder audit (DOMAIN §26 defect search), run on `main` after RUN-008:
 
 ```bash
