@@ -48,6 +48,7 @@ from intelligence.model_gateway.adapters.base import (
 )
 from intelligence.model_gateway.catalog import ModelCatalog
 from intelligence.model_gateway.credentials import CredentialResolver
+from intelligence.model_gateway.dlp import DlpDecision, DlpGuard
 from intelligence.model_gateway.errors import GatewayError, GatewayErrorCode
 from intelligence.model_gateway.events import (
     EventFactory,
@@ -150,6 +151,7 @@ class ModelGateway:
         tool_schemas: ToolSchemaSource | None = None,
         transport: HttpTransport | None = None,
         selector: RouteSelector | None = None,
+        dlp: DlpGuard | None = None,
         clock: Callable[[], float] = time.time,
         logger: logging.Logger | None = None,
     ) -> None:
@@ -158,10 +160,15 @@ class ModelGateway:
         self._credentials = credentials if credentials is not None else CredentialResolver(self._environ)
         self._tool_schemas = tool_schemas if tool_schemas is not None else MappingToolSchemaSource()
         self._transport = transport if transport is not None else StdlibHttpTransport()
+        # INT-003 owns selection policy and provides `PolicyRouteSelector`; which selector a
+        # deployment runs is the composition root's decision, so an uninjected gateway keeps the
+        # INT-002 path and the seam stays injectable (see HANDOFF.md).
         self._selector = selector if selector is not None else CatalogPrimarySelector()
+        self._dlp = dlp
         self._clock = clock
         self._logger = logger if logger is not None else logging.getLogger(LOGGER_NAME)
         self._cancellations = CancellationRegistry()
+        self._dlp_decision: DlpDecision | None = None
 
     @classmethod
     def from_environment(
@@ -189,6 +196,11 @@ class ModelGateway:
     @property
     def cancellations(self) -> CancellationRegistry:
         return self._cancellations
+
+    @property
+    def dlp_decision(self) -> DlpDecision | None:
+        """The data-policy decision of the last prepared call, when one was prepared."""
+        return getattr(self, "_dlp_decision", None)
 
     def resolve_route(self, request: intelligence_pb2.ModelCallRequest) -> RouteDecision:
         """Deterministic route resolution; raises `ROUTE_UNAVAILABLE` when nothing resolves."""
@@ -262,6 +274,13 @@ class ModelGateway:
         budget_ms = request.timeout_ms if remaining_ms is None else min(request.timeout_ms, remaining_ms)
 
         route = self.resolve_route(request)
+        # When a data policy is installed (INT-003), it is enforced before a byte is built for
+        # transmission: a disallowed data/provider combination fails here, and what does leave is
+        # redacted first.
+        if self._dlp is not None:
+            self._dlp_decision = self._dlp.check(request, route.model, route.provider)
+            if self._dlp_decision.fired_redactions:
+                self._dlp.redact(request)
         provider = route.provider
         if request.max_output_tokens > route.model.context_window:
             raise GatewayError(
