@@ -1,0 +1,117 @@
+{
+  "task_id": "INT-005",
+  "git_commit": "a2d621784fd403544359b80e61cd4811f2efe280",
+  "recorded_at": "2026-09-12T11:47:09Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test context_bridge",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T11-46-48Z/command-1.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_search_program.py tests/intelligence/test_context_projection.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T11-46-48Z/command-2.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T11-46-48Z/command-3.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T11-46-48Z/command-4.log"
+    },
+    {
+      "command": "cargo clippy --workspace --offline --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T11-46-48Z/command-5.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-12T11-46-48Z/command-6.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test context_bridge",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_search_program.py tests/intelligence/test_context_projection.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --offline --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/runtime/context_bridge/mod.rs",
+      "sha256": "04d9cdea06dd23257e4df535d6fa4782b960cf41205e3c5ebda52227c988a458",
+      "bytes": 3480
+    },
+    {
+      "path": "crates/server/src/runtime/context_bridge/port.rs",
+      "sha256": "b464cd15706d81bc4f2b7eeb24d07005e6fea6cacc12deca00e99a452f466f5b",
+      "bytes": 10294
+    },
+    {
+      "path": "crates/server/src/runtime/mod.rs",
+      "sha256": "be1b015157a88b4116b6994d2fe438a9b55751c8c118e80c71fec5e174261afd",
+      "bytes": 517
+    },
+    {
+      "path": "crates/server/tests/context_bridge.rs",
+      "sha256": "919932081e5956de2e7bbc445302a514ea5dd08458ffcdd886f08deca8541020",
+      "bytes": 10133
+    },
+    {
+      "path": "python/intelligence/context/search.py",
+      "sha256": "ac44312f668cab528fde20934e43c508163b6bec6d6ebc09eda090fac690f7d9",
+      "bytes": 12102
+    },
+    {
+      "path": "python/intelligence/context/projection.py",
+      "sha256": "f5be2d7b4c7eb2487192e95dcd2a58e2f6245238c5811cdeb01f0d27dc8947e9",
+      "bytes": 10772
+    },
+    {
+      "path": "python/tests/intelligence/test_search_program.py",
+      "sha256": "c7f24b112551cac76dda22b8075c3fa13168242149e6691f8b2b63ce3a5b54c1",
+      "bytes": 7603
+    },
+    {
+      "path": "python/tests/intelligence/test_context_projection.py",
+      "sha256": "cdbc7d1b759f693f202202233e28d972eb500453c780a7480031cd5d634e7f1a",
+      "bytes": 8111
+    }
+  ]
+}

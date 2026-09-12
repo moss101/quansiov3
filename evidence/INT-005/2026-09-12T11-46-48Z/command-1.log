@@ -1,0 +1,11 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.41s
+     Running tests/context_bridge.rs (target/debug/deps/context_bridge-329bf8546dd67e7a)
+
+running 3 tests
+test an_unwired_bridge_fails_closed_rather_than_fabricating_context ... ok
+test a_projection_the_plane_could_not_label_is_refused_before_the_run_sees_it ... ok
+test a_labelled_projection_is_accepted_and_its_id_is_recorded_on_the_turn ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+

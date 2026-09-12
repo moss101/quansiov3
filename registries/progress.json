@@ -819,28 +819,34 @@
     },
     "INT-005": {
       "coverage": "GENUINE_GAP",
-      "status": "IN_PROGRESS",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T10:01:29Z",
-      "updated_at": "2026-09-12T10:59:22Z",
-      "git_commit": "1e12ba6491066f96351099114adc0e4665d9223e",
+      "updated_at": "2026-09-12T11:47:09Z",
+      "git_commit": "a2d621784fd403544359b80e61cd4811f2efe280",
       "tests": [
         "(cd python && uv run --frozen pytest tests/intelligence/test_search_program.py tests/intelligence/test_context_projection.py -q) (22 tests: AST validation, closed vocabulary, literal-only values, canonical form, trust-required, ledger/provenance, budget packing, dedupe, stable prefix, stale snapshot, contract parity)",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test context_bridge (3 tests: labelled projection recorded on the turn, unlabelled projection refused before the run sees it, unwired bridge fails closed)",
+        "cargo test -p quansio-server --lib context_bridge (6 unit tests: boundary validation and stale snapshot)",
         "(cd python && uv run --frozen pytest -q) (216 passed, 6 skipped live-provider cases)",
-        "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+        "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings",
         "bash scripts/ci/ci.sh"
       ],
       "artifacts": [
-        "evidence/INT-005/2026-09-12T10-59-12Z/summary.json",
+        "evidence/INT-005/2026-09-12T11-46-48Z/summary.json",
+        "crates/server/src/runtime/context_bridge/mod.rs",
+        "crates/server/src/runtime/context_bridge/port.rs",
+        "crates/server/src/runtime/mod.rs",
+        "crates/server/tests/context_bridge.rs",
         "python/intelligence/context/search.py",
         "python/intelligence/context/projection.py",
         "python/tests/intelligence/test_search_program.py",
         "python/tests/intelligence/test_context_projection.py"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "IN PROGRESS \u2014 both Python halves are implemented and verified; the Rust bridge remains. DONE: context/search.py implements \u00a711.3's SearchProgram as data (six channels, typed predicates over a closed field/operator vocabulary, canonical order-independent serialization, fail-closed validation) and context/projection.py implements \u00a711.2's ContextProjection: a segment without a trust_level is refused at construction AND against the policy floor, a bundle records its program key, snapshot, policy and token ledger (used/remaining/dropped tokens and dropped segments by channel), packing is deterministic (score, then trust, then id) and bounded, duplicates are deduplicated with the more trusted copy winning, degradation is reported, the stable prefix is a pure function of stable-trust segments only (so it is cacheable and excludes agent-generated and external content), and a projection whose sources have moved is refused rather than served. All three acceptance statements are now covered by tests that fail if they were false: no executable predicate strings (plus a structural no-evaluator gate), the bundle records source/snapshot/policy/ledger, and every segment carries a trust_level with a missing one rejected. Evidence: evidence/INT-005/<ts>/; 22 tests, the plane passes 216/216 (6 skipped live-provider), ruff/format/mypy clean, ci.sh green. REMAINING: crates/server/src/runtime/context_bridge/ \u2014 the Rust side that hands the canonical program to the intelligence plane and receives the projection, applying the runtime's \u00a712 trust labels at that boundary (INT-001 owns the typed RPC boundary it crosses); CORE-009's indexer is PASS, so the exact and lexical channels have a real backend."
+      "notes": "ContextProjection and typed SearchProgram, both halves. python/intelligence/context/search.py implements \u00a711.3's SearchProgram as data (six channels, typed predicates over a closed field/operator vocabulary, canonical order-independent serialization, fail-closed validation, and a structural gate proving the module cannot evaluate anything) and projection.py implements \u00a711.2's ContextProjection (a segment without a trust_level is refused at construction and against the policy floor; the bundle records program key, snapshot, policy and token ledger with dropped tokens and segments by channel; deterministic bounded packing; dedupe keeping the more trusted copy; reported degradation; a stable prefix that is a pure function of stable-trust segments only; and a projection whose sources moved is refused). crates/server/src/runtime/context_bridge implements the runtime's side: ContextBridgePort is the only way a run asks for a projection, validate_projection is a fail-closed boundary check (an unlabelled or unknown-labelled segment, a projection without identity or snapshot, and a stale snapshot are all refused before the run sees anything), and a validated projection's id is what the turn records (turns.context_projection_id), so a turn is always traceable to its context - proven end to end by running a real turn and reading the row back. The bridge deliberately does not re-implement search, ranking or packing: that is the plane's authority, and its production RPC implementation belongs to INT-001's typed boundary (the port's default fails closed until then). All three acceptance statements are covered by tests that fail if they were false. Evidence: evidence/INT-005/<ts>/; 36 Rust suites, the Python plane 216/216 (6 skipped live-provider), fmt/clippy clean, ci.sh green."
     },
     "INT-006": {
       "coverage": null,
