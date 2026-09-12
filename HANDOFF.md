@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0 complete; M1: CORE-001…CORE-004, CORE-006, CORE-007 PASS; 15 of 99 tasks complete)
+Updated: 2026-09-12 (M0 complete; M1: CORE-001…CORE-007 PASS; 16 of 99 tasks complete)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,9 +16,9 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M1 — canonical state, events and persistence
-Current task: CORE-005 (GraphTransaction), CORE-008 (scheduler and durable timers) and CORE-009
-(projections and resumable streaming) delegated in isolated worktrees
-Current task status: 15 of 99 tasks `PASS`; the baseline pipeline is green on `main`
+Current task: CORE-008 (scheduler and durable timers), CORE-009 (projections and resumable streaming),
+INT-001 (Python intelligence service) and INT-004 (Rust indexer) delegated in isolated worktrees
+Current task status: 16 of 99 tasks `PASS`; the baseline pipeline is green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
@@ -55,6 +55,12 @@ Current language: Rust + SQL
   `deny.toml` completeness, deterministic CycloneDX SBOM with drift verification, a real
   RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill quarantine-lifecycle checks; `cargo-deny` is an
   explicit informational result when absent. Evidence: `evidence/OPS-007/<ts>/`.
+- CORE-005 — GraphTransaction — `PASS` (`crates/graph/src/transaction/`): one transaction applies the graph
+  batch under a single `graph_heads` compare-and-set and stages every RuntimeEvent (tenant sequence +
+  outbox row) before one commit, so a rejected change rolls back state and events together; `PlanProposal`
+  application enforces `base_revision`, bounded size, acyclicity and the RUN-005 narrowing hook; change
+  kinds that DOMAIN §9.2 does not yet name are rejected before the transaction opens. Evidence:
+  `evidence/CORE-005/<ts>/`.
 - CORE-007 — artifact and evidence storage — `PASS` (`crates/server/src/artifacts/`): metadata authority
   plus a SigV4 S3 client writing tenant-prefixed, content-addressed keys to the dev MinIO with multipart
   upload and SSE-S3; evidence is insert-only with new identities per capture; grants fail closed;
@@ -80,9 +86,11 @@ Current language: Rust + SQL
 
 ## What is currently being implemented
 
-TASK: CORE-005 — GraphTransaction: one atomic, revision-checked, event-emitting mutation across
-WorkGraph/AgentGraph/StateGraph, on top of `crates/graph::apply_batch` and
-`crates/events::EventStore::commit_mutation`.
+TASK: INT-001 — Python intelligence service over the generated `IntelligenceGateway` gRPC contract
+(`python/intelligence/`): typed scope/deadline enforcement, a real deterministic `ClassifyTrust`, and
+typed unimplemented failures for behaviour owned by later tasks.
+TASK: INT-004 — Rust indexer and `SearchIndex` API (`crates/indexer/`): exact/lexical/symbol channels over
+artifact text, typed SearchProgram filters, rebuildability, tenant isolation and budgets.
 TASK: CORE-008 — scheduler, waits and durable timers (`crates/server/src/scheduler/`): persisted timers,
 wait registry, single-fire leasing and routine due-time computation.
 TASK: CORE-009 — projections and resumable streaming (`crates/events`): rebuildable read models with
