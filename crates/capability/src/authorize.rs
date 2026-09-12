@@ -106,6 +106,10 @@ pub struct Authorization {
 }
 
 /// One authorization request.
+///
+/// The current projection inputs are a required part of the request: dispatch can only
+/// authorize against the inputs it has actually resolved, so a projection whose
+/// `inputs_digest` no longer matches them is caught as stale instead of being trusted.
 #[derive(Debug, Clone)]
 pub struct AuthorizationRequest<'a> {
     /// The proposed effect class.
@@ -116,10 +120,11 @@ pub struct AuthorizationRequest<'a> {
     pub tier: Tier,
     /// The approval the caller already holds (`always` means a receipt is available).
     pub requested_approval: Approval,
+    /// The inputs currently resolved for the subject; the staleness check compares them
+    /// with the projection's `inputs_digest`.
+    pub current_inputs: &'a [ProjectionInput],
     /// When the decision is made.
     pub now: DateTime<Utc>,
-    /// The current projection inputs; when supplied, a digest mismatch is stale.
-    pub current_inputs: Option<&'a [ProjectionInput]>,
 }
 
 impl<'a> AuthorizationRequest<'a> {
@@ -130,14 +135,15 @@ impl<'a> AuthorizationRequest<'a> {
         resource: &'a ResourceSelector,
         tier: Tier,
         requested_approval: Approval,
+        current_inputs: &'a [ProjectionInput],
     ) -> Self {
         Self {
             effect_class,
             resource,
             tier,
             requested_approval,
+            current_inputs,
             now: Utc::now(),
-            current_inputs: None,
         }
     }
 
@@ -147,16 +153,10 @@ impl<'a> AuthorizationRequest<'a> {
         self.now = now;
         self
     }
-
-    /// Supply the current inputs, enabling the `inputs_digest` staleness check.
-    #[must_use]
-    pub fn with_current_inputs(mut self, current_inputs: &'a [ProjectionInput]) -> Self {
-        self.current_inputs = Some(current_inputs);
-        self
-    }
 }
 
-/// Authorize one proposed effect against a projection.
+/// Authorize one proposed effect against a projection and the inputs currently resolved
+/// for its subject.
 ///
 /// # Errors
 /// Returns [`CapabilityError::StaleProjection`] when the projection is expired or its
@@ -166,7 +166,7 @@ pub fn authorize(
     projection: &CapabilityProjection,
     request: &AuthorizationRequest<'_>,
 ) -> Result<Authorization, CapabilityError> {
-    if let Some(reason) = projection.staleness(request.current_inputs, request.now) {
+    if let Some(reason) = projection.staleness(Some(request.current_inputs), request.now) {
         return Err(CapabilityError::StaleProjection(Box::new(
             StaleProjection {
                 projection_id: projection.id.to_string(),

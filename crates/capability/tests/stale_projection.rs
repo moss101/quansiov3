@@ -37,9 +37,9 @@ fn request<'a>(
         resource,
         Tier::new(0).expect("tier"),
         Approval::Always,
+        inputs,
     )
     .with_now(now)
-    .with_current_inputs(inputs)
 }
 
 #[test]
