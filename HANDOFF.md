@@ -16,7 +16,7 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M2 — the runtime loop (M0/M1 complete)
-Current task: none in flight — RUN-011 closed `PASS`; the next dependency-ready task is RUN-008
+Current task: none in flight — RUN-011 closed `PASS`; `--next` selects RUN-004 (then RUN-008, INT-003, INT-005, INT-011, EXEC-001)
 Current task status: 27 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
 Current owner: `agent:principal-1`
 Current component: `turn loop` (`crates/server/src/runtime/turn_loop/`, `crates/tools/`)
@@ -194,20 +194,21 @@ through capability, policy, approval, the Effect Ledger and the host seam.
 
 ## Exact next action
 
-Take RUN-008 (CompletionContract verification) next: it closes the turn loop's `completion_claim`
-branch, which still returns `SeamNotAvailable` naming RUN-008, and it depends only on the Effect Ledger
-that is already `PASS`. Then RUN-004 (concurrency, fanout/fanin, cancellation and waits), which completes
-M2. Before wiring the planner into the turn loop, apply the alias fix recorded under "Architecture
-decisions" so a plan can reference nodes it creates in the same batch.
+Run `python3 scripts/validate_v81.py --next` and take what it selects: right now that is **RUN-004**
+(concurrency, fanout/fanin, cancellation and waits), which completes M2, followed by **RUN-008**
+(CompletionContract verification — it closes the turn loop's `completion_claim` branch, which still
+returns `SeamNotAvailable` naming RUN-008, and it depends only on the Effect Ledger that is already
+`PASS`). Before wiring the planner into the turn loop, apply the alias fix recorded under
+"Architecture decisions" so a plan can reference nodes it creates in the same batch.
 Database-backed suites need `scripts/dev/up` plus
 `QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio`; the baseline
 pipeline derives that URL from the generated `.env` automatically.
 
 ## Ready queue
 
-1. `RUN-008` — CompletionContract verification (depends on the Effect Ledger, now PASS); it closes the
+1. `RUN-004` — concurrency, fanout/fanin, cancellation and waits; completes M2 (`--next` selects it).
+2. `RUN-008` — CompletionContract verification (depends on the Effect Ledger, now PASS); it closes the
    turn loop's completion-claim branch.
-2. `RUN-004` — concurrency, fanout/fanin, cancellation and waits; completes M2.
 3. `INT-003` — deterministic model selection, DLP and failover (ready; real boundary like INT-002).
 4. `INT-005` — ContextProjection and typed SearchProgram; supplies the trust labels RUN-011 reads.
 5. `EXEC-001` — machine control and execution-target lifecycle.
