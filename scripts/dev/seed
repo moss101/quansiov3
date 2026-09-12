@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Seed deterministic, non-secret development identities into the dev stack:
+# one personal tenant, one workspace and one teammate template. Idempotent:
+# repeated runs keep the same row identifiers (infra/compose/seed/seed.sql).
+#
+# Usage: scripts/dev/seed
+set -euo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
+
+require_docker
+
+compose exec -T postgres psql -v ON_ERROR_STOP=1 -q \
+  -U "$QUANSIO_DEV_POSTGRES_USER" -d "$QUANSIO_DEV_POSTGRES_DB" \
+  < "$ROOT/infra/compose/seed/seed.sql"
+
+# Ensure the tenant-prefixed dev bucket exists (idempotent).
+compose run --rm minio-init >/dev/null
+
+echo "dev stack: seeded deterministic identities tn_/ws_/agt_ (see infra/compose/README.md)"

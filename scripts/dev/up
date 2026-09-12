@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Start the deterministic local development stack and block until it is
+# health-ready (Postgres+pgvector, NATS JetStream, MinIO). Idempotent.
+#
+# Usage: scripts/dev/up [--vector]
+#   --vector  also start the optional external vector adapter (compose profile)
+set -euo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
+
+PROFILE_ARGS=()
+for arg in "$@"; do
+  case "$arg" in
+    --vector) PROFILE_ARGS+=(--profile "$(cfg vector_adapter_profile)") ;;
+    *)
+      echo "usage: scripts/dev/up [--vector]" >&2
+      exit 2
+      ;;
+  esac
+done
+
+require_docker
+write_env_file
+
+echo "dev stack: starting project $QUANSIO_DEV_COMPOSE_PROJECT"
+if ((${#PROFILE_ARGS[@]})); then
+  compose "${PROFILE_ARGS[@]}" up -d --remove-orphans
+else
+  compose up -d --remove-orphans
+fi
+
+"$ROOT/scripts/dev/healthcheck"

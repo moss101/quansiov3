@@ -1,0 +1,56 @@
+# Quansio V8.1 local development stack configuration (GOV-007).
+#
+# Non-secret only: service/image names, loopback host ports and the NAMES of the
+# environment variables that carry settings. Passwords and tokens never appear
+# here; scripts/dev/up injects dev-only defaults into a generated, gitignored
+# .env at the repository root, and every value can be overridden by exporting
+# the variable before running scripts/dev/up.
+#
+# Flat `key: value` entries are read by scripts/dev/_common.sh (cfg()).
+version: 1
+compose_file: infra/compose/compose.yaml
+compose_project: quansio-dev
+env_file: .env
+
+# PostgreSQL 16+ with pgvector (DOSSIER.md §9). Env var names:
+# QUANSIO_DEV_POSTGRES_{HOST,PORT,USER,PASSWORD,DB}.
+postgres_image: pgvector/pgvector:pg17
+postgres_host: 127.0.0.1
+postgres_port: 55440
+postgres_user: quansio
+postgres_db: quansio
+postgres_password_env: QUANSIO_DEV_POSTGRES_PASSWORD
+
+# NATS JetStream (DOSSIER.md §9). Env var names:
+# QUANSIO_DEV_NATS_{PORT,MONITOR_PORT}.
+nats_image: nats:2.11-alpine
+nats_host: 127.0.0.1
+nats_port: 54230
+nats_monitor_port: 54231
+
+# MinIO S3-compatible object storage (DOSSIER.md §9). Env var names:
+# QUANSIO_DEV_MINIO_{PORT,CONSOLE_PORT,BUCKET,ROOT_USER,ROOT_PASSWORD}.
+minio_image: quay.io/minio/minio:latest
+minio_mc_image: minio/mc:RELEASE.2024-01-13T08-44-48Z
+minio_host: 127.0.0.1
+minio_port: 59010
+minio_console_port: 59011
+minio_bucket: quansio-dev
+minio_root_user: quansio-dev
+minio_root_password_env: QUANSIO_DEV_MINIO_ROOT_PASSWORD
+
+# Offline stub model provider (OpenAI-compatible). Config env var name:
+# QUANSIO_DEV_STUB_PROVIDER_PORT. Point config/models.yaml's openai-compatible
+# provider at it with QUANSIO_OPENAI_COMPATIBLE_BASE_URL.
+stub_provider_image: python:3.12-slim
+stub_provider_host: 127.0.0.1
+stub_provider_port: 59020
+
+# Optional external vector adapter, opt-in via the `vector` compose profile.
+vector_adapter_profile: vector
+vector_adapter_image: qdrant/qdrant:v1.12.4
+vector_adapter_host: 127.0.0.1
+vector_adapter_port: 59030
+
+# Bounded wait (seconds) for scripts/dev/healthcheck.
+health_timeout_seconds: 90
