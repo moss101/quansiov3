@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0/M1 complete; M2/M3 in progress; 23 PASS + 1 BLOCKED_EXTERNAL)
+Updated: 2026-09-12 (M0/M1 complete; M2/M3 in progress; 24 PASS + 1 BLOCKED_EXTERNAL)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,9 +16,8 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M1 — canonical state, events and persistence
-Current task: RUN-006 (policy, RBAC, privacy, approvals) and RUN-003 (plan compilation), delegated in
-parallel worktrees
-Current task status: 23 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; pipeline green on `main`
+Current task: RUN-006 (policy, RBAC, privacy, approvals) is in flight; RUN-003 closed
+Current task status: 24 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; pipeline green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
@@ -55,6 +54,14 @@ Current language: Rust + SQL
   `deny.toml` completeness, deterministic CycloneDX SBOM with drift verification, a real
   RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill quarantine-lifecycle checks; `cargo-deny` is an
   explicit informational result when absent. Evidence: `evidence/OPS-007/<ts>/`.
+- RUN-003 — plan compilation and validation — `PASS` (`crates/server/src/runtime/planning/`): proposals are
+  compiled and validated before touching the graph — bounded by the policy `max_plan_nodes` (25 when no
+  policy exists), malformed input rejected while writing nothing, acyclicity checked over existing edges,
+  `parent_id` chains and the proposal's own additions, CompletionContract ownership or inheritance recorded
+  per node, capability needs checked with RUN-005's narrowing algebra, and `base_revision` compare-and-set
+  enforced before the single GraphTransaction applies the batch. Determinism is proven by identical revision,
+  event sequence and node shape across repeat runs and after a simulated restart. Evidence:
+  `evidence/RUN-003/<ts>/`.
 - RUN-005 — Capability Projection — `PASS` (`crates/capability/`): the algebra composes grants by
   intersection with most-restrictive constraints over all nine DOMAIN §6.1 selector kinds; projection
   assembly follows the fixed §6.2 layer order and ignores + records any widening attempt as
@@ -148,7 +155,7 @@ pipeline derives that URL from the generated `.env` automatically.
 
 1. `RUN-006` — policy, RBAC, privacy guards and approvals (in flight, delegated); it unblocks RUN-007
    (Effect Ledger) and RUN-011 (tool dispatch).
-2. `RUN-003` — compile model plans into validated WorkGraph mutations (in flight, delegated).
+2. `RUN-004` — concurrency, fanout/fanin, cancellation and waits.
 3. `INT-003` — deterministic model selection, DLP and failover (ready; real boundary like INT-002).
 4. `INT-005` — ContextProjection and typed SearchProgram.
 5. `EXEC-001` — machine control and execution-target lifecycle.
@@ -174,6 +181,15 @@ rather than fabricated.
 
 ## Architecture decisions made during implementation
 
+- **Plan batches cannot yet reference their own nodes (RUN-003 limitation).** CORE-005's
+  `GraphChange::CreateWorkNode` generates a `wn_` id inside the transaction with no alias, so a plan that
+  creates a parent and a child together cannot point the child at the new parent; intra-plan references are
+  validated and then rejected with `VALIDATION_SCHEMA`, and created nodes must start `draft`. *Fix (before
+  RUN-011 wires the planner into the turn loop):* add an optional caller-supplied alias to
+  `CreateWorkNode` in `crates/graph/src/transaction/` and have the transaction resolve aliases (parent ids
+  and edge endpoints) to the generated ids inside the same batch, then widen RUN-003's planning test set to
+  cover a parent/child proposal applied in one transaction. Affected paths: `crates/graph/src/transaction/`,
+  `crates/graph/tests/`, `crates/server/tests/planning.rs`.
 - **Runtime state tables are duplicated and guarded (RUN-001).** The runtime keeps its own copies of the
   DOMAIN run/turn/step/attempt status values because `crates/graph` depends on the server's schema module,
   so `crates/server` cannot depend on `crates/graph` (a package cycle). `tests/architecture/test_runtime_state_parity.py`
