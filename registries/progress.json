@@ -552,18 +552,28 @@
       "notes": "Evaluation order is RBAC -> capability projection -> trust escalation -> privacy -> sequence guards -> policy rules -> receipt requirement -> user rules, with tenant and workspace policies merged most-restrictively (deny>ask>allow) and no matching rule at effective tier >= 1 denying. Tier 4 always asks: an always user rule is rejected on store and ignored on evaluation. Receipts bind id/request/effect/approver/params_digest/scope/generation/expiry and are signed with HMAC-SHA256 under a server key from QUANSIO_APPROVAL_SIGNING_KEY (absent key fails closed); verification is constant-time and single-use, so a receipt for one action cannot authorize a changed one, and nothing is written on failure. A parameter change supersedes a pending request with one approval.superseded event. Escalation follows DOMAIN \u00a712 rule 2 (tier >= 2 derived from UNTRUSTED_EXTERNAL escalates one tier) rather than the brief's paraphrase, and escalated proposals cannot use always. Trust labelling arrives through an injected source, fail-closed until INT-012."
     },
     "RUN-007": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-run007",
+      "started_at": "2026-09-12T05:16:05Z",
+      "updated_at": "2026-09-12T05:16:05Z",
+      "git_commit": "f70e94c",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test effects",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/RUN-007/2026-09-12T05-13-09Z/summary.json",
+        "crates/server/src/effects/ledger.rs",
+        "crates/server/src/effects/model.rs",
+        "crates/server/src/effects/taxonomy.rs",
+        "config/effects.yaml"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Universal Effect Ledger: reservation derives the idempotency key from effect class, resource and params digest and leans on the schema's partial unique in-flight index, so racing dispatchers reserve exactly one action and an in-flight duplicate is a typed conflict; every transition is one event-emitting transaction with exactly one effect.* event and contiguous aggregate versions; settlement is terminal and re-settlement refuses before writing; an OUTCOME_UNKNOWN record cannot be retried (typed refusal) and is resolved only by reconciliation matching the class strategy from config/effects.yaml (validated against the generated catalog and failing closed on any divergence); a retry creates a new identity sharing the key and never touches the old row; approval-required actions cannot bypass the receipt; protocol state keeps next_safe_action on ReconcileEffect until settled; all reads are tenant-scoped."
     },
     "RUN-008": {
       "coverage": null,
