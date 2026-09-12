@@ -47,12 +47,27 @@ extend-exclude = ["intelligence/contracts/generated"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# The servicer implements the generated gRPC contract, whose method names are fixed by
+# quansio.v1.intelligence.IntelligenceGateway and cannot be lower-cased.
+"intelligence/server/servicer.py" = ["N802"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
 warn_unreachable = true
 disallow_any_generics = true
 no_implicit_reexport = true
+mypy_path = "intelligence/contracts/generated"
+# The generated tree is analysed once, under its canonical `quansio.v1.*` name.
+exclude = '^intelligence/contracts/generated/'
+
+[[tool.mypy.overrides]]
+# protoc-generated protobuf/gRPC modules and grpcio are machine-written, unannotated.
+module = ["quansio.*", "grpc", "grpc.*"]
+ignore_errors = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
