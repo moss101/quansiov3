@@ -1,0 +1,128 @@
+{
+  "task_id": "RUN-004",
+  "git_commit": "79557f2236a1953108a3c3265c0ad4f5e0f378ee",
+  "recorded_at": "2026-09-12T07:47:02Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test orchestration",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-12T07-44-00Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-graph --test orchestration",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-12T07-44-00Z/command-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --lib",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-12T07-44-00Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server -p quansio-tools -p quansio-graph",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-12T07-44-00Z/command-4.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-12T07-44-00Z/command-5.log"
+    },
+    {
+      "command": "cargo clippy --workspace --offline --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-12T07-44-00Z/command-6.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-12T07-44-00Z/command-7.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test orchestration",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-graph --test orchestration",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --lib",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server -p quansio-tools -p quansio-graph",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --offline --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/runtime/orchestration/mod.rs",
+      "sha256": "de0674d97c4f8501d7ce1da3b4089f0b8ffee84ebbdc5e90352860aff5adcd09",
+      "bytes": 8263
+    },
+    {
+      "path": "crates/server/src/runtime/orchestration/graph.rs",
+      "sha256": "2ed981521db6f8aff056697d944de4c2e9b9f2e789bcd93ac5234bf068423850",
+      "bytes": 9811
+    },
+    {
+      "path": "crates/server/src/runtime/orchestration/queue.rs",
+      "sha256": "8de54b80a7cae19f7f506afdc26ed21369279db96c76f6c20be7507a3d1daa3d",
+      "bytes": 19714
+    },
+    {
+      "path": "crates/server/src/runtime/orchestration/capacity.rs",
+      "sha256": "193802f25b1ddd603444a88620a8d6240519589963bc2671cf29380fe4da3e0d",
+      "bytes": 5195
+    },
+    {
+      "path": "crates/server/src/runtime/orchestration/cancel.rs",
+      "sha256": "14fe46daf1f8af4ef715472fd774432bbb15afdb12aed6f11fa10b3fc198b348",
+      "bytes": 12301
+    },
+    {
+      "path": "crates/server/src/runtime/orchestration/service.rs",
+      "sha256": "701e9a798f06bb294ddceeec99f0ccd933e4b627b05f2504f170a14bbb68c603",
+      "bytes": 15111
+    },
+    {
+      "path": "crates/server/tests/orchestration.rs",
+      "sha256": "2a9abe0e270b4974c845422695d50e10b9598b90d5449b422cdc934830e63ff3",
+      "bytes": 28698
+    },
+    {
+      "path": "crates/graph/tests/orchestration.rs",
+      "sha256": "60ce672e67f100f6efdac302f6f58b98fbb6d42cb5a1a8e097550e997c45f80e",
+      "bytes": 15278
+    }
+  ]
+}

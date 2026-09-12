@@ -1,0 +1,448 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+   Compiling quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/crates/graph)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.28s
+     Running unittests src/lib.rs (target/debug/deps/quansio_graph-11cb0acf8fb00d4f)
+
+running 15 tests
+test state::tests::only_depends_on_and_parent_of_relations_must_be_acyclic ... ok
+test state::tests::every_status_declares_a_round_tripping_db_string ... ok
+test state::tests::kinds_and_origins_round_trip_through_their_db_strings ... ok
+test state::tests::run_reaches_success_only_through_verifying ... ok
+test state::tests::terminal_work_node_states_never_transition ... ok
+test state::tests::run_terminals_are_immutable ... ok
+test state::tests::step_and_attempt_transitions_fail_closed ... ok
+test transaction::event::tests::agent_thread_targets_use_domain_names_and_refuse_the_un_named_states ... ok
+test transaction::event::tests::run_targets_use_domain_names ... ok
+test transaction::event::tests::unmapped_change_kinds_are_refused ... ok
+test state::tests::unknown_state_strings_fail_closed ... ok
+test transaction::plan::tests::an_empty_contract_is_absent_and_a_populated_one_is_present ... ok
+test transaction::event::tests::mapped_change_kinds_are_accepted ... ok
+test transaction::event::tests::every_named_event_type_is_a_canonical_family_member ... ok
+test transaction::plan::tests::structural_narrowing_accepts_equal_and_rejects_wider_templates ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/agent_graph.rs (target/debug/deps/agent_graph-ea89600688a4cf5d)
+
+running 3 tests
+test the_narrowing_hook_is_invoked_and_rejection_writes_nothing ... ok
+test delegation_records_the_parent_capability_and_requires_the_parent ... ok
+test teammates_never_join_and_workers_do ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
+     Running tests/atomic_batch.rs (target/debug/deps/atomic_batch-5fbc7c3583dcf0d7)
+
+running 3 tests
+test one_invalid_item_rolls_back_the_whole_batch ... ok
+test stale_batch_revision_applies_nothing ... ok
+test one_batch_mutates_work_agent_and_state_graphs_together ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running tests/attempts_append_only.rs (target/debug/deps/attempts_append_only-e10e2f82776b7089)
+
+running 1 test
+test retries_append_attempts_and_never_overwrite_earlier_ones ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
+
+     Running tests/cycle_rejection.rs (target/debug/deps/cycle_rejection-52b10835aab51e41)
+
+running 1 test
+test graph_rejects_self_two_node_and_longer_cycles ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+     Running tests/graph_transaction.rs (target/debug/deps/graph_transaction-f65b03f75bb4a5a9)
+
+running 5 tests
+test a_rejected_transaction_emits_no_event ... ok
+test a_stale_base_revision_rejects_the_whole_transaction ... ok
+test events_carry_aggregate_identity_and_causal_metadata ... ok
+test an_invalid_last_change_rolls_back_every_row_and_event ... ok
+test a_committed_transaction_writes_state_and_events_with_contiguous_sequences ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.64s
+
+     Running tests/illegal_transitions.rs (target/debug/deps/illegal_transitions-54cf5b7a1c69d5b0)
+
+running 4 tests
+test work_node_transitions_fail_closed ... ok
+test turn_transitions_fail_closed ... ok
+test run_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+test step_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.56s
+
+     Running tests/orchestration.rs (target/debug/deps/orchestration-dc915dc3ba28f41a)
+
+running 1 test
+test a_dependent_is_not_releasable_until_every_prerequisite_is_done ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.38s
+
+     Running tests/plan_proposal.rs (target/debug/deps/plan_proposal-ee0aada9362c9ad1)
+
+running 6 tests
+test a_plan_whose_needs_exceed_the_proposer_is_rejected ... ok
+test a_plan_node_without_a_contract_or_an_inheriting_parent_is_rejected ... ok
+test replaying_an_applied_plan_conflicts_instead_of_duplicating_work ... ok
+test a_plan_above_the_policy_bound_is_rejected_and_writes_nothing ... ok
+test a_plan_that_would_close_a_cycle_is_rejected ... ok
+test an_accepted_plan_is_one_transaction_with_its_own_event ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.68s
+
+     Running tests/planning.rs (target/debug/deps/planning-33d0d3c20197b440)
+
+running 4 tests
+test replaying_a_compiled_plan_conflicts_instead_of_duplicating_nodes ... ok
+test a_compiled_plan_commits_through_graph_transaction_with_one_revision_bump ... ok
+test the_seed_node_id_is_visible_to_the_compiler_snapshot ... ok
+test the_same_plan_over_the_same_state_is_deterministic_across_runs_and_restart ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.81s
+
+     Running tests/revision_cas.rs (target/debug/deps/revision_cas-58b30caf6a6a757a)
+
+running 1 test
+test stale_revision_conflicts_and_writes_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+     Running tests/scheduler_dispatch.rs (target/debug/deps/scheduler_dispatch-f34d0fbaa7c7d6ac)
+
+running 4 tests
+test an_idle_tenant_tick_commits_no_event ... ok
+test routine_firing_creates_its_objective_through_the_command_path ... ok
+test queued_run_is_dispatched_through_the_graph_state_machine ... ok
+test timer_fire_resumes_the_run_through_the_graph_state_machine ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.56s
+
+     Running tests/tenant_isolation.rs (target/debug/deps/tenant_isolation-1d2c253426820fa9)
+
+running 1 test
+test cross_tenant_reads_and_writes_return_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-1252fb2fc1871310)
+
+running 85 tests
+test policy::approval::tests::an_empty_key_is_refused ... ok
+test artifacts::object_store::tests::endpoint_split_preserves_port_and_rejects_bad_schemes ... ok
+test artifacts::object_store::tests::object_keys_reject_traversal_and_non_tenant_prefixes ... ok
+test policy::approval::tests::request_status_round_trips_and_supersession_detects_changed_params ... ok
+test policy::approval::tests::a_signature_from_another_key_never_verifies ... ok
+test policy::approval::tests::a_valid_receipt_verifies_for_its_exact_binding ... ok
+test policy::approval::tests::binding_mismatches_are_typed_failures ... ok
+test policy::approval::tests::an_expired_receipt_is_refused ... ok
+test effects::taxonomy::tests::an_out_of_range_tier_fails_closed ... ok
+test artifacts::object_store::tests::object_keys_are_tenant_prefixed_and_content_addressed ... ok
+test effects::taxonomy::tests::an_unknown_class_fails_closed ... ok
+test effects::taxonomy::tests::a_missing_class_fails_closed ... ok
+test policy::escalation::tests::derived_trust_is_the_most_untrusted_label ... ok
+test policy::approval::tests::a_tampered_receipt_never_verifies ... ok
+test artifacts::sigv4::tests::query_encoding_is_rfc3986_and_sorted ... ok
+test artifacts::sigv4::tests::matches_the_aws_documented_signing_example ... ok
+test policy::escalation::tests::escalation_forbids_always_and_requires_receipt ... ok
+test policy::escalation::tests::every_trust_level_round_trips ... ok
+test policy::escalation::tests::trusted_derivations_never_escalate ... ok
+test effects::taxonomy::tests::builtin_covers_every_domain_class_exactly ... ok
+test policy::escalation::tests::unavailable_labelling_fails_closed ... ok
+test policy::escalation::tests::untrusted_external_escalates_tier_two_and_above_by_one ... ok
+test policy::evaluation::tests::a_failed_sequence_guard_denies ... ok
+test policy::evaluation::tests::a_user_never_denies ... ok
+test policy::evaluation::tests::a_missing_rule_at_tier_three_denies ... ok
+test policy::evaluation::tests::an_explicit_deny_beats_a_user_always ... ok
+test policy::evaluation::tests::absent_trust_fails_closed_to_untrusted ... ok
+test policy::evaluation::tests::tier_zero_without_a_rule_is_allowed ... ok
+test policy::evaluation::tests::protected_egress_without_a_grant_denies ... ok
+test policy::evaluation::tests::missing_projection_and_rbac_deny_before_any_rule ... ok
+test effects::taxonomy::tests::builtin_matches_the_generated_catalog ... ok
+test policy::evaluation::tests::untrusted_derivation_escalates_and_forbids_always ... ok
+test policy::evaluation::tests::digest_is_stable_for_identical_inputs_and_changes_with_params ... ok
+test policy::guards::tests::approval_cannot_be_used_before_it_is_granted ... ok
+test policy::guards::tests::protected_data_class_names_are_protected ... ok
+test policy::evaluation::tests::user_always_is_rejected_on_tier_four ... ok
+test policy::guards::tests::protected_movement_without_egress_grant_is_denied ... ok
+test policy::evaluation::tests::user_always_moves_ask_to_allow_only_where_policy_allows ... ok
+test policy::guards::tests::settlement_cannot_precede_its_reservation ... ok
+test policy::guards::tests::untrusted_origin_without_egress_grant_is_denied ... ok
+test policy::rbac::tests::approver_approves_but_does_not_author_work ... ok
+test policy::rbac::tests::missing_role_denies_every_workspace_action ... ok
+test policy::rbac::tests::role_names_round_trip ... ok
+test policy::rbac::tests::tenant_owner_and_admin_inherit_workspace_admin ... ok
+test policy::rbac::tests::viewer_only_reads_and_billing_only_views_usage ... ok
+test policy::rules::tests::always_on_tier_four_is_rejected ... ok
+test policy::rules::tests::conditions_fail_closed_on_unlisted_data_class ... ok
+test policy::rules::tests::rule_conditions_deny_above_tier_and_trust_ceilings ... ok
+test policy::rules::tests::canonical_rule_json_parses_and_unknown_fields_fail_closed ... ok
+test policy::rules::tests::scope_round_trips ... ok
+test policy::rules::tests::time_window_handles_wrap_and_rejects_garbage ... ok
+test policy::rules::tests::workspace_policy_can_only_narrow_tenant_policy ... ok
+test runtime::orchestration::cancel::tests::a_queued_run_is_reported_as_unstarted_not_cancelled ... ok
+test runtime::orchestration::cancel::tests::a_settled_effect_inside_the_subtree_is_not_retouched ... ok
+test runtime::orchestration::cancel::tests::an_already_cancelled_subtree_plans_nothing ... ok
+test runtime::orchestration::cancel::tests::cancellation_covers_the_subtree_its_runs_and_its_dependents ... ok
+test runtime::orchestration::capacity::tests::a_saturated_gate_refuses_with_a_typed_error ... ok
+test runtime::orchestration::capacity::tests::a_zero_limit_freezes_rather_than_unbounding ... ok
+test runtime::orchestration::capacity::tests::slots_are_counted_from_durable_run_state ... ok
+test runtime::orchestration::queue::tests::a_cycle_is_refused ... ok
+test runtime::orchestration::queue::tests::a_dependent_never_starts_before_its_prerequisite ... ok
+test runtime::orchestration::queue::tests::capacity_defers_the_tail_deterministically ... ok
+test runtime::orchestration::queue::tests::ordering_is_priority_then_id ... ok
+test runtime::orchestration::queue::tests::joins_release_once_and_block_on_a_broken_child ... ok
+test runtime::orchestration::queue::tests::parked_runs_are_waiting_not_dispatchable ... ok
+test runtime::orchestration::queue::tests::release_is_idempotent_over_the_same_snapshot ... ok
+test runtime::orchestration::queue::tests::release_makes_satisfied_work_ready_and_blocks_work_that_can_never_run ... ok
+test runtime::state_machine::state::tests::every_state_round_trips_through_its_stored_value ... ok
+test runtime::state_machine::state::tests::run_lifecycle_states_match_domain_5_2 ... ok
+test runtime::state_machine::state::tests::terminal_run_states_never_transition ... ok
+test runtime::state_machine::state::tests::unknown_state_strings_fail_closed ... ok
+test runtime::state_machine::state::tests::waiting_states_resume_cancel_fail_or_suspend_only ... ok
+test runtime::turn_loop::dispatch::tests::hosts_name_their_owning_task ... ok
+test runtime::turn_loop::dispatch::tests::output_is_bounded_to_the_declared_size ... ok
+test runtime::turn_loop::parallel::tests::control_tools_run_alone_and_last ... ok
+test runtime::turn_loop::parallel::tests::identical_calls_are_serialised ... ok
+test runtime::turn_loop::parallel::tests::independent_calls_share_a_round_and_keep_proposal_order ... ok
+test runtime::turn_loop::parallel::tests::no_calls_means_no_rounds ... ok
+test scheduler::routine::tests::absence_policies_round_trip_through_the_stored_form ... ok
+test runtime::turn_loop::parallel::tests::join_all_runs_yielding_futures_concurrently ... ok
+test runtime::turn_loop::parallel::tests::join_all_preserves_result_order_not_completion_order ... ok
+test scheduler::routine::tests::event_triggers_have_no_due_time_and_intervals_advance ... ok
+test scheduler::routine::tests::interval_specs_parse_to_positive_durations ... ok
+test scheduler::routine::tests::timezones_are_utc_or_fixed_offsets_and_fail_closed_otherwise ... ok
+test scheduler::routine::tests::cron_next_due_respects_fields_and_timezone ... ok
+
+test result: ok. 85 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/agents.rs (target/debug/deps/agents-033b2f0e6ee1db27)
+
+running 7 tests
+test capability_narrowing_accepts_only_narrowing_and_writes_nothing_on_widening ... ok
+test fanout_join_out_of_order_parks_parent_until_the_last_child_and_is_idempotent ... ok
+test generation_fencing_and_tenant_isolation_for_agent_mutations ... ok
+test handoff_is_recoverable_across_a_pool_drop_and_idempotent ... ok
+test delegating_proposal_creates_a_real_child_and_parks_the_run ... ok
+test lifecycle_transitions_for_teammate_and_worker_with_policy_negatives ... ok
+test mailbox_cursor_resumes_exactly_once_and_isolates_tenants_and_threads ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.86s
+
+     Running tests/artifacts.rs (target/debug/deps/artifacts-0c0ba4d7f7b73278)
+
+running 8 tests
+test evidence_is_insert_only_and_never_overwritten ... ok
+test digest_corruption_is_rejected_against_minio ... ok
+test artifact_round_trip_verifies_the_recorded_digest_against_minio ... ok
+test grant_scope_denies_ungranted_callers_and_read_cannot_write ... ok
+test evidence_bundle_records_claims_sources_and_verification ... ok
+test legal_hold_and_retention_are_recorded_not_silently_deleted ... ok
+test new_bytes_get_a_new_version_identity ... ok
+test multipart_attachment_round_trips_against_minio ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.28s
+
+     Running tests/command_idempotency.rs (target/debug/deps/command_idempotency-767164325c7ddb86)
+
+running 2 tests
+test duplicate_commands_replay_and_param_changes_conflict ... ok
+test stale_generations_are_rejected_before_mutation ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+
+     Running tests/effects.rs (target/debug/deps/effects-ba4ac93c6c037cb1)
+
+running 8 tests
+test approval_required_actions_cannot_bypass_the_receipt ... ok
+test unknown_outcomes_are_reconciled_by_strategy_and_never_retried ... ok
+test settlement_is_terminal_with_one_event_per_transition ... ok
+test effect_events_are_one_per_transition_in_order ... ok
+test protocol_state_keeps_reconcile_effect_until_settled ... ok
+test effect_reads_are_tenant_scoped ... ok
+test racing_dispatchers_reserve_exactly_one_action ... ok
+test retry_creates_a_new_identity_with_the_same_key ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.04s
+
+     Running tests/orchestration.rs (target/debug/deps/orchestration-11b9fe6da42b19e0)
+
+running 7 tests
+test a_waiting_parent_joins_once_its_last_child_completes ... ok
+test a_cancel_storm_cancels_each_run_once_and_blocks_dependents ... ok
+test a_cycle_in_the_graph_is_refused_before_anything_is_dispatched ... ok
+test a_lost_graph_race_is_recomputed_against_the_new_revision ... ok
+test a_dependent_with_a_failed_prerequisite_is_blocked_never_dispatched ... ok
+test capacity_bounds_concurrency_and_frees_slots_as_runs_finish ... ok
+test a_parallel_dag_releases_and_dispatches_in_dependency_order ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.95s
+
+     Running tests/planning.rs (target/debug/deps/planning-607f5071855e216b)
+
+running 12 tests
+test a_missing_base_revision_is_a_revision_conflict ... ok
+test a_two_node_cycle_is_rejected ... ok
+test a_plan_above_the_policy_bound_is_rejected_with_validation_bounds ... ok
+test replaying_an_applied_plan_conflicts_and_never_duplicates_nodes ... ok
+test a_cycle_against_the_existing_graph_is_rejected ... ok
+test an_over_authorized_plan_is_rejected_and_writes_nothing ... ok
+test a_self_edge_cycle_is_rejected ... ok
+test duplicate_ids_and_unknown_endpoints_are_rejected ... ok
+test completion_contract_inheritance_is_recorded_and_missing_contracts_are_rejected ... ok
+test malformed_proposals_are_rejected_and_write_nothing ... ok
+test a_cycle_through_proposed_parent_ids_is_rejected ... ok
+test the_same_proposal_over_the_same_starting_state_is_deterministic ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.91s
+
+     Running tests/policy.rs (target/debug/deps/policy-842e7298d5934bd1)
+
+running 11 tests
+test default_policy_evaluation_is_fail_closed_for_missing_inputs ... ok
+test protected_egress_without_a_grant_is_denied_and_settlement_before_reservation_is_refused ... ok
+test a_policy_decision_is_recorded_with_exactly_one_policy_event ... ok
+test approval_substitution_fails_closed_and_writes_nothing ... ok
+test a_run_parks_in_waiting_approval_and_resumes_only_on_its_matching_receipt ... ok
+test a_tampered_receipt_fails_verification_and_writes_nothing ... ok
+test policy_deny_wins_over_user_always_and_a_missing_rule_denies ... ok
+test a_tier_four_always_user_rule_is_rejected_and_never_stored ... ok
+test exactly_one_approval_event_per_transition_and_denial_changes_no_effect_state ... ok
+test expired_and_superseded_requests_cannot_be_granted_and_changes_supersede ... ok
+test escalation_forbids_always_and_the_preview_carries_the_untrusted_origin ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.02s
+
+     Running tests/protocol_state.rs (target/debug/deps/protocol_state-9c514a5a76a9aa71)
+
+running 5 tests
+test protocol_state_is_tenant_scoped ... ok
+test crash_restart_reconstructs_the_next_safe_action ... ok
+test partial_tool_call_recovery_reconciles_and_never_retries ... ok
+test approval_and_question_waits_survive_restart ... ok
+test checkpoints_are_generation_and_retention_fenced ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.61s
+
+     Running tests/runtime_state_machine.rs (target/debug/deps/runtime_state_machine-6d0af857a385b3e2)
+
+running 16 tests
+test stale_generation_is_fenced_before_any_write ... ok
+test protocol_state_round_trips_for_recovery ... ok
+test illegal_transitions_of_each_family_leave_state_and_events_untouched ... ok
+test suspended_run_resumes_only_with_the_current_generation ... ok
+test canonical_ownership_and_tenant_isolation_hold ... ok
+test cancellation_during_waiting_ends_cancelled_with_one_event ... ok
+test unknown_tool_outcome_suspends_for_reconciliation_never_retry ... ok
+test attempts_are_appended_never_overwritten ... ok
+test cancellation_during_running_ends_cancelled_with_one_event ... ok
+test happy_path_emits_every_event_in_order_with_contiguous_sequences ... ok
+test recovery_honours_a_cancellation_requested_before_the_crash_once ... ok
+test budget_exhaustion_stops_the_loop_without_further_model_calls ... ok
+test unavailable_seams_name_the_task_that_owns_them ... ok
+test parked_run_is_not_released_by_a_mismatched_wait_state ... ok
+test recovery_waits_for_the_matching_approval_and_is_idempotent ... ok
+test recovery_never_retries_an_unsettled_effect ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.05s
+
+     Running tests/scheduler.rs (target/debug/deps/scheduler-d7b9b41cdcb65163)
+
+running 10 tests
+test stale_generation_timer_is_fenced_and_never_wakes_the_run ... ok
+test queued_run_is_offered_to_the_graph_dispatch_port ... ok
+test due_timer_fires_once_clears_the_wait_and_emits_one_event ... ok
+test absence_policy_applies_skip_queue_and_catch_up_once ... ok
+test saturated_due_queue_returns_a_typed_error_and_drops_nothing ... ok
+test fire_reports_a_lost_claim_without_emitting ... ok
+test resolving_wait_a_cannot_resume_run_b ... ok
+test scheduled_timer_registers_a_wait_and_emits_run_waiting ... ok
+test two_concurrent_loops_fire_a_timer_exactly_once ... ok
+test durable_timer_survives_a_pool_drop_and_still_fires_at_its_due_time ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.49s
+
+     Running tests/schema_bootstrap.rs (target/debug/deps/schema_bootstrap-38929d1ab431141c)
+
+running 5 tests
+test tenant_context_validation_rejects_non_canonical_ids ... ok
+test migrations_are_reapplied_safely_over_existing_data ... ok
+test tenant_isolation_returns_zero_rows_without_context ... ok
+test unset_context_fails_closed_on_a_plain_connection ... ok
+test bootstrap_from_zero_creates_the_authoritative_schema ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.58s
+
+     Running tests/turn_loop.rs (target/debug/deps/turn_loop-0dec34643ebde035)
+
+running 11 tests
+test every_declared_effect_class_has_a_catalog_tier ... ok
+test a_delegation_wait_survives_a_restart ... ok
+test a_crash_between_dispatch_and_settlement_reconciles_instead_of_redispatching ... ok
+test independent_tool_calls_run_together_and_settle_in_proposal_order ... ok
+test a_tier_three_call_parks_for_approval_and_resumes_without_a_duplicate_dispatch ... ok
+test unknown_tools_and_unknown_fields_are_rejected_before_dispatch ... ok
+test a_call_outside_the_capability_projection_is_rejected_before_dispatch ... ok
+test a_user_ask_call_parks_the_run_and_the_question_is_durable ... ok
+test a_turn_executes_tool_proposals_through_capability_policy_and_the_effect_ledger ... ok
+test an_unprovable_proposal_chain_escalates_a_tier_two_call_to_approval ... ok
+test a_question_wait_survives_a_restart_and_resumes_on_the_answer ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.34s
+
+     Running unittests src/lib.rs (target/debug/deps/quansio_tools-721f160f622fd296)
+
+running 3 tests
+test registry::tests::families_match_only_their_own_shape ... ok
+test call::tests::urls_reduce_to_their_host ... ok
+test call::tests::paths_inside_the_root_are_recognised ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/source_trust_parity.rs (target/debug/deps/source_trust_parity-f52be6a01e115e19)
+
+running 2 tests
+test only_untrusted_external_is_data_only ... ok
+test source_trust_matches_the_generated_contract ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/tool_contract.rs (target/debug/deps/tool_contract-b062a3b741ad5b22)
+
+running 11 tests
+test schemas_reject_unsupported_vocabulary_at_load_time ... ok
+test open_object_schemas_are_refused ... ok
+test unknown_tool_is_rejected_before_dispatch ... ok
+test unknown_argument_field_is_rejected ... ok
+test missing_and_ill_typed_arguments_are_rejected ... ok
+test reserved_family_names_are_not_callable ... ok
+test declared_hosts_and_output_bounds_come_from_the_declaration ... ok
+test exposure_is_capability_filtered ... ok
+test parameter_digest_is_canonical_and_key_order_independent ... ok
+test derived_effect_class_follows_the_target_root ... ok
+test builtin_registry_covers_the_generated_tool_catalog ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_graph
+
+running 1 test
+test crates/graph/src/transaction/mod.rs - transaction (line 21) - compile ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+   Doc-tests quansio_server
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_tools
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

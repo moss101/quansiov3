@@ -6,6 +6,7 @@
 
 pub mod agents;
 pub mod checkpoints;
+pub mod orchestration;
 pub mod planning;
 pub mod protocol_state;
 pub mod state_machine;

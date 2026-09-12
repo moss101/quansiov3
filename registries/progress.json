@@ -490,18 +490,36 @@
       "notes": "Model proposals are compiled and validated before touching the graph: bounded by the policy max_plan_nodes (25 when no policy row), malformed input rejected with VALIDATION_SCHEMA while writing nothing, acyclicity checked over existing depends_on/parent_of edges, parent_id chains and the proposal's own additions, CompletionContract ownership or explicit inheritance recorded per node, capability needs checked with RUN-005's narrowing algebra, and base_revision compare-and-set enforced before the single GraphTransaction applies the batch. Determinism is proven by applying the same proposal against the same starting state twice (identical revision, aggregate/event type sequence and node shape) and once after a simulated restart; replay after acceptance fails with the revision conflict; work.plan_proposed/applied/rejected are emitted exactly once. Known limitation recorded in HANDOFF: CORE-005's CreateWorkNode generates node ids inside the transaction without an alias, so a plan cannot yet reference a node it creates in the same batch (intra-plan parents/edges are validated then rejected with VALIDATION_SCHEMA). Fix planned before RUN-011 wires the planner into the turn loop."
     },
     "RUN-004": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T07:26:17Z",
+      "updated_at": "2026-09-12T07:44:57Z",
+      "git_commit": "79557f2236a1953108a3c3265c0ad4f5e0f378ee",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test orchestration (7 tests)",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-graph --test orchestration (graph-backed port, 1 test)",
+        "cargo test -p quansio-server --lib (85 unit tests, 15 new for orchestration)",
+        "cargo test -p quansio-server -p quansio-tools -p quansio-graph (32 suites, 253 tests, 0 failures)",
+        "cargo fmt --all --check",
+        "cargo clippy --workspace --all-targets -- -D warnings",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/RUN-004/2026-09-12T07-44-00Z/summary.json",
+        "crates/server/src/runtime/orchestration/mod.rs",
+        "crates/server/src/runtime/orchestration/graph.rs",
+        "crates/server/src/runtime/orchestration/queue.rs",
+        "crates/server/src/runtime/orchestration/capacity.rs",
+        "crates/server/src/runtime/orchestration/cancel.rs",
+        "crates/server/src/runtime/orchestration/service.rs",
+        "crates/server/tests/orchestration.rs",
+        "crates/graph/tests/orchestration.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Bounded-concurrency orchestration over the canonical WorkGraph. crates/server/src/runtime/orchestration owns the execution decisions: a deterministic ready queue (priority then id), dependency release (draft/blocked -> ready once every depends_on prerequisite is done; -> blocked when one failed or was cancelled), fan-in joins (a waiting parent joins once its last child is done and is blocked if a child can never finish), a capacity gate counted from durable run state, cancellation propagation down work_nodes.parent_id with dependents blocked, and durable waits obeyed by never selecting a node whose run is parked or suspended. depends_on reads `from` depends on `to` (documented on WorkEdgeKind), so `to` is the prerequisite; orchestration refuses a cyclic snapshot instead of selecting from a graph it cannot reason about. Every started run goes through the existing scheduler RunDispatch port into the canonical Run state machine, so there is no second scheduler or orchestration authority; every node transition goes through a WorkGraphPort whose production implementation applies it as one event-emitting GraphTransaction, proven in crates/graph/tests/orchestration.rs against the real store (one revision bump per batch, a stale replay conflicts, and a dependent is never releasable while any prerequisite is unfinished). Concurrency is counted from durable run state (RUNNING/VERIFYING hold a slot; QUEUED and parked runs do not), so the bound survives a restart and two instances agree; the limit itself is supplied by the caller because RUN-010 owns budget enforcement, and a saturated limit is a typed BUDGET_EXHAUSTED refusal rather than a silent drop. Cancellation converges under a storm: runs go through the one authoritative RuntimeStore::cancel (idempotent, one run.cancelled per run, a lost transaction race counted as already-cancelled), the node batch is revision compare-and-set with bounded recomputation, and work a caller actually cancelled is reported even when a later retry wins the graph race. Two limits are recorded rather than papered over: the Run state machine has no QUEUED -> CANCELLED edge, so an unstarted run inside a cancelled subtree is reported (runs_left_unstarted) and never dispatched instead of being cancelled; and the graph-backed port's wiring belongs to the composition root (APP-001), exactly as PlanWorkspacePort does."
     },
     "RUN-005": {
       "coverage": "GENUINE_GAP",
