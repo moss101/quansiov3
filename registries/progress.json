@@ -656,17 +656,31 @@
     },
     "RUN-010": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T09:34:41Z",
-      "updated_at": "2026-09-12T09:34:41Z",
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "updated_at": "2026-09-12T09:43:11Z",
+      "git_commit": "a0568951c3fd4341e78fe068fef7f504d3b21d5d",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test budgets (3 tests: budget inheritance, capacity saturation, graceful stop)",
+        "cargo test -p quansio-server --lib (103 unit tests, 6 new budget rules)",
+        "cargo test -p quansio-server -p quansio-tools -p quansio-graph (35 suites)",
+        "cargo fmt --all --check",
+        "cargo clippy --workspace --all-targets -- -D warnings",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/RUN-010/2026-09-12T09-41-20Z/summary.json",
+        "crates/server/src/runtime/budgets/mod.rs",
+        "crates/server/src/runtime/budgets/limits.rs",
+        "crates/server/src/runtime/budgets/service.rs",
+        "crates/server/src/runtime/mod.rs",
+        "crates/server/tests/budgets.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "RUN-010 claimed: runtime budgets, quotas and capacity control (DOMAIN.md \u00a713.2). Takes over the concurrency limit RUN-004's CapacityGate expects from its caller, and adds budget limits, consumed accounting and child <= parent remaining."
+      "notes": "Runtime budgets, quotas and capacity control. crates/server/src/runtime/budgets implements DOMAIN.md \u00a713.2: limits.rs holds the pure rules (the seven meters, remaining/fits, the deterministic first-exhausted report, the child<=parent-remaining check and the narrowing helper), and service.rs is the durable authority that grants budgets, charges them and emits usage.* events. Acceptance 2 is enforced at grant time against the parent's REMAINING allowance, not its original limit, and nesting holds through the chain (a grandchild is bounded by its child parent). Acceptance 1 is met twice over: a charge beyond a limit is refused, marks the budget exhausted and emits usage.exhausted, and capacity_limit reports 0 so RUN-004's orchestration gate admits nothing; and the service writes only the budget row and its usage event, so an effect already reserved or dispatched is left untouched for the Effect Ledger \u2014 the graceful-stop test asserts an in-flight effect keeps its exact row and that no settlement event appears. The concurrency meter is the same number RUN-004's capacity gate takes from its caller, which the capacity test drives through the real gate and select(). Recorded gap, not worked around: the canonical prefix catalog (quansio.v1.core.EntityPrefix, DOMAIN.md \u00a71.1) has no budget prefix, so a budget id is supplied by its creator (BudgetService::create takes the id) rather than minted by the typed generator; extending the authority set is not this module's call."
     },
     "RUN-011": {
       "coverage": "GENUINE_GAP",

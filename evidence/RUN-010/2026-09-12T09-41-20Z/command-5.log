@@ -1,0 +1,5 @@
+    Checking quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Checking quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/crates/graph)
+    Checking quansio-indexer v0.1.0 (/Users/mohsin/projects/quansiov3/crates/indexer)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 14.12s
+exit=0

@@ -1,0 +1,11 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.39s
+     Running tests/budgets.rs (target/debug/deps/budgets-c53dd6dc35daab77)
+
+running 3 tests
+test a_budget_capacity_limit_bounds_admission_and_exhaustion_stops_it ... ok
+test budget_exhaustion_stops_new_work_without_corrupting_active_effects ... ok
+test child_budgets_cannot_exceed_parent_remaining ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s
+
