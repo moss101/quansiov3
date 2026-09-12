@@ -495,7 +495,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T07:26:17Z",
       "updated_at": "2026-09-12T07:44:57Z",
-      "git_commit": "pending-merge",
+      "git_commit": "79557f2236a1953108a3c3265c0ad4f5e0f378ee",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test orchestration (7 tests)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-graph --test orchestration (graph-backed port, 1 test)",
