@@ -879,16 +879,16 @@
     "INT-008": {
       "coverage": "GENUINE_GAP",
       "status": "BLOCKED_EXTERNAL",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-12T19:14:06Z",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T19:14:38Z",
+      "updated_at": "2026-09-12T19:14:38Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Not started in this run: the task is dependency-ready, but every path to verifying it runs through the dev stack (its own tests are database-backed), so starting it could only produce unverifiable code. It becomes the next actionable work the moment the runtime is back."
+      "notes": "Claimed for assessment only \u2014 NO code was written for INT-008 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
     },
     "INT-009": {
       "coverage": "GENUINE_GAP",
@@ -921,16 +921,16 @@
     "INT-011": {
       "coverage": "GENUINE_GAP",
       "status": "BLOCKED_EXTERNAL",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-12T19:14:06Z",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T19:14:38Z",
+      "updated_at": "2026-09-12T19:14:38Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Not started in this run: the task is dependency-ready, but every path to verifying it runs through the dev stack (its own tests are database-backed), so starting it could only produce unverifiable code. It becomes the next actionable work the moment the runtime is back."
+      "notes": "Claimed for assessment only \u2014 NO code was written for INT-011 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
     },
     "INT-012": {
       "coverage": "GENUINE_GAP",
@@ -962,16 +962,16 @@
     "EXEC-001": {
       "coverage": "GENUINE_GAP",
       "status": "BLOCKED_EXTERNAL",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-12T19:14:06Z",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T19:14:38Z",
+      "updated_at": "2026-09-12T19:14:38Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Not started in this run: the task is dependency-ready, but every path to verifying it runs through the dev stack (its own tests are database-backed), so starting it could only produce unverifiable code. It becomes the next actionable work the moment the runtime is back."
+      "notes": "Claimed for assessment only \u2014 NO code was written for EXEC-001 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
     },
     "EXEC-002": {
       "coverage": null,
@@ -1130,16 +1130,16 @@
     "APP-001": {
       "coverage": "GENUINE_GAP",
       "status": "BLOCKED_EXTERNAL",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-12T19:14:06Z",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T19:14:38Z",
+      "updated_at": "2026-09-12T19:14:38Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Not started in this run: the task is dependency-ready, but every path to verifying it runs through the dev stack (its own tests are database-backed), so starting it could only produce unverifiable code. It becomes the next actionable work the moment the runtime is back."
+      "notes": "Claimed for assessment only \u2014 NO code was written for APP-001 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
     },
     "APP-002": {
       "coverage": null,
@@ -1494,30 +1494,30 @@
     "OPS-004": {
       "coverage": "GENUINE_GAP",
       "status": "BLOCKED_EXTERNAL",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-12T19:14:06Z",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T19:14:38Z",
+      "updated_at": "2026-09-12T19:14:38Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Not started in this run: the task is dependency-ready, but every path to verifying it runs through the dev stack (its own tests are database-backed), so starting it could only produce unverifiable code. It becomes the next actionable work the moment the runtime is back."
+      "notes": "Claimed for assessment only \u2014 NO code was written for OPS-004 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
     },
     "OPS-005": {
       "coverage": "GENUINE_GAP",
       "status": "BLOCKED_EXTERNAL",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-12T19:14:06Z",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T19:14:38Z",
+      "updated_at": "2026-09-12T19:14:38Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Not started in this run: the task is dependency-ready, but every path to verifying it runs through the dev stack (its own tests are database-backed), so starting it could only produce unverifiable code. It becomes the next actionable work the moment the runtime is back."
+      "notes": "Claimed for assessment only \u2014 NO code was written for OPS-005 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
     },
     "OPS-006": {
       "coverage": null,
@@ -1601,16 +1601,16 @@
     "QA-003": {
       "coverage": "GENUINE_GAP",
       "status": "BLOCKED_EXTERNAL",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-12T19:14:06Z",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T19:14:38Z",
+      "updated_at": "2026-09-12T19:14:38Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": "the container runtime is down: `docker ps` returns 500 Internal Server Error and the dev Postgres port (127.0.0.1:55440) is closed, so every database-backed gate and test is unrunnable \u2014 `bash scripts/ci/ci.sh` fails on `toolchains` (which runs `cargo test --workspace`) while the pure gates pass. Unblock: `bash scripts/dev/up` (the project forbids `scripts/dev/down` and volume deletion), then `bash scripts/ci/ci.sh`, then merge the named branch.",
-      "notes": "Not started in this run: the task is dependency-ready, but every path to verifying it runs through the dev stack (its own tests are database-backed), so starting it could only produce unverifiable code. It becomes the next actionable work the moment the runtime is back."
+      "notes": "Claimed for assessment only \u2014 NO code was written for QA-003 in this run. The task is dependency-ready, but every path to verifying it runs through the dev stack, whose container runtime is down, so implementing it could only produce unverifiable code. It is the next actionable work the moment `bash scripts/dev/up` succeeds."
     },
     "QA-004": {
       "coverage": null,
