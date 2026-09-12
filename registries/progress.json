@@ -118,18 +118,25 @@
       "notes": ""
     },
     "GOV-006": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-12T00:25:45Z",
+      "updated_at": "2026-09-12T00:27:08Z",
+      "git_commit": "ce4e6da",
+      "tests": [
+        "python3.12 scripts/ci/legacy_map_check.py",
+        "uv run --project python pytest tests/architecture/test_legacy_map_check.py -q",
+        "python3.12 scripts/ci/inventory.py --scan"
+      ],
+      "artifacts": [
+        "evidence/GOV-006/2026-09-12T00-27-02Z/summary.json",
+        "docs/review/legacy-migration-map.md"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Greenfield: no legacy module, parallel orchestrator, direct provider call or shadow state exists; map is empty and completeness/direct-path checks are executable."
     },
     "GOV-007": {
       "coverage": null,

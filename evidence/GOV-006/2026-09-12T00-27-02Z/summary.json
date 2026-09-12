@@ -1,0 +1,70 @@
+{
+  "task_id": "GOV-006",
+  "git_commit": "ce4e6dac69113c648bb93a23f4aed55b0203e543",
+  "recorded_at": "2026-09-12T00:27:03Z",
+  "commands": [
+    {
+      "command": "python3.12 scripts/ci/legacy_map_check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-006/2026-09-12T00-27-02Z/command-1.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture/test_legacy_map_check.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-006/2026-09-12T00-27-02Z/command-2.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/inventory.py --scan",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-006/2026-09-12T00-27-02Z/command-3.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-006/2026-09-12T00-27-02Z/command-4.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "python3.12 scripts/ci/legacy_map_check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture/test_legacy_map_check.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/inventory.py --scan",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/review/legacy-migration-map.md",
+      "sha256": "825970e4c22d98c8b8c3a26e7724ac64597193394557e8cd58a0554c4239e570",
+      "bytes": 2020
+    },
+    {
+      "path": "scripts/ci/legacy_map_check.py",
+      "sha256": "48ab05906f26b9f75d4c98dbe6f2953230e722a1cd8e23877b8fef7edfe21264",
+      "bytes": 5779
+    },
+    {
+      "path": "tests/architecture/test_legacy_map_check.py",
+      "sha256": "da94fdf39eb8f1721d347e03444ce03b4a5d6b2b98b2b02ea038a737435817a2",
+      "bytes": 4239
+    }
+  ]
+}
