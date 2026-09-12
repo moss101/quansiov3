@@ -5,3 +5,4 @@
 //! tasks extend this module without introducing a second store (DOSSIER.md §5).
 
 pub mod schema;
+pub mod skills;
