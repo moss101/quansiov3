@@ -528,18 +528,28 @@
       "notes": "Capability algebra composes grants by intersection with most-restrictive constraints (max_tier=min, approval only toward ask/never, earliest expiry, smallest budget) over all nine DOMAIN \u00a76.1 selector kinds; projection assembly follows the fixed \u00a76.2 layer order, ignores and records any widening as capability.widening_rejected naming the layer, and fails closed with an empty projection plus CAPABILITY_INPUTS_UNAVAILABLE when an input layer is unavailable or a policy has a gap at tier >= 1; authorize() always re-checks the current inputs digest and expiry so a stale projection cannot authorize dispatch; delegation narrowing is implemented for RUN-002's hook. During integration the architecture gate's new-persistent-store rule was corrected: capability owns capability_projections, so it is an allowed store owner, and the rule's fixtures now cover every table-owning module."
     },
     "RUN-006": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-run006",
+      "started_at": "2026-09-12T04:56:37Z",
+      "updated_at": "2026-09-12T04:56:37Z",
+      "git_commit": "4517fcb",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test policy",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/RUN-006/2026-09-12T04-53-43Z/summary.json",
+        "crates/server/src/policy/approval.rs",
+        "crates/server/src/policy/evaluation.rs",
+        "crates/server/src/policy/store.rs",
+        "crates/server/tests/policy.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Evaluation order is RBAC -> capability projection -> trust escalation -> privacy -> sequence guards -> policy rules -> receipt requirement -> user rules, with tenant and workspace policies merged most-restrictively (deny>ask>allow) and no matching rule at effective tier >= 1 denying. Tier 4 always asks: an always user rule is rejected on store and ignored on evaluation. Receipts bind id/request/effect/approver/params_digest/scope/generation/expiry and are signed with HMAC-SHA256 under a server key from QUANSIO_APPROVAL_SIGNING_KEY (absent key fails closed); verification is constant-time and single-use, so a receipt for one action cannot authorize a changed one, and nothing is written on failure. A parameter change supersedes a pending request with one approval.superseded event. Escalation follows DOMAIN \u00a712 rule 2 (tier >= 2 derived from UNTRUSTED_EXTERNAL escalates one tier) rather than the brief's paraphrase, and escalated proposals cannot use always. Trust labelling arrives through an injected source, fail-closed until INT-012."
     },
     "RUN-007": {
       "coverage": null,
