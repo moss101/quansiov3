@@ -1,0 +1,102 @@
+{
+  "task_id": "INT-002",
+  "git_commit": "35b57b066f2103cd8b06aa79fab8d661052091d7",
+  "recorded_at": "2026-09-12T03:52:11Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-12T03-49-40Z/command-1.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-12T03-49-40Z/command-2.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-12T03-49-40Z/command-3.log"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-12T03-49-40Z/command-4.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-12T03-49-40Z/command-5.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-12T03-49-40Z/command-6.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/model_gateway/gateway.py",
+      "sha256": "89fc0b86175f8a32d1a895ac023fd819b6a176139266646f09bcc81472f63e24",
+      "bytes": 21026
+    },
+    {
+      "path": "python/intelligence/model_gateway/credentials.py",
+      "sha256": "a41d743e38978c569d2b9a01aa51279c7a8dbee537341a62808644e18e9f5b6a",
+      "bytes": 3209
+    },
+    {
+      "path": "python/intelligence/model_gateway/adapters/anthropic.py",
+      "sha256": "8e9b323ee827e8ebcd5b408f96121aab8e4917630a4cf8d7fa500aa54e8a6e5a",
+      "bytes": 13296
+    },
+    {
+      "path": "python/intelligence/model_gateway/adapters/openai.py",
+      "sha256": "7a2fbadbb52ecba84b0cc64c2661ac934e2242ac28ab7af4c13f3a1974905fc8",
+      "bytes": 12575
+    },
+    {
+      "path": "python/tests/intelligence/test_model_gateway_live.py",
+      "sha256": "e1477a1ea1fbedda8cd75cfc626812535d676c4210b907e2fb07a2ed53ad964f",
+      "bytes": 4577
+    }
+  ]
+}

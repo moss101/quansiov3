@@ -606,18 +606,29 @@
       "notes": "gRPC service over the generated IntelligenceGateway contract on loopback TCP or a unix socket, with a single scope/deadline gate (tenant, workspace, correlation id, capability projection id, deadline) that aborts before any handler logic; ClassifyTrust is genuinely implemented as deterministic non-LLM labelling plus injection heuristics; every behaviour owned by a later task returns a typed unimplemented failure naming the owner; graceful SIGTERM drain and no payload logging. Verified on main after the subagent was interrupted by a full disk: 71 Python-plane tests, ruff/format/mypy strict, 181 repository tests, architecture and duplicate-authority gates clean."
     },
     "INT-002": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:subagent-int002",
+      "started_at": "2026-09-12T03:52:23Z",
+      "updated_at": "2026-09-12T03:52:23Z",
+      "git_commit": "35b57b0",
+      "tests": [
+        "(cd python && uv run --frozen pytest -q)",
+        "(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)",
+        "(cd python && uv run --frozen ruff check . && uv run --frozen mypy intelligence)",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/INT-002/2026-09-12T03-49-40Z/summary.json",
+        "python/intelligence/model_gateway/gateway.py",
+        "python/intelligence/model_gateway/credentials.py",
+        "python/intelligence/model_gateway/adapters/anthropic.py",
+        "python/tests/intelligence/test_model_gateway_live.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Live real-boundary conformance cannot run in this environment: QUANSIO_TEST_ANTHROPIC_API_KEY and QUANSIO_TEST_OPENAI_API_KEY are not set (and api.anthropic.com / api.openai.com egress is unverified). Unblock: set both variables in an environment with provider egress, then run 'uv run --project python python -m pytest python/tests/intelligence/test_model_gateway_live.py -q' and record the run as real_boundary_evidence.",
+      "notes": "Implementation complete and verified offline: three adapters (Anthropic primary, OpenAI, OpenAI-compatible) normalized to the DOMAIN \u00a711.1 stream through one EventFactory (exactly one usage/stop/terminal outcome per call), cancellable streaming that interrupts a silent provider, strict tool schemas, operator-channel instructions, multimodal mapping with capability checks from config/models.yaml only, provider-side compaction/context-editing rejected on the prepared bytes, and credential custody proven by a canary secret-leak scan. The deterministic stub proves wire-level behaviour for all three adapters and is explicitly NOT real-boundary evidence; the live suite reports BLOCKED_EXTERNAL with the missing variable named (6 skipped). One earlier pipeline run in an evidence bundle at 03-45-20Z failed only in the tests gate because a parallel worktree was building against the shared dev stack; the immediate re-run passed every gate and this bundle records the passing run."
     },
     "INT-003": {
       "coverage": null,

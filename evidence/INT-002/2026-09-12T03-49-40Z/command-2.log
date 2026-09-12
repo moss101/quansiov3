@@ -1,0 +1,11 @@
+$ (cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)
+exit_code: 0
+
+--- stdout ---
+ssssss.                                                                  [100%]
+=========================== short test summary info ============================
+SKIPPED [3] tests/intelligence/test_model_gateway_live.py:51: BLOCKED_EXTERNAL: QUANSIO_TEST_ANTHROPIC_API_KEY is not set; live anthropic conformance requires it
+SKIPPED [3] tests/intelligence/test_model_gateway_live.py:51: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY is not set; live openai conformance requires it
+1 passed, 6 skipped in 0.08s
+
+--- stderr ---
