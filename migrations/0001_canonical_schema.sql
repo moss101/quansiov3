@@ -1197,7 +1197,10 @@ DO $$
 BEGIN
     CREATE ROLE quansio_app NOLOGIN;
 EXCEPTION
+    -- Concurrent migration from several databases in one cluster can surface either
+    -- duplicate_object or the underlying unique violation on pg_authid.
     WHEN duplicate_object THEN NULL;
+    WHEN unique_violation THEN NULL;
 END $$;
 
 GRANT USAGE ON SCHEMA public, derived TO quansio_app;
