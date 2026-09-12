@@ -304,7 +304,8 @@ async fn routine_firing_creates_its_objective_through_the_command_path() {
     assert_eq!(objective.kind, WorkNodeKind::Objective);
     assert_eq!(objective.title, "nightly digest");
 
-    // The Run was created by the same firing and queued through the state machine.
+    // The Run created by the same firing was queued and then dispatched by the scheduler
+    // through the canonical Run state machine.
     let runs = store.list_runs(WORKSPACE).await.expect("runs");
     let created = runs
         .iter()
@@ -312,10 +313,6 @@ async fn routine_firing_creates_its_objective_through_the_command_path() {
         .expect("a Routine Run was created");
     assert_eq!(created.trigger_ref.as_deref(), Some(routine_id.as_str()));
     assert_eq!(created.work_node_id, objective.id);
-    assert_eq!(created.status, RunStatus::Queued);
-
-    // The next tick dispatches that queued Run to RUNNING.
-    let report = scheduler(pool.clone()).tick().await.expect("dispatch tick");
     assert_eq!(report.runs_dispatched, 1);
     let dispatched = store.get_run(&created.id).await.expect("run");
     assert_eq!(dispatched.status, RunStatus::Running);

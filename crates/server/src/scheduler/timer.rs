@@ -373,12 +373,13 @@ impl TimerStore {
                         return Ok(());
                     }
 
-                    if resolve_in(conn, &tenant_id, &run_id, WaitKind::Timer, &wait_key)
-                        .await
-                        .is_err()
-                    {
-                        set_abort(&abort_in, FireAbort::WaitMissing);
-                        return Ok(());
+                    match resolve_in(conn, &tenant_id, &run_id, WaitKind::Timer, &wait_key).await {
+                        Ok(_) => {}
+                        Err(crate::scheduler::wait::WaitError::NotRegistered { .. }) => {
+                            set_abort(&abort_in, FireAbort::WaitMissing);
+                            return Ok(());
+                        }
+                        Err(error) => return Err(bridge(&error)),
                     }
 
                     let generation = Generation::new(generation).map_err(|error| bridge(&error))?;
