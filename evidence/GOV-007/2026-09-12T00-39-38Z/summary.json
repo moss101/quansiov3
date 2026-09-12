@@ -1,0 +1,91 @@
+{
+  "task_id": "GOV-007",
+  "git_commit": "b456a83c3d9790b9cd6f2836a535e467e937a9b5",
+  "recorded_at": "2026-09-12T00:40:23Z",
+  "commands": [
+    {
+      "command": "bash scripts/dev/up",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-12T00-39-38Z/command-1.log"
+    },
+    {
+      "command": "bash scripts/dev/healthcheck",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-12T00-39-38Z/command-2.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-12T00-39-38Z/command-3.log"
+    },
+    {
+      "command": "bash scripts/dev/down",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-12T00-39-38Z/command-4.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-12T00-39-38Z/command-5.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "bash scripts/dev/up",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/dev/healthcheck",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/dev/down",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "infra/compose/compose.yaml",
+      "sha256": "d175e449679eb373b1cc60879348c6409dc9fae674d87e57b3913da726391926",
+      "bytes": 4294
+    },
+    {
+      "path": "config/dev.yaml",
+      "sha256": "a5bd056175046437d223491f4fc1088cb4198a9474df1d08346aeeb2dcf4535e",
+      "bytes": 2093
+    },
+    {
+      "path": "scripts/dev/up",
+      "sha256": "bd79270ef573fe76ad4dbe2c66e170d0f862d2b797c7a1fab004e155f3f78ae6",
+      "bytes": 827
+    },
+    {
+      "path": "tests/integration/test_dev_stack.py",
+      "sha256": "5a949491c7ea270874357de97fd390c70fbdcfc2f3722be0e33756e960728396",
+      "bytes": 9304
+    },
+    {
+      "path": "evidence/GOV-007/2026-09-12T00-39-38Z/healthcheck.log",
+      "sha256": "839fdc859ca5d667c354a6a3cc97a078e5011d7ac503440bde2858303ca9a90a",
+      "bytes": 62
+    }
+  ]
+}

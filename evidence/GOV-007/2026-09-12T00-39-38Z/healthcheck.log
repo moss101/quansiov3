@@ -1,0 +1,1 @@
+dev stack: HEALTHY (postgres+pgvector, nats jetstream, minio)

@@ -1,0 +1,32 @@
+$ bash scripts/dev/up
+exit_code: 0
+
+--- stdout ---
+dev stack: starting project quansio-dev
+dev stack: HEALTHY (postgres+pgvector, nats jetstream, minio)
+
+--- stderr ---
+ Network quansio-dev_default Creating 
+ Network quansio-dev_default Created 
+ Container quansio-dev-minio-1 Creating 
+ Container quansio-dev-stub-provider-1 Creating 
+ Container quansio-dev-postgres-1 Creating 
+ Container quansio-dev-nats-1 Creating 
+ Container quansio-dev-minio-1 Created 
+ Container quansio-dev-minio-init-1 Creating 
+ Container quansio-dev-nats-1 Created 
+ Container quansio-dev-stub-provider-1 Created 
+ Container quansio-dev-postgres-1 Created 
+ Container quansio-dev-minio-init-1 Created 
+ Container quansio-dev-stub-provider-1 Starting 
+ Container quansio-dev-postgres-1 Starting 
+ Container quansio-dev-minio-1 Starting 
+ Container quansio-dev-nats-1 Starting 
+ Container quansio-dev-stub-provider-1 Started 
+ Container quansio-dev-nats-1 Started 
+ Container quansio-dev-postgres-1 Started 
+ Container quansio-dev-minio-1 Started 
+ Container quansio-dev-minio-1 Waiting 
+ Container quansio-dev-minio-1 Healthy 
+ Container quansio-dev-minio-init-1 Starting 
+ Container quansio-dev-minio-init-1 Started 

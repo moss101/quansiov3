@@ -1,0 +1,20 @@
+dev stack: starting project quansio-dev
+ Container quansio-dev-stub-provider-1 Running 
+ Container quansio-dev-postgres-1 Running 
+ Container quansio-dev-nats-1 Running 
+ Container quansio-dev-minio-1 Running 
+ Container quansio-dev-minio-1 Waiting 
+ Container quansio-dev-minio-1 Healthy 
+ Container quansio-dev-minio-init-1 Starting 
+ Container quansio-dev-minio-init-1 Started 
+dev stack: HEALTHY (postgres+pgvector, nats jetstream, minio)
+NOTICE:  extension "vector" already exists, skipping
+NOTICE:  schema "dev" already exists, skipping
+NOTICE:  schema "derived" already exists, skipping
+NOTICE:  relation "seed_identity" already exists, skipping
+ Container quansio-dev-minio-1 Running 
+ Container quansio-dev-minio-1 Waiting 
+ Container quansio-dev-minio-1 Healthy 
+ Container quansio-dev-minio-init-run-1c171a929a65 Creating 
+ Container quansio-dev-minio-init-run-1c171a929a65 Created 
+dev stack: seeded deterministic identities tn_/ws_/agt_ (see infra/compose/README.md)
