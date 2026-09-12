@@ -209,26 +209,26 @@ recorded under "Environment requirements".
 
 ## What is currently being implemented
 
-**INT-005 — ContextProjection and typed SearchProgram — `IN_PROGRESS` (merge `b6d620de6756`).**
+**INT-005 — ContextProjection and typed SearchProgram — `IN_PROGRESS` (merge `1e12ba649106`).**
 
-Done: `python/intelligence/context/search.py` implements §11.3's SearchProgram **as data** — the six
-channels, typed predicates over a closed field-and-operator vocabulary, canonical order-independent
-serialization (so a projection can record the program it was built from and cache-key it) and
-fail-closed validation refusing an unknown channel, key, field, operator, value shape or limit.
-Acceptance 1 is met and proven: an expression-shaped value is refused as a predicate while a literal
-containing punctuation stays searchable, because values are literals in a closed vocabulary — and a
-structural test parses the module and asserts it makes no evaluator call and imports no evaluator.
-15 tests; the plane passes 209/209 (6 skipped live-provider cases); ruff, format, mypy and `ci.sh`
-are green. Evidence: `evidence/INT-005/2026-09-12T10-09-35Z/`.
+Done, both Python halves, with all three acceptance statements covered by tests that fail if they
+were false. `context/search.py`: §11.3's SearchProgram **as data** — six channels, typed predicates
+over a closed field/operator vocabulary, canonical order-independent serialization, fail-closed
+validation, and a structural gate proving the module cannot evaluate anything (acceptance 1).
+`context/projection.py`: §11.2's ContextProjection — a segment without a `trust_level` is refused at
+construction *and* against the policy floor (acceptance 3); the bundle records its program key,
+snapshot, policy and token ledger with dropped tokens and dropped segments by channel (acceptance 2);
+packing is deterministic (score, then trust, then id) and bounded; duplicates collapse with the more
+trusted copy winning; degradation is reported; the stable prefix is a pure function of stable-trust
+segments only, so it is cacheable and excludes agent-generated and external content; and a
+projection whose sources have moved is refused rather than served. Evidence:
+`evidence/INT-005/2026-09-12T10-59-12Z/` — 22 tests, the plane passes 216/216 (6 skipped
+live-provider cases), ruff/format/mypy clean, `ci.sh` green.
 
-Remaining, in order: (1) ranking, dedupe and budgeted packing with provenance and degradation
-reporting, plus the budget-packing and stale-snapshot tests; (2) ContextProjection per §11.2 —
-segments carrying a source, a snapshot and a `trust_level` per §12 (a segment without one is
-rejected) and stable-prefix-first rendering for caching; (3) the Rust
-`crates/server/src/runtime/context_bridge/` that takes the program and returns the projection.
+Remaining, the only item left: the Rust `crates/server/src/runtime/context_bridge/` — the side that
+hands the canonical program to the intelligence plane and receives the projection, applying the
+runtime's §12 trust labels at that boundary (INT-001 owns the typed RPC boundary it crosses).
 CORE-009's indexer is `PASS`, so the exact and lexical channels have a real backend to drive.
-
-
 **INT-003 — deterministic model selection, DLP and bounded failover — `BLOCKED_EXTERNAL` (implementation complete, merge `47365327f7ca`).**
 
 `model_gateway/routing/` holds the policy (the seven request classes, capability demand, cost/quality
