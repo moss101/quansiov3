@@ -21,5 +21,6 @@ thiserror = "2"
 [dev-dependencies]
 async-trait = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
+quansio-capability = { path = "../capability" }
 quansio-events = { path = "../events" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
