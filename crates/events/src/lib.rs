@@ -16,11 +16,21 @@ pub mod envelope;
 pub mod error;
 pub mod event_type;
 pub mod outbox;
+pub mod projection;
 pub mod store;
+pub mod stream;
 
-pub use cursor::{CursorState, ResumeBatch};
+pub use cursor::{CursorState, ResumeBatch, PROJECTION_CONSUMER};
 pub use envelope::{Actor, ActorKind, EventDraft, RuntimeEvent, SCHEMA_VERSION_V1};
 pub use error::{EventError, TransportError};
 pub use event_type::{parse_family, EventFamily, EventType, EVENT_FAMILIES};
 pub use outbox::{EventTransport, OutboxPublisher, PublishReport, UnavailableTransport};
+pub use projection::{
+    ApplyOutcome, CatchUpReport, Projection, ProjectionRunner, RunStatusProjection,
+    WorkNodeStatusProjection,
+};
 pub use store::{BoxEventFuture, EventBatch, EventStore};
+pub use stream::{
+    Channel, ChannelKind, EventFrame, LiveFrame, LiveSendOutcome, LiveSender, StreamConfig,
+    StreamError, StreamFrame, StreamSession, StreamSubscription,
+};

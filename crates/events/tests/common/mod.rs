@@ -10,6 +10,8 @@
 //! second migrator (nor on `quansio-server`, which depends on this crate at runtime).
 #![allow(dead_code)]
 
+use quansio_core::{CorrelationId, EventId, TypedId, UlidGenerator};
+use quansio_events::{Actor, EventDraft, EventStore, EventType};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Executor, PgPool};
 
@@ -100,4 +102,90 @@ pub async fn seed_tenant(pool: &PgPool, tenant: &str, workspace: &str) {
         .await
         .expect("insert workspace");
     tx.commit().await.expect("commit");
+}
+
+/// URL of an existing scratch database, or `None` when the environment provides none.
+#[must_use]
+pub fn database_url(name: &str) -> Option<String> {
+    admin_url().map(|admin| scratch_url(&admin, name))
+}
+
+/// Reconnect to an existing scratch database (used to simulate a restarted process).
+pub async fn connect_database(name: &str) -> Option<PgPool> {
+    let url = database_url(name)?;
+    Some(
+        PgPoolOptions::new()
+            .max_connections(4)
+            .connect(&url)
+            .await
+            .expect("connect to the scratch database"),
+    )
+}
+
+/// Collect frames until the session ends, failing the test on an unexpected error.
+pub async fn collect_frames(
+    session: &mut quansio_events::StreamSession,
+) -> Vec<quansio_events::StreamFrame> {
+    let mut frames = Vec::new();
+    loop {
+        match tokio::time::timeout(std::time::Duration::from_secs(5), session.next_frame()).await {
+            Ok(Ok(frame)) => frames.push(frame),
+            Ok(Err(quansio_events::StreamError::Closed)) => return frames,
+            Ok(Err(other)) => panic!("unexpected stream error: {other}"),
+            Err(_) => panic!("timed out waiting for a stream frame"),
+        }
+    }
+}
+
+/// One RuntimeEvent to commit in its own transaction.
+pub struct SeedEvent<'a> {
+    /// Aggregate kind, e.g. `run`.
+    pub aggregate_type: &'a str,
+    /// Aggregate identity.
+    pub aggregate_id: &'a str,
+    /// Version of the aggregate after the transition.
+    pub aggregate_version: u64,
+    /// Canonical `<family>.<event>` type.
+    pub event_type: &'a str,
+    /// Owning workspace, when the event is workspace-scoped.
+    pub workspace_id: Option<&'a str>,
+    /// Event payload.
+    pub payload: serde_json::Value,
+}
+
+/// Commit one event (with a real state mutation) and return its event id.
+pub async fn commit_event(store: &EventStore, tenant_id: &str, seed: SeedEvent<'_>) -> EventId {
+    let mut generator = UlidGenerator::new();
+    let correlation_id = CorrelationId::generate(&mut generator);
+    let event_id = EventId::generate(&mut generator);
+    let event_type = EventType::parse(seed.event_type).expect("canonical event type");
+    let mut draft = EventDraft::new(
+        seed.aggregate_type,
+        seed.aggregate_id,
+        seed.aggregate_version,
+        event_type,
+        correlation_id,
+        Actor::system("projection_test"),
+    )
+    .with_event_id(event_id)
+    .with_payload(seed.payload);
+    if let Some(workspace_id) = seed.workspace_id {
+        draft = draft.with_workspace(workspace_id);
+    }
+    let tenant = tenant_id.to_string();
+    store
+        .commit_mutation(tenant_id, move |conn, batch| {
+            Box::pin(async move {
+                sqlx::query("UPDATE tenants SET name = $2 WHERE id = $1")
+                    .bind(&tenant)
+                    .bind(format!("seed-{event_id}"))
+                    .execute(&mut *conn)
+                    .await?;
+                batch.emit(draft);
+                Ok(event_id)
+            })
+        })
+        .await
+        .expect("commit event");
+    event_id
 }
