@@ -1,0 +1,91 @@
+{
+  "task_id": "RUN-008",
+  "git_commit": null,
+  "recorded_at": "2026-09-12T08:16:39Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test verification",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-12T08-15-56Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --lib",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-12T08-15-56Z/command-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server -p quansio-tools -p quansio-graph",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-12T08-15-56Z/command-3.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-12T08-15-56Z/command-4.log"
+    },
+    {
+      "command": "cargo clippy --workspace --offline --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-12T08-15-56Z/command-5.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --test verification",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server --lib",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-server -p quansio-tools -p quansio-graph",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --offline --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/runtime/verification/mod.rs",
+      "sha256": "bc597cfad952654775b6b96774dd4f92a621cba5be0b3430f80a22c7550e168a",
+      "bytes": 3664
+    },
+    {
+      "path": "crates/server/src/runtime/verification/contract.rs",
+      "sha256": "0069f2da1615cf7f441a003eb74fbfaaf4700c3f8a0dba89779deb90066ec764",
+      "bytes": 12675
+    },
+    {
+      "path": "crates/server/src/runtime/verification/checks.rs",
+      "sha256": "c09d036523f0c9ebed297c87a82b41cdeabc3cb56400947fd63509f8ac4e3d10",
+      "bytes": 9734
+    },
+    {
+      "path": "crates/server/src/runtime/verification/service.rs",
+      "sha256": "552e3b2c84a59460046d0b306acf58607e919044e3c128a5370f302015f995be",
+      "bytes": 10423
+    },
+    {
+      "path": "crates/server/tests/verification.rs",
+      "sha256": "23296ef98afebe50a0100798393fd3dc29e7cff1d7222a9be9a8427fa1b1e4ab",
+      "bytes": 20579
+    }
+  ]
+}

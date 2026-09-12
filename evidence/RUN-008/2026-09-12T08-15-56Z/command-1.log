@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running tests/verification.rs (target/debug/deps/verification-c526e4691fb340b2)
+
+running 6 tests
+test an_unimplemented_check_kind_fails_closed_and_names_its_owner ... ok
+test a_model_claim_alone_cannot_succeed_a_run_without_its_artifact ... ok
+test an_unsettled_effect_keeps_the_run_incomplete ... ok
+test a_contract_that_binds_nothing_cannot_certify_completion ... ok
+test the_same_claim_verifies_once_the_contract_is_satisfied ... ok
+test a_semantic_verifier_disagreement_keeps_work_incomplete ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.14s
+
