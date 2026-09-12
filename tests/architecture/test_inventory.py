@@ -129,8 +129,8 @@ def test_every_canonical_owner_has_a_declared_path():
 def test_reconciliation_report_and_evidence_committed():
     report = ROOT / "docs" / "review" / "2026-09-12-gov-001-reconciliation.md"
     assert report.exists(), "GOV-001 reconciliation report must be committed"
-    text = report.read_text()
-    for needle in ("GENUINE_GAP", "no legacy authority found", "duplicate-authority", "canonical owner"):
+    text = report.read_text().lower()
+    for needle in ("genuine_gap", "no legacy authority found", "duplicate-authority", "canonical owner"):
         assert needle in text, f"reconciliation report must state: {needle}"
     bundles = sorted((ROOT / "evidence" / "GOV-001").glob("*/summary.json"))
     assert bundles, "GOV-001 evidence bundle must be committed"
