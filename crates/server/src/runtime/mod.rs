@@ -7,6 +7,7 @@
 pub mod agents;
 pub mod budgets;
 pub mod checkpoints;
+pub mod context_bridge;
 pub mod orchestration;
 pub mod planning;
 pub mod protocol_state;
