@@ -198,8 +198,6 @@ pub fn check(roles: ActorRoles, action: ActionFamily) -> Result<(), RbacFailure>
                 .is_some_and(TenantRole::inherits_workspace_admin)
             {
                 Ok(())
-            } else if roles.tenant == Some(TenantRole::Billing) {
-                Err(RbacFailure::InsufficientRole)
             } else {
                 Err(RbacFailure::InsufficientRole)
             }

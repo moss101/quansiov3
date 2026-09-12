@@ -1010,8 +1010,8 @@ fn emit(
     if let Some(causation_id) = &identity.causation_id {
         draft = draft.with_causation_id(causation_id.clone());
     }
-    if let Some(command_id) = &identity.command_id {
-        draft = draft.with_command_id(command_id.clone());
+    if let Some(command_id) = identity.command_id {
+        draft = draft.with_command_id(command_id);
     }
     batch.emit(draft);
     Ok(())
