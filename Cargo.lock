@@ -1199,6 +1199,7 @@ name = "quansio-graph"
 version = "0.1.0"
 dependencies = [
  "quansio-core",
+ "quansio-events",
  "quansio-server",
  "serde_json",
  "sqlx",

@@ -12,6 +12,7 @@ workspace = true
 
 [dependencies]
 quansio-core = { path = "../core" }
+quansio-events = { path = "../events" }
 quansio-server = { path = "../server" }
 serde_json = "1"
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "chrono", "json"] }

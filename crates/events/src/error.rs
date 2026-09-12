@@ -30,6 +30,17 @@ pub enum EventError {
     /// refuses the commit and rolls the transaction back (DOMAIN.md §9.1).
     #[error("mutation staged no RuntimeEvent; refusing to commit state without its event")]
     NoEventStaged,
+    /// The mutation rejected the transaction with its own typed error.
+    ///
+    /// The store rolls back and returns this wrapper; the rejecting owner carries its
+    /// typed error out of band, so a rejection never reaches the event stream.
+    #[error("mutation rejected by {owner}: {message}")]
+    MutationRejected {
+        /// Repository path of the owner that rejected the mutation.
+        owner: &'static str,
+        /// Human-readable rejection reason.
+        message: String,
+    },
     /// A cursor token could not be decoded or encoded.
     #[error("cursor error: {0}")]
     Cursor(#[from] CoreError),
