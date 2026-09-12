@@ -22,6 +22,10 @@ pub struct RawPlanProposal {
     /// Workspace the proposal applies to.
     pub workspace_id: String,
     /// The graph revision the proposer observed; the compare-and-set key.
+    ///
+    /// A missing value defaults to `0`, which can never equal a graph revision (the head
+    /// starts at 1), so an omitted `base_revision` is refused as `CONFLICT_REVISION`.
+    #[serde(default)]
     pub base_revision: u64,
     /// Nodes to create.
     #[serde(default)]

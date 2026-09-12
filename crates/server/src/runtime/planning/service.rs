@@ -119,11 +119,7 @@ impl Planner {
         let limit = max_plan_nodes(&self.pool, &self.identity.tenant_id, &raw.workspace_id).await?;
         let compiled = match compile(&raw, &snapshot, &proposer, limit) {
             Ok(compiled) => compiled,
-            Err(error) => {
-                self.record_rejection(&raw, snapshot.revision.get(), &error)
-                    .await?;
-                return Err(error);
-            }
+            Err(error) => return Err(self.reject(&raw, snapshot.revision.get(), error).await),
         };
 
         let outcome = self.compiled_outcome(&compiled);
@@ -134,12 +130,21 @@ impl Planner {
                 event_ids: committed.event_ids,
                 ..outcome
             }),
-            Err(error) => {
-                self.record_rejection(&raw, snapshot.revision.get(), &error)
-                    .await?;
-                Err(error)
+            Err(error) => Err(self.reject(&raw, snapshot.revision.get(), error).await),
+        }
+    }
+
+    /// Record a plan verdict on the audit trail and return the rejection unchanged.
+    ///
+    /// Infrastructure failures are not plan verdicts, so they are returned without a
+    /// `work.plan_rejected` event.
+    async fn reject(&self, raw: &RawPlanProposal, revision: u64, error: PlanError) -> PlanError {
+        if error.is_rejection() {
+            if let Err(record) = self.record_rejection(raw, revision, &error).await {
+                return record;
             }
         }
+        error
     }
 
     /// The deterministic parts of the outcome, derived from the compiled plan.

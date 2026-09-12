@@ -380,12 +380,25 @@ async fn setup(prefix: &str) -> Option<Fixture> {
 }
 
 async fn event_types(events: &EventStore) -> Vec<String> {
+    event_shape(events)
+        .await
+        .into_iter()
+        .map(|(_, event_type)| event_type)
+        .collect()
+}
+
+/// `(aggregate_type, event_type)` in tenant sequence order.
+///
+/// Generated `wn_…`/`we_…` aggregate ids are ULIDs (CORE-002), so determinism is asserted
+/// on the aggregate *kind* and event type sequence; the plan events' aggregate id is the
+/// workspace, which the accepted-plan test pins exactly.
+async fn event_shape(events: &EventStore) -> Vec<(String, String)> {
     events
         .read_events_after(TENANT, None, 1000)
         .await
         .expect("read events")
         .into_iter()
-        .map(|event| event.event_type.to_string())
+        .map(|event| (event.aggregate_type, event.event_type.to_string()))
         .collect()
 }
 
@@ -518,7 +531,7 @@ async fn the_same_plan_over_the_same_state_is_deterministic_across_runs_and_rest
             .expect("apply");
         let snapshot = (
             outcome.revision,
-            event_types(&fixture.events).await,
+            event_shape(&fixture.events).await,
             node_shape(&fixture.pool).await,
         );
 
@@ -534,7 +547,7 @@ async fn the_same_plan_over_the_same_state_is_deterministic_across_runs_and_rest
                 .get(),
             outcome.revision
         );
-        assert_eq!(event_types(&restarted_events).await, snapshot.1);
+        assert_eq!(event_shape(&restarted_events).await, snapshot.1);
         assert_eq!(node_shape(&fixture.pool).await, snapshot.2);
 
         drop_pool(&fixture.pool, &fixture.name).await;
@@ -554,12 +567,15 @@ async fn the_same_plan_over_the_same_state_is_deterministic_across_runs_and_rest
         .expect("apply");
     let snapshot_b = (
         outcome_b.revision,
-        event_types(&fixture_b.events).await,
+        event_shape(&fixture_b.events).await,
         node_shape(&fixture_b.pool).await,
     );
 
     assert_eq!(plan_a.0, snapshot_b.0, "same resulting revision");
-    assert_eq!(plan_a.1, snapshot_b.1, "same event sequence");
+    assert_eq!(
+        plan_a.1, snapshot_b.1,
+        "same aggregate kind and event type sequence"
+    );
     assert_eq!(plan_a.2, snapshot_b.2, "same node shape");
 
     drop_pool(&fixture_b.pool, &fixture_b.name).await;

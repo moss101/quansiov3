@@ -779,3 +779,29 @@ async fn the_same_proposal_over_the_same_starting_state_is_deterministic() {
     drop_pool(&first.pool, &first.name).await;
     drop_pool(&second.pool, &second.name).await;
 }
+
+#[tokio::test]
+async fn a_missing_base_revision_is_a_revision_conflict() {
+    let Some(fixture) = setup("planning_no_base", snapshot(vec![], vec![])).await else {
+        blocked_marker();
+        return;
+    };
+    let mut raw = proposal(1, vec![node("a", "task", contract())]);
+    raw.as_object_mut()
+        .expect("proposal object")
+        .remove("base_revision");
+
+    let error = fixture
+        .planner
+        .propose(&raw, proposer())
+        .await
+        .expect_err("a proposal without base_revision is stale");
+    assert_eq!(error.code(), "CONFLICT_REVISION");
+    assert!(matches!(
+        error,
+        PlanError::StaleBaseRevision { expected: 0, .. }
+    ));
+    assert_eq!(fixture.workspace.node_count(), 0, "nothing was written");
+
+    drop_pool(&fixture.pool, &fixture.name).await;
+}
