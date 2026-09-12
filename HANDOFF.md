@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0/M1 complete; M2/M3 in progress; 22 PASS + 1 BLOCKED_EXTERNAL)
+Updated: 2026-09-12 (M0/M1 complete; M2/M3 in progress; 23 PASS + 1 BLOCKED_EXTERNAL)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,8 +16,9 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M1 — canonical state, events and persistence
-Current task: RUN-005 — Capability Projection (M2), delegated in an isolated worktree
-Current task status: 22 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; pipeline green on `main`
+Current task: RUN-006 (policy, RBAC, privacy, approvals) and RUN-003 (plan compilation), delegated in
+parallel worktrees
+Current task status: 23 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; pipeline green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
@@ -54,6 +55,14 @@ Current language: Rust + SQL
   `deny.toml` completeness, deterministic CycloneDX SBOM with drift verification, a real
   RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill quarantine-lifecycle checks; `cargo-deny` is an
   explicit informational result when absent. Evidence: `evidence/OPS-007/<ts>/`.
+- RUN-005 — Capability Projection — `PASS` (`crates/capability/`): the algebra composes grants by
+  intersection with most-restrictive constraints over all nine DOMAIN §6.1 selector kinds; projection
+  assembly follows the fixed §6.2 layer order and ignores + records any widening attempt as
+  `capability.widening_rejected` naming the layer; an unavailable input layer, unparseable grant or policy
+  gap at tier ≥ 1 fails closed with an empty projection and `CAPABILITY_INPUTS_UNAVAILABLE`; and
+  `authorize` always re-checks the current inputs digest and expiry, so a stale projection cannot
+  authorize dispatch. The delegation narrowing check that RUN-002's hook expects is implemented. Evidence:
+  `evidence/RUN-005/<ts>/`.
 - RUN-002 — AgentThread, delegation, handoff and join — `PASS`
   (`crates/server/src/runtime/agents/`, migration `0006_agent_mailbox_handoff_join.sql`): one primitive
   serves persistent teammates and ephemeral workers with a separate lifecycle policy (teammates never JOIN,
@@ -137,10 +146,13 @@ pipeline derives that URL from the generated `.env` automatically.
 
 ## Ready queue
 
-1. `RUN-005` — Capability Projection (in flight, delegated); it unblocks RUN-006 (policy), RUN-007 (Effect
-   Ledger), RUN-011 (tool dispatch) and the delegation narrowing hook RUN-002 left open.
-2. `RUN-003` — compile model plans into validated WorkGraph mutations.
-3. `INT-011` — embedding pipeline and derived vector index (ready because INT-002 is
+1. `RUN-006` — policy, RBAC, privacy guards and approvals (in flight, delegated); it unblocks RUN-007
+   (Effect Ledger) and RUN-011 (tool dispatch).
+2. `RUN-003` — compile model plans into validated WorkGraph mutations (in flight, delegated).
+3. `INT-003` — deterministic model selection, DLP and failover (ready; real boundary like INT-002).
+4. `INT-005` — ContextProjection and typed SearchProgram.
+5. `EXEC-001` — machine control and execution-target lifecycle.
+6. `INT-011` — embedding pipeline and derived vector index (ready because INT-002 is
    `BLOCKED_EXTERNAL` with implementation complete; per D-017 it may start but a task that depends on it
    can only reach `PASS` once the live conformance runs).
 
