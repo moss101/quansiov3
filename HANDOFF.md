@@ -18,7 +18,7 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 Milestone: M2 — the runtime loop (M0/M1 complete)
 Current task: INT-003 — implement deterministic model selection, dlp and failover — `RECONCILING` (claimed, not started)
 Previous task: INT-003 implemented and verified offline, `BLOCKED_EXTERNAL` on live provider credentials
-Current task status: 31 tasks `PASS`, INT-003 `BLOCKED_EXTERNAL` (implementation complete), INT-005 `RECONCILING`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
+Current task status: 31 tasks `PASS`, INT-003 `BLOCKED_EXTERNAL` (implementation complete), INT-005 `IN_PROGRESS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; every baseline gate green on `main`
 Current owner: `agent:principal-1`
 Current component: `context` (`python/intelligence/context/`, `crates/server/runtime/context_bridge/`)
 Current language: Python
@@ -208,6 +208,26 @@ recorded under "Environment requirements".
   value. Evidence: `evidence/RUN-004/<ts>/`.
 
 ## What is currently being implemented
+
+**INT-005 — ContextProjection and typed SearchProgram — `IN_PROGRESS` (merge `b6d620de6756`).**
+
+Done: `python/intelligence/context/search.py` implements §11.3's SearchProgram **as data** — the six
+channels, typed predicates over a closed field-and-operator vocabulary, canonical order-independent
+serialization (so a projection can record the program it was built from and cache-key it) and
+fail-closed validation refusing an unknown channel, key, field, operator, value shape or limit.
+Acceptance 1 is met and proven: an expression-shaped value is refused as a predicate while a literal
+containing punctuation stays searchable, because values are literals in a closed vocabulary — and a
+structural test parses the module and asserts it makes no evaluator call and imports no evaluator.
+15 tests; the plane passes 209/209 (6 skipped live-provider cases); ruff, format, mypy and `ci.sh`
+are green. Evidence: `evidence/INT-005/2026-09-12T10-09-35Z/`.
+
+Remaining, in order: (1) ranking, dedupe and budgeted packing with provenance and degradation
+reporting, plus the budget-packing and stale-snapshot tests; (2) ContextProjection per §11.2 —
+segments carrying a source, a snapshot and a `trust_level` per §12 (a segment without one is
+rejected) and stable-prefix-first rendering for caching; (3) the Rust
+`crates/server/src/runtime/context_bridge/` that takes the program and returns the projection.
+CORE-009's indexer is `PASS`, so the exact and lexical channels have a real backend to drive.
+
 
 **INT-003 — deterministic model selection, DLP and bounded failover — `BLOCKED_EXTERNAL` (implementation complete, merge `47365327f7ca`).**
 
