@@ -153,7 +153,7 @@
       "claimed_by": "agent:subagent-gov007",
       "started_at": "2026-09-12T00:40:29Z",
       "updated_at": "2026-09-12T00:54:20Z",
-      "git_commit": "47f1ce1",
+      "git_commit": "ef33e1b03ebfab8ae3699fd6b9cd95c5ad8d51b3",
       "tests": [
         "bash scripts/dev/up && bash scripts/dev/healthcheck",
         "uv run --project python pytest tests/integration/test_dev_stack.py -q"
