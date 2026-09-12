@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-12 (M0/M1 complete; M2/M3 in progress; 25 PASS + 1 BLOCKED_EXTERNAL)
+Updated: 2026-09-12 (M0/M1 complete; M2/M3 in progress; 26 PASS + 1 BLOCKED_EXTERNAL)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -16,8 +16,8 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M1 — canonical state, events and persistence
-Current task: RUN-007 — Universal Effect Ledger (M2), delegated in an isolated worktree
-Current task status: 25 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; pipeline green on `main`
+Current task: RUN-011 — agent turn loop, Tool contract and Tool Registry (M2), delegated
+Current task status: 26 tasks `PASS`, INT-002 `BLOCKED_EXTERNAL` with implementation complete; pipeline green on `main`
 Current owner: `agent:principal-1`
 Current component: `persistence` (`migrations/`, `crates/server/src/control/schema/`)
 Current language: Rust + SQL
@@ -54,6 +54,16 @@ Current language: Rust + SQL
   `deny.toml` completeness, deterministic CycloneDX SBOM with drift verification, a real
   RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill quarantine-lifecycle checks; `cargo-deny` is an
   explicit informational result when absent. Evidence: `evidence/OPS-007/<ts>/`.
+- RUN-007 — Universal Effect Ledger — `PASS` (`crates/server/src/effects/`, `config/effects.yaml`): the
+  reservation derives its idempotency key from effect class, resource and parameter digest and leans on the
+  schema's partial unique in-flight index, so two racing dispatchers reserve exactly one action; every
+  transition is one event-emitting transaction with exactly one `effect.*` event and contiguous aggregate
+  versions; settlement is terminal and refuses before writing; an `OUTCOME_UNKNOWN` record **cannot** be
+  retried and is resolved only by reconciliation matching the class's strategy (the taxonomy is loaded from
+  `config/effects.yaml`, validated against the generated catalog and fails closed on any divergence); a retry
+  creates a new identity sharing the key and leaves the old record untouched; approval-required actions
+  cannot bypass the receipt; protocol state keeps `next_safe_action` reporting `ReconcileEffect` until the
+  ledger is settled. Evidence: `evidence/RUN-007/<ts>/`.
 - RUN-006 — policy, RBAC, privacy guards and approvals — `PASS` (`crates/server/src/policy/`): evaluation
   order is RBAC → capability projection → trust escalation → privacy → sequence guards → policy rules →
   receipt requirement → user rules, with tenant and workspace policies merged most-restrictively
@@ -164,9 +174,10 @@ pipeline derives that URL from the generated `.env` automatically.
 
 ## Ready queue
 
-1. `RUN-007` — Universal Effect Ledger (in flight, delegated); it is the gate every consequential action
-   passes through and unblocks RUN-011 (tool dispatch) and EXEC-006/009/011.
-2. `RUN-004` — concurrency, fanout/fanin, cancellation and waits.
+1. `RUN-011` — agent turn loop, Tool contract and Tool Registry (in flight, delegated); it closes the M2
+   runtime path and unblocks EXEC-006/009/011 and the whole M4 tool surface.
+2. `RUN-008` — CompletionContract verification (depends on the Effect Ledger, now PASS).
+3. `RUN-004` — concurrency, fanout/fanin, cancellation and waits.
 3. `INT-003` — deterministic model selection, DLP and failover (ready; real boundary like INT-002).
 4. `INT-005` — ContextProjection and typed SearchProgram.
 5. `EXEC-001` — machine control and execution-target lifecycle.
