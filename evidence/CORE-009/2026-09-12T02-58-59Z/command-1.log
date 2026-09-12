@@ -1,0 +1,90 @@
+$ QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio cargo test -p quansio-events
+exit_code: 0
+
+--- stdout ---
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+test malformed_types_are_rejected ... ok
+test unknown_family_is_rejected_with_a_typed_error ... ok
+test known_types_parse_and_subjects_follow_domain_naming ... ok
+test canonical_families_match_the_generated_catalog ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test unavailable_transport_fails_closed_instead_of_dropping ... ok
+test crash_between_send_and_mark_cannot_duplicate_and_loses_no_event ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+
+running 3 tests
+test projections_do_not_write_rows_for_unrelated_events ... ok
+test rebuild_is_byte_identical_to_incremental_application ... ok
+test reapplying_an_applied_event_neither_double_counts_nor_regresses ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.62s
+
+
+running 1 test
+test checkpoint_resumes_after_a_crash_without_gaps_or_duplicates ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
+
+
+running 6 tests
+test committed_mutation_writes_state_event_and_outbox_together ... ok
+test a_rolled_back_commit_releases_its_sequence_instead_of_burning_it ... ok
+test concurrent_writers_get_distinct_gap_free_sequences ... ok
+test consumer_resumes_exactly_after_the_stored_sequence ... ok
+test failing_mutation_rolls_back_state_event_and_outbox ... ok
+test committing_without_an_event_is_refused ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.58s
+
+
+running 1 test
+test a_slow_consumer_is_disconnected_without_blocking_the_publisher ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+
+running 3 tests
+test channel_and_subscription_validation_fails_closed ... ok
+test live_frames_are_transient_droppable_and_never_persisted ... ok
+test a_subscriber_receives_only_its_own_channel_and_tenant ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.50s
+
+
+running 3 tests
+test a_cursor_from_another_stream_is_rejected ... ok
+test reconnecting_with_the_last_cursor_replays_exactly_the_missed_events ... ok
+test a_client_without_a_cursor_resumes_from_the_persisted_consumer_position ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.54s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running unittests src/lib.rs (target/debug/deps/quansio_events-99bd7be59e7d7488)
+     Running tests/event_families.rs (target/debug/deps/event_families-6e26caa66d08b357)
+     Running tests/outbox_publisher.rs (target/debug/deps/outbox_publisher-9f9bb46dd26fe1fe)
+     Running tests/projection_determinism.rs (target/debug/deps/projection_determinism-14851e5e33612466)
+     Running tests/projection_resume.rs (target/debug/deps/projection_resume-d3368c37cf021356)
+     Running tests/runtime_event_store.rs (target/debug/deps/runtime_event_store-3e912fda2bd6fe91)
+     Running tests/stream_backpressure.rs (target/debug/deps/stream_backpressure-3a487739a8ca7b2a)
+     Running tests/stream_channels.rs (target/debug/deps/stream_channels-f6bd28bb8de8d5b0)
+     Running tests/stream_resume.rs (target/debug/deps/stream_resume-36bb707267f9e73d)
+   Doc-tests quansio_events

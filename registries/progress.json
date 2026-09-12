@@ -394,18 +394,28 @@
       "notes": "Durable timers and a wait registry persisted in PostgreSQL (migration 0004) with exactly-once firing proven under two concurrent scheduler loops, survival across a pool drop/reconnect, fencing by generation, a typed saturated-queue error instead of silent drops, run dispatch through the canonical Run state machine, and routine due-time computation with skip/queue/catch_up_once absence policies. Integrated and re-verified by the principal agent after the delegating subagent was killed by a full disk."
     },
     "CORE-009": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:subagent-core009",
+      "started_at": "2026-09-12T03:00:48Z",
+      "updated_at": "2026-09-12T03:00:48Z",
+      "git_commit": "669b4e0",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-events",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
+        "bash scripts/ci/ci.sh"
+      ],
+      "artifacts": [
+        "evidence/CORE-009/2026-09-12T02-58-59Z/summary.json",
+        "crates/events/src/projection.rs",
+        "crates/events/src/stream.rs",
+        "crates/events/tests/projection_determinism.rs",
+        "migrations/0005_projections.sql"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Rebuildable projections with a checkpoint per projection (deterministic incremental vs rebuilt state, idempotent re-application, crash/resume with no gaps or duplicates) and resumable client streaming per DOMAIN.md \u00a79.3: durable event frames with cursors, transient live frames, channel and tenant scoping, and bounded backpressure that disconnects a slow consumer with a typed error. Integrated and re-verified by the principal agent after the subagent was killed by a full disk; the projections migration was renumbered to 0005 and the dev-dependency cycle the workspace gate caught was removed."
     },
     "RUN-001": {
       "coverage": null,
