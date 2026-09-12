@@ -553,8 +553,8 @@ mod tests {
         }
     }
 
-    fn editor() -> ActorRoles {
-        ActorRoles::new(Some(TenantRole::Member), Some(WorkspaceRole::Editor))
+    fn approver_actor() -> ActorRoles {
+        ActorRoles::new(Some(TenantRole::Member), Some(WorkspaceRole::Approver))
     }
 
     static EMPTY_GRANTS: EgressGrantSet = EgressGrantSet::empty();
@@ -571,7 +571,7 @@ mod tests {
             resource,
             catalog_tier: tier,
             action,
-            roles: editor(),
+            roles: approver_actor(),
             derived_from_trust: Some(TrustLevel::TrustedUser),
             data_classes: &[],
             destination: None,
