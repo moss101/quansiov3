@@ -209,7 +209,7 @@ recorded under "Environment requirements".
 
 ## What is currently being implemented
 
-**INT-009 — Skill Registry and task-scoped resolver — `IN_PROGRESS` (work on `task/INT-009-skills` at `07c30f2048bb0e4c41052f7b7ca48fc4370966a9`, not yet merged).**
+**INT-009 — Skill Registry and task-scoped resolver — `IN_PROGRESS` (work on `task/INT-009-skills` at `13626c6374105f09bab1f6f699487119f8ce34e2`, not yet merged).**
 
 The resolver half is implemented and verified there: only `ACTIVE` versions resolve (every other state,
 including `APPROVED`, is excluded with the rule that excluded it), a version whose `tool_needs` or
@@ -226,11 +226,12 @@ the dev-stack Postgres port is closed — so the DB-backed gates (`toolchains`, 
 a pipeline that cannot be verified is not a green pipeline. Unblock: bring the runtime back with
 `bash scripts/dev/up` (never `down`) and re-run `bash scripts/ci/ci.sh`; then merge `task/INT-009-skills` (`07c30f2048bb0e4c41052f7b7ca48fc4370966a9`).
 
-**Remaining for INT-009:** `crates/server/src/control/skills/` — the Rust control-plane store holding
-metadata, provenance and evals and owning the promotion state machine (draft → candidate → evaluating
-→ approved → active → deprecated → retired, evaluating → rejected) that sets
-`skills.current_active_version_id`. The `skills`/`skill_versions` tables already exist, so no
-migration is needed.
+**INT-009 now has both halves on its branch.** `crates/server/src/control/skills/state.rs` holds the §11.5
+promotion ladder as a fail-closed state machine (every state documented, only `ACTIVE` resolving, every
+illegal edge refused and named), with 4 unit tests that pass without a database and clean fmt/clippy.
+**Remaining:** the DB-backed store operations (create skill and version, apply a legal promotion, set
+`skills.current_active_version_id`) and their integration tests — plus merging the branch once the runtime
+is healthy. The `skills`/`skill_versions` tables already exist, so no migration is needed.
 
 
 **INT-005 — ContextProjection and typed SearchProgram — `PASS` (merge `a2d621784fd4`).**
