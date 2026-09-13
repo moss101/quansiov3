@@ -10,12 +10,14 @@ Layout:
 
 * `datasets` — versioned, content-addressed datasets: the pinned inputs a run is reproducible from, and
   a load that refuses drift from the recorded digest;
+* `runs` — the record of one run: its dataset pins, the versions it ran under, its measurements and its
+  cost/latency, content-addressed so two runs of the same inputs are comparable;
 * `semantic_verifier` — RUN-008's independent completion verifier, which the runtime drives (not a
   metric of this harness).
 
 The protected gate configuration lives in `tests/evaluation/thresholds.yaml`, which encodes
 DOSSIER §21.3 verbatim and is checked against the document by `tests/evaluation/test_thresholds.py`.
-The run record and the decision gate are the remaining units of this task.
+The decision gate that consumes it is the remaining unit of this task.
 """
 
 from __future__ import annotations
@@ -30,14 +32,36 @@ from intelligence.evaluation.datasets import (
     load_dataset,
     load_datasets,
 )
+from intelligence.evaluation.runs import (
+    UNITS,
+    CostLatency,
+    DatasetPin,
+    EvaluationRun,
+    ImplementationVersions,
+    Measurement,
+    RunError,
+    load_run,
+    pins_for,
+    run_for,
+)
 
 __all__ = [
     "KINDS",
+    "UNITS",
+    "CostLatency",
     "Dataset",
     "DatasetCase",
     "DatasetError",
+    "DatasetPin",
+    "EvaluationRun",
+    "ImplementationVersions",
+    "Measurement",
+    "RunError",
     "dataset_from_mapping",
     "datasets_of_kind",
     "load_dataset",
     "load_datasets",
+    "load_run",
+    "pins_for",
+    "run_for",
 ]
