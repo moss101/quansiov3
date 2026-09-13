@@ -10,14 +10,24 @@ Layout:
 
 * `models` — the entry, its scopes, its closed provenance vocabulary and its lifecycle, as pure
   values;
-* `store` — the durable store over `public.memory_entries`, one tenant at a time.
+* `store` — the durable store over `public.memory_entries`, one tenant at a time;
+* `candidates` — what may be proposed (and by whom), and the scope resolution the owner applies.
 
-Candidate creation and retrieval through the semantic channel (the INT-011 seam) are the remaining
-units of this task.
+Retrieval through the semantic channel (the INT-011 seam) and the deletion path are the remaining
+unit of this task.
 """
 
 from __future__ import annotations
 
+from intelligence.memory.candidates import (
+    MemoryCandidate,
+    MemoryProposalSink,
+    ProposalOutcome,
+    StoreMemoryProposals,
+    new_memory_id,
+    propose,
+    resolve_scope,
+)
 from intelligence.memory.models import (
     ID_PREFIX,
     RETRIEVABLE_STATUS,
@@ -48,14 +58,21 @@ __all__ = [
     "RETRIEVABLE_STATUS",
     "STATEMENTS",
     "TRANSITIONS",
+    "MemoryCandidate",
     "MemoryEntry",
     "MemoryEntryError",
     "MemoryFabric",
+    "MemoryProposalSink",
     "MemoryProvenance",
     "MemoryScope",
     "MemoryStatus",
     "MemoryStore",
+    "ProposalOutcome",
     "SqlMemoryStore",
     "StatusChange",
+    "StoreMemoryProposals",
     "memory_for",
+    "new_memory_id",
+    "propose",
+    "resolve_scope",
 ]

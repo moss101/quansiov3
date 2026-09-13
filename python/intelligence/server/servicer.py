@@ -19,12 +19,16 @@ Implemented today:
   * `Embed` — fulfils the `embedding` request class through the same gateway (INT-011). The
     servicer validates the request shape and returns one vector per input at the configured
     route's width; it reads no canonical state, writes none and holds no credential.
+  * `ProposeMemory` — hands a memory candidate to the intelligence plane's memory owner (INT-007),
+    which decides the identity, the scope and whether anything is remembered at all. The servicer
+    forwards; the sink the composition root installs owns the durable write. When no sink is
+    configured the call fails closed with a typed error rather than accepting a candidate nothing
+    will store.
 
 Not implemented here; each returns a typed UNIMPLEMENTED failure naming the owning task that
 will implement the behaviour (never a success-shaped empty response):
   * `BuildContext`  → INT-005 (ContextProjection assembly)
   * `Search`        → INT-005 (typed SearchProgram execution)
-  * `ProposeMemory` → INT-007 (semantic memory candidates)
   * `Evaluate`      → INT-010 (evaluation harness)
 INT-006 (Knowledge Fabric) and INT-012 (trust enforcement) have no RPC in the contract today.
 
@@ -48,6 +52,11 @@ from intelligence.embeddings.provider import (
     EmbeddingError,
     EmbeddingProvider,
 )
+from intelligence.memory.candidates import (
+    MemoryCandidate,
+    MemoryProposalSink,
+)
+from intelligence.memory.models import MemoryEntryError, MemoryProvenance
 from intelligence.model_gateway import Fulfillment, GatewayError, ModelGateway
 from intelligence.model_gateway.embeddings import MAX_EMBED_INPUTS
 from intelligence.server.errors import ErrorCode, ErrorDetail, ErrorEnvelope, abort_with
@@ -63,11 +72,10 @@ SERVICER_LOGGER_NAME = "intelligence.server"
 _UNIMPLEMENTED_OWNERS: Mapping[str, str] = {
     "BuildContext": "INT-005",
     "Search": "INT-005",
-    "ProposeMemory": "INT-007",
     "Evaluate": "INT-010",
 }
 
-IMPLEMENTED_METHODS: frozenset[str] = frozenset({"ClassifyTrust", "FulfillModel", "Embed"})
+IMPLEMENTED_METHODS: frozenset[str] = frozenset({"ClassifyTrust", "FulfillModel", "Embed", "ProposeMemory"})
 
 TrustClassifier = Callable[[str, str], TrustClassification]
 
@@ -86,12 +94,14 @@ class IntelligenceGatewayServicer:
         logger: logging.Logger | None = None,
         gateway: ModelGateway | None = None,
         embedder: EmbeddingProvider | None = None,
+        memories: MemoryProposalSink | None = None,
     ) -> None:
         self._trust_classifier = trust_classifier
         self._clock = clock
         self._logger = logger if logger is not None else logging.getLogger(SERVICER_LOGGER_NAME)
         self._gateway = gateway
         self._embedder = embedder
+        self._memories = memories
         self._idle = threading.Condition(threading.Lock())
         self._in_flight = 0
         self._draining = False
@@ -313,11 +323,105 @@ class IntelligenceGatewayServicer:
     def ProposeMemory(
         self, request: service_pb2.MemoryCandidate, context: grpc.ServicerContext
     ) -> service_pb2.ProposalAck:
+        """Offer a memory candidate to the memory owner (INT-007).
+
+        The servicer is a forwarder: it validates the call scope, turns the wire candidate into the
+        owner's proposal type and hands it to the configured sink, which decides the identity, the
+        scope and whether anything is remembered. A refusal from the owner travels back as a typed
+        error naming the rule that refused it; a process with no sink configured fails closed, so a
+        candidate is never acknowledged while nothing stores it.
+        """
         self._begin_call(context)
         try:
-            self._reject_unimplemented("ProposeMemory", request, context)
+            scope = self._validated_scope("ProposeMemory", request, context)
+            candidate = self._memory_candidate(request, scope, context)
+            self._ensure_live("ProposeMemory", context)
+            sink = self._memories
+            if sink is None:
+                abort_with(
+                    context,
+                    ErrorEnvelope(
+                        code=ErrorCode.ROUTE_UNAVAILABLE,
+                        message=(
+                            "no memory store is configured for this intelligence process; the "
+                            "composition root installs the durable memory sink (APP-001)"
+                        ),
+                        correlation_id=scope.correlation_id,
+                        details=(ErrorDetail("owner_task", "INT-007"),),
+                    ),
+                )
+            try:
+                outcome = sink.propose(
+                    tenant_id=scope.tenant_id,
+                    workspace_id=scope.workspace_id,
+                    candidate=candidate,
+                )
+            except MemoryEntryError as refusal:
+                abort_with(
+                    context,
+                    ErrorEnvelope(
+                        code=_error_code(refusal.code),
+                        message=refusal.detail,
+                        correlation_id=scope.correlation_id,
+                        details=(
+                            ErrorDetail("rule_id", refusal.rule_id),
+                            ErrorDetail("owner_task", "INT-007"),
+                        ),
+                    ),
+                )
+            self._ensure_live("ProposeMemory", context)
+            return service_pb2.ProposalAck(
+                schema_version=SCHEMA_VERSION,
+                accepted=True,
+                proposal_id=outcome.entry.id,
+                reason="" if outcome.recorded else "already remembered",
+            )
         finally:
             self._end_call()
+
+    def _memory_candidate(
+        self,
+        request: service_pb2.MemoryCandidate,
+        scope: CallScope,
+        context: grpc.ServicerContext,
+    ) -> MemoryCandidate:
+        """The owner's proposal type, or a typed refusal for a wire shape it cannot accept."""
+        try:
+            provenance_kind = MemoryProvenance(request.provenance_kind.strip().lower())
+        except ValueError:
+            abort_with(
+                context,
+                ErrorEnvelope(
+                    code=ErrorCode.VALIDATION_SCHEMA,
+                    message=(
+                        f"provenance_kind {request.provenance_kind!r} is not one of "
+                        f"{[kind.value for kind in MemoryProvenance]}"
+                    ),
+                    correlation_id=scope.correlation_id,
+                    details=(ErrorDetail("owner_task", "INT-007"),),
+                ),
+            )
+        try:
+            return MemoryCandidate(
+                subject_ref=request.subject_ref,
+                content=request.content,
+                provenance_kind=provenance_kind,
+                provenance_ref=request.provenance_ref,
+                confidence=request.confidence,
+            )
+        except MemoryEntryError as refusal:
+            abort_with(
+                context,
+                ErrorEnvelope(
+                    code=_error_code(refusal.code),
+                    message=refusal.detail,
+                    correlation_id=scope.correlation_id,
+                    details=(
+                        ErrorDetail("rule_id", refusal.rule_id),
+                        ErrorDetail("owner_task", "INT-007"),
+                    ),
+                ),
+            )
 
     def Embed(
         self, request: service_pb2.EmbedRequest, context: grpc.ServicerContext
