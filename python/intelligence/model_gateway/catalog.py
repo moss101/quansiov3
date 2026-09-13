@@ -81,6 +81,10 @@ class ModelSpec:
     context_window: int
     cost_class: str
     dlp_eligible: bool
+    #: Vector width an `embeddings` model produces; required for that capability, absent
+    #: otherwise. The derived embedding index (INT-011) pins its own width and refuses a
+    #: route that does not match it, so this is the declared side of that check.
+    embedding_dimensions: int | None = None
 
     def supports(self, capability: str) -> bool:
         return capability in self.capabilities
@@ -242,6 +246,7 @@ def _parse_model(entry: object, providers: Mapping[str, ProviderConfig], source:
     context_window = entry.get("context_window")
     cost_class = entry.get("cost_class")
     dlp_eligible = entry.get("dlp_eligible")
+    embedding_dimensions = entry.get("embedding_dimensions")
     if not isinstance(model_id, str) or not model_id:
         raise GatewayError(GatewayErrorCode.VALIDATION_SCHEMA, f"{source}: model id missing")
     if not isinstance(provider_name, str) or provider_name not in providers:
@@ -261,6 +266,21 @@ def _parse_model(entry: object, providers: Mapping[str, ProviderConfig], source:
         raise GatewayError(GatewayErrorCode.VALIDATION_SCHEMA, f"{source}: model '{model_id}' cost_class")
     if not isinstance(dlp_eligible, bool):
         raise GatewayError(GatewayErrorCode.VALIDATION_SCHEMA, f"{source}: model '{model_id}' dlp_eligible")
+    if embedding_dimensions is not None and (
+        not isinstance(embedding_dimensions, int) or embedding_dimensions <= 0
+    ):
+        raise GatewayError(
+            GatewayErrorCode.VALIDATION_SCHEMA,
+            f"{source}: model '{model_id}' embedding_dimensions must be a positive integer",
+        )
+    if "embeddings" in capabilities and embedding_dimensions is None:
+        # An embedding route whose width is undeclared cannot be checked against the width the
+        # derived index pins, so it is refused at load rather than discovered when a vector
+        # cannot be written.
+        raise GatewayError(
+            GatewayErrorCode.VALIDATION_SCHEMA,
+            f"{source}: model '{model_id}' declares the `embeddings` capability without embedding_dimensions",
+        )
     return {
         model_id: ModelSpec(
             id=model_id,
@@ -270,6 +290,7 @@ def _parse_model(entry: object, providers: Mapping[str, ProviderConfig], source:
             context_window=context_window,
             cost_class=cost_class,
             dlp_eligible=dlp_eligible,
+            embedding_dimensions=embedding_dimensions,
         )
     }
 

@@ -22,12 +22,13 @@ the full policy and replaces the injected `RouteSelector`.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
 import threading
 import time
-from collections.abc import Callable, Generator, Iterator, Mapping
+from collections.abc import Callable, Generator, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -49,12 +50,21 @@ from intelligence.model_gateway.adapters.base import (
 from intelligence.model_gateway.catalog import ModelCatalog
 from intelligence.model_gateway.credentials import CredentialResolver
 from intelligence.model_gateway.dlp import DlpDecision, DlpGuard
+from intelligence.model_gateway.embeddings import (
+    EmbeddingCallContext,
+    check_width,
+    embedding_wire_for_kind,
+    response_byte_budget,
+    validate_embedding_inputs,
+)
 from intelligence.model_gateway.errors import GatewayError, GatewayErrorCode
 from intelligence.model_gateway.events import (
     EventFactory,
     TerminalOutcome,
     estimate_cost_minor_units,
 )
+from intelligence.model_gateway.ids import new_ulid
+from intelligence.model_gateway.routing import PolicyRouteSelector, RequestClass
 from intelligence.model_gateway.selection import CatalogPrimarySelector, RouteDecision, RouteSelector
 from intelligence.model_gateway.tooling import MappingToolSchemaSource, ToolSchemaSource, resolve_tools
 from intelligence.model_gateway.transport import (
@@ -68,6 +78,22 @@ from intelligence.model_gateway.transport import (
 )
 
 LOGGER_NAME = "intelligence.model_gateway"
+
+#: Default wall-clock bound for one embedding call when the caller names none.
+DEFAULT_EMBEDDING_TIMEOUT_MS = 60_000
+
+
+@dataclass(frozen=True, slots=True)
+class EmbeddingOutcome:
+    """One fulfilled embedding call: the vectors, in input order, and the route that produced them."""
+
+    model_catalog_id: str
+    wire_model_id: str
+    provider: str
+    route_id: str
+    dimensions: int
+    vectors: tuple[tuple[float, ...], ...]
+    chosen_by: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,6 +177,7 @@ class ModelGateway:
         tool_schemas: ToolSchemaSource | None = None,
         transport: HttpTransport | None = None,
         selector: RouteSelector | None = None,
+        embedding_selector: RouteSelector | None = None,
         dlp: DlpGuard | None = None,
         clock: Callable[[], float] = time.time,
         logger: logging.Logger | None = None,
@@ -164,6 +191,15 @@ class ModelGateway:
         # deployment runs is the composition root's decision, so an uninjected gateway keeps the
         # INT-002 path and the seam stays injectable (see HANDOFF.md).
         self._selector = selector if selector is not None else CatalogPrimarySelector()
+        # Embedding routes are resolved by class, never by `routing.primary`: the catalog's
+        # primary model leads *chat*, and reusing that here would send an embedding call to a
+        # model with no embeddings endpoint. INT-003's selector is class-driven, so the
+        # embedding class gets its own instance of it.
+        self._embedding_selector = (
+            embedding_selector
+            if embedding_selector is not None
+            else PolicyRouteSelector(default_class=RequestClass.EMBEDDING)
+        )
         self._dlp = dlp
         self._clock = clock
         self._logger = logger if logger is not None else logging.getLogger(LOGGER_NAME)
@@ -209,6 +245,27 @@ class ModelGateway:
     def cancel(self, cancellation_token: str) -> bool:
         """Cancel a live call by its request `cancellation_token`."""
         return self._cancellations.cancel(cancellation_token)
+
+    def embedding_routes(self) -> tuple[str, ...]:
+        """Catalog ids an embedding call may use, in the order routing would try them.
+
+        The first entry is the route `embed` resolves. Only models that declare the
+        `embeddings` capability *and* a width are offered, because a route the gateway cannot
+        check a width against, or one with no embeddings endpoint, must not appear as a
+        failover target the index could then prefer over a working route.
+        """
+        probe = intelligence_pb2.ModelCallRequest(
+            schema_version="v1", call_id="ec_route_probe", max_output_tokens=0
+        )
+        decision = self._embedding_selector.select(self._catalog, probe)
+        ordered = [decision.model.id]
+        for model_id in decision.route.fallbacks:
+            model = self._catalog.models.get(model_id)
+            if model is None or not model.supports("embeddings") or model.embedding_dimensions is None:
+                continue
+            if model.id not in ordered:
+                ordered.append(model.id)
+        return tuple(ordered)
 
     def fulfill(
         self,
@@ -319,6 +376,165 @@ class ModelGateway:
             cancellation=cancellation,
             budget_ms=budget_ms,
         )
+
+    def embed(
+        self,
+        texts: Sequence[str],
+        *,
+        model_hint: str = "",
+        call_id: str = "",
+        dlp_profile: str = "",
+        timeout_ms: int = DEFAULT_EMBEDDING_TIMEOUT_MS,
+        deadline_ms: int | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
+    ) -> EmbeddingOutcome:
+        """Embed `texts` through the `embedding` request class; vectors in input order.
+
+        Ordering matches a chat call: the same deterministic route resolution, the same
+        credential custody and the same DLP guard before a byte is built, then one bounded
+        request over the pinned transport. Every failure is a typed `GatewayError`, so a caller
+        sees the same taxonomy it sees from `FulfillModel`.
+
+        Route resolution uses the embedding-class selector: the conversation selector is
+        class-blind (it returns `routing.primary`), and an embedding route must be one that
+        declares the `embeddings` capability and a width, not whatever model leads chat.
+        """
+        inputs = validate_embedding_inputs(texts)
+        if timeout_ms <= 0:
+            raise GatewayError(
+                GatewayErrorCode.VALIDATION_SCHEMA, "timeout_ms is required for an embedding call"
+            )
+        now = int(self._clock() * 1000)
+        remaining_ms: int | None = None
+        if deadline_ms is not None:
+            remaining_ms = deadline_ms - now
+            if remaining_ms <= 0:
+                raise GatewayError(
+                    GatewayErrorCode.TOOL_TIMEOUT,
+                    "call deadline expired before the embedding call",
+                    retryable=False,
+                )
+        budget_ms = timeout_ms if remaining_ms is None else min(timeout_ms, remaining_ms)
+        request = intelligence_pb2.ModelCallRequest(
+            schema_version="v1",
+            call_id=call_id.strip() or f"ec_{new_ulid()}",
+            route_hint=model_hint.strip(),
+            # The embedding request class's shape: no conversation, no output tokens.
+            max_output_tokens=0,
+            dlp_profile=dlp_profile,
+            timeout_ms=budget_ms,
+        )
+        decision = self._embedding_selector.select(self._catalog, request)
+        model = decision.model
+        if model.embedding_dimensions is None:
+            raise GatewayError(
+                GatewayErrorCode.ROUTE_UNAVAILABLE,
+                f"model '{model.id}' declares no embedding_dimensions, so its vectors cannot be "
+                "checked against the index width",
+            )
+        if self._dlp is not None:
+            # Same guard as a chat call, before anything is built for transmission: the data
+            # class is refused here, and a redaction rule that fires is recorded.
+            self._dlp_decision = self._dlp.check(request, model, decision.provider)
+        base_url = decision.provider.resolve_base_url(self._environ)
+        credential = self._credentials.resolve(decision.provider)
+        wire = embedding_wire_for_kind(decision.provider.kind)
+        prepared = wire.build_request(
+            EmbeddingCallContext(
+                model_catalog_id=model.id,
+                wire_model_id=model.model_id,
+                provider=decision.provider.name,
+                credential=credential,
+                base_url=base_url,
+                texts=inputs,
+                timeout_seconds=max(budget_ms / 1000.0, 0.001),
+            )
+        )
+        body = self._post_embedding(
+            prepared.as_http_request(),
+            expected=len(inputs),
+            dimensions=model.embedding_dimensions,
+            is_cancelled=is_cancelled,
+        )
+        vectors = wire.decode(prepared, body)
+        if len(vectors) != len(inputs):
+            raise GatewayError(
+                GatewayErrorCode.VALIDATION_BOUNDS,
+                f"route {model.id} returned {len(vectors)} vectors for {len(inputs)} inputs",
+            )
+        return EmbeddingOutcome(
+            model_catalog_id=model.id,
+            wire_model_id=model.model_id,
+            provider=decision.provider.name,
+            route_id=decision.route_id,
+            dimensions=check_width(vectors, expected=model.embedding_dimensions, model_catalog_id=model.id),
+            vectors=vectors,
+            chosen_by=decision.route.chosen_by,
+        )
+
+    def _post_embedding(
+        self,
+        request: HttpRequest,
+        *,
+        expected: int,
+        dimensions: int,
+        is_cancelled: Callable[[], bool] | None,
+    ) -> bytes:
+        """Send one embedding request and read its bounded body, or raise a typed error.
+
+        The response is read through the same `StreamResponse` the streaming path uses, so the
+        socket timeout, the call deadline and caller cancellation all still bound this call; a
+        non-2xx status is classified by the shared provider-error mapping and never parsed as
+        data, because an error body can echo the request.
+        """
+        budget = response_byte_budget(expected, dimensions)
+        deadline = time.monotonic() + max(request.timeout_seconds, 0.001)
+        cancelled = is_cancelled if is_cancelled is not None else _never_cancelled
+        response: StreamResponse | None = None
+        chunks: list[bytes] = []
+        total = 0
+        try:
+            response = self._transport.open(request)
+            status = response.status
+            if status < 200 or status >= 300:
+                result = http_error_result(status, b"")
+                raise GatewayError(
+                    GatewayErrorCode(result.error_code or str(GatewayErrorCode.PROVIDER_UNAVAILABLE)),
+                    f"embedding provider answered HTTP {status}",
+                    retryable=result.retryable,
+                )
+            while True:
+                line = response.read_line(deadline=deadline, cancelled=cancelled)
+                if line is None:
+                    break
+                total += len(line)
+                if total > budget:
+                    raise GatewayError(
+                        GatewayErrorCode.VALIDATION_BOUNDS,
+                        f"embedding response exceeded {budget} bytes for {expected} inputs",
+                    )
+                chunks.append(line)
+            return b"".join(chunks)
+        except StreamCancelledError as error:
+            raise GatewayError(
+                GatewayErrorCode.TOOL_TIMEOUT, "embedding call was cancelled", retryable=False
+            ) from error
+        except TransportTimeoutError as error:
+            raise GatewayError(
+                GatewayErrorCode.TOOL_TIMEOUT, "embedding provider did not answer in time", retryable=True
+            ) from error
+        except TransportError as error:
+            raise GatewayError(
+                GatewayErrorCode.PROVIDER_UNAVAILABLE, "embedding provider is unreachable", retryable=True
+            ) from error
+        finally:
+            if response is not None:
+                with contextlib.suppress(OSError):
+                    response.close()
+
+
+def _never_cancelled() -> bool:
+    return False
 
 
 class Fulfillment:

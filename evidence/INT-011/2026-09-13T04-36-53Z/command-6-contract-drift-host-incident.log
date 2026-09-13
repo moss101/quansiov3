@@ -1,0 +1,5 @@
+=== host-incident probe: byte-identical copy vs original ===
+COPY HANGS / ORIGINAL RAN (captured 2026-09-13)
+
+=== contract drift check via the pre-existing-inode workaround ===
+DRIFT PROBLEMS: []

@@ -98,6 +98,17 @@ LIMIT %(limit)s
 
 _COUNT_SQL = "SELECT count(*) FROM derived.embeddings WHERE tenant_id = %(tenant_id)s"
 
+_SOURCES_SQL = """
+SELECT DISTINCT source_ref FROM derived.embeddings
+WHERE tenant_id = %(tenant_id)s AND source_kind = %(source_kind)s
+"""
+
+_PRUNE_SQL = """
+DELETE FROM derived.embeddings
+WHERE tenant_id = %(tenant_id)s AND source_kind = %(source_kind)s
+  AND source_ref <> ALL(%(keep)s::text[])
+"""
+
 _TENANT_CONTEXT_SQL = "SELECT set_config('quansio.tenant_id', %(tenant_id)s, true)"
 
 #: Every statement this module owns, for the tenant-filter invariant.
@@ -109,6 +120,8 @@ STATEMENTS: tuple[str, ...] = (
     _DELETE_MISSING_SQL,
     _SEARCH_SQL,
     _COUNT_SQL,
+    _SOURCES_SQL,
+    _PRUNE_SQL,
 )
 
 
@@ -182,6 +195,8 @@ class RebuildReport:
 
     sources: tuple[IndexReport, ...]
     removed: int
+    #: Rows of sources the authoritative set no longer names (deletion propagation on rebuild).
+    pruned: int = 0
 
     @property
     def embedded(self) -> int:
@@ -248,6 +263,12 @@ class EmbeddingStore(Protocol):
 
     def count(self, *, tenant_id: str) -> int:
         """Rows this tenant has in the index."""
+
+    def sources(self, *, tenant_id: str, source_kind: str) -> Sequence[str]:
+        """The source refs of one kind this tenant currently has rows for."""
+
+    def prune(self, *, tenant_id: str, source_kind: str, keep: frozenset[str]) -> int:
+        """Delete rows of one kind whose source ref is not in ``keep``; returns rows removed."""
 
 
 class SqlConnection(Protocol):
@@ -471,6 +492,19 @@ class SqlEmbeddingStore:
             cursor.execute(_COUNT_SQL, {"tenant_id": tenant_id})
             return _as_int(cursor.fetchall()[0][0], "count")
 
+    def sources(self, *, tenant_id: str, source_kind: str) -> Sequence[str]:
+        with self._transaction(tenant_id) as cursor:
+            cursor.execute(_SOURCES_SQL, {"tenant_id": tenant_id, "source_kind": source_kind})
+            return tuple(str(row[0]) for row in cursor.fetchall())
+
+    def prune(self, *, tenant_id: str, source_kind: str, keep: frozenset[str]) -> int:
+        with self._transaction(tenant_id) as cursor:
+            cursor.execute(
+                _PRUNE_SQL,
+                {"tenant_id": tenant_id, "source_kind": source_kind, "keep": sorted(keep)},
+            )
+            return cursor.rowcount
+
 
 @dataclass(slots=True)
 class EmbeddingIndex:
@@ -588,6 +622,20 @@ class EmbeddingIndex:
             )
         reports = tuple(self.index_source(document) for document in documents)
         return RebuildReport(sources=reports, removed=removed)
+
+    def prune(self, *, source_kind: str, keep_refs: frozenset[str]) -> int:
+        """Drop rows of ``source_kind`` whose source is not in the authoritative set.
+
+        A rebuild knows the complete source set it read, so a source the set no longer names is
+        a deletion that has already happened upstream: keeping its rows would let a removed
+        source keep answering retrieval. Only the named kind is pruned, because a reader covers
+        one authoritative plane and deleting another plane's rows would be a cross-owner act.
+        """
+        if not source_kind.strip():
+            raise EmbeddingIndexError(
+                "VALIDATION_SCHEMA", RULE_SOURCE_SHAPE, "a prune needs the source kind it covers"
+            )
+        return self.store.prune(tenant_id=self.tenant_id, source_kind=source_kind, keep=frozenset(keep_refs))
 
     def query(
         self, text: str, *, limit: int = DEFAULT_LIMIT, snapshot: str | None = None

@@ -9,6 +9,10 @@
 #               route protected content here.
 
 version: 1
+# `base_url` is the endpoint root, without an API version: every wire path the adapters send
+# carries its own version segment (`/v1/messages`, `/v1/chat/completions`, `/v1/embeddings`).
+# A versioned `base_url` would double the segment and address a route the provider does not
+# serve, so the two spellings must not be mixed.
 providers:
   anthropic:
     kind: anthropic
@@ -16,7 +20,7 @@ providers:
     credential_handle: provider/anthropic
   openai:
     kind: openai
-    base_url: https://api.openai.com/v1
+    base_url: https://api.openai.com
     credential_handle: provider/openai
   openai-compatible:
     # Self-hosted / local inference endpoints use the OpenAI-compatible adapter (OD-004).
@@ -73,3 +77,7 @@ models:
     context_window: 8191
     cost_class: low
     dlp_eligible: true
+    # The vector width this route produces. A model that declares the `embeddings`
+    # capability must declare its width, and the derived index refuses a route whose width
+    # differs from the width it pins, so failover can never cross embedding spaces.
+    embedding_dimensions: 1536

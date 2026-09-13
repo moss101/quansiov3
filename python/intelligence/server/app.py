@@ -29,6 +29,9 @@ from pathlib import Path
 import grpc
 from quansio.v1.intelligence import service_pb2, service_pb2_grpc
 
+from intelligence.embeddings import INDEX_DIMENSIONS
+from intelligence.embeddings.gateway_provider import gateway_embedder
+from intelligence.embeddings.provider import EmbeddingError, EmbeddingProvider
 from intelligence.model_gateway import ModelGateway
 from intelligence.server.servicer import (
     IMPLEMENTED_METHODS,
@@ -45,6 +48,9 @@ CONTRACT_SERVICE_NAME = service_pb2.DESCRIPTOR.services_by_name["IntelligenceGat
 
 _ENV_PREFIX = "QUANSIO_INTELLIGENCE_"
 
+#: Operator override for the model catalog file; a checkout uses its own `config/models.yaml`.
+ENV_MODEL_CATALOG = f"{_ENV_PREFIX}MODEL_CATALOG"
+
 
 def gateway_version() -> str:
     """Installed `quansio-intelligence` version, or a marked fallback for source checkouts."""
@@ -52,6 +58,37 @@ def gateway_version() -> str:
         return importlib.metadata.version("quansio-intelligence")
     except importlib.metadata.PackageNotFoundError:
         return "0.0.0+unknown"
+
+
+def _default_servicer() -> IntelligenceGatewayServicer:
+    """The production servicer: one gateway, and the embedding route when the catalog has one.
+
+    The model catalog is the repository's `config/models.yaml` unless the operator names another
+    file, because the catalog is deployment configuration (D-018) and a deployment may point the
+    providers at different endpoints than a checkout does.
+
+    An embedding route is composed from the catalog, so a deployment whose catalog declares no
+    embedding model is still a valid chat-only process; `Embed` then fails closed with a typed
+    `ROUTE_UNAVAILABLE` rather than the process refusing to start. The reason is logged once, at
+    startup, because a missing embedding route is an operator-visible configuration fact.
+    """
+    override = os.environ.get(ENV_MODEL_CATALOG, "").strip()
+    gateway = ModelGateway.from_environment(catalog_path=Path(override) if override else None)
+    embedder: EmbeddingProvider | None = None
+    try:
+        embedder = gateway_embedder(gateway, dimensions=INDEX_DIMENSIONS)
+    except EmbeddingError as unavailable:
+        logging.getLogger(SERVICER_LOGGER_NAME).warning(
+            json.dumps(
+                {
+                    "event": "intelligence.embeddings.unconfigured",
+                    "rule_id": unavailable.rule_id,
+                    "detail": unavailable.detail,
+                },
+                sort_keys=True,
+            )
+        )
+    return IntelligenceGatewayServicer(gateway=gateway, embedder=embedder)
 
 
 class Transport(StrEnum):
@@ -154,12 +191,9 @@ class IntelligenceServer:
     ) -> None:
         self._config = config
         # Composition root: the process builds the one gateway every model call goes through
-        # (INT-002/D-006). Provider credentials are materialized by the gateway, never here.
-        self._servicer = (
-            servicer
-            if servicer is not None
-            else IntelligenceGatewayServicer(gateway=ModelGateway.from_environment())
-        )
+        # (INT-002/D-006) and the embedding route the index embeds through (INT-011). Provider
+        # credentials are materialized by the gateway, never here.
+        self._servicer = servicer if servicer is not None else _default_servicer()
         self._logger = logger if logger is not None else logging.getLogger(SERVICER_LOGGER_NAME)
         self._server: grpc.Server | None = None
         self._address: str | None = None

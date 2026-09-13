@@ -1,0 +1,4 @@
++(eval):3> cd python
++(eval):3> uv run --frozen pytest tests/intelligence/test_embed_rpc.py -q
+..........                                                               [100%]
+10 passed in 2.55s

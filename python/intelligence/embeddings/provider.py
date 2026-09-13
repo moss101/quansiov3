@@ -28,6 +28,7 @@ RULE_DIMENSION_MISMATCH = "embedding.dimension_mismatch"
 RULE_PROVIDER_FAILED = "embedding.provider_failed"
 RULE_BAD_VECTOR = "embedding.bad_vector"
 RULE_EMPTY_INPUT = "embedding.empty_input"
+RULE_GATEWAY_FAILED = "embedding.gateway_failed"
 
 
 class EmbeddingError(RuntimeError):
@@ -98,6 +99,23 @@ class FailoverEmbedder:
     def route_ids(self) -> tuple[str, ...]:
         """The candidate order, for reporting."""
         return tuple(provider.route_id for provider in self.providers)
+
+    @property
+    def route_id(self) -> str:
+        """The primary route's id: the route a call starts with and reports as its own.
+
+        A failover embedder *is* an [`EmbeddingProvider`], so it answers with the route it would
+        try first; `served_by` says which route actually answered the last call.
+        """
+        return self.providers[0].route_id
+
+    @property
+    def served_by(self) -> str | None:
+        """The route that answered the last call, or None when none has answered yet."""
+        for attempt in reversed(self.attempts):
+            if attempt.outcome == "answered":
+                return attempt.route_id
+        return None
 
     def embed(self, texts: Sequence[str], *, deadline_ms: int) -> tuple[tuple[float, ...], ...]:
         """Embed ``texts`` through the first route that answers.
