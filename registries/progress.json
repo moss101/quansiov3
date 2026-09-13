@@ -850,17 +850,26 @@
     },
     "INT-006": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "IN_PROGRESS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-13T04:56:32Z",
-      "updated_at": "2026-09-13T04:56:32Z",
-      "git_commit": "fa3fd17643ffde802871cf7d5f180fa11b5294c7",
-      "tests": [],
-      "artifacts": [],
+      "updated_at": "2026-09-13T04:59:10Z",
+      "git_commit": "930ec28e13ecc5fb5ce2496fe31ab4bfaaa8231c",
+      "tests": [
+        "(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_models.py -q) (13 tests: an entry is provenance-addressable or refused, the declared shape validated fail-closed on every field, workspace scope agreeing with the workspace it names, superseded_by agreeing with the status, only ACTIVE retrievable, every lifecycle edge legal or refused with both ends named, deletion terminal and quarantine recoverable, a source deletion quarantining exactly the knowledge derived from it while accounting for every entry and deleting nothing)",
+        "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q) (304 passed, 6 skipped: the plane suite with the knowledge unit)",
+        "(cd python && ruff check . && ruff format --check . && mypy intelligence)"
+      ],
+      "artifacts": [
+        "evidence/INT-006/2026-09-13T04-58-21Z/RECONCILIATION.md",
+        "evidence/INT-006/2026-09-13T04-58-21Z/summary.json",
+        "python/intelligence/knowledge/models.py",
+        "python/tests/intelligence/test_knowledge_models.py"
+      ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": "CLAIMED and being reconciled. Canonical owner: python/intelligence/knowledge/ (the package is a docstring stub today; no implementation exists). The persistence shape already exists and is owned by CORE-001: public.knowledge_entries carries the DOMAIN.md 11.4 fields (id with the `kn_` prefix, scope tenant|workspace|pack, kind, content_ref, content, provenance JSONB, confidence 0..1, version, status candidate|verified|active|superseded|quarantined|deleted, superseded_by) with forced row-level security. The wire contract is already generated: quansio.v1.intelligence.KnowledgeEntry with Scope, Status and Provenance. Recorded reconciliation decision: the authority set assigns the Knowledge Fabric to the intelligence plane (DOSSIER.md 4.2 lists knowledge/ in the Python plane, and INT-006's `paths` is python/intelligence/knowledge/ alone), so Python owns these rows as its own durable data; Python still proposes rather than commits privileged runtime/graph/effect/machine state, and the derived index stays INT-011's. Deletion reaching retrieval is bounded by DOSSIER.md 21.3 (memory/knowledge deletion visible in retrieval within 60 s), which is what the INT-011 deletion seam exists for."
+      "notes": "IN PROGRESS (unit 1 of 4 landed). Canonical owner python/intelligence/knowledge/; reconciliation recorded in evidence/INT-006/2026-09-13T04-58-21Z/RECONCILIATION.md. The entry model, provenance addressing and lifecycle are implemented (python/intelligence/knowledge/models.py) and taken from the authorities that already exist rather than invented: DOMAIN.md 11.4 and the generated quansio.v1.intelligence.KnowledgeEntry contract supply every field and state, and CORE-001's public.knowledge_entries already declares them (id `kn_` prefix, scope tenant|workspace|pack, kind, content_ref, content, provenance JSONB, confidence 0..1, version, status, superseded_by) with forced row-level security, so no migration is needed. Two properties are structural: an entry with no provenance reference is refused (provenance-addressability is an acceptance statement, and knowledge nobody can trace is an assertion), and derived knowledge follows its source - `quarantine_derived` quarantines exactly the entries derived from a deleted source, leaves entries already out of retrieval alone, accounts for every entry and deletes nothing, because quarantine is a recorded decision a person can review and re-ingesting the source can re-verify it. The lifecycle is a closed ladder in one table (TRANSITIONS); an illegal edge is refused naming both ends, deletion is terminal, and retrieval is one predicate - only `active` knowledge is retrievable - which is what makes a deletion's effect on retrieval a property of the model rather than a convention the index remembers. REMAINING: (2) the durable store over public.knowledge_entries (create, read by provenance address, promote, supersede, delete; tenant-scoped, database-backed tests); (3) ingestion from approved sources and verified run outcomes, including calling the INT-011 deletion seam on a source deletion (DOSSIER.md 21.3 bounds retrieval visibility to 60 s); (4) the semantic-channel wiring and the evidence bundle. STATUS NOTE: INT-006 cannot reach PASS while its dependency INT-011 is BLOCKED_EXTERNAL, for the same validator rule and the same missing provider credentials that block INT-002/INT-003."
     },
     "INT-007": {
       "coverage": null,

@@ -17,18 +17,31 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **`INT-011` — embedding pipeline and derived vector index — `BLOCKED_EXTERNAL`,
-implementation complete.** Every build item is implemented and verified; the status is not `PASS`
-because `INT-002` (its dependency) is `BLOCKED_EXTERNAL`, and the validator requires every
-dependency to be `PASS` before a task may be `PASS`. The measured evidence is complete and
-committed: `evidence/INT-011/2026-09-13T04-36-53Z/`.
-Previous task: `INT-012` closed `PASS`, after `INT-009` closed `PASS`.
+Current task: **`INT-006` — Knowledge Fabric — `IN_PROGRESS`, unit 1 of 4 landed.**
+`python/intelligence/knowledge/models.py` holds the entry model, provenance addressing and the
+lifecycle ladder; the reconciliation (owner, reused authorities, plan of units) is
+`evidence/INT-006/2026-09-13T04-58-21Z/RECONCILIATION.md`. Remaining: the durable store over
+`public.knowledge_entries`, ingestion from approved sources and verified run outcomes (which calls
+the INT-011 deletion seam), and the semantic-channel wiring.
+Previous task: `INT-011` — embedding pipeline and derived vector index — `BLOCKED_EXTERNAL`,
+implementation complete, evidence `evidence/INT-011/2026-09-13T04-36-53Z/`. Its status is not `PASS`
+because `INT-002` (its dependency) is `BLOCKED_EXTERNAL` and the validator requires every dependency
+to be `PASS` first. Before that, `INT-012` and `INT-009` closed `PASS`.
 Current owner: `agent:principal-1`
-Current component: `embeddings` (`python/intelligence/embeddings/`, `python/intelligence/model_gateway/embeddings.py`)
-Current language: Python/SQL
+Current component: `knowledge` (`python/intelligence/knowledge/`)
+Current language: Python
 
 ## Completed since the previous handoff
 
+- **INT-006 (unit 1 of 4) — the knowledge entry model.** `python/intelligence/knowledge/models.py`:
+  a `kn_`-identified entry scoped `tenant|workspace|pack` carrying kind, content_ref, provenance,
+  confidence, version, status and superseded_by, taken from DOMAIN.md §11.4 and the already-generated
+  `KnowledgeEntry` contract rather than invented. An entry with no provenance reference is refused
+  (provenance-addressability), `quarantine_derived` quarantines exactly the entries derived from a
+  deleted source while accounting for every entry and deleting nothing, the lifecycle is a closed
+  ladder whose illegal edges are refused naming both ends, deletion is terminal, and retrieval is one
+  predicate — only `active` knowledge is retrievable. 13 tests; the plane suite is 304 passed /
+  6 skipped; lint, format and mypy clean.
 - **INT-011 (1/3) — the `Embed` wire.** `python/intelligence/model_gateway/embeddings.py` answers the
   `embedding` request class with a **non-streaming** fulfilment through the one gateway: the same
   deterministic route resolution, credential custody, DLP guard and pinned transport as a chat call,
@@ -82,13 +95,17 @@ What is verified, on which path:
 
 ## Exact next action
 
-Claim the next dependency-ready task — `python3 scripts/validate_v81.py --next` selects **`INT-006`
-(Knowledge Fabric, `python/intelligence/knowledge/`, M3)** because INT-011 is now
-`BLOCKED_EXTERNAL`+`implementation_complete`, which counts as ready for its dependents. Set its
-status to `RECONCILING` with `claimed_by` before editing, then reconcile it against the repository.
-The ready queue below also holds INT-008, INT-010, EXEC-001, APP-001, OPS-004, OPS-005 and QA-003;
-prefer the task that unblocks the most downstream work, and if a task's toolchain cannot execute on
-this host (see "Environment requirements"), record that and take the next one.
+Continue `INT-006` with **unit 2: the durable store over `public.knowledge_entries`** — create an
+entry (minting a `kn_` id), read one by provenance address, promote along the ladder, supersede and
+delete, every operation tenant-scoped and every mutation returning the new value rather than writing
+in place — with database-backed tests under `python/tests/integration/` following the INT-011
+precedent (`QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)`,
+activated by `scripts/dev/up`). Then unit 3 (ingestion from approved sources and verified run
+outcomes, calling `IndexSourceDeletion` from INT-011 on a source deletion) and unit 4 (the semantic
+channel and the evidence bundle). The ready queue below also holds INT-008, INT-010, EXEC-001,
+APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks the most downstream work, and if
+a task's toolchain cannot execute on this host (see "Environment requirements"), record that and take
+the next one.
 
 ## Ready queue
 

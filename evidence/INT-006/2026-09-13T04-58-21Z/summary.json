@@ -1,0 +1,61 @@
+{
+  "task_id": "INT-006",
+  "git_commit": "930ec28e13ecc5fb5ce2496fe31ab4bfaaa8231c",
+  "recorded_at": "2026-09-13T05:40:00Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_models.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T04-58-21Z/unit-1-model.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T04-58-21Z/plane.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T04-58-21Z/lint-types.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "unit 1 model tests",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "intelligence plane suite with the dev database",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "lint, format and mypy strict",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/knowledge/models.py",
+      "sha256": "82b5557aeeda79767d6b1167e600925a42fd3c2491037ce73164c247c4426d6b",
+      "bytes": 11937
+    },
+    {
+      "path": "python/tests/intelligence/test_knowledge_models.py",
+      "sha256": "a9231848e46fea548ac1b9521b1d41d27d3701bc27f04838a33683e205dbff09",
+      "bytes": 10921
+    },
+    {
+      "path": "evidence/INT-006/2026-09-13T04-58-21Z/RECONCILIATION.md",
+      "sha256": "e06e334494009b5f248ed79dcb9edd96797be653b4005ab02ad8e1fd47876d2b",
+      "bytes": 3757
+    }
+  ],
+  "real_boundary_evidence": [],
+  "note": "This bundle covers unit 1 of INT-006 (the entry model and lifecycle). The task is NOT complete: the durable store, ingestion from approved sources and verified run outcomes, and the semantic-channel wiring remain, and the task cannot reach PASS while its dependency INT-011 is BLOCKED_EXTERNAL."
+}
