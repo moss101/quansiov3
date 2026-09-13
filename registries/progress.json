@@ -985,18 +985,18 @@
       "notes": "Skill registry, promotion ladder and task-scoped resolver, both halves, unblocked by the container runtime coming back. The control plane (crates/server/src/control/skills) owns the rows: `state.rs` is the §11.5 ladder as a fail-closed state machine (DRAFT → CANDIDATE → EVALUATING → APPROVED → ACTIVE → DEPRECATED → RETIRED, with EVALUATING → REJECTED; only ACTIVE resolves), and `store.rs` is the durable registry — create a skill, add a DRAFT version, promote along the ladder. Every mutation is one transaction that stages its `skill.*` RuntimeEvent (`skill.created`, `skill.version_created`, `skill.version_promoted`) at the aggregate's next version, so a refused promotion writes neither the state nor the event; the refusal travels out of band as `MutationRejected` and comes back typed (VALIDATION_SCHEMA / RUNTIME_ILLEGAL_TRANSITION / NOT_FOUND / CONFLICT_STATE / INTERNAL). One invariant is the store's rather than the ladder's: a skill has at most one ACTIVE version and `skills.current_active_version_id` names exactly that version — promoting to ACTIVE is refused while a different version is active (deprecate it first, which is the ladder's own ACTIVE → DEPRECATED edge), leaving ACTIVE clears the pointer, and `active_versions` (the view the resolver consumes) requires the state and the pointer to agree, ordered by name so the resolver's input order is deterministic. The Python resolver (python/intelligence/skills) resolves at most `max_skills` ACTIVE versions relevant to the task, excluding any candidate whose tool_needs or capability_needs exceed the caller's snapshot rather than granting them, and accounting for every candidate it excludes with the rule that excluded it. Verified on main: the full verification sweep and `bash scripts/ci/ci.sh` (11 gates) are green at 3914fc53ffa7."
     },
     "INT-010": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-13T06:40:30Z",
+      "updated_at": "2026-09-13T06:40:30Z",
+      "git_commit": "60e9804",
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "CLAIMED and being reconciled. Canonical owner: python/intelligence/evaluation/ plus tests/evaluation/ (INT-010's paths). The package exists but holds only the semantic verifier RUN-008 already owns (evaluation/semantic_verifier/); there is no harness, no dataset and no thresholds file yet, so the coverage is GENUINE_GAP. The authorities that already exist and are reused rather than re-created: DOSSIER.md 21.3 supplies the provisional thresholds to encode as the initial protected gate (route determinism 100%, tool-proposal schema validity >= 98%, unsupported-claim rate <= 2% on the pinned research set, retrieval recall@10 >= 0.85, cross-tenant retrieval in the adversarial set 0, deleted-memory retrieval after refresh 0, injection-corpus unauthorized effects 0, injection escalation/detection >= 95%, protected recovery/safety regressions 0 and blocking promotion); DOSSIER.md 21.2 supplies the latency budget the cost/latency capture records against; INT-012's pinned injection corpus (tests/security/injection/corpus.json) and INT-005's SearchProgram/ContextProjection are the inputs the retrieval and injection metrics are computed from; INT-011's embedding route and INT-009's skill resolver report the versions a run records. Recorded reconciliation decision: the harness measures and gates, it does not promote - promotion stays the operator's and REL-001's, so the gate's output is a decision record, never a mutation."
     },
     "INT-011": {
       "coverage": "GENUINE_GAP",
