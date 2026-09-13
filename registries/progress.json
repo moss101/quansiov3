@@ -989,10 +989,12 @@
       "status": "RECONCILING",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-13T06:40:30Z",
-      "updated_at": "2026-09-13T06:40:30Z",
+      "updated_at": "2026-09-13T06:40:56Z",
       "git_commit": "60e9804",
       "tests": [],
-      "artifacts": [],
+      "artifacts": [
+        "evidence/INT-010/2026-09-13T06-50-00Z/RECONCILIATION.md"
+      ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
