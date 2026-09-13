@@ -17,8 +17,15 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **next ready task — `validate_v81.py --next` selects it** (M3 is otherwise closed out;
-INT-008 was the last M3 task in the queue).
+Current task: **`EXEC-002` — qworkerd typed endpoint/guest protocol — being claimed next**
+(`--next` selects it: M4, `crates/qworkerd/` + `crates/machine/gateway/`, depends on EXEC-001 and
+GOV-004, both `PASS`).
+Previous task: **`EXEC-001` — Rust machine-control and execution-target lifecycle — `PASS`.**
+`crates/machine/src/control/` owns the execution-target lifecycle (class, substrate, the ten §8.2
+states, generation, desired/observed state, derived health) and the lease a controller must hold, with
+the two fences — generation and lease expiry — that keep a stale controller harmless. 12 tests against
+real PostgreSQL; the ownership rule is a workspace-wide source scan, and the lease race is a real
+concurrency test. Its evidence is `evidence/EXEC-001/2026-09-13T17-21-49Z/`.
 Previous task: **`INT-008` — compaction epochs and the bounded conversation projection — `PASS`**, the
 first task to reach `PASS` in this mission. Both halves are implemented and tested: the Rust epoch
 lifecycle (`crates/server/src/runtime/compaction/`, 8 tests against real PostgreSQL) refuses abandoned
@@ -71,6 +78,12 @@ Current language: Python
 
 ## Completed since the previous handoff
 
+- **EXEC-001 — machine control: execution-target and lease lifecycle (`PASS`).**
+  `crates/machine/src/control/` owns the target lifecycle (§8.1–§8.2: class, substrate, ten states,
+  generation, desired/observed state, derived health) and the lease of §8.3. The ownership rule is a
+  workspace-wide source scan rather than a promise, and the two fences are enforced at every mutation:
+  a fenced-out caller writes nothing, and expiring or revoking a lease bumps its target's generation.
+  Acquisition locks the target row first, so the lease race is settled by the database. 12 tests.
 - **INT-008 — compaction epochs and the bounded conversation projection (`PASS`).**
   `crates/server/src/runtime/compaction/` owns create/install/refuse-as-stale over
   `public.compaction_epochs`; an epoch installs only while the caller's position contains its range and it
@@ -231,13 +244,14 @@ What is verified, on which path:
 
 ## Exact next action
 
-Implement `INT-008` from its reconciliation, in the four units it names: the **Rust epoch lifecycle**
-(`crates/server/src/runtime/compaction/`) — create an epoch for a source range, install it only while
-the run's position still contains that range, and record `rejected_stale` otherwise, decided inside the
-installing transaction against durable state; the **Rust tests** for both acceptance statements (a
-fork/revert refuses to install abandoned history, and the replay read set still names no compaction
-table); the **Python half** (`python/intelligence/context/compaction/`) — the bounded conversation
-projection, with tool and protocol state never summarised; and the task's evidence panel. The ready queue below also
+Claim and reconcile **`EXEC-002` — qworkerd typed endpoint/guest protocol** (`crates/qworkerd/` and
+`crates/machine/gateway/`): read its build items and acceptance statements — an outbound authenticated
+control channel with heartbeat, lease validation, tool dispatch, stream output, checkpoint hooks and
+evidence upload; no direct control-plane database access; tool execution only under dispatch tokens the
+runtime issues (RUN-011); a disconnected worker resumes or is fenced without duplicate effect execution;
+and malformed or stale action envelopes failing before any tool runs — reconcile them against what
+exists, record the reconciliation, then implement with the three named tests (disconnect/reconnect,
+stale envelope, network ACL). Its `validate_lease` fence is `EXEC-001`'s, already in place. The ready queue below also
 holds INT-008, INT-010, EXEC-001, APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks
 the most downstream work, and if a task's toolchain cannot execute on this host (see "Environment
 requirements"), record that and take the next one.
@@ -248,7 +262,7 @@ requirements"), record that and take the next one.
 
 | Task | Milestone | Note |
 |---|---|---|
-| EXEC-001 | M4 | Rust machine-control and execution-target lifecycle |
+| EXEC-002 | M4 | qworkerd typed endpoint/guest protocol; selected by `--next` (EXEC-001 is now PASS) |
 | APP-001 | M5 | server API/control composition and the walking skeleton |
 | CAP-006 | M6 | WikiSkill and knowledge-navigation baseline (newly ready) |
 | OPS-002 | M7 | audit, privacy, retention and user data controls |

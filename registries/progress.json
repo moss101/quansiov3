@@ -1126,18 +1126,30 @@
       "notes": "Content trust and injection defense, complete and exercised end to end now that the database is reachable. python/intelligence/trust labels every context segment by its source (an unrecognised source fails closed to UNTRUSTED_EXTERNAL), renders untrusted content inside a typed boundary carrying the data-only instruction, runs deterministic non-LLM injection heuristics that tag a suspect segment and replace it in context with an evidence reference, and derives an element's trust as the weakest label among the segments it references (an element referencing nothing is refused rather than assumed trusted). The policy side reuses the shipped guards rather than adding a second one: `escalate` raises a tier ≥ 2 proposal one tier when its chain reaches UNTRUSTED_EXTERNAL, forbids `always`, and `requires_receipt` at tier ≥ 3 makes the call park. The new end-to-end test closes the gap the task left open: an unprovable chain escalates a tier 2 egress call, the approval request the operator loads carries the untrusted origin and its refs (present if and only if policy escalated), the effect waits at PROPOSED, and after the receipt the resumed call dispatches exactly once and settles. The pinned corpus (7 malicious shapes, 4 benign) is what QA-007 will consume."
     },
     "EXEC-001": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-13T17:22:48Z",
+      "updated_at": "2026-09-13T17:22:48Z",
+      "git_commit": "ea68b98",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test control (12 tests against real PostgreSQL: a target walks the lifecycle DOMAIN.md 8.2 draws and an edge it does not draw is refused with both ends named; DESTROYED is terminal; a stale generation cannot steer the target it lost, by transition or by acquisition, and a fenced-out caller writes nothing; two racing acquirers cannot both hold a lease, the loser is told who holds it, and a released target can be leased again; a lease that is not live - wrong generation, expired, or released - does not permit the action and is not revived by renewing it; a lease expiring fences its holder by moving the generation; only a READY target can be leased; health is classified from what the platform observes, and a target reports what it observes through observe; and only machine control writes the target/lease tables anywhere in the workspace)",
+        "cargo fmt --all --check",
+        "cargo clippy -p quansio-machine --all-targets -- -D warnings",
+        "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/workspace_check.py (V8.1 validation PASS, architecture CLEAN, workspace CLEAN)"
+      ],
+      "artifacts": [
+        "evidence/EXEC-001/2026-09-13T17-21-49Z/summary.json",
+        "crates/machine/src/control/mod.rs",
+        "crates/machine/src/lib.rs",
+        "crates/machine/Cargo.toml",
+        "crates/machine/tests/control.rs",
+        "crates/machine/tests/common/mod.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "PASS. crates/machine/src/control/ owns placement-adjacent lifecycle for every execution environment: ExecutionTarget with class (persistent_workspace_computer, isolated_task_runtime), substrate (cloud_microvm, local_capsule_macos, local_capsule_windows, windows_native, customer_private_worker), the ten states of DOMAIN.md 8.2 with the transition table the diagram draws, generation, desired/observed state and derived health; and Lease with holder, generation, expiry and status. Acceptance 1 (only machine-control mutates target/lease lifecycle) is a structural test: the suite scans every .rs file in the workspace for the six write statements against execution_targets/leases and fails if any other owner has one, asserting it actually walked the tree. Acceptance 2 (lease expiry or generation change fences old controllers) is enforced at every mutation: transitions and acquisitions are guarded on the caller's generation, a fenced-out caller writes nothing, expiring or revoking a lease bumps its target's generation, validate_lease is the (lease_id, generation) check a worker applies before acting, and acquisition locks the target row first so two racing controllers cannot both win (tested with tokio::join! on two connections). Health is derived from heartbeat freshness and the desired/observed states rather than accepted from the target, with the interval comparison made in SQL so there is one piece of interval arithmetic rather than two. Three defects were found by the tests: instants were returned in Postgres's rendering rather than the ISO-8601 a caller passes in (now rendered through to_char); every statement now carries an explicit tenant predicate in addition to row-level security, because a superuser connection bypasses the policy and the isolation test caught the store relying on it; and acquire_lease's eight arguments became a LeaseRequest. No migration was needed: execution_targets and leases already declared the shape, including the CHECKs and the state vocabulary this module writes. Both dependencies (RUN-005, CORE-003) are PASS and real_boundary is false, so no external proof is outstanding."
     },
     "EXEC-002": {
       "coverage": null,
