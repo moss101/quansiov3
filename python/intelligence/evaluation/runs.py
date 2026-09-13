@@ -186,6 +186,36 @@ class Measurement:
 
 
 @dataclass(frozen=True, slots=True)
+class CaseOutcome:
+    """How one pinned case fared in a run.
+
+    A run keeps these because DOSSIER §21.3's blocking row — protected recovery/safety regressions — is a
+    statement about individual protected cases across two runs, and no average can express it.
+    """
+
+    dataset_id: str
+    case_id: str
+    protected: bool = False
+    passed: bool = False
+
+    def __post_init__(self) -> None:
+        if not self.dataset_id.strip() or not self.case_id.strip():
+            raise RunError("VALIDATION_SCHEMA", RULE_RUN_MEASUREMENT, "an outcome needs its dataset and case")
+        if not isinstance(self.protected, bool) or not isinstance(self.passed, bool):
+            raise RunError(
+                "VALIDATION_SCHEMA", RULE_RUN_MEASUREMENT, "an outcome is pass/fail and protected or not"
+            )
+
+    def as_mapping(self) -> dict[str, object]:
+        return {
+            "dataset_id": self.dataset_id,
+            "case_id": self.case_id,
+            "protected": self.protected,
+            "passed": self.passed,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class CostLatency:
     """What the run cost and how long it took; read against the provisional SLOs in DOSSIER §21.2."""
 
@@ -230,6 +260,7 @@ class EvaluationRun:
     cost: CostLatency
     started_at: str = ""
     finished_at: str = ""
+    outcomes: tuple[CaseOutcome, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.run_id.strip():
@@ -288,6 +319,7 @@ class EvaluationRun:
                 "pins": [pin.as_mapping() for pin in self.pins],
                 "measurements": [item.as_mapping() for item in self.measurements],
                 "versions": self.versions.as_mapping(),
+                "outcomes": [item.as_mapping() for item in self.outcomes],
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -333,6 +365,7 @@ class EvaluationRun:
             "pins": [pin.as_mapping() for pin in self.pins],
             "versions": self.versions.as_mapping(),
             "measurements": [item.as_mapping() for item in self.measurements],
+            "outcomes": [item.as_mapping() for item in self.outcomes],
             "cost": self.cost.as_mapping(),
             "digest": self.digest,
         }
@@ -352,6 +385,7 @@ def run_for(
     cost: CostLatency | None = None,
     started_at: str = "",
     finished_at: str = "",
+    outcomes: Sequence[CaseOutcome] = (),
 ) -> EvaluationRun:
     """Build a run record from the datasets it measured against."""
     return EvaluationRun(
@@ -362,6 +396,7 @@ def run_for(
         cost=cost if cost is not None else CostLatency(wall_time_ms=0),
         started_at=started_at,
         finished_at=finished_at,
+        outcomes=tuple(outcomes),
     )
 
 
@@ -459,6 +494,20 @@ def load_run(path: Path) -> EvaluationRun:
             raw_cost.get("slowest_index_query_ms", 0), field="cost.slowest_index_query_ms", path=path
         ),
     )
+    outcomes: list[CaseOutcome] = []
+    for index, raw_outcome in enumerate(
+        _require_list(document.get("outcomes", []), field="outcomes", path=path)
+    ):
+        outcome = _require_mapping(raw_outcome, field=f"outcomes[{index}]", path=path)
+        outcomes.append(
+            CaseOutcome(
+                dataset_id=str(outcome.get("dataset_id", "")),
+                case_id=str(outcome.get("case_id", "")),
+                protected=bool(outcome.get("protected", False)),
+                passed=bool(outcome.get("passed", False)),
+            )
+        )
+
     run = EvaluationRun(
         run_id=str(document.get("run_id", "")),
         pins=tuple(pins),
@@ -467,6 +516,7 @@ def load_run(path: Path) -> EvaluationRun:
         cost=cost,
         started_at=str(document.get("started_at", "")),
         finished_at=str(document.get("finished_at", "")),
+        outcomes=tuple(outcomes),
     )
     recorded = document.get("digest")
     if recorded is not None and str(recorded) != run.digest:
