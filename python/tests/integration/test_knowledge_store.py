@@ -13,7 +13,10 @@ and skips, because the local development stack is not running.
 
 from __future__ import annotations
 
+import json
 import os
+import subprocess
+import sys
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -43,6 +46,7 @@ from intelligence.knowledge.store import (
 
 ROOT = Path(__file__).resolve().parents[3]
 ADMIN_URL = os.environ.get("QUANSIO_TEST_POSTGRES_URL", "").strip()
+SEEDER = ROOT / "scripts" / "dev" / "seed_test_database.py"
 
 pytestmark = pytest.mark.skipif(
     not ADMIN_URL,
@@ -50,9 +54,43 @@ pytestmark = pytest.mark.skipif(
 )
 
 TENANT = "tn_01J8Z3K6F1N8VQ2X5W9Y0KKKKK"
-TENANT_B = "tn_01J8Z3K6F1N8VQ2X5W9Y0LLLLL"
+TENANT_B = "tn_01J8Z3K6F1N8VQ2X5W9Y0JJJJJ"
 WORKSPACE = "ws_01J8Z3K6F1N8VQ2X5W9Y0KKKKK"
 RUNBOOK = "Runbook: retention is ninety days for logs."
+
+
+def seed_scratch_database(name: str, *, tenants: list[str], workspaces: list[str]) -> dict:
+    """(Re)create a scratch database with the canonical schema and the identities it needs.
+
+    Seeding canonical identities is tooling's job (`scripts/dev/seed_test_database.py`, the
+    counterpart of `scripts/dev/seed` for the dev stack), so neither this suite nor any product
+    module contains that write: a Python test may reference an identity the control plane created,
+    never create one.
+    """
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SEEDER),
+            "--admin-url",
+            ADMIN_URL,
+            "--database",
+            name,
+            *(f"--tenant={tenant}" for tenant in tenants),
+            *(f"--workspace={workspace}" for workspace in workspaces),
+        ],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise AssertionError(f"seeding {name} failed:\n{result.stdout}\n{result.stderr}")
+    return json.loads(result.stdout.strip().splitlines()[-1])
+
+
+def drop_scratch_database(name: str) -> None:
+    """Remove the scratch database this suite created."""
+    with psycopg.connect(ADMIN_URL, autocommit=True) as admin:
+        admin.execute(f"DROP DATABASE IF EXISTS {name} WITH (FORCE)")
 
 
 def _scratch_url(name: str) -> str:
@@ -64,30 +102,11 @@ def _scratch_url(name: str) -> str:
 def database() -> Iterator[str]:
     """A scratch database with the canonical schema and two seeded tenants."""
     name = f"quansio_pykn_{os.getpid()}"
-    with psycopg.connect(ADMIN_URL, autocommit=True) as admin:
-        admin.execute(f"DROP DATABASE IF EXISTS {name} WITH (FORCE)")
-        admin.execute(f"CREATE DATABASE {name}")
-    url = _scratch_url(name)
-    with psycopg.connect(url, autocommit=True) as connection:
-        for path in sorted((ROOT / "migrations").glob("*.sql")):
-            connection.execute(path.read_text())
-        for tenant in (TENANT, TENANT_B):
-            connection.execute("SELECT set_config('quansio.tenant_id', %s, false)", (tenant,))
-            connection.execute(
-                "INSERT INTO tenants (id, name, personal) VALUES (%s, %s, true)",
-                (tenant, f"test {tenant}"),
-            )
-        connection.execute("SELECT set_config('quansio.tenant_id', %s, false)", (TENANT,))
-        connection.execute(
-            "INSERT INTO workspaces (id, tenant_id, name) VALUES (%s, %s, %s)",
-            (WORKSPACE, TENANT, "test workspace"),
-        )
-        connection.execute("SELECT set_config('quansio.tenant_id', '', false)")
+    seeded = seed_scratch_database(name, tenants=[TENANT, TENANT_B], workspaces=[WORKSPACE])
     try:
-        yield url
+        yield seeded["url"]
     finally:
-        with psycopg.connect(ADMIN_URL, autocommit=True) as admin:
-            admin.execute(f"DROP DATABASE IF EXISTS {name} WITH (FORCE)")
+        drop_scratch_database(name)
 
 
 @pytest.fixture(autouse=True)

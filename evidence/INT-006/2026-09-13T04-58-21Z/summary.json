@@ -55,7 +55,5 @@
       "sha256": "e06e334494009b5f248ed79dcb9edd96797be653b4005ab02ad8e1fd47876d2b",
       "bytes": 3757
     }
-  ],
-  "real_boundary_evidence": [],
-  "note": "This bundle covers unit 1 of INT-006 (the entry model and lifecycle). The task is NOT complete: the durable store, ingestion from approved sources and verified run outcomes, and the semantic-channel wiring remain, and the task cannot reach PASS while its dependency INT-011 is BLOCKED_EXTERNAL."
+  ]
 }
