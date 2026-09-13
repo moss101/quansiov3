@@ -4,10 +4,12 @@
 //!
 //! `control` is the machine-control authority (EXEC-001): the execution-target lifecycle, the lease a
 //! controller must hold to steer a target, and the fences — generation and lease expiry — that keep a
-//! stale controller harmless. Nothing here decides what to run; that is the runtime's.
+//! stale controller harmless. `gateway` is the typed envelope that reaches a worker and the rules that
+//! gate it (EXEC-002). Nothing here decides what to run; that is the runtime's.
 #![forbid(unsafe_code)]
 
 pub mod control;
+pub mod gateway;
 
 /// Repository path of this crate's canonical owner, used by the workspace
 /// conformance check to prove one owner maps to exactly one package.
