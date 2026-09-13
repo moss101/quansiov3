@@ -537,6 +537,38 @@ impl MachineControl {
         Ok(())
     }
 
+    /// Bind a target to a network policy.
+    ///
+    /// A target with no policy reaches nothing (EXEC-008's deny by default), so this is the
+    /// operation that makes a target's egress governable at all. It writes only `network_policy_id`,
+    /// which DOMAIN.md §8.2 already defines on the target, and it does not move the generation: the
+    /// policy's own revision is what fences the grants issued under it, so a rebind does not have to
+    /// disturb a controller that holds a lease.
+    ///
+    /// # Errors
+    /// Returns [`MachineError::TargetNotFound`] when the tenant has no such target.
+    pub async fn set_network_policy(
+        conn: &mut PgConnection,
+        tenant_id: &str,
+        target_id: &str,
+        policy_id: Option<&str>,
+    ) -> Result<(), MachineError> {
+        Self::tenant(conn, tenant_id).await?;
+        let updated = sqlx::query(
+            "UPDATE execution_targets SET network_policy_id = $3 WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(target_id)
+        .bind(tenant_id)
+        .bind(policy_id)
+        .execute(&mut *conn)
+        .await?
+        .rows_affected();
+        if updated == 0 {
+            return Err(MachineError::TargetNotFound(target_id.to_string()));
+        }
+        Ok(())
+    }
+
     /// Load one target.
     ///
     /// # Errors

@@ -1,0 +1,112 @@
+{
+  "task_id": "EXEC-008",
+  "git_commit": "40327f63ce097bc48cb0ac98dc2cff396a2c9384",
+  "recorded_at": "2026-09-13T18:15:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine  # 48 passed: 21 egress unit tests (destination canonicalization so one name has one answer; a URL with credentials or a bad scheme refused; the address classification table over 22 addresses including IPv4-mapped; the blocked-host list; deny by default; a granted destination reached; a granted name refused when it resolves to loopback/private/link-local; an unresolved name refused; a policy that denies or has no network rule; a rule the domain does not define refused rather than defaulted; a policy change fencing every grant at the previous revision; expiry exclusive at the instant; revocation; generation and capability scoping; another tenant's grant never considered; the longest-lived live grant reported even beside stale ones; the log carrying the destination and the credential handle but no header value; the same answer from every caller), 12 EXEC-001 control tests against real PostgreSQL, and 5 EXEC-002 gateway tests. Plus 10 database-backed egress tests: deny-by-default end to end, blocked domain, DNS rebinding, grant expiry, policy-change fencing and rebinding, revocation recorded not deleted, effect-keyed idempotency and conflict, generation and capability scoping, tenant isolation, and a target with no policy.",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-10-41Z/machine-tests.log"
+    },
+    {
+      "command": "cargo test --workspace  # 466 passed across 77 suites. Clean in 7 of 8 runs; the one failure is a pre-existing load-sensitive server test, reproduced on main at dd5e024 before this change (8 of 10 runs clean there), and is recorded under 'pre-existing failures' in NOTES.md. The failing run is workspace-tests-flake.log and the clean run is workspace-tests-pass.log.",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-10-41Z/workspace-tests-pass.log"
+    },
+    {
+      "command": "cargo fmt --all --check  # clean (empty output)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-10-41Z/rust-fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-machine --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-10-41Z/rust-clippy.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # V8.1 PASS (37 PASS, 12 ready), dossier CLEAN, architecture CLEAN, authority CLEAN, workspace CLEAN, supply-chain CLEAN (1 informational: cargo-deny not installed), legacy-map CLEAN, duplicate-authority CLEAN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-10-41Z/static-gates.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-10-41Z/ci-pipeline.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine  # 48 passed: 21 egress unit tests (destination canonicalization so one name has one answer; a URL with credentials or a bad scheme refused; the address classification table over 22 addresses including IPv4-mapped; the blocked-host list; deny by default; a granted destination reached; a granted name refused when it resolves to loopback/private/link-local; an unresolved name refused; a policy that denies or has no network rule; a rule the domain does not define refused rather than defaulted; a policy change fencing every grant at the previous revision; expiry exclusive at the instant; revocation; generation and capability scoping; another tenant's grant never considered; the longest-lived live grant reported even beside stale ones; the log carrying the destination and the credential handle but no header value; the same answer from every caller), 12 EXEC-001 control tests against real PostgreSQL, and 5 EXEC-002 gateway tests. Plus 10 database-backed egress tests: deny-by-default end to end, blocked domain, DNS rebinding, grant expiry, policy-change fencing and rebinding, revocation recorded not deleted, effect-keyed idempotency and conflict, generation and capability scoping, tenant isolation, and a target with no policy.",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --workspace  # 466 passed across 77 suites. Clean in 7 of 8 runs; the one failure is a pre-existing load-sensitive server test, reproduced on main at dd5e024 before this change (8 of 10 runs clean there), and is recorded under 'pre-existing failures' in NOTES.md. The failing run is workspace-tests-flake.log and the clean run is workspace-tests-pass.log.",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check  # clean (empty output)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-machine --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # V8.1 PASS (37 PASS, 12 ready), dossier CLEAN, architecture CLEAN, authority CLEAN, workspace CLEAN, supply-chain CLEAN (1 informational: cargo-deny not installed), legacy-map CLEAN, duplicate-authority CLEAN",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "migrations/0009_egress_grants.sql",
+      "sha256": "af827c15bf73dc5532d3e2662a73f848b0a928043f2ea0d6c092791878e24966",
+      "bytes": 3530
+    },
+    {
+      "path": "crates/machine/src/egress/mod.rs",
+      "sha256": "1a1e3592ee15ccf7413f74f116d3eefeb56a3b8581131c3d9bcbe97c6dd1ea56",
+      "bytes": 59971
+    },
+    {
+      "path": "crates/machine/src/egress/store.rs",
+      "sha256": "cf8d14ef690ec2d4e7ce8d979a48cac6361685e040e202ad45211d3917953f19",
+      "bytes": 18126
+    },
+    {
+      "path": "crates/machine/src/control/mod.rs",
+      "sha256": "846221dcd8bb94b50db2edf7364bce96142dc96683a2d7550e4b6b2d96560a71",
+      "bytes": 42187
+    },
+    {
+      "path": "crates/machine/src/lib.rs",
+      "sha256": "ebd299423cae8ebfa0fad1467b601257833b8ad65758a6d44aa966229c1a920f",
+      "bytes": 927
+    },
+    {
+      "path": "crates/machine/Cargo.toml",
+      "sha256": "82773b93ab8df5458c8cedcb302cc013dbb2d8e8e6e5eb5a59f22308da33a1c7",
+      "bytes": 685
+    },
+    {
+      "path": "crates/machine/tests/egress.rs",
+      "sha256": "f674dbeb254b4708566b55e79d952d4c9fe8a2056208885fbfbac6f32d14ac4e",
+      "bytes": 30196
+    }
+  ]
+}

@@ -1,7 +1,8 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-13 (M4 under way: 37 PASS, 12 dependency-ready, EXEC-001 and EXEC-002 both `PASS`;
-the intelligence-plane tasks remain `BLOCKED_EXTERNAL` on INT-002's live provider credentials only)
+Updated: 2026-09-13 (M4 under way: 38 PASS, 12 dependency-ready; EXEC-001, EXEC-002 and EXEC-008 all
+`PASS`; the intelligence-plane tasks remain `BLOCKED_EXTERNAL` on INT-002's live provider credentials
+only. Two pre-existing load-sensitive server-test failures are now recorded under Known defects.)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -17,9 +18,22 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M4 — the execution plane (M0/M1/M2/M3 complete as far as INT-002's credentials allow)
-Current task: **`EXEC-008` — deny-by-default network and egress policy — being claimed next**
-(`--next` selects it: M4, depends on `EXEC-001` and `RUN-006`, both `PASS`; of the M4 tasks that became
-ready when EXEC-002 landed it has the most transitive dependents).
+Current task: **`EXEC-007` — secret broker and opaque credential handles — being claimed next**
+(`--next` selects it: M4, depends on `RUN-005` and `EXEC-002`, both `PASS`).
+Previous task: **`EXEC-008` — deny-by-default network and egress policy — `PASS`.**
+`crates/machine/src/egress/` owns the broker that answers whether an execution target may reach a
+destination, and its answer is deny: a destination is reachable only when a live, scoped, unexpired
+grant covers it *and* every address the name resolved to is in a class the target's network policy
+allows, so a granted name that starts resolving to loopback or private space is refused (DNS
+rebinding). The policy is the canonical `policies` row `execution_targets.network_policy_id` already
+pointed at, and a grant's identity is the `network.egress.new_destination` effect that authorized it.
+A grant records the policy id and revision it was issued under, so a policy change or a rebind fences
+every grant issued before it in one comparison rather than by racing a scan. New migration
+`migrations/0009_egress_grants.sql`; `MachineControl::set_network_policy` binds a policy. 48
+machine-crate tests, 466 across the workspace, pipeline 11/11. Its evidence is
+`evidence/EXEC-008/2026-09-13T18-10-41Z/`. Two pre-existing load-sensitive server-test failures were
+found and recorded rather than dismissed (see Known defects); one of them, the cancellation
+over-report, the test caught in this suite's own first run.
 Previous task: **`EXEC-002` — qworkerd typed endpoint/guest protocol — `PASS`.**
 `crates/machine/src/gateway/` owns the typed envelope a worker receives — a closed kind vocabulary
 (dispatch/cancel/checkpoint/evidence_upload), the `(lease_id, generation)` fence, the argument digest
@@ -257,16 +271,21 @@ What is verified, on which path:
 
 ## Exact next action
 
-Claim and reconcile **`EXEC-008` — deny-by-default network and egress policy** (`--next` selects it:
-M4, depends on `EXEC-001` and `RUN-006`, both `PASS`; of the M4 tasks that became ready when EXEC-002
-landed, it has the most transitive dependents). Read its build items and acceptance statements from
-`registries/tasks.json`, reconcile them against what already exists, record the reconciliation, then
-implement. `crates/machine/` already owns the egress-broker surface (`crates/machine/src/lib.rs` names
-it) and `MachineGateway::dial` already decides whether a caller may open a connection at all; the
-policy decision itself is `RUN-006`'s, so check what that has already provided before adding anything.
-The ready queue below also holds EXEC-003, EXEC-004, EXEC-005, EXEC-006, EXEC-007, APP-001, CAP-006,
-OPS-002, OPS-004, OPS-005 and QA-003; prefer the task that unblocks the most downstream work, and if a
-task's toolchain or substrate cannot execute on this host, record that and take the next one.
+Claim and reconcile **`EXEC-007` — secret broker and opaque credential handles** (`--next` selects it:
+M4, depends on `RUN-005` and `EXEC-002`, both `PASS`). Read its build items and acceptance statements
+from `registries/tasks.json`, reconcile them against what already exists — `crates/machine/` names a
+secret broker in its README and `Prefix::SecretHandle` (`sec_`) already exists in `crates/core`, and
+EXEC-008's decision log already carries an opaque credential handle rather than material — then
+implement with its named tests. The ready queue below also holds EXEC-003, EXEC-004, EXEC-005,
+EXEC-006, APP-001, CAP-006, OPS-002, OPS-004, OPS-005 and QA-003; prefer the task that unblocks the
+most downstream work, and if a task's toolchain or substrate cannot execute on this host, record that
+and take the next one.
+
+**Also outstanding, and higher value than it looks:** the two pre-existing failures under Known
+defects. The cancellation over-report has a root cause and a proposed fix on file, and it asserts a
+"once each" property the product depends on. It is `crates/server` work, so it is not inside any ready
+task's paths; take it as a bounded unit of its own when the graph's next task is a `real_boundary` one
+that cannot execute here, or after EXEC-007.
 
 ## Ready queue
 
@@ -274,12 +293,11 @@ task's toolchain or substrate cannot execute on this host, record that and take 
 
 | Task | Milestone | Note |
 |---|---|---|
-| EXEC-008 | M4 | deny-by-default network and egress policy; selected by `--next` |
+| EXEC-007 | M4 | secret broker and opaque credential handles; selected by `--next` |
+| EXEC-006 | M4 | file, terminal and process tool host |
 | EXEC-003 | M4 | macOS local Linux microVM capsule (`real_boundary: true` — needs a microVM host) |
 | EXEC-004 | M4 | Windows local capsule and native broker (`real_boundary: true` — needs Windows) |
 | EXEC-005 | M4 | cloud microVM execution fabric (`real_boundary: true` — needs a cloud account) |
-| EXEC-006 | M4 | file, terminal and process tool host |
-| EXEC-007 | M4 | secret broker and opaque credential handles |
 | APP-001 | M5 | server API/control composition and the walking skeleton |
 | CAP-006 | M6 | WikiSkill and knowledge-navigation baseline |
 | OPS-002 | M7 | audit, privacy, retention and user data controls |
@@ -367,6 +385,26 @@ rather than fabricated.
   self-certified.
 - **INT-012's pinned injection corpus** (`tests/security/injection/corpus.json`) is what QA-007
   consumes.
+- **Cancellation reports more runs cancelled than exist under a storm (found during EXEC-008, pre-existing).**
+  `crates/server/tests/orchestration.rs::a_cancel_storm_cancels_each_run_once_and_blocks_dependents`
+  asserts 2 cancelled runs and intermittently sees 3 — 2 of 10 runs on `main` at `dd5e024`, before
+  EXEC-008 existed. Root cause:
+  `crates/server/src/runtime/state_machine/store.rs:693` `RunStore::cancel` returns
+  `Ok(run_in_cancelled_state)` both when it performed the cancellation and when it found the run
+  already cancelled, and `crates/server/src/runtime/orchestration/service.rs:336`
+  `OrchestrationService::cancel_runs` counts `Ok(after) if after.status == Cancelled` as a *new*
+  cancellation, so the window between the caller's read and `cancel`'s own read lets two callers both
+  be told they did it. The event count stays correct (the transaction dedupes), so this is a reporting
+  and contract defect rather than a duplicated side effect. *Fix:* make `cancel` distinguish "I
+  cancelled it" from "it was already cancelled" (a `StateConflict` on the pre-check path, consistent
+  with what the in-transaction check already returns, and audit `engine.rs:204`'s callers), or return
+  the distinction explicitly; then re-run the storm test repeatedly rather than once.
+- **`turn_loop.rs` protocol-state write races under parallel load (pre-existing).**
+  `a_turn_executes_tool_proposals_through_capability_policy_and_the_effect_ledger` fails with
+  `duplicate key value violates unique constraint "protocol_states_pkey"` when the whole workspace
+  suite runs in parallel; it passes standalone. The same suite failed transiently during EXEC-002.
+  Scratch databases are not shared (each test names its own), so this is a concurrency-sensitive write
+  in the turn loop, not a harness collision. *Not yet diagnosed past the symptom.*
 - No other known defects: the intermittent intelligence-plane failure (the route-id clock dependency)
   remains fixed with its regression test, and the determinism audit found no further leaks.
 
@@ -378,21 +416,24 @@ Baseline pipeline (this session, after the host incident cleared): `bash scripts
 (`scripts/dev/bootstrap.sh`: cargo fmt/clippy/test over the workspace — 73 suites — plus pnpm, swift and
 the Python plane) and `contract-drift` (the generated bindings are current).
 
-Last run at `3c90c5a` (EXEC-002's evidence bundle is `evidence/EXEC-002/2026-09-13T17-47-45Z/`):
+Last run at `40327f6` (EXEC-008's evidence bundle is `evidence/EXEC-008/2026-09-13T18-10-41Z/`):
 
-- `cargo test --workspace` → **435 passed, 0 failed**, across 76 suites, including `tests/control.rs`
-  (EXEC-001, real PostgreSQL) and `tests/host.rs` (EXEC-002)
-- `cargo test -p quansio-machine -p quansio-qworkerd` → 30 passed (5 gateway, 12 control, 13 host)
-- `cargo fmt --all --check` → clean; `cargo clippy -p quansio-machine -p quansio-qworkerd --all-targets -- -D warnings` → clean
-- `python3.12 scripts/validate_v81.py` → PASS (37 PASS, 12 ready); `--next` → EXEC-008
-- Static gates → dossier CLEAN, architecture CLEAN (including `worker-to-control-db`), authority CLEAN,
-  workspace CLEAN, supply-chain CLEAN (1 informational: `cargo-deny` is not installed), legacy-map
-  CLEAN, duplicate-authority CLEAN
+- `cargo test --workspace` → **466 passed** across 77 suites
+- `QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine` → 48 passed (21 egress unit, 12 control
+  against real PostgreSQL, 5 gateway) plus 10 database-backed egress tests
+- `cargo fmt --all --check` → clean; `cargo clippy -p quansio-machine --all-targets -- -D warnings` → clean
+- `python3.12 scripts/validate_v81.py` → PASS (38 PASS, 12 ready); `--next` → EXEC-007
+- Static gates → dossier CLEAN, architecture CLEAN, authority CLEAN, workspace CLEAN, supply-chain CLEAN
+  (1 informational: `cargo-deny` is not installed), legacy-map CLEAN, duplicate-authority CLEAN
 - `uv run --project python pytest tests -q` → 244 passed
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **462 passed, 6 skipped**
   (the 6 are the live-provider cases that need `QUANSIO_TEST_*` credentials)
 
-Failing: none. Still required: the per-task tests of the remaining registry tasks (EXEC-008 is next).
+Failing: **two pre-existing, load-sensitive server tests** — see Known defects. `cargo test --workspace`
+was clean in 7 of 8 runs at `40327f6` and in 8 of 10 runs on `main` at `dd5e024` before the EXEC-008
+change existed, so neither is a regression; neither is claimed green. The dev stack must be reached
+with `QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:56440/quansio` — with the
+variable unset the database-backed suites print `BLOCKED_EXTERNAL` and *pass* without testing anything.
 
 ## Migrations / state changes
 
