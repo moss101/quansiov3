@@ -1,0 +1,133 @@
+{
+  "task_id": "INT-007",
+  "git_commit": "d150ba3cc7de2b8ed9f4284e8d252fa74078e3f6",
+  "recorded_at": "2026-09-13T06:45:00Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_memory_candidates.py -q)  # 12 passed: a candidate cannot name identity, tenant or state; the provenance vocabulary is closed to evaluated origins; the scope hint is honoured or refused and never downgraded; the owner mints the identity and stores a candidate; minted identities are unique and time-sortable; the same claim is not remembered twice while a forgotten one is new memory; and the store sink is the production shape",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-40-00Z/unit-3-candidates.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_memory_proposals.py -q)  # 7 passed over the real loopback gateway onto real PostgreSQL: a proposal lands as a candidate row whose tenant and scope come from the call, the same claim is recognised rather than duplicated, a refused provenance kind and an empty candidate are typed errors storing nothing, the scope gate runs first, a process with no sink fails closed, and a promoted memory becomes retrievable with its use mark",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-40-00Z/unit-3-proposals-postgres.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 430 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-40-00Z/plane.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)  # 66 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-40-00Z/integration.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-40-00Z/lint-types.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-40-00Z/repo-gates.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py  # V8.1 validation PASS; architecture CLEAN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-40-00Z/baseline-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_memory_candidates.py -q)  # 12 passed: a candidate cannot name identity, tenant or state; the provenance vocabulary is closed to evaluated origins; the scope hint is honoured or refused and never downgraded; the owner mints the identity and stores a candidate; minted identities are unique and time-sortable; the same claim is not remembered twice while a forgotten one is new memory; and the store sink is the production shape",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_memory_proposals.py -q)  # 7 passed over the real loopback gateway onto real PostgreSQL: a proposal lands as a candidate row whose tenant and scope come from the call, the same claim is recognised rather than duplicated, a refused provenance kind and an empty candidate are typed errors storing nothing, the scope gate runs first, a process with no sink fails closed, and a promoted memory becomes retrievable with its use mark",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 430 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)  # 66 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py  # V8.1 validation PASS; architecture CLEAN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-007/2026-09-13T06-06-36Z/RECONCILIATION.md",
+      "sha256": "324b48028d70c85933530103d9765870df6132a61bae2bcbb3a6f14218e4596a",
+      "bytes": 5776
+    },
+    {
+      "path": "python/intelligence/memory/candidates.py",
+      "sha256": "bc045d92acc1fb71710089c068c8736e7bebab2af215b297754d6478bdb20a95",
+      "bytes": 7949
+    },
+    {
+      "path": "python/intelligence/memory/models.py",
+      "sha256": "76590481d446acf9ce0205f9b742ef39bd774c24c605ad37824059b1474f65eb",
+      "bytes": 9527
+    },
+    {
+      "path": "python/intelligence/memory/store.py",
+      "sha256": "e1fbbde1f6a12558bcd04e6702c89f205289d85ddb7747f7962924d597cfe599",
+      "bytes": 20315
+    },
+    {
+      "path": "python/intelligence/memory/__init__.py",
+      "sha256": "33d1bd0998c6dd5299c12c1c82974bb596ababe409fd346f9c0d14053c96eae9",
+      "bytes": 2063
+    },
+    {
+      "path": "python/intelligence/server/servicer.py",
+      "sha256": "5fd085d60be2bd161a291c8cf8f910763db2d2e0e5aa95295a8c2b8c1b2d029b",
+      "bytes": 25334
+    },
+    {
+      "path": "python/tests/intelligence/test_memory_candidates.py",
+      "sha256": "f7f6b1d89aa5db8b812bc1b68ac49bf438f1e88940c7ad635a1c161b08a5f2fd",
+      "bytes": 7250
+    },
+    {
+      "path": "python/tests/intelligence/test_generated_binding_boundary.py",
+      "sha256": "9173bbcc08c5e20fd0b29ac4b0b191f2a5b28021b4c3a839d4301ba281164b49",
+      "bytes": 6187
+    },
+    {
+      "path": "python/tests/integration/test_memory_proposals.py",
+      "sha256": "4f0f4fc5361160c70c7dfb74f599f1ef94e952c3ce0f07dc8f4bb47f19708148",
+      "bytes": 8789
+    }
+  ]
+}
