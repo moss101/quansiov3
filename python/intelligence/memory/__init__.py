@@ -11,10 +11,9 @@ Layout:
 * `models` — the entry, its scopes, its closed provenance vocabulary and its lifecycle, as pure
   values;
 * `store` — the durable store over `public.memory_entries`, one tenant at a time;
-* `candidates` — what may be proposed (and by whom), and the scope resolution the owner applies.
-
-Retrieval through the semantic channel (the INT-011 seam) and the deletion path are the remaining
-unit of this task.
+* `candidates` — what may be proposed (and by whom), and the scope resolution the owner applies;
+* `retrieval` — the semantic channel: what belongs in INT-011's derived index, retrieval that agrees
+  with the fabric and the clock, and the forgetting path.
 """
 
 from __future__ import annotations
@@ -38,6 +37,15 @@ from intelligence.memory.models import (
     MemoryScope,
     MemoryStatus,
 )
+from intelligence.memory.retrieval import (
+    SOURCE_KIND_MEMORY,
+    IndexSyncReport,
+    MemoryIndexer,
+    RetrievedMemory,
+    forget_memory,
+    retrieve,
+    snapshot_of,
+)
 from intelligence.memory.store import (
     DEFAULT_LIMIT,
     MAX_LIMIT,
@@ -56,23 +64,30 @@ __all__ = [
     "MAX_LIMIT",
     "READ_TABLES",
     "RETRIEVABLE_STATUS",
+    "SOURCE_KIND_MEMORY",
     "STATEMENTS",
     "TRANSITIONS",
+    "IndexSyncReport",
     "MemoryCandidate",
     "MemoryEntry",
     "MemoryEntryError",
     "MemoryFabric",
+    "MemoryIndexer",
     "MemoryProposalSink",
     "MemoryProvenance",
     "MemoryScope",
     "MemoryStatus",
     "MemoryStore",
     "ProposalOutcome",
+    "RetrievedMemory",
     "SqlMemoryStore",
     "StatusChange",
     "StoreMemoryProposals",
+    "forget_memory",
     "memory_for",
     "new_memory_id",
     "propose",
     "resolve_scope",
+    "retrieve",
+    "snapshot_of",
 ]
