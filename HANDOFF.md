@@ -185,20 +185,22 @@ rather than fabricated.
 
 ## Tests
 
-Last run this session, at `fa3fd17643ffde80` (INT-011 evidence bundle
-`evidence/INT-011/2026-09-13T04-36-53Z/`):
+Last run this session, at `0af6e90bea2d` (INT-006 unit 3 evidence bundle
+`evidence/INT-006/2026-09-13T05-58-14Z/`; INT-011's is `evidence/INT-011/2026-09-13T04-36-53Z/`):
 
+- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **356 passed, 6 skipped**
+  (the 6 are the live-provider cases that need `QUANSIO_TEST_*` credentials)
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_store.py -q)` → 24 passed
-- `(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_models.py tests/intelligence/test_knowledge_store_boundaries.py -q)` → 22 passed
-- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **337 passed, 6 skipped**
+- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_forgetting.py -q)` → 4 passed
+- `(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_models.py tests/intelligence/test_knowledge_store_boundaries.py tests/intelligence/test_knowledge_ingestion.py -q)` → 37 passed
 - `(cd python && uv run --frozen pytest tests/intelligence/test_embed_rpc.py -q)` → 10 passed
 - `(cd python && uv run --frozen pytest tests/intelligence/test_embeddings.py tests/intelligence/test_embedding_sources.py -q)` → 30 passed
-- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)` → 9 passed
 - `(cd python && uv run --frozen pytest tests/intelligence/test_server_launch_embed.py -q)` → 2 passed
 - `(cd python && ruff check . && ruff format --check . && mypy intelligence)` → clean
 - `uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q` → 130 passed
 - The baseline gates that do not execute a newly linked binary (validate_v81, dossier-consistency,
-  arch_check, authority-pointers, workspace, legacy-map, contract-lint-compat, supply-chain) → all CLEAN
+  arch_check, authority-pointers, workspace, legacy-map, inventory, contract-lint-compat,
+  supply-chain) → all CLEAN
 - Contract drift (`scripts/ci/gen_contracts.py` `check([...])`, run around the host incident below) →
   `DRIFT PROBLEMS: []`
 
