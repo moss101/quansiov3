@@ -1,0 +1,138 @@
+{
+  "task_id": "INT-006",
+  "git_commit": "0af6e90bea2de9e42301cf153e1da83f9eda1d52",
+  "recorded_at": "2026-09-13T06:00:00Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_models.py tests/intelligence/test_knowledge_store_boundaries.py tests/intelligence/test_knowledge_ingestion.py -q)  # 37 passed: the entry model and lifecycle, the fabric's fail-closed boundaries (a refused call reaches no I/O), and ingestion (a proposal cannot name identity/tenant/scope/state, both evaluated origins are accepted, dedupe, id minting, and the forgetting path's order and seam calls)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T05-58-14Z/unit-3-knowledge-rules.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_store.py -q)  # 24 passed against real PostgreSQL: write/read-back equivalence, provenance addressing, filtered bounded reads, duplicate identity, typed not-found, the lifecycle ladder and its refusals, the stale-write guard, all-or-nothing batches, deletion retaining the row, database-owned timestamps, source invalidation, tenant isolation, RLS refusing a context-free write, corrupted stored state refused rather than coerced, and the tenant-filter invariant over every statement",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T05-58-14Z/unit-3-store-postgres.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_forgetting.py -q)  # 4 passed against real PostgreSQL and the real derived index (INT-011 with the shipped gateway embedder over a loopback stub): ingested knowledge is stored and retrievable, forgetting a source quarantines exactly its derived knowledge and empties both index sets so quarantined knowledge stops answering retrieval, withdrawing an entry removes its own index rows while the row is retained, and a deletion that matches nothing changes nothing",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T05-58-14Z/unit-3-forgetting-postgres.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 356 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T05-58-14Z/plane.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T05-58-14Z/lint-types.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed, including the architecture gate that requires Python to write no canonical authority table and the contract gate that validates every evidence summary against its schema",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T05-58-14Z/repo-gates.log"
+    },
+    {
+      "command": "the baseline gates that do not execute a newly linked binary: scripts/validate_v81.py, ci/dossier_consistency.py, ci/arch_check.py, ci/check_authority.py --check, ci/workspace_check.py, ci/legacy_map_check.py, ci/inventory.py --scan, ci/contract_compat.py, ci/supply_chain/check.py  # all CLEAN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T05-58-14Z/baseline-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_models.py tests/intelligence/test_knowledge_store_boundaries.py tests/intelligence/test_knowledge_ingestion.py -q)  # 37 passed: the entry model and lifecycle, the fabric's fail-closed boundaries (a refused call reaches no I/O), and ingestion (a proposal cannot name identity/tenant/scope/state, both evaluated origins are accepted, dedupe, id minting, and the forgetting path's order and seam calls)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_store.py -q)  # 24 passed against real PostgreSQL: write/read-back equivalence, provenance addressing, filtered bounded reads, duplicate identity, typed not-found, the lifecycle ladder and its refusals, the stale-write guard, all-or-nothing batches, deletion retaining the row, database-owned timestamps, source invalidation, tenant isolation, RLS refusing a context-free write, corrupted stored state refused rather than coerced, and the tenant-filter invariant over every statement",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_forgetting.py -q)  # 4 passed against real PostgreSQL and the real derived index (INT-011 with the shipped gateway embedder over a loopback stub): ingested knowledge is stored and retrievable, forgetting a source quarantines exactly its derived knowledge and empties both index sets so quarantined knowledge stops answering retrieval, withdrawing an entry removes its own index rows while the row is retained, and a deletion that matches nothing changes nothing",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 356 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed, including the architecture gate that requires Python to write no canonical authority table and the contract gate that validates every evidence summary against its schema",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "the baseline gates that do not execute a newly linked binary: scripts/validate_v81.py, ci/dossier_consistency.py, ci/arch_check.py, ci/check_authority.py --check, ci/workspace_check.py, ci/legacy_map_check.py, ci/inventory.py --scan, ci/contract_compat.py, ci/supply_chain/check.py  # all CLEAN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/knowledge/models.py",
+      "sha256": "82b5557aeeda79767d6b1167e600925a42fd3c2491037ce73164c247c4426d6b",
+      "bytes": 11937
+    },
+    {
+      "path": "python/intelligence/knowledge/store.py",
+      "sha256": "461f4871a26e9896522d31365cfcaec75291487be87a78a1d8d6d3e06ad63e63",
+      "bytes": 22283
+    },
+    {
+      "path": "python/intelligence/knowledge/ingestion.py",
+      "sha256": "2ba525e4d2cb24cfc336b0e075322f891693d693616a12f599f010b1109912b5",
+      "bytes": 9906
+    },
+    {
+      "path": "python/intelligence/knowledge/__init__.py",
+      "sha256": "12220a617058b6fa02a7ac18587f41c8d0d4f00299c6dbff7cb3c43c2c1b453b",
+      "bytes": 2330
+    },
+    {
+      "path": "python/tests/intelligence/test_knowledge_models.py",
+      "sha256": "a9231848e46fea548ac1b9521b1d41d27d3701bc27f04838a33683e205dbff09",
+      "bytes": 10921
+    },
+    {
+      "path": "python/tests/intelligence/test_knowledge_store_boundaries.py",
+      "sha256": "c0e93ad0f1db9061302a7542603a78e68a7abfb61ad26e059d8e5a6eaeefbfe1",
+      "bytes": 8131
+    },
+    {
+      "path": "python/tests/intelligence/test_knowledge_ingestion.py",
+      "sha256": "f17b463ff28bdb790e901429f07f7bda6b95b837e5c62dfc78297859d804d856",
+      "bytes": 9824
+    },
+    {
+      "path": "python/tests/integration/test_knowledge_store.py",
+      "sha256": "51f40f0cf0eccd33cfa7be47d06731817615d7f15d77a85d455e372486cacc0d",
+      "bytes": 25013
+    },
+    {
+      "path": "python/tests/integration/test_knowledge_forgetting.py",
+      "sha256": "18584a0cd17d7fe54be0dfee1135b747fe5931de360ce7e5f0c25929c1253c9e",
+      "bytes": 11512
+    },
+    {
+      "path": "scripts/dev/seed_test_database.py",
+      "sha256": "1480bd086f76acd641720c091138ee1594989346b9ab7671e6cfcb4b1c627dc8",
+      "bytes": 6087
+    }
+  ]
+}
