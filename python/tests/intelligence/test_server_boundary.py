@@ -52,17 +52,12 @@ HOSTILE_CONTENT = (
 BENIGN_CONTENT = "Summarise the failing tests from yesterday's run."
 
 # Method -> owning task for the behaviour INT-001 must not fake. FulfillModel is implemented
-# by INT-002 (it delegates to the model gateway) and has its own boundary tests.
-UNIMPLEMENTED_METHODS = {
-    "BuildContext": "INT-005",
-    "Search": "INT-005",
-    "ProposeMemory": "INT-007",
-    "Embed": "INT-011",
-    "Evaluate": "INT-010",
-}
+# by INT-002 and Embed by INT-011 (both delegate to the model gateway) and have their own
+# boundary tests. The map itself is the servicer's, so this file cannot drift from it.
+UNIMPLEMENTED_METHODS = dict(IntelligenceGatewayServicer.UNIMPLEMENTED_OWNERS)
 # Requests that carry no ScopeContext field of their own and must use invocation metadata.
 METADATA_SCOPE_METHODS = frozenset({"FulfillModel", "Search"})
-ALL_METHODS = (*sorted(UNIMPLEMENTED_METHODS), "ClassifyTrust", "FulfillModel")
+ALL_METHODS = (*sorted(UNIMPLEMENTED_METHODS), "ClassifyTrust", "FulfillModel", "Embed")
 # Server-streaming RPCs whose response must be consumed before the status surfaces.
 STREAMING_METHODS = frozenset({"FulfillModel"})
 

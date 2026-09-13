@@ -32,11 +32,18 @@ from intelligence.model_gateway.credentials import (
     SecretValue,
     env_var_for_handle,
 )
+from intelligence.model_gateway.embeddings import (
+    MAX_EMBED_INPUTS,
+    EmbeddingCallContext,
+    EmbeddingWire,
+    embedding_wire_for_kind,
+)
 from intelligence.model_gateway.errors import GatewayError, GatewayErrorCode
 from intelligence.model_gateway.events import TerminalOutcome, UsageTotals
 from intelligence.model_gateway.gateway import (
     CancellationRegistry,
     CancellationToken,
+    EmbeddingOutcome,
     Fulfillment,
     ModelGateway,
     PreparedCall,
@@ -54,10 +61,14 @@ from intelligence.model_gateway.tooling import (
 from intelligence.model_gateway.transport import HttpTransport, StdlibHttpTransport
 
 __all__ = [
+    "MAX_EMBED_INPUTS",
     "CancellationRegistry",
     "CancellationToken",
     "CatalogPrimarySelector",
     "CredentialResolver",
+    "EmbeddingCallContext",
+    "EmbeddingOutcome",
+    "EmbeddingWire",
     "Fulfillment",
     "GatewayError",
     "GatewayErrorCode",
@@ -77,5 +88,6 @@ __all__ = [
     "ToolDefinition",
     "ToolSchemaSource",
     "UsageTotals",
+    "embedding_wire_for_kind",
     "env_var_for_handle",
 ]

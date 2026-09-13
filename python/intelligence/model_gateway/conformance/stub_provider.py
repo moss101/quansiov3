@@ -15,7 +15,9 @@ real-boundary proof, and it is gated on `QUANSIO_TEST_ANTHROPIC_API_KEY` /
 
 from __future__ import annotations
 
+import hashlib
 import json
+import math
 import socket
 import threading
 import time
@@ -41,13 +43,23 @@ SCENARIOS: frozenset[str] = frozenset(
         "http_error_retryable",
         "http_error_fatal",
         "slow",
+        # Embedding scenarios (INT-011): the request class the index embeds through.
+        "embedding_width_mismatch",
+        "embedding_malformed",
     }
 )
 
 _ANTHROPIC_PATH = "/v1/messages"
 _OPENAI_PATH = "/v1/chat/completions"
+_EMBEDDINGS_PATH = "/v1/embeddings"
 _TOOL_ARG_CHUNKS = ('{"value":', '"42"}')
 _SLOW_HEARTBEATS = 100
+
+#: Width the stub's embedding route answers with: the width `config/models.yaml` declares for
+#: the embedding model, so a stub run exercises the same width check a provider run would.
+STUB_EMBEDDING_DIMENSIONS = 1_536
+#: Width the `embedding_width_mismatch` scenario answers with, to prove the refusal.
+STUB_WRONG_DIMENSIONS = 8
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,6 +224,8 @@ class _StubHandler(BaseHTTPRequestHandler):
             self._anthropic(body, scenario)
         elif self.path == _OPENAI_PATH:
             self._openai(body, scenario)
+        elif self.path == _EMBEDDINGS_PATH:
+            self._embeddings(body, scenario)
         else:
             self._send_json(404, {"error": {"type": "invalid_request_error", "message": "no route"}})
 
@@ -507,6 +521,47 @@ class _StubHandler(BaseHTTPRequestHandler):
         }.get(scenario, "stop")
         events += _openai_tail(model, finish, repeat_usage=scenario == "usage_repeat")
         self._sse(events)
+
+    def _embeddings(self, body: bytes, scenario: str) -> None:
+        """Deterministic OpenAI embeddings: vectors are a bag of hashed words.
+
+        The scenario marker selects the refusal shapes, so a run proves the width check and the
+        malformed-payload refusal against a real HTTP response rather than a hand-built error.
+        """
+        if scenario == "embedding_malformed":
+            self._send_json(200, {"object": "list", "data": "not-a-list"})
+            return
+        decoded = _decode(body)
+        raw_input = decoded.get("input")
+        texts = [raw_input] if isinstance(raw_input, str) else raw_input
+        if not isinstance(texts, list):
+            self._send_json(400, {"error": {"type": "invalid_request_error", "message": "bad input"}})
+            return
+        dimensions = (
+            STUB_WRONG_DIMENSIONS if scenario == "embedding_width_mismatch" else STUB_EMBEDDING_DIMENSIONS
+        )
+        self._send_json(
+            200,
+            {
+                "object": "list",
+                "model": str(decoded.get("model", "")),
+                "data": [
+                    {"object": "embedding", "index": index, "embedding": _embedding_vector(text, dimensions)}
+                    for index, text in enumerate(texts)
+                ],
+                "usage": {"prompt_tokens": sum(len(str(text).split()) for text in texts), "total_tokens": 0},
+            },
+        )
+
+
+def _embedding_vector(text: object, dimensions: int) -> list[float]:
+    """A unit vector over hashed words: shared words mean closeness, deterministically."""
+    buckets = [0.0] * dimensions
+    for word in str(text).lower().split():
+        digest = hashlib.sha256(word.encode("utf-8")).digest()
+        buckets[int.from_bytes(digest[:8], "big") % dimensions] += 1.0
+    norm = math.sqrt(sum(value * value for value in buckets)) or 1.0
+    return [value / norm for value in buckets]
 
 
 def _anthropic_start(model: str) -> dict[str, Any]:

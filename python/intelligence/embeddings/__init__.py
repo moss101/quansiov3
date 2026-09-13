@@ -14,6 +14,11 @@ from intelligence.embeddings.chunking import (
     chunk_text,
     content_digest,
 )
+from intelligence.embeddings.gateway_provider import (
+    GatewayEmbeddingProvider,
+    gateway_embedder,
+    gateway_embedding_routes,
+)
 from intelligence.embeddings.index import (
     DEFAULT_LIMIT,
     INDEX_DIMENSIONS,
@@ -31,11 +36,25 @@ from intelligence.embeddings.index import (
     StoredEmbedding,
     index_for,
 )
+from intelligence.embeddings.objectstore import S3Config, S3ObjectReader
 from intelligence.embeddings.provider import (
     Attempt,
     EmbeddingError,
     EmbeddingProvider,
     FailoverEmbedder,
+)
+from intelligence.embeddings.sources import (
+    MAX_SOURCE_BYTES,
+    SOURCE_KIND_ARTIFACT,
+    ArtifactObjectListing,
+    IndexSourceDeletion,
+    ObjectSourceReader,
+    SourceDeletionPort,
+    SourceDescriptor,
+    SourceListing,
+    SourceReadError,
+    SourceSkip,
+    rebuild_from_sources,
 )
 
 __all__ = [
@@ -44,8 +63,11 @@ __all__ = [
     "DEFAULT_OVERLAP_CHARS",
     "INDEX_DIMENSIONS",
     "MAX_LIMIT",
+    "MAX_SOURCE_BYTES",
     "ROW_ID_PREFIX",
+    "SOURCE_KIND_ARTIFACT",
     "STATEMENTS",
+    "ArtifactObjectListing",
     "Attempt",
     "Chunk",
     "ChunkingError",
@@ -56,12 +78,25 @@ __all__ = [
     "EmbeddingRow",
     "EmbeddingStore",
     "FailoverEmbedder",
+    "GatewayEmbeddingProvider",
     "IndexReport",
+    "IndexSourceDeletion",
+    "ObjectSourceReader",
     "RebuildReport",
+    "S3Config",
+    "S3ObjectReader",
+    "SourceDeletionPort",
+    "SourceDescriptor",
     "SourceDocument",
+    "SourceListing",
+    "SourceReadError",
+    "SourceSkip",
     "SqlEmbeddingStore",
     "StoredEmbedding",
     "chunk_text",
     "content_digest",
+    "gateway_embedder",
+    "gateway_embedding_routes",
     "index_for",
+    "rebuild_from_sources",
 ]

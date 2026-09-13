@@ -193,6 +193,25 @@ class MemoryStore:
     def count(self, *, tenant_id: str) -> int:
         return sum(1 for row in self.rows.values() if row.tenant_id == tenant_id)
 
+    def sources(self, *, tenant_id: str, source_kind: str) -> Sequence[str]:
+        return sorted(
+            {
+                row.source_ref
+                for row in self.rows.values()
+                if row.tenant_id == tenant_id and row.source_kind == source_kind
+            }
+        )
+
+    def prune(self, *, tenant_id: str, source_kind: str, keep: frozenset[str]) -> int:
+        doomed = [
+            key
+            for key, row in self.rows.items()
+            if row.tenant_id == tenant_id and row.source_kind == source_kind and row.source_ref not in keep
+        ]
+        for key in doomed:
+            del self.rows[key]
+        return len(doomed)
+
 
 def _cosine_distance(left: Sequence[float], right: Sequence[float]) -> float:
     dot = sum(a * b for a, b in zip(left, right, strict=True))

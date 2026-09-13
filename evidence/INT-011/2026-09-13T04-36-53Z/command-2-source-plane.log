@@ -1,0 +1,4 @@
++(eval):4> cd python
++(eval):4> uv run --frozen pytest tests/intelligence/test_embedding_sources.py tests/intelligence/test_embeddings.py -q
+..............................                                           [100%]
+30 passed in 0.06s

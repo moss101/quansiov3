@@ -1,0 +1,17 @@
+=== authority: python3.12 scripts/validate_v81.py (exit 0) ===
+V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 34 PASS, 7 ready)
+=== dossier-consistency: python3.12 scripts/ci/dossier_consistency.py (exit 0) ===
+dossier consistency: CLEAN (0 findings)
+=== architecture: python3.12 scripts/ci/arch_check.py (exit 0) ===
+architecture check: CLEAN (0 findings)
+=== authority-pointers: python3.12 scripts/ci/check_authority.py --check (exit 0) ===
+authority check: CLEAN (0 findings)
+=== workspace: python3.12 scripts/ci/workspace_check.py (exit 0) ===
+workspace check: CLEAN (0 findings)
+=== legacy-map: python3.12 scripts/ci/legacy_map_check.py (exit 0) ===
+legacy map check: CLEAN (0 findings)
+=== contract-lint-compat: uv run --project python python scripts/ci/contract_compat.py (exit 0) ===
+contract check: CLEAN (lint + compatibility)
+=== supply-chain: exit 0 ===
+cargo-deny-unavailable: cargo-deny binary is not installed; licences/bans/sources/advisories are checked offline by this gate instead (install cargo-deny for the external check)
+supply-chain: CLEAN (1 informational)
