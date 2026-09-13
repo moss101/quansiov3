@@ -1,0 +1,99 @@
+{
+  "task_id": "INT-006",
+  "unit": 2,
+  "git_commit": "c22b7ca57904c56de6d5e3eca28bf495aeb03c84",
+  "recorded_at": "2026-09-13T05:50:00Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_store_boundaries.py tests/intelligence/test_knowledge_models.py -q)  # 22 passed: the entry shape, the closed lifecycle ladder, quarantine_derived, and the fabric's fail-closed boundaries with a recording store (a refused call reaches no I/O at all)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T05-47-59Z/unit-2-boundaries.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_store.py -q)  # 24 passed against real PostgreSQL: round trip, provenance addressing, filtered bounded reads, duplicate identity, typed not-found, the lifecycle ladder and its refusals, the stale-write guard, all-or-nothing batches, deletion retaining the row, database-owned timestamps, source invalidation, tenant isolation, RLS refusing a context-free write, corrupted stored state refused rather than coerced, and the tenant-filter invariant over every statement",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T05-47-59Z/unit-2-store.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 337 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T05-47-59Z/plane.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T05-47-59Z/lint-types.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_store_boundaries.py tests/intelligence/test_knowledge_models.py -q)  # 22 passed: the entry shape, the closed lifecycle ladder, quarantine_derived, and the fabric's fail-closed boundaries with a recording store (a refused call reaches no I/O at all)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_store.py -q)  # 24 passed against real PostgreSQL: round trip, provenance addressing, filtered bounded reads, duplicate identity, typed not-found, the lifecycle ladder and its refusals, the stale-write guard, all-or-nothing batches, deletion retaining the row, database-owned timestamps, source invalidation, tenant isolation, RLS refusing a context-free write, corrupted stored state refused rather than coerced, and the tenant-filter invariant over every statement",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 337 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/knowledge/models.py",
+      "sha256": "82b5557aeeda79767d6b1167e600925a42fd3c2491037ce73164c247c4426d6b",
+      "bytes": 11937
+    },
+    {
+      "path": "python/intelligence/knowledge/store.py",
+      "sha256": "461f4871a26e9896522d31365cfcaec75291487be87a78a1d8d6d3e06ad63e63",
+      "bytes": 22283
+    },
+    {
+      "path": "python/intelligence/knowledge/__init__.py",
+      "sha256": "58e6a7ff3c8ab92786782450718f6c31b78e1646605fe0f0b3260cf988054164",
+      "bytes": 1719
+    },
+    {
+      "path": "python/tests/intelligence/test_knowledge_models.py",
+      "sha256": "a9231848e46fea548ac1b9521b1d41d27d3701bc27f04838a33683e205dbff09",
+      "bytes": 10921
+    },
+    {
+      "path": "python/tests/intelligence/test_knowledge_store_boundaries.py",
+      "sha256": "f93f1c272af95bae143f897079f4043c24f4102b0c5e3a6dbe52aaed33a537c7",
+      "bytes": 7107
+    },
+    {
+      "path": "python/tests/integration/test_knowledge_store.py",
+      "sha256": "519e347b68eac013cccded05836640a01bfe3f5513bca74fc199cac616857d19",
+      "bytes": 24620
+    }
+  ],
+  "real_boundary_evidence": [],
+  "note": "INT-006 unit 2: the durable store over public.knowledge_entries. The database-backed suite is the release evidence; the recording-store suite exists to prove what a database-backed suite cannot, namely that a refused call reaches no I/O. The task is not complete: unit 3 (ingestion from approved sources and verified run outcomes, calling the INT-011 deletion seam) and unit 4 (the semantic channel and the evidence bundle) remain, and INT-006 cannot reach PASS while its dependency INT-011 is BLOCKED_EXTERNAL.",
+  "recorded_decisions": [
+    "public.knowledge_entries is the authority: no second knowledge table and no second semantic structure was created, and the derived channel stays INT-011's.",
+    "The tenant is intrinsic to the fabric (bound at construction, no method accepts one, every statement filtered) and the database's own row-level security WITH CHECK is the second check, verified by writing through the application role with a missing context.",
+    "Lifecycle moves go through the model's with_status and every UPDATE is guarded on the state the caller read, so an illegal edge and a concurrent move are both refused instead of being applied because SQL can.",
+    "A batch of moves is one transaction, so a source deletion is never half applied.",
+    "delete is the model's terminal lifecycle edge and the row is retained, so provenance, audit and a future replacement survive; quarantine is never replaced by deletion.",
+    "The derived pointer (embedding_ref) is refused by this store because it belongs to the vector index (INT-011); persisting it here would make this store a second derived authority.",
+    "Inline content JSONB is left unset: neither DOMAIN.md 11.4 nor the generated KnowledgeEntry contract names an inline payload field, so adding one is additive work for the task that needs it rather than a field invented here.",
+    "Timestamps are the database's (created_at/updated_at defaults): neither DOMAIN.md 11.4 nor the generated contract exposes them, so the store never writes them, and a test proves a status change leaves created_at alone.",
+    "knowledge_entries.id is the primary key, so identities are globally unique (a real deployment mints ULIDs); the isolation test gives each tenant its own identity."
+  ]
+}

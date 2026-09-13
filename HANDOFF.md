@@ -17,12 +17,14 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **`INT-006` — Knowledge Fabric — `IN_PROGRESS`, unit 1 of 4 landed.**
+Current task: **`INT-006` — Knowledge Fabric — `IN_PROGRESS`, units 1 and 2 of 4 landed.**
 `python/intelligence/knowledge/models.py` holds the entry model, provenance addressing and the
-lifecycle ladder; the reconciliation (owner, reused authorities, plan of units) is
-`evidence/INT-006/2026-09-13T04-58-21Z/RECONCILIATION.md`. Remaining: the durable store over
-`public.knowledge_entries`, ingestion from approved sources and verified run outcomes (which calls
-the INT-011 deletion seam), and the semantic-channel wiring.
+lifecycle ladder; `python/intelligence/knowledge/store.py` holds the durable store over
+`public.knowledge_entries` (`SqlKnowledgeStore` plus the tenant-bound `KnowledgeFabric`). The
+reconciliation (owner, reused authorities, plan of units) is
+`evidence/INT-006/2026-09-13T04-58-21Z/RECONCILIATION.md`; unit 2's evidence is
+`evidence/INT-006/2026-09-13T05-47-59Z/`. Remaining: ingestion from approved sources and verified run
+outcomes (which calls the INT-011 deletion seam), and the semantic-channel wiring.
 Previous task: `INT-011` — embedding pipeline and derived vector index — `BLOCKED_EXTERNAL`,
 implementation complete, evidence `evidence/INT-011/2026-09-13T04-36-53Z/`. Its status is not `PASS`
 because `INT-002` (its dependency) is `BLOCKED_EXTERNAL` and the validator requires every dependency
@@ -33,6 +35,15 @@ Current language: Python
 
 ## Completed since the previous handoff
 
+- **INT-006 (unit 2 of 4) — the durable knowledge store.** `python/intelligence/knowledge/store.py`:
+  `SqlKnowledgeStore` over `public.knowledge_entries` (one transaction per operation, the tenant
+  context set on every one) and `KnowledgeFabric`, the tenant-bound object that is the only way to
+  reach the table. The tenant is intrinsic and the database's own row-level security is the second
+  check; lifecycle moves go through the model's `with_status` and every `UPDATE` is guarded on the
+  state the caller read, so an illegal edge and a concurrent move are both refused; a batch of moves
+  is one transaction, so a deletion is never half applied; and `delete` is a terminal lifecycle edge
+  that retains the row, so provenance and audit survive. 24 database-backed tests against real
+  PostgreSQL plus 9 fail-closed boundary tests that prove a refused call reaches no I/O.
 - **INT-006 (unit 1 of 4) — the knowledge entry model.** `python/intelligence/knowledge/models.py`:
   a `kn_`-identified entry scoped `tenant|workspace|pack` carrying kind, content_ref, provenance,
   confidence, version, status and superseded_by, taken from DOMAIN.md §11.4 and the already-generated
@@ -95,17 +106,15 @@ What is verified, on which path:
 
 ## Exact next action
 
-Continue `INT-006` with **unit 2: the durable store over `public.knowledge_entries`** — create an
-entry (minting a `kn_` id), read one by provenance address, promote along the ladder, supersede and
-delete, every operation tenant-scoped and every mutation returning the new value rather than writing
-in place — with database-backed tests under `python/tests/integration/` following the INT-011
-precedent (`QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)`,
-activated by `scripts/dev/up`). Then unit 3 (ingestion from approved sources and verified run
-outcomes, calling `IndexSourceDeletion` from INT-011 on a source deletion) and unit 4 (the semantic
-channel and the evidence bundle). The ready queue below also holds INT-008, INT-010, EXEC-001,
-APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks the most downstream work, and if
-a task's toolchain cannot execute on this host (see "Environment requirements"), record that and take
-the next one.
+Continue `INT-006` with **unit 3: ingestion from approved sources and verified run outcomes** — a
+proposal the model may produce (kind, content_ref, provenance, confidence; never a status, never a
+tenant, never an identity) that the canonical owner validates, mints a `kn_` id for and persists as
+a `candidate`; plus the deletion path that calls `IndexSourceDeletion` from INT-011 so a removed
+source leaves retrieval (DOSSIER.md §21.3 bounds that to 60 s). Then unit 4 (the semantic channel —
+index knowledge text through INT-011 — and the task's evidence bundle). The ready queue below also
+holds INT-008, INT-010, EXEC-001, APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks
+the most downstream work, and if a task's toolchain cannot execute on this host (see "Environment
+requirements"), record that and take the next one.
 
 ## Ready queue
 
@@ -179,12 +188,13 @@ rather than fabricated.
 Last run this session, at `fa3fd17643ffde80` (INT-011 evidence bundle
 `evidence/INT-011/2026-09-13T04-36-53Z/`):
 
+- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_store.py -q)` → 24 passed
+- `(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_models.py tests/intelligence/test_knowledge_store_boundaries.py -q)` → 22 passed
+- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **337 passed, 6 skipped**
 - `(cd python && uv run --frozen pytest tests/intelligence/test_embed_rpc.py -q)` → 10 passed
 - `(cd python && uv run --frozen pytest tests/intelligence/test_embeddings.py tests/intelligence/test_embedding_sources.py -q)` → 30 passed
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)` → 9 passed
 - `(cd python && uv run --frozen pytest tests/intelligence/test_server_launch_embed.py -q)` → 2 passed
-- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **291 passed, 6 skipped**
-  (the 6 are the live-provider cases that need `QUANSIO_TEST_*` credentials)
 - `(cd python && ruff check . && ruff format --check . && mypy intelligence)` → clean
 - `uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q` → 130 passed
 - The baseline gates that do not execute a newly linked binary (validate_v81, dossier-consistency,
