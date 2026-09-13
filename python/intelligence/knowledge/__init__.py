@@ -11,13 +11,25 @@ Layout:
 
 * `models` — the entry, its provenance address, the closed lifecycle ladder and the quarantine
   rules, as pure values;
-* `store` — the durable store over `public.knowledge_entries`, one tenant at a time.
+* `store` — the durable store over `public.knowledge_entries`, one tenant at a time;
+* `ingestion` — what a model may propose, and the forgetting path a removed source takes;
+* `indexing` — the semantic channel: what belongs in INT-011's derived index, and retrieval that
+  agrees with the fabric.
 
-The derived semantic channel (the pgvector index) is INT-011's, not this package's.
+The derived index itself is INT-011's, not this package's: `indexing` decides what belongs in the
+channel and lets INT-011 own how it is stored and searched.
 """
 
 from __future__ import annotations
 
+from intelligence.knowledge.indexing import (
+    DescribedKnowledgeText,
+    IndexSyncReport,
+    KnowledgeIndexer,
+    KnowledgeText,
+    RetrievedKnowledge,
+    retrieve,
+)
 from intelligence.knowledge.ingestion import (
     PROVENANCE_APPROVED_SOURCE,
     PROVENANCE_KINDS,
@@ -66,16 +78,21 @@ __all__ = [
     "SOURCE_KIND_KNOWLEDGE",
     "STATEMENTS",
     "TRANSITIONS",
+    "DescribedKnowledgeText",
+    "IndexSyncReport",
     "IngestionResult",
     "KnowledgeEntry",
     "KnowledgeError",
     "KnowledgeFabric",
+    "KnowledgeIndexer",
     "KnowledgeProposal",
     "KnowledgeScope",
     "KnowledgeStatus",
     "KnowledgeStore",
+    "KnowledgeText",
     "Provenance",
     "QuarantineOutcome",
+    "RetrievedKnowledge",
     "SourceDeletionOutcome",
     "SqlKnowledgeStore",
     "StatusUpdate",
@@ -86,4 +103,5 @@ __all__ = [
     "knowledge_for",
     "new_knowledge_id",
     "quarantine_derived",
+    "retrieve",
 ]
