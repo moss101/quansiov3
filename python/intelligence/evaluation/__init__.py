@@ -12,12 +12,14 @@ Layout:
   a load that refuses drift from the recorded digest;
 * `runs` — the record of one run: its dataset pins, the versions it ran under, its measurements and its
   cost/latency, content-addressed so two runs of the same inputs are comparable;
+* `gate` — the decision: protected metrics first and blocking, quality metrics reported, and a verdict
+  that records the configuration it applied;
 * `semantic_verifier` — RUN-008's independent completion verifier, which the runtime drives (not a
   metric of this harness).
 
 The protected gate configuration lives in `tests/evaluation/thresholds.yaml`, which encodes
 DOSSIER §21.3 verbatim and is checked against the document by `tests/evaluation/test_thresholds.py`.
-The decision gate that consumes it is the remaining unit of this task.
+The metric implementations that produce a run's measurements are the remaining unit of this task.
 """
 
 from __future__ import annotations
@@ -31,6 +33,15 @@ from intelligence.evaluation.datasets import (
     datasets_of_kind,
     load_dataset,
     load_datasets,
+)
+from intelligence.evaluation.gate import (
+    COMPARISONS,
+    GateThreshold,
+    GateVerdict,
+    MetricVerdict,
+    ThresholdError,
+    ThresholdSet,
+    evaluate_gate,
 )
 from intelligence.evaluation.runs import (
     UNITS,
@@ -46,6 +57,7 @@ from intelligence.evaluation.runs import (
 )
 
 __all__ = [
+    "COMPARISONS",
     "KINDS",
     "UNITS",
     "CostLatency",
@@ -54,11 +66,17 @@ __all__ = [
     "DatasetError",
     "DatasetPin",
     "EvaluationRun",
+    "GateThreshold",
+    "GateVerdict",
     "ImplementationVersions",
     "Measurement",
+    "MetricVerdict",
     "RunError",
+    "ThresholdError",
+    "ThresholdSet",
     "dataset_from_mapping",
     "datasets_of_kind",
+    "evaluate_gate",
     "load_dataset",
     "load_datasets",
     "load_run",

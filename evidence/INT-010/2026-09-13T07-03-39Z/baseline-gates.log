@@ -1,0 +1,4 @@
+cargo-deny-unavailable: cargo-deny binary is not installed; licences/bans/sources/advisories are checked offline by this gate instead (install cargo-deny for the external check)
+supply-chain: CLEAN (1 informational)
+architecture check: CLEAN (0 findings)
+V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 34 PASS, 7 ready)
