@@ -1,0 +1,123 @@
+{
+  "task_id": "INT-007",
+  "git_commit": "b6b045f61ba8288fdb6d009efad758ebae92050e",
+  "recorded_at": "2026-09-13T06:35:00Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_memory_models.py tests/intelligence/test_memory_store_boundaries.py -q)  # 22 passed: the entry shape, the lifecycle ladder and the one canonical instant shape, plus the fabric's fail-closed boundaries with a recording store (a foreign tenant, an illegal edge, a duplicate identity and out-of-bounds reads reach no I/O at all)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-29-11Z/unit-2-rules.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_memory_store.py -q)  # 18 passed against real PostgreSQL: write/read-back equivalence, instants surviving the round trip through TIMESTAMPTZ, scope and workspace, filtered bounded ordered reads, duplicate identity, typed not-found, marking used persisting only the instant, the lifecycle with its refusals, the guard on a concurrent move, an expired memory stored but not retrievable, tenant isolation, RLS refusing a context-free write, corrupted persisted state refused rather than coerced, and the structural invariants (every statement tenant-scoped, no recovery table named)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-29-11Z/unit-2-store-postgres.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 414 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-29-11Z/plane.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)  # 59 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-29-11Z/integration.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-29-11Z/lint-types.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-29-11Z/repo-gates.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py  # V8.1 validation PASS; architecture CLEAN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-29-11Z/baseline-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_memory_models.py tests/intelligence/test_memory_store_boundaries.py -q)  # 22 passed: the entry shape, the lifecycle ladder and the one canonical instant shape, plus the fabric's fail-closed boundaries with a recording store (a foreign tenant, an illegal edge, a duplicate identity and out-of-bounds reads reach no I/O at all)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_memory_store.py -q)  # 18 passed against real PostgreSQL: write/read-back equivalence, instants surviving the round trip through TIMESTAMPTZ, scope and workspace, filtered bounded ordered reads, duplicate identity, typed not-found, marking used persisting only the instant, the lifecycle with its refusals, the guard on a concurrent move, an expired memory stored but not retrievable, tenant isolation, RLS refusing a context-free write, corrupted persisted state refused rather than coerced, and the structural invariants (every statement tenant-scoped, no recovery table named)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 414 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)  # 59 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py  # V8.1 validation PASS; architecture CLEAN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-007/2026-09-13T06-06-36Z/RECONCILIATION.md",
+      "sha256": "324b48028d70c85933530103d9765870df6132a61bae2bcbb3a6f14218e4596a",
+      "bytes": 5776
+    },
+    {
+      "path": "python/intelligence/memory/models.py",
+      "sha256": "76590481d446acf9ce0205f9b742ef39bd774c24c605ad37824059b1474f65eb",
+      "bytes": 9527
+    },
+    {
+      "path": "python/intelligence/memory/store.py",
+      "sha256": "e1fbbde1f6a12558bcd04e6702c89f205289d85ddb7747f7962924d597cfe599",
+      "bytes": 20315
+    },
+    {
+      "path": "python/intelligence/memory/__init__.py",
+      "sha256": "f825a7f842d33715ca81533c92a07932280b27a485efe1253b691619e73f7402",
+      "bytes": 1619
+    },
+    {
+      "path": "python/tests/intelligence/test_memory_models.py",
+      "sha256": "f0786593edb2d7681c3ee686c8e4267696283ee9d14b06c0ab7c17731f6d4d96",
+      "bytes": 7951
+    },
+    {
+      "path": "python/tests/intelligence/test_memory_store_boundaries.py",
+      "sha256": "10f2b151e44fa98867053ed6eba7976e63a7fc36057cc4d5192489bcef3171a1",
+      "bytes": 11295
+    },
+    {
+      "path": "python/tests/integration/test_memory_store.py",
+      "sha256": "21261fbda5c3da94f180d521857dbf64e6a2359304e8406cb4e8916657a2a468",
+      "bytes": 15939
+    }
+  ]
+}
