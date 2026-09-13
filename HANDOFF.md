@@ -17,8 +17,14 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **`INT-007` — semantic memory with provenance — being claimed next** (selected by
-`validate_v81.py --next`: M3, `python/intelligence/memory/`, depends on INT-006 and RUN-005).
+Current task: **`INT-007` — semantic memory with provenance — `IN_PROGRESS`, unit 1 of 4 landed**
+(selected by `validate_v81.py --next`: M3, `python/intelligence/memory/`, depends on INT-006 and
+RUN-005). `python/intelligence/memory/models.py` holds the entry, its scopes, its closed provenance
+vocabulary and its lifecycle; the reconciliation — including why "memory is not recovery" is a test
+rather than a comment — is `evidence/INT-007/2026-09-13T06-06-36Z/RECONCILIATION.md`. Remaining: the
+durable store over `public.memory_entries`, the policy-gated candidate path (with the `ProposeMemory`
+RPC the servicer still reports as INT-007's), and retrieval through the semantic channel with its
+deletion path.
 Previous task: **`INT-006` — Knowledge Fabric — `BLOCKED_EXTERNAL`, implementation complete.** All
 four units landed: `models.py` (entry, provenance addressing, the closed lifecycle ladder,
 `quarantine_derived`), `store.py` (the durable store over `public.knowledge_entries` and the
@@ -38,6 +44,14 @@ Current language: Python
 
 ## Completed since the previous handoff
 
+- **INT-007 (unit 1 of 4) — the memory entry model.** `python/intelligence/memory/models.py`:
+  scopes `user|workspace|teammate`, the closed provenance vocabulary `explicit_user|verified_run`, and
+  the lifecycle `candidate → active → deleted`, taken from DOMAIN.md §11.4, CORE-001's
+  `public.memory_entries` and the generated `MemoryEntry` contract. Memory is not recovery, and a
+  structural test says so: the model may not carry `checkpoint`, `cursor`, `position`, `effect_id`,
+  `generation`, `lease`, `protocol_state`, `resume_token`, `attempt` or `backoff`. Everything starts
+  as a candidate, only `active` answers retrieval, promotion is irreversible and deletion is terminal;
+  expiry is data compared lexicographically rather than a deletion. 9 tests.
 - **INT-006 (unit 4 of 4) — the semantic channel.** `python/intelligence/knowledge/indexing.py`:
   `KnowledgeIndexer.synchronize` indexes every retrievable entry under the entry's identity with its
   version as the snapshot, and prunes the derived index down to the entries the fabric still
@@ -128,15 +142,14 @@ What is verified, on which path:
 
 ## Exact next action
 
-Claim and reconcile **`INT-007` — semantic memory with provenance** (`python/intelligence/memory/`):
-reconcile it against `public.memory_entries` and the generated `quansio.v1.intelligence.MemoryEntry`
-contract, record the reconciliation, then implement it in units — the entry model and its closed
-lifecycle (`candidate|active|deleted`), the durable store, candidate creation from explicit user
-direction and verified work gated by policy and provenance, task-relevant retrieval, and the deletion
-path through the INT-011 seam. Two acceptance statements drive the design: a runtime restart must
-succeed with memory *disabled* (memory is never recovery state), and a deletion must stop future
-retrieval once the derived index has refreshed. Its `memory.propose` tool route is the Rust turn
-loop's (RUN-011 leaves it failing closed until this task supplies the port). The ready queue below also
+Continue `INT-007` with **unit 2: the durable store over `public.memory_entries`** — tenant-bound
+like INT-006's fabric, provenance-addressed, with the `last_used_at` mark a retrieval records and the
+expiry respected on read, plus database-backed tests through
+`scripts/dev/seed_test_database.py` for the scratch database. Then unit 3 (candidate creation from
+explicit user direction and verified work, gated by provenance and scope, including the
+`ProposeMemory` RPC — the servicer currently reports it as owned by INT-007, and RUN-011's
+`MemoryProposalPort` is the seam the runtime calls) and unit 4 (retrieval through INT-011's semantic
+channel with the deletion path). The ready queue below also
 holds INT-008, INT-010, EXEC-001, APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks
 the most downstream work, and if a task's toolchain cannot execute on this host (see "Environment
 requirements"), record that and take the next one.

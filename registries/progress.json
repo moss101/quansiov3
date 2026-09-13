@@ -892,17 +892,28 @@
     },
     "INT-007": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "IN_PROGRESS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-13T06:06:29Z",
-      "updated_at": "2026-09-13T06:06:29Z",
-      "git_commit": "062ba85",
-      "tests": [],
-      "artifacts": [],
+      "updated_at": "2026-09-13T06:09:14Z",
+      "git_commit": "fe9cde352a63315931495e69d6bfb63f78a30a80",
+      "tests": [
+        "(cd python && uv run --frozen pytest tests/intelligence/test_memory_models.py -q) (9 tests: the declared shape validated fail-closed on every field, scope deciding whether a workspace is named, only ACTIVE retrievable, an expiry taking a memory out of retrieval without deleting it, every lifecycle edge legal or refused with both ends named, a memory never activating itself, deletion terminal, the use mark changing nothing else, the closed provenance vocabulary, and the model carrying no recovery state at all)",
+        "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q) (383 passed, 6 skipped: the plane suite with the memory model)",
+        "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+        "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q (130 passed)"
+      ],
+      "artifacts": [
+        "evidence/INT-007/2026-09-13T06-06-36Z/RECONCILIATION.md",
+        "evidence/INT-007/2026-09-13T06-06-36Z/summary.json",
+        "python/intelligence/memory/models.py",
+        "python/intelligence/memory/__init__.py",
+        "python/tests/intelligence/test_memory_models.py"
+      ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": "CLAIMED and being reconciled. Canonical owner: python/intelligence/memory/ (the package is a docstring stub today; no implementation exists). The persistence shape already exists and is owned by CORE-001: public.memory_entries carries the DOMAIN.md 11.4 fields (id with the `mem_` prefix, scope user|workspace|teammate, subject_ref, content, provenance_kind explicit_user|verified_run, provenance_ref, confidence 0..1, status candidate|active|deleted, last_used_at, expires_at) with forced row-level security and the memory_entries_subject_idx index. The wire contracts already exist: the generated quansio.v1.intelligence.MemoryEntry, and the ProposeMemory RPC (MemoryCandidate -> ProposalAck) that the servicer still reports as owned by INT-007. The write path's seam is Rust: RUN-011's MemoryProposalPort (propose(run_id, workspace_id, candidate_json, scope)) with its default UnavailableMemoryProposals failing closed naming MEMORY_OWNER, so INT-007 supplies the behaviour the runtime will call while the cross-process binding stays APP-001's, exactly as INT-005's context bridge does. Recorded reconciliation decision: memory remains NOT recovery (AGENTS.md invariant 7, D-007) - nothing here may be read on a restart path, and the task's own acceptance statement is that a runtime restart succeeds with memory disabled."
+      "notes": "IN PROGRESS (unit 1 of 4 landed). Canonical owner python/intelligence/memory/; reconciliation in evidence/INT-007/2026-09-13T06-06-36Z/RECONCILIATION.md. UNIT 1 - the memory entry model (memory/models.py): scopes user|workspace|teammate, the closed provenance vocabulary explicit_user|verified_run, and the lifecycle candidate -> active -> deleted, taken from DOMAIN.md 11.4, CORE-001's public.memory_entries (id `mem_` prefix, subject_ref, content, provenance_kind, provenance_ref, confidence 0..1, status, last_used_at, expires_at, forced RLS, memory_entries_subject_idx) and the generated MemoryEntry contract, so no migration is needed. Memory is not recovery, and that is a test rather than a comment: a structural assertion refuses checkpoint/cursor/position/effect_id/generation/lease/protocol_state/resume_token/attempt/backoff as fields, because memory is an enrichment that must be able to be absent - which is what makes the task's acceptance statement (a restart succeeds with memory disabled) a property. A memory is never self-certified: everything starts as a candidate, only ACTIVE answers retrieval, promotion is irreversible (active -> deleted only, because \"forget this\" is the only direction a person asks for) and deletion is terminal. Expiry is data, not a decision: is_retrievable_at compares an ISO-8601 instant lexicographically, so the model needs no clock and an expired memory stays ACTIVE rather than being deleted. The error type is MemoryEntryError because MemoryError shadows the Python builtin (a linter rule caught it). REMAINING: (2) the durable store over public.memory_entries with the last_used_at mark a retrieval records and database-backed tests; (3) candidate creation from explicit user direction and verified work, gated by provenance and scope, including the ProposeMemory RPC the servicer still reports as owned by INT-007 (RUN-011's MemoryProposalPort is the seam the runtime calls, and the cross-process binding stays APP-001's); (4) retrieval through the semantic channel (INT-011, source kind memory_entry) and the deletion path that removes a memory from retrieval after index refresh. STATUS NOTE: INT-007 cannot reach PASS while its dependency INT-006 is BLOCKED_EXTERNAL (itself blocked by INT-011/INT-002's live provider credentials)."
     },
     "INT-008": {
       "coverage": null,

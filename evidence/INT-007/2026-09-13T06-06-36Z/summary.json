@@ -1,0 +1,86 @@
+{
+  "task_id": "INT-007",
+  "git_commit": "fe9cde352a63315931495e69d6bfb63f78a30a80",
+  "recorded_at": "2026-09-13T06:30:00Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_memory_models.py -q)  # 9 passed: the declared shape validated fail-closed on every field, scope deciding whether a workspace is named, only active memory retrievable, an expiry taking a memory out of retrieval without deleting it, every lifecycle edge legal or refused with both ends named, a memory never activating itself, deletion terminal, the use mark changing nothing else, the closed provenance vocabulary, and the model carrying no recovery state at all",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-06-36Z/unit-1-model.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 383 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-06-36Z/plane.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-06-36Z/lint-types.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-06-36Z/repo-gates.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/arch_check.py && python3.12 scripts/validate_v81.py  # architecture CLEAN; V8.1 validation PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-06-36Z/baseline-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_memory_models.py -q)  # 9 passed: the declared shape validated fail-closed on every field, scope deciding whether a workspace is named, only active memory retrievable, an expiry taking a memory out of retrieval without deleting it, every lifecycle edge legal or refused with both ends named, a memory never activating itself, deletion terminal, the use mark changing nothing else, the closed provenance vocabulary, and the model carrying no recovery state at all",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 383 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/arch_check.py && python3.12 scripts/validate_v81.py  # architecture CLEAN; V8.1 validation PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-007/2026-09-13T06-06-36Z/RECONCILIATION.md",
+      "sha256": "324b48028d70c85933530103d9765870df6132a61bae2bcbb3a6f14218e4596a",
+      "bytes": 5776
+    },
+    {
+      "path": "python/intelligence/memory/models.py",
+      "sha256": "1df5c489df77f1d17fb863b9bc6046b913007417c7552b2e44866efeb8aaaaa9",
+      "bytes": 8625
+    },
+    {
+      "path": "python/intelligence/memory/__init__.py",
+      "sha256": "f8340d48b2aef35b431fcb6583b0a7b2715082ed083a693abd8085c3bfbd1af7",
+      "bytes": 1201
+    },
+    {
+      "path": "python/tests/intelligence/test_memory_models.py",
+      "sha256": "45ad59b29fc61fd692f6f3b98242af5a90cbf236c5a63f51829f8a3a256c85f1",
+      "bytes": 7030
+    }
+  ]
+}
