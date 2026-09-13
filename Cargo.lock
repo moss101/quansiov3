@@ -1698,6 +1698,13 @@ version = "0.1.0"
 [[package]]
 name = "quansio-qworkerd"
 version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "quansio-core",
+ "quansio-machine",
+ "thiserror",
+ "tokio",
+]
 
 [[package]]
 name = "quansio-server"
