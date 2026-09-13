@@ -1,0 +1,112 @@
+{
+  "task_id": "EXEC-002",
+  "git_commit": "3c90c5a48ed327cf861e41d3cb936a8c2453d7aa",
+  "recorded_at": "2026-09-13T17:50:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-machine -p quansio-qworkerd  # 30 passed: 5 gateway unit tests (a live envelope validates; issuing computes the argument digest and a rewritten argument set is refused; shape is checked before anything else; a kind needs what it runs, and a checkpoint needs no tool; the dial rule is the substrate's decision), 12 EXEC-001 machine-control tests against real PostgreSQL, and 13 qworkerd host tests. The host tests are the task's three: stale envelope (all eight refusals decided with the executor showing zero calls), disconnect/reconnect (a replay is answered from the record; a replay after the lease lapsed is fenced; a cancelled effect is not re-dispatched; a failed tool is not re-run; the sink bounds each chunk as it arrives including a 640000-byte stream against a 100-byte bound; a worker reports the state it observes and only its own generation), and network ACL (a private worker is never dialled, asserted across all five substrates). Plus the two source scans: qworkerd reaches no control-plane database and evaluates no policy or capability.",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-09-13T17-47-45Z/unit-tests.log"
+    },
+    {
+      "command": "cargo test --workspace  # 435 passed, 0 failed, across 76 suites, including tests/control.rs and tests/host.rs",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-09-13T17-47-45Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo fmt --all --check  # clean (empty output)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-09-13T17-47-45Z/rust-fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-machine -p quansio-qworkerd --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-09-13T17-47-45Z/rust-clippy.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # V8.1 PASS (36 PASS, 8 ready), dossier CLEAN, architecture CLEAN (worker-to-control-db satisfied), authority CLEAN, workspace CLEAN, supply-chain CLEAN (1 informational: cargo-deny not installed), legacy-map CLEAN, duplicate-authority CLEAN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-09-13T17-47-45Z/static-gates.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates (authority, dossier-consistency, architecture, authority-pointers, workspace, supply-chain, legacy-map, contract-drift, contract-lint-compat, toolchains, tests)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-09-13T17-47-45Z/ci-pipeline.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-machine -p quansio-qworkerd  # 30 passed: 5 gateway unit tests (a live envelope validates; issuing computes the argument digest and a rewritten argument set is refused; shape is checked before anything else; a kind needs what it runs, and a checkpoint needs no tool; the dial rule is the substrate's decision), 12 EXEC-001 machine-control tests against real PostgreSQL, and 13 qworkerd host tests. The host tests are the task's three: stale envelope (all eight refusals decided with the executor showing zero calls), disconnect/reconnect (a replay is answered from the record; a replay after the lease lapsed is fenced; a cancelled effect is not re-dispatched; a failed tool is not re-run; the sink bounds each chunk as it arrives including a 640000-byte stream against a 100-byte bound; a worker reports the state it observes and only its own generation), and network ACL (a private worker is never dialled, asserted across all five substrates). Plus the two source scans: qworkerd reaches no control-plane database and evaluates no policy or capability.",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --workspace  # 435 passed, 0 failed, across 76 suites, including tests/control.rs and tests/host.rs",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check  # clean (empty output)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-machine -p quansio-qworkerd --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # V8.1 PASS (36 PASS, 8 ready), dossier CLEAN, architecture CLEAN (worker-to-control-db satisfied), authority CLEAN, workspace CLEAN, supply-chain CLEAN (1 informational: cargo-deny not installed), legacy-map CLEAN, duplicate-authority CLEAN",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates (authority, dossier-consistency, architecture, authority-pointers, workspace, supply-chain, legacy-map, contract-drift, contract-lint-compat, toolchains, tests)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/machine/src/gateway/mod.rs",
+      "sha256": "a8d9c44392b0e791258ffe6473f14e3a2e0fcdb7c389e522fa4068fcad8df274",
+      "bytes": 20120
+    },
+    {
+      "path": "crates/machine/src/lib.rs",
+      "sha256": "89aac27c5594ce73a3aba9eb97cd191994d5a0114798fb2377934fa1c88e9b00",
+      "bytes": 787
+    },
+    {
+      "path": "crates/machine/Cargo.toml",
+      "sha256": "42ffbcbd8d1135e7c005d1a5de3a070eca4c72b038301ef60a65b0c33783794b",
+      "bytes": 668
+    },
+    {
+      "path": "crates/qworkerd/src/host.rs",
+      "sha256": "337e577172e1d63f2b06f9f66f0c78c73d3241578a56cf38f34883fe968dde58",
+      "bytes": 12765
+    },
+    {
+      "path": "crates/qworkerd/src/lib.rs",
+      "sha256": "db7f0f050fdd9666f885c43021c9e4a78f9eeef3284498ddb5196d487079711c",
+      "bytes": 769
+    },
+    {
+      "path": "crates/qworkerd/Cargo.toml",
+      "sha256": "cbccac03127a0562538ef133a7b3b02fcd0d0381a91c010291fcd8f7ed72dfdd",
+      "bytes": 572
+    },
+    {
+      "path": "crates/qworkerd/tests/host.rs",
+      "sha256": "5dc48caf65d788ad8ecd7c624bfc22ba7ee84fe1a2e6428ae926436f7c839f82",
+      "bytes": 20860
+    }
+  ]
+}
