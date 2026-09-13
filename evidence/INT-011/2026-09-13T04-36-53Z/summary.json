@@ -1,0 +1,203 @@
+{
+  "task_id": "INT-011",
+  "git_commit": "fa3fd17643ffde802871cf7d5f180fa11b5294c7",
+  "recorded_at": "2026-09-13T05:10:00Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_embed_rpc.py -q)  # 10 passed: one vector per input at the pinned width over the real loopback gateway, the served route reported, empty/blank/oversized/unservable-model refusals, the scope gate first, no-route and wrong-width fail-closed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-13T04-36-53Z/command-1-embed-rpc.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_embeddings.py tests/intelligence/test_embedding_sources.py -q)  # 30 passed: the index rules plus the authoritative source plane (rebuild equivalence, deletion by set membership, digest refusal, visible skips, plan-scoped prune, the deletion seam)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-13T04-36-53Z/command-2-source-plane.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)  # 9 passed against real PostgreSQL + pgvector and real MinIO: rebuild from CORE-007 object storage reproduces retrieval, a deleted source disappears, corruption is refused, tenant isolation holds with the tenant context absent, the deletion seam removes real rows",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-13T04-36-53Z/command-3-db-index.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_server_launch_embed.py -q)  # 2 passed: the shipped `python -m intelligence.server` entry point launched twice over loopback TCP returns the same real 1536-wide vectors and refuses an empty request",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-13T04-36-53Z/command-4-launch.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)  # clean: lint, format and mypy strict over 60 source files",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-13T04-36-53Z/command-5-lint-types.log"
+    },
+    {
+      "command": "scripts/ci/gen_contracts.py check([catalog, openapi, rust, python, ts]) run around the host incident  # DRIFT PROBLEMS: []",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-13T04-36-53Z/command-6-contract-drift-host-incident.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed, 1 deselected (the deselected test is the cargo-driven binding regeneration, executed separately above because this host cannot execute newly linked binaries)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-13T04-36-53Z/command-7-repo-gates.log"
+    },
+    {
+      "command": "the baseline gates that do not execute a newly linked binary: scripts/validate_v81.py, ci/dossier_consistency.py, ci/arch_check.py, ci/check_authority.py --check, ci/workspace_check.py, ci/legacy_map_check.py, ci/contract_compat.py, ci/supply_chain/check.py  # all CLEAN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-13T04-36-53Z/command-8-baseline-gates.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 291 passed, 6 skipped (the 6 are the live-provider conformance cases that need QUANSIO_TEST_* credentials)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-13T04-36-53Z/command-9-plane-full.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_embed_rpc.py -q)  # 10 passed: one vector per input at the pinned width over the real loopback gateway, the served route reported, empty/blank/oversized/unservable-model refusals, the scope gate first, no-route and wrong-width fail-closed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_embeddings.py tests/intelligence/test_embedding_sources.py -q)  # 30 passed: the index rules plus the authoritative source plane (rebuild equivalence, deletion by set membership, digest refusal, visible skips, plan-scoped prune, the deletion seam)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)  # 9 passed against real PostgreSQL + pgvector and real MinIO: rebuild from CORE-007 object storage reproduces retrieval, a deleted source disappears, corruption is refused, tenant isolation holds with the tenant context absent, the deletion seam removes real rows",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_server_launch_embed.py -q)  # 2 passed: the shipped `python -m intelligence.server` entry point launched twice over loopback TCP returns the same real 1536-wide vectors and refuses an empty request",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)  # clean: lint, format and mypy strict over 60 source files",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "scripts/ci/gen_contracts.py check([catalog, openapi, rust, python, ts]) run around the host incident  # DRIFT PROBLEMS: []",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed, 1 deselected (the deselected test is the cargo-driven binding regeneration, executed separately above because this host cannot execute newly linked binaries)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "the baseline gates that do not execute a newly linked binary: scripts/validate_v81.py, ci/dossier_consistency.py, ci/arch_check.py, ci/check_authority.py --check, ci/workspace_check.py, ci/legacy_map_check.py, ci/contract_compat.py, ci/supply_chain/check.py  # all CLEAN",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 291 passed, 6 skipped (the 6 are the live-provider conformance cases that need QUANSIO_TEST_* credentials)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/embeddings/provider.py",
+      "sha256": "d3a87412661f85547597158283433385c6a4fe989d2f40ac041709423aa87b4b",
+      "bytes": 6794
+    },
+    {
+      "path": "python/intelligence/embeddings/gateway_provider.py",
+      "sha256": "bccd2de68e3f92652c34607d62519278b6501a3dde5facd919f4b1b99ea5cda3",
+      "bytes": 4435
+    },
+    {
+      "path": "python/intelligence/embeddings/sources.py",
+      "sha256": "0c812da441f81d324a0686a7e487213140a8ad44e3b50b07bfe51ddfc5ec3515",
+      "bytes": 12967
+    },
+    {
+      "path": "python/intelligence/embeddings/objectstore.py",
+      "sha256": "08001dc8a83a5c8caecc83a3f9dedc009a0648306c09436944d79216f8eebf26",
+      "bytes": 11931
+    },
+    {
+      "path": "python/intelligence/embeddings/index.py",
+      "sha256": "cab195643b04e3926739cc7fc014d3eaf239445703dee2e083d55325a92f843b",
+      "bytes": 27306
+    },
+    {
+      "path": "python/intelligence/model_gateway/embeddings.py",
+      "sha256": "6c82fb1a57a551987b5b359a6e1b9530c32eba2b94b7bc905560cc317b2abdbe",
+      "bytes": 11132
+    },
+    {
+      "path": "python/intelligence/model_gateway/gateway.py",
+      "sha256": "99482d0a24c4f90f2f6885abd2e48db8d2e39d94789249e23e356022f8f0fe44",
+      "bytes": 31664
+    },
+    {
+      "path": "python/intelligence/model_gateway/catalog.py",
+      "sha256": "010a3f35b5b3596448ee6321cc2342a0197d236d837e5151639f7a30b8e0c645",
+      "bytes": 12811
+    },
+    {
+      "path": "python/intelligence/server/servicer.py",
+      "sha256": "67440e799cba71dc61f2d79943c43e98b0dbbb9bd343abdb9cb860cf86af179b",
+      "bytes": 20675
+    },
+    {
+      "path": "python/intelligence/server/app.py",
+      "sha256": "437cd650d50c26adfd588d3f069c4d11033cbc4b12c64f4721b808e51a221b72",
+      "bytes": 11621
+    },
+    {
+      "path": "python/intelligence/model_gateway/conformance/stub_provider.py",
+      "sha256": "ff9a9b5489713ed005b991aa54080d9b631bc3951e239a99f9aaea3c31b9d318",
+      "bytes": 25708
+    },
+    {
+      "path": "config/models.yaml",
+      "sha256": "35cdf03b37fd3e19eddd5cb7029976e4c30e42681a26c7d943392bcc6710ab1d",
+      "bytes": 3518
+    },
+    {
+      "path": "schemas/json/models-config.schema.json",
+      "sha256": "cef5815fd198075870c26a4ed8a1049d4dd5fa4afcbc2016ef4a889efd4b5823",
+      "bytes": 2364
+    },
+    {
+      "path": "python/tests/intelligence/test_embed_rpc.py",
+      "sha256": "c41ce224125988f59e0f67003ca2c922e8abe3cccc4d21d6917864af89d8b6b0",
+      "bytes": 8476
+    },
+    {
+      "path": "python/tests/intelligence/test_embedding_sources.py",
+      "sha256": "8cd671cefdb9f323906ef253e3d513ee8c3ac541e436c6aba6721bccbeafaa20",
+      "bytes": 15705
+    },
+    {
+      "path": "python/tests/intelligence/test_server_launch_embed.py",
+      "sha256": "e06db6a7d9f97b8aaf92006049c4e050ab698f5e1aca164f97a1382c5b72bfc2",
+      "bytes": 7416
+    },
+    {
+      "path": "python/tests/integration/test_embedding_rebuild_sources.py",
+      "sha256": "e9dd260768c4429ea74b9749e854acc43a58a312f354a7796d5aedb112413206",
+      "bytes": 16963
+    },
+    {
+      "path": "python/tests/intelligence/test_server_boundary.py",
+      "sha256": "cec7f21c829089b2ccb2194dfe4696378ae13b6f41d36a184a122e162ee7c42d",
+      "bytes": 21767
+    }
+  ],
+  "real_boundary_evidence": [],
+  "note": "INT-011 is real_boundary=false: its proof is the shipped Python path plus real PostgreSQL+pgvector and real CORE-007 object storage in the dev stack, not a live model provider. The embedding wire is exercised against the loopback conformance stub, which is a wire proof and not live-provider evidence (that belongs to INT-002/INT-003, both BLOCKED_EXTERNAL on QUANSIO_TEST_* provider credentials).",
+  "environment_blocker": "bash scripts/ci/ci.sh cannot complete on this host right now: two of its gates execute a newly linked binary, and the host is again refusing to execute newly created inodes (the incident HANDOFF.md records). Proven with a byte-identical copy: a copy of a working test binary hangs in _dyld_start while the original runs. contract-drift was still verified by running the shipped generator's bytes in a pre-existing inode (zero drift), and every other gate ran individually (all CLEAN); the toolchains gate (cargo test --workspace) could not run because the workspace target directory had been emptied for disk space and every freshly linked test binary would hang. Unblock: reboot the host (or let the incident clear, as it did earlier in this mission), then run `bash scripts/ci/ci.sh`."
+}
