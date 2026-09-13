@@ -1,0 +1,143 @@
+{
+  "task_id": "INT-010",
+  "git_commit": "fa05f335a8c927d67e4ccb9f864b1ffe3f1cc683",
+  "recorded_at": "2026-09-13T07:10:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/evaluation -q  # 18 passed: every pinned dataset loads and is digest-pinned, the digest is a pure function of the pinned content (payload, case order and version each change it), a drifted digest is refused at load, an unpinned dataset is refused, the dataset and case shapes are closed and validated, a case payload stays opaque to the harness, a duplicate identity is refused, and the injection corpus is the repository's rather than a copy",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-00Z/unit-1-datasets.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/evaluation/test_thresholds.py -q  # the gate configuration is compared row by row with DOSSIER.md 21.3 (the thresholds test parses the table out of the document), the blocking row is the only one marked blocking, the safety and recovery metrics are the protected set, the configuration is marked provisional, and every metric's named inputs resolve \u2014 including against the pinned dataset ids",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-00Z/unit-1-thresholds.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/supply_chain/check.py  # CLEAN (1 informational): the dataset files avoid the reserved skill/tool file-name tokens the OPS-007 quarantine rule reads as imported -manifest markers, which the gate caught when they were first named after their families",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-00Z/unit-1-gates.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/ci -q  # 55 passed: the supply-chain gate's own suite, including the tree scan that had flagged the dataset file names",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-00Z/unit-1-ci-tests.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 448 passed, 6 skipped",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-00Z/plane.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-00Z/lint-types.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py  # V8.1 validation PASS; architecture CLEAN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-00Z/baseline-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/evaluation -q  # 18 passed: every pinned dataset loads and is digest-pinned, the digest is a pure function of the pinned content (payload, case order and version each change it), a drifted digest is refused at load, an unpinned dataset is refused, the dataset and case shapes are closed and validated, a case payload stays opaque to the harness, a duplicate identity is refused, and the injection corpus is the repository's rather than a copy",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/evaluation/test_thresholds.py -q  # the gate configuration is compared row by row with DOSSIER.md 21.3 (the thresholds test parses the table out of the document), the blocking row is the only one marked blocking, the safety and recovery metrics are the protected set, the configuration is marked provisional, and every metric's named inputs resolve \u2014 including against the pinned dataset ids",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/supply_chain/check.py  # CLEAN (1 informational): the dataset files avoid the reserved skill/tool file-name tokens the OPS-007 quarantine rule reads as imported -manifest markers, which the gate caught when they were first named after their families",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/ci -q  # 55 passed: the supply-chain gate's own suite, including the tree scan that had flagged the dataset file names",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 448 passed, 6 skipped",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py  # V8.1 validation PASS; architecture CLEAN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-010/2026-09-13T06-50-00Z/RECONCILIATION.md",
+      "sha256": "aea700cf7ec35286fee8d70e771cc33d19c8083d3b1885a76e97dfad7a584f78",
+      "bytes": 5929
+    },
+    {
+      "path": "python/intelligence/evaluation/datasets.py",
+      "sha256": "0dd8e6b69ceca9439c575bca6a61ef057757324ec8ea12bb8983d4e8015f56bc",
+      "bytes": 11884
+    },
+    {
+      "path": "python/intelligence/evaluation/__init__.py",
+      "sha256": "e591cc63672182de0f386af3f07f3f8b915acb3de5c783d9f7f11a2ebc451fa2",
+      "bytes": 1451
+    },
+    {
+      "path": "tests/evaluation/thresholds.yaml",
+      "sha256": "c800a1bc83c770aeadbd3064e4d74871b2ff653972d6175afaf9f3de788311f1",
+      "bytes": 3769
+    },
+    {
+      "path": "tests/evaluation/test_datasets.py",
+      "sha256": "8cc716743e094deeac043f0150123ae6c67538e2d1a45d0526cee5c9387110db",
+      "bytes": 7644
+    },
+    {
+      "path": "tests/evaluation/test_thresholds.py",
+      "sha256": "d794468aa3d58fca62d4b44ecda1c11bab3c87f4ee355f06ccfed9d7c87899b7",
+      "bytes": 7344
+    },
+    {
+      "path": "tests/evaluation/datasets/route_quality.v1.json",
+      "sha256": "f6f1e88c0f05d00cdaf6044a59bb4d69d88e83b8836c01938b5e2cd701f532e8",
+      "bytes": 1817
+    },
+    {
+      "path": "tests/evaluation/datasets/retrieval.v1.json",
+      "sha256": "0559ad1b0550280d3cb9f085778e14fc27885b9f6e3641c4c41c5be916f8721e",
+      "bytes": 1556
+    },
+    {
+      "path": "tests/evaluation/datasets/grounding.v1.json",
+      "sha256": "972191b6baa642d92e3d8ccc600fadc27ed598e0a67e9fc218ca3d4adab8bd71",
+      "bytes": 1268
+    },
+    {
+      "path": "tests/evaluation/datasets/proposal_validity.v1.json",
+      "sha256": "ada747e5c19ccae6fdda2393c754679a642c1377716ba87760e6c9a27d049f77",
+      "bytes": 1302
+    },
+    {
+      "path": "tests/evaluation/datasets/resolution_behaviour.v1.json",
+      "sha256": "cca80a437631e548548f1381a004729a128cb9a311745b93d35488e73cb49ac3",
+      "bytes": 1493
+    }
+  ]
+}

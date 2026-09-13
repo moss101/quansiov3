@@ -17,9 +17,15 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **`INT-010` — intelligence evaluation harness — being claimed next** (selected by
-`validate_v81.py --next`: M3, `python/intelligence/evaluation/` + `tests/evaluation/`, depends on
-INT-002, INT-005 and INT-009).
+Current task: **`INT-010` — intelligence evaluation harness — `IN_PROGRESS`, unit 1 of 4 landed**
+(selected by `validate_v81.py --next`: M3, `python/intelligence/evaluation/` + `tests/evaluation/`,
+depends on INT-002, INT-005 and INT-009). `evaluation/datasets.py` holds the versioned,
+content-addressed datasets the harness measures against; `tests/evaluation/thresholds.yaml` encodes
+DOSSIER §21.3 as the provisional protected gate and `tests/evaluation/test_thresholds.py` compares it
+with the document row by row. The reconciliation is
+`evidence/INT-010/2026-09-13T06-50-00Z/RECONCILIATION.md`; unit 1's bundle is
+`evidence/INT-010/2026-09-13T07-05-00Z/`. Remaining: the run record (versions with cost/latency), the
+decision gate (protected metrics blocking) and the metric implementations.
 Previous task: **`INT-007` — semantic memory with provenance — `BLOCKED_EXTERNAL`, implementation
 complete.** All four units landed: `models.py` (entry, scopes, closed provenance vocabulary, lifecycle,
 one canonical instant shape), `store.py` (the durable store over `public.memory_entries` and the
@@ -48,6 +54,15 @@ Current language: Python
 
 ## Completed since the previous handoff
 
+- **INT-010 (unit 1 of 4) — pinned datasets and the protected gate.** `python/intelligence/evaluation/datasets.py`:
+  a dataset is versioned and content-addressed over its identity, version, kind and every case in
+  order, and loading refuses a file whose recorded digest does not match its content, so
+  "reproducible from pinned inputs" is enforced at load. Five pinned datasets cover the families the
+  task names and carry the protected safety cases. `tests/evaluation/thresholds.yaml` encodes
+  DOSSIER §21.3 verbatim and `test_thresholds.py` parses the table out of the document and compares it
+  metric by metric, so the configuration cannot drift from its authority. The OPS-007 supply-chain
+  gate caught the dataset file names (a `skill`/`tool` file-name token marks an imported manifest), so
+  they were renamed with the family left in `kind`. 18 tests in `tests/evaluation`.
 - **INT-007 (unit 4 of 4) — memory retrieval and the forgetting path.**
   `python/intelligence/memory/retrieval.py`: the channel keeps INT-011's derived index in agreement
   with the fabric in both directions (every retrievable memory indexed; nothing that left retrieval or
@@ -172,13 +187,13 @@ What is verified, on which path:
 
 ## Exact next action
 
-Claim and reconcile **`INT-010` — intelligence evaluation harness** (`python/intelligence/evaluation/`,
-`tests/evaluation/`): versioned datasets for route quality, retrieval, answer grounding, tool-proposal
-validity and skill behaviour; each run recording the model/provider/index/skill versions with cost and
-latency; and the provisional thresholds from DOSSIER.md §21.3 encoded as `tests/evaluation/thresholds.yaml`.
-Its two acceptance statements drive the design — an evaluation run is reproducible from pinned inputs,
-and a protected safety/recovery regression blocks promotion regardless of aggregate quality gain.
-Record the reconciliation, then implement it in units as INT-006 and INT-007 were. The ready queue below also
+Continue `INT-010` with **unit 2: the run record** — an evaluation run that records the dataset
+versions and their digests, the corpus digest, the implementation versions it was produced under
+(model route, embedding route, skill versions) and the cost and latency it observed, so two runs of
+the same pinned inputs are comparable and a run whose inputs moved is visibly a different run. Then
+unit 3 (the decision gate: protected metrics evaluated first and blocking, quality metrics reported
+whatever they say, missing or unknown measurements failing closed) and unit 4 (the metric
+implementations and the task's closing evidence). The ready queue below also
 holds INT-008, INT-010, EXEC-001, APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks
 the most downstream work, and if a task's toolchain cannot execute on this host (see "Environment
 requirements"), record that and take the next one.
@@ -189,7 +204,7 @@ requirements"), record that and take the next one.
 
 | Task | Milestone | Note |
 |---|---|---|
-| INT-010 | M3 | intelligence evaluation harness (`python/intelligence/evaluation/`, `tests/evaluation/`); selected by `--next` |
+| INT-010 | M3 | intelligence evaluation harness (`python/intelligence/evaluation/`, `tests/evaluation/`); in progress, units 2-4 remain |
 | OPS-002 | M7 | audit, privacy, retention and user data controls (newly ready) |
 | INT-008 | M3 | compaction epochs and the bounded conversation projection |
 | INT-010 | M3 | intelligence evaluation harness (`python/intelligence/evaluation/`, `tests/evaluation/`) |
@@ -273,10 +288,14 @@ rather than fabricated.
 
 ## Tests
 
-Last run this session, at `340dbce83e36` (INT-007 unit 4 evidence bundle
-`evidence/INT-007/2026-09-13T06-38-37Z/`; INT-006's is `evidence/INT-006/2026-09-13T06-14-00Z/` and
-INT-011's `evidence/INT-011/2026-09-13T04-36-53Z/`):
+Last run this session, at `fa05f335a8c9` (INT-010 unit 1 evidence bundle
+`evidence/INT-010/2026-09-13T07-05-00Z/`; INT-007's is `evidence/INT-007/2026-09-13T06-38-37Z/`,
+INT-006's `evidence/INT-006/2026-09-13T06-14-00Z/` and INT-011's
+`evidence/INT-011/2026-09-13T04-36-53Z/`):
 
+- `uv run --project python pytest tests -q` → **206 passed**
+- `uv run --project python pytest tests/evaluation -q` → 18 passed
+- `uv run --project python pytest tests/ci -q` → 55 passed
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **448 passed, 6 skipped**
   (the 6 are the live-provider cases that need `QUANSIO_TEST_*` credentials)
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)` → 72 passed
