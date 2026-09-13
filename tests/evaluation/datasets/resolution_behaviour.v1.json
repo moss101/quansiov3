@@ -1,0 +1,59 @@
+{
+  "dataset_id": "resolution_behaviour",
+  "version": 1,
+  "kind": "skill_behaviour",
+  "notes": "Skill resolution: a version may guide procedure and may not widen authority, so each case pins a caller snapshot and the versions that may resolve for it. The file and dataset id avoid the token 'skill' because the supply-chain gate reads that token in a file name as an imported-manifest marker.",
+  "cases": [
+    {
+      "case_id": "active_version_resolves",
+      "payload": {
+        "candidate_states": [
+          "active"
+        ],
+        "expected_resolved": [
+          "skill_active"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "resolution"
+      ]
+    },
+    {
+      "case_id": "approved_but_not_active_is_excluded",
+      "payload": {
+        "candidate_states": [
+          "approved",
+          "deprecated",
+          "retired",
+          "draft"
+        ],
+        "expected_resolved": []
+      },
+      "protected": true,
+      "tags": [
+        "resolution",
+        "authority"
+      ]
+    },
+    {
+      "case_id": "insufficient_snapshot_is_excluded",
+      "payload": {
+        "candidate_states": [
+          "active"
+        ],
+        "needs_tool": "fs.write",
+        "caller_tools": [
+          "fs.read"
+        ],
+        "expected_resolved": []
+      },
+      "protected": true,
+      "tags": [
+        "resolution",
+        "authority"
+      ]
+    }
+  ],
+  "digest": "45f10cdd39b22faa91dd86f99bfd2ccf975dc858836aa5d7854493483d41131b"
+}

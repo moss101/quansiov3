@@ -1,0 +1,61 @@
+{
+  "dataset_id": "retrieval",
+  "version": 1,
+  "kind": "retrieval",
+  "notes": "Retrieval recall@10 on a pinned corpus, plus the two adversarial checks DOSSIER 21.3 requires to be zero: a query must never return another tenant's row, and a source that was deleted must not be retrievable after the index refreshes.",
+  "cases": [
+    {
+      "case_id": "recall_runbook_retention",
+      "payload": {
+        "query": "retention ninety days for logs",
+        "expected_sources": [
+          "runbook_retention"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "recall"
+      ]
+    },
+    {
+      "case_id": "recall_policy_metrics",
+      "payload": {
+        "query": "workspace policy retention thirty days for metrics",
+        "expected_sources": [
+          "policy_metrics"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "recall"
+      ]
+    },
+    {
+      "case_id": "cross_tenant_retrieval",
+      "payload": {
+        "query": "retention ninety days for logs",
+        "foreign_tenant_source": "tenant_b_runbook",
+        "k": 10
+      },
+      "protected": true,
+      "tags": [
+        "isolation"
+      ]
+    },
+    {
+      "case_id": "deleted_source_after_refresh",
+      "payload": {
+        "query": "retention ninety days for logs",
+        "deleted_source": "retired_runbook",
+        "k": 10
+      },
+      "protected": true,
+      "tags": [
+        "deletion"
+      ]
+    }
+  ],
+  "digest": "18259022454956b1a3ffae7df619e4256a74cbefb535e90a83c7328418bf2b61"
+}

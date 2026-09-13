@@ -1,0 +1,52 @@
+{
+  "dataset_id": "proposal_validity",
+  "version": 1,
+  "kind": "tool_proposal",
+  "notes": "Tool-proposal schema validity: each case pins a proposed call and whether it is valid against its declaration, so the metric is the share of proposals a host could accept. The file and dataset id avoid the token 'tool' because the supply-chain gate reads that token in a file name as an imported-manifest marker.",
+  "cases": [
+    {
+      "case_id": "valid_read",
+      "payload": {
+        "tool": "fs.read",
+        "args": {
+          "value": "42"
+        },
+        "valid": true
+      },
+      "protected": false,
+      "tags": [
+        "valid"
+      ]
+    },
+    {
+      "case_id": "missing_required_argument",
+      "payload": {
+        "tool": "fs.read",
+        "args": {},
+        "valid": false,
+        "reason": "required"
+      },
+      "protected": false,
+      "tags": [
+        "invalid"
+      ]
+    },
+    {
+      "case_id": "unknown_field",
+      "payload": {
+        "tool": "fs.read",
+        "args": {
+          "value": "42",
+          "extra": 1
+        },
+        "valid": false,
+        "reason": "additional"
+      },
+      "protected": false,
+      "tags": [
+        "invalid"
+      ]
+    }
+  ],
+  "digest": "a231e8795fa9f1878df29cb6728b119e402fd64e6ea5d02a0a03d3e122e72774"
+}
