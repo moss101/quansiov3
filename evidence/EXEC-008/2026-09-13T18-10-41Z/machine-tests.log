@@ -1,0 +1,74 @@
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.04s
+     Running unittests src/lib.rs (target/debug/deps/quansio_machine-c71c95fa55b652df)
+
+running 26 tests
+test egress::tests::a_request_that_is_not_a_destination_is_refused ... ok
+test egress::tests::addresses_are_classified_by_what_they_reach ... ok
+test egress::tests::a_name_that_did_not_resolve_is_refused_rather_than_assumed_fine ... ok
+test egress::tests::a_policy_change_fences_every_grant_at_the_previous_revision ... ok
+test egress::tests::a_grant_belongs_to_one_target_generation_and_one_capability ... ok
+test egress::tests::a_destination_carries_its_port_and_scheme ... ok
+test egress::tests::a_policy_with_no_network_rule_permits_nothing ... ok
+test egress::tests::an_address_the_policy_names_is_reachable_when_the_caller_asked_for_it ... ok
+test egress::tests::an_expired_or_revoked_grant_is_refused_with_its_own_reason ... ok
+test egress::tests::an_unknown_destination_is_denied_by_default ... ok
+test egress::tests::a_policy_that_denies_stops_the_destination_before_any_grant_is_consulted ... ok
+test egress::tests::a_granted_destination_with_an_allowed_address_is_reached ... ok
+test egress::tests::a_destination_is_canonicalized_so_one_name_has_one_answer ... ok
+test egress::tests::a_grant_for_another_port_or_host_does_not_cover_the_destination ... ok
+test egress::tests::no_grant_from_another_tenant_or_target_is_ever_considered ... ok
+test egress::tests::hosts_the_broker_never_reaches_are_named ... ok
+test egress::tests::a_rule_the_domain_does_not_define_is_refused_rather_than_defaulted ... ok
+test egress::tests::a_granted_name_is_still_refused_when_it_resolves_inside ... ok
+test egress::tests::the_longest_lived_live_grant_is_the_one_reported ... ok
+test egress::tests::the_decision_log_records_the_destination_and_never_a_header_value ... ok
+test egress::tests::the_same_destination_reaches_the_same_answer_from_every_caller ... ok
+test gateway::tests::a_kind_needs_what_it_runs ... ok
+test gateway::tests::a_live_envelope_validates ... ok
+test gateway::tests::issuing_computes_the_argument_digest ... ok
+test gateway::tests::the_dial_rule_is_the_substrate_s_decision ... ok
+test gateway::tests::shape_is_checked_before_anything_else ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/control.rs (target/debug/deps/control-e9966f47ef255e5e)
+
+running 12 tests
+test health_is_classified_from_what_the_platform_observes ... ok
+test only_machine_control_writes_the_target_and_lease_tables ... ok
+test a_tenant_cannot_see_another_tenants_target ... ok
+test two_racing_acquirers_cannot_both_hold_a_lease ... ok
+test a_target_reports_what_it_observes_and_the_platform_classifies_it ... ok
+test a_stale_generation_cannot_steer_the_target_it_lost ... ok
+test a_lease_expiring_fences_the_controller_that_held_it ... ok
+test a_target_walks_the_lifecycle_domain_8_2_draws ... ok
+test only_a_ready_target_can_be_leased ... ok
+test a_lease_that_is_not_live_does_not_permit_the_action ... ok
+test an_edge_the_lifecycle_does_not_draw_is_refused_with_both_ends ... ok
+test destroyed_is_terminal ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.15s
+
+     Running tests/egress.rs (target/debug/deps/egress-c2121f9d1e6cb5ff)
+
+running 10 tests
+test revocation_is_recorded_rather_than_deleted ... ok
+test a_blocked_domain_is_refused_even_with_a_grant ... ok
+test another_tenant_cannot_reach_or_change_this_tenants_grants ... ok
+test a_target_with_no_network_policy_reaches_nothing ... ok
+test a_grant_stops_being_usable_when_it_expires ... ok
+test an_unknown_destination_is_denied_until_an_effect_grants_it ... ok
+test a_grant_is_keyed_by_the_effect_that_authorized_it ... ok
+test a_policy_change_fences_the_grants_issued_under_it ... ok
+test a_grant_is_fenced_by_the_target_generation_and_narrowed_by_capability ... ok
+test a_granted_name_that_resolves_inside_is_refused ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+   Doc-tests quansio_machine
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-13T17:52:00Z",
+  "updated_at": "2026-09-13T18:16:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1249,18 +1249,33 @@
       "notes": ""
     },
     "EXEC-008": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-13T17:55:00Z",
+      "updated_at": "2026-09-13T18:16:00Z",
+      "git_commit": "40327f6",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine (48 tests: 21 egress unit tests over destination canonicalization, the 22-address classification table including IPv4-mapped, the blocked-host list, deny by default, a granted destination, a granted name refused when it resolves loopback/private/link-local, an unresolved name, a denying policy and a policy with no network rule, a rule the domain does not define, a policy change fencing every grant at the previous revision, expiry exclusive at the instant, revocation, generation and capability scoping, another tenant's grant never considered, the longest-lived live grant reported beside stale ones, and a log carrying the destination and credential handle but no header value; 12 EXEC-001 control tests against real PostgreSQL; 5 EXEC-002 gateway tests)",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test egress (10 database-backed tests: deny-by-default end to end until an effect grants the destination and only that host and port; a blocked domain granted deliberately and still refused, plus a literal metadata address refused by class; DNS rebinding where the same granted name is reached when public and refused at 127.0.0.1, 10.0.0.7, 169.254.169.254 and ::ffff:127.0.0.1, including a mixed answer set and an empty resolution; grant expiry with the exclusive instant and a refused non-advancing window that writes nothing; a policy revision bump fencing the grant and re-issuing under the new revision working, and a rebind to another policy fencing it too; revocation recorded rather than deleted with revoke_for_target reporting what it changed; effect-keyed idempotency, cross-target conflict, and a non-canonical host refused before any write; generation and capability scoping; tenant isolation; and a target with no policy reaching nothing)",
+        "cargo test --workspace (466 passed across 77 suites; see the evidence NOTES for two pre-existing load-sensitive server-test failures, reproduced on main before this change)",
+        "cargo fmt --all --check",
+        "cargo clippy -p quansio-machine --all-targets -- -D warnings",
+        "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/workspace_check.py && python3.12 scripts/ci/inventory.py --scan && python3.12 scripts/ci/dossier_consistency.py && python3.12 scripts/ci/check_authority.py --check && python3.12 scripts/ci/supply_chain/check.py && python3.12 scripts/ci/legacy_map_check.py (V8.1 validation PASS; architecture CLEAN; workspace CLEAN; duplicate-authority CLEAN; dossier CLEAN; authority CLEAN; supply-chain CLEAN; legacy-map CLEAN)",
+        "bash scripts/ci/ci.sh (pipeline: PASS, 11 of 11 gates)"
+      ],
+      "artifacts": [
+        "evidence/EXEC-008/2026-09-13T18-10-41Z/summary.json",
+        "evidence/EXEC-008/2026-09-13T18-10-41Z/NOTES.md",
+        "migrations/0009_egress_grants.sql",
+        "crates/machine/src/egress/mod.rs",
+        "crates/machine/src/egress/store.rs",
+        "crates/machine/tests/egress.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "The egress broker answers one question -- may this execution target reach this destination -- and its answer is deny. A destination is reachable only when a live, scoped, unexpired grant covers it and every address the name resolved to is in a class the target's network policy allows, which is what makes a granted name that starts resolving to loopback or private space refused (DNS rebinding); an unresolved name is refused rather than assumed fine. The network policy is the canonical `policies` row `execution_targets.network_policy_id` already pointed at (DOMAIN.md 7.1, 8.2), not a second policy engine, and a grant's identity is the `network.egress.new_destination` effect that authorized it, so re-issuing is idempotent by the Effect Ledger's own rule. A grant records the policy id and revision it was issued under, so a policy change or a rebind fences every grant issued before it in one comparison rather than by racing a scan; revocation and expiry are the other half, and both are recorded rather than deleted so the audit trail survives. The decision log is built from the destination, the decision and identifiers only, so a header value or credential material has nowhere to be recorded. MachineControl::set_network_policy (EXEC-001's module, since it writes execution_targets) is the operation that binds a policy. Out-of-scope by design: the host/network-gateway enforcement point itself, and DNS resolution -- the broker decides from the addresses the resolver hands it, and that seam is what the rebinding test drives. real_boundary is false."
     },
     "EXEC-009": {
       "coverage": null,
