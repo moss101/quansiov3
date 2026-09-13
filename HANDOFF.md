@@ -17,14 +17,15 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **`INT-006` — Knowledge Fabric — `IN_PROGRESS`, units 1 and 2 of 4 landed.**
+Current task: **`INT-006` — Knowledge Fabric — `IN_PROGRESS`, units 1-3 of 4 landed.**
 `python/intelligence/knowledge/models.py` holds the entry model, provenance addressing and the
-lifecycle ladder; `python/intelligence/knowledge/store.py` holds the durable store over
-`public.knowledge_entries` (`SqlKnowledgeStore` plus the tenant-bound `KnowledgeFabric`). The
-reconciliation (owner, reused authorities, plan of units) is
-`evidence/INT-006/2026-09-13T04-58-21Z/RECONCILIATION.md`; unit 2's evidence is
-`evidence/INT-006/2026-09-13T05-47-59Z/`. Remaining: ingestion from approved sources and verified run
-outcomes (which calls the INT-011 deletion seam), and the semantic-channel wiring.
+lifecycle ladder; `store.py` holds the durable store over `public.knowledge_entries`
+(`SqlKnowledgeStore` plus the tenant-bound `KnowledgeFabric`); `ingestion.py` holds what a model may
+propose (`KnowledgeProposal` — no identity, tenant, scope or status) and the forgetting path that
+quarantines derived knowledge through the INT-011 deletion seam. The reconciliation (owner, reused
+authorities, plan of units) is `evidence/INT-006/2026-09-13T04-58-21Z/RECONCILIATION.md`; the unit
+bundles are `2026-09-13T05-47-59Z` and `2026-09-13T05-58-14Z`, each with a `NOTES.md` beside its
+summary. Remaining: the semantic-channel wiring (unit 4).
 Previous task: `INT-011` — embedding pipeline and derived vector index — `BLOCKED_EXTERNAL`,
 implementation complete, evidence `evidence/INT-011/2026-09-13T04-36-53Z/`. Its status is not `PASS`
 because `INT-002` (its dependency) is `BLOCKED_EXTERNAL` and the validator requires every dependency
@@ -35,6 +36,17 @@ Current language: Python
 
 ## Completed since the previous handoff
 
+- **INT-006 (unit 3 of 4) — ingestion and the forgetting path.** `python/intelligence/knowledge/ingestion.py`:
+  a `KnowledgeProposal` carries no identity, tenant, scope or lifecycle state (asserted
+  structurally), so a model may only propose; both evaluated origins (`approved_source`,
+  `verified_run`) are accepted and the vocabulary is closed; re-ingesting the same claim reuses the
+  entry while a retired claim is new knowledge; and forgetting a source quarantines the knowledge
+  derived from it first (committed, and it stands even when the derived index is unreachable), then
+  empties the source's own index rows and the rows of every entry the deletion quarantined. Two
+  repository-gate findings were fixed rather than worked around: canonical identity seeding moved
+  into `scripts/dev/seed_test_database.py` (the architecture gate rejects Python writing `tenants`;
+  the tool also refuses a non-canonical ULID, which caught a non-Crockford id in an earlier fixture),
+  and the evidence summaries were rewritten to the canonical schema with the narrative in `NOTES.md`.
 - **INT-006 (unit 2 of 4) — the durable knowledge store.** `python/intelligence/knowledge/store.py`:
   `SqlKnowledgeStore` over `public.knowledge_entries` (one transaction per operation, the tenant
   context set on every one) and `KnowledgeFabric`, the tenant-bound object that is the only way to
@@ -106,12 +118,11 @@ What is verified, on which path:
 
 ## Exact next action
 
-Continue `INT-006` with **unit 3: ingestion from approved sources and verified run outcomes** — a
-proposal the model may produce (kind, content_ref, provenance, confidence; never a status, never a
-tenant, never an identity) that the canonical owner validates, mints a `kn_` id for and persists as
-a `candidate`; plus the deletion path that calls `IndexSourceDeletion` from INT-011 so a removed
-source leaves retrieval (DOSSIER.md §21.3 bounds that to 60 s). Then unit 4 (the semantic channel —
-index knowledge text through INT-011 — and the task's evidence bundle). The ready queue below also
+Continue `INT-006` with **unit 4: the semantic channel** — index the fabric's retrievable knowledge
+through INT-011 (`derived.embeddings`) with provenance and snapshot metadata, and keep the derived
+channel in agreement with the fabric so a quarantined or withdrawn entry can never be retrieved by
+meaning (INT-011's `rebuild` and `prune` are the primitives). Then close INT-006 with its evidence
+panel. The ready queue below also
 holds INT-008, INT-010, EXEC-001, APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks
 the most downstream work, and if a task's toolchain cannot execute on this host (see "Environment
 requirements"), record that and take the next one.
@@ -234,6 +245,8 @@ relinks it.
 
 ## Commands
 
+Prepare a database for the Python integration suites:
+`uv run --project python python scripts/dev/seed_test_database.py --admin-url <dsn> --database <name> --tenant <tn_id>`
 Build: `bash scripts/dev/bootstrap.sh` (or `cargo check --workspace`, `pnpm build`, `(cd python && uv sync --frozen)`)
 Test: `uv run --project python pytest tests -q` · `(cd python && uv run --frozen pytest -q)` · `pnpm test` · `cargo test --workspace`
 Validate: `python3 scripts/validate_v81.py` (regenerate views with `--write`)
