@@ -34,6 +34,9 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 20
+          --shm-size 1g
+          -c max_locks_per_transaction=1024
+          -c max_connections=100
     steps:
       - uses: actions/checkout@v4
         with:

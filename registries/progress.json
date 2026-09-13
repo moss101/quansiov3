@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-13T18:16:00Z",
+  "updated_at": "2026-09-13T18:46:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1262,7 +1262,8 @@
         "cargo fmt --all --check",
         "cargo clippy -p quansio-machine --all-targets -- -D warnings",
         "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/workspace_check.py && python3.12 scripts/ci/inventory.py --scan && python3.12 scripts/ci/dossier_consistency.py && python3.12 scripts/ci/check_authority.py --check && python3.12 scripts/ci/supply_chain/check.py && python3.12 scripts/ci/legacy_map_check.py (V8.1 validation PASS; architecture CLEAN; workspace CLEAN; duplicate-authority CLEAN; dossier CLEAN; authority CLEAN; supply-chain CLEAN; legacy-map CLEAN)",
-        "bash scripts/ci/ci.sh (pipeline: PASS, 11 of 11 gates)"
+        "bash scripts/ci/ci.sh (pipeline: PASS, 11 of 11 gates)",
+        "cargo test -p quansio-server --test orchestration --test runtime_state_machine (24 passed, including the cancel storm the first full-workspace run of this task caught, and the new deterministic regression that a second cancellation reports AlreadyCancelled rather than claiming the cancellation; the storm then passed 20 of 20 consecutive runs against 8 of 10 before the fix)"
       ],
       "artifacts": [
         "evidence/EXEC-008/2026-09-13T18-10-41Z/summary.json",
@@ -1270,12 +1271,14 @@
         "migrations/0009_egress_grants.sql",
         "crates/machine/src/egress/mod.rs",
         "crates/machine/src/egress/store.rs",
-        "crates/machine/tests/egress.rs"
+        "crates/machine/tests/egress.rs",
+        "evidence/EXEC-008/2026-09-13T18-40-00Z/summary.json",
+        "evidence/EXEC-008/2026-09-13T18-40-00Z/NOTES.md"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "The egress broker answers one question -- may this execution target reach this destination -- and its answer is deny. A destination is reachable only when a live, scoped, unexpired grant covers it and every address the name resolved to is in a class the target's network policy allows, which is what makes a granted name that starts resolving to loopback or private space refused (DNS rebinding); an unresolved name is refused rather than assumed fine. The network policy is the canonical `policies` row `execution_targets.network_policy_id` already pointed at (DOMAIN.md 7.1, 8.2), not a second policy engine, and a grant's identity is the `network.egress.new_destination` effect that authorized it, so re-issuing is idempotent by the Effect Ledger's own rule. A grant records the policy id and revision it was issued under, so a policy change or a rebind fences every grant issued before it in one comparison rather than by racing a scan; revocation and expiry are the other half, and both are recorded rather than deleted so the audit trail survives. The decision log is built from the destination, the decision and identifiers only, so a header value or credential material has nowhere to be recorded. MachineControl::set_network_policy (EXEC-001's module, since it writes execution_targets) is the operation that binds a policy. Out-of-scope by design: the host/network-gateway enforcement point itself, and DNS resolution -- the broker decides from the addresses the resolver hands it, and that seam is what the rebinding test drives. real_boundary is false."
+      "notes": "The egress broker answers one question -- may this execution target reach this destination -- and its answer is deny. A destination is reachable only when a live, scoped, unexpired grant covers it and every address the name resolved to is in a class the target's network policy allows, which is what makes a granted name that starts resolving to loopback or private space refused (DNS rebinding); an unresolved name is refused rather than assumed fine. The network policy is the canonical `policies` row `execution_targets.network_policy_id` already pointed at (DOMAIN.md 7.1, 8.2), not a second policy engine, and a grant's identity is the `network.egress.new_destination` effect that authorized it, so re-issuing is idempotent by the Effect Ledger's own rule. A grant records the policy id and revision it was issued under, so a policy change or a rebind fences every grant issued before it in one comparison rather than by racing a scan; revocation and expiry are the other half, and both are recorded rather than deleted so the audit trail survives. The decision log is built from the destination, the decision and identifiers only, so a header value or credential material has nowhere to be recorded. MachineControl::set_network_policy (EXEC-001's module, since it writes execution_targets) is the operation that binds a policy. Out-of-scope by design: the host/network-gateway enforcement point itself, and DNS resolution -- the broker decides from the addresses the resolver hands it, and that seam is what the rebinding test drives. real_boundary is false. Follow-up filed in the same evidence directory: EXEC-008's first full-workspace run surfaced a pre-existing defect in the cancel path -- RunStore::cancel returned Ok(run-in-cancelled-state) both when it cancelled the run and when it found it already cancelled, so OrchestrationService::cancel_runs counted another caller's cancellation. cancel_once now reports which happened and only a real cancellation counts; a genuine fence error still propagates rather than being mistaken for 'already cancelled'. The same run also exposed a Postgres lock-table capacity limit when dozens of scratch-database migrations run concurrently, so infra/compose and the CI workflow now size max_locks_per_transaction at 1024 with a 1 GB shared-memory segment; one workspace run in ten still exhausts it, which is recorded as an environment capacity limit, not claimed fixed."
     },
     "EXEC-009": {
       "coverage": null,
