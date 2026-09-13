@@ -1,0 +1,15 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.22s
+     Running tests/compaction.rs (target/debug/deps/compaction-baa6e197d5f9e347)
+
+running 8 tests
+test the_replay_path_does_not_read_compaction ... ok
+test a_stale_controller_cannot_install_after_the_generation_moved ... ok
+test a_fork_refuses_an_epoch_from_another_run ... ok
+test an_unordered_range_is_refused_before_the_write ... ok
+test an_installed_epoch_is_not_installed_twice ... ok
+test epochs_are_listed_per_thread_and_are_tenant_scoped ... ok
+test a_revert_refuses_an_epoch_covering_abandoned_history ... ok
+test an_epoch_installs_when_the_caller_still_holds_its_range ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.67s
+
