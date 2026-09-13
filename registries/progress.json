@@ -849,18 +849,18 @@
       "notes": "ContextProjection and typed SearchProgram, both halves. python/intelligence/context/search.py implements §11.3's SearchProgram as data (six channels, typed predicates over a closed field/operator vocabulary, canonical order-independent serialization, fail-closed validation, and a structural gate proving the module cannot evaluate anything) and projection.py implements §11.2's ContextProjection (a segment without a trust_level is refused at construction and against the policy floor; the bundle records program key, snapshot, policy and token ledger with dropped tokens and segments by channel; deterministic bounded packing; dedupe keeping the more trusted copy; reported degradation; a stable prefix that is a pure function of stable-trust segments only; and a projection whose sources moved is refused). crates/server/src/runtime/context_bridge implements the runtime's side: ContextBridgePort is the only way a run asks for a projection, validate_projection is a fail-closed boundary check (an unlabelled or unknown-labelled segment, a projection without identity or snapshot, and a stale snapshot are all refused before the run sees anything), and a validated projection's id is what the turn records (turns.context_projection_id), so a turn is always traceable to its context - proven end to end by running a real turn and reading the row back. The bridge deliberately does not re-implement search, ranking or packing: that is the plane's authority, and its production RPC implementation belongs to INT-001's typed boundary (the port's default fails closed until then). All three acceptance statements are covered by tests that fail if they were false. Evidence: evidence/INT-005/<ts>/; 36 Rust suites, the Python plane 216/216 (6 skipped live-provider), fmt/clippy clean, ci.sh green."
     },
     "INT-006": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-13T04:56:32Z",
+      "updated_at": "2026-09-13T04:56:32Z",
+      "git_commit": "fa3fd17643ffde802871cf7d5f180fa11b5294c7",
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "CLAIMED and being reconciled. Canonical owner: python/intelligence/knowledge/ (the package is a docstring stub today; no implementation exists). The persistence shape already exists and is owned by CORE-001: public.knowledge_entries carries the DOMAIN.md 11.4 fields (id with the `kn_` prefix, scope tenant|workspace|pack, kind, content_ref, content, provenance JSONB, confidence 0..1, version, status candidate|verified|active|superseded|quarantined|deleted, superseded_by) with forced row-level security. The wire contract is already generated: quansio.v1.intelligence.KnowledgeEntry with Scope, Status and Provenance. Recorded reconciliation decision: the authority set assigns the Knowledge Fabric to the intelligence plane (DOSSIER.md 4.2 lists knowledge/ in the Python plane, and INT-006's `paths` is python/intelligence/knowledge/ alone), so Python owns these rows as its own durable data; Python still proposes rather than commits privileged runtime/graph/effect/machine state, and the derived index stays INT-011's. Deletion reaching retrieval is bounded by DOSSIER.md 21.3 (memory/knowledge deletion visible in retrieval within 60 s), which is what the INT-011 deletion seam exists for."
     },
     "INT-007": {
       "coverage": null,
