@@ -1,0 +1,80 @@
+{
+  "task_id": "EXEC-001",
+  "git_commit": "4666389c3df55e3e3dcfa87f658977ba81d2e8a0",
+  "recorded_at": "2026-09-13T17:30:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test control  # 12 passed against real PostgreSQL: a target walks the lifecycle DOMAIN.md 8.2 draws and an edge it does not draw is refused with both ends named; DESTROYED is terminal; a stale generation cannot steer the target it lost (transition or acquisition), and a fenced-out caller writes nothing; two racing acquirers cannot both hold a lease (one wins, the other is told who holds it, and the released target can be leased again); a lease that is not live (wrong generation, expired, released) does not permit the action and is not revived by renewing it; a lease expiring fences its holder by moving the generation; only a READY target can be leased; health is classified from what the platform observes and a target reports what it observes; and only machine control writes the target/lease tables across the whole workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-001/2026-09-13T17-21-49Z/unit-1-control.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-001/2026-09-13T17-21-49Z/rust-fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-machine --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-001/2026-09-13T17-21-49Z/rust-clippy.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/workspace_check.py  # V8.1 validation PASS (35 PASS), architecture CLEAN, workspace CLEAN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-001/2026-09-13T17-21-49Z/baseline-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test control  # 12 passed against real PostgreSQL: a target walks the lifecycle DOMAIN.md 8.2 draws and an edge it does not draw is refused with both ends named; DESTROYED is terminal; a stale generation cannot steer the target it lost (transition or acquisition), and a fenced-out caller writes nothing; two racing acquirers cannot both hold a lease (one wins, the other is told who holds it, and the released target can be leased again); a lease that is not live (wrong generation, expired, released) does not permit the action and is not revived by renewing it; a lease expiring fences its holder by moving the generation; only a READY target can be leased; health is classified from what the platform observes and a target reports what it observes; and only machine control writes the target/lease tables across the whole workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-machine --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/workspace_check.py  # V8.1 validation PASS (35 PASS), architecture CLEAN, workspace CLEAN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/machine/src/control/mod.rs",
+      "sha256": "905210b68a7f01abd2cabf4ce6fde9958b6ab63113325ac6816425d23c20bda5",
+      "bytes": 40917
+    },
+    {
+      "path": "crates/machine/src/lib.rs",
+      "sha256": "f907a39f6f37590258c5c65e5015d0f1696f1ce1371a386efb377888385baac5",
+      "bytes": 673
+    },
+    {
+      "path": "crates/machine/Cargo.toml",
+      "sha256": "42ffbcbd8d1135e7c005d1a5de3a070eca4c72b038301ef60a65b0c33783794b",
+      "bytes": 668
+    },
+    {
+      "path": "crates/machine/tests/control.rs",
+      "sha256": "adb4353550f95a0273ed8bacbc3e2d97edd04a63ad592c499b5012a984d3f545",
+      "bytes": 24896
+    },
+    {
+      "path": "crates/machine/tests/common/mod.rs",
+      "sha256": "e4fde827d842fbcbbb5ad2b959cf8b57c807ee45970328569632a97887f405f2",
+      "bytes": 3787
+    }
+  ]
+}
