@@ -17,16 +17,18 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **`INT-007` — semantic memory with provenance — `IN_PROGRESS`, units 1-3 of 4
-landed** (selected by `validate_v81.py --next`: M3, `python/intelligence/memory/`, depends on INT-006
-and RUN-005). `models.py` holds the entry, its scopes, its closed provenance vocabulary, its
-lifecycle and the one canonical instant shape; `store.py` holds the durable store over
-`public.memory_entries` (`SqlMemoryStore` plus the tenant-bound `MemoryFabric`); `candidates.py` holds
-the proposal type, the owner's provenance and scope gates, and the sink `ProposeMemory` forwards to
-(now implemented on the servicer). The reconciliation — including why "memory is not recovery" is a
-test rather than a comment — is `evidence/INT-007/2026-09-13T06-06-36Z/RECONCILIATION.md`; the unit
-bundles are `2026-09-13T06-29-11Z` and `2026-09-13T06-40-00Z`, each with `NOTES.md`. Remaining:
-retrieval through the semantic channel with its deletion path.
+Current task: **`INT-010` — intelligence evaluation harness — being claimed next** (selected by
+`validate_v81.py --next`: M3, `python/intelligence/evaluation/` + `tests/evaluation/`, depends on
+INT-002, INT-005 and INT-009).
+Previous task: **`INT-007` — semantic memory with provenance — `BLOCKED_EXTERNAL`, implementation
+complete.** All four units landed: `models.py` (entry, scopes, closed provenance vocabulary, lifecycle,
+one canonical instant shape), `store.py` (the durable store over `public.memory_entries` and the
+tenant-bound `MemoryFabric`), `candidates.py` (the proposal type, the owner's provenance and scope
+gates, and the sink `ProposeMemory` forwards to) and `retrieval.py` (the semantic channel and the
+forgetting path). The reconciliation — including why "memory is not recovery" is a test rather than a
+comment — is `evidence/INT-007/2026-09-13T06-06-36Z/RECONCILIATION.md`; the unit bundles are
+`2026-09-13T06-29-11Z`, `2026-09-13T06-40-00Z` and `2026-09-13T06-38-37Z`, each with `NOTES.md`. Its
+status is not `PASS` because its dependency INT-006 is `BLOCKED_EXTERNAL`.
 Previous task: **`INT-006` — Knowledge Fabric — `BLOCKED_EXTERNAL`, implementation complete.** All
 four units landed: `models.py` (entry, provenance addressing, the closed lifecycle ladder,
 `quarantine_derived`), `store.py` (the durable store over `public.knowledge_entries` and the
@@ -46,6 +48,14 @@ Current language: Python
 
 ## Completed since the previous handoff
 
+- **INT-007 (unit 4 of 4) — memory retrieval and the forgetting path.**
+  `python/intelligence/memory/retrieval.py`: the channel keeps INT-011's derived index in agreement
+  with the fabric in both directions (every retrievable memory indexed; nothing that left retrieval or
+  expired keeps rows), a hit cites the digest of the memory's text, `retrieve` re-checks each hit
+  against the fabric *and* the clock so a stale row is unservable, and `forget_memory` applies the
+  model's terminal edge then clears the derived rows through INT-011's deletion seam. Memory needs no
+  source reader because `memory_entries.content` stores the text. 34 rule tests plus 6 against real
+  PostgreSQL and the real pgvector index.
 - **INT-007 (unit 3 of 4) — the proposal gate and the `ProposeMemory` wire.**
   `python/intelligence/memory/candidates.py`: `MemoryCandidate` carries no identity, tenant or state
   (asserted structurally); the provenance vocabulary is closed to `explicit_user` and `verified_run`;
@@ -162,14 +172,13 @@ What is verified, on which path:
 
 ## Exact next action
 
-Continue `INT-007` with **unit 4: retrieval through the semantic channel** — index the fabric's
-retrievable memory through INT-011 (`derived.embeddings`, source kind `memory_entry`) with its
-provenance and snapshot, keep the derived channel in agreement with the fabric so a deleted or
-expired memory is never reachable by meaning (INT-006's `indexing.py` is the pattern, and INT-011's
-`index.create`/`prune` and `IndexSourceDeletion` are the primitives), and close the task with its
-evidence panel. Two acceptance statements drive it: a runtime restart must succeed with memory
-*disabled* (already proved structurally — nothing here is recovery state), and a deletion must stop
-future retrieval once the derived index has refreshed (DOSSIER.md §21.3's 60 s bound). The ready queue below also
+Claim and reconcile **`INT-010` — intelligence evaluation harness** (`python/intelligence/evaluation/`,
+`tests/evaluation/`): versioned datasets for route quality, retrieval, answer grounding, tool-proposal
+validity and skill behaviour; each run recording the model/provider/index/skill versions with cost and
+latency; and the provisional thresholds from DOSSIER.md §21.3 encoded as `tests/evaluation/thresholds.yaml`.
+Its two acceptance statements drive the design — an evaluation run is reproducible from pinned inputs,
+and a protected safety/recovery regression blocks promotion regardless of aggregate quality gain.
+Record the reconciliation, then implement it in units as INT-006 and INT-007 were. The ready queue below also
 holds INT-008, INT-010, EXEC-001, APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks
 the most downstream work, and if a task's toolchain cannot execute on this host (see "Environment
 requirements"), record that and take the next one.
@@ -180,7 +189,8 @@ requirements"), record that and take the next one.
 
 | Task | Milestone | Note |
 |---|---|---|
-| INT-007 | M3 | semantic memory with provenance (`python/intelligence/memory/`); selects INT-011's channel too, and must never become recovery state |
+| INT-010 | M3 | intelligence evaluation harness (`python/intelligence/evaluation/`, `tests/evaluation/`); selected by `--next` |
+| OPS-002 | M7 | audit, privacy, retention and user data controls (newly ready) |
 | INT-008 | M3 | compaction epochs and the bounded conversation projection |
 | INT-010 | M3 | intelligence evaluation harness (`python/intelligence/evaluation/`, `tests/evaluation/`) |
 | EXEC-001 | M4 | Rust machine control and execution-target lifecycle |
@@ -200,6 +210,16 @@ environment with provider egress, run
 record that run as INT-002's `real_boundary_evidence`, and flip INT-002 (and INT-003) to `PASS`;
 INT-011 then flips to `PASS` with the evidence already committed.
 Independent work available: yes — everything in the ready queue.
+
+### INT-007 — semantic memory with provenance (`BLOCKED_EXTERNAL`, implementation complete)
+Reason: its dependency `INT-006` is `BLOCKED_EXTERNAL`, and the validator requires every dependency
+to be `PASS` first. Both acceptance statements already hold: a restart succeeds with memory disabled
+(proved structurally — the model may carry no recovery state and the store's statements name only
+`memory_entries`), and a deletion stops future retrieval, verified in both planes including the window
+before the derived index refreshes.
+Exact unblock condition: the same provider credentials as INT-011 — set
+`QUANSIO_TEST_ANTHROPIC_API_KEY` and `QUANSIO_TEST_OPENAI_API_KEY`, run INT-002's live suite, record
+it and flip INT-002 (then INT-003, INT-011, INT-006 and INT-007) to `PASS`.
 
 ### INT-006 — Knowledge Fabric (`BLOCKED_EXTERNAL`, implementation complete)
 Reason: its dependency `INT-011` is `BLOCKED_EXTERNAL`, and the validator requires every dependency
@@ -253,15 +273,15 @@ rather than fabricated.
 
 ## Tests
 
-Last run this session, at `d150ba3cc7de` (INT-007 unit 3 evidence bundle
-`evidence/INT-007/2026-09-13T06-40-00Z/`; INT-006's is `evidence/INT-006/2026-09-13T06-14-00Z/` and
+Last run this session, at `340dbce83e36` (INT-007 unit 4 evidence bundle
+`evidence/INT-007/2026-09-13T06-38-37Z/`; INT-006's is `evidence/INT-006/2026-09-13T06-14-00Z/` and
 INT-011's `evidence/INT-011/2026-09-13T04-36-53Z/`):
 
-- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **430 passed, 6 skipped**
+- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **448 passed, 6 skipped**
   (the 6 are the live-provider cases that need `QUANSIO_TEST_*` credentials)
-- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)` → 66 passed
-- `(cd python && uv run --frozen pytest tests/intelligence/test_memory_candidates.py -q)` → 12 passed
-- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_memory_proposals.py -q)` → 7 passed
+- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)` → 72 passed
+- `(cd python && uv run --frozen pytest tests/intelligence/test_memory_models.py tests/intelligence/test_memory_store_boundaries.py tests/intelligence/test_memory_candidates.py tests/intelligence/test_memory_retrieval.py -q)` → 46 passed
+- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_memory_store.py tests/integration/test_memory_proposals.py tests/integration/test_memory_semantic_channel.py -q)` → 31 passed
 - `(cd python && uv run --frozen pytest tests/intelligence/test_memory_models.py tests/intelligence/test_memory_store_boundaries.py -q)` → 22 passed
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_memory_store.py -q)` → 18 passed
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_store.py -q)` → 24 passed

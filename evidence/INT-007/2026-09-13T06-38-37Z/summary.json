@@ -1,0 +1,128 @@
+{
+  "task_id": "INT-007",
+  "git_commit": "340dbce83e36463772c4582f36711ccff8474daf",
+  "recorded_at": "2026-09-13T06:50:00Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_memory_retrieval.py tests/intelligence/test_memory_candidates.py tests/intelligence/test_memory_store_boundaries.py tests/intelligence/test_memory_models.py -q)  # 46 passed: the memory plane's rules - the entry shape and lifecycle, the one canonical instant shape, the fabric's boundaries, the proposal gate, and the channel (only retrievable memory indexed, the content digest as the snapshot, expired and unpromoted memory pruned, retrieval dropping hits the fabric or the clock refuses, a broken index surfacing unmasked, and the channel reading the memory itself rather than object storage)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-38-37Z/unit-4-rules.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_memory_semantic_channel.py -q)  # 6 passed against real PostgreSQL and the real pgvector index with the shipped gateway embedder: promoted memory is retrievable by meaning with the digest of its text as the snapshot, a candidate is never indexed, deleting a memory removes it from both planes while the unrelated memory still answers, an expired memory is pruned from the channel without being deleted, a stale index row cannot be served, and re-synchronising reuses current rows",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-38-37Z/unit-4-semantic-postgres.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 448 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-38-37Z/plane.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)  # 72 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-38-37Z/integration.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-38-37Z/lint-types.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-38-37Z/repo-gates.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py  # V8.1 validation PASS; architecture CLEAN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-13T06-38-37Z/baseline-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_memory_retrieval.py tests/intelligence/test_memory_candidates.py tests/intelligence/test_memory_store_boundaries.py tests/intelligence/test_memory_models.py -q)  # 46 passed: the memory plane's rules - the entry shape and lifecycle, the one canonical instant shape, the fabric's boundaries, the proposal gate, and the channel (only retrievable memory indexed, the content digest as the snapshot, expired and unpromoted memory pruned, retrieval dropping hits the fabric or the clock refuses, a broken index surfacing unmasked, and the channel reading the memory itself rather than object storage)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_memory_semantic_channel.py -q)  # 6 passed against real PostgreSQL and the real pgvector index with the shipped gateway embedder: promoted memory is retrievable by meaning with the digest of its text as the snapshot, a candidate is never indexed, deleting a memory removes it from both planes while the unrelated memory still answers, an expired memory is pruned from the channel without being deleted, a stale index row cannot be served, and re-synchronising reuses current rows",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 448 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)  # 72 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py  # V8.1 validation PASS; architecture CLEAN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-007/2026-09-13T06-06-36Z/RECONCILIATION.md",
+      "sha256": "324b48028d70c85933530103d9765870df6132a61bae2bcbb3a6f14218e4596a",
+      "bytes": 5776
+    },
+    {
+      "path": "python/intelligence/memory/retrieval.py",
+      "sha256": "79d4a69e393832aaee5728b2ecca46f7ce98bafd8f5653fae4881ce449ef1f80",
+      "bytes": 7581
+    },
+    {
+      "path": "python/intelligence/memory/candidates.py",
+      "sha256": "bc045d92acc1fb71710089c068c8736e7bebab2af215b297754d6478bdb20a95",
+      "bytes": 7949
+    },
+    {
+      "path": "python/intelligence/memory/models.py",
+      "sha256": "76590481d446acf9ce0205f9b742ef39bd774c24c605ad37824059b1474f65eb",
+      "bytes": 9527
+    },
+    {
+      "path": "python/intelligence/memory/store.py",
+      "sha256": "e1fbbde1f6a12558bcd04e6702c89f205289d85ddb7747f7962924d597cfe599",
+      "bytes": 20315
+    },
+    {
+      "path": "python/intelligence/memory/__init__.py",
+      "sha256": "404c78f8a60d588abcadf517a22e9fe20b3085ac73b0bd719141533b7f2a2e36",
+      "bytes": 2436
+    },
+    {
+      "path": "python/tests/intelligence/test_memory_retrieval.py",
+      "sha256": "f50a41a17deb2291c715c3c59646792582e1d01ba988dce84a05cd183ea64895",
+      "bytes": 9408
+    },
+    {
+      "path": "python/tests/integration/test_memory_semantic_channel.py",
+      "sha256": "d5bad0f5111ecbfdf6cccd18e9961a40613e7d794394c66e4cb862260b63681b",
+      "bytes": 9439
+    }
+  ]
+}
