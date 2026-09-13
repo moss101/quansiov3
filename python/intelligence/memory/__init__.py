@@ -9,10 +9,11 @@ disabled, which is only meaningful if retrieval is an enrichment that can be abs
 Layout:
 
 * `models` — the entry, its scopes, its closed provenance vocabulary and its lifecycle, as pure
-  values.
+  values;
+* `store` — the durable store over `public.memory_entries`, one tenant at a time.
 
-The durable store over `public.memory_entries`, candidate creation, retrieval and the deletion path
-(the INT-011 seam) are the remaining units of this task.
+Candidate creation and retrieval through the semantic channel (the INT-011 seam) are the remaining
+units of this task.
 """
 
 from __future__ import annotations
@@ -27,14 +28,34 @@ from intelligence.memory.models import (
     MemoryScope,
     MemoryStatus,
 )
+from intelligence.memory.store import (
+    DEFAULT_LIMIT,
+    MAX_LIMIT,
+    READ_TABLES,
+    STATEMENTS,
+    MemoryFabric,
+    MemoryStore,
+    SqlMemoryStore,
+    StatusChange,
+    memory_for,
+)
 
 __all__ = [
+    "DEFAULT_LIMIT",
     "ID_PREFIX",
+    "MAX_LIMIT",
+    "READ_TABLES",
     "RETRIEVABLE_STATUS",
+    "STATEMENTS",
     "TRANSITIONS",
     "MemoryEntry",
     "MemoryEntryError",
+    "MemoryFabric",
     "MemoryProvenance",
     "MemoryScope",
     "MemoryStatus",
+    "MemoryStore",
+    "SqlMemoryStore",
+    "StatusChange",
+    "memory_for",
 ]

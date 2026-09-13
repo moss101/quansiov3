@@ -19,6 +19,7 @@ to, and the store enforces the tenant boundary around all three.
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass, replace
 from enum import StrEnum
 
@@ -44,9 +45,26 @@ RULE_CONFIDENCE = "memory.confidence"
 RULE_STATUS = "memory.status"
 RULE_TRANSITION = "memory.transition"
 RULE_EXPIRY = "memory.expiry"
+RULE_INSTANT = "memory.instant"
 
 #: Identity prefix `memory_entries.id` constrains with `CHECK (id LIKE 'mem\_%')`.
 ID_PREFIX = "mem_"
+
+#: The one instant shape this plane stores and compares: an ISO-8601 UTC instant, seconds
+#: precision, `Z`-suffixed. A canonical form is what makes `is_retrievable_at` a lexicographic
+#: comparison and what makes a value written to `TIMESTAMPTZ` read back identically.
+INSTANT_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+
+
+def require_instant(value: str, *, field: str) -> str:
+    """Validate one instant, refusing anything that is not the canonical form."""
+    if not INSTANT_PATTERN.match(value.strip()):
+        raise MemoryEntryError(
+            "VALIDATION_SCHEMA",
+            RULE_INSTANT,
+            f"{field} must be an ISO-8601 UTC instant (YYYY-MM-DDTHH:MM:SSZ), got {value!r}",
+        )
+    return value.strip()
 
 
 class MemoryScope(StrEnum):
@@ -139,6 +157,10 @@ class MemoryEntry:
             )
         if not isinstance(self.status, MemoryStatus):
             raise MemoryEntryError("VALIDATION_SCHEMA", RULE_STATUS, f"unknown status {self.status!r}")
+        if self.expires_at.strip():
+            require_instant(self.expires_at, field="expires_at")
+        if self.last_used_at.strip():
+            require_instant(self.last_used_at, field="last_used_at")
         workspace = (self.workspace_id or "").strip()
         if self.scope is MemoryScope.USER and workspace:
             raise MemoryEntryError(
@@ -177,6 +199,7 @@ class MemoryEntry:
         schema's `TIMESTAMPTZ` and the generated contract's string fields both carry, so the
         comparison needs no clock here.
         """
+        require_instant(now, field="now")
         if not self.retrievable:
             return False
         expires = self.expires_at.strip()
@@ -200,8 +223,4 @@ class MemoryEntry:
 
     def used_at(self, now: str) -> MemoryEntry:
         """Record that retrieval used this memory; content and status are untouched."""
-        if not now.strip():
-            raise MemoryEntryError(
-                "VALIDATION_SCHEMA", RULE_EXPIRY, "a use mark needs the instant it happened"
-            )
-        return replace(self, last_used_at=now)
+        return replace(self, last_used_at=require_instant(now, field="now"))

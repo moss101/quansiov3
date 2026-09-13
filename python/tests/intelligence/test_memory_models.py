@@ -169,7 +169,23 @@ def test_a_use_mark_records_the_instant_and_changes_nothing_else() -> None:
     assert marked.status is item.status
     with pytest.raises(MemoryEntryError) as refusal:
         item.used_at("  ")
-    assert refusal.value.rule_id == "memory.expiry"
+    assert refusal.value.rule_id == "memory.instant"
+
+
+def test_instants_have_one_canonical_shape() -> None:
+    """One shape is what makes a stored instant read back identically and compare lexicographically."""
+    assert entry(expires_at="2099-01-01T00:00:00Z").expires_at == "2099-01-01T00:00:00Z"
+    assert entry(last_used_at="2026-09-13T10:00:00Z").last_used_at == "2026-09-13T10:00:00Z"
+    for bad in ("2026-09-13 00:00:00", "2026-09-13T00:00:00+03:00", "2026-09-13", "yesterday", "now"):
+        with pytest.raises(MemoryEntryError) as refusal:
+            entry(expires_at=bad)
+        assert refusal.value.rule_id == "memory.instant", bad
+        with pytest.raises(MemoryEntryError) as use_mark:
+            entry().used_at(bad)
+        assert use_mark.value.rule_id == "memory.instant", bad
+        with pytest.raises(MemoryEntryError) as comparison:
+            entry().is_retrievable_at(bad)
+        assert comparison.value.rule_id == "memory.instant", bad
 
 
 def test_the_provenance_vocabulary_is_closed() -> None:
