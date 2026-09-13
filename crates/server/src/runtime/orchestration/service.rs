@@ -8,9 +8,9 @@
 
 use std::sync::Arc;
 
-use quansio_core::CanonicalId;
+use quansio_core::{CanonicalId, Generation};
 
-use crate::runtime::state_machine::{RuntimeError, RuntimeIdentity, RuntimeStore};
+use crate::runtime::state_machine::{CancellationWon, RuntimeError, RuntimeIdentity, RuntimeStore};
 use crate::scheduler::{DispatchOutcome, RunDispatch, RunDispatchRequest};
 
 use super::cancel::{cancel_plan, CancelPlan, CancelRequest, CancellationOutcome, CancelledNode};
@@ -341,21 +341,19 @@ impl Orchestrator {
         let mut already = Vec::new();
         for run in &plan.runs {
             let run_id = CanonicalId::parse_typed(&run.run_id, quansio_core::Prefix::Run)?;
-            let before = self.runs.load_run(&run_id).await?;
-            if before.status == crate::runtime::state_machine::RunStatus::Cancelled {
-                already.push(run.run_id.clone());
-                continue;
-            }
-            match self.runs.cancel(&run_id, before.generation).await {
-                Ok(after)
-                    if after.status == crate::runtime::state_machine::RunStatus::Cancelled =>
-                {
-                    cancelled.push(run.run_id.clone());
-                }
-                Ok(_) => already.push(run.run_id.clone()),
+            let generation = Generation::new(run.generation)
+                .map_err(|error| OrchestrationError::from(RuntimeError::from(error)))?;
+            match self.runs.cancel_once(&run_id, generation).await {
+                // Only a call that performed the cancellation counts as one. A call that found the run
+                // already cancelled must not report it: under a storm of concurrent cancellations of
+                // the same Run every caller would otherwise claim the same cancellation, and "once
+                // each" is the property the caller is asserting.
+                Ok((_, CancellationWon::Cancelled)) => cancelled.push(run.run_id.clone()),
+                Ok((_, CancellationWon::AlreadyCancelled)) => already.push(run.run_id.clone()),
                 Err(RuntimeError::StateConflict { .. }) => {
-                    // A concurrent cancellation won the transaction: the storm converges on
-                    // "already cancelled" instead of failing or cancelling twice.
+                    // A concurrent cancellation won the transaction in the window between the read
+                    // and the lock: the storm converges on "already cancelled" instead of failing or
+                    // cancelling twice.
                     already.push(run.run_id.clone());
                 }
                 Err(error) => return Err(OrchestrationError::from(error)),

@@ -476,6 +476,18 @@ impl WaitResolution {
     }
 }
 
+/// Whether a cancellation call did the work or found it already done.
+///
+/// The resulting `Run` is the same either way, so this is the only way a caller that counts its own
+/// cancellations can avoid counting another caller's.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CancellationWon {
+    /// This call performed the cancellation.
+    Cancelled,
+    /// The Run was already cancelled, by another caller.
+    AlreadyCancelled,
+}
+
 /// The Run/Turn/Step/Attempt store (DOMAIN.md §5.2–§5.5).
 #[derive(Debug, Clone)]
 pub struct RuntimeStore {
@@ -695,53 +707,77 @@ impl RuntimeStore {
         run_id: &CanonicalId,
         generation: Generation,
     ) -> Result<Run, RuntimeError> {
+        self.cancel_once(run_id, generation)
+            .await
+            .map(|(run, _)| run)
+    }
+
+    /// Cancel a Run, reporting whether *this call* performed the cancellation.
+    ///
+    /// [`Self::cancel`] is the same operation for a caller that only needs the resulting state. The
+    /// distinction matters to a caller that counts what it did: under a storm of concurrent
+    /// cancellations of the same Run, exactly one call cancelled it and the rest found it done, and
+    /// only this answer can tell them apart — the resulting `Run` is identical either way.
+    ///
+    /// # Errors
+    /// Returns [`RuntimeError::FencedStaleGeneration`] for a stale generation, and
+    /// [`RuntimeError::StateConflict`] when a concurrent cancellation won the transaction — which is
+    /// the same fact as [`CancellationWon::AlreadyCancelled`] learned one step later, so a caller that
+    /// counts cancellations must treat it the same way.
+    pub async fn cancel_once(
+        &self,
+        run_id: &CanonicalId,
+        generation: Generation,
+    ) -> Result<(Run, CancellationWon), RuntimeError> {
         // An already-cancelled run is returned as-is: a transaction that stages no event
         // is refused by the event store, and a second cancellation must not add one.
         let current = self.load_run(run_id).await?;
         fence(current.generation, generation)?;
         if current.status == RunStatus::Cancelled {
-            return Ok(current);
+            return Ok((current, CancellationWon::AlreadyCancelled));
         }
         let tenant_id = self.identity.tenant_id.clone();
         let identity = self.identity.clone();
         let run_id = *run_id;
-        self.commit(move |tx, batch| {
-            Box::pin(async move {
-                let mut publisher = Publisher::new(&tenant_id, &identity);
-                let current = lock_run(tx, &tenant_id, &run_id).await?;
-                fence(current.generation, generation)?;
-                if current.status == RunStatus::Cancelled {
-                    return Err(RuntimeError::StateConflict {
-                        entity: "run",
-                        id: run_id.to_string(),
-                    });
-                }
-                if let Some(mut state) =
-                    ProtocolStateStore::load(tx, &tenant_id, &run_id.to_string())
-                        .await
-                        .map_err(RuntimeError::from)?
-                {
-                    state.cancellation_requested = true;
-                    state.cancellation_at = current.updated_at.to_rfc3339().into();
-                    state.generation = current.generation.get() as i64;
-                    ProtocolStateStore::store(tx, &tenant_id, &state)
-                        .await
-                        .map_err(RuntimeError::from)?;
-                }
-                apply_run_transition(
-                    tx,
-                    batch,
-                    &mut publisher,
-                    &tenant_id,
-                    &run_id,
-                    generation,
-                    RunStatus::Cancelled,
-                    Some("cancellation requested".to_string()),
-                )
-                .await
+        let cancelled = self
+            .commit(move |tx, batch| {
+                Box::pin(async move {
+                    let mut publisher = Publisher::new(&tenant_id, &identity);
+                    let current = lock_run(tx, &tenant_id, &run_id).await?;
+                    fence(current.generation, generation)?;
+                    if current.status == RunStatus::Cancelled {
+                        return Err(RuntimeError::StateConflict {
+                            entity: "run",
+                            id: run_id.to_string(),
+                        });
+                    }
+                    if let Some(mut state) =
+                        ProtocolStateStore::load(tx, &tenant_id, &run_id.to_string())
+                            .await
+                            .map_err(RuntimeError::from)?
+                    {
+                        state.cancellation_requested = true;
+                        state.cancellation_at = current.updated_at.to_rfc3339().into();
+                        state.generation = current.generation.get() as i64;
+                        ProtocolStateStore::store(tx, &tenant_id, &state)
+                            .await
+                            .map_err(RuntimeError::from)?;
+                    }
+                    apply_run_transition(
+                        tx,
+                        batch,
+                        &mut publisher,
+                        &tenant_id,
+                        &run_id,
+                        generation,
+                        RunStatus::Cancelled,
+                        Some("cancellation requested".to_string()),
+                    )
+                    .await
+                })
             })
-        })
-        .await
+            .await?;
+        Ok((cancelled, CancellationWon::Cancelled))
     }
 
     /// Suspend a Run with a typed reason (DOMAIN.md §5.2).
