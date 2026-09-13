@@ -941,22 +941,31 @@
     },
     "INT-008": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-13T07:16:43Z",
-      "updated_at": "2026-09-13T07:24:47Z",
-      "git_commit": "3037d44",
-      "tests": [],
+      "updated_at": "2026-09-13T09:13:37Z",
+      "git_commit": "fca2bd3",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test compaction (8 tests: an epoch installs while the caller still holds its range; a revert refuses an epoch covering abandoned history and records rejected_stale on the retained row; a fork refuses an epoch belonging to another run; a stale controller's generation fence is refused without writing a decision; an installed epoch is not installed twice; an unordered range is refused before the write and the table's CHECK refuses it when a writer bypasses the store; epochs are listed per thread and are tenant-scoped; and the declared recovery read set names no compaction table while the recovery sources never query one)",
+        "(cd python && uv run --frozen pytest tests/intelligence/test_context_compaction.py -q) (14 tests: the section vocabulary is closed to narrative and the protocol surfaces are refused by name with the reason; sections and summaries are shape-checked; a summary still covering the caller's position is used and one covering beyond it is dropped with the reason recorded; a summary too large for the budget is dropped whole rather than truncated; the budget bounds the projection and accounts for what it left out by channel; the synchronous fallback is a projection without the summary; and the projection has no field a tool call, a wait or a protocol state could be smuggled through)",
+        "(cd python && QUANSIO_TEST_POSTGRES_URL=... uv run --frozen pytest -q) (462 passed, 6 skipped)",
+        "cargo fmt --all --check && cargo clippy -p quansio-server --all-targets -- -D warnings && (cd python && ruff check . && ruff format --check . && mypy intelligence)",
+        "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py (V8.1 validation PASS, architecture CLEAN)"
+      ],
       "artifacts": [
         "evidence/INT-008/2026-09-13T07-30-00Z/RECONCILIATION.md",
-        "evidence/INT-008/2026-09-13T07-30-00Z/NOTES.md",
-        "evidence/INT-008/2026-09-13T07-30-00Z/ci-pipeline.log",
-        "evidence/INT-008/2026-09-13T07-30-00Z/toolchains-gate.log"
+        "evidence/INT-008/2026-09-13T09-09-37Z/summary.json",
+        "crates/server/src/runtime/compaction/mod.rs",
+        "crates/server/tests/compaction.rs",
+        "python/intelligence/context/compaction/__init__.py",
+        "python/intelligence/context/compaction/summary.py",
+        "python/tests/intelligence/test_context_compaction.py"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "CLAIMED and being reconciled. Canonical owner: crates/server/runtime/compaction/ (Rust) and python/intelligence/context/compaction/ (Python) - the two paths the task names. Neither exists today, so the coverage is GENUINE_GAP. The persistence shape already exists and is owned by CORE-001: public.compaction_epochs carries id (cep_ prefix), tenant_id, thread_id, run_id, seq, source_from_sequence, source_to_sequence, summary_artifact_id, token_estimate, status (pending|installed|rejected_stale), created_by_model_route_id, timestamps, UNIQUE (thread_id, seq) and CHECK (source_to_sequence >= source_from_sequence), so an epoch is already defined as a versioned range over the thread's event sequence and a stale one has a status of its own. The authorities the two halves reuse: CORE-006's protocol state and next_safe_action (which already reconciles rather than retries), CORE-003's per-tenant event sequence (the source range), CORE-009's projections for the summary artifact, INT-005's ContextProjection (which is what a compacted conversation is projected through), and INT-002's model route id that an epoch records as its author. Recorded reconciliation decision: the Rust half owns the epoch lifecycle (create, install, reject-as-stale) because it is runtime state, while the Python half owns what a summary may contain and how a bounded projection is assembled - the split the task's two paths already state. Environment note: the host incident that blocked newly created binaries all session has cleared (a freshly compiled probe now executes), so cargo test and the full ci.sh pipeline are runnable again and this task's Rust half is verifiable on the host. The reconciliation is committed with the baseline evidence: evidence/INT-008/2026-09-13T07-30-00Z/ holds RECONCILIATION.md, NOTES.md, ci-pipeline.log (bash scripts/ci/ci.sh -> 11/11 gates PASS, pipeline: PASS, the first complete run since the host incident began), toolchains-gate.log (the bootstrap re-run) and ci-first-run-transient.log (the first attempt's transient toolchains failure, classified as flaky rather than a regression on the standalone 12/12 and the gate re-run's bootstrap: OK)."
+      "notes": "PASS. Both halves are implemented in the canonical owners the task names and both acceptance statements are covered by tests against real boundaries. The Rust half (crates/server/src/runtime/compaction/) owns the epoch lifecycle over public.compaction_epochs - create, install and refuse-as-stale - and reads or writes no protocol state, which is what keeps compaction out of anything a run obeys. The Python half (python/intelligence/context/compaction/) owns what a summary may say and how the bounded projection is assembled. Acceptance 1 (a fork/revert never installs compaction from abandoned history): an epoch installs only while the position the caller holds contains the range it summarises (a revert moves it back) and only while it belongs to the caller's run (a fork leaves it behind); either refusal moves it to rejected_stale and keeps the row, and the decision is taken inside the installing transaction with the row read FOR UPDATE. Acceptance 2 (exact protocol replay does not depend on summary text): the summary's section vocabulary is closed to narrative and the protocol surfaces are refused by name, a projection has no field that could carry them, and RUN-009's declared RECOVERY_READ_TABLES names no compaction table while the recovery sources never query one. Two decisions came out of the tests rather than the plan: a stale refusal that must persist cannot be an Err (a caller rolling back on Err would discard the record), so install returns an InstallOutcome whose Rejected carries the epoch already moved; and a stale generation is not abandoned history, so a fenced-out writer returns the epoch untouched and leaves it pending rather than deciding on the current controller's behalf. The synchronous fallback the task asks for is the projection without the summary: a compaction that may not be installed costs context, never progress. No migration was needed: public.compaction_epochs already declares the shape, including the status this lifecycle writes and the CHECK a bypassing writer still hits. Both dependencies (CORE-006, INT-005) are PASS, and real_boundary is false, so no external proof is outstanding."
     },
     "INT-009": {
       "coverage": "GENUINE_GAP",

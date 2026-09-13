@@ -17,13 +17,16 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **`INT-008` — compaction epochs and the bounded conversation projection — `IN_PROGRESS`,
-claimed and reconciled** (selected by `validate_v81.py --next`: M3). Its reconciliation is
-`evidence/INT-008/2026-09-13T07-30-00Z/RECONCILIATION.md`: the Rust half (`crates/server/src/runtime/compaction/`)
-owns the epoch lifecycle because an epoch is runtime state, the Python half
-(`python/intelligence/context/compaction/`) owns what a summary may contain and how a bounded
-conversation projection is assembled, and `public.compaction_epochs` already declares the shape (a
-versioned source range with a `rejected_stale` state).
+Current task: **next ready task — `validate_v81.py --next` selects it** (M3 is otherwise closed out;
+INT-008 was the last M3 task in the queue).
+Previous task: **`INT-008` — compaction epochs and the bounded conversation projection — `PASS`**, the
+first task to reach `PASS` in this mission. Both halves are implemented and tested: the Rust epoch
+lifecycle (`crates/server/src/runtime/compaction/`, 8 tests against real PostgreSQL) refuses abandoned
+history and records `rejected_stale` inside the installing transaction, and the Python projection
+(`python/intelligence/context/compaction/`, 14 tests) keeps protocol truth out of summaries and bounds
+the conversation, with the drop as the synchronous fallback. Its reconciliation is
+`evidence/INT-008/2026-09-13T07-30-00Z/RECONCILIATION.md` and its evidence is
+`evidence/INT-008/2026-09-13T09-09-37Z/`.
 Previous task: **`INT-010` — intelligence evaluation harness — `BLOCKED_EXTERNAL`, implementation
 complete.** All four units landed: `datasets.py` (versioned, content-addressed datasets),
 `runs.py` (what a run measured, under which versions, at what cost, with per-case outcomes),
@@ -68,6 +71,15 @@ Current language: Python
 
 ## Completed since the previous handoff
 
+- **INT-008 — compaction epochs and the bounded conversation projection (`PASS`).**
+  `crates/server/src/runtime/compaction/` owns create/install/refuse-as-stale over
+  `public.compaction_epochs`; an epoch installs only while the caller's position contains its range and it
+  belongs to the caller's run, and a history refusal records `rejected_stale` on the retained row. Two
+  design corrections came from the tests: a refusal that must persist cannot be an `Err` (the caller's
+  rollback would discard it), and a fenced-out writer must not write a decision at all. The Python half
+  (`python/intelligence/context/compaction/`) closes the summary's vocabulary to narrative — the protocol
+  surfaces are refused by name — and drops a summary that covers abandoned history or cannot fit the
+  budget, which is the synchronous fallback. 8 Rust tests plus 14 Python tests; the plane suite is 462.
 - **INT-010 (unit 4 of 4) — the metric implementations.** `python/intelligence/evaluation/metrics.py`:
   each family turns a pinned dataset into a `MetricResult` — the aggregate measurement plus the per-case
   outcome of every case, because §21.3's blocking row is a statement about individual protected cases
@@ -236,8 +248,7 @@ requirements"), record that and take the next one.
 
 | Task | Milestone | Note |
 |---|---|---|
-| INT-008 | M3 | compaction epochs and the bounded conversation projection; selected by `--next` |
-| EXEC-001 | M4 | Rust machine control and execution-target lifecycle |
+| EXEC-001 | M4 | Rust machine-control and execution-target lifecycle |
 | APP-001 | M5 | server API/control composition and the walking skeleton |
 | CAP-006 | M6 | WikiSkill and knowledge-navigation baseline (newly ready) |
 | OPS-002 | M7 | audit, privacy, retention and user data controls |
@@ -348,7 +359,7 @@ INT-006's `evidence/INT-006/2026-09-13T06-14-00Z/` and INT-011's
 - `uv run --project python pytest tests -q` → **234 passed**
 - `uv run --project python pytest tests/evaluation -q` → 46 passed (12 of them the gate)
 - `uv run --project python pytest tests/ci -q` → 55 passed
-- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **448 passed, 6 skipped**
+- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **462 passed, 6 skipped**
   (the 6 are the live-provider cases that need `QUANSIO_TEST_*` credentials)
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)` → 72 passed
 - `(cd python && uv run --frozen pytest tests/intelligence/test_memory_models.py tests/intelligence/test_memory_store_boundaries.py tests/intelligence/test_memory_candidates.py tests/intelligence/test_memory_retrieval.py -q)` → 46 passed

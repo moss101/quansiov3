@@ -1,6 +1,6 @@
 {
   "task_id": "INT-008",
-  "git_commit": "20d8c29d95813b9f70b5ef4c8a398afe03ad302f",
+  "git_commit": "fca2bd3",
   "recorded_at": "2026-09-13T09:15:00Z",
   "commands": [
     {
@@ -26,6 +26,24 @@
       "exit_code": 0,
       "result": "PASS",
       "log": "evidence/INT-008/2026-09-13T09-09-37Z/baseline-gates.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_context_compaction.py -q)  # 14 passed: the section vocabulary is closed to narrative and the protocol surfaces are refused by name with the reason; sections and summaries are shape-checked; a summary still covering the caller's position is used and one covering beyond it is dropped with the reason recorded; a summary too large for the budget is dropped whole; the budget bounds the projection and accounts for what it left out; the fallback is a projection without the summary; and the projection has nowhere to put protocol state",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-008/2026-09-13T09-09-37Z/unit-2-projection.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 462 passed, 6 skipped",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-008/2026-09-13T09-09-37Z/plane.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-008/2026-09-13T09-09-37Z/lint-types.log"
     }
   ],
   "results": [
@@ -48,6 +66,21 @@
       "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py  # V8.1 validation PASS, architecture CLEAN",
       "exit_code": 0,
       "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_context_compaction.py -q)  # 14 passed: the section vocabulary is closed to narrative and the protocol surfaces are refused by name with the reason; sections and summaries are shape-checked; a summary still covering the caller's position is used and one covering beyond it is dropped with the reason recorded; a summary too large for the budget is dropped whole; the budget bounds the projection and accounts for what it left out; the fallback is a projection without the summary; and the projection has nowhere to put protocol state",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 462 passed, 6 skipped",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
     }
   ],
   "artifacts": [
@@ -65,6 +98,21 @@
       "path": "crates/server/tests/compaction.rs",
       "sha256": "d5d81011b245362b669fc6da543022a343c20ffbc1c0146b54c7287722eefbf9",
       "bytes": 16465
+    },
+    {
+      "path": "python/intelligence/context/compaction/__init__.py",
+      "sha256": "90e717101f252a9c9373d947ee502203fe3a520df14b6240e3f5011a384ccd8e",
+      "bytes": 1223
+    },
+    {
+      "path": "python/intelligence/context/compaction/summary.py",
+      "sha256": "9f9a935639b3ebface3f7b9163a0e4065264411326c08008b98016966b5b4a9d",
+      "bytes": 9994
+    },
+    {
+      "path": "python/tests/intelligence/test_context_compaction.py",
+      "sha256": "82b2ea63467eb1cd3733bc6a90bcef0bd9ab3aff96ab7d12493c6795d86f293a",
+      "bytes": 10109
     }
   ]
 }
