@@ -17,7 +17,16 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **`INT-010` — intelligence evaluation harness — `IN_PROGRESS`, units 1-3 of 4 landed**
+Current task: **`INT-008` — compaction epochs and the bounded conversation projection — being
+claimed next** (selected by `validate_v81.py --next`: M3).
+Previous task: **`INT-010` — intelligence evaluation harness — `BLOCKED_EXTERNAL`, implementation
+complete.** All four units landed: `datasets.py` (versioned, content-addressed datasets),
+`runs.py` (what a run measured, under which versions, at what cost, with per-case outcomes),
+`gate.py` (protected metrics first and blocking) and `metrics.py` (the five families measured, with
+the two cross-authority metrics port-driven). Its status is not `PASS` because its dependency INT-002
+is `BLOCKED_EXTERNAL`.
+
+**`INT-010` history:** `IN_PROGRESS`, units 1-4 landed**
 (selected by `validate_v81.py --next`: M3, `python/intelligence/evaluation/` + `tests/evaluation/`,
 depends on INT-002, INT-005 and INT-009). `datasets.py` holds the versioned, content-addressed datasets the harness measures against;
 `runs.py` records what a run measured, under which versions, at what cost; `gate.py` decides
@@ -54,6 +63,14 @@ Current language: Python
 
 ## Completed since the previous handoff
 
+- **INT-010 (unit 4 of 4) — the metric implementations.** `python/intelligence/evaluation/metrics.py`:
+  each family turns a pinned dataset into a `MetricResult` — the aggregate measurement plus the per-case
+  outcome of every case, because §21.3's blocking row is a statement about individual protected cases
+  across runs. Route quality resolves through the configured selector (the test scores 1.0 with a
+  class-driven selector and below 1.0 with the class-blind default, proving the metric observes
+  behaviour); skill resolution drives INT-009's resolver; the injection metrics read INT-012's corpus;
+  `measure_retrieval` drives a real index; grounding and tool-proposal validity are ports that report
+  *not measured* when their authority is absent, which the gate fails closed on. 10 metric tests.
 - **INT-010 (unit 3 of 4) — the protected decision gate.** `python/intelligence/evaluation/gate.py`:
   protected metrics are evaluated and reported first, and a protected failure blocks promotion whatever
   the quality metrics say — the acceptance statement is a test: every quality metric at its best with one
@@ -197,13 +214,11 @@ What is verified, on which path:
 
 ## Exact next action
 
-Continue `INT-010` with **unit 4: the metric implementations** — the five families the pinned datasets
-exist for: route quality (determinism and class resolution through the model gateway's selector),
-retrieval grounding (recall@10 over a pinned corpus, the cross-tenant check and deleted-after-refresh,
-both against the real derived index), answer grounding, tool-proposal validity against the tool
-declarations, and skill resolution through INT-009's resolver — each producing the `Measurement`s the
-gate consumes, with the injection metrics reading INT-012's corpus. Then close INT-010 with its
-evidence panel. The ready queue below also
+Claim and reconcile **`INT-008` — compaction epochs and the bounded conversation projection`: read the
+task's build items and acceptance statements, reconcile them against what already exists (DOMAIN §11.3
+context/compaction, INT-005's `ContextProjection`, CORE-009's projections, and the schema's
+`compaction_epochs` table), record the reconciliation, then implement it in units as INT-006, INT-007
+and INT-010 were. The ready queue below also
 holds INT-008, INT-010, EXEC-001, APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks
 the most downstream work, and if a task's toolchain cannot execute on this host (see "Environment
 requirements"), record that and take the next one.
@@ -214,8 +229,11 @@ requirements"), record that and take the next one.
 
 | Task | Milestone | Note |
 |---|---|---|
-| INT-010 | M3 | intelligence evaluation harness (`python/intelligence/evaluation/`, `tests/evaluation/`); in progress, units 2-4 remain |
-| OPS-002 | M7 | audit, privacy, retention and user data controls (newly ready) |
+| INT-008 | M3 | compaction epochs and the bounded conversation projection; selected by `--next` |
+| EXEC-001 | M4 | Rust machine control and execution-target lifecycle |
+| APP-001 | M5 | server API/control composition and the walking skeleton |
+| CAP-006 | M6 | WikiSkill and knowledge-navigation baseline (newly ready) |
+| OPS-002 | M7 | audit, privacy, retention and user data controls |
 | INT-008 | M3 | compaction epochs and the bounded conversation projection |
 | INT-010 | M3 | intelligence evaluation harness (`python/intelligence/evaluation/`, `tests/evaluation/`) |
 | EXEC-001 | M4 | Rust machine control and execution-target lifecycle |
@@ -235,6 +253,17 @@ environment with provider egress, run
 record that run as INT-002's `real_boundary_evidence`, and flip INT-002 (and INT-003) to `PASS`;
 INT-011 then flips to `PASS` with the evidence already committed.
 Independent work available: yes — everything in the ready queue.
+
+### INT-010 — intelligence evaluation harness (`BLOCKED_EXTERNAL`, implementation complete)
+Reason: its dependency `INT-002` is `BLOCKED_EXTERNAL`, so the validator refuses `PASS`. Both acceptance
+statements already hold: a run is reproducible from pinned inputs (digest-pinned datasets and
+content-addressed runs with a comparability check that names what differs), and a protected
+safety/recovery regression blocks promotion regardless of aggregate quality (the gate blocks on a
+protected failure while reporting every quality metric, and `protected_regressions` counts the
+document's blocking row from per-case outcomes).
+Exact unblock condition: the same provider credentials as INT-011 — set
+`QUANSIO_TEST_ANTHROPIC_API_KEY` and `QUANSIO_TEST_OPENAI_API_KEY`, run INT-002's live suite, record it
+and flip INT-002 (then INT-003, INT-011, INT-006, INT-007 and INT-010) to `PASS`.
 
 ### INT-007 — semantic memory with provenance (`BLOCKED_EXTERNAL`, implementation complete)
 Reason: its dependency `INT-006` is `BLOCKED_EXTERNAL`, and the validator requires every dependency

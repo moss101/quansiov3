@@ -1,0 +1,97 @@
+{
+  "task_id": "INT-010",
+  "git_commit": "205526735059b34b6d92ca72a532986f27c13ed2",
+  "recorded_at": "2026-09-13T07:45:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/evaluation/test_metrics.py -q  # 10 passed: route quality measures the configured selector (1.0 with a class-driven one, below 1.0 with the class-blind default, so the metric observes behaviour rather than restating the dataset) and carries the protected cases; skill resolution drives INT-009's resolver; the injection metrics report a detection rate at or above 95 % and zero samples reaching context as an instruction; grounding and tool-proposal validity report not measured without their authority and drive it when installed; protected_regressions counts only cases that passed before and fail now, reporting new protected cases instead of counting them; and the whole path blocks promotion on a protected regression",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-14-16Z/unit-4-metrics.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/evaluation -q  # 56 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-14-16Z/unit-4-suite.log"
+    },
+    {
+      "command": "uv run --project python pytest tests -q  # 244 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-14-16Z/root-tests.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 448 passed, 6 skipped",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-14-16Z/plane.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-14-16Z/lint-types.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/supply_chain/check.py && python3.12 scripts/validate_v81.py  # architecture CLEAN, supply-chain CLEAN, V8.1 validation PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-14-16Z/baseline-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/evaluation/test_metrics.py -q  # 10 passed: route quality measures the configured selector (1.0 with a class-driven one, below 1.0 with the class-blind default, so the metric observes behaviour rather than restating the dataset) and carries the protected cases; skill resolution drives INT-009's resolver; the injection metrics report a detection rate at or above 95 % and zero samples reaching context as an instruction; grounding and tool-proposal validity report not measured without their authority and drive it when installed; protected_regressions counts only cases that passed before and fail now, reporting new protected cases instead of counting them; and the whole path blocks promotion on a protected regression",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/evaluation -q  # 56 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests -q  # 244 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 448 passed, 6 skipped",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/supply_chain/check.py && python3.12 scripts/validate_v81.py  # architecture CLEAN, supply-chain CLEAN, V8.1 validation PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/evaluation/metrics.py",
+      "sha256": "1ce0e17514e4325544cbfcdfc172e3e0d347b65fec8190d563bef4faa5322dcf",
+      "bytes": 23199
+    },
+    {
+      "path": "python/intelligence/evaluation/runs.py",
+      "sha256": "c670f8172f4ec9b735ae05818111ef724ca55491e69227103d3813741748eb17",
+      "bytes": 21731
+    },
+    {
+      "path": "python/intelligence/evaluation/__init__.py",
+      "sha256": "340669139aeacccadaa9bf59a64406e137a47f8b444c74ab6cc8a0aed7f5291a",
+      "bytes": 3955
+    },
+    {
+      "path": "tests/evaluation/test_metrics.py",
+      "sha256": "986f9a03030367a829018464614b7bbc99b8200878ee4b173ff22826d18f6dee",
+      "bytes": 13337
+    }
+  ]
+}
