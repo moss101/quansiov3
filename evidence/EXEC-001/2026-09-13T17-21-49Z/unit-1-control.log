@@ -1,0 +1,20 @@
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.46s
+     Running tests/control.rs (target/debug/deps/control-d2fe5fcfc91f7d30)
+
+running 12 tests
+test health_is_classified_from_what_the_platform_observes ... ok
+test only_machine_control_writes_the_target_and_lease_tables ... ok
+test a_tenant_cannot_see_another_tenants_target ... ok
+test destroyed_is_terminal ... ok
+test a_stale_generation_cannot_steer_the_target_it_lost ... ok
+test only_a_ready_target_can_be_leased ... ok
+test a_target_walks_the_lifecycle_domain_8_2_draws ... ok
+test an_edge_the_lifecycle_does_not_draw_is_refused_with_both_ends ... ok
+test two_racing_acquirers_cannot_both_hold_a_lease ... ok
+test a_lease_expiring_fences_the_controller_that_held_it ... ok
+test a_lease_that_is_not_live_does_not_permit_the_action ... ok
+test a_target_reports_what_it_observes_and_the_platform_classifies_it ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.14s
+
