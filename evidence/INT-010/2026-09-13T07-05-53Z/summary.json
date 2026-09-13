@@ -1,0 +1,92 @@
+{
+  "task_id": "INT-010",
+  "git_commit": "7a54e463be070088cf924f5926543ea1bb61e653",
+  "recorded_at": "2026-09-13T07:30:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/evaluation/test_gate.py -q  # 12 passed: the shipped configuration gates a run; a protected regression blocks promotion while every quality metric passes (the acceptance statement); a quality regression fails the gate without blocking promotion; both are reported together; an unmeasured metric and a mis-unit measurement fail closed; an ungated measurement is reported rather than ignored; the configuration shape is closed; only a protected metric may block promotion; the document's blocking row blocks on its own; and a verdict records the configuration that decided it",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-53Z/unit-3-gate-only.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/evaluation -q  # 46 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-53Z/unit-3-gate.log"
+    },
+    {
+      "command": "uv run --project python pytest tests -q  # 234 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-53Z/root-tests.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 448 passed, 6 skipped",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-53Z/plane.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-53Z/lint-types.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/supply_chain/check.py  # V8.1 validation PASS, architecture CLEAN, supply-chain CLEAN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-05-53Z/baseline-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/evaluation/test_gate.py -q  # 12 passed: the shipped configuration gates a run; a protected regression blocks promotion while every quality metric passes (the acceptance statement); a quality regression fails the gate without blocking promotion; both are reported together; an unmeasured metric and a mis-unit measurement fail closed; an ungated measurement is reported rather than ignored; the configuration shape is closed; only a protected metric may block promotion; the document's blocking row blocks on its own; and a verdict records the configuration that decided it",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/evaluation -q  # 46 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests -q  # 234 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 448 passed, 6 skipped",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/supply_chain/check.py  # V8.1 validation PASS, architecture CLEAN, supply-chain CLEAN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/evaluation/gate.py",
+      "sha256": "c24cfe3422c8b12ed19dc62a6fb1e616037753a8870daa4b1a08b36a4a1c4b25",
+      "bytes": 13923
+    },
+    {
+      "path": "python/intelligence/evaluation/__init__.py",
+      "sha256": "e9f31c29fba511db02aacca840337e597551547b4a9215cafcba22a3861bb55c",
+      "bytes": 2519
+    },
+    {
+      "path": "tests/evaluation/test_gate.py",
+      "sha256": "9874e2e2ffb7668d5eb52d493e9093dbc1944943137f93408b1d2439d1ee5704",
+      "bytes": 10813
+    }
+  ]
+}

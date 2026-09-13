@@ -1,0 +1,70 @@
+{
+  "task_id": "INT-010",
+  "git_commit": "7a54e463be070088cf924f5926543ea1bb61e653",
+  "recorded_at": "2026-09-13T07:20:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/evaluation -q  # 34 passed: the pinned datasets and their digests, the gate configuration against DOSSIER 21.3, and the run record - pins taken from loaded datasets, a run that pins nothing refused, a dataset pinned twice refused, measurement validation in the gate's units, the same metric measured twice refused, an unmeasured metric absent rather than defaulted, cost and latency recorded and validated, the run digest a pure function of pins/versions/measurements (cost excluded), comparability naming what differs, skill versions compared only when asked, and the record round-tripping with a drifted record refused",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-03-39Z/unit-2-runs.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/evaluation/test_runs.py -q  # 16 passed: the run record's own suite",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-03-39Z/unit-2-run-record.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 448 passed, 6 skipped",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-03-39Z/plane.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/supply_chain/check.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/validate_v81.py  # supply-chain CLEAN, architecture CLEAN, V8.1 validation PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-13T07-03-39Z/baseline-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/evaluation -q  # 34 passed: the pinned datasets and their digests, the gate configuration against DOSSIER 21.3, and the run record - pins taken from loaded datasets, a run that pins nothing refused, a dataset pinned twice refused, measurement validation in the gate's units, the same metric measured twice refused, an unmeasured metric absent rather than defaulted, cost and latency recorded and validated, the run digest a pure function of pins/versions/measurements (cost excluded), comparability naming what differs, skill versions compared only when asked, and the record round-tripping with a drifted record refused",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/evaluation/test_runs.py -q  # 16 passed: the run record's own suite",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 448 passed, 6 skipped",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/supply_chain/check.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/validate_v81.py  # supply-chain CLEAN, architecture CLEAN, V8.1 validation PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/evaluation/runs.py",
+      "sha256": "7af6969528581ad714a2c01a5b5fef8e911aa4c78aa56e0c9afd3df00932477d",
+      "bytes": 19772
+    },
+    {
+      "path": "python/intelligence/evaluation/__init__.py",
+      "sha256": "088dd51fa6aeafa845d2c6e243443a17ed6fd568cd470f737ddf128dc9eb2991",
+      "bytes": 2025
+    },
+    {
+      "path": "tests/evaluation/test_runs.py",
+      "sha256": "fee40bfd0d9ec66dc00e85eff48f66f5323b3dbd1e117b4c3f6380a1f179cf87",
+      "bytes": 11219
+    }
+  ]
+}
