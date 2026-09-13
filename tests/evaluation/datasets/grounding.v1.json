@@ -1,0 +1,50 @@
+{
+  "dataset_id": "grounding",
+  "version": 1,
+  "kind": "grounding",
+  "notes": "Answer grounding on a pinned research set: the unsupported-claim rate is the share of claims whose cited evidence does not support them. Each case pins the claim and the evidence that must (or must not) support it.",
+  "cases": [
+    {
+      "case_id": "supported_retention_claim",
+      "payload": {
+        "claim": "Logs are retained for ninety days.",
+        "citations": [
+          "runbook_retention"
+        ],
+        "supported": true
+      },
+      "protected": false,
+      "tags": [
+        "supported"
+      ]
+    },
+    {
+      "case_id": "unsupported_retention_claim",
+      "payload": {
+        "claim": "Logs are retained for a year.",
+        "citations": [
+          "runbook_retention"
+        ],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "uncited_claim",
+      "payload": {
+        "claim": "The deployment is quarterly.",
+        "citations": [],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported",
+        "uncited"
+      ]
+    }
+  ],
+  "digest": "8d93c3698045fa333302447c62a7b3b9385f05b54811568cd818c17ed86d29d3"
+}

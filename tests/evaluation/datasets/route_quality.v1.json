@@ -1,0 +1,74 @@
+{
+  "dataset_id": "route_quality",
+  "version": 1,
+  "kind": "route_quality",
+  "notes": "Route determinism and request-class resolution. Each case pins the request shape and the class it must resolve to, so the metric is 'the same inputs resolve to the same route, and to the right class'. Protected: a non-deterministic route is a correctness failure, and DOSSIER 21.3 allows no tolerance on it.",
+  "cases": [
+    {
+      "case_id": "chat_default",
+      "payload": {
+        "request": {
+          "messages": 2,
+          "tools": [],
+          "max_output_tokens": 4096
+        },
+        "expected_class": "chat"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    },
+    {
+      "case_id": "tool_heavy_with_tools",
+      "payload": {
+        "request": {
+          "messages": 2,
+          "tools": [
+            "fs.read"
+          ],
+          "max_output_tokens": 4096
+        },
+        "expected_class": "tool_heavy"
+      },
+      "protected": true,
+      "tags": [
+        "determinism",
+        "tools"
+      ]
+    },
+    {
+      "case_id": "embedding_shape",
+      "payload": {
+        "request": {
+          "messages": 0,
+          "tools": [],
+          "max_output_tokens": 0
+        },
+        "expected_class": "embedding"
+      },
+      "protected": true,
+      "tags": [
+        "determinism",
+        "embeddings"
+      ]
+    },
+    {
+      "case_id": "explicit_route_hint",
+      "payload": {
+        "request": {
+          "messages": 1,
+          "tools": [],
+          "max_output_tokens": 512,
+          "route_hint": "openai-gpt"
+        },
+        "expected_rule": "catalog.route_hint"
+      },
+      "protected": false,
+      "tags": [
+        "hint"
+      ]
+    }
+  ],
+  "digest": "a75611485f57df94eb6cd6a4b52423e3aa297cb1c8056b85259597f50a4c404a"
+}
