@@ -30,8 +30,8 @@ mod turn_loop;
 pub use engine::{RecoveryOutcome, RuntimeEngine};
 pub use state::{AttemptStatus, RunStatus, RunTriggerKind, StepKind, StepStatus, TurnStatus};
 pub use store::{
-    Attempt, Budget, NewRun, NewStep, Run, RuntimeStore, Step, Turn, TurnInput, WaitResolution,
-    DEFAULT_MAX_STEPS,
+    Attempt, Budget, CancellationWon, NewRun, NewStep, Run, RuntimeStore, Step, Turn, TurnInput,
+    WaitResolution, DEFAULT_MAX_STEPS,
 };
 pub use turn_loop::{
     CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort, DelegationRequest,

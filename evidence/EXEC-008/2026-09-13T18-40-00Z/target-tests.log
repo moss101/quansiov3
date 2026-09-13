@@ -1,0 +1,38 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.72s
+     Running tests/orchestration.rs (target/debug/deps/orchestration-94fde5dc413eb790)
+
+running 7 tests
+test a_waiting_parent_joins_once_its_last_child_completes ... ok
+test a_dependent_with_a_failed_prerequisite_is_blocked_never_dispatched ... ok
+test a_parallel_dag_releases_and_dispatches_in_dependency_order ... ok
+test a_cycle_in_the_graph_is_refused_before_anything_is_dispatched ... ok
+test capacity_bounds_concurrency_and_frees_slots_as_runs_finish ... ok
+test a_lost_graph_race_is_recomputed_against_the_new_revision ... ok
+test a_cancel_storm_cancels_each_run_once_and_blocks_dependents ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.93s
+
+     Running tests/runtime_state_machine.rs (target/debug/deps/runtime_state_machine-94f6bbfe0551f402)
+
+running 17 tests
+test parked_run_is_not_released_by_a_mismatched_wait_state ... ok
+test only_the_cancellation_that_did_the_work_reports_that_it_cancelled_the_run ... ok
+test canonical_ownership_and_tenant_isolation_hold ... ok
+test recovery_never_retries_an_unsettled_effect ... ok
+test cancellation_during_waiting_ends_cancelled_with_one_event ... ok
+test suspended_run_resumes_only_with_the_current_generation ... ok
+test unavailable_seams_name_the_task_that_owns_them ... ok
+test recovery_waits_for_the_matching_approval_and_is_idempotent ... ok
+test recovery_honours_a_cancellation_requested_before_the_crash_once ... ok
+test budget_exhaustion_stops_the_loop_without_further_model_calls ... ok
+test happy_path_emits_every_event_in_order_with_contiguous_sequences ... ok
+test stale_generation_is_fenced_before_any_write ... ok
+test attempts_are_appended_never_overwritten ... ok
+test protocol_state_round_trips_for_recovery ... ok
+test illegal_transitions_of_each_family_leave_state_and_events_untouched ... ok
+test unknown_tool_outcome_suspends_for_reconciliation_never_retry ... ok
+test cancellation_during_running_ends_cancelled_with_one_event ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.24s
+

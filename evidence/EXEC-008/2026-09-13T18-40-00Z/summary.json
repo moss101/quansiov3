@@ -1,0 +1,118 @@
+{
+  "task_id": "EXEC-008",
+  "git_commit": "fb506736ac406eb5b6c29d4c133e2eefe2dd9513",
+  "recorded_at": "2026-09-13T18:45:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test orchestration --test runtime_state_machine  # 24 passed: the 7 orchestration tests including the cancel storm, and 17 runtime state-machine tests including the new deterministic regression 'only_the_cancellation_that_did_the_work_reports_that_it_cancelled_the_run' (the first call reports Cancelled, the second AlreadyCancelled, and the two returned runs are equal -- which is why the distinction cannot be inferred from the resulting state)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-40-00Z/target-tests.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test orchestration  # repeated 20 times: 20 clean, against 8 of 10 before the fix and 4 clean of 6 at baseline dd5e024",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-40-00Z/target-tests.log"
+    },
+    {
+      "command": "cargo test --workspace  # 9 clean runs of 10 after the fix and the stack resize; the one failure is Postgres refusing a scratch-database migration with 'out of shared memory ... increase max_locks_per_transaction', an environment capacity limit recorded rather than claimed fixed. Zero correctness failures in 28 workspace runs after the fix.",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-40-00Z/workspace-clean.log"
+    },
+    {
+      "command": "cargo fmt --all --check  # clean (empty output)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-40-00Z/rust-fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server -p quansio-machine --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-40-00Z/rust-clippy.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN; V8.1 PASS (38 PASS, 12 ready)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-40-00Z/static-gates.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-008/2026-09-13T18-40-00Z/ci-pipeline.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test orchestration --test runtime_state_machine  # 24 passed: the 7 orchestration tests including the cancel storm, and 17 runtime state-machine tests including the new deterministic regression 'only_the_cancellation_that_did_the_work_reports_that_it_cancelled_the_run' (the first call reports Cancelled, the second AlreadyCancelled, and the two returned runs are equal -- which is why the distinction cannot be inferred from the resulting state)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test orchestration  # repeated 20 times: 20 clean, against 8 of 10 before the fix and 4 clean of 6 at baseline dd5e024",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --workspace  # 9 clean runs of 10 after the fix and the stack resize; the one failure is Postgres refusing a scratch-database migration with 'out of shared memory ... increase max_locks_per_transaction', an environment capacity limit recorded rather than claimed fixed. Zero correctness failures in 28 workspace runs after the fix.",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check  # clean (empty output)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server -p quansio-machine --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN; V8.1 PASS (38 PASS, 12 ready)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/runtime/state_machine/store.rs",
+      "sha256": "32bf02d9824e1b14220df4ff302f33ad6bab61e8f4c6a307d7bed98e9f21e7cd",
+      "bytes": 74474
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/mod.rs",
+      "sha256": "232359a1c9583cef70cad0a123f1d432bd86d8a2815babc15a3d025c65885d64",
+      "bytes": 10636
+    },
+    {
+      "path": "crates/server/src/runtime/orchestration/service.rs",
+      "sha256": "0195ad27c2f818c6401beff4ef2a5d1d20c988a65da9322f14fd6fb67b7cf575",
+      "bytes": 15407
+    },
+    {
+      "path": "crates/server/tests/runtime_state_machine.rs",
+      "sha256": "b62ceba7f70b44dc4c5e11c1f845b0cde18fd1980edb411c36520b9744851ad0",
+      "bytes": 39038
+    },
+    {
+      "path": "infra/compose/compose.yaml",
+      "sha256": "b2420d298842097c8d83bca17534614fc449bc3cc97e6c60c33573a36270defe",
+      "bytes": 5324
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "cf7ef9ed7c2f0e84d1a2fd83f2c8412dc48dff7b6c8b7c76e140de326cc37331",
+      "bytes": 2266
+    }
+  ]
+}

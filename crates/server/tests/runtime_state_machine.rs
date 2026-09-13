@@ -24,10 +24,10 @@ use sqlx::PgPool;
 use quansio_server::control::schema;
 use quansio_server::runtime::protocol_state::{PendingToolCall, ProtocolState, ProtocolStateStore};
 use quansio_server::runtime::state_machine::{
-    AttemptStatus, Budget, ModelCallRequest, ModelProposal, ModelProposalSource, NewRun, NewStep,
-    ProposedToolCall, RecoveryOutcome, Run, RunStatus, RunTriggerKind, RuntimeEngine, RuntimeError,
-    RuntimeIdentity, StepKind, StepStatus, ToolDispatchOutcome, ToolDispatchPort,
-    ToolDispatchRequest, TurnInput, TurnOutcome, TurnStatus, VerificationContext,
+    AttemptStatus, Budget, CancellationWon, ModelCallRequest, ModelProposal, ModelProposalSource,
+    NewRun, NewStep, ProposedToolCall, RecoveryOutcome, Run, RunStatus, RunTriggerKind,
+    RuntimeEngine, RuntimeError, RuntimeIdentity, StepKind, StepStatus, ToolDispatchOutcome,
+    ToolDispatchPort, ToolDispatchRequest, TurnInput, TurnOutcome, TurnStatus, VerificationContext,
     VerificationOutcome, VerificationPort, WaitResolution, DELEGATION_OWNER, TOOL_DISPATCH_OWNER,
     VERIFICATION_OWNER,
 };
@@ -778,6 +778,51 @@ async fn stale_generation_is_fenced_before_any_write() {
         .await
         .expect("current generation");
     assert_eq!(queued.status, RunStatus::Queued);
+    drop_pool(&f.pool, &f.name).await;
+}
+
+#[tokio::test]
+async fn only_the_cancellation_that_did_the_work_reports_that_it_cancelled_the_run() {
+    // A caller that counts its own cancellations needs to tell "I cancelled it" from "it was already
+    // cancelled": under a storm, every caller sees the same resulting Run, so the resulting state
+    // alone cannot distinguish them and each would claim the same cancellation.
+    let Some(f) = prepare("runtime_cancel_won").await else {
+        blocked_marker();
+        return;
+    };
+    let run = running_run(&f, 9).await;
+
+    let (first_run, first) = f
+        .engine
+        .store()
+        .cancel_once(&run.id, run.generation)
+        .await
+        .expect("cancel");
+    assert_eq!(first, CancellationWon::Cancelled);
+    assert_eq!(first_run.status, RunStatus::Cancelled);
+
+    let (second_run, second) = f
+        .engine
+        .store()
+        .cancel_once(&run.id, run.generation)
+        .await
+        .expect("cancel twice");
+    assert_eq!(
+        second,
+        CancellationWon::AlreadyCancelled,
+        "the second call cancelled nothing"
+    );
+    // The state is identical either way, which is exactly why the distinction has to be reported.
+    assert_eq!(second_run.status, first_run.status);
+    assert_eq!(second_run.generation, first_run.generation);
+
+    // `cancel` keeps its old shape for a caller that only wants the resulting state.
+    let plain = f
+        .engine
+        .cancel(&run.id, run.generation)
+        .await
+        .expect("cancel");
+    assert_eq!(plain.status, RunStatus::Cancelled);
     drop_pool(&f.pool, &f.name).await;
 }
 

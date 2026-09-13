@@ -2,7 +2,9 @@
 
 Updated: 2026-09-13 (M4 under way: 38 PASS, 12 dependency-ready; EXEC-001, EXEC-002 and EXEC-008 all
 `PASS`; the intelligence-plane tasks remain `BLOCKED_EXTERNAL` on INT-002's live provider credentials
-only. Two pre-existing load-sensitive server-test failures are now recorded under Known defects.)
+only. The cancel over-report EXEC-008's first workspace run surfaced is fixed and re-measured; the
+Postgres lock-table capacity limit it also exposed is mitigated to 1 workspace run in 10 and recorded,
+not claimed fixed.)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -281,11 +283,10 @@ EXEC-006, APP-001, CAP-006, OPS-002, OPS-004, OPS-005 and QA-003; prefer the tas
 most downstream work, and if a task's toolchain or substrate cannot execute on this host, record that
 and take the next one.
 
-**Also outstanding, and higher value than it looks:** the two pre-existing failures under Known
-defects. The cancellation over-report has a root cause and a proposed fix on file, and it asserts a
-"once each" property the product depends on. It is `crates/server` work, so it is not inside any ready
-task's paths; take it as a bounded unit of its own when the graph's next task is a `real_boundary` one
-that cannot execute here, or after EXEC-007.
+**Also outstanding, and higher value than it looks:** the residual Postgres lock-table capacity limit
+and the undiagnosed `turn_loop.rs` protocol-state race, both under Known defects. Neither is inside a
+ready task's paths; take them as bounded units of their own when the graph's next task is a
+`real_boundary` one that cannot execute here, or after EXEC-007.
 
 ## Ready queue
 
@@ -385,26 +386,34 @@ rather than fabricated.
   self-certified.
 - **INT-012's pinned injection corpus** (`tests/security/injection/corpus.json`) is what QA-007
   consumes.
-- **Cancellation reports more runs cancelled than exist under a storm (found during EXEC-008, pre-existing).**
+- **Cancellation reported more runs cancelled than exist under a storm — FIXED at `fb50673`.**
   `crates/server/tests/orchestration.rs::a_cancel_storm_cancels_each_run_once_and_blocks_dependents`
-  asserts 2 cancelled runs and intermittently sees 3 — 2 of 10 runs on `main` at `dd5e024`, before
-  EXEC-008 existed. Root cause:
-  `crates/server/src/runtime/state_machine/store.rs:693` `RunStore::cancel` returns
-  `Ok(run_in_cancelled_state)` both when it performed the cancellation and when it found the run
-  already cancelled, and `crates/server/src/runtime/orchestration/service.rs:336`
-  `OrchestrationService::cancel_runs` counts `Ok(after) if after.status == Cancelled` as a *new*
-  cancellation, so the window between the caller's read and `cancel`'s own read lets two callers both
-  be told they did it. The event count stays correct (the transaction dedupes), so this is a reporting
-  and contract defect rather than a duplicated side effect. *Fix:* make `cancel` distinguish "I
-  cancelled it" from "it was already cancelled" (a `StateConflict` on the pre-check path, consistent
-  with what the in-transaction check already returns, and audit `engine.rs:204`'s callers), or return
-  the distinction explicitly; then re-run the storm test repeatedly rather than once.
-- **`turn_loop.rs` protocol-state write races under parallel load (pre-existing).**
-  `a_turn_executes_tool_proposals_through_capability_policy_and_the_effect_ledger` fails with
+  asserts 2 cancelled runs and intermittently saw 3. `RunStore::cancel` returned
+  `Ok(run-in-cancelled-state)` both when it performed the cancellation and when it found the run
+  already cancelled, so `OrchestrationService::cancel_runs` counted a run another caller had cancelled.
+  `RunStore::cancel_once` now reports which of the two happened, `cancel` delegates and keeps its
+  shape, and only a real cancellation counts; a genuine fence error still propagates rather than being
+  mistaken for "already cancelled". The suite passes 20 of 20 consecutive runs (8 of 10 before), with a
+  deterministic regression test in `crates/server/tests/runtime_state_machine.rs`. Evidence:
+  `evidence/EXEC-008/2026-09-13T18-40-00Z/`.
+- **Postgres runs out of lock table when many scratch databases migrate at once — mitigated, not fixed.**
+  Under `cargo test --workspace` dozens of suites apply the whole schema to their own scratch database
+  concurrently, and a migration transaction locks every object it creates, so Postgres refuses with
+  `out of shared memory ... increase "max_locks_per_transaction"`. Adding a migration made each of
+  those transactions hold more locks, which is how EXEC-008's `0009_egress_grants.sql` brought the
+  default limit into reach (0 exhaustions in 6 baseline runs, 2 in 6 with it).
+  `infra/compose/compose.yaml` and `.github/workflows/ci.yml` now set
+  `max_locks_per_transaction=1024`, `max_connections=100` and a 1 GB shared-memory segment, which took
+  it from 2 in 6 to **1 in 10** — recorded, not claimed fixed. *Better fix, not attempted here because
+  it spans every crate's test harness:* migrate one template database per test binary and clone it with
+  `CREATE DATABASE ... TEMPLATE ...`.
+- **`turn_loop.rs` protocol-state write races under parallel load.**
+  `a_turn_executes_tool_proposals_through_capability_policy_and_the_effect_ledger` failed once with
   `duplicate key value violates unique constraint "protocol_states_pkey"` when the whole workspace
-  suite runs in parallel; it passes standalone. The same suite failed transiently during EXEC-002.
-  Scratch databases are not shared (each test names its own), so this is a concurrency-sensitive write
-  in the turn loop, not a harness collision. *Not yet diagnosed past the symptom.*
+  suite ran in parallel, and passes standalone. It did not reappear in the 28 workspace runs after the
+  cancel fix. Scratch databases are not shared (each test names its own), so this is a
+  concurrency-sensitive write in the turn loop rather than a harness collision. *Not yet diagnosed past
+  the symptom.*
 - No other known defects: the intermittent intelligence-plane failure (the route-id clock dependency)
   remains fixed with its regression test, and the determinism audit found no further leaks.
 
