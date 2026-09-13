@@ -1,0 +1,128 @@
+{
+  "task_id": "INT-006",
+  "git_commit": "c27b798a0ff1cb97ffb4381a445d7c5297ba22c2",
+  "recorded_at": "2026-09-13T06:20:00Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_indexing.py -q)  # 14 passed: only retrievable knowledge is indexed, the entry identity and version are the index key and snapshot, re-synchronisation reuses current rows, an unreadable source keeps its rows and is reported, a tenant mismatch is refused, retrieval drops hits the fabric does not consider retrievable or whose entry is gone, another channel's hits are ignored, a broken index surfaces unmasked, and the module never calls a whole-index rebuild",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T06-14-00Z/unit-4-channel-rules.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_semantic_channel.py -q)  # 4 passed against real PostgreSQL and the real pgvector index with the shipped gateway embedder: retrieval by meaning carries provenance and snapshot, a quarantined source disappears from both planes, a withdrawn entry leaves retrieval, and a stale index row cannot be served",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T06-14-00Z/unit-4-semantic-postgres.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 374 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T06-14-00Z/plane.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)  # 41 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T06-14-00Z/integration.log"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T06-14-00Z/lint-types.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T06-14-00Z/repo-gates.log"
+    },
+    {
+      "command": "the baseline gates that do not execute a newly linked binary: scripts/validate_v81.py, ci/arch_check.py, ci/inventory.py --scan, ci/dossier_consistency.py, ci/check_authority.py --check, ci/workspace_check.py, ci/legacy_map_check.py  # all CLEAN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-006/2026-09-13T06-14-00Z/baseline-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_indexing.py -q)  # 14 passed: only retrievable knowledge is indexed, the entry identity and version are the index key and snapshot, re-synchronisation reuses current rows, an unreadable source keeps its rows and is reported, a tenant mismatch is refused, retrieval drops hits the fabric does not consider retrievable or whose entry is gone, another channel's hits are ignored, a broken index surfaces unmasked, and the module never calls a whole-index rebuild",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_semantic_channel.py -q)  # 4 passed against real PostgreSQL and the real pgvector index with the shipped gateway embedder: retrieval by meaning carries provenance and snapshot, a quarantined source disappears from both planes, a withdrawn entry leaves retrieval, and a stale index row cannot be served",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)  # 374 passed, 6 skipped (the 6 need QUANSIO_TEST_* provider credentials)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)  # 41 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q  # 130 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "the baseline gates that do not execute a newly linked binary: scripts/validate_v81.py, ci/arch_check.py, ci/inventory.py --scan, ci/dossier_consistency.py, ci/check_authority.py --check, ci/workspace_check.py, ci/legacy_map_check.py  # all CLEAN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/knowledge/indexing.py",
+      "sha256": "944f73394b25af8fec09b51f63fe07303cb3f05686766c3fa5ab2996390f8547",
+      "bytes": 7967
+    },
+    {
+      "path": "python/intelligence/knowledge/__init__.py",
+      "sha256": "3aaae351a51f4e4cb8bae8a99772f541ed7ac0c74f3a61875ed85af0e7a7bc69",
+      "bytes": 2937
+    },
+    {
+      "path": "python/intelligence/knowledge/models.py",
+      "sha256": "82b5557aeeda79767d6b1167e600925a42fd3c2491037ce73164c247c4426d6b",
+      "bytes": 11937
+    },
+    {
+      "path": "python/intelligence/knowledge/store.py",
+      "sha256": "461f4871a26e9896522d31365cfcaec75291487be87a78a1d8d6d3e06ad63e63",
+      "bytes": 22283
+    },
+    {
+      "path": "python/intelligence/knowledge/ingestion.py",
+      "sha256": "2ba525e4d2cb24cfc336b0e075322f891693d693616a12f599f010b1109912b5",
+      "bytes": 9906
+    },
+    {
+      "path": "python/tests/intelligence/test_knowledge_indexing.py",
+      "sha256": "ffa08b12cdd9b4b8f1f9f097d30b866bb16ec46a14161da5e7da72f67b028b2b",
+      "bytes": 11534
+    },
+    {
+      "path": "python/tests/intelligence/test_knowledge_ingestion.py",
+      "sha256": "f17b463ff28bdb790e901429f07f7bda6b95b837e5c62dfc78297859d804d856",
+      "bytes": 9824
+    },
+    {
+      "path": "python/tests/integration/test_knowledge_semantic_channel.py",
+      "sha256": "e17a5933cee18e74d6ef4266ac4c3ddcb8e6ac65d577fcdfa7d99d324680b0db",
+      "bytes": 12252
+    }
+  ]
+}

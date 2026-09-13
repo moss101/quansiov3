@@ -17,15 +17,17 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **`INT-006` — Knowledge Fabric — `IN_PROGRESS`, units 1-3 of 4 landed.**
-`python/intelligence/knowledge/models.py` holds the entry model, provenance addressing and the
-lifecycle ladder; `store.py` holds the durable store over `public.knowledge_entries`
-(`SqlKnowledgeStore` plus the tenant-bound `KnowledgeFabric`); `ingestion.py` holds what a model may
-propose (`KnowledgeProposal` — no identity, tenant, scope or status) and the forgetting path that
-quarantines derived knowledge through the INT-011 deletion seam. The reconciliation (owner, reused
-authorities, plan of units) is `evidence/INT-006/2026-09-13T04-58-21Z/RECONCILIATION.md`; the unit
-bundles are `2026-09-13T05-47-59Z` and `2026-09-13T05-58-14Z`, each with a `NOTES.md` beside its
-summary. Remaining: the semantic-channel wiring (unit 4).
+Current task: **`INT-007` — semantic memory with provenance — being claimed next** (selected by
+`validate_v81.py --next`: M3, `python/intelligence/memory/`, depends on INT-006 and RUN-005).
+Previous task: **`INT-006` — Knowledge Fabric — `BLOCKED_EXTERNAL`, implementation complete.** All
+four units landed: `models.py` (entry, provenance addressing, the closed lifecycle ladder,
+`quarantine_derived`), `store.py` (the durable store over `public.knowledge_entries` and the
+tenant-bound `KnowledgeFabric`), `ingestion.py` (what a model may propose, and the forgetting path
+through INT-011's deletion seam) and `indexing.py` (the semantic channel, kept in agreement with the
+fabric in both directions). The reconciliation is
+`evidence/INT-006/2026-09-13T04-58-21Z/RECONCILIATION.md`; the unit bundles are `2026-09-13T05-47-59Z`,
+`2026-09-13T05-58-14Z` and `2026-09-13T06-14-00Z`, each with `NOTES.md` beside its summary. Its
+status is not `PASS` because its dependency INT-011 is `BLOCKED_EXTERNAL`.
 Previous task: `INT-011` — embedding pipeline and derived vector index — `BLOCKED_EXTERNAL`,
 implementation complete, evidence `evidence/INT-011/2026-09-13T04-36-53Z/`. Its status is not `PASS`
 because `INT-002` (its dependency) is `BLOCKED_EXTERNAL` and the validator requires every dependency
@@ -36,6 +38,14 @@ Current language: Python
 
 ## Completed since the previous handoff
 
+- **INT-006 (unit 4 of 4) — the semantic channel.** `python/intelligence/knowledge/indexing.py`:
+  `KnowledgeIndexer.synchronize` indexes every retrievable entry under the entry's identity with its
+  version as the snapshot, and prunes the derived index down to the entries the fabric still
+  considers retrievable — so nothing that left retrieval is reachable by meaning. An entry whose text
+  cannot be read keeps the rows it had and is reported; pruning never means "the source was
+  momentarily unreadable". `retrieve` re-checks every hit against the entry's lifecycle instead of
+  trusting the index, and `DescribedKnowledgeText` reads text through INT-011's digest-verifying
+  object reader. 14 rule tests plus 4 against real PostgreSQL and the real pgvector index.
 - **INT-006 (unit 3 of 4) — ingestion and the forgetting path.** `python/intelligence/knowledge/ingestion.py`:
   a `KnowledgeProposal` carries no identity, tenant, scope or lifecycle state (asserted
   structurally), so a model may only propose; both evaluated origins (`approved_source`,
@@ -118,11 +128,15 @@ What is verified, on which path:
 
 ## Exact next action
 
-Continue `INT-006` with **unit 4: the semantic channel** — index the fabric's retrievable knowledge
-through INT-011 (`derived.embeddings`) with provenance and snapshot metadata, and keep the derived
-channel in agreement with the fabric so a quarantined or withdrawn entry can never be retrieved by
-meaning (INT-011's `rebuild` and `prune` are the primitives). Then close INT-006 with its evidence
-panel. The ready queue below also
+Claim and reconcile **`INT-007` — semantic memory with provenance** (`python/intelligence/memory/`):
+reconcile it against `public.memory_entries` and the generated `quansio.v1.intelligence.MemoryEntry`
+contract, record the reconciliation, then implement it in units — the entry model and its closed
+lifecycle (`candidate|active|deleted`), the durable store, candidate creation from explicit user
+direction and verified work gated by policy and provenance, task-relevant retrieval, and the deletion
+path through the INT-011 seam. Two acceptance statements drive the design: a runtime restart must
+succeed with memory *disabled* (memory is never recovery state), and a deletion must stop future
+retrieval once the derived index has refreshed. Its `memory.propose` tool route is the Rust turn
+loop's (RUN-011 leaves it failing closed until this task supplies the port). The ready queue below also
 holds INT-008, INT-010, EXEC-001, APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks
 the most downstream work, and if a task's toolchain cannot execute on this host (see "Environment
 requirements"), record that and take the next one.
@@ -133,7 +147,7 @@ requirements"), record that and take the next one.
 
 | Task | Milestone | Note |
 |---|---|---|
-| INT-006 | M3 | Knowledge Fabric (`python/intelligence/knowledge/`); selects the semantic channel through INT-011 |
+| INT-007 | M3 | semantic memory with provenance (`python/intelligence/memory/`); selects INT-011's channel too, and must never become recovery state |
 | INT-008 | M3 | compaction epochs and the bounded conversation projection |
 | INT-010 | M3 | intelligence evaluation harness (`python/intelligence/evaluation/`, `tests/evaluation/`) |
 | EXEC-001 | M4 | Rust machine control and execution-target lifecycle |
@@ -153,6 +167,16 @@ environment with provider egress, run
 record that run as INT-002's `real_boundary_evidence`, and flip INT-002 (and INT-003) to `PASS`;
 INT-011 then flips to `PASS` with the evidence already committed.
 Independent work available: yes — everything in the ready queue.
+
+### INT-006 — Knowledge Fabric (`BLOCKED_EXTERNAL`, implementation complete)
+Reason: its dependency `INT-011` is `BLOCKED_EXTERNAL`, and the validator requires every dependency
+to be `PASS` before a task may be `PASS`. Both acceptance statements are already verified against
+real PostgreSQL: entries are tenant-scoped and provenance-addressable, and removing a source
+quarantines the knowledge derived from it and empties both the fabric's retrieval view and the
+derived index in one operation (well inside DOSSIER.md §21.3's 60 s bound).
+Exact unblock condition: the same provider credentials as INT-011 — set
+`QUANSIO_TEST_ANTHROPIC_API_KEY` and `QUANSIO_TEST_OPENAI_API_KEY`, run INT-002's live suite, record
+it and flip INT-002 (then INT-003, INT-011 and INT-006) to `PASS`.
 
 ### INT-002 — server-side model gateway (`BLOCKED_EXTERNAL`, implementation complete)
 Reason: the live provider conformance suite cannot run here.
@@ -196,14 +220,16 @@ rather than fabricated.
 
 ## Tests
 
-Last run this session, at `0af6e90bea2d` (INT-006 unit 3 evidence bundle
-`evidence/INT-006/2026-09-13T05-58-14Z/`; INT-011's is `evidence/INT-011/2026-09-13T04-36-53Z/`):
+Last run this session, at `c27b798a0ff1` (INT-006 unit 4 evidence bundle
+`evidence/INT-006/2026-09-13T06-14-00Z/`; INT-011's is `evidence/INT-011/2026-09-13T04-36-53Z/`):
 
-- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **356 passed, 6 skipped**
+- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **374 passed, 6 skipped**
   (the 6 are the live-provider cases that need `QUANSIO_TEST_*` credentials)
+- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration -q)` → 41 passed
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_store.py -q)` → 24 passed
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_forgetting.py -q)` → 4 passed
-- `(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_models.py tests/intelligence/test_knowledge_store_boundaries.py tests/intelligence/test_knowledge_ingestion.py -q)` → 37 passed
+- `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest tests/integration/test_knowledge_semantic_channel.py -q)` → 4 passed
+- `(cd python && uv run --frozen pytest tests/intelligence/test_knowledge_models.py tests/intelligence/test_knowledge_store_boundaries.py tests/intelligence/test_knowledge_ingestion.py tests/intelligence/test_knowledge_indexing.py -q)` → 51 passed
 - `(cd python && uv run --frozen pytest tests/intelligence/test_embed_rpc.py -q)` → 10 passed
 - `(cd python && uv run --frozen pytest tests/intelligence/test_embeddings.py tests/intelligence/test_embedding_sources.py -q)` → 30 passed
 - `(cd python && uv run --frozen pytest tests/intelligence/test_server_launch_embed.py -q)` → 2 passed
