@@ -17,8 +17,13 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **`INT-008` — compaction epochs and the bounded conversation projection — being
-claimed next** (selected by `validate_v81.py --next`: M3).
+Current task: **`INT-008` — compaction epochs and the bounded conversation projection — `IN_PROGRESS`,
+claimed and reconciled** (selected by `validate_v81.py --next`: M3). Its reconciliation is
+`evidence/INT-008/2026-09-13T07-30-00Z/RECONCILIATION.md`: the Rust half (`crates/server/src/runtime/compaction/`)
+owns the epoch lifecycle because an epoch is runtime state, the Python half
+(`python/intelligence/context/compaction/`) owns what a summary may contain and how a bounded
+conversation projection is assembled, and `public.compaction_epochs` already declares the shape (a
+versioned source range with a `rejected_stale` state).
 Previous task: **`INT-010` — intelligence evaluation harness — `BLOCKED_EXTERNAL`, implementation
 complete.** All four units landed: `datasets.py` (versioned, content-addressed datasets),
 `runs.py` (what a run measured, under which versions, at what cost, with per-case outcomes),
@@ -214,11 +219,13 @@ What is verified, on which path:
 
 ## Exact next action
 
-Claim and reconcile **`INT-008` — compaction epochs and the bounded conversation projection`: read the
-task's build items and acceptance statements, reconcile them against what already exists (DOMAIN §11.3
-context/compaction, INT-005's `ContextProjection`, CORE-009's projections, and the schema's
-`compaction_epochs` table), record the reconciliation, then implement it in units as INT-006, INT-007
-and INT-010 were. The ready queue below also
+Implement `INT-008` from its reconciliation, in the four units it names: the **Rust epoch lifecycle**
+(`crates/server/src/runtime/compaction/`) — create an epoch for a source range, install it only while
+the run's position still contains that range, and record `rejected_stale` otherwise, decided inside the
+installing transaction against durable state; the **Rust tests** for both acceptance statements (a
+fork/revert refuses to install abandoned history, and the replay read set still names no compaction
+table); the **Python half** (`python/intelligence/context/compaction/`) — the bounded conversation
+projection, with tool and protocol state never summarised; and the task's evidence panel. The ready queue below also
 holds INT-008, INT-010, EXEC-001, APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks
 the most downstream work, and if a task's toolchain cannot execute on this host (see "Environment
 requirements"), record that and take the next one.
@@ -327,6 +334,12 @@ rather than fabricated.
 
 ## Tests
 
+Baseline pipeline (this session, after the host incident cleared): `bash scripts/ci/ci.sh` with
+`QUANSIO_TEST_POSTGRES_URL` set → **11/11 gates PASS, `pipeline: PASS`**
+(`evidence/INT-008/2026-09-13T07-30-00Z/ci-pipeline.log`), including `toolchains`
+(`scripts/dev/bootstrap.sh`: cargo fmt/clippy/test over the workspace — 73 suites — plus pnpm, swift and
+the Python plane) and `contract-drift` (the generated bindings are current).
+
 Last run this session, at `fa05f335a8c9` (INT-010 unit 1 evidence bundle
 `evidence/INT-010/2026-09-13T07-05-00Z/`; INT-007's is `evidence/INT-007/2026-09-13T06-38-37Z/`,
 INT-006's `evidence/INT-006/2026-09-13T06-14-00Z/` and INT-011's
@@ -357,8 +370,8 @@ INT-006's `evidence/INT-006/2026-09-13T06-14-00Z/` and INT-011's
 - Contract drift (`scripts/ci/gen_contracts.py` `check([...])`, run around the host incident below) →
   `DRIFT PROBLEMS: []`
 
-Failing: none. Still required: `bash scripts/ci/ci.sh` (blocked this session by the host incident —
-see "Environment requirements") and the per-task tests of the remaining registry tasks.
+Failing: none. Still required: the per-task tests of the remaining registry tasks (INT-008 is claimed
+and reconciled; its units are next).
 
 ## Migrations / state changes
 
@@ -419,7 +432,15 @@ record `BLOCKED_EXTERNAL` until provided. Database-backed tests read `QUANSIO_TE
 example `postgres://quansio:quansio-dev-only@127.0.0.1:55440/quansio` (the baseline pipeline derives
 that URL from the generated `.env` automatically). Never place raw secrets in this file.
 
-**Host incident (ACTIVE at the end of this session).** The host is again refusing to execute newly
+**Host incident (RESOLVED this session).** The machine is again executing newly created
+binaries: a freshly compiled probe runs, `cargo test` runs, and `bash scripts/ci/ci.sh` reports
+**11 of 11 gates PASS, `pipeline: PASS`** (`evidence/INT-008/2026-09-13T07-30-00Z/ci-pipeline.log`) —
+the first complete pipeline run since the incident began. One transient `toolchains` failure was
+recorded and classified as flaky rather than a regression, with the standalone re-run (12/12) and the
+gate re-run (`bootstrap: OK`, 73 suites) as evidence; see that bundle's `NOTES.md`. The historical
+description is kept below for the record.
+
+**Host incident (historical description, no longer in force).** The host is again refusing to execute newly
 created binaries: a byte-identical `cp` of a working test binary hangs in `_dyld_start` while the
 original runs (captured in the INT-011 evidence bundle). Consequences: `cargo test` cannot run (its
 freshly linked test binaries hang), `cargo run` for `scripts/dev/contract-gen` cannot run, and
