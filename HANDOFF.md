@@ -17,15 +17,15 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M3 — the intelligence plane (M0/M1/M2 complete)
-Current task: **`INT-010` — intelligence evaluation harness — `IN_PROGRESS`, unit 1 of 4 landed**
+Current task: **`INT-010` — intelligence evaluation harness — `IN_PROGRESS`, units 1-3 of 4 landed**
 (selected by `validate_v81.py --next`: M3, `python/intelligence/evaluation/` + `tests/evaluation/`,
-depends on INT-002, INT-005 and INT-009). `evaluation/datasets.py` holds the versioned,
-content-addressed datasets the harness measures against; `tests/evaluation/thresholds.yaml` encodes
-DOSSIER §21.3 as the provisional protected gate and `tests/evaluation/test_thresholds.py` compares it
-with the document row by row. The reconciliation is
-`evidence/INT-010/2026-09-13T06-50-00Z/RECONCILIATION.md`; unit 1's bundle is
-`evidence/INT-010/2026-09-13T07-05-00Z/`. Remaining: the run record (versions with cost/latency), the
-decision gate (protected metrics blocking) and the metric implementations.
+depends on INT-002, INT-005 and INT-009). `datasets.py` holds the versioned, content-addressed datasets the harness measures against;
+`runs.py` records what a run measured, under which versions, at what cost; `gate.py` decides
+promotion with the protected metrics first and blocking. `tests/evaluation/thresholds.yaml` encodes
+DOSSIER §21.3 and `test_thresholds.py` compares it with the document row by row. The reconciliation is
+`evidence/INT-010/2026-09-13T06-50-00Z/RECONCILIATION.md`; the unit bundles are
+`2026-09-13T07-05-00Z`, `2026-09-13T07-03-39Z` and `2026-09-13T07-05-53Z`. Remaining: the metric
+implementations that produce a run's measurements.
 Previous task: **`INT-007` — semantic memory with provenance — `BLOCKED_EXTERNAL`, implementation
 complete.** All four units landed: `models.py` (entry, scopes, closed provenance vocabulary, lifecycle,
 one canonical instant shape), `store.py` (the durable store over `public.memory_entries` and the
@@ -54,6 +54,16 @@ Current language: Python
 
 ## Completed since the previous handoff
 
+- **INT-010 (unit 3 of 4) — the protected decision gate.** `python/intelligence/evaluation/gate.py`:
+  protected metrics are evaluated and reported first, and a protected failure blocks promotion whatever
+  the quality metrics say — the acceptance statement is a test: every quality metric at its best with one
+  leaked tenant row still blocks. A quality miss fails the verdict without blocking, missing and
+  mis-unit measurements fail closed, an ungated measurement is reported, and every verdict records the
+  configuration's version, authority and ratification state. The gate mutates nothing. 12 tests.
+- **INT-010 (unit 2 of 4) — the evaluation run record.** `python/intelligence/evaluation/runs.py`: the
+  dataset pins, the implementation versions and the measurements, plus cost and latency; content-
+  addressed over exactly the first three so two runs of the same inputs are comparable, with
+  `comparable_with` naming what differs. 16 tests.
 - **INT-010 (unit 1 of 4) — pinned datasets and the protected gate.** `python/intelligence/evaluation/datasets.py`:
   a dataset is versioned and content-addressed over its identity, version, kind and every case in
   order, and loading refuses a file whose recorded digest does not match its content, so
@@ -187,13 +197,13 @@ What is verified, on which path:
 
 ## Exact next action
 
-Continue `INT-010` with **unit 2: the run record** — an evaluation run that records the dataset
-versions and their digests, the corpus digest, the implementation versions it was produced under
-(model route, embedding route, skill versions) and the cost and latency it observed, so two runs of
-the same pinned inputs are comparable and a run whose inputs moved is visibly a different run. Then
-unit 3 (the decision gate: protected metrics evaluated first and blocking, quality metrics reported
-whatever they say, missing or unknown measurements failing closed) and unit 4 (the metric
-implementations and the task's closing evidence). The ready queue below also
+Continue `INT-010` with **unit 4: the metric implementations** — the five families the pinned datasets
+exist for: route quality (determinism and class resolution through the model gateway's selector),
+retrieval grounding (recall@10 over a pinned corpus, the cross-tenant check and deleted-after-refresh,
+both against the real derived index), answer grounding, tool-proposal validity against the tool
+declarations, and skill resolution through INT-009's resolver — each producing the `Measurement`s the
+gate consumes, with the injection metrics reading INT-012's corpus. Then close INT-010 with its
+evidence panel. The ready queue below also
 holds INT-008, INT-010, EXEC-001, APP-001, OPS-004, OPS-005 and QA-003; prefer the task that unblocks
 the most downstream work, and if a task's toolchain cannot execute on this host (see "Environment
 requirements"), record that and take the next one.
@@ -293,8 +303,8 @@ Last run this session, at `fa05f335a8c9` (INT-010 unit 1 evidence bundle
 INT-006's `evidence/INT-006/2026-09-13T06-14-00Z/` and INT-011's
 `evidence/INT-011/2026-09-13T04-36-53Z/`):
 
-- `uv run --project python pytest tests -q` → **206 passed**
-- `uv run --project python pytest tests/evaluation -q` → 18 passed
+- `uv run --project python pytest tests -q` → **234 passed**
+- `uv run --project python pytest tests/evaluation -q` → 46 passed (12 of them the gate)
 - `uv run --project python pytest tests/ci -q` → 55 passed
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **448 passed, 6 skipped**
   (the 6 are the live-provider cases that need `QUANSIO_TEST_*` credentials)
