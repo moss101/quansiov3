@@ -11,6 +11,7 @@ nothing was attempted). Every durable property is proved against real PostgreSQL
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import replace
 
 import pytest
 
@@ -48,6 +49,8 @@ class RecordingStore:
 
     def insert(self, *, entry: KnowledgeEntry) -> int:
         self.entries.append(entry)
+        if self.insert_result == 1:
+            self.rows = (*self.rows, entry)
         return self.insert_result
 
     def get(self, *, tenant_id: str, knowledge_id: str) -> KnowledgeEntry:
@@ -78,8 +81,30 @@ class RecordingStore:
         return sum(1 for row in self.rows if status is None or row.status is status)
 
     def update_statuses(self, *, tenant_id: str, updates: Sequence[StatusUpdate]) -> int:
+        """Apply the guarded moves the way the real store does, so a read-back sees them."""
         self.updates.append(tuple(updates))
-        return len(updates)
+        applied = 0
+        for update in updates:
+            moved = [
+                row
+                for row in self.rows
+                if row.id == update.knowledge_id and row.status is update.expected_status
+            ]
+            if not moved:
+                raise KnowledgeError(
+                    "CONFLICT_STATE",
+                    RULE_STORE,
+                    f"knowledge entry {update.knowledge_id!r} is not in "
+                    f"{update.expected_status.value!r} any more; the move was not applied",
+                )
+            self.rows = tuple(
+                replace(row, status=update.new_status, superseded_by=update.superseded_by)
+                if row.id == update.knowledge_id
+                else row
+                for row in self.rows
+            )
+            applied += 1
+        return applied
 
 
 def entry(**overrides: object) -> KnowledgeEntry:
