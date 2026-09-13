@@ -1,0 +1,96 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running unittests src/lib.rs (target/debug/deps/quansio_machine-a8a00d3667d39882)
+
+running 35 tests
+test egress::tests::a_destination_carries_its_port_and_scheme ... ok
+test egress::tests::a_destination_is_canonicalized_so_one_name_has_one_answer ... ok
+test egress::tests::a_granted_destination_with_an_allowed_address_is_reached ... ok
+test egress::tests::a_name_that_did_not_resolve_is_refused_rather_than_assumed_fine ... ok
+test egress::tests::a_policy_that_denies_stops_the_destination_before_any_grant_is_consulted ... ok
+test egress::tests::a_policy_change_fences_every_grant_at_the_previous_revision ... ok
+test egress::tests::a_grant_for_another_port_or_host_does_not_cover_the_destination ... ok
+test egress::tests::a_granted_name_is_still_refused_when_it_resolves_inside ... ok
+test egress::tests::a_policy_with_no_network_rule_permits_nothing ... ok
+test egress::tests::a_request_that_is_not_a_destination_is_refused ... ok
+test egress::tests::a_rule_the_domain_does_not_define_is_refused_rather_than_defaulted ... ok
+test egress::tests::hosts_the_broker_never_reaches_are_named ... ok
+test egress::tests::an_unknown_destination_is_denied_by_default ... ok
+test egress::tests::addresses_are_classified_by_what_they_reach ... ok
+test egress::tests::a_grant_belongs_to_one_target_generation_and_one_capability ... ok
+test egress::tests::an_expired_or_revoked_grant_is_refused_with_its_own_reason ... ok
+test egress::tests::no_grant_from_another_tenant_or_target_is_ever_considered ... ok
+test egress::tests::an_address_the_policy_names_is_reachable_when_the_caller_asked_for_it ... ok
+test egress::tests::the_decision_log_records_the_destination_and_never_a_header_value ... ok
+test egress::tests::the_longest_lived_live_grant_is_the_one_reported ... ok
+test egress::tests::the_same_destination_reaches_the_same_answer_from_every_caller ... ok
+test gateway::tests::a_kind_needs_what_it_runs ... ok
+test gateway::tests::a_live_envelope_validates ... ok
+test gateway::tests::issuing_computes_the_argument_digest ... ok
+test gateway::tests::shape_is_checked_before_anything_else ... ok
+test gateway::tests::the_dial_rule_is_the_substrate_s_decision ... ok
+test secrets::tests::a_handle_is_usable_only_while_it_is_active_and_unexpired ... ok
+test secrets::tests::a_frame_that_was_changed_does_not_open ... ok
+test secrets::tests::a_lifetime_is_added_in_the_canonical_shape ... ok
+test secrets::tests::a_kms_provider_wraps_through_the_kms_and_not_locally ... ok
+test secrets::tests::a_master_key_file_that_is_not_a_key_is_refused ... ok
+test secrets::tests::a_scope_renders_as_a_kind_and_a_value ... ok
+test secrets::tests::material_cannot_be_rendered_into_a_log ... ok
+test secrets::tests::a_sealed_secret_opens_under_its_own_provider_and_under_no_other ... ok
+test secrets::tests::sealing_twice_produces_different_frames_for_the_same_secret ... ok
+
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/control.rs (target/debug/deps/control-17e8319cb340fe3d)
+
+running 12 tests
+test health_is_classified_from_what_the_platform_observes ... ok
+test only_machine_control_writes_the_target_and_lease_tables ... ok
+test a_lease_that_is_not_live_does_not_permit_the_action ... ok
+test a_tenant_cannot_see_another_tenants_target ... ok
+test a_lease_expiring_fences_the_controller_that_held_it ... ok
+test a_target_reports_what_it_observes_and_the_platform_classifies_it ... ok
+test destroyed_is_terminal ... ok
+test only_a_ready_target_can_be_leased ... ok
+test an_edge_the_lifecycle_does_not_draw_is_refused_with_both_ends ... ok
+test a_stale_generation_cannot_steer_the_target_it_lost ... ok
+test a_target_walks_the_lifecycle_domain_8_2_draws ... ok
+test two_racing_acquirers_cannot_both_hold_a_lease ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.97s
+
+     Running tests/egress.rs (target/debug/deps/egress-eb1080ecee61ca1b)
+
+running 10 tests
+test a_blocked_domain_is_refused_even_with_a_grant ... ok
+test an_unknown_destination_is_denied_until_an_effect_grants_it ... ok
+test another_tenant_cannot_reach_or_change_this_tenants_grants ... ok
+test a_policy_change_fences_the_grants_issued_under_it ... ok
+test a_grant_is_fenced_by_the_target_generation_and_narrowed_by_capability ... ok
+test a_grant_stops_being_usable_when_it_expires ... ok
+test a_target_with_no_network_policy_reaches_nothing ... ok
+test a_grant_is_keyed_by_the_effect_that_authorized_it ... ok
+test a_granted_name_that_resolves_inside_is_refused ... ok
+test revocation_is_recorded_rather_than_deleted ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.17s
+
+     Running tests/secrets.rs (target/debug/deps/secrets-4999557bfa11436b)
+
+running 8 tests
+test a_scheduled_expiry_sweeps_the_handle_and_fences_it ... ok
+test the_value_is_stored_sealed_and_appears_in_nothing_that_is_logged_or_sent ... ok
+test rotating_replaces_the_material_and_fences_the_materializations_before_it ... ok
+test a_materialization_cannot_be_presented_for_another_scope ... ok
+test revoking_fences_the_materialization_a_worker_already_holds ... ok
+test a_handle_sealed_under_one_key_does_not_open_under_another ... ok
+test a_handle_is_reachable_only_from_its_own_tenant_and_workspace ... ok
+test a_handle_with_no_material_and_a_malformed_id_are_typed_refusals ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.91s
+
+   Doc-tests quansio_machine
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
