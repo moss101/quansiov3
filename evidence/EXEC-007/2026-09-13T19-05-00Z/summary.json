@@ -1,0 +1,107 @@
+{
+  "task_id": "EXEC-007",
+  "git_commit": "3a02acd868cb53cd0c60939699dde344a48f8546",
+  "recorded_at": "2026-09-13T19:10:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine  # 65 passed: 35 unit tests and 30 database-backed tests. The secrets half is 9 unit tests (a sealed secret opens under its own provider and no other, and the frame does not contain the plaintext; a changed byte of the sealed material, of the wrapped data key, of the version or of the frame length is a named refusal rather than a wrong value; sealing twice gives different frames for the same value; a master key of the wrong length is refused and a provider never renders its key; material and its materialization render redacted while the access record carries actor/effect/scope/decision; a handle is usable only while active and unexpired, with expiry exclusive; lifetimes are added in the canonical shape across minute/hour/day/month/leap-day/century boundaries and malformed instants are refused; a KMS provider routes wrap and unwrap through the KMS and not locally) and 8 database-backed tests (the secret scan over every stored byte column; a handle sealed under one key does not open under another; revoking fences the materialization a worker already holds and refuses a fresh one; rotating replaces the material and fences earlier materializations; a materialization presented for another connector, target or tool is refused with both scopes named while its own scope validates; a scheduled expiry is honoured before the sweep and the sweep fences as it expires; another tenant and another workspace cannot reach a handle; a handle with no material, a malformed handle id and a frame from an unknown version are typed refusals).",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-13T19-05-00Z/machine-tests.log"
+    },
+    {
+      "command": "cargo test --workspace  # 484 passed; 4 of 4 runs clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-13T19-05-00Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo fmt --all --check  # clean (empty output)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-13T19-05-00Z/rust-fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-machine --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-13T19-05-00Z/rust-clippy.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN, including supply-chain with the new chacha20poly1305 dependency; V8.1 PASS (38 PASS, 12 ready)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-13T19-05-00Z/static-gates.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-13T19-05-00Z/ci-pipeline.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine  # 65 passed: 35 unit tests and 30 database-backed tests. The secrets half is 9 unit tests (a sealed secret opens under its own provider and no other, and the frame does not contain the plaintext; a changed byte of the sealed material, of the wrapped data key, of the version or of the frame length is a named refusal rather than a wrong value; sealing twice gives different frames for the same value; a master key of the wrong length is refused and a provider never renders its key; material and its materialization render redacted while the access record carries actor/effect/scope/decision; a handle is usable only while active and unexpired, with expiry exclusive; lifetimes are added in the canonical shape across minute/hour/day/month/leap-day/century boundaries and malformed instants are refused; a KMS provider routes wrap and unwrap through the KMS and not locally) and 8 database-backed tests (the secret scan over every stored byte column; a handle sealed under one key does not open under another; revoking fences the materialization a worker already holds and refuses a fresh one; rotating replaces the material and fences earlier materializations; a materialization presented for another connector, target or tool is refused with both scopes named while its own scope validates; a scheduled expiry is honoured before the sweep and the sweep fences as it expires; another tenant and another workspace cannot reach a handle; a handle with no material, a malformed handle id and a frame from an unknown version are typed refusals).",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --workspace  # 484 passed; 4 of 4 runs clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check  # clean (empty output)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-machine --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN, including supply-chain with the new chacha20poly1305 dependency; V8.1 PASS (38 PASS, 12 ready)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "migrations/0010_secret_handle_fencing.sql",
+      "sha256": "bef4aadd3ecc81792fdaf8ee589a4898d2f994117947026968d68e1046b0188a",
+      "bytes": 2104
+    },
+    {
+      "path": "crates/machine/src/secrets/mod.rs",
+      "sha256": "0acfc5eb4c3764245d51be3692ffef496d818cf4f511ec7fcb14156ccac3b35f",
+      "bytes": 41912
+    },
+    {
+      "path": "crates/machine/src/secrets/key_provider.rs",
+      "sha256": "a3c0ff25a7a5923127ded8f697fdc64a6133d5609f017caa8dc43405a9f274a6",
+      "bytes": 12085
+    },
+    {
+      "path": "crates/machine/src/lib.rs",
+      "sha256": "4e2656cf6e5b86485c6f9dabbd27f2fe9e5e3130c160a4398e36915d62529b78",
+      "bytes": 1059
+    },
+    {
+      "path": "crates/machine/Cargo.toml",
+      "sha256": "c1c09503f5704df860a076f38ed258f631a170fc0b6efcb40c821a38723b7a39",
+      "bytes": 727
+    },
+    {
+      "path": "crates/machine/tests/secrets.rs",
+      "sha256": "1b363524d5d096ff3804175e425211f180db3df378f905fd5a8c440b4a0ec113",
+      "bytes": 23778
+    }
+  ]
+}

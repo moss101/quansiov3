@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-13T18:46:00Z",
+  "updated_at": "2026-09-13T19:11:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1235,18 +1235,32 @@
       "notes": ""
     },
     "EXEC-007": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-13T18:55:00Z",
+      "updated_at": "2026-09-13T19:11:00Z",
+      "git_commit": "3a02acd",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine (65 tests: 35 unit and 30 database-backed. Secrets: 9 unit tests over envelope sealing and opening, tamper and version refusals, nonce freshness, master-key validation, redacted renderings, handle usability with exclusive expiry, canonical lifetime arithmetic across leap-day and century boundaries, and KMS-delegated wrapping; 8 database-backed tests for the secret scan over every stored byte column, a wrong key-encryption key, revocation fencing a materialization a worker cached, rotation fencing earlier materializations, scope substitution across connector/target/tool, scheduled expiry and the sweep, tenant and workspace isolation, and typed refusals for a handle with no material, a malformed handle id and an unknown envelope version)",
+        "cargo test --workspace (484 passed; 4 of 4 runs clean)",
+        "cargo fmt --all --check",
+        "cargo clippy -p quansio-machine --all-targets -- -D warnings",
+        "python3.12 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/workspace_check.py && python3.12 scripts/ci/inventory.py --scan && python3.12 scripts/ci/dossier_consistency.py && python3.12 scripts/ci/check_authority.py --check && python3.12 scripts/ci/supply_chain/check.py && python3.12 scripts/ci/legacy_map_check.py (V8.1 validation PASS; architecture CLEAN; workspace CLEAN; duplicate-authority CLEAN; dossier CLEAN; authority CLEAN; supply-chain CLEAN with the new chacha20poly1305 dependency; legacy-map CLEAN)",
+        "bash scripts/ci/ci.sh (pipeline: PASS, 11 of 11 gates)"
+      ],
+      "artifacts": [
+        "evidence/EXEC-007/2026-09-13T19-05-00Z/summary.json",
+        "evidence/EXEC-007/2026-09-13T19-05-00Z/NOTES.md",
+        "migrations/0010_secret_handle_fencing.sql",
+        "crates/machine/src/secrets/mod.rs",
+        "crates/machine/src/secrets/key_provider.rs",
+        "crates/machine/tests/secrets.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "A credential reaches a caller as an opaque `sec_` handle and never as material: SecretMaterial has no Display, Serialize or Clone and prints redacted, and SecretHandle has no field the material could occupy, so a value cannot enter a model prompt, a tool log or an RPC payload by being formatted into one -- the canary scan over every stored byte column is a check on that design rather than on a redaction rule. Material is stored envelope-encrypted through a KeyProvider: KmsKeyProvider delegates wrap/unwrap to a KmsClient so a cloud KMS holds the KEK, and LocalMasterKeyProvider seals under a master key file for dev and self-host; the frame is versioned and binds its parts together as associated data, and a fresh data key and nonce per seal means two handles for one credential are not linkable. Resolution happens only at the approved boundary, records last_used_at in the same transaction, and returns a typed SecretAccess naming actor, effect, scope and generation for the audit owner (audit_entries is OPS-002's hash-chained authority, so no second audit store). A Materialization carries the handle generation, so revoking or rotating fences what a disconnected worker cached by one comparison rather than by a search for outstanding copies; it is also scoped, so a credential taken for one connector is refused when presented for another. Migration 0010 adds generation and expires_at (additive; the CHECK that a handle cannot expire before it was created is honoured). New dependency chacha20poly1305 (the tree had no symmetric AEAD and rolling one is not an option); the supply-chain gate stays CLEAN. Out-of-scope by design: contacting a real cloud KMS (the seam is exercised through a recording double) and wiping material on drop (no zeroize-style dependency in the tree). Revocation cannot un-deliver material already handed out; it stops the materialization being used, which is why materializations are short-lived. real_boundary is false."
     },
     "EXEC-008": {
       "coverage": "GENUINE_GAP",

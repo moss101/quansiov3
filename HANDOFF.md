@@ -1,10 +1,10 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-13 (M4 under way: 38 PASS, 12 dependency-ready; EXEC-001, EXEC-002 and EXEC-008 all
-`PASS`; the intelligence-plane tasks remain `BLOCKED_EXTERNAL` on INT-002's live provider credentials
-only. The cancel over-report EXEC-008's first workspace run surfaced is fixed and re-measured; the
-Postgres lock-table capacity limit it also exposed is mitigated to 1 workspace run in 10 and recorded,
-not claimed fixed.)
+Updated: 2026-09-13 (M4 under way: 39 PASS, 12 dependency-ready; EXEC-001, EXEC-002, EXEC-007 and
+EXEC-008 all `PASS`; the intelligence-plane tasks remain `BLOCKED_EXTERNAL` on INT-002's live provider
+credentials only. The cancel over-report EXEC-008's first workspace run surfaced is fixed and
+re-measured; the Postgres lock-table capacity limit it also exposed is mitigated and recorded, not
+claimed fixed.)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -20,8 +20,21 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M4 — the execution plane (M0/M1/M2/M3 complete as far as INT-002's credentials allow)
-Current task: **`EXEC-007` — secret broker and opaque credential handles — being claimed next**
-(`--next` selects it: M4, depends on `RUN-005` and `EXEC-002`, both `PASS`).
+Current task: **`EXEC-006` — file, terminal and process tool host — being claimed next**
+(`--next` selects it: M4, depends on `EXEC-002`, `RUN-007` and `RUN-011`, all `PASS`).
+Previous task: **`EXEC-007` — secret broker and opaque credential handles — `PASS`.**
+`crates/machine/src/secrets/` keeps credential material behind an opaque `sec_` handle: `SecretMaterial`
+has no `Display`, `Serialize` or `Clone` and prints redacted, and `SecretHandle` has no field the
+material could occupy, so a value cannot enter a model prompt, a tool log or an RPC payload by being
+formatted into one. Material is stored envelope-encrypted through a `KeyProvider` — a cloud KMS wraps
+per-secret data keys through a `KmsClient` seam, a local master-key file does it in dev and self-host —
+and resolves only at the approved boundary, where `last_used_at` is written in the same transaction and
+a typed `SecretAccess` comes back for the audit owner. A `Materialization` carries the handle's
+generation, so revoking or rotating fences what a disconnected worker cached by one comparison; it is
+also scoped, so a credential taken for one connector is refused when presented for another. New
+migration `migrations/0010_secret_handle_fencing.sql` and a new `chacha20poly1305` dependency (the tree
+had no symmetric AEAD). 65 machine-crate tests, 484 across the workspace, pipeline 11/11. Evidence:
+`evidence/EXEC-007/2026-09-13T19-05-00Z/`.
 Previous task: **`EXEC-008` — deny-by-default network and egress policy — `PASS`.**
 `crates/machine/src/egress/` owns the broker that answers whether an execution target may reach a
 destination, and its answer is deny: a destination is reachable only when a live, scoped, unexpired
@@ -273,20 +286,18 @@ What is verified, on which path:
 
 ## Exact next action
 
-Claim and reconcile **`EXEC-007` — secret broker and opaque credential handles** (`--next` selects it:
-M4, depends on `RUN-005` and `EXEC-002`, both `PASS`). Read its build items and acceptance statements
-from `registries/tasks.json`, reconcile them against what already exists — `crates/machine/` names a
-secret broker in its README and `Prefix::SecretHandle` (`sec_`) already exists in `crates/core`, and
-EXEC-008's decision log already carries an opaque credential handle rather than material — then
-implement with its named tests. The ready queue below also holds EXEC-003, EXEC-004, EXEC-005,
-EXEC-006, APP-001, CAP-006, OPS-002, OPS-004, OPS-005 and QA-003; prefer the task that unblocks the
-most downstream work, and if a task's toolchain or substrate cannot execute on this host, record that
-and take the next one.
+Claim and reconcile **`EXEC-006` — file, terminal and process tool host** (`--next` selects it: M4,
+depends on `EXEC-002`, `RUN-007` and `RUN-011`, all `PASS`). Read its build items and acceptance
+statements from `registries/tasks.json`, reconcile them against what already exists — `crates/qworkerd`
+already hosts tools behind EXEC-002's validated envelope, `crates/tools` owns the Tool declaration and
+registry, and `config/tools.yaml` declares `fs.read`/`fs.write`/`fs.patch`/`terminal.exec`/`process.spawn`
+with their effect classes and bounds — then implement with its named tests. The ready queue below also
+holds EXEC-003, EXEC-004, EXEC-005, APP-001, CAP-006, OPS-002, OPS-004, OPS-005 and QA-003; prefer the
+task that unblocks the most downstream work, and if a task's toolchain or substrate cannot execute on
+this host, record that and take the next one.
 
-**Also outstanding, and higher value than it looks:** the residual Postgres lock-table capacity limit
-and the undiagnosed `turn_loop.rs` protocol-state race, both under Known defects. Neither is inside a
-ready task's paths; take them as bounded units of their own when the graph's next task is a
-`real_boundary` one that cannot execute here, or after EXEC-007.
+**Also outstanding:** the residual Postgres lock-table capacity limit and the undiagnosed `turn_loop.rs`
+protocol-state race, both under Known defects. Neither is inside a ready task's paths.
 
 ## Ready queue
 
@@ -294,8 +305,7 @@ ready task's paths; take them as bounded units of their own when the graph's nex
 
 | Task | Milestone | Note |
 |---|---|---|
-| EXEC-007 | M4 | secret broker and opaque credential handles; selected by `--next` |
-| EXEC-006 | M4 | file, terminal and process tool host |
+| EXEC-006 | M4 | file, terminal and process tool host; selected by `--next` |
 | EXEC-003 | M4 | macOS local Linux microVM capsule (`real_boundary: true` — needs a microVM host) |
 | EXEC-004 | M4 | Windows local capsule and native broker (`real_boundary: true` — needs Windows) |
 | EXEC-005 | M4 | cloud microVM execution fabric (`real_boundary: true` — needs a cloud account) |
@@ -425,22 +435,23 @@ Baseline pipeline (this session, after the host incident cleared): `bash scripts
 (`scripts/dev/bootstrap.sh`: cargo fmt/clippy/test over the workspace — 73 suites — plus pnpm, swift and
 the Python plane) and `contract-drift` (the generated bindings are current).
 
-Last run at `40327f6` (EXEC-008's evidence bundle is `evidence/EXEC-008/2026-09-13T18-10-41Z/`):
+Last run at `3a02acd` (EXEC-007's evidence bundle is `evidence/EXEC-007/2026-09-13T19-05-00Z/`):
 
-- `cargo test --workspace` → **466 passed** across 77 suites
-- `QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine` → 48 passed (21 egress unit, 12 control
-  against real PostgreSQL, 5 gateway) plus 10 database-backed egress tests
+- `cargo test --workspace` → **484 passed**; 4 of 4 runs clean
+- `QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine` → 65 passed (35 unit, 12 control,
+  10 egress, 8 secrets), all database-backed suites against real PostgreSQL
 - `cargo fmt --all --check` → clean; `cargo clippy -p quansio-machine --all-targets -- -D warnings` → clean
-- `python3.12 scripts/validate_v81.py` → PASS (38 PASS, 12 ready); `--next` → EXEC-007
+- `python3.12 scripts/validate_v81.py` → PASS (39 PASS, 12 ready); `--next` → EXEC-006
 - Static gates → dossier CLEAN, architecture CLEAN, authority CLEAN, workspace CLEAN, supply-chain CLEAN
-  (1 informational: `cargo-deny` is not installed), legacy-map CLEAN, duplicate-authority CLEAN
+  (1 informational: `cargo-deny` is not installed; the new `chacha20poly1305` dependency is accepted),
+  legacy-map CLEAN, duplicate-authority CLEAN
 - `uv run --project python pytest tests -q` → 244 passed
 - `QUANSIO_TEST_POSTGRES_URL=... (cd python && uv run --frozen pytest -q)` → **462 passed, 6 skipped**
   (the 6 are the live-provider cases that need `QUANSIO_TEST_*` credentials)
 
-Failing: **two pre-existing, load-sensitive server tests** — see Known defects. `cargo test --workspace`
-was clean in 7 of 8 runs at `40327f6` and in 8 of 10 runs on `main` at `dd5e024` before the EXEC-008
-change existed, so neither is a regression; neither is claimed green. The dev stack must be reached
+Failing: none in the four runs at `3a02acd`; the two load-sensitive server tests recorded under Known
+defects are mitigated rather than eliminated, so a rare failure is still possible and is not claimed
+green. The dev stack must be reached
 with `QUANSIO_TEST_POSTGRES_URL=postgres://quansio:quansio-dev-only@127.0.0.1:56440/quansio` — with the
 variable unset the database-backed suites print `BLOCKED_EXTERNAL` and *pass* without testing anything.
 
