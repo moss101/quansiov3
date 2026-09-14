@@ -105,6 +105,7 @@ Use these names in code, contracts, events, UI copy and tests. Do not introduce 
 | Connector | `cnx_` | | SecretHandle | `sec_` |
 | ModelRoute | `mr_` | | UsageRecord | `use_` |
 | AuditEntry | `aud_` | | Webhook subscription | `whk_` |
+| TerminalSession | `tsn_` | | | |
 
 ### 1.2 Replay-safety primitives (CORE-002)
 - `command_id`: client-generated ULID; unique per tenant; duplicate submission returns the original result (idempotent).

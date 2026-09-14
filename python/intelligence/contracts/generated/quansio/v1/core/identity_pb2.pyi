@@ -56,6 +56,7 @@ class EntityPrefix(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     ENTITY_PREFIX_SECRET_HANDLE: _ClassVar[EntityPrefix]
     ENTITY_PREFIX_USAGE_RECORD: _ClassVar[EntityPrefix]
     ENTITY_PREFIX_WEBHOOK_SUBSCRIPTION: _ClassVar[EntityPrefix]
+    ENTITY_PREFIX_TERMINAL_SESSION: _ClassVar[EntityPrefix]
 
 class MembershipStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
@@ -127,6 +128,7 @@ ENTITY_PREFIX_NOTIFICATION: EntityPrefix
 ENTITY_PREFIX_SECRET_HANDLE: EntityPrefix
 ENTITY_PREFIX_USAGE_RECORD: EntityPrefix
 ENTITY_PREFIX_WEBHOOK_SUBSCRIPTION: EntityPrefix
+ENTITY_PREFIX_TERMINAL_SESSION: EntityPrefix
 MEMBERSHIP_STATUS_UNSPECIFIED: MembershipStatus
 MEMBERSHIP_STATUS_INVITED: MembershipStatus
 MEMBERSHIP_STATUS_ACTIVE: MembershipStatus

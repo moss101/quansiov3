@@ -106,6 +106,8 @@ pub enum Prefix {
     UsageRecord,
     /// `whk_` webhook subscription.
     WebhookSubscription,
+    /// `tsn_` terminal session.
+    TerminalSession,
 }
 
 impl Prefix {
@@ -159,6 +161,7 @@ impl Prefix {
             Self::SecretHandle => "sec_",
             Self::UsageRecord => "use_",
             Self::WebhookSubscription => "whk_",
+            Self::TerminalSession => "tsn_",
         }
     }
 
@@ -214,6 +217,7 @@ impl Prefix {
             Self::SecretHandle => "SECRET_HANDLE",
             Self::UsageRecord => "USAGE_RECORD",
             Self::WebhookSubscription => "WEBHOOK_SUBSCRIPTION",
+            Self::TerminalSession => "TERMINAL_SESSION",
         }
     }
 
@@ -267,6 +271,7 @@ impl Prefix {
             Self::SecretHandle,
             Self::UsageRecord,
             Self::WebhookSubscription,
+            Self::TerminalSession,
         ]
     }
 }

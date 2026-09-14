@@ -62,6 +62,7 @@ enum EntityPrefix {
   ENTITY_PREFIX_SECRET_HANDLE = 44;  // sec_
   ENTITY_PREFIX_USAGE_RECORD = 45;  // use_
   ENTITY_PREFIX_WEBHOOK_SUBSCRIPTION = 46;  // whk_
+  ENTITY_PREFIX_TERMINAL_SESSION = 47;  // tsn_
 }
 
 // Tenant/workspace scope carried by every tenant-scoped contract.

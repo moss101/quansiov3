@@ -46,3 +46,4 @@ ids:
   UsageRecord: use_
   AuditEntry: aud_
   Webhook subscription: whk_
+  TerminalSession: tsn_
