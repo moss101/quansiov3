@@ -1787,6 +1787,11 @@ dependencies = [
 [[package]]
 name = "quansio-native-windows"
 version = "0.1.0"
+dependencies = [
+ "base64",
+ "quansio-machine",
+ "serde_json",
+]
 
 [[package]]
 name = "quansio-qworkerd"
