@@ -23,6 +23,9 @@
 use sqlx::postgres::PgConnection;
 use sqlx::Row;
 
+/// Terminal sessions and their durable cursors (EXEC-006).
+pub mod terminal;
+
 /// Refusal rules, named so a caller can tell which one fired.
 pub mod rules {
     /// The target does not exist for this tenant.
@@ -457,6 +460,9 @@ pub enum MachineError {
         /// When its lease expires.
         until: String,
     },
+    /// The terminal session is not one the domain defines or cannot be used.
+    #[error("terminal session: {0}")]
+    Terminal(String),
     /// The target is not in a leasable state.
     #[error("target {id} is {status}, not ready to be leased")]
     TargetNotReady {
