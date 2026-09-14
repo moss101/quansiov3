@@ -1350,11 +1350,11 @@
       "notes": "The real boundary is a real browser: every browser test launches the Google Chrome installed on this host (152) with the DevTools protocol on a loopback port and drives it, so nothing stands in for Chrome. crates/qworkerd/src/browser/ adds the CDP driver -- one frame loop matching responses to calls by id because a page interleaves events with answers, with every call, the handshake and the endpoint reads bounded, and the endpoint read to Content-Length rather than EOF because Chrome does not always close -- plus the session rules of DOMAIN 8.4. Understanding is DOM, accessibility tree and metadata first; a screenshot is taken only when the DOM names nothing, and the count that decides is of *named* accessibility nodes because Chrome always emits structural ones. Consequence is classified from the control's role, accessible name, href and form, so a purchase, a deletion, a send and an inert toggle are different classes at different tiers and an action with no consequence is not recorded; the ledger's reservation and settlement are RUN-011 and RUN-007, both PASS. web.fetch reads through the same browser and extraction, so research and action cannot disagree, and its output is bounded, labelled UNTRUSTED_EXTERNAL and digested. The durable browser_sessions row is owned by machine control because the architecture gate forbids qworkerd a Postgres client at all, and 8.4's rules are enforced there too so two callers cannot disagree about who holds the browser; a takeover is a pause that keeps the tabs, the profile and the page. bsn_ was enforced by the schema since 0001 and absent from the catalog 1.1 is generated from, repaired additively. New dependency tokio-tungstenite for the WebSocket transport, accepted by the supply-chain gate. Out-of-scope by design: native Input.dispatchMouseEvent relay for client-driven takeover (the driver acts through the page's own DOM, which is what DOM-first means) and carrying screencast frames to a client, which is APP-007's live-view transport."
     },
     "EXEC-010": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "PARTIAL",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-14T06:48:00Z",
+      "updated_at": "2026-09-14T06:48:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
