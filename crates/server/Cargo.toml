@@ -12,7 +12,7 @@ workspace = true
 
 [dependencies]
 async-trait = "0.1"
-axum = "0.7"
+axum = { version = "0.7", features = ["ws"] }
 chrono = { version = "0.4", features = ["serde"] }
 hex = "0.4"
 hmac = "0.12"
@@ -28,9 +28,12 @@ sha2 = "0.10"
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "migrate", "macros", "json", "chrono", "uuid"] }
 thiserror = "2"
 tokio = { version = "1", features = ["time", "sync", "net", "rt-multi-thread", "macros"] }
+futures-util = "0.3"
 
 [dev-dependencies]
 async-trait = "0.1"
+futures-util = "0.3"
 tower = { version = "0.5", features = ["util"] }
+tokio-tungstenite = "0.24"
 quansio-core = { path = "../core" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }

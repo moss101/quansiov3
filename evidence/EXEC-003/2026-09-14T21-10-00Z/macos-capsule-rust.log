@@ -1,0 +1,8 @@
+running 5 tests
+test guest_channel_has_a_closed_service_vocabulary ... ok
+test unpublished_catalog_cannot_boot_and_has_no_path_to_host_secrets_or_metadata ... ok
+test image_bytes_are_verified_and_mismatch_fails_closed ... ok
+test lifecycle_is_repeatable_and_reset_discards_only_the_overlay ... ok
+test stale_generation_is_refused_before_native_execution ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out

@@ -1,0 +1,93 @@
+{
+  "task_id": "APP-001",
+  "git_commit": null,
+  "recorded_at": "2026-09-14T21:10:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test api --test walking_skeleton",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-14T21-10-00Z/api-and-skeleton.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-14T21-10-00Z/validate.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test api --test walking_skeleton",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/api/mod.rs",
+      "sha256": "9bbd967b4a636d0c15e1618055449140db2a7bd0bae905a333f3ba89c35a8d44",
+      "bytes": 12763
+    },
+    {
+      "path": "crates/server/src/api/commands.rs",
+      "sha256": "dfab83d74378dab5b1516c65f7636f3bf0855a33186d35a2eaf6805e2cf0a9af",
+      "bytes": 19724
+    },
+    {
+      "path": "crates/server/src/api/stream.rs",
+      "sha256": "f2bd6fd73c156eb697c038cd380a05851ddefb8ba8893e3941d4804070147fba",
+      "bytes": 7633
+    },
+    {
+      "path": "crates/server/src/api/projections.rs",
+      "sha256": "f827e1808d720563c2a1b995c68532271bf9bc0474c4e5e058833e61d2dc49f7",
+      "bytes": 5448
+    },
+    {
+      "path": "crates/server/src/api/flags.rs",
+      "sha256": "53ea2bce6df1a2e86c34b2c389f70f072fd4ce94ccab69e75cd51e1e29b14294",
+      "bytes": 2177
+    },
+    {
+      "path": "crates/server/src/api/limits.rs",
+      "sha256": "ea462f969f76be9b12bdce30deeabea26915230465b557ad269b5bef334d04c4",
+      "bytes": 1684
+    },
+    {
+      "path": "crates/server/src/api/seams.rs",
+      "sha256": "37f5f517e6dc6b41734faccc9b09b1655c83cc5bdbc2b954b75f1513cde7d7c0",
+      "bytes": 3536
+    },
+    {
+      "path": "crates/server/src/control/conversation.rs",
+      "sha256": "448b011c6b019beafff865b4f09605c74ed62b2d75cb9553f6d91065ca66d6d2",
+      "bytes": 13607
+    },
+    {
+      "path": "crates/server/tests/api.rs",
+      "sha256": "68564a2f005fa1e30fce4a6f157deee38e28b0ab678adb9a1db762581a0806ff",
+      "bytes": 22805
+    },
+    {
+      "path": "crates/server/tests/walking_skeleton.rs",
+      "sha256": "1b17d4abec7624c6f756d1b33c345f040a99f46cafb9eaa546dad6f80e1f2ae3",
+      "bytes": 9051
+    },
+    {
+      "path": "evidence/APP-001/2026-09-14T21-10-00Z/NOTES.md",
+      "sha256": "3b390ec85fb6349ba215f8136f84b1b562bfe9993fdd04de6cc00bd9b92fb4b2",
+      "bytes": 1422
+    },
+    {
+      "path": "evidence/APP-001/2026-09-14T21-10-00Z/api-and-skeleton.log",
+      "sha256": "59acc7ab43c6d74c5aad04ea5d6d4788c2a0b5ef1c255192fa75048f8b4a3412",
+      "bytes": 1023
+    }
+  ]
+}

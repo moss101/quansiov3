@@ -528,3 +528,87 @@ async fn the_deployable_composes_from_the_environment() {
     assert!(composition.api().catalog().commands().len() > 20);
     let _ = composition.router();
 }
+
+#[test]
+fn feature_flags_load_from_config_and_cannot_disable_escalation() {
+    let flags = quansio_server::api::FeatureFlags::load().expect("flags");
+    assert!(
+        flags.enabled("trust.escalation.enabled"),
+        "escalation is authority, not a rollout switch that can go off"
+    );
+    assert!(flags.get("runtime.compaction.epochs").is_some());
+}
+
+#[test]
+fn generated_openapi_lists_every_catalog_command() {
+    let spec: serde_yaml::Value =
+        serde_yaml::from_str(include_str!("../../../schemas/openapi/public-api-v1.yaml"))
+            .expect("openapi");
+    let catalog = quansio_server::api::Catalog::from_embedded().expect("catalog");
+    let paths = spec.get("paths").and_then(serde_yaml::Value::as_mapping);
+    let paths = paths.expect("paths");
+    for name in catalog.commands() {
+        let path = format!("/v1/commands/{name}");
+        assert!(
+            paths.contains_key(serde_yaml::Value::String(path.clone())),
+            "generated OpenAPI is missing {path}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn a_tenant_over_the_rate_limit_is_rate_limited() {
+    let name = common::scratch_name("api_rate");
+    let Some(pool) = common::fresh_database(&name).await else {
+        common::blocked_marker();
+        return;
+    };
+    quansio_server::control::schema::migrate(&pool)
+        .await
+        .expect("migrate");
+    common::seed_tenant(
+        &pool,
+        TENANT,
+        USER,
+        WORKSPACE,
+        "wn_01J8Z3K6F1N8VQ2X5W9Y0CCCCC",
+    )
+    .await;
+    let state = quansio_server::api::ApiState::new(pool.clone())
+        .expect("api")
+        .with_limits(quansio_server::api::RateLimiter::new(
+            1,
+            std::time::Duration::from_secs(60),
+        ));
+    let router = quansio_server::api::router(state);
+    let (run, generation) = runtime_run(&pool).await;
+    let first = router
+        .clone()
+        .oneshot(request(
+            "POST",
+            "/v1/commands/CancelRun",
+            Some(TENANT),
+            Some(serde_json::json!({
+                "command_id": COMMAND,
+                "params": { "run_id": run.to_string(), "generation": generation }
+            })),
+        ))
+        .await
+        .expect("first");
+    assert_eq!(first.status(), StatusCode::OK);
+    let second = router
+        .oneshot(request(
+            "POST",
+            "/v1/commands/CancelRun",
+            Some(TENANT),
+            Some(serde_json::json!({
+                "command_id": "cmd_01J8Z3K6F1N8VQ2X5W9Y0DDDDD",
+                "params": { "run_id": run.to_string(), "generation": generation }
+            })),
+        ))
+        .await
+        .expect("second");
+    assert_eq!(second.status(), StatusCode::TOO_MANY_REQUESTS);
+    assert_eq!(json_body(second).await["code"], "RATE_LIMITED");
+    common::drop_pool(&pool, &name).await;
+}
