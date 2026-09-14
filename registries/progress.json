@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-14T10:38:00Z",
+  "updated_at": "2026-09-14T10:42:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1207,18 +1207,18 @@
       "notes": ""
     },
     "EXEC-005": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-14T10:40:00Z",
+      "updated_at": "2026-09-14T10:42:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "blocker": "The acceptance requires provisioning real cloud microVMs and demonstrating that a lost node produces a fenced replacement: 'Tenant workloads are isolated and do not receive host/cloud root credentials' and 'Lost node results in fenced replacement and safe runtime recovery'. This host has no cloud account, no provider credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, GOOGLE_APPLICATION_CREDENTIALS, ARM_CLIENT_ID and GCP_PROJECT are all unset), no cloud CLI (neither aws nor gcloud is installed) and no Firecracker binary, so no microVM can be placed, snapshotted, warmed or killed here and no mock can stand in for the fabric the statement names. Unblock: provider credentials and a region with permission to create instances, plus Firecracker (or the managed equivalent) reachable from the runner; the local halves -- the ExecutionTarget/Lease substrate seam over EXEC-001, image and snapshot metadata -- are implementable without a provider and are unstarted, so implementation_complete is false rather than partial-credit.",
+      "notes": "Reconciled, not implemented. crates/machine/substrates/cloud_microvm/ and infra/images/ do not exist. What it builds on is landed: EXEC-001 owns the execution-target lifecycle, generations and leases with the fence that makes a stale controller harmless, which is exactly the seam a cloud substrate plugs into and the mechanism a fenced replacement needs; and EXEC-008's egress broker already governs what a guest may reach. "
     },
     "EXEC-006": {
       "coverage": "GENUINE_GAP",

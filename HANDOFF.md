@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-14 (M4 under way: 41 PASS, 10 dependency-ready; EXEC-001, EXEC-002, EXEC-006, EXEC-007,
+Updated: 2026-09-14 (M4 under way: 41 PASS, 9 dependency-ready; EXEC-001, EXEC-002, EXEC-006, EXEC-007,
 EXEC-008 and EXEC-009 all `PASS`; the intelligence-plane tasks remain `BLOCKED_EXTERNAL` on INT-002's live
 provider credentials only. A deadlock in every crate's test harness was found and fixed, and the
 workspace suite is now clean in 7 of 7 runs against 8 of 10 and 9 of 10 before it.)
@@ -19,11 +19,28 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M4 — the execution plane (M0/M1/M2/M3 complete as far as INT-002's credentials allow)
-Current task: **`EXEC-005` — cloud microVM execution fabric — next to reconcile**
-(`--next` selects it: M4, depends on `EXEC-001` and `EXEC-002`, both `PASS`). Its `real_boundary` is
-`true`: it needs a cloud account and a provider API to provision real microVMs, which is the first thing
-to establish rather than to assume. If that boundary is unavailable, `APP-001` (M5,
-`real_boundary: false`) is the next task that is executable with certainty.
+Current task: **`EXEC-010` — computer-use and human takeover — next to reconcile**
+(`--next` selects it: M4, depends on `EXEC-009` and `RUN-005`, both `PASS`). Its boundary is native OS
+automation, so the first step is to establish what this host offers rather than to assume: macOS exposes
+the accessibility and input APIs through `AXUIElement`/`CGEvent`, and `swift`/`xcrun` are installed, but
+whether the required permissions (Accessibility and Screen Recording for the runner) can be granted
+without an operator is a real question. **If that or any other M4 boundary turns out to be unavailable,
+`APP-001` (M5, `real_boundary: false`) is the next task that is executable with certainty, and CAP-006,
+OPS-002 and OPS-004 are also `real_boundary: false`.**
+Previous task: **`EXEC-005` — cloud microVM execution fabric — `BLOCKED_EXTERNAL`, not implemented.**
+Verified rather than assumed: this host has no cloud credentials (`AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY`, `GOOGLE_APPLICATION_CREDENTIALS`, `ARM_CLIENT_ID`, `GCP_PROJECT` all unset), no
+cloud CLI (`aws` and `gcloud` are not installed) and no `firecracker` binary, so no microVM can be
+placed, snapshotted, warmed or killed here. `implementation_complete: false`, because
+`crates/machine/substrates/cloud_microvm/` and `infra/images/` do not exist. What it builds on is landed:
+EXEC-001 owns the target lifecycle, generations and lease fences — the seam a cloud substrate plugs into
+and the mechanism a fenced replacement needs — and EXEC-008 governs what a guest may reach.
+**`EXEC-003` (macOS microVM capsule) is not blocked and not started.** Its boundary is partly present:
+this is an Apple M5 Pro with `swift` and `xcrun` installed, so Virtualization.framework is available, but
+`infra/images/` is empty — no Linux kernel or rootfs is shipped — and the hypervisor path needs the
+`com.apple.security.virtualization` entitlement, which needs a signing identity. The first step is
+therefore to establish a guest image and the entitlement, not to write Rust against a VM that cannot boot.
+**`EXEC-004` (Windows capsule and native broker) needs Windows and is not runnable here.**
 Previous task: **`EXEC-009` — managed browser session with DOM/CDP-first control — `PASS`, and its
 boundary was real.** Every browser test launches the Google Chrome installed on this host (152) with the
 DevTools protocol on a loopback port and drives it, so nothing stands in for the browser.
