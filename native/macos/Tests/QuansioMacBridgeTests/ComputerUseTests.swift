@@ -12,6 +12,14 @@ import ApplicationServices
 /// effect is a *read*: identity, a bounded tree walk, and clipboard round-trip with the previous value put
 /// back.
 final class ComputerUseTests: XCTestCase {
+    override func setUpWithError() throws {
+        guard ProcessInfo.processInfo.environment["QUANSIO_TEST_MACOS_COMPUTER_USE"] == "1" else {
+            throw XCTSkip(
+                "BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary"
+            )
+        }
+    }
+
     /// Whether this process may use AX at all. It is a TCC permission an operator grants, so the tests that
     /// need it say so rather than assuming it.
     private var trusted: Bool { automationTrusted() }
@@ -21,6 +29,23 @@ final class ComputerUseTests: XCTestCase {
         let app = try frontmostApp()
         XCTAssertGreaterThan(app.pid, 0)
         XCTAssertFalse(app.name.isEmpty, "the frontmost application has no name")
+    }
+
+    func testExactForegroundIdentityFailsClosed() throws {
+        let app = try frontmostApp()
+        XCTAssertEqual(try requireForegroundApp(app.bundleId), app)
+        XCTAssertThrowsError(try requireForegroundApp("com.quansio.not-the-foreground-app")) { error in
+            XCTAssertEqual(
+                error as? ComputerUseError,
+                .unexpectedForegroundApp(
+                    expected: "com.quansio.not-the-foreground-app",
+                    actual: app.bundleId
+                )
+            )
+        }
+        XCTAssertThrowsError(try requireForegroundApp("")) { error in
+            XCTAssertEqual(error as? ComputerUseError, .unidentifiedForegroundApp)
+        }
     }
 
     func testATreeWalkIsBounded() throws {
@@ -65,12 +90,13 @@ final class ComputerUseTests: XCTestCase {
     }
 
     func testTheClipboardRoundTripsAndIsPutBack() throws {
+        let app = try frontmostApp()
         let previous = clipboardText()
-        defer { setClipboardText(previous) }
+        defer { try? setClipboardText(previous, expectedBundleId: app.bundleId) }
         let marker = "quansio-bridge-test-\(UUID().uuidString)"
-        setClipboardText(marker)
+        try setClipboardText(marker, expectedBundleId: app.bundleId)
         XCTAssertEqual(clipboardText(), marker)
-        setClipboardText(previous)
+        try setClipboardText(previous, expectedBundleId: app.bundleId)
         XCTAssertEqual(clipboardText(), previous)
     }
 
@@ -79,5 +105,31 @@ final class ComputerUseTests: XCTestCase {
         let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
         let anyTitled = windows.contains { ($0[kCGWindowName as String] as? String)?.isEmpty == false }
         XCTAssertEqual(screenCaptureAvailable(), anyTitled)
+    }
+
+    func testScreenshotOutputIsHardBounded() throws {
+        guard screenCaptureAvailable() else {
+            throw XCTSkip("BLOCKED_EXTERNAL: Screen Recording is not granted to this process")
+        }
+        let data = try boundedScreenshot(maxBytes: 64 * 1024 * 1024)
+        XCTAssertFalse(data.isEmpty)
+        XCTAssertLessThanOrEqual(data.count, 64 * 1024 * 1024)
+        XCTAssertEqual(Array(data.prefix(8)), [137, 80, 78, 71, 13, 10, 26, 10])
+        XCTAssertThrowsError(try boundedScreenshot(maxBytes: 1)) { error in
+            guard case .screenshotTooLarge(let actual, let maximum) = error as? ComputerUseError else {
+                return XCTFail("unexpected error: \(error)")
+            }
+            XCTAssertGreaterThan(actual, maximum)
+            XCTAssertEqual(maximum, 1)
+        }
+    }
+
+    func testSystemKeyVocabularyFailsBeforePostingUnknownInput() throws {
+        let app = try frontmostApp()
+        XCTAssertThrowsError(
+            try sendSystemKey(["command", "launch-missiles"], expectedBundleId: app.bundleId)
+        ) { error in
+            XCTAssertEqual(error as? ComputerUseError, .invalidKeyChord("launch-missiles"))
+        }
     }
 }

@@ -57,6 +57,8 @@ use super::questions::{NewQuestion, QuestionService};
 pub const FILE_TOOL_HOST_OWNER: &str = "EXEC-006";
 /// The task that owns managed browser sessions.
 pub const BROWSER_TOOL_HOST_OWNER: &str = "EXEC-009";
+/// The task that owns native computer-use through the Rust machine authority.
+pub const COMPUTER_TOOL_HOST_OWNER: &str = "EXEC-010";
 /// The task that owns the connector and integration broker.
 pub const CONNECTOR_HOST_OWNER: &str = "EXEC-011";
 /// The task that owns source-control, PR and CI tools.
@@ -76,6 +78,7 @@ pub fn host_owner(tool: &str) -> &'static str {
         "knowledge.cite" => KNOWLEDGE_HOST_OWNER,
         "browser.navigate" | "browser.click" | "browser.type" | "browser.extract"
         | "browser.screenshot" => BROWSER_TOOL_HOST_OWNER,
+        _ if tool.starts_with("computer.") => COMPUTER_TOOL_HOST_OWNER,
         "web.search" | "web.fetch" => CONNECTOR_HOST_OWNER,
         _ if tool.starts_with("connector.") => CONNECTOR_HOST_OWNER,
         _ if tool.starts_with("scm.") => SCM_HOST_OWNER,
@@ -1825,6 +1828,7 @@ mod tests {
     fn hosts_name_their_owning_task() {
         assert_eq!(host_owner("terminal.exec"), "EXEC-006");
         assert_eq!(host_owner("browser.click"), "EXEC-009");
+        assert_eq!(host_owner("computer.system_key"), "EXEC-010");
         assert_eq!(host_owner("connector.github.create_issue"), "EXEC-011");
         assert_eq!(host_owner("artifact.create"), "CORE-007");
         assert_eq!(host_owner("knowledge.cite"), "INT-006");

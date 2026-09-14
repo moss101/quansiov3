@@ -26,6 +26,8 @@ pub enum ToolHost {
     Qworkerd,
     /// A browser session hosted by the runtime.
     Browser,
+    /// The Rust machine authority calling a narrow native-platform broker.
+    Machine,
     /// A connector or provider adapter behind the egress boundary.
     Adapter,
 }
@@ -38,6 +40,7 @@ impl ToolHost {
             Self::Server => "server",
             Self::Qworkerd => "qworkerd",
             Self::Browser => "browser",
+            Self::Machine => "machine",
             Self::Adapter => "adapter",
         }
     }
@@ -51,9 +54,10 @@ impl ToolHost {
             "server" => Ok(Self::Server),
             "qworkerd" => Ok(Self::Qworkerd),
             "browser" => Ok(Self::Browser),
+            "machine" => Ok(Self::Machine),
             "adapter" => Ok(Self::Adapter),
             other => Err(format!(
-                "host {other:?} is not one of server, qworkerd, browser, adapter"
+                "host {other:?} is not one of server, qworkerd, browser, machine, adapter"
             )),
         }
     }

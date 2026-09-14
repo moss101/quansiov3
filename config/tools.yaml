@@ -397,14 +397,49 @@ tools:
         content: { type: string }
       required: [status, content]
 
+  - name: computer.read
+    version: 1
+    description: Read a bounded accessibility tree and optional bounded screenshot for the named foreground application.
+    host: machine
+    source_trust: untrusted_external
+    effect_class: read.internal
+    resource: { kind: app, arg: application }
+    idempotency: { digest_args: [application, max_nodes, max_depth, include_screenshot] }
+    max_output_bytes: 1048576
+    timeout_ms: 30000
+    cancellable: true
+    evidence: { kinds: [accessibility_tree, screenshot], redact: [] }
+    grant_templates:
+      - effect_class: read.internal
+        resource: { kind: app, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        application: { type: string, minLength: 1 }
+        max_nodes: { type: integer, minimum: 1, maximum: 512 }
+        max_depth: { type: integer, minimum: 0, maximum: 16 }
+        include_screenshot: { type: boolean }
+      required: [application, max_nodes, max_depth, include_screenshot]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        application: { type: string }
+        nodes: { type: array, items: { type: object, additionalProperties: false, properties: { role: { type: string }, title: { type: string }, value: { type: string }, depth: { type: integer }, child_count: { type: integer } } } }
+        truncated: { type: boolean }
+        screenshot_artifact_id: { type: string }
+      required: [application, nodes, truncated]
+
   - name: computer.click
     version: 1
     description: Click at absolute coordinates on the execution target's desktop.
-    host: qworkerd
+    host: machine
     source_trust: untrusted_external
     effect_class: computer.input.privileged
-    resource: { kind: app, selector: "*" }
-    idempotency: { digest_args: [x, y, button] }
+    resource: { kind: app, arg: application }
+    idempotency: { digest_args: [application, x, y, button] }
     max_output_bytes: 65536
     timeout_ms: 30000
     cancellable: true
@@ -417,10 +452,11 @@ tools:
       type: object
       additionalProperties: false
       properties:
+        application: { type: string, minLength: 1 }
         x: { type: integer }
         y: { type: integer }
         button: { type: string, enum: [left, right, middle] }
-      required: [x, y]
+      required: [application, x, y, button]
     output_schema:
       type: object
       additionalProperties: false
@@ -431,10 +467,10 @@ tools:
   - name: computer.type
     version: 1
     description: Type text into the focused application on the execution target.
-    host: qworkerd
+    host: machine
     source_trust: untrusted_external
     effect_class: computer.input.privileged
-    resource: { kind: app, selector: "*" }
+    resource: { kind: app, arg: application }
     idempotency: { digest_args: [text, application] }
     max_output_bytes: 65536
     timeout_ms: 30000
@@ -457,6 +493,67 @@ tools:
       properties:
         typed: { type: boolean }
       required: [typed]
+
+  - name: computer.clipboard
+    version: 1
+    description: Read or replace text in the shared native clipboard for the named foreground application.
+    host: machine
+    source_trust: untrusted_external
+    effect_class: computer.input.privileged
+    resource: { kind: app, arg: application }
+    idempotency: { digest_args: [application, operation, text] }
+    max_output_bytes: 262144
+    timeout_ms: 30000
+    cancellable: true
+    evidence: { kinds: [computer_action], redact: [text] }
+    grant_templates:
+      - effect_class: computer.input.privileged
+        resource: { kind: app, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        application: { type: string, minLength: 1 }
+        operation: { type: string, enum: [read, write] }
+        text: { type: string }
+      required: [application, operation, text]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        text: { type: string }
+        written: { type: boolean }
+
+  - name: computer.system_key
+    version: 1
+    description: Send an allowlisted system-key chord to the named foreground application.
+    host: machine
+    source_trust: untrusted_external
+    effect_class: computer.input.privileged
+    resource: { kind: app, arg: application }
+    idempotency: { digest_args: [application, keys] }
+    max_output_bytes: 65536
+    timeout_ms: 30000
+    cancellable: true
+    evidence: { kinds: [computer_action], redact: [] }
+    grant_templates:
+      - effect_class: computer.input.privileged
+        resource: { kind: app, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        application: { type: string, minLength: 1 }
+        keys: { type: array, items: { type: string } }
+      required: [application, keys]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        sent: { type: boolean }
+      required: [sent]
 
   - name: artifact.create
     version: 1

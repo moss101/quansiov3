@@ -10,19 +10,17 @@
 //! * **a tier is a grant, not a request.** `computer.click`, `computer.type`, `computer.clipboard` and
 //!   `computer.system_key` each need a grant at least as high as the action, so a run granted reading
 //!   cannot type its way into a write.
-//! * **a takeover cannot race with agent input.** [`AutomationFence`] serializes them: an action takes a
-//!   generation before it acts and a takeover only completes once no action is in flight, so there is no
-//!   interleaving in which a person takes control and an action they fenced still lands. An action that
-//!   begins after a takeover is refused outright.
+//! * **a takeover cannot race with agent input.** [`store::ComputerControlStore`] serializes them in
+//!   PostgreSQL: an action owns one exact ToolCall slot and a takeover only completes after it settles or
+//!   is reconciled. The holder and generation survive process and worker restarts.
 //!
 //! The native side is `native/macos` (AX over Accessibility, input over `CGEvent`), which the Rust machine
 //! module calls (DOSSIER.md §5). It is deliberately *not* in this crate: `#![forbid(unsafe_code)]` holds
 //! here, and the privileged calls belong in the bridge that the operator grants the permission to.
 
 use std::collections::BTreeSet;
-use std::sync::Arc;
 
-use tokio::sync::Mutex;
+pub mod store;
 
 /// What an action does, in the order the tiers escalate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -196,20 +194,6 @@ pub enum Refusal {
         /// The highest tier granted.
         granted: &'static str,
     },
-    /// A person holds the machine.
-    #[error("a person holds this machine; automation is fenced until an explicit handback")]
-    HeldByUser,
-    /// A takeover is in progress, so no new action may begin.
-    #[error("a takeover is in progress; automation is fenced until it completes")]
-    TakeoverInProgress,
-    /// The action began under a generation the fence has moved past.
-    #[error("the action began at generation {began} and the fence is at {current}")]
-    StaleGeneration {
-        /// The generation the action held.
-        began: u64,
-        /// The fence's generation now.
-        current: u64,
-    },
 }
 
 /// An authorised action: enough to act, and to prove afterwards that it may.
@@ -286,6 +270,8 @@ pub enum MachineHolder {
     Agent,
     /// A person, after a takeover.
     User,
+    /// Nobody may drive, for example while policy has paused the target.
+    Nobody,
 }
 
 impl MachineHolder {
@@ -295,149 +281,18 @@ impl MachineHolder {
         match self {
             Self::Agent => "agent",
             Self::User => "user",
+            Self::Nobody => "none",
         }
     }
-}
 
-#[derive(Debug)]
-struct FenceState {
-    generation: u64,
-    holder: MachineHolder,
-    in_flight: usize,
-    takeover_pending: bool,
-}
-
-/// Serializes agent input against a human takeover.
-///
-/// The two cannot interleave, and the mechanism is a generation plus a drain rather than a lock held
-/// across an action:
-///
-/// * an action calls [`Self::begin`], which refuses unless the agent holds the machine, counts the action
-///   in flight, and hands back the generation it began at;
-/// * a takeover calls [`Self::request_takeover`] and then [`Self::complete_takeover`], which only
-///   completes when nothing is in flight — so a person cannot take control while an action is landing;
-/// * an action calls [`Self::finish`], which refuses to close a generation the fence has moved past, so an
-///   action cannot report success for a decision that was superseded underneath it.
-///
-/// Holding a mutex across the action itself would be wrong: actions are long and asynchronous, and a lock
-/// held for their duration would make a takeover wait on the very thing it is meant to interrupt.
-#[derive(Debug, Clone)]
-pub struct AutomationFence {
-    state: Arc<Mutex<FenceState>>,
-}
-
-impl Default for AutomationFence {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AutomationFence {
-    /// A fence the agent holds.
+    /// Parse the canonical persisted value.
     #[must_use]
-    pub fn new() -> Self {
-        Self {
-            state: Arc::new(Mutex::new(FenceState {
-                generation: 1,
-                holder: MachineHolder::Agent,
-                in_flight: 0,
-                takeover_pending: false,
-            })),
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "agent" => Some(Self::Agent),
+            "user" => Some(Self::User),
+            "none" => Some(Self::Nobody),
+            _ => None,
         }
-    }
-
-    /// Who holds the machine.
-    pub async fn holder(&self) -> MachineHolder {
-        self.state.lock().await.holder
-    }
-
-    /// The current generation.
-    pub async fn generation(&self) -> u64 {
-        self.state.lock().await.generation
-    }
-
-    /// How many actions are in flight.
-    pub async fn in_flight(&self) -> usize {
-        self.state.lock().await.in_flight
-    }
-
-    /// Begin an action, taking the generation it acts under.
-    ///
-    /// # Errors
-    /// Returns [`Refusal::HeldByUser`] when a person holds the machine and
-    /// [`Refusal::TakeoverInProgress`] once a takeover has been requested, so no action begins while the
-    /// machine is changing hands.
-    pub async fn begin(&self) -> Result<u64, Refusal> {
-        let mut state = self.state.lock().await;
-        if matches!(state.holder, MachineHolder::User) {
-            return Err(Refusal::HeldByUser);
-        }
-        if state.takeover_pending {
-            return Err(Refusal::TakeoverInProgress);
-        }
-        state.in_flight += 1;
-        Ok(state.generation)
-    }
-
-    /// Close an action that began at `generation`.
-    ///
-    /// # Errors
-    /// Returns [`Refusal::StaleGeneration`] when the fence moved past it, which means the action's decision
-    /// was superseded and it must not be reported as having acted under the current fence.
-    pub async fn finish(&self, generation: u64) -> Result<(), Refusal> {
-        let mut state = self.state.lock().await;
-        state.in_flight = state.in_flight.saturating_sub(1);
-        if generation != state.generation {
-            return Err(Refusal::StaleGeneration {
-                began: generation,
-                current: state.generation,
-            });
-        }
-        Ok(())
-    }
-
-    /// Ask for the machine, which fences new actions immediately.
-    ///
-    /// # Errors
-    /// Returns [`Refusal::HeldByUser`] when a person already holds it.
-    pub async fn request_takeover(&self) -> Result<(), Refusal> {
-        let mut state = self.state.lock().await;
-        if matches!(state.holder, MachineHolder::User) {
-            return Err(Refusal::HeldByUser);
-        }
-        state.takeover_pending = true;
-        Ok(())
-    }
-
-    /// Complete the takeover, which hands the machine to the person.
-    ///
-    /// # Errors
-    /// Returns [`Refusal::TakeoverInProgress`] when an action is still in flight: the takeover waits for
-    /// the action rather than interleaving with it, which is what makes the race impossible rather than
-    /// unlikely.
-    pub async fn complete_takeover(&self) -> Result<u64, Refusal> {
-        let mut state = self.state.lock().await;
-        if state.in_flight > 0 {
-            return Err(Refusal::TakeoverInProgress);
-        }
-        state.holder = MachineHolder::User;
-        state.takeover_pending = false;
-        state.generation += 1;
-        Ok(state.generation)
-    }
-
-    /// Hand the machine back to the agent, which is the only way automation resumes.
-    ///
-    /// # Errors
-    /// Returns [`Refusal::HeldByUser`] when the agent already holds it, so a handback cannot be used to
-    /// skip a takeover that never happened.
-    pub async fn handback(&self) -> Result<u64, Refusal> {
-        let mut state = self.state.lock().await;
-        if matches!(state.holder, MachineHolder::Agent) {
-            return Err(Refusal::HeldByUser);
-        }
-        state.holder = MachineHolder::Agent;
-        state.generation += 1;
-        Ok(state.generation)
     }
 }

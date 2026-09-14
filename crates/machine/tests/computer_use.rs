@@ -5,12 +5,24 @@
 //! action needs, that an application nobody vouched for is refused whatever the grant, and that a human
 //! takeover cannot interleave with agent input.
 
-use std::sync::Arc;
-
 use quansio_machine::computer_use::{
-    AppIdentity, AutomationFence, ComputerGrant, ComputerTier, ComputerUsePolicy, KnownApps,
-    Refusal,
+    store::{ComputerControlError, ComputerControlStore},
+    AppIdentity, ComputerGrant, ComputerTier, ComputerUsePolicy, KnownApps, MachineHolder, Refusal,
 };
+use quansio_machine::control::{MachineControl, NewTarget, Substrate, TargetClass};
+use sqlx::PgPool;
+use std::sync::Arc;
+use tokio::sync::Barrier;
+
+mod common;
+
+const TENANT: &str = "tn_01J8Z3K6F1N8VQ2X5W9Y0FFFFF";
+const USER: &str = "usr_01J8Z3K6F1N8VQ2X5W9Y0FFFFF";
+const WORKSPACE: &str = "ws_01J8Z3K6F1N8VQ2X5W9Y0FFFFF";
+const TARGET: &str = "tgt_01J8Z3K6F1N8VQ2X5W9Y0FFFFF";
+const CALL_A: &str = "tc_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
+const CALL_B: &str = "tc_01J8Z3K6F1N8VQ2X5W9Y0BBBBB";
+const AT: &str = "2026-09-14T10:00:00Z";
 
 /// An application the runtime recognises.
 fn known_app() -> AppIdentity {
@@ -155,160 +167,176 @@ fn an_application_the_runtime_does_not_recognise_is_refused_at_every_tier() {
     assert!(!listed.recognises("e.f"));
 }
 
-// ------------------------------------------------------------------ the takeover race
+// ------------------------------------------------------------------ durable takeover and recovery
 
-#[tokio::test]
-async fn a_takeover_cannot_race_with_agent_input() {
-    let fence = AutomationFence::new();
-    assert_eq!(
-        fence.holder().await,
-        quansio_machine::computer_use::MachineHolder::Agent
-    );
-
-    // An action takes the generation it acts under.
-    let first = fence.begin().await.expect("the agent holds the machine");
-    assert_eq!(first, 1);
-    assert_eq!(fence.in_flight().await, 1);
-
-    // A person asks for the machine, which fences new actions immediately.
-    fence.request_takeover().await.expect("takeover requested");
-    assert!(matches!(
-        fence.begin().await,
-        Err(Refusal::TakeoverInProgress)
-    ));
-
-    // The takeover cannot complete while that action is in flight: this is the race, and the answer is
-    // that the takeover waits rather than interleaving.
-    assert!(matches!(
-        fence.complete_takeover().await,
-        Err(Refusal::TakeoverInProgress)
-    ));
-    assert_eq!(
-        fence.holder().await,
-        quansio_machine::computer_use::MachineHolder::Agent
-    );
-
-    // The action finishes, and only then does control change hands -- with the fence moved.
-    fence.finish(first).await.expect("the same generation");
-    let generation = fence.complete_takeover().await.expect("takeover completes");
-    assert_eq!(generation, 2);
-    assert_eq!(
-        fence.holder().await,
-        quansio_machine::computer_use::MachineHolder::User
-    );
-    assert_eq!(fence.in_flight().await, 0);
-
-    // While a person holds it, no action may begin; automation resumes only on an explicit handback.
-    assert!(matches!(fence.begin().await, Err(Refusal::HeldByUser)));
-    assert!(matches!(
-        fence.request_takeover().await,
-        Err(Refusal::HeldByUser)
-    ));
-    let back = fence.handback().await.expect("handback");
-    assert_eq!(back, 3);
-    assert_eq!(
-        fence.holder().await,
-        quansio_machine::computer_use::MachineHolder::Agent
-    );
-    assert!(fence.begin().await.is_ok());
-
-    // A handback when the agent already holds it is a refusal, so it cannot be used to skip a takeover
-    // that never happened.
-    assert!(matches!(fence.handback().await, Err(Refusal::HeldByUser)));
-}
-
-#[tokio::test]
-async fn an_action_cannot_close_a_generation_the_fence_moved_past() {
-    let fence = AutomationFence::new();
-    let stale = fence.begin().await.expect("begin");
-    // A takeover completes for a reason the first action did not foresee: here, the action was abandoned.
-    fence.request_takeover().await.expect("request");
-    fence.finish(stale).await.expect("the first action closes");
-    fence.complete_takeover().await.expect("complete");
-    let moved = fence.generation().await;
-
-    // A new action under the new generation... and the old generation cannot be closed as if it were
-    // current, so an action cannot report acting under a fence that has moved.
-    fence.handback().await.expect("handback");
-    let fresh = fence.begin().await.expect("begin");
-    assert_eq!(fresh, moved + 1);
-    assert_eq!(
-        fence.finish(stale).await,
-        Err(Refusal::StaleGeneration {
-            began: stale,
-            current: fresh,
-        })
-    );
-    fence
-        .finish(fresh)
+async fn prepare(prefix: &str) -> Option<(String, PgPool)> {
+    let name = common::scratch_name(prefix);
+    let pool = common::fresh_database(&name).await?;
+    common::seed_tenant(&pool, TENANT, USER, WORKSPACE).await;
+    let mut conn = pool.acquire().await.expect("acquire");
+    MachineControl::register(
+        &mut conn,
+        TENANT,
+        &NewTarget {
+            id: TARGET.to_string(),
+            workspace_id: WORKSPACE.to_string(),
+            class: TargetClass::PersistentWorkspaceComputer,
+            substrate: Substrate::LocalCapsuleMacos,
+            image_digest: None,
+            desired_state: None,
+        },
+    )
+    .await
+    .expect("register target");
+    ComputerControlStore::open(&mut conn, TENANT, TARGET, None)
         .await
-        .expect("the current generation closes");
+        .expect("open control");
+    drop(conn);
+    Some((name, pool))
 }
 
 #[tokio::test]
-async fn many_actions_and_a_takeover_never_interleave() {
-    // The property, driven with real concurrency rather than asserted about one interleaving: whatever
-    // order the runtime schedules them in, no action may be in flight when the takeover completes, and
-    // every action that began before it is refused for closing under the new generation.
-    let fence = Arc::new(AutomationFence::new());
-    let actions: Vec<_> = (0..8)
-        .map(|_| {
-            let fence = Arc::clone(&fence);
-            tokio::spawn(async move {
-                let started = fence.begin().await;
-                let generation = match started {
-                    Ok(generation) => generation,
-                    Err(refusal) => return Err(refusal),
-                };
-                // A little work, so the actions overlap with the takeover.
-                tokio::task::yield_now().await;
-                fence.finish(generation).await
-            })
-        })
-        .collect();
-    let takeover = {
-        let fence = Arc::clone(&fence);
-        tokio::spawn(async move {
-            fence.request_takeover().await?;
-            // Retry until the drain completes, which is what a real takeover does.
-            for _ in 0..64 {
-                match fence.complete_takeover().await {
-                    Ok(generation) => return Ok(generation),
-                    Err(Refusal::TakeoverInProgress) => tokio::task::yield_now().await,
-                    Err(other) => return Err(other),
-                }
-            }
-            Err(Refusal::TakeoverInProgress)
-        })
+async fn takeover_fences_input_survives_restart_and_requires_explicit_handback() {
+    let Some((name, pool)) = prepare("computer_recovery").await else {
+        common::blocked_marker();
+        return;
     };
+    let mut conn = pool.acquire().await.expect("acquire");
+    let active = ComputerControlStore::begin_action(&mut conn, TENANT, TARGET, CALL_A, 1)
+        .await
+        .expect("begin action");
+    assert_eq!(active.active_tool_call_id.as_deref(), Some(CALL_A));
+    let pending = ComputerControlStore::request_takeover(&mut conn, TENANT, TARGET, 1)
+        .await
+        .expect("request takeover");
+    assert!(pending.takeover_pending);
+    assert!(matches!(
+        ComputerControlStore::begin_action(&mut conn, TENANT, TARGET, CALL_B, 1).await,
+        Err(ComputerControlError::TakeoverPending)
+    ));
+    assert!(matches!(
+        ComputerControlStore::complete_takeover(&mut conn, TENANT, TARGET, 1, AT).await,
+        Err(ComputerControlError::ActionInFlight(_))
+    ));
 
-    let mut started = 0;
-    let mut refused_to_start = 0;
-    for action in actions {
-        match action.await.expect("join") {
-            Ok(()) => started += 1,
-            Err(Refusal::TakeoverInProgress) => refused_to_start += 1,
-            Err(other) => panic!("unexpected refusal: {other:?}"),
+    // A new database connection is the restart boundary: neither the action nor pending takeover is
+    // process memory, and recovery must reconcile the exact call before control can move.
+    drop(conn);
+    let mut restarted = pool.acquire().await.expect("reacquire after restart");
+    let recovered = ComputerControlStore::load(&mut restarted, TENANT, TARGET)
+        .await
+        .expect("recover");
+    assert_eq!(recovered.active_tool_call_id.as_deref(), Some(CALL_A));
+    assert!(recovered.takeover_pending);
+    ComputerControlStore::finish_action(&mut restarted, TENANT, TARGET, CALL_A, 1)
+        .await
+        .expect("effect settled or reconciled");
+    let user = ComputerControlStore::complete_takeover(&mut restarted, TENANT, TARGET, 1, AT)
+        .await
+        .expect("takeover after drain");
+    assert_eq!(user.holder, MachineHolder::User);
+    assert_eq!(user.generation, 2);
+    assert!(matches!(
+        ComputerControlStore::begin_action(&mut restarted, TENANT, TARGET, CALL_B, 2).await,
+        Err(ComputerControlError::Held("user"))
+    ));
+    let agent = ComputerControlStore::handback(&mut restarted, TENANT, TARGET, 2, AT)
+        .await
+        .expect("explicit handback");
+    assert_eq!(agent.holder, MachineHolder::Agent);
+    assert_eq!(agent.generation, 3);
+    assert!(agent.agent_may_input());
+    assert!(matches!(
+        ComputerControlStore::begin_action(&mut restarted, TENANT, TARGET, CALL_B, 2).await,
+        Err(ComputerControlError::StaleGeneration { .. })
+    ));
+    ComputerControlStore::begin_action(&mut restarted, TENANT, TARGET, CALL_B, 3)
+        .await
+        .expect("new generation may act");
+    drop(restarted);
+    common::drop_pool(&pool, &name).await;
+}
+
+#[tokio::test]
+async fn a_takeover_racing_an_action_has_only_safe_outcomes() {
+    let Some((name, pool)) = prepare("computer_race").await else {
+        common::blocked_marker();
+        return;
+    };
+    let barrier = Arc::new(Barrier::new(3));
+    let action_pool = pool.clone();
+    let action_barrier = Arc::clone(&barrier);
+    let action = tokio::spawn(async move {
+        let mut conn = action_pool.acquire().await.expect("action connection");
+        action_barrier.wait().await;
+        ComputerControlStore::begin_action(&mut conn, TENANT, TARGET, CALL_A, 1).await
+    });
+    let takeover_pool = pool.clone();
+    let takeover_barrier = Arc::clone(&barrier);
+    let takeover = tokio::spawn(async move {
+        let mut conn = takeover_pool.acquire().await.expect("takeover connection");
+        takeover_barrier.wait().await;
+        ComputerControlStore::request_takeover(&mut conn, TENANT, TARGET, 1).await
+    });
+    barrier.wait().await;
+    let action = action.await.expect("action join");
+    let takeover = takeover
+        .await
+        .expect("takeover join")
+        .expect("request always fences");
+    assert!(takeover.takeover_pending);
+
+    let mut conn = pool.acquire().await.expect("verify connection");
+    let state = ComputerControlStore::load(&mut conn, TENANT, TARGET)
+        .await
+        .expect("load");
+    match action {
+        Ok(_) => {
+            assert_eq!(state.active_tool_call_id.as_deref(), Some(CALL_A));
+            assert!(matches!(
+                ComputerControlStore::complete_takeover(&mut conn, TENANT, TARGET, 1, AT).await,
+                Err(ComputerControlError::ActionInFlight(_))
+            ));
+            ComputerControlStore::finish_action(&mut conn, TENANT, TARGET, CALL_A, 1)
+                .await
+                .expect("finish winner");
         }
+        Err(ComputerControlError::TakeoverPending) => {
+            assert!(state.active_tool_call_id.is_none());
+        }
+        Err(other) => panic!("unsafe race outcome: {other:?}"),
     }
-    let generation = takeover.await.expect("join").expect("the takeover drains");
-    assert_eq!(generation, 2, "the takeover moved the fence once");
-    assert_eq!(
-        fence.in_flight().await,
-        0,
-        "an action was in flight when control changed"
-    );
-    assert_eq!(
-        fence.holder().await,
-        quansio_machine::computer_use::MachineHolder::User
-    );
-    assert_eq!(
-        started + refused_to_start,
-        8,
-        "every action is accounted for, whether it ran or was fenced"
-    );
-    assert!(
-        refused_to_start > 0 || started == 8,
-        "the storm was not actually concurrent"
-    );
+    let user = ComputerControlStore::complete_takeover(&mut conn, TENANT, TARGET, 1, AT)
+        .await
+        .expect("complete only after no action");
+    assert_eq!(user.holder, MachineHolder::User);
+    assert!(user.active_tool_call_id.is_none());
+    drop(conn);
+    common::drop_pool(&pool, &name).await;
+}
+
+#[tokio::test]
+async fn exact_tool_call_and_tenant_scope_fail_closed() {
+    let Some((name, pool)) = prepare("computer_scope").await else {
+        common::blocked_marker();
+        return;
+    };
+    let mut conn = pool.acquire().await.expect("acquire");
+    assert!(matches!(
+        ComputerControlStore::begin_action(&mut conn, TENANT, TARGET, "not-a-call", 1).await,
+        Err(ComputerControlError::ToolCallIdInvalid(_))
+    ));
+    ComputerControlStore::begin_action(&mut conn, TENANT, TARGET, CALL_A, 1)
+        .await
+        .expect("begin");
+    assert!(matches!(
+        ComputerControlStore::finish_action(&mut conn, TENANT, TARGET, CALL_B, 1).await,
+        Err(ComputerControlError::ActionMismatch { .. })
+    ));
+    assert!(matches!(
+        ComputerControlStore::load(&mut conn, "tn_01J8Z3K6F1N8VQ2X5W9Y0OTHER", TARGET).await,
+        Err(ComputerControlError::NotFound(_))
+    ));
+    drop(conn);
+    common::drop_pool(&pool, &name).await;
 }
