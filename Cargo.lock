@@ -1779,6 +1779,7 @@ dependencies = [
  "chacha20poly1305",
  "quansio-core",
  "serde_json",
+ "sha2",
  "sqlx",
  "thiserror",
  "tokio",

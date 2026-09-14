@@ -18,6 +18,7 @@ pub mod control;
 pub mod egress;
 pub mod gateway;
 pub mod secrets;
+pub mod substrates;
 
 /// Repository path of this crate's canonical owner, used by the workspace
 /// conformance check to prove one owner maps to exactly one package.
