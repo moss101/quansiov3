@@ -15,24 +15,32 @@
 //!   deployment cannot serve a catalog its own binary was not built from;
 //! * `/v1/read-projections` reports the §10 read projections the same way.
 
+pub mod commands;
 pub mod error;
+pub mod flags;
+pub mod limits;
+pub mod projections;
+pub mod seams;
+pub mod stream;
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use axum::extract::{Path, State};
+use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use quansio_core::{
-    CanonicalId, CommandId, CorrelationId, Digest, Generation, Prefix, UlidGenerator,
-};
+use quansio_core::{CanonicalId, CommandId, Prefix};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
 pub use error::{ApiError, ApiErrorCode};
+pub use flags::FeatureFlags;
+pub use limits::RateLimiter;
+pub use seams::{ConformanceStubHost, ConformanceStubModel, TenantMemberRoles};
 
-use crate::runtime::state_machine::{RuntimeEngine, RuntimeIdentity};
+use crate::runtime::state_machine::ModelProposalSource;
+use crate::runtime::turn_loop::{RoleProvider, ToolHostPort};
 
 /// The §14 command catalog, embedded so the served catalog is the one this binary was built from.
 const COMMAND_CATALOG: &str = include_str!("../../../../schemas/catalog/commands.yaml");
@@ -209,12 +217,17 @@ impl TenantScope {
     }
 }
 
-/// The API's state: the pool, the catalogs, and the tenant the call is for.
+/// The API's state: the pool, the catalogs, flags, limits and walking-skeleton seams.
 #[derive(Clone)]
 pub struct ApiState {
     pool: PgPool,
     catalog: Arc<Catalog>,
     projections: Arc<[String]>,
+    flags: Arc<FeatureFlags>,
+    limits: RateLimiter,
+    model: Arc<dyn ModelProposalSource>,
+    host: Arc<dyn ToolHostPort>,
+    roles: Arc<dyn RoleProvider>,
 }
 
 impl ApiState {
@@ -223,10 +236,19 @@ impl ApiState {
     /// # Errors
     /// Returns [`ApiError`] when a catalog is not the shape the contract defines.
     pub fn new(pool: PgPool) -> Result<Self, ApiError> {
+        let (model, host, roles) = seams::skeleton_seams(None);
         Ok(Self {
             pool,
             catalog: Arc::new(Catalog::from_embedded()?),
             projections: Arc::from(Catalog::read_projections()?),
+            flags: Arc::new(
+                FeatureFlags::load()
+                    .map_err(|error| ApiError::new(ApiErrorCode::Internal, error, "startup"))?,
+            ),
+            limits: RateLimiter::from_env(),
+            model,
+            host,
+            roles,
         })
     }
 
@@ -242,10 +264,47 @@ impl ApiState {
         &self.projections
     }
 
+    /// Evaluated feature flags.
+    #[must_use]
+    pub fn flags(&self) -> &FeatureFlags {
+        &self.flags
+    }
+
+    /// Per-tenant rate limiter.
+    #[must_use]
+    pub fn limits(&self) -> &RateLimiter {
+        &self.limits
+    }
+
+    /// Replace the rate limiter (tests).
+    #[must_use]
+    pub fn with_limits(mut self, limits: RateLimiter) -> Self {
+        self.limits = limits;
+        self
+    }
+
     /// The pool.
     #[must_use]
     pub const fn pool(&self) -> &PgPool {
         &self.pool
+    }
+
+    /// Conformance-stub model source.
+    #[must_use]
+    pub fn model(&self) -> Arc<dyn ModelProposalSource> {
+        Arc::clone(&self.model)
+    }
+
+    /// Conformance-stub tool host.
+    #[must_use]
+    pub fn host(&self) -> Arc<dyn ToolHostPort> {
+        Arc::clone(&self.host)
+    }
+
+    /// Acting-role seam.
+    #[must_use]
+    pub fn roles(&self) -> Arc<dyn RoleProvider> {
+        Arc::clone(&self.roles)
     }
 }
 
@@ -253,9 +312,14 @@ impl ApiState {
 pub fn router(state: ApiState) -> Router {
     Router::new()
         .route("/v1/health", get(health))
-        .route("/v1/commands", get(commands))
+        .route("/v1/commands", get(command_catalog))
         .route("/v1/read-projections", get(read_projections))
-        .route("/v1/commands/:command", post(invoke))
+        .route("/v1/commands/:command", post(commands::invoke))
+        .route("/v1/stream", get(stream::stream))
+        .route("/v1/threads/:id", get(projections::thread))
+        .route("/v1/messages", get(projections::messages))
+        .route("/v1/runs/:id", get(projections::run))
+        .route("/v1/effects", get(projections::effects))
         .with_state(state)
 }
 
@@ -280,209 +344,13 @@ async fn health(State(state): State<ApiState>) -> Result<Json<serde_json::Value>
 }
 
 /// The §14 command catalog.
-async fn commands(State(state): State<ApiState>) -> Json<Catalog> {
+async fn command_catalog(State(state): State<ApiState>) -> Json<Catalog> {
     Json(state.catalog().clone())
 }
 
 /// The §10 read projections.
 async fn read_projections(State(state): State<ApiState>) -> Json<serde_json::Value> {
     Json(serde_json::json!({ "read_projections": state.projections() }))
-}
-
-/// The one command this surface applies, until the rest are wired.
-///
-/// `CancelRun` is chosen deliberately: its canonical owner is unambiguous — the runtime owns a Run's
-/// lifecycle — so this handler can call the owner and report the owner's answer without reinterpreting
-/// anything. The commands whose owner is a *store* this deployment does not yet compose (`PostMessage`
-/// creating a message and a run, `TriggerRoutineNow`) are refused rather than half-applied, because a
-/// handler that applies half a command and reports success is worse than one that says it cannot.
-const CANCEL_RUN: &str = "CancelRun";
-
-/// Apply a command.
-///
-/// The command is recorded in `commands` — the log §1.2's idempotency is defined over — before the owner
-/// is called, and the owner is the module that owns the change. A repeat of the same `command_id` with the
-/// same parameters returns the recorded result; a repeat with different parameters is refused, because the
-/// two cannot both be what that command meant.
-async fn invoke(
-    State(state): State<ApiState>,
-    Path(command): Path<String>,
-    headers: HeaderMap,
-    Json(request): Json<CommandRequest>,
-) -> Result<Json<CommandResponse>, ApiError> {
-    let scope = TenantScope::from_headers(&headers)?;
-    let command_id = TenantScope::command_id(&request)?;
-    // The correlation id is a bare ULID shared by everything caused by one external input (DOMAIN.md §1.2), so
-    // it is generated once here and carried into the runtime identity.
-    let correlation_id = CorrelationId::generate(&mut UlidGenerator::new());
-    let correlation = correlation_id.to_string();
-
-    let params_digest = Digest::of_canonical_json(&request.params.to_string())
-        .as_str()
-        .to_string();
-    let known = state
-        .catalog()
-        .commands()
-        .iter()
-        .any(|name| name.eq_ignore_ascii_case(&command));
-    if !known {
-        return Err(ApiError::new(
-            ApiErrorCode::NotFound,
-            format!("{command:?} is not a command in the catalog"),
-            correlation,
-        ));
-    }
-
-    // The idempotency decision and the record are one statement: the unique key is (tenant, command_id), so
-    // a concurrent replay cannot insert a second row and both callers see the row that won.
-    let inserted = sqlx::query(
-        "INSERT INTO commands (id, tenant_id, command_name, command_id, params_digest, status, correlation_id) \
-         VALUES ($1, $2, $3, $4, $5, 'accepted', $6) \
-         ON CONFLICT (tenant_id, command_id) DO NOTHING",
-    )
-    .bind(command_id.as_canonical().to_string())
-    .bind(&scope.tenant_id)
-    .bind(&command)
-    .bind(command_id.as_canonical().to_string())
-    .bind(&params_digest)
-    .bind(&correlation)
-    .execute(state.pool())
-    .await
-    .map_err(|error| database_error(&error))?;
-
-    if inserted.rows_affected() == 0 {
-        let existing = sqlx::query_as::<_, (String, Option<serde_json::Value>, Option<serde_json::Value>)>(
-            "SELECT params_digest, result, error FROM commands WHERE tenant_id = $1 AND command_id = $2",
-        )
-        .bind(&scope.tenant_id)
-        .bind(command_id.as_canonical().to_string())
-        .fetch_optional(state.pool())
-        .await
-        .map_err(|error| database_error(&error))?
-        .ok_or_else(|| {
-            ApiError::new(
-                ApiErrorCode::Internal,
-                "a command conflicted but cannot be read back",
-                correlation.clone(),
-            )
-        })?;
-        if existing.0 != params_digest {
-            return Err(ApiError::new(
-                ApiErrorCode::ConflictIdempotencyMismatch,
-                "this command_id was already used with different parameters",
-                correlation,
-            ));
-        }
-        return Ok(Json(CommandResponse {
-            command_id: command_id.as_canonical().to_string().to_string(),
-            replayed: true,
-            result: existing.1.or(existing.2).unwrap_or(serde_json::Value::Null),
-        }));
-    }
-
-    let result = match command.as_str() {
-        CANCEL_RUN => {
-            let run_id = CanonicalId::parse_typed(
-                request
-                    .params
-                    .get("run_id")
-                    .and_then(serde_json::Value::as_str)
-                    .ok_or_else(|| {
-                        ApiError::new(
-                            ApiErrorCode::ValidationSchema,
-                            "CancelRun needs a run_id",
-                            correlation.clone(),
-                        )
-                    })?,
-                Prefix::Run,
-            )
-            .map_err(|error| {
-                ApiError::new(
-                    ApiErrorCode::ValidationBounds,
-                    error.to_string(),
-                    correlation.clone(),
-                )
-            })?;
-            let generation = Generation::new(
-                request
-                    .params
-                    .get("generation")
-                    .and_then(serde_json::Value::as_u64)
-                    .unwrap_or(Generation::INITIAL.get()),
-            )
-            .map_err(|error| {
-                ApiError::new(
-                    ApiErrorCode::ValidationBounds,
-                    error.to_string(),
-                    correlation.clone(),
-                )
-            })?;
-            let identity = RuntimeIdentity::system(&scope.tenant_id, "api", correlation_id)
-                .with_command_id(command_id);
-            let engine = RuntimeEngine::new(state.pool().clone(), identity).map_err(|error| {
-                ApiError::new(
-                    ApiErrorCode::Internal,
-                    error.to_string(),
-                    correlation.clone(),
-                )
-            })?;
-            // The runtime owns the Run's lifecycle: this handler asks it to cancel and reports what it
-            // said, rather than writing the status itself.
-            let run = engine
-                .cancel(&run_id, generation)
-                .await
-                .map_err(|error| runtime_error(error, &correlation))?;
-            serde_json::json!({ "run_id": run.id.to_string(), "status": run.status.as_db_str() })
-        }
-        // The catalog names every command; this surface applies one until the rest are wired. Refusing
-        // rather than pretending is what keeps the catalog an honest statement of what exists.
-        other => {
-            return Err(ApiError::new(
-                ApiErrorCode::Internal,
-                format!("{other} is in the catalog and has no handler in this build"),
-                correlation,
-            ))
-        }
-    };
-
-    sqlx::query(
-        "UPDATE commands SET status = 'applied', result = $3 WHERE tenant_id = $1 AND command_id = $2",
-    )
-    .bind(&scope.tenant_id)
-    .bind(command_id.as_canonical().to_string())
-    .bind(&result)
-    .execute(state.pool())
-    .await
-    .map_err(|error| database_error(&error))?;
-
-    Ok(Json(CommandResponse {
-        command_id: command_id.as_canonical().to_string().to_string(),
-        replayed: false,
-        result,
-    }))
-}
-
-/// A database failure is never the caller's fault and never carries a row back.
-fn database_error(error: &sqlx::Error) -> ApiError {
-    ApiError::new(ApiErrorCode::Internal, error.to_string(), "database")
-}
-
-/// Map a runtime refusal onto §15. The mapping is exhaustive over the codes the runtime can produce, so a
-/// new one is a compile error rather than a silent 500.
-fn runtime_error(
-    error: crate::runtime::state_machine::RuntimeError,
-    correlation: &str,
-) -> ApiError {
-    let code = match error.code() {
-        "RUNTIME_ILLEGAL_TRANSITION" => ApiErrorCode::RuntimeIllegalTransition,
-        "FENCED_STALE_GENERATION" => ApiErrorCode::FencedStaleGeneration,
-        "RUNTIME_NOT_FOUND" => ApiErrorCode::NotFound,
-        "RUNTIME_SCHEMA" => ApiErrorCode::ValidationSchema,
-        "RUNTIME_STATE_CONFLICT" => ApiErrorCode::ConflictState,
-        "RUNTIME_LEASE_LOST" => ApiErrorCode::LeaseLost,
-        _ => ApiErrorCode::Internal,
-    };
-    ApiError::new(code, error.to_string(), correlation)
 }
 
 /// The status a successful mutating call is served with, so a caller can tell created from replayed.

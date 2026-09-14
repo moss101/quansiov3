@@ -1,9 +1,8 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-14 (M4 under way: 41 PASS, 9 dependency-ready; EXEC-001, EXEC-002, EXEC-006, EXEC-007,
-EXEC-008 and EXEC-009 all `PASS`; the intelligence-plane tasks remain `BLOCKED_EXTERNAL` on INT-002's live
-provider credentials only. A deadlock in every crate's test harness was found and fixed, and the
-workspace suite is now clean in 7 of 7 runs against 8 of 10 and 9 of 10 before it.)
+Updated: 2026-09-14 (M4/M5: 41 PASS; EXEC-003 and APP-001 implementation-complete as `BLOCKED_EXTERNAL`.
+EXEC-003 waits on the unpublished signed Linux guest image; APP-001 waits on INT-002 live credentials
+because PASS requires every dependency PASS. `--next` is still EXEC-004 on a Windows host.)
 Repository: `quansiov3` (local)
 Branch: `main`
 HEAD: see `git rev-parse HEAD` on `main`
@@ -41,29 +40,25 @@ on the bundle id rather than a name a program can choose, and a fence serializin
 agent input by generation and drain. Nine Swift tests and five Rust tests. Its fence is in memory, which
 is one of the gaps the reconciliation already lists.
 
-Current task: **`APP-001` — Rust quansio-server API/control composition — `IN_PROGRESS`, first unit
-landed.** A concurrent agent owns M4: it completed EXEC-010 (as `BLOCKED_EXTERNAL`) and is mid-`EXEC-003`
-(in flight, with `native/macos` and a capsule bridge already committed). `--next` says `EXEC-004`, which
-needs a Windows host — the cross-compile target is installed but there is no Windows host, no SDK and no
-`wsl.exe`/`powershell.exe`, and the acceptance needs a real capsule — so this turn took APP-001, a
-different milestone and clearly outside that agent's path.
-What landed: `crates/server/src/api/` (the public v1 surface — §15's error taxonomy as a closed enum
-checked against the generated catalog in both directions, tenant scope with `AUTH_REQUIRED` and
-`VALIDATION_BOUNDS` kept apart, the §14 command catalog and §10 read projections embedded at build time,
-health, and one mutating endpoint), `crates/server/src/composition.rs` (the root that opens one pool and
-applies the schema through its canonical runner) and `crates/server/src/bin/quansio-server.rs` (the
-deployable, which did not exist). `POST /v1/commands/CancelRun` cancels a run by asking the runtime and
-reporting the runtime's answer; idempotency is decided in one `ON CONFLICT` statement so a concurrent
-replay cannot insert a second row. The API writes exactly one table of its own, `commands`, and a
-structural scan over `crates/server/src/api/` fails on any statement naming another — that is the half of
-the ownership acceptance a handler's output cannot show. 9 new tests, 527 across the workspace, all
-gates CLEAN. Evidence: `evidence/APP-001/2026-09-14T12-10-00Z/`.
-**Remaining and named, not implied:** the walking-skeleton smoke test (HTTP command → runtime → gateway
-with the conformance stub → tool proposal → Effect Ledger → projection → WebSocket event), the WebSocket
-surface and its reconnect test, per-tenant rate limits and feature flags, OpenAPI-generated endpoints with
-generated-client contract tests, and handlers for the rest of the catalog.
-Next: continue APP-001 from that list — the walking skeleton is the acceptance and the place to start —
-or take EXEC-004 if a Windows host appears.
+Current task: **`EXEC-003` and `APP-001` are both `BLOCKED_EXTERNAL` with `implementation_complete: true`.**
+`--next` remains `EXEC-004` (Windows capsule; no Windows host here). APP-002 is now dependency-ready
+because APP-001's implementation is complete even though INT-002 is not PASS.
+
+**`EXEC-003` — macOS local Linux microVM capsule.** Rust verifies the desktop-update catalog and image
+digests and fences generation before calling the Swift Virtualization.framework bridge. The guest has
+no network device and no host directory share; qworkerd is reached only on virtio-socket port 40581;
+cookie import is not a guest service. Start/stop/reset/checkpoint are repeatable in the controller
+tests. The signed guest image is unpublished (`config/guest-images.yaml` status `BLOCKED_EXTERNAL`,
+no sha256/url), so the live VM suite skips with that marker. Evidence:
+`evidence/EXEC-003/2026-09-14T21-10-00Z/`.
+
+**`APP-001` — Rust quansio-server API/control composition.** Public v1: §15 errors, tenant scope,
+command-log idempotency, OpenAPI/catalog contract, feature flags, per-tenant `RATE_LIMITED`. Mutating
+commands call owners (`CancelRun`/`PauseRun`/`ResumeRun` → runtime; `CreateThread`/`PostMessage` →
+conversation). Walking skeleton: HTTP `PostMessage` → run_turn with the conformance-stub `fs.read` →
+Effect Ledger → `/v1/runs/{id}` and `/v1/effects` → WebSocket `/v1/stream` reconnect-from-cursor.
+Cannot be PASS until INT-002 is PASS. Evidence: `evidence/APP-001/2026-09-14T21-10-00Z/`.
+Next: APP-002 (onboarding) if staying on M5; EXEC-004 if a Windows host appears.
 Previous task: **`EXEC-011` — connector and integration broker — `BLOCKED_EXTERNAL`, not implemented.**
 Its acceptance requires each GA connector to pass the shared conformance suite *in its provider sandbox*
 (GitHub, Google Workspace, Slack, a web-search provider), and no sandbox credentials, OAuth client
