@@ -1179,11 +1179,11 @@
       "notes": "The typed worker protocol, both halves of the control channel. Inbound: ActionEnvelope with a closed kind vocabulary (dispatch/cancel/checkpoint/evidence_upload), the (lease_id, generation) fence, the argument digest computed by DispatchRequest::dispatch, and a deadline; MachineGateway::validate is pure and ordered (shape, args digest, target, lease held, generation, lease expiry, deadline) so every refusal precedes execution; MachineGateway::dial answers whether a caller may open the connection (a customer private worker is never dialled). Outbound: Heartbeat carries what the worker observes plus the generation it holds, and accept_heartbeat refuses a fenced report, an undefined state and another target. qworkerd's WorkerHost validates before it executes, runs each dispatch token at most once and answers a re-delivery from its record, and bounds output through OutputSink as the tool streams rather than on the finished buffer. Out-of-scope by design: the transport that chunks the bounded output to the controller, and durability of the replay record across a worker process restart (the record answers a channel reconnect, which is the acceptance statement). real_boundary is false: the gateway is pure and the host is in-process."
     },
     "EXEC-003": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-14T07:27:00Z",
+      "updated_at": "2026-09-14T07:27:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
