@@ -1,0 +1,16 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.22s
+     Running tests/api.rs (target/debug/deps/api-dc6b9b765d2989c1)
+
+running 9 tests
+test every_code_maps_to_a_status_and_says_whether_a_retry_could_help ... ok
+test the_command_catalog_is_the_one_the_gate_checks ... ok
+test an_api_handler_reads_and_writes_only_its_own_table ... ok
+test the_error_vocabulary_is_the_one_the_catalog_generates ... ok
+test a_mutating_call_calls_the_owner_and_a_resend_returns_its_result_once ... ok
+test a_call_without_a_usable_tenant_is_refused_with_the_right_code ... ok
+test health_reports_readiness_and_the_catalogues_it_serves ... ok
+test a_command_scoped_to_another_tenant_does_not_touch_this_one ... ok
+test the_deployable_composes_from_the_environment ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.65s
+

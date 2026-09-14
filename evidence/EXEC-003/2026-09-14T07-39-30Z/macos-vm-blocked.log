@@ -1,0 +1,20 @@
+[0/1] Planning build
+Building for debugging...
+[0/2] Write swift-version--58304C5D6DBC2206.txt
+Build complete! (0.10s)
+Test Suite 'Selected tests' started at 2026-09-14 10:39:37.059.
+Test Suite 'QuansioMacBridgePackageTests.xctest' started at 2026-09-14 10:39:37.060.
+Test Suite 'MacOSCapsuleTests' started at 2026-09-14 10:39:37.060.
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testRealVMStartStopResetCheckpointAndPrivateQworkerdChannel]' started.
+/Users/mohsin/projects/quansiov3/native/macos/Tests/QuansioMacBridgeTests/MacOSCapsuleTests.swift:99: -[QuansioMacBridgeTests.MacOSCapsuleTests testRealVMStartStopResetCheckpointAndPrivateQworkerdChannel] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_GUEST_KERNEL and QUANSIO_TEST_MACOS_GUEST_ROOT_DISK must name the signed V8.1 image
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testRealVMStartStopResetCheckpointAndPrivateQworkerdChannel]' skipped (0.001 seconds).
+Test Suite 'MacOSCapsuleTests' passed at 2026-09-14 10:39:37.061.
+	 Executed 1 test, with 1 test skipped and 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'QuansioMacBridgePackageTests.xctest' passed at 2026-09-14 10:39:37.061.
+	 Executed 1 test, with 1 test skipped and 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'Selected tests' passed at 2026-09-14 10:39:37.061.
+	 Executed 1 test, with 1 test skipped and 0 failures (0 unexpected) in 0.001 (0.001) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.

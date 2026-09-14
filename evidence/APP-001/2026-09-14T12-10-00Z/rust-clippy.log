@@ -1,0 +1,12 @@
+    Checking tower v0.5.3
+    Checking axum-core v0.4.5
+    Checking tower-http v0.6.11
+    Checking axum v0.7.9
+    Checking reqwest v0.12.28
+    Checking quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Checking tonic v0.12.3
+    Checking quansio-contracts v0.1.0 (/Users/mohsin/projects/quansiov3/crates/contracts)
+    Checking quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/crates/tools)
+    Checking quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/crates/graph)
+    Checking quansio-indexer v0.1.0 (/Users/mohsin/projects/quansiov3/crates/indexer)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 17.70s
