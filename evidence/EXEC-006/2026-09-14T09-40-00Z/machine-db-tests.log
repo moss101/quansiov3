@@ -1,0 +1,61 @@
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.78s
+     Running tests/control.rs (target/debug/deps/control-17e8319cb340fe3d)
+
+running 12 tests
+test health_is_classified_from_what_the_platform_observes ... ok
+test only_machine_control_writes_the_target_and_lease_tables ... ok
+test only_a_ready_target_can_be_leased ... ok
+test a_target_walks_the_lifecycle_domain_8_2_draws ... ok
+test two_racing_acquirers_cannot_both_hold_a_lease ... ok
+test a_tenant_cannot_see_another_tenants_target ... ok
+test a_target_reports_what_it_observes_and_the_platform_classifies_it ... ok
+test a_lease_that_is_not_live_does_not_permit_the_action ... ok
+test a_stale_generation_cannot_steer_the_target_it_lost ... ok
+test an_edge_the_lifecycle_does_not_draw_is_refused_with_both_ends ... ok
+test destroyed_is_terminal ... ok
+test a_lease_expiring_fences_the_controller_that_held_it ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.17s
+
+     Running tests/egress.rs (target/debug/deps/egress-eb1080ecee61ca1b)
+
+running 10 tests
+test a_blocked_domain_is_refused_even_with_a_grant ... ok
+test a_grant_stops_being_usable_when_it_expires ... ok
+test a_grant_is_fenced_by_the_target_generation_and_narrowed_by_capability ... ok
+test a_policy_change_fences_the_grants_issued_under_it ... ok
+test an_unknown_destination_is_denied_until_an_effect_grants_it ... ok
+test a_granted_name_that_resolves_inside_is_refused ... ok
+test another_tenant_cannot_reach_or_change_this_tenants_grants ... ok
+test revocation_is_recorded_rather_than_deleted ... ok
+test a_target_with_no_network_policy_reaches_nothing ... ok
+test a_grant_is_keyed_by_the_effect_that_authorized_it ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.99s
+
+     Running tests/secrets.rs (target/debug/deps/secrets-4999557bfa11436b)
+
+running 8 tests
+test revoking_fences_the_materialization_a_worker_already_holds ... ok
+test a_handle_with_no_material_and_a_malformed_id_are_typed_refusals ... ok
+test a_scheduled_expiry_sweeps_the_handle_and_fences_it ... ok
+test the_value_is_stored_sealed_and_appears_in_nothing_that_is_logged_or_sent ... ok
+test a_handle_sealed_under_one_key_does_not_open_under_another ... ok
+test rotating_replaces_the_material_and_fences_the_materializations_before_it ... ok
+test a_materialization_cannot_be_presented_for_another_scope ... ok
+test a_handle_is_reachable_only_from_its_own_tenant_and_workspace ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s
+
+     Running tests/terminal.rs (target/debug/deps/terminal-84616a78a51f8aac)
+
+running 5 tests
+test a_session_cannot_be_opened_on_a_target_that_does_not_exist_or_a_bad_id ... ok
+test a_reconnect_replays_from_the_durable_cursor_instead_of_running_the_command_again ... ok
+test two_reconnects_with_the_same_command_cannot_both_be_told_to_run_it ... ok
+test the_cursor_only_moves_forward_and_a_session_that_is_not_open_refuses ... ok
+test a_session_is_scoped_to_its_tenant_and_target ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.66s
+

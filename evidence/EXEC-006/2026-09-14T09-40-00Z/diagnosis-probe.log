@@ -1,0 +1,27 @@
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.48s
+     Running tests/tmp_probe2.rs (target/debug/deps/tmp_probe2-325ef234bb22563f)
+
+running 1 test
+M1: fresh_database
+M2: seed_tenant x2
+M3: acquire
+M4: register
+M5: open
+M6: opened cursor=0 status=Open last=None
+M7: attach #1
+M8: attach #1 = Dispatch { command_id: "tc_01J8Z3K6F1N8VQ2X5W9Y0FFFFF", from: 0 }
+M9: advance 12
+M10: acquire a second connection
+M11: load on the second connection
+M12: reloaded cursor=12 last=Some("tc_01J8Z3K6F1N8VQ2X5W9Y0FFFFF")
+M13: attach #2 on the second connection (the replay)
+M14: replay = Replay { command_id: "tc_01J8Z3K6F1N8VQ2X5W9Y0FFFFF", from: 12 }
+M15: attach #3
+M16: again = Replay { command_id: "tc_01J8Z3K6F1N8VQ2X5W9Y0FFFFF", from: 12 }
+M17: attach the next command
+M18: next = Dispatch { command_id: "tc_01J8Z3K6F1N8VQ2X5W9Y0GGGGG", from: 12 }
+M19: attach the next command again
+M20: next_again = Replay { command_id: "tc_01J8Z3K6F1N8VQ2X5W9Y0GGGGG", from: 12 }
+M21: drop_pool
+test probe2 has been running for over 60 seconds

@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-14T09:05:00Z",
+  "updated_at": "2026-09-14T09:46:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1222,31 +1222,34 @@
     },
     "EXEC-006": {
       "coverage": "GENUINE_GAP",
-      "status": "IN_PROGRESS",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T08:05:00Z",
-      "updated_at": "2026-09-14T09:05:00Z",
-      "git_commit": "fa52887",
+      "updated_at": "2026-09-14T09:46:00Z",
+      "git_commit": "ba04ac1",
       "tests": [
-        "cargo test -p quansio-qworkerd (20 passed: 13 control-channel tests and 7 tool-host tests. The tool tests are the task's three: path traversal -- a parent component refused outright whether or not it would land inside the root, an absolute path refused rather than reinterpreted, an unauthorized root refused before any path is considered, a symbolic link inside the root pointing outside refused for both read and write with the file outside proven unwritten, and the ordinary case working so the refusals are the rules and not a broken host; PTY reconnect -- the replay decision asserted directly, a reconnect of a command that ran resuming from the durable cursor and not dispatching, a different command dispatching from that cursor, the cursor refusing to move backwards, and a closed or lost session refusing the attach; command cancellation -- a cancelled command killed and reaped so its pid is released and it never reaches its marker, a deadline stopping the command the same way and naming the deadline, an already-cancelled token refusing without starting anything, and output bounded to 128 bytes of 20000 produced with the total counted.)",
-        "cargo test -p quansio-machine --test control (12 passed) and --test egress (10 passed) against real PostgreSQL, after the terminal work",
-        "python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/workspace_check.py (CLEAN)"
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test terminal --test control --test egress --test secrets (35 passed: 5 terminal tests -- open then attach dispatching, a reconnect replaying from the durable cursor without dispatching again, a new command dispatching from that cursor, the cursor refusing to move backwards, a closed or lost session refusing an attach, tenant and target scoping, a bad session id, a bad target and a corrupt cursor refused, and two concurrent reconnects of one command neither of which is told to dispatch; 12 control; 10 egress; 8 secrets)",
+        "cargo test -p quansio-qworkerd (20 passed: 13 control-channel and 7 tool-host tests -- the task's path-traversal, PTY-reconnect and command-cancellation cases, plus digest-checked writes, all-or-nothing patches, output bounded while a command streams, a deadline stopping the command, an already-cancelled token refusing without starting anything, and a cancelled command killed and reaped so its pid is released)",
+        "cargo test --workspace (496 passed across 80 suites; 7 of 7 runs clean, zero failures, against 8 of 10 at dd5e024 and 9 of 10 at fb50673 before the harness fix in this task)",
+        "cargo fmt --all --check and cargo clippy --workspace --all-targets -- -D warnings",
+        "python3.12 scripts/validate_v81.py && scripts/ci/arch_check.py && scripts/ci/workspace_check.py && scripts/ci/inventory.py --scan && scripts/ci/dossier_consistency.py && scripts/ci/check_authority.py --check && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py (all CLEAN; V8.1 PASS)",
+        "bash scripts/ci/ci.sh (pipeline: PASS, 11 of 11 gates)"
       ],
       "artifacts": [
-        "crates/qworkerd/src/tools/mod.rs",
+        "evidence/EXEC-006/2026-09-14T09-40-00Z/summary.json",
+        "evidence/EXEC-006/2026-09-14T09-40-00Z/NOTES.md",
         "crates/qworkerd/src/tools/sandbox.rs",
         "crates/qworkerd/src/tools/files.rs",
         "crates/qworkerd/src/tools/process.rs",
         "crates/qworkerd/src/tools/terminal.rs",
         "crates/qworkerd/tests/tools.rs",
         "crates/machine/src/control/terminal.rs",
-        "DOMAIN.md",
-        "schemas/catalog/ids.yaml"
+        "crates/machine/tests/terminal.rs"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": "TerminalStore::attach hangs against PostgreSQL and is not diagnosed; the durable cursor is therefore not verified. Ruled out: the database is reachable and the control and egress suites pass against it; open, load, advance and close all complete on the same store, including their own FOR UPDATE statements; the hang reproduces with the driving test alone and one thread, parked in the tokio reactor with no Postgres session established for the test. The test is kept out of the tree so it cannot hang a pipeline.",
-      "notes": "Parts landed. (1) The identity catalog is repaired: terminal_sessions.id has carried CHECK (id LIKE 'tsn_%') since 0001 and DOMAIN.md 8.5 defines the entity, but 1.1 never listed the prefix, so it existed in the schema and in no authority the id catalog is generated from; TerminalSession tsn_ is now in 1.1, ids.yaml, the identity proto enum and the core prefix table, additively within v1. (2) The worker's tool host: every file operation takes a path proven to be inside an authorized root, a request naming a root the sandbox was not given is refused before any path is considered, a parent component is refused outright, and an ancestor resolving outside the root is refused too because the textual path being inside is not what matters; mutations carry the capability/effect/idempotency context they settle; a declared content digest is checked before anything is written; a patch applies all-or-nothing. Commands run under bounds enforced while they run, and cancellation kills and reaps the child rather than leaving a zombie that still answers kill -0. The terminal conduit ships pipe-backed with the PTY behind a trait: the acceptance statement is about the durable cursor and single dispatch, which the trait's contract carries, and PTY allocation is a substrate concern -- recorded as a limitation, not approximated. (3) The terminal session store in machine control, with attach unverified as described in the blocker."
+      "implementation_complete": true,
+      "blocker": null,
+      "notes": "Three parts. (1) Identity repair: terminal_sessions.id has carried CHECK (id LIKE 'tsn_%') since 0001 and DOMAIN 8.5 defines the entity, but 1.1's canonical id table never listed the prefix, so it existed in the schema and in no authority the identity catalog is generated from; TerminalSession tsn_ is now in 1.1, ids.yaml, the identity proto enum and the core prefix table, additively within v1. (2) The worker's tool host: every file operation takes a path proven to be inside an authorized root, a request naming a root the sandbox was not given is refused before any path is considered, a parent component is refused outright and an ancestor resolving outside the root is refused too because the textual path being inside is not what matters; mutations carry the capability/effect/idempotency context they settle; a declared content digest is checked before anything is written; a patch applies all-or-nothing; commands run under bounds enforced while they run and cancellation kills and reaps the child. (3) The durable terminal session store in machine control, which owns the row because the architecture gate forbids crates/qworkerd a Postgres client at all: last_command_id is the record of what ran, attach takes the decision under a row lock so two reconnects cannot both be told to dispatch, and the cursor only moves forward. Out-of-scope by design: PTY allocation (the conduit is pipe-backed behind a TerminalConduit trait, and the acceptance statement is about the durable cursor, which the trait's contract carries), and stopping a command's grandchildren (containing those is the execution target's job, documented on the method). The previous turn's report that TerminalStore::attach hangs was wrong: a probe replicating the failing test reached teardown having completed every store operation correctly, and the hang was PgPool::close in the shared test harness waiting for a checked-out connection. All six crates' harnesses had it and are fixed. real_boundary is false."
     },
     "EXEC-007": {
       "coverage": "GENUINE_GAP",
