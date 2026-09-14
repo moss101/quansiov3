@@ -1,0 +1,20 @@
+schema_version: v1
+channel: desktop_update
+macos_local_capsule:
+  status: BLOCKED_EXTERNAL
+  required_artifacts:
+    - linux-kernel
+    - linux-root-disk
+  contents:
+    - qworkerd
+    - chromium
+    - base-tooling
+  control_channel:
+    transport: virtio_socket
+    port: 40581
+  isolation:
+    network_devices: 0
+    host_directory_shares: 0
+  blocker: >-
+    The signed V8.1 Linux guest image and its update-catalog SHA-256 digests have not been
+    published. The machine authority refuses to boot an unpinned or mismatched artifact.

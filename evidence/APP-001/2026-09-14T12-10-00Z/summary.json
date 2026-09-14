@@ -1,0 +1,85 @@
+{
+  "task_id": "APP-001",
+  "git_commit": "6b4a954bb18ceea7246c87103b7662272e2135a7",
+  "recorded_at": "2026-09-14T12:15:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test api  # 9 passed: the \u00a715 vocabulary matches the generated catalog in both directions and every code maps to a status; the shape carries exactly \u00a715's four required keys; the served \u00a714 catalog holds the commands the surface routes to; the API writes only its own table (a scan, with an assertion that it read the module); health reports readiness; a missing tenant is AUTH_REQUIRED, a malformed one VALIDATION_BOUNDS and an unknown command NOT_FOUND; CancelRun cancels through the runtime so the owner's table changes, a resend returns the same result marked replayed, and the same command_id with different parameters is CONFLICT_IDEMPOTENCY_MISMATCH; another tenant's call leaves this tenant's run untouched; and the deployable composes from the environment",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-14T12-10-00Z/api-tests.log"
+    },
+    {
+      "command": "cargo test --workspace  # 527 passed, zero failures",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-14T12-10-00Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo fmt --all --check and cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-14T12-10-00Z/rust-clippy.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN with the axum dependency added",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-14T12-10-00Z/static-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test api  # 9 passed: the \u00a715 vocabulary matches the generated catalog in both directions and every code maps to a status; the shape carries exactly \u00a715's four required keys; the served \u00a714 catalog holds the commands the surface routes to; the API writes only its own table (a scan, with an assertion that it read the module); health reports readiness; a missing tenant is AUTH_REQUIRED, a malformed one VALIDATION_BOUNDS and an unknown command NOT_FOUND; CancelRun cancels through the runtime so the owner's table changes, a resend returns the same result marked replayed, and the same command_id with different parameters is CONFLICT_IDEMPOTENCY_MISMATCH; another tenant's call leaves this tenant's run untouched; and the deployable composes from the environment",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --workspace  # 527 passed, zero failures",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check and cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN with the axum dependency added",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/api/mod.rs",
+      "sha256": "654742e076e5f4803ff30f6c54cd38a55cb5de1d3652757c43914069b11bd428",
+      "bytes": 19033
+    },
+    {
+      "path": "crates/server/src/api/error.rs",
+      "sha256": "0e583bdeac1342e77b9a31cc975f238b07a47830b9ffced780ce38d71e301bd5",
+      "bytes": 14272
+    },
+    {
+      "path": "crates/server/src/composition.rs",
+      "sha256": "ca71a954785c2806cf6345d08dd8b6b7e153b6dc51cf551a16c703c4a7e7b9c7",
+      "bytes": 4314
+    },
+    {
+      "path": "crates/server/src/bin/quansio-server.rs",
+      "sha256": "08b7b67ec508d7c8bfad0e15efe815ce229814f5f63419cf2be50ea480dc76f7",
+      "bytes": 860
+    },
+    {
+      "path": "crates/server/src/lib.rs",
+      "sha256": "c8e4fa64734715b45df637e17c92f3395e5ffac8001c014ee07b7527d84f75f2",
+      "bytes": 958
+    },
+    {
+      "path": "crates/server/tests/api.rs",
+      "sha256": "8bc10778d98c4a21436ca6c17201a6e524d0350c35531f8e53ab558000d7deea",
+      "bytes": 19980
+    }
+  ]
+}

@@ -41,44 +41,29 @@ on the bundle id rather than a name a program can choose, and a fence serializin
 agent input by generation and drain. Nine Swift tests and five Rust tests. Its fence is in memory, which
 is one of the gaps the reconciliation already lists.
 
-Current task: **`EXEC-003` — macOS local Linux microVM capsule — next to reconcile**
-(`--next` selects it: M4, `real_boundary: true`). Its boundary is partly present: this is an Apple M5 Pro
-with `swift` and `xcrun`, so Virtualization.framework is available, but `infra/images/` is empty — no Linux
-kernel or rootfs ships — and the hypervisor path needs the `com.apple.security.virtualization`
-entitlement, which needs a signing identity. **The first step is to establish a guest image and the
-entitlement, not to write Rust against a VM that cannot boot.** If that cannot be established,
-`APP-001` (M5, `real_boundary: false`) is executable with certainty, as are CAP-006, OPS-002 and OPS-004.
-Previous task: **`EXEC-005` — cloud microVM execution fabric — `BLOCKED_EXTERNAL`, not implemented.**
-Verified rather than assumed: this host has no cloud credentials (`AWS_ACCESS_KEY_ID`,
-`AWS_SECRET_ACCESS_KEY`, `GOOGLE_APPLICATION_CREDENTIALS`, `ARM_CLIENT_ID`, `GCP_PROJECT` all unset), no
-cloud CLI (`aws` and `gcloud` are not installed) and no `firecracker` binary, so no microVM can be
-placed, snapshotted, warmed or killed here. `implementation_complete: false`, because
-`crates/machine/substrates/cloud_microvm/` and `infra/images/` do not exist. What it builds on is landed:
-EXEC-001 owns the target lifecycle, generations and lease fences — the seam a cloud substrate plugs into
-and the mechanism a fenced replacement needs — and EXEC-008 governs what a guest may reach.
-**`EXEC-003` (macOS microVM capsule) is not blocked and not started.** Its boundary is partly present:
-this is an Apple M5 Pro with `swift` and `xcrun` installed, so Virtualization.framework is available, but
-`infra/images/` is empty — no Linux kernel or rootfs is shipped — and the hypervisor path needs the
-`com.apple.security.virtualization` entitlement, which needs a signing identity. The first step is
-therefore to establish a guest image and the entitlement, not to write Rust against a VM that cannot boot.
-**`EXEC-004` (Windows capsule and native broker) needs Windows and is not runnable here.**
-Previous task: **`EXEC-009` — managed browser session with DOM/CDP-first control — `PASS`, and its
-boundary was real.** Every browser test launches the Google Chrome installed on this host (152) with the
-DevTools protocol on a loopback port and drives it, so nothing stands in for the browser.
-`crates/qworkerd/src/browser/` adds the CDP driver — one frame loop matching responses to calls by id,
-because a page interleaves events with answers — plus §8.4's session rules; understanding is DOM,
-accessibility tree and metadata first, and a screenshot is taken only when the DOM names nothing, which
-is decided by counting *named* accessibility nodes because Chrome always emits structural ones.
-Consequence is classified from the control's own semantics (role, accessible name, href, form), so a
-purchase, a deletion, a send and an inert toggle are different classes at different tiers and an action
-with no consequence is not recorded at all. `web.fetch` reads through the same browser and extraction,
-so research and action cannot disagree about what a page said. The durable `browser_sessions` row is
-owned by machine control, since the architecture gate forbids qworkerd a Postgres client at all, and
-§8.4's rules are enforced there too so two callers cannot disagree about who holds the browser. Four
-defects the real browser caught are recorded in the evidence — an endpoint read that waited for an EOF
-Chrome does not send, `/json/new` needing PUT, an accessibility tree that is never empty, and an
-extraction whose form lookup never matched. New dependency `tokio-tungstenite`, accepted by supply-chain.
-Evidence: `evidence/EXEC-009/2026-09-14T10-30-00Z/`.
+Current task: **`APP-001` — Rust quansio-server API/control composition — `IN_PROGRESS`, first unit
+landed.** A concurrent agent owns M4: it completed EXEC-010 (as `BLOCKED_EXTERNAL`) and is mid-`EXEC-003`
+(in flight, with `native/macos` and a capsule bridge already committed). `--next` says `EXEC-004`, which
+needs a Windows host — the cross-compile target is installed but there is no Windows host, no SDK and no
+`wsl.exe`/`powershell.exe`, and the acceptance needs a real capsule — so this turn took APP-001, a
+different milestone and clearly outside that agent's path.
+What landed: `crates/server/src/api/` (the public v1 surface — §15's error taxonomy as a closed enum
+checked against the generated catalog in both directions, tenant scope with `AUTH_REQUIRED` and
+`VALIDATION_BOUNDS` kept apart, the §14 command catalog and §10 read projections embedded at build time,
+health, and one mutating endpoint), `crates/server/src/composition.rs` (the root that opens one pool and
+applies the schema through its canonical runner) and `crates/server/src/bin/quansio-server.rs` (the
+deployable, which did not exist). `POST /v1/commands/CancelRun` cancels a run by asking the runtime and
+reporting the runtime's answer; idempotency is decided in one `ON CONFLICT` statement so a concurrent
+replay cannot insert a second row. The API writes exactly one table of its own, `commands`, and a
+structural scan over `crates/server/src/api/` fails on any statement naming another — that is the half of
+the ownership acceptance a handler's output cannot show. 9 new tests, 527 across the workspace, all
+gates CLEAN. Evidence: `evidence/APP-001/2026-09-14T12-10-00Z/`.
+**Remaining and named, not implied:** the walking-skeleton smoke test (HTTP command → runtime → gateway
+with the conformance stub → tool proposal → Effect Ledger → projection → WebSocket event), the WebSocket
+surface and its reconnect test, per-tenant rate limits and feature flags, OpenAPI-generated endpoints with
+generated-client contract tests, and handlers for the rest of the catalog.
+Next: continue APP-001 from that list — the walking skeleton is the acceptance and the place to start —
+or take EXEC-004 if a Windows host appears.
 Previous task: **`EXEC-011` — connector and integration broker — `BLOCKED_EXTERNAL`, not implemented.**
 Its acceptance requires each GA connector to pass the shared conformance suite *in its provider sandbox*
 (GitHub, Google Workspace, Slack, a web-search provider), and no sandbox credentials, OAuth client
