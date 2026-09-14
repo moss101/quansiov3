@@ -1354,8 +1354,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T06:48:00Z",
-      "updated_at": "2026-09-14T07:23:00Z",
-      "git_commit": "75dff091be291f068cf0acddf0f573765a92385e",
+      "updated_at": "2026-09-14T07:25:00Z",
+      "git_commit": "15fa6e6252d11546ce57c18db7a66421aa8de9a9",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test computer_use -- --nocapture (6 passed against real PostgreSQL: permission tiers, unknown app fail-closed, concurrent takeover/action serialization, restart recovery, exact ToolCall/generation/tenant fencing, and unknown native input retained for Effect Ledger reconciliation)",
         "QUANSIO_TEST_MACOS_COMPUTER_USE=1 swift test --package-path native/macos --filter ComputerUseTests (8 passed against live NSWorkspace, AX, Screen Recording and NSPasteboard boundaries)",
