@@ -20,6 +20,7 @@
 
 use std::collections::BTreeSet;
 
+pub mod bridge;
 pub mod store;
 
 /// What an action does, in the order the tiers escalate.

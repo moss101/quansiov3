@@ -6,10 +6,15 @@
 //! takeover cannot interleave with agent input.
 
 use quansio_machine::computer_use::{
+    bridge::{
+        ComputerDispatchError, ComputerDispatcher, NativeBridgeError, NativeComputerAction,
+        NativeComputerBridge,
+    },
     store::{ComputerControlError, ComputerControlStore},
     AppIdentity, ComputerGrant, ComputerTier, ComputerUsePolicy, KnownApps, MachineHolder, Refusal,
 };
 use quansio_machine::control::{MachineControl, NewTarget, Substrate, TargetClass};
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::sync::Barrier;
@@ -36,6 +41,24 @@ fn stranger() -> AppIdentity {
 
 fn policy(granted: ComputerTier, known: &[&str]) -> ComputerUsePolicy {
     ComputerUsePolicy::new(KnownApps::of(known.to_vec()), ComputerGrant::up_to(granted))
+}
+
+struct TestBridge {
+    foreground: AppIdentity,
+    failure: Option<&'static str>,
+}
+
+impl NativeComputerBridge for TestBridge {
+    fn foreground_app(&self) -> Result<AppIdentity, NativeBridgeError> {
+        Ok(self.foreground.clone())
+    }
+
+    fn execute(&self, action: &NativeComputerAction) -> Result<Value, NativeBridgeError> {
+        match self.failure {
+            Some(code) => Err(NativeBridgeError::new(code)),
+            None => Ok(json!({ "application": action.application(), "ok": true })),
+        }
+    }
 }
 
 // ------------------------------------------------------------------ permission tiers
@@ -337,6 +360,108 @@ async fn exact_tool_call_and_tenant_scope_fail_closed() {
         ComputerControlStore::load(&mut conn, "tn_01J8Z3K6F1N8VQ2X5W9Y0OTHER", TARGET).await,
         Err(ComputerControlError::NotFound(_))
     ));
+    drop(conn);
+    common::drop_pool(&pool, &name).await;
+}
+
+#[tokio::test]
+async fn rust_dispatch_rechecks_identity_and_keeps_unknown_input_for_reconciliation() {
+    let Some((name, pool)) = prepare("computer_dispatch").await else {
+        common::blocked_marker();
+        return;
+    };
+    let click = NativeComputerAction::Click {
+        application: "com.apple.TextEdit".to_string(),
+        x: 10,
+        y: 20,
+        button: "left".to_string(),
+    };
+    let mut conn = pool.acquire().await.expect("acquire");
+
+    let changed = ComputerDispatcher::new(
+        TestBridge {
+            foreground: stranger(),
+            failure: None,
+        },
+        policy(ComputerTier::SystemKey, &["com.apple.TextEdit"]),
+    );
+    assert!(matches!(
+        changed
+            .execute(&mut conn, TENANT, TARGET, CALL_A, 1, &click)
+            .await,
+        Err(ComputerDispatchError::ForegroundChanged { .. })
+    ));
+    assert!(
+        ComputerControlStore::load(&mut conn, TENANT, TARGET)
+            .await
+            .expect("load")
+            .active_tool_call_id
+            .is_none(),
+        "an identity refusal reached the durable dispatch slot"
+    );
+
+    let denied = ComputerDispatcher::new(
+        TestBridge {
+            foreground: known_app(),
+            failure: None,
+        },
+        policy(ComputerTier::Read, &["com.apple.TextEdit"]),
+    );
+    assert!(matches!(
+        denied
+            .execute(&mut conn, TENANT, TARGET, CALL_A, 1, &click)
+            .await,
+        Err(ComputerDispatchError::Authorization(
+            Refusal::TierNotGranted { .. }
+        ))
+    ));
+
+    let uncertain = ComputerDispatcher::new(
+        TestBridge {
+            foreground: known_app(),
+            failure: Some("native_disconnect"),
+        },
+        policy(ComputerTier::SystemKey, &["com.apple.TextEdit"]),
+    );
+    assert!(matches!(
+        uncertain
+            .execute(&mut conn, TENANT, TARGET, CALL_A, 1, &click)
+            .await,
+        Err(ComputerDispatchError::OutcomeUnknown { .. })
+    ));
+    assert_eq!(
+        ComputerControlStore::load(&mut conn, TENANT, TARGET)
+            .await
+            .expect("load")
+            .active_tool_call_id
+            .as_deref(),
+        Some(CALL_A),
+        "an uncertain native effect was released for a blind retry"
+    );
+    ComputerControlStore::finish_action(&mut conn, TENANT, TARGET, CALL_A, 1)
+        .await
+        .expect("reconcile unknown effect");
+
+    let read = NativeComputerAction::Read {
+        application: "com.apple.TextEdit".to_string(),
+        max_nodes: 32,
+        max_depth: 4,
+        include_screenshot: false,
+    };
+    assert!(matches!(
+        uncertain
+            .execute(&mut conn, TENANT, TARGET, CALL_B, 1, &read)
+            .await,
+        Err(ComputerDispatchError::ReadFailed(_))
+    ));
+    assert!(
+        ComputerControlStore::load(&mut conn, TENANT, TARGET)
+            .await
+            .expect("load")
+            .active_tool_call_id
+            .is_none(),
+        "a failed read left an effect-reconciliation fence"
+    );
     drop(conn);
     common::drop_pool(&pool, &name).await;
 }
