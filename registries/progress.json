@@ -1183,8 +1183,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T07:27:00Z",
-      "updated_at": "2026-09-14T21:10:00Z",
-      "git_commit": "ea03557860f572e054be2b006bade4a5ddbf76aa",
+      "updated_at": "2026-09-14T21:20:00Z",
+      "git_commit": "1efb8c5434c1f898fe339f99aaa8200b917925f2",
       "tests": [
         "cargo test -p quansio-machine --test macos_capsule (5 passed: digest mismatch fail-closed, repeatable start/stop/reset/checkpoint, stale-generation fencing, closed qworkerd vocabulary including cookie-import denial, unpublished catalog cannot boot and has no host-secret/metadata path)",
         "swift test --package-path native/macos --filter MacOSCapsuleTests (3 passed: private device graph, arbitrary port/host URL denial, overlay reset; 1 skipped BLOCKED_EXTERNAL without QUANSIO_TEST_MACOS_VM=1 and signed guest image)",
@@ -1450,8 +1450,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T11:20:00Z",
-      "updated_at": "2026-09-14T21:10:00Z",
-      "git_commit": "ea03557860f572e054be2b006bade4a5ddbf76aa",
+      "updated_at": "2026-09-14T21:20:00Z",
+      "git_commit": "1efb8c5434c1f898fe339f99aaa8200b917925f2",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test api (12 passed: \u00a715 vocabulary, ownership scan, OpenAPI/catalog contract, feature flags, per-tenant RATE_LIMITED, CancelRun owner path, composition)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test walking_skeleton (2 passed: HTTP PostMessage -> conformance-stub fs.read -> Effect Ledger -> projections; WebSocket reconnect-from-cursor)",
