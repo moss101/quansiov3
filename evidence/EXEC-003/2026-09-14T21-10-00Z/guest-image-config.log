@@ -1,0 +1,17 @@
+======================================================================
+ERROR: test_guest_image_config (unittest.loader._FailedTest.test_guest_image_config)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_guest_image_config
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_4/Frameworks/Python.framework/Versions/3.12/lib/python3.12/unittest/loader.py", line 137, in loadTestsFromName
+    module = __import__(module_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsin/projects/quansiov3/tests/architecture/test_guest_image_config.py", line 5, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (errors=1)

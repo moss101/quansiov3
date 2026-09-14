@@ -1,0 +1,83 @@
+{
+  "task_id": "EXEC-003",
+  "git_commit": null,
+  "recorded_at": "2026-09-14T21:10:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-machine --test macos_capsule",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-003/2026-09-14T21-10-00Z/macos-capsule-rust.log"
+    },
+    {
+      "command": "swift test --package-path native/macos --filter MacOSCapsuleTests",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/EXEC-003/2026-09-14T21-10-00Z/macos-vm-blocked.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-machine --test macos_capsule",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "swift test --package-path native/macos --filter MacOSCapsuleTests",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/machine/src/substrates/macos_capsule/mod.rs",
+      "sha256": "95ae1f8b6d00b4d71f6c6e4d7122617657bb4e67a0fb665007c7b7946379c2f2",
+      "bytes": 14454
+    },
+    {
+      "path": "crates/machine/src/substrates/macos_capsule/catalog.rs",
+      "sha256": "96dea40a96dd20bcbe954c2cf37eba41fe91f2a766c10af99ac1c8114206f8bd",
+      "bytes": 6444
+    },
+    {
+      "path": "crates/machine/tests/macos_capsule.rs",
+      "sha256": "46e5f25517831cd1b57f12ffe803f4bd67c9448d6f1d0ee54bb649097ea30a05",
+      "bytes": 8507
+    },
+    {
+      "path": "native/macos/Sources/QuansioMacBridge/MacOSCapsule.swift",
+      "sha256": "b5f79cecda5c82f8a41ca20926007757b2b7ee298f18c2afba203b6da9d99cd8",
+      "bytes": 12832
+    },
+    {
+      "path": "native/macos/Tests/QuansioMacBridgeTests/MacOSCapsuleTests.swift",
+      "sha256": "1d9726108087d6bc942f96f13013d0987e0e82f26de49105308b964cc0c0622e",
+      "bytes": 5864
+    },
+    {
+      "path": "config/guest-images.yaml",
+      "sha256": "1cec59ef1878faf652327b4a22992e41e4b3f405be1ccd5580a867a2b88be600",
+      "bytes": 538
+    },
+    {
+      "path": "evidence/EXEC-003/RECONCILIATION.md",
+      "sha256": "b56993285e0a13230ccb9652939cf33073acd8e2f9fbcf7b2be5d900135df2b4",
+      "bytes": 3960
+    },
+    {
+      "path": "evidence/EXEC-003/2026-09-14T21-10-00Z/NOTES.md",
+      "sha256": "3fbb62753b5dbf45f1af96992f2e66d65a0a74a968882d06eb0b2ddc78b9f962",
+      "bytes": 1264
+    },
+    {
+      "path": "evidence/EXEC-003/2026-09-14T21-10-00Z/macos-capsule-rust.log",
+      "sha256": "206db65e7f5dfdd5f106fc7ad32962b4b56958e8aa4f15469c53d3ac5aae8bdf",
+      "bytes": 437
+    },
+    {
+      "path": "evidence/EXEC-003/2026-09-14T21-10-00Z/macos-vm-blocked.log",
+      "sha256": "9208588f0c380f8a414c00006ae195d563def78a58cb7345722c7abd58676216",
+      "bytes": 1603
+    }
+  ]
+}

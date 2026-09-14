@@ -51,11 +51,11 @@ reported as `BLOCKED_EXTERNAL`; no fake VM counts.
 
 ## Implementation checklist
 
-- [ ] Add the pinned guest-image configuration/schema and digest verifier.
-- [ ] Implement the Rust macOS capsule state adapter over ExecutionTarget/Lease/generation.
-- [ ] Implement the narrow Swift Virtualization.framework VM configuration and lifecycle bridge.
-- [ ] Connect qworkerd only through a private virtio-socket typed channel and deny host/cloud access.
-- [ ] Implement repeatable start/stop/reset/checkpoint/restore with stale-generation fencing.
-- [ ] Add negative image, permission, host-secret, metadata and cookie-import tests.
-- [ ] Run the real macOS VM suite or record the exact `BLOCKED_EXTERNAL` boundary.
-- [ ] Qualify, record evidence, update progress and merge to `main`.
+- [x] Add the pinned guest-image configuration/schema and digest verifier.
+- [x] Implement the Rust macOS capsule state adapter over ExecutionTarget/Lease/generation.
+- [x] Implement the narrow Swift Virtualization.framework VM configuration and lifecycle bridge.
+- [x] Connect qworkerd only through a private virtio-socket typed channel and deny host/cloud access.
+- [x] Implement repeatable start/stop/reset/checkpoint/restore with stale-generation fencing.
+- [x] Add negative image, permission, host-secret, metadata and cookie-import tests.
+- [x] Run the real macOS VM suite or record the exact `BLOCKED_EXTERNAL` boundary.
+- [x] Qualify, record evidence, update progress and merge to `main`.

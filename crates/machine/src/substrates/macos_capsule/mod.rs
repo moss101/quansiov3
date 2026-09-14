@@ -5,6 +5,8 @@
 //! Virtualization.framework bridge. The guest has one private virtio-socket channel and no direct
 //! network or host-filesystem device; egress remains a host-side broker decision.
 
+mod catalog;
+
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
@@ -13,6 +15,8 @@ use sha2::{Digest as _, Sha256};
 
 use crate::control::{ExecutionTarget, Substrate, TargetFence};
 use crate::gateway::ActionEnvelope;
+
+pub use catalog::{GuestImageCatalog, GUEST_IMAGES_YAML};
 
 /// Fixed private virtio-socket port on which the guest image launches qworkerd.
 pub const QWORKERD_VSOCK_PORT: u32 = 40_581;
@@ -155,6 +159,17 @@ pub enum CapsuleError {
     /// Saved-login import must take the tier-4 approval path, never the guest channel.
     #[error("browser.session.import requires an explicit tier-4 approval")]
     CookieImportRequiresApproval,
+    /// The desktop-update catalog is not a published, digest-pinned release.
+    #[error("macos local capsule image is unavailable ({status}): {reason}")]
+    ImageUnavailable {
+        /// Catalog status (`BLOCKED_EXTERNAL`, `unpublished`, …).
+        status: String,
+        /// Human-readable blocker from the catalog.
+        reason: String,
+    },
+    /// The embedded guest-image catalog is not the shape the controller requires.
+    #[error("guest-image catalog is invalid: {0}")]
+    CatalogInvalid(String),
     /// The native bridge refused the operation.
     #[error("macOS capsule bridge: {0}")]
     Native(String),

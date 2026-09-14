@@ -15,7 +15,8 @@ use quansio_machine::control::{
 use quansio_machine::gateway::{ActionEnvelope, EnvelopeKind};
 use quansio_machine::substrates::macos_capsule::{
     guest_service, verify_artifact, CapsuleError, CapsuleLaunch, CapsuleState, GuestImage,
-    GuestService, ImageArtifact, MacosCapsuleBridge, MacosCapsuleController, QWORKERD_VSOCK_PORT,
+    GuestImageCatalog, GuestService, ImageArtifact, MacosCapsuleBridge, MacosCapsuleController,
+    QWORKERD_VSOCK_PORT,
 };
 
 #[derive(Clone)]
@@ -228,6 +229,23 @@ fn stale_generation_is_refused_before_native_execution() {
         .expect_err("stale fence must fail");
     assert!(matches!(error, CapsuleError::StaleGeneration { .. }));
     assert!(calls.lock().unwrap().is_empty());
+}
+
+#[test]
+fn unpublished_catalog_cannot_boot_and_has_no_path_to_host_secrets_or_metadata() {
+    let catalog = GuestImageCatalog::load().expect("embedded catalog");
+    assert_eq!(catalog.channel, "desktop_update");
+    assert_eq!(
+        catalog.required_artifacts,
+        ["linux-kernel", "linux-root-disk"]
+    );
+    assert_eq!(catalog.contents, ["qworkerd", "chromium", "base-tooling"]);
+    assert_eq!(catalog.vsock_port, QWORKERD_VSOCK_PORT);
+    assert!(catalog.host_secrets_and_cloud_metadata_unreachable());
+    assert!(matches!(
+        catalog.require_published(),
+        Err(CapsuleError::ImageUnavailable { status, .. }) if status == "BLOCKED_EXTERNAL"
+    ));
 }
 
 #[test]
