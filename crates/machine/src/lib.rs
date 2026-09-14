@@ -7,10 +7,13 @@
 //! stale controller harmless. `gateway` is the typed envelope that reaches a worker and the rules that
 //! gate it (EXEC-002). `egress` is the broker that decides which destinations an execution target may
 //! reach, and denies by default (EXEC-008). `secrets` is the secret broker: opaque handles and the
-//! one boundary where material is resolved (EXEC-007). Nothing here decides what to run; that is the
+//! one boundary where material is resolved (EXEC-007). `computer_use` is the policy over native
+//! automation: capability tiers, a fail-closed app identity and a fence that serializes a human takeover
+//! against agent input (EXEC-010). Nothing here decides what to run; that is the
 //! runtime's.
 #![forbid(unsafe_code)]
 
+pub mod computer_use;
 pub mod control;
 pub mod egress;
 pub mod gateway;

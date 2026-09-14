@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-14T10:42:00Z",
+  "updated_at": "2026-09-14T11:10:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1354,16 +1354,23 @@
       "status": "IN_PROGRESS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T06:48:00Z",
-      "updated_at": "2026-09-14T06:54:00Z",
+      "updated_at": "2026-09-14T11:10:00Z",
       "git_commit": null,
-      "tests": [],
+      "tests": [
+        "input to this task, not its verification: swift test --package-path native/macos (9 passed, 5 new, against the live system) and cargo test -p quansio-machine --test computer_use (5 passed) cover the macOS AX surface and the policy core; see evidence/EXEC-010/2026-09-14T11-00-00Z/summary.json"
+      ],
       "artifacts": [
-        "evidence/EXEC-010/RECONCILIATION.md"
+        "evidence/EXEC-010/RECONCILIATION.md",
+        "evidence/EXEC-010/2026-09-14T11-00-00Z/summary.json",
+        "evidence/EXEC-010/2026-09-14T11-00-00Z/NOTES.md",
+        "native/macos/Sources/QuansioMacBridge/ComputerUse.swift",
+        "crates/machine/src/computer_use/mod.rs",
+        "crates/machine/tests/computer_use.rs"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed and reconciled by a concurrent agent at 06:48 (evidence/EXEC-010/RECONCILIATION.md); this entry was briefly overwritten with a PASS by a second agent that did not see that claim, and is restored here. The task is NOT complete. The reconciliation's gap list is the authoritative one: process-local control does not survive a restart (the fence in crates/machine/src/computer_use/ is in memory), no native bridge is wired behind a typed Rust port, Windows is a crate marker only, the Tool Registry exposes only computer.click and computer.type, computer.read/clipboard/system_key are absent from the canonical catalog, and generated command parameter schemas are placeholders. What a second agent did contribute and has committed meanwhile is the macOS AX/input surface in native/macos/Sources/QuansioMacBridge/ComputerUse.swift with a live boundary probe (AXIsProcessTrusted true, a frontmost application resolving by bundle id, an AX role and window count read with err=0), the tier ladder and fail-closed app identity and the in-memory fence in crates/machine/src/computer_use/, and the tests for both -- which the reconciliation had already noted as preserved uncommitted input. A forward migration for the durable computer_controls row the reconciliation describes is not written."
     },
     "EXEC-011": {
       "coverage": "GENUINE_GAP",

@@ -1,0 +1,37 @@
+Building for debugging...
+[0/2] Write swift-version--58304C5D6DBC2206.txt
+Build complete! (0.12s)
+Test Suite 'All tests' started at 2026-09-14 09:49:36.270.
+Test Suite 'QuansioMacBridgePackageTests.xctest' started at 2026-09-14 09:49:36.271.
+Test Suite 'ComputerUseTests' started at 2026-09-14 09:49:36.271.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testATreeWalkIsBounded]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testATreeWalkIsBounded]' passed (0.066 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testBoundsThatAreNotUsableAreRefused]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testBoundsThatAreNotUsableAreRefused]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testFrontmostAppResolvesWithoutAccessibility]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testFrontmostAppResolvesWithoutAccessibility]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenCaptureAvailabilityAgreesWithReadableWindowTitles]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenCaptureAvailabilityAgreesWithReadableWindowTitles]' passed (0.022 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testTheClipboardRoundTripsAndIsPutBack]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testTheClipboardRoundTripsAndIsPutBack]' passed (0.006 seconds).
+Test Suite 'ComputerUseTests' passed at 2026-09-14 09:49:36.366.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.094 (0.095) seconds
+Test Suite 'MacBridgeTests' started at 2026-09-14 09:49:36.366.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testAppleSiliconIsSupported]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testAppleSiliconIsSupported]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testIntelIsBestEffort]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testIntelIsBestEffort]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testRequireSupportPassesOnArm64]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testRequireSupportPassesOnArm64]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testUnknownArchitectureFailsClosed]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testUnknownArchitectureFailsClosed]' passed (0.000 seconds).
+Test Suite 'MacBridgeTests' passed at 2026-09-14 09:49:36.366.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'QuansioMacBridgePackageTests.xctest' passed at 2026-09-14 09:49:36.366.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.095 (0.096) seconds
+Test Suite 'All tests' passed at 2026-09-14 09:49:36.366.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.095 (0.096) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
