@@ -63,11 +63,18 @@ pub async fn fresh_database(name: &str) -> Option<PgPool> {
 }
 
 /// Close a pool and drop its scratch database.
+/// Close a pool and drop its scratch database.
+///
+/// The pool is **not** closed first. `PgPool::close` waits for every checked-out connection to be
+/// returned, and a test calling this is usually still holding one — the connection is a local that
+/// outlives its last query — so closing first waits forever instead of finishing.
+/// `DROP DATABASE ... WITH (FORCE)` terminates whatever sessions are still attached, so the database is
+/// gone either way, and the pool is closed when its owner drops it.
 pub async fn drop_pool(pool: &PgPool, name: &str) {
     let Some(admin) = admin_url() else {
         return;
     };
-    pool.close().await;
+    let _ = pool;
     if let Ok(admin_pool) = PgPoolOptions::new()
         .max_connections(2)
         .connect(&admin)

@@ -1,0 +1,148 @@
+{
+  "task_id": "EXEC-006",
+  "git_commit": "ba04ac1af2d798cb8634099b6d618c33674b1034",
+  "recorded_at": "2026-09-14T09:45:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test terminal --test control --test egress --test secrets  # 35 passed: 5 terminal (create/open, attach dispatch then replay from the durable cursor, cursor forward-only, a closed or lost session refusing, tenant and target scoping, a bad session id and a corrupt cursor refused, and two concurrent reconnects of one command neither of which is told to dispatch), 12 control, 10 egress and 8 secrets",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-006/2026-09-14T09-40-00Z/machine-db-tests.log"
+    },
+    {
+      "command": "cargo test -p quansio-qworkerd  # 20 passed: 13 control-channel tests and 7 tool-host tests -- the task's path-traversal, PTY-reconnect and command-cancellation cases, plus digest-checked writes, all-or-nothing patches, bounded streaming output, a deadline stopping the command, an already-cancelled token refusing, and a cancelled command killed and reaped so its pid is released",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-006/2026-09-14T09-40-00Z/qworkerd-tests.log"
+    },
+    {
+      "command": "cargo test --workspace  # 496 passed across 80 suites, 7 of 7 runs clean, zero failures. Before the harness fix in this task the same suite was clean in 8 of 10 runs at dd5e024 and 9 of 10 at fb50673.",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-006/2026-09-14T09-40-00Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo fmt --all --check  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-006/2026-09-14T09-40-00Z/rust-fmt.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-006/2026-09-14T09-40-00Z/rust-clippy.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN; V8.1 PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-006/2026-09-14T09-40-00Z/static-gates.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-006/2026-09-14T09-40-00Z/ci-pipeline.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test terminal --test control --test egress --test secrets  # 35 passed: 5 terminal (create/open, attach dispatch then replay from the durable cursor, cursor forward-only, a closed or lost session refusing, tenant and target scoping, a bad session id and a corrupt cursor refused, and two concurrent reconnects of one command neither of which is told to dispatch), 12 control, 10 egress and 8 secrets",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-qworkerd  # 20 passed: 13 control-channel tests and 7 tool-host tests -- the task's path-traversal, PTY-reconnect and command-cancellation cases, plus digest-checked writes, all-or-nothing patches, bounded streaming output, a deadline stopping the command, an already-cancelled token refusing, and a cancelled command killed and reaped so its pid is released",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --workspace  # 496 passed across 80 suites, 7 of 7 runs clean, zero failures. Before the harness fix in this task the same suite was clean in 8 of 10 runs at dd5e024 and 9 of 10 at fb50673.",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN; V8.1 PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/qworkerd/src/tools/mod.rs",
+      "sha256": "52baac2062075bc2404d3f2b1738aad4063a4564ba91e65616bc86811942012b",
+      "bytes": 8847
+    },
+    {
+      "path": "crates/qworkerd/src/tools/sandbox.rs",
+      "sha256": "76ceebad85bb615222738ceef2e6ba5e408a644a45be41ce45cdc4b76394e541",
+      "bytes": 11761
+    },
+    {
+      "path": "crates/qworkerd/src/tools/files.rs",
+      "sha256": "e6848b159c76a5ce86f9eb03839b21c2dbce777a110207946dee1c3ed0d485ba",
+      "bytes": 18784
+    },
+    {
+      "path": "crates/qworkerd/src/tools/process.rs",
+      "sha256": "766a2975956a3137f3da8f22c96d8d3b42d820bba1380d117318318c59ccc1ac",
+      "bytes": 14838
+    },
+    {
+      "path": "crates/qworkerd/src/tools/terminal.rs",
+      "sha256": "0b1ad5851c3bb4428c0632310500dddb0277909c39011736d8b6e916f07eabd2",
+      "bytes": 9540
+    },
+    {
+      "path": "crates/qworkerd/tests/tools.rs",
+      "sha256": "915231e8d3e6a1039948602c44b865ace0683b593285bb48f0dec1575a86ec9e",
+      "bytes": 22432
+    },
+    {
+      "path": "crates/machine/src/control/terminal.rs",
+      "sha256": "da4d3cd8567c4a36683ba3b246e1d78a7d17701393cfe6ca70fca37a1a9bae22",
+      "bytes": 14190
+    },
+    {
+      "path": "crates/machine/tests/terminal.rs",
+      "sha256": "06fc07d668e24be954da2c432edbbf4105209048250cf33d7656419ee22514c4",
+      "bytes": 13964
+    },
+    {
+      "path": "crates/machine/tests/common/mod.rs",
+      "sha256": "a3c57c305007d135207a91e201e6467b5d581fdcf46711c42d7cd9ac2fe2e6ce",
+      "bytes": 4293
+    },
+    {
+      "path": "crates/server/tests/common/mod.rs",
+      "sha256": "23cdcb0567989a54f60af2eee2eede792ee9d4ae77c0fa5136252996be40ac29",
+      "bytes": 4781
+    },
+    {
+      "path": "DOMAIN.md",
+      "sha256": "1cc6939f69efa403a4f8fb0769c9672ed83ce96c02b3667c2dfa595c2b43e61e",
+      "bytes": 46748
+    },
+    {
+      "path": "schemas/catalog/ids.yaml",
+      "sha256": "00c62a81aa2222bb0cb4c95866cb3c8530827704a1b26fefd0d2498b8b572bbf",
+      "bytes": 1042
+    }
+  ]
+}

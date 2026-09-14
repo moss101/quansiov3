@@ -1,0 +1,48 @@
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+   Compiling quansio-qworkerd v0.1.0 (/Users/mohsin/projects/quansiov3/crates/qworkerd)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.21s
+     Running unittests src/lib.rs (target/debug/deps/quansio_qworkerd-64fc9d1a4149ccce)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/host.rs (target/debug/deps/host-7be4a37fb8468aec)
+
+running 13 tests
+test a_private_worker_is_never_dialled ... ok
+test an_unknown_kind_is_refused_rather_than_guessed ... ok
+test the_sink_bounds_each_chunk_as_it_arrives ... ok
+test a_worker_reports_the_state_it_observes_and_only_its_own_generation ... ok
+test a_failing_tool_is_recorded_as_a_failure ... ok
+test a_replayed_dispatch_is_answered_from_the_record_not_run_again ... ok
+test output_is_bounded_while_the_tool_streams_and_evidence_is_uploaded ... ok
+test a_stale_envelope_fails_before_any_tool_runs ... ok
+test a_cancelled_effect_is_recorded_and_not_re_dispatched ... ok
+test qworkerd_evaluates_no_policy_or_capability ... ok
+test a_checkpoint_hook_records_the_target ... ok
+test a_replay_after_the_lease_lapsed_is_fenced_rather_than_served ... ok
+test qworkerd_reaches_no_control_plane_database ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/tools.rs (target/debug/deps/tools-b4ceeb54ecf42a6c)
+
+running 7 tests
+test a_reconnect_resumes_from_the_durable_cursor_without_running_the_command_again ... ok
+test a_root_must_be_absolute_existing_and_a_directory ... ok
+test a_path_that_leaves_its_root_is_refused_before_any_io ... ok
+test a_patch_applies_all_or_nothing ... ok
+test a_write_checks_its_declared_digest_and_reads_back_with_provenance ... ok
+test output_is_bounded_while_a_command_runs ... ok
+kill: 91148: No such process
+test a_command_is_cancelled_while_it_runs_and_stopped_when_it_is ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+   Doc-tests quansio_qworkerd
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

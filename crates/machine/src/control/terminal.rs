@@ -7,15 +7,6 @@
 //! channel. The worker keeps the conduit and decides *whether* to run a command; this store keeps the
 //! answer, so a worker that restarts has nothing to remember.
 //!
-//! # Open defect
-//!
-//! `attach` is **not verified**. It hangs when driven against PostgreSQL — parked in the tokio reactor
-//! with no session established — while every other method on this store completes, including their own
-//! `FOR UPDATE` statements, and the sibling suites (`control`, `egress`) pass against the same database.
-//! It reproduces with a single test and one thread. The database path is called out here rather than
-//! left implicit because a store whose read-mostly methods work and whose one lock-taking decision point
-//! does not is exactly the shape a reviewer should not accept on trust.
-//!
 //! //! Two rules make a reconnect safe:
 //!
 //! * **`last_command_id` is the record of what ran.** An attach naming that command is a replay and runs
