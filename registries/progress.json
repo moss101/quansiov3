@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-13T19:11:00Z",
+  "updated_at": "2026-09-14T09:05:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1221,18 +1221,32 @@
       "notes": ""
     },
     "EXEC-006": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "coverage": "GENUINE_GAP",
+      "status": "IN_PROGRESS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-14T08:05:00Z",
+      "updated_at": "2026-09-14T09:05:00Z",
+      "git_commit": "fa52887",
+      "tests": [
+        "cargo test -p quansio-qworkerd (20 passed: 13 control-channel tests and 7 tool-host tests. The tool tests are the task's three: path traversal -- a parent component refused outright whether or not it would land inside the root, an absolute path refused rather than reinterpreted, an unauthorized root refused before any path is considered, a symbolic link inside the root pointing outside refused for both read and write with the file outside proven unwritten, and the ordinary case working so the refusals are the rules and not a broken host; PTY reconnect -- the replay decision asserted directly, a reconnect of a command that ran resuming from the durable cursor and not dispatching, a different command dispatching from that cursor, the cursor refusing to move backwards, and a closed or lost session refusing the attach; command cancellation -- a cancelled command killed and reaped so its pid is released and it never reaches its marker, a deadline stopping the command the same way and naming the deadline, an already-cancelled token refusing without starting anything, and output bounded to 128 bytes of 20000 produced with the total counted.)",
+        "cargo test -p quansio-machine --test control (12 passed) and --test egress (10 passed) against real PostgreSQL, after the terminal work",
+        "python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/workspace_check.py (CLEAN)"
+      ],
+      "artifacts": [
+        "crates/qworkerd/src/tools/mod.rs",
+        "crates/qworkerd/src/tools/sandbox.rs",
+        "crates/qworkerd/src/tools/files.rs",
+        "crates/qworkerd/src/tools/process.rs",
+        "crates/qworkerd/src/tools/terminal.rs",
+        "crates/qworkerd/tests/tools.rs",
+        "crates/machine/src/control/terminal.rs",
+        "DOMAIN.md",
+        "schemas/catalog/ids.yaml"
+      ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "blocker": "TerminalStore::attach hangs against PostgreSQL and is not diagnosed; the durable cursor is therefore not verified. Ruled out: the database is reachable and the control and egress suites pass against it; open, load, advance and close all complete on the same store, including their own FOR UPDATE statements; the hang reproduces with the driving test alone and one thread, parked in the tokio reactor with no Postgres session established for the test. The test is kept out of the tree so it cannot hang a pipeline.",
+      "notes": "Parts landed. (1) The identity catalog is repaired: terminal_sessions.id has carried CHECK (id LIKE 'tsn_%') since 0001 and DOMAIN.md 8.5 defines the entity, but 1.1 never listed the prefix, so it existed in the schema and in no authority the id catalog is generated from; TerminalSession tsn_ is now in 1.1, ids.yaml, the identity proto enum and the core prefix table, additively within v1. (2) The worker's tool host: every file operation takes a path proven to be inside an authorized root, a request naming a root the sandbox was not given is refused before any path is considered, a parent component is refused outright, and an ancestor resolving outside the root is refused too because the textual path being inside is not what matters; mutations carry the capability/effect/idempotency context they settle; a declared content digest is checked before anything is written; a patch applies all-or-nothing. Commands run under bounds enforced while they run, and cancellation kills and reaps the child rather than leaving a zombie that still answers kill -0. The terminal conduit ships pipe-backed with the PTY behind a trait: the acceptance statement is about the durable cursor and single dispatch, which the trait's contract carries, and PTY allocation is a substrate concern -- recorded as a limitation, not approximated. (3) The terminal session store in machine control, with attach unverified as described in the blocker."
     },
     "EXEC-007": {
       "coverage": "GENUINE_GAP",

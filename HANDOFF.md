@@ -20,8 +20,12 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M4 — the execution plane (M0/M1/M2/M3 complete as far as INT-002's credentials allow)
-Current task: **`EXEC-006` — file, terminal and process tool host — being claimed next**
-(`--next` selects it: M4, depends on `EXEC-002`, `RUN-007` and `RUN-011`, all `PASS`).
+Current task: **`EXEC-006` — file, terminal and process tool host — `IN_PROGRESS`, NOT complete.**
+Two parts landed: the worker's tool host (`crates/qworkerd/src/tools/`, 7 tests) and the terminal
+session store (`crates/machine/src/control/terminal.rs`). One part does not work: **`TerminalStore::attach`
+hangs against PostgreSQL and is not diagnosed**, so the durable cursor is not verified and the task must
+not be read as done. The driving test is deliberately kept out of the tree (preserved in the goal scratch
+dir) so it cannot hang a pipeline. Everything landed is committed at `fa52887`; the tree is clean.
 Previous task: **`EXEC-007` — secret broker and opaque credential handles — `PASS`.**
 `crates/machine/src/secrets/` keeps credential material behind an opaque `sec_` handle: `SecretMaterial`
 has no `Display`, `Serialize` or `Clone` and prints redacted, and `SecretHandle` has no field the
@@ -296,8 +300,11 @@ holds EXEC-003, EXEC-004, EXEC-005, APP-001, CAP-006, OPS-002, OPS-004, OPS-005 
 task that unblocks the most downstream work, and if a task's toolchain or substrate cannot execute on
 this host, record that and take the next one.
 
-**Also outstanding:** the residual Postgres lock-table capacity limit and the undiagnosed `turn_loop.rs`
-protocol-state race, both under Known defects. Neither is inside a ready task's paths.
+**The next action is to diagnose `EXEC-006`'s hang, not to take a new task.** Note that
+`validate_v81.py --next` now reports `EXEC-011`, because the selector only considers `NOT_STARTED` and
+`FAIL` tasks and `EXEC-006` is `IN_PROGRESS`; that is a mechanism quirk, not a decision that EXEC-006 is
+finished. Also outstanding: the residual Postgres lock-table capacity limit and the undiagnosed
+`turn_loop.rs` protocol-state race, both under Known defects.
 
 ## Ready queue
 
@@ -417,6 +424,19 @@ rather than fabricated.
   it from 2 in 6 to **1 in 10** — recorded, not claimed fixed. *Better fix, not attempted here because
   it spans every crate's test harness:* migrate one template database per test binary and clone it with
   `CREATE DATABASE ... TEMPLATE ...`.
+- **`TerminalStore::attach` hangs (EXEC-006, open, blocking that task).** With both tool-host parts
+  landed, `attach` in `crates/machine/src/control/terminal.rs` never returns when driven against the dev
+  PostgreSQL: the process parks in the tokio reactor on I/O with **no Postgres session established for
+  the test**, and it reproduces with a single test and one thread. Ruled out: the database is reachable
+  (`psql` answers, port 56440 open); `cargo test -p quansio-machine --test control` (12) and `--test
+  egress` (10) both pass against the same database immediately after; and on the same store `open`,
+  `load`, `advance` and `close` all complete, including their own `BEGIN`/`FOR UPDATE`/`COMMIT`
+  statements — so the transaction idiom and row locking are not the cause. `attach` differs from
+  `advance` by reading the full row through `row_to_session` and by conditionally writing
+  `last_command_id` before committing, which is where to look next. *Repro:* restore
+  `terminal-tests-hanging.rs` from the goal scratch dir over `crates/machine/tests/terminal.rs` and run
+  `cargo test -p quansio-machine --test terminal a_reconnect_replays` with `QUANSIO_TEST_POSTGRES_URL`
+  set. The two tests that call `attach` are the ones that hang.
 - **`turn_loop.rs` protocol-state write races under parallel load.**
   `a_turn_executes_tool_proposals_through_capability_policy_and_the_effect_ledger` failed once with
   `duplicate key value violates unique constraint "protocol_states_pkey"` when the whole workspace
