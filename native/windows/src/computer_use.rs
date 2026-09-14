@@ -269,11 +269,13 @@ mod tests {
     #[test]
     fn non_windows_boundary_reports_blocked_external() {
         #[cfg(not(windows))]
-        assert!(WindowsComputerBridge
+        let error = WindowsComputerBridge
             .foreground_app()
-            .expect_err("not Windows")
-            .code
-            .contains("BLOCKED_EXTERNAL"));
+            .expect_err("not Windows");
+        #[cfg(not(windows))]
+        eprintln!("{}", error.code);
+        #[cfg(not(windows))]
+        assert!(error.code.contains("BLOCKED_EXTERNAL"));
     }
 
     #[test]
