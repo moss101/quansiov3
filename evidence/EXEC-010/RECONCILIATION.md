@@ -68,11 +68,11 @@ artifact or workspace data is rewritten.
 
 ## Implementation checklist
 
-- [ ] Add the canonical `ComputerControl` shape/tool names and regenerate contracts/catalogs.
-- [ ] Replace the process-local-only fence with a durable, tenant-scoped control store and recovery tests.
-- [ ] Add a typed native bridge port and enforce exact app identity, computer tier and fence generation.
-- [ ] Materialize read/click/type/clipboard/system-key declarations and ToolCall/effect-path tests.
-- [ ] Complete macOS AX/screenshot/input behavior with safe, explicitly gated real-boundary tests.
-- [ ] Complete the allowlisted Windows UIA/input broker and its platform-gated tests.
-- [ ] Exercise negative, concurrent takeover, crash/restart and migration paths.
-- [ ] Run full Rust/Swift/static/validator suites, record evidence, update progress and merge to `main`.
+- [x] Add the canonical `ComputerControl` shape/tool names and regenerate contracts/catalogs.
+- [x] Replace the process-local-only fence with a durable, tenant-scoped control store and recovery tests.
+- [x] Add a typed native bridge port and enforce exact app identity, computer tier and fence generation.
+- [x] Materialize read/click/type/clipboard/system-key declarations and ToolCall/effect-path tests.
+- [x] Complete macOS AX/screenshot/input behavior with safe, explicitly gated real-boundary tests.
+- [x] Complete the allowlisted Windows UIA/input broker and its platform-gated tests.
+- [x] Exercise negative, concurrent takeover, crash/restart and migration paths.
+- [x] Run full Rust/Swift/static/validator suites, record evidence, update progress and merge to `main`.

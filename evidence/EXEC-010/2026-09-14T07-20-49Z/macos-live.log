@@ -1,0 +1,33 @@
+[0/1] Planning build
+Building for debugging...
+[0/2] Write swift-version--58304C5D6DBC2206.txt
+Build complete! (0.10s)
+Test Suite 'Selected tests' started at 2026-09-14 10:21:42.041.
+Test Suite 'QuansioMacBridgePackageTests.xctest' started at 2026-09-14 10:21:42.042.
+Test Suite 'ComputerUseTests' started at 2026-09-14 10:21:42.042.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testATreeWalkIsBounded]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testATreeWalkIsBounded]' passed (0.045 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testBoundsThatAreNotUsableAreRefused]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testBoundsThatAreNotUsableAreRefused]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testExactForegroundIdentityFailsClosed]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testExactForegroundIdentityFailsClosed]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testFrontmostAppResolvesWithoutAccessibility]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testFrontmostAppResolvesWithoutAccessibility]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenCaptureAvailabilityAgreesWithReadableWindowTitles]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenCaptureAvailabilityAgreesWithReadableWindowTitles]' passed (0.026 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenshotOutputIsHardBounded]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenshotOutputIsHardBounded]' passed (0.475 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testSystemKeyVocabularyFailsBeforePostingUnknownInput]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testSystemKeyVocabularyFailsBeforePostingUnknownInput]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testTheClipboardRoundTripsAndIsPutBack]' started.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testTheClipboardRoundTripsAndIsPutBack]' passed (0.003 seconds).
+Test Suite 'ComputerUseTests' passed at 2026-09-14 10:21:42.592.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.550 (0.550) seconds
+Test Suite 'QuansioMacBridgePackageTests.xctest' passed at 2026-09-14 10:21:42.592.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.550 (0.550) seconds
+Test Suite 'Selected tests' passed at 2026-09-14 10:21:42.592.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.550 (0.551) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
