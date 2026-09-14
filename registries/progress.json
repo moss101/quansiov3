@@ -1351,13 +1351,15 @@
     },
     "EXEC-010": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "IN_PROGRESS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T06:48:00Z",
-      "updated_at": "2026-09-14T06:48:00Z",
+      "updated_at": "2026-09-14T06:54:00Z",
       "git_commit": null,
       "tests": [],
-      "artifacts": [],
+      "artifacts": [
+        "evidence/EXEC-010/RECONCILIATION.md"
+      ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
