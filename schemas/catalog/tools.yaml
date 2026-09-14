@@ -13,8 +13,11 @@ tools:
 - browser.screenshot
 - web.search
 - web.fetch
+- computer.read
 - computer.click
 - computer.type
+- computer.clipboard
+- computer.system_key
 - connector.<id>.<op>
 - scm.git.<op>
 - scm.pr.<op>

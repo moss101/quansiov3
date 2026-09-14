@@ -1,0 +1,102 @@
+{
+  "task_id": "EXEC-010",
+  "git_commit": "6397e6b8015260af9672c3b71817da7ccba1cc25",
+  "recorded_at": "2026-09-14T11:05:00Z",
+  "commands": [
+    {
+      "command": "swift test --package-path native/macos  # 9 passed, 5 of them new: identity resolves without Accessibility, a tree walk is bounded in nodes and depth, unusable bounds are typed refusals, the clipboard round-trips and is put back, and screen-capture availability agrees with whether window titles are readable -- against the live system, with the process trusted for Accessibility and Screen Recording granted",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-010/2026-09-14T11-00-00Z/swift-tests.log"
+    },
+    {
+      "command": "cargo test -p quansio-machine --test computer_use  # 5 passed: a tier is a grant and a run cannot reach past it; an application the runtime does not recognise is refused at every tier including system_key, with a missing foreground app its own refusal and an impostor using a known display name refused on its bundle id; a takeover cannot race with agent input, including that a takeover waits for an action in flight and that automation resumes only on an explicit handback; an action cannot close a generation the fence moved past; and eight concurrent actions against a takeover never interleave",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-010/2026-09-14T11-00-00Z/computer-use-tests.log"
+    },
+    {
+      "command": "cargo test --workspace  # 509 passed across 83 suites, zero failures",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-010/2026-09-14T11-00-00Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo fmt --all --check and cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-010/2026-09-14T11-00-00Z/rust-clippy.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN; V8.1 PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-010/2026-09-14T11-00-00Z/static-gates.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-010/2026-09-14T11-00-00Z/ci-pipeline.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "swift test --package-path native/macos  # 9 passed, 5 of them new: identity resolves without Accessibility, a tree walk is bounded in nodes and depth, unusable bounds are typed refusals, the clipboard round-trips and is put back, and screen-capture availability agrees with whether window titles are readable -- against the live system, with the process trusted for Accessibility and Screen Recording granted",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-machine --test computer_use  # 5 passed: a tier is a grant and a run cannot reach past it; an application the runtime does not recognise is refused at every tier including system_key, with a missing foreground app its own refusal and an impostor using a known display name refused on its bundle id; a takeover cannot race with agent input, including that a takeover waits for an action in flight and that automation resumes only on an explicit handback; an action cannot close a generation the fence moved past; and eight concurrent actions against a takeover never interleave",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --workspace  # 509 passed across 83 suites, zero failures",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check and cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN; V8.1 PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "native/macos/Sources/QuansioMacBridge/ComputerUse.swift",
+      "sha256": "f13418e314d9a85ff790bf27cac50e82ce17565093db59994826aaf762965665",
+      "bytes": 8689
+    },
+    {
+      "path": "native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift",
+      "sha256": "82a3a5aa086f27506778dce54c15bc62eb144380415cf2d001d988668b213bf3",
+      "bytes": 4081
+    },
+    {
+      "path": "crates/machine/src/computer_use/mod.rs",
+      "sha256": "f62df6f6f57353e12b98d8110355c2c8078dfae7a271170756ce9d457bb32bf9",
+      "bytes": 15137
+    },
+    {
+      "path": "crates/machine/src/lib.rs",
+      "sha256": "27b8a9ee694323158fa5541dc13032f662a6278ebf8df0dcbccb74693ebe7ae8",
+      "bytes": 1264
+    },
+    {
+      "path": "crates/machine/tests/computer_use.rs",
+      "sha256": "f2ee0fb6734043e47b7730b7a491b11afc6b1458889eb8f034110340445290d5",
+      "bytes": 11819
+    }
+  ]
+}

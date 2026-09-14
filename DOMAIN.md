@@ -49,6 +49,7 @@ Use these names in code, contracts, events, UI copy and tests. Do not introduce 
 | **Tool** | A typed, registered capability the runtime can dispatch (file, terminal, browser, connector, artifact, work, user). |
 | **ToolCall** | One proposed and validated invocation of a Tool inside a Step. |
 | **ExecutionTarget** | A managed execution environment (persistent workspace computer or isolated task runtime) on a substrate. |
+| **ComputerControl** | Durable native-computer input ownership and fencing state for one ExecutionTarget. |
 | **Substrate** | How a target is realized: cloud microVM, macOS local capsule, Windows local capsule, Windows native VM, customer private worker. |
 | **Lease** | Time-bounded exclusive control of an ExecutionTarget by one controller generation. |
 | **Generation** | Monotonic fencing number for a Run/AgentThread/Target controller; stale generations are rejected. |
@@ -348,7 +349,7 @@ timeout/disconnect → OUTCOME_UNKNOWN → reconcile before any retry
 ```
 
 ### 7.5 Tool
-`name (namespaced: fs.read, fs.write, fs.patch, terminal.exec, process.spawn, browser.navigate, browser.click, browser.type, browser.extract, browser.screenshot, web.search, web.fetch, computer.click, computer.type, connector.<id>.<op>, scm.git.<op>, scm.pr.<op>, artifact.create, artifact.update, work.propose_plan, work.delegate, user.ask, memory.propose, knowledge.cite), version, description, input_schema (JSON Schema, additionalProperties=false), output_schema, effect_class (static or derived by function of args), resource_derivation, required_grant_template, idempotency_key_derivation, host (server|qworkerd|browser|adapter), max_output_bytes, evidence_capture (what is recorded), source_trust (trust level assigned to results), timeout_ms, cancellable`.
+`name (namespaced: fs.read, fs.write, fs.patch, terminal.exec, process.spawn, browser.navigate, browser.click, browser.type, browser.extract, browser.screenshot, web.search, web.fetch, computer.read, computer.click, computer.type, computer.clipboard, computer.system_key, connector.<id>.<op>, scm.git.<op>, scm.pr.<op>, artifact.create, artifact.update, work.propose_plan, work.delegate, user.ask, memory.propose, knowledge.cite), version, description, input_schema (JSON Schema, additionalProperties=false), output_schema, effect_class (static or derived by function of args), resource_derivation, required_grant_template, idempotency_key_derivation, host (server|qworkerd|browser|machine|adapter), max_output_bytes, evidence_capture (what is recorded), source_trust (trust level assigned to results), timeout_ms, cancellable`.
 
 Tools are registered in the Tool Registry (control plane) and exposed to models only through CapabilityProjection filtering; a model never sees a tool it cannot use.
 
@@ -387,6 +388,18 @@ Understanding order for agents: DOM/CDP/network metadata → accessibility tree 
 
 ### 8.5 TerminalSession
 `id, target_id, run_id?, pty_ref, cursor (durable byte offset), status, last_command_id`. Replay resumes from `cursor`; commands are effects with `process.exec.*` class.
+
+### 8.6 ComputerControl (EXEC-010)
+`target_id (primary key), run_id?, holder (agent|user|none), generation, takeover_pending, active_tool_call_id?, control_since`.
+
+The row is the durable native-computer input fence for one ExecutionTarget. Action begin, action finish,
+`RequestTakeover`, and `Handback` lock this row. Only one native input ToolCall may be active: begin is
+allowed only while `holder=agent`, `takeover_pending=false`, and `active_tool_call_id` is empty. A takeover
+first sets `takeover_pending=true`, fencing new input; it may change the holder to `user` only after the
+active ToolCall settles or is reconciled, and increments `generation`. `Handback` is the only transition
+from `user` to `agent` and increments `generation` again. A restart reloads the row; it never assumes an
+active ToolCall failed and never clears user ownership. Browser takeover continues to use BrowserSession
+§8.4; both forms park the owning Run through ProtocolState.
 
 ---
 

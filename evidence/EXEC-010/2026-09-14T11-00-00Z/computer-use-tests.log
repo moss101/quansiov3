@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running tests/computer_use.rs (target/debug/deps/computer_use-792a106d1107749b)
+
+running 5 tests
+test a_tier_is_a_grant_and_a_run_cannot_reach_past_it ... ok
+test an_application_the_runtime_does_not_recognise_is_refused_at_every_tier ... ok
+test an_action_cannot_close_a_generation_the_fence_moved_past ... ok
+test a_takeover_cannot_race_with_agent_input ... ok
+test many_actions_and_a_takeover_never_interleave ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

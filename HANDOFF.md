@@ -19,14 +19,35 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M4 — the execution plane (M0/M1/M2/M3 complete as far as INT-002's credentials allow)
-Current task: **`EXEC-010` — computer-use and human takeover — next to reconcile**
-(`--next` selects it: M4, depends on `EXEC-009` and `RUN-005`, both `PASS`). Its boundary is native OS
-automation, so the first step is to establish what this host offers rather than to assume: macOS exposes
-the accessibility and input APIs through `AXUIElement`/`CGEvent`, and `swift`/`xcrun` are installed, but
-whether the required permissions (Accessibility and Screen Recording for the runner) can be granted
-without an operator is a real question. **If that or any other M4 boundary turns out to be unavailable,
-`APP-001` (M5, `real_boundary: false`) is the next task that is executable with certainty, and CAP-006,
-OPS-002 and OPS-004 are also `real_boundary: false`.**
+**Two agents worked `EXEC-010` at once, and that is the most important thing to know about this
+handoff.** A concurrent agent claimed it at 06:48, reconciled it (`evidence/EXEC-010/RECONCILIATION.md`)
+and is mid-implementation; a second agent then did part of the same task without seeing the claim, and
+briefly marked the task `PASS` on the strength of only part of its contract. **That was corrected: the
+claimant's registry entry is restored and `EXEC-010` is `IN_PROGRESS` under it.** The reconciliation's gap
+list is the authoritative one — control that does not survive a restart, no typed Rust port behind the
+native bridge, Windows a marker only, `computer.read`/`clipboard`/`system_key` absent from the catalog,
+placeholder command parameter schemas — and the claimant has since added
+`migrations/0011_computer_control.sql`, the durable `computer_controls` row with
+`active_tool_call_id` retained across restart. **Do not start `EXEC-010` again; it is owned.**
+
+What the second agent contributed and committed (as input to that task, not its completion, at `6f349f5`):
+the macOS AX and input surface in `native/macos`, with a live probe establishing the boundary rather than
+assuming it — `AXIsProcessTrusted` is **true** on this host, Screen Recording is granted, and a frontmost
+application resolves by bundle id with an AX role and window count read at `err=0`. Identity comes from
+`NSWorkspace` because the system-wide AX element answers `kAXErrorCannotComplete` with no attached GUI
+session. Plus a breadth-first bounded tree walk, click/type over `CGEvent`, and clipboard read/write; and
+in `crates/machine/src/computer_use/` the tier ladder as a total order, a fail-closed app identity matching
+on the bundle id rather than a name a program can choose, and a fence serializing a human takeover against
+agent input by generation and drain. Nine Swift tests and five Rust tests. Its fence is in memory, which
+is one of the gaps the reconciliation already lists.
+
+Current task: **`EXEC-003` — macOS local Linux microVM capsule — next to reconcile**
+(`--next` selects it: M4, `real_boundary: true`). Its boundary is partly present: this is an Apple M5 Pro
+with `swift` and `xcrun`, so Virtualization.framework is available, but `infra/images/` is empty — no Linux
+kernel or rootfs ships — and the hypervisor path needs the `com.apple.security.virtualization`
+entitlement, which needs a signing identity. **The first step is to establish a guest image and the
+entitlement, not to write Rust against a VM that cannot boot.** If that cannot be established,
+`APP-001` (M5, `real_boundary: false`) is executable with certainty, as are CAP-006, OPS-002 and OPS-004.
 Previous task: **`EXEC-005` — cloud microVM execution fabric — `BLOCKED_EXTERNAL`, not implemented.**
 Verified rather than assumed: this host has no cloud credentials (`AWS_ACCESS_KEY_ID`,
 `AWS_SECRET_ACCESS_KEY`, `GOOGLE_APPLICATION_CREDENTIALS`, `ARM_CLIENT_ID`, `GCP_PROJECT` all unset), no

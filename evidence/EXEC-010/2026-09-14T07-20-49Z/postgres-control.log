@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
+     Running tests/computer_use.rs (target/debug/deps/computer_use-792a106d1107749b)
+
+running 6 tests
+test a_tier_is_a_grant_and_a_run_cannot_reach_past_it ... ok
+test an_application_the_runtime_does_not_recognise_is_refused_at_every_tier ... ok
+test exact_tool_call_and_tenant_scope_fail_closed ... ok
+test a_takeover_racing_an_action_has_only_safe_outcomes ... ok
+test rust_dispatch_rechecks_identity_and_keeps_unknown_input_for_reconciliation ... ok
+test takeover_fences_input_survives_restart_and_requires_explicit_handback ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.60s
+

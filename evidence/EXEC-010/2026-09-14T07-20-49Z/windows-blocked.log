@@ -1,0 +1,9 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+     Running unittests src/lib.rs (target/debug/deps/quansio_native_windows-59fcf40d84307df6)
+
+running 1 test
+BLOCKED_EXTERNAL: QUANSIO_TEST_WINDOWS_COMPUTER_USE=1 requires a Windows 11 interactive host
+test computer_use::tests::non_windows_boundary_reports_blocked_external ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+

@@ -1,0 +1,5 @@
+frontmost: ZCode bundle=dev.zcode.app pid=713
+running apps: 85
+AX role of frontmost: err=0 value=Optional(AXApplication)
+AX windows: err=0 count=2
+system-wide focused app: err=-25204 (kAXErrorCannotComplete=-25204, kAXErrorAPIDisabled=-25211)

@@ -291,6 +291,65 @@ fn declared_hosts_and_output_bounds_come_from_the_declaration() {
 }
 
 #[test]
+fn native_computer_tools_are_machine_hosted_and_app_scoped() {
+    let registry = ToolRegistry::builtin();
+    let calls = [
+        (
+            "computer.read",
+            json!({ "application": "com.apple.TextEdit", "max_nodes": 32, "max_depth": 4, "include_screenshot": false }),
+            "read.internal",
+            0,
+        ),
+        (
+            "computer.click",
+            json!({ "application": "com.apple.TextEdit", "x": 20, "y": 30, "button": "left" }),
+            "computer.input.privileged",
+            3,
+        ),
+        (
+            "computer.type",
+            json!({ "application": "com.apple.TextEdit", "text": "bounded" }),
+            "computer.input.privileged",
+            3,
+        ),
+        (
+            "computer.clipboard",
+            json!({ "application": "com.apple.TextEdit", "operation": "write", "text": "secret" }),
+            "computer.input.privileged",
+            3,
+        ),
+        (
+            "computer.system_key",
+            json!({ "application": "com.apple.TextEdit", "keys": ["command", "a"] }),
+            "computer.input.privileged",
+            3,
+        ),
+    ];
+    for (name, args, effect_class, tier) in calls {
+        let plan = plan_call(registry, name, None, &args, &tier_of, &context()).expect(name);
+        assert_eq!(plan.host, ToolHost::Machine, "{name}");
+        assert_eq!(plan.resource.kind(), "app", "{name}");
+        assert_eq!(plan.resource.selector(), "com.apple.TextEdit", "{name}");
+        assert_eq!(plan.effect_class.as_str(), effect_class, "{name}");
+        assert_eq!(plan.tier.get(), tier, "{name}");
+    }
+
+    let missing_identity = plan_call(
+        registry,
+        "computer.click",
+        None,
+        &json!({ "x": 1, "y": 2 }),
+        &tier_of,
+        &context(),
+    )
+    .expect_err("an unscoped native click must fail before dispatch");
+    assert!(matches!(
+        missing_identity,
+        ToolError::InvalidArguments { .. }
+    ));
+}
+
+#[test]
 fn schemas_reject_unsupported_vocabulary_at_load_time() {
     let source = r#"
 version: 1
