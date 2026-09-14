@@ -1180,17 +1180,17 @@
     },
     "EXEC-003": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "IN_PROGRESS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T07:27:00Z",
-      "updated_at": "2026-09-14T07:27:00Z",
+      "updated_at": "2026-09-14T07:33:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Reconciled as a genuine gap. Canonical owners are native/macos for the narrow Virtualization.framework bridge and crates/machine/src/substrates/macos_capsule for lifecycle adaptation over the existing target, lease, gateway, egress and checkpoint authorities. No guest network device, host directory share, Keychain access or alternate cookie-import path is permitted."
     },
     "EXEC-004": {
       "coverage": null,
