@@ -20,9 +20,21 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 
 Milestone: M4 — the execution plane (M0/M1/M2/M3 complete as far as INT-002's credentials allow)
 Current task: **`EXEC-009` — managed browser session with DOM/CDP-first control — next to reconcile**
-(`--next` selects it: M4, depends on `EXEC-001` and `EXEC-002`, both `PASS`). Its `real_boundary` is
-`true`: it needs a real browser to drive over CDP, so the first step is to establish whether one is
-available on this host rather than to assume either way.
+(`--next` selects it: M4, depends on `EXEC-001`/`EXEC-002`/`EXEC-008`/`RUN-007`/`RUN-011`, all `PASS`).
+**Its boundary is available: Google Chrome is installed at `/Applications/Google Chrome.app`, so a real
+CDP driver can be exercised here** — this task is executable, not blocked. Its acceptance needs the same
+browser stack for research and action workflows, browser actions that cause external consequence routed
+through the Effect Ledger, and `web.fetch` output bounded, labelled `UNTRUSTED_EXTERNAL` and carrying its
+source URL, retrieval time and content digest. Paths: `crates/qworkerd/browser/` and
+`crates/qworkerd/src/browser/` do not exist yet; `browser_sessions` (0001) declares `bsn_`, the
+control_holder/takeover columns, `tabs`, `screencast` and the
+active/paused_takeover/paused_policy/closed states, and nothing writes it.
+
+**First step of EXEC-009, because it must mint `bsn_` ids: the same undeclared-prefix gap `tsn_` had.**
+`browser_sessions.id CHECK (id LIKE 'bsn\_%')` has enforced `bsn_` since 0001 and DOMAIN 8.4 defines
+`BrowserSession`, but 1.1's canonical id table never listed it — so it is absent from `ids.yaml`, the
+identity proto enum and the core prefix table. Repair it exactly as `TerminalSession tsn_` was repaired,
+and note the generator now accepts one-letter prefixes (see below).
 Previous task: **`EXEC-011` — connector and integration broker — `BLOCKED_EXTERNAL`, not implemented.**
 Its acceptance requires each GA connector to pass the shared conformance suite *in its provider sandbox*
 (GitHub, Google Workspace, Slack, a web-search provider), and no sandbox credentials, OAuth client
@@ -448,6 +460,13 @@ rather than fabricated.
   it from 2 in 6 to **1 in 10** — recorded, not claimed fixed. *Better fix, not attempted here because
   it spans every crate's test harness:* migrate one template database per test binary and clone it with
   `CREATE DATABASE ... TEMPLATE ...`.
+- **The id catalog silently dropped the one-letter `q_` prefix — FIXED at `e6790d4`.**
+  `scripts/ci/domain_catalog.py`'s `parse_id_prefixes` accepted only `[a-z]{2,4}_`, so DOMAIN 1.1's `q_`
+  for Question never reached the generated `schemas/catalog/ids.yaml`. Every gate stayed green because
+  nothing compared that table against the identity proto or `crates/core`: the catalog had 46 entries
+  against the core table's 47, with the difference being exactly `q_`. Now 47 against 47, no drift.
+  Worth remembering as a *class* of defect: a generated view can be internally consistent and
+  `gen_contracts.py --check` can report CLEAN while the table it generates is missing a row.
 - **Every crate's test harness could deadlock at teardown — FIXED at `ba04ac1`.** `drop_pool` called
   `PgPool::close()` before dropping the scratch database, and `close` waits for every checked-out
   connection to be returned — a test calling it is usually still holding one, because the connection is a
