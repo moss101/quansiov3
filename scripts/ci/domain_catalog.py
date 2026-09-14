@@ -63,7 +63,10 @@ def parse_id_prefixes(text: str) -> Dict[str, str]:
             prefix_cell = cells[i + 1].strip()
             matched = False
             for entity, prefix in _name_prefix_pairs(name_cell, prefix_cell):
-                if entity and re.fullmatch(r"[a-z]{2,4}_", prefix):
+                # One to four letters, because the canonical table has a one-letter prefix: `q_` for
+                # Question. A `{2,4}` bound silently dropped it from the generated catalog, which then
+                # disagreed with the identity proto and with `crates/core` while every gate stayed green.
+                if entity and re.fullmatch(r"[a-z]{1,4}_", prefix):
                     prefixes[entity] = prefix
                     matched = True
             i += 2 if matched else 1

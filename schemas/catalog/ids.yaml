@@ -33,6 +33,7 @@ ids:
   EvidenceBundle: evb_
   RuntimeEvent: evt_
   KnowledgeEntry: kn_
+  Question: q_
   MemoryEntry: mem_
   Skill: skl_
   SkillVersion: sklv_
