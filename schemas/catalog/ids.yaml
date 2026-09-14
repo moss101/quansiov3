@@ -48,3 +48,4 @@ ids:
   AuditEntry: aud_
   Webhook subscription: whk_
   TerminalSession: tsn_
+  BrowserSession: bsn_

@@ -108,6 +108,8 @@ pub enum Prefix {
     WebhookSubscription,
     /// `tsn_` terminal session.
     TerminalSession,
+    /// `bsn_` browser session.
+    BrowserSession,
 }
 
 impl Prefix {
@@ -162,6 +164,7 @@ impl Prefix {
             Self::UsageRecord => "use_",
             Self::WebhookSubscription => "whk_",
             Self::TerminalSession => "tsn_",
+            Self::BrowserSession => "bsn_",
         }
     }
 
@@ -218,6 +221,7 @@ impl Prefix {
             Self::UsageRecord => "USAGE_RECORD",
             Self::WebhookSubscription => "WEBHOOK_SUBSCRIPTION",
             Self::TerminalSession => "TERMINAL_SESSION",
+            Self::BrowserSession => "BROWSER_SESSION",
         }
     }
 
@@ -272,6 +276,7 @@ impl Prefix {
             Self::UsageRecord,
             Self::WebhookSubscription,
             Self::TerminalSession,
+            Self::BrowserSession,
         ]
     }
 }

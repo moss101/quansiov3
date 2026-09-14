@@ -534,6 +534,8 @@ pub enum EntityPrefix {
     WebhookSubscription = 46,
     /// tsn_
     TerminalSession = 47,
+    /// bsn_
+    BrowserSession = 48,
 }
 impl EntityPrefix {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -590,6 +592,7 @@ impl EntityPrefix {
             Self::UsageRecord => "ENTITY_PREFIX_USAGE_RECORD",
             Self::WebhookSubscription => "ENTITY_PREFIX_WEBHOOK_SUBSCRIPTION",
             Self::TerminalSession => "ENTITY_PREFIX_TERMINAL_SESSION",
+            Self::BrowserSession => "ENTITY_PREFIX_BROWSER_SESSION",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -643,6 +646,7 @@ impl EntityPrefix {
             "ENTITY_PREFIX_USAGE_RECORD" => Some(Self::UsageRecord),
             "ENTITY_PREFIX_WEBHOOK_SUBSCRIPTION" => Some(Self::WebhookSubscription),
             "ENTITY_PREFIX_TERMINAL_SESSION" => Some(Self::TerminalSession),
+            "ENTITY_PREFIX_BROWSER_SESSION" => Some(Self::BrowserSession),
             _ => None,
         }
     }
