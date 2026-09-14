@@ -1,0 +1,117 @@
+{
+  "task_id": "EXEC-009",
+  "git_commit": "996e0d22c6ee9a42883e421178edb30ef03b8e42",
+  "recorded_at": "2026-09-14T10:35:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-qworkerd --test browser -- --test-threads=1  # 4 passed against a real headless Google Chrome this host has installed: the DOM is read first and a screenshot is taken only when the DOM names nothing (a canvas page), with the PNG asserted by its signature; a click is classified from the page's own semantics before it runs (egress tier 2, payment tier 4, deletion tier 3, a form submit tier 2, an in-page anchor and an inert toggle as no effect at all) and the page's own handler is asserted to have run; web.fetch is bounded, labelled UNTRUSTED_EXTERNAL and digested with the source URL and retrieval time; and a takeover fences agent input without duplicating the session",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-09-14T10-30-00Z/browser-tests.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test browser  # 4 passed against real PostgreSQL: a session and its tabs survive the worker and a takeover hands over the same row; a policy pause cannot be resumed by a handback; a closed session is terminal and keeps its checkpoint; and a session is scoped to its tenant with an undefined state refused by the schema",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-09-14T10-30-00Z/browser-session-store-tests.log"
+    },
+    {
+      "command": "cargo test --workspace  # 504 passed across 82 suites, zero failures",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-09-14T10-30-00Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo fmt --all --check and cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-09-14T10-30-00Z/rust-clippy.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN, including supply-chain with tokio-tungstenite; V8.1 PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-09-14T10-30-00Z/static-gates.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-09-14T10-30-00Z/ci-pipeline.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-qworkerd --test browser -- --test-threads=1  # 4 passed against a real headless Google Chrome this host has installed: the DOM is read first and a screenshot is taken only when the DOM names nothing (a canvas page), with the PNG asserted by its signature; a click is classified from the page's own semantics before it runs (egress tier 2, payment tier 4, deletion tier 3, a form submit tier 2, an in-page anchor and an inert toggle as no effect at all) and the page's own handler is asserted to have run; web.fetch is bounded, labelled UNTRUSTED_EXTERNAL and digested with the source URL and retrieval time; and a takeover fences agent input without duplicating the session",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test browser  # 4 passed against real PostgreSQL: a session and its tabs survive the worker and a takeover hands over the same row; a policy pause cannot be resumed by a handback; a closed session is terminal and keeps its checkpoint; and a session is scoped to its tenant with an undefined state refused by the schema",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --workspace  # 504 passed across 82 suites, zero failures",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check and cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py && scripts/ci/dossier_consistency.py && scripts/ci/arch_check.py && scripts/ci/check_authority.py --check && scripts/ci/workspace_check.py && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py && scripts/ci/inventory.py --scan  # all CLEAN, including supply-chain with tokio-tungstenite; V8.1 PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # pipeline: PASS, 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/qworkerd/src/browser/mod.rs",
+      "sha256": "f94679aa110bbf29486e913e4f7e60e8821b69fa40d44bf945684852d9303587",
+      "bytes": 43334
+    },
+    {
+      "path": "crates/qworkerd/src/browser/cdp.rs",
+      "sha256": "fcd6ea392a8fcca1949f60502a1f97b55ed3381913ef1f61f3292e8d46711933",
+      "bytes": 17497
+    },
+    {
+      "path": "crates/qworkerd/tests/browser.rs",
+      "sha256": "e6b3efe01438f456ec3eb8645938f06d21cdb721e55c344bf9a106bd4e185285",
+      "bytes": 19736
+    },
+    {
+      "path": "crates/machine/src/control/browser.rs",
+      "sha256": "c95a757c8564fb21fa303f63cb4f72583045eae72c0aa4c1ff977c53a4555dce",
+      "bytes": 18915
+    },
+    {
+      "path": "crates/machine/tests/browser.rs",
+      "sha256": "276413c7ba42f82a1af7068e4b425910d5c7294dc56e2292f75010601f11d858",
+      "bytes": 12976
+    },
+    {
+      "path": "crates/qworkerd/Cargo.toml",
+      "sha256": "2303b25dc9aca47d6a406e98f90a4a9394f600404bda8268fd794e086ec17630",
+      "bytes": 750
+    },
+    {
+      "path": "DOMAIN.md",
+      "sha256": "7ed7e931547215fcf43d618f2d51436ad031c2eb8478be7c6a28316524db6376",
+      "bytes": 46770
+    },
+    {
+      "path": "schemas/catalog/ids.yaml",
+      "sha256": "f7a645892a754d1400fb38db6c9effda51e860776cd4b774879a2c6de3c8294b",
+      "bytes": 1080
+    }
+  ]
+}

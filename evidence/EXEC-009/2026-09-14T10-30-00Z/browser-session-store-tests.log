@@ -1,0 +1,12 @@
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.38s
+     Running tests/browser.rs (target/debug/deps/browser-b4de08d85d69fd42)
+
+running 4 tests
+test a_policy_pause_cannot_be_resumed_by_a_handback ... ok
+test a_session_survives_its_worker_and_a_takeover_hands_over_the_same_row ... ok
+test a_session_is_scoped_to_its_tenant_and_checked_against_its_target ... ok
+test a_closed_session_is_terminal_and_keeps_its_checkpoint ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.65s
+

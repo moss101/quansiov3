@@ -1,7 +1,7 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-14 (M4 under way: 40 PASS, 10 dependency-ready; EXEC-001, EXEC-002, EXEC-006, EXEC-007
-and EXEC-008 all `PASS`; the intelligence-plane tasks remain `BLOCKED_EXTERNAL` on INT-002's live
+Updated: 2026-09-14 (M4 under way: 41 PASS, 10 dependency-ready; EXEC-001, EXEC-002, EXEC-006, EXEC-007,
+EXEC-008 and EXEC-009 all `PASS`; the intelligence-plane tasks remain `BLOCKED_EXTERNAL` on INT-002's live
 provider credentials only. A deadlock in every crate's test harness was found and fixed, and the
 workspace suite is now clean in 7 of 7 runs against 8 of 10 and 9 of 10 before it.)
 Repository: `quansiov3` (local)
@@ -19,22 +19,28 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M4 — the execution plane (M0/M1/M2/M3 complete as far as INT-002's credentials allow)
-Current task: **`EXEC-009` — managed browser session with DOM/CDP-first control — next to reconcile**
-(`--next` selects it: M4, depends on `EXEC-001`/`EXEC-002`/`EXEC-008`/`RUN-007`/`RUN-011`, all `PASS`).
-**Its boundary is available: Google Chrome is installed at `/Applications/Google Chrome.app`, so a real
-CDP driver can be exercised here** — this task is executable, not blocked. Its acceptance needs the same
-browser stack for research and action workflows, browser actions that cause external consequence routed
-through the Effect Ledger, and `web.fetch` output bounded, labelled `UNTRUSTED_EXTERNAL` and carrying its
-source URL, retrieval time and content digest. Paths: `crates/qworkerd/browser/` and
-`crates/qworkerd/src/browser/` do not exist yet; `browser_sessions` (0001) declares `bsn_`, the
-control_holder/takeover columns, `tabs`, `screencast` and the
-active/paused_takeover/paused_policy/closed states, and nothing writes it.
-
-**First step of EXEC-009, because it must mint `bsn_` ids: the same undeclared-prefix gap `tsn_` had.**
-`browser_sessions.id CHECK (id LIKE 'bsn\_%')` has enforced `bsn_` since 0001 and DOMAIN 8.4 defines
-`BrowserSession`, but 1.1's canonical id table never listed it — so it is absent from `ids.yaml`, the
-identity proto enum and the core prefix table. Repair it exactly as `TerminalSession tsn_` was repaired,
-and note the generator now accepts one-letter prefixes (see below).
+Current task: **`EXEC-005` — cloud microVM execution fabric — next to reconcile**
+(`--next` selects it: M4, depends on `EXEC-001` and `EXEC-002`, both `PASS`). Its `real_boundary` is
+`true`: it needs a cloud account and a provider API to provision real microVMs, which is the first thing
+to establish rather than to assume. If that boundary is unavailable, `APP-001` (M5,
+`real_boundary: false`) is the next task that is executable with certainty.
+Previous task: **`EXEC-009` — managed browser session with DOM/CDP-first control — `PASS`, and its
+boundary was real.** Every browser test launches the Google Chrome installed on this host (152) with the
+DevTools protocol on a loopback port and drives it, so nothing stands in for the browser.
+`crates/qworkerd/src/browser/` adds the CDP driver — one frame loop matching responses to calls by id,
+because a page interleaves events with answers — plus §8.4's session rules; understanding is DOM,
+accessibility tree and metadata first, and a screenshot is taken only when the DOM names nothing, which
+is decided by counting *named* accessibility nodes because Chrome always emits structural ones.
+Consequence is classified from the control's own semantics (role, accessible name, href, form), so a
+purchase, a deletion, a send and an inert toggle are different classes at different tiers and an action
+with no consequence is not recorded at all. `web.fetch` reads through the same browser and extraction,
+so research and action cannot disagree about what a page said. The durable `browser_sessions` row is
+owned by machine control, since the architecture gate forbids qworkerd a Postgres client at all, and
+§8.4's rules are enforced there too so two callers cannot disagree about who holds the browser. Four
+defects the real browser caught are recorded in the evidence — an endpoint read that waited for an EOF
+Chrome does not send, `/json/new` needing PUT, an accessibility tree that is never empty, and an
+extraction whose form lookup never matched. New dependency `tokio-tungstenite`, accepted by supply-chain.
+Evidence: `evidence/EXEC-009/2026-09-14T10-30-00Z/`.
 Previous task: **`EXEC-011` — connector and integration broker — `BLOCKED_EXTERNAL`, not implemented.**
 Its acceptance requires each GA connector to pass the shared conformance suite *in its provider sandbox*
 (GitHub, Google Workspace, Slack, a web-search provider), and no sandbox credentials, OAuth client
@@ -496,13 +502,14 @@ Baseline pipeline (this session, after the host incident cleared): `bash scripts
 (`scripts/dev/bootstrap.sh`: cargo fmt/clippy/test over the workspace — 73 suites — plus pnpm, swift and
 the Python plane) and `contract-drift` (the generated bindings are current).
 
-Last run at `3a02acd` (EXEC-007's evidence bundle is `evidence/EXEC-007/2026-09-13T19-05-00Z/`):
+Last run at `996e0d2` (EXEC-009's evidence bundle is `evidence/EXEC-009/2026-09-14T10-30-00Z/`):
 
-- `cargo test --workspace` → **484 passed**; 4 of 4 runs clean
-- `QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine` → 65 passed (35 unit, 12 control,
-  10 egress, 8 secrets), all database-backed suites against real PostgreSQL
-- `cargo fmt --all --check` → clean; `cargo clippy -p quansio-machine --all-targets -- -D warnings` → clean
-- `python3.12 scripts/validate_v81.py` → PASS (39 PASS, 12 ready); `--next` → EXEC-006
+- `cargo test --workspace` → **504 passed across 82 suites**, zero failures
+- `QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine` → 73 passed (35 unit, 12 control,
+  10 egress, 8 secrets, 4 browser, 4 terminal), all database-backed suites against real PostgreSQL
+- `cargo test -p quansio-qworkerd` → 24 passed, including 4 against a real headless Chrome
+- `cargo fmt --all --check` → clean; `cargo clippy --workspace --all-targets -- -D warnings` → clean
+- `python3.12 scripts/validate_v81.py` → PASS (41 PASS, 10 ready); `--next` → EXEC-005
 - Static gates → dossier CLEAN, architecture CLEAN, authority CLEAN, workspace CLEAN, supply-chain CLEAN
   (1 informational: `cargo-deny` is not installed; the new `chacha20poly1305` dependency is accepted),
   legacy-map CLEAN, duplicate-authority CLEAN

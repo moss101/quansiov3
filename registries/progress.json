@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-14T09:52:00Z",
+  "updated_at": "2026-09-14T10:38:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1312,18 +1312,42 @@
       "notes": "The egress broker answers one question -- may this execution target reach this destination -- and its answer is deny. A destination is reachable only when a live, scoped, unexpired grant covers it and every address the name resolved to is in a class the target's network policy allows, which is what makes a granted name that starts resolving to loopback or private space refused (DNS rebinding); an unresolved name is refused rather than assumed fine. The network policy is the canonical `policies` row `execution_targets.network_policy_id` already pointed at (DOMAIN.md 7.1, 8.2), not a second policy engine, and a grant's identity is the `network.egress.new_destination` effect that authorized it, so re-issuing is idempotent by the Effect Ledger's own rule. A grant records the policy id and revision it was issued under, so a policy change or a rebind fences every grant issued before it in one comparison rather than by racing a scan; revocation and expiry are the other half, and both are recorded rather than deleted so the audit trail survives. The decision log is built from the destination, the decision and identifiers only, so a header value or credential material has nowhere to be recorded. MachineControl::set_network_policy (EXEC-001's module, since it writes execution_targets) is the operation that binds a policy. Out-of-scope by design: the host/network-gateway enforcement point itself, and DNS resolution -- the broker decides from the addresses the resolver hands it, and that seam is what the rebinding test drives. real_boundary is false. Follow-up filed in the same evidence directory: EXEC-008's first full-workspace run surfaced a pre-existing defect in the cancel path -- RunStore::cancel returned Ok(run-in-cancelled-state) both when it cancelled the run and when it found it already cancelled, so OrchestrationService::cancel_runs counted another caller's cancellation. cancel_once now reports which happened and only a real cancellation counts; a genuine fence error still propagates rather than being mistaken for 'already cancelled'. The same run also exposed a Postgres lock-table capacity limit when dozens of scratch-database migrations run concurrently, so infra/compose and the CI workflow now size max_locks_per_transaction at 1024 with a 1 GB shared-memory segment; one workspace run in ten still exhausts it, which is recorded as an environment capacity limit, not claimed fixed."
     },
     "EXEC-009": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
-      "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-14T10:05:00Z",
+      "updated_at": "2026-09-14T10:36:00Z",
+      "git_commit": "996e0d2",
+      "tests": [
+        "cargo test -p quansio-qworkerd --test browser -- --test-threads=1 (4 passed against a real headless Google Chrome on this host: the DOM is read first and a screenshot taken only when the DOM names nothing -- a canvas page -- with the PNG asserted by its signature and the reason recorded; a click is classified from the page's own semantics before it runs, covering egress tier 2, payment tier 4, deletion tier 3, a form submit tier 2 and no effect at all for an in-page anchor or an inert toggle, with the page's own click handler asserted to have run; web.fetch bounded, labelled UNTRUSTED_EXTERNAL and digested with the source URL and retrieval time, including that a truncated and a whole fetch of one page digest differently and two whole fetches digest the same; and a takeover fencing agent input without duplicating the session, with handback, policy pause and close)",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test browser (4 passed against real PostgreSQL: a session and its tabs survive the worker and a takeover hands over the same row with tabs, profile and page intact; a policy pause cannot be resumed by a handback; a closed session is terminal and keeps its checkpoint; a session is scoped to its tenant, a bad target and a bad id are refused, and an undefined state is refused by the schema's CHECK)",
+        "cargo test --workspace (504 passed across 82 suites, zero failures)",
+        "cargo fmt --all --check and cargo clippy --workspace --all-targets -- -D warnings",
+        "python3.12 scripts/validate_v81.py && scripts/ci/arch_check.py && scripts/ci/workspace_check.py && scripts/ci/inventory.py --scan && scripts/ci/dossier_consistency.py && scripts/ci/check_authority.py --check && scripts/ci/supply_chain/check.py && scripts/ci/legacy_map_check.py (all CLEAN; V8.1 PASS)",
+        "bash scripts/ci/ci.sh (pipeline: PASS, 11 of 11 gates)"
+      ],
+      "artifacts": [
+        "evidence/EXEC-009/2026-09-14T10-30-00Z/summary.json",
+        "evidence/EXEC-009/2026-09-14T10-30-00Z/NOTES.md",
+        "crates/qworkerd/src/browser/cdp.rs",
+        "crates/qworkerd/src/browser/mod.rs",
+        "crates/qworkerd/tests/browser.rs",
+        "crates/machine/src/control/browser.rs",
+        "crates/machine/tests/browser.rs"
+      ],
+      "real_boundary_evidence": [
+        {
+          "boundary": "A real Google Chrome (152) driven over the DevTools protocol on a loopback port. crates/qworkerd/tests/browser.rs launches it, navigates it, reads its DOM and accessibility tree, clicks its controls and captures its screenshot; nothing stands in for the browser and no recorded fixture is asserted against.",
+          "environment": "macOS, Google Chrome 152.0.7977.84 at /Applications/Google Chrome.app/Contents/MacOS/Google Chrome, launched headless (--headless=new --remote-debugging-port=<free port> --user-data-dir=<scratch>). Chrome is present on this host; the suite reports BLOCKED_EXTERNAL and returns when it is not, so an absent browser can never be a pass.",
+          "command": "cargo test -p quansio-qworkerd --test browser -- --test-threads=1",
+          "artifact": "evidence/EXEC-009/2026-09-14T10-30-00Z/browser-tests.log",
+          "sha256": "d1e80bd8529e3e64f87efe26ecf8bf9c454b872a3ad1d74ebd1053c69abb0894",
+          "recorded_at": "2026-09-14T10:35:00Z"
+        }
+      ],
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "The real boundary is a real browser: every browser test launches the Google Chrome installed on this host (152) with the DevTools protocol on a loopback port and drives it, so nothing stands in for Chrome. crates/qworkerd/src/browser/ adds the CDP driver -- one frame loop matching responses to calls by id because a page interleaves events with answers, with every call, the handshake and the endpoint reads bounded, and the endpoint read to Content-Length rather than EOF because Chrome does not always close -- plus the session rules of DOMAIN 8.4. Understanding is DOM, accessibility tree and metadata first; a screenshot is taken only when the DOM names nothing, and the count that decides is of *named* accessibility nodes because Chrome always emits structural ones. Consequence is classified from the control's role, accessible name, href and form, so a purchase, a deletion, a send and an inert toggle are different classes at different tiers and an action with no consequence is not recorded; the ledger's reservation and settlement are RUN-011 and RUN-007, both PASS. web.fetch reads through the same browser and extraction, so research and action cannot disagree, and its output is bounded, labelled UNTRUSTED_EXTERNAL and digested. The durable browser_sessions row is owned by machine control because the architecture gate forbids qworkerd a Postgres client at all, and 8.4's rules are enforced there too so two callers cannot disagree about who holds the browser; a takeover is a pause that keeps the tabs, the profile and the page. bsn_ was enforced by the schema since 0001 and absent from the catalog 1.1 is generated from, repaired additively. New dependency tokio-tungstenite for the WebSocket transport, accepted by the supply-chain gate. Out-of-scope by design: native Input.dispatchMouseEvent relay for client-driven takeover (the driver acts through the page's own DOM, which is what DOM-first means) and carrying screencast frames to a client, which is APP-007's live-view transport."
     },
     "EXEC-010": {
       "coverage": null,

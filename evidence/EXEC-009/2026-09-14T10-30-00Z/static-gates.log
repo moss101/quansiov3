@@ -1,0 +1,19 @@
+===== authority =====
+V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 40 PASS, 10 ready)
+===== --next =====
+EXEC-009
+===== dossier =====
+dossier consistency: CLEAN (0 findings)
+===== architecture =====
+architecture check: CLEAN (0 findings)
+===== authority-pointers =====
+authority check: CLEAN (0 findings)
+===== workspace =====
+workspace check: CLEAN (0 findings)
+===== supply-chain =====
+cargo-deny-unavailable: cargo-deny binary is not installed; licences/bans/sources/advisories are checked offline by this gate instead (install cargo-deny for the external check)
+supply-chain: CLEAN (1 informational)
+===== legacy-map =====
+legacy map check: CLEAN (0 findings)
+===== inventory =====
+duplicate-authority scan: CLEAN (0 findings)
