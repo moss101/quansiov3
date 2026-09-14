@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-14T09:46:00Z",
+  "updated_at": "2026-09-14T09:52:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1340,18 +1340,18 @@
       "notes": ""
     },
     "EXEC-011": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-14T09:50:00Z",
+      "updated_at": "2026-09-14T09:52:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "blocker": "The acceptance statement requires each GA connector to pass the shared conformance suite *in its provider sandbox*: GitHub, Google Workspace (Gmail/Drive/Calendar), Slack and a web-search provider. No sandbox credentials, OAuth client registrations or provider egress exist on this host, and no mock can substitute for the boundary the statement names. Unblock: register OAuth apps for the four providers, provide sandbox credentials for each, and run the conformance suite against them. Note the connector broker's local halves are implementable without a provider and are unstarted rather than done -- crates/server/control/connectors/ and python/intelligence/adapters/connectors/ do not exist yet, and connector_instances (0001) is unused.",
+      "notes": "Reconciled, not implemented. The schema already has connector_instances with an id CHECK on cnx_, a credential_handle reference to secret_handles and a status CHECK of connected/degraded/revoked, so the control-plane shape EXEC-011 needs is declared; nothing writes it yet. The token half is EXEC-007's, now landed: a connector's token can only ever be a sec_ handle because SecretMaterial has no rendering and SecretHandle has no field for it, which is what the 'token never reaches renderer/model' acceptance asks for. The egress half is EXEC-008's, also landed: a connector's outbound calls go through the same broker as webhooks, with the destination class and the grant fence already enforced. What remains is the connector-specific work (OAuth begin/complete, states, adapter normalization, the conformance suite) and the provider sandboxes it must be measured in."
     },
     "EXEC-012": {
       "coverage": null,

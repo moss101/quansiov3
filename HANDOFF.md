@@ -1,6 +1,6 @@
 # QUANSIO V8.1 IMPLEMENTATION HANDOFF
 
-Updated: 2026-09-14 (M4 under way: 40 PASS, 11 dependency-ready; EXEC-001, EXEC-002, EXEC-006, EXEC-007
+Updated: 2026-09-14 (M4 under way: 40 PASS, 10 dependency-ready; EXEC-001, EXEC-002, EXEC-006, EXEC-007
 and EXEC-008 all `PASS`; the intelligence-plane tasks remain `BLOCKED_EXTERNAL` on INT-002's live
 provider credentials only. A deadlock in every crate's test harness was found and fixed, and the
 workspace suite is now clean in 7 of 7 runs against 8 of 10 and 9 of 10 before it.)
@@ -19,8 +19,21 @@ stopped; when one task is blocked, record the blocker and take the next dependen
 ## Current position
 
 Milestone: M4 — the execution plane (M0/M1/M2/M3 complete as far as INT-002's credentials allow)
-Current task: **`EXEC-011` — connector and integration broker — being claimed next**
-(`--next` selects it: M4, depends on `EXEC-008`, `RUN-005` and `RUN-007`, all `PASS`).
+Current task: **`EXEC-009` — managed browser session with DOM/CDP-first control — next to reconcile**
+(`--next` selects it: M4, depends on `EXEC-001` and `EXEC-002`, both `PASS`). Its `real_boundary` is
+`true`: it needs a real browser to drive over CDP, so the first step is to establish whether one is
+available on this host rather than to assume either way.
+Previous task: **`EXEC-011` — connector and integration broker — `BLOCKED_EXTERNAL`, not implemented.**
+Its acceptance requires each GA connector to pass the shared conformance suite *in its provider sandbox*
+(GitHub, Google Workspace, Slack, a web-search provider), and no sandbox credentials, OAuth client
+registrations or provider egress exist here. Recorded with the exact unblock condition and with
+`implementation_complete: false`, because the connective work is genuinely unstarted:
+`crates/server/control/connectors/` and `python/intelligence/adapters/connectors/` do not exist. What it
+builds on is in place — `connector_instances` (0001) declares `cnx_`, `credential_handle` and the
+connected/degraded/revoked states, tokens can only ever be `sec_` handles now that EXEC-007 has landed,
+and a connector's outbound calls already go through EXEC-008's egress broker with its class and grant
+fences. **If EXEC-009's browser boundary also turns out to be unavailable, `APP-001` (M5,
+`real_boundary: false`) is the next task that is executable with certainty.**
 Previous task: **`EXEC-006` — file, terminal and process tool host — `PASS`.**
 `crates/qworkerd/src/tools/` confines every file operation to a path proven to be inside an authorized
 root — a parent component is refused outright, an absolute path is refused rather than reinterpreted, a
@@ -312,7 +325,10 @@ this host, record that and take the next one.
 
 Also outstanding: the residual Postgres lock-table capacity limit under parallel migration, and the
 `turn_loop.rs` protocol-state race that has not recurred in 7 clean runs but was never diagnosed. Both
-under Known defects.
+under Known defects. Seven of the ten remaining ready tasks are `real_boundary: true` (EXEC-003/004/005
+need a microVM host, Windows or a cloud account; EXEC-009 needs a browser; EXEC-011 needs provider
+sandboxes; OPS-005 and QA-003 also declare it), so the executable set is APP-001, CAP-006, OPS-002 and
+OPS-004 — all `real_boundary: false`.
 
 ## Ready queue
 
