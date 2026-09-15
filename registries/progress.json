@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T08:15:00Z",
+  "updated_at": "2026-09-15T08:16:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1911,8 +1911,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:10:00Z",
-      "updated_at": "2026-09-15T08:15:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T08:16:00Z",
+      "git_commit": "ce9137dc0532b9dd984ba70c6305966502e4cd9f",
       "tests": [
         "cargo test -p quansio-server --test enterprise_identity (3 passed: SSO ignores client roles; SCIM deprovision revokes sessions; service scopes explicit and auditable; live OIDC prints BLOCKED_EXTERNAL)"
       ],
