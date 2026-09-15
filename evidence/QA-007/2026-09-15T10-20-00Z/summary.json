@@ -1,0 +1,48 @@
+{
+  "task_id": "QA-007",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T10:20:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/security/test_adversarial_qualification.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-007/2026-09-15T10-20-00Z/adversarial.log"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-007/2026-09-15T10-20-00Z/python-plane.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/security/test_adversarial_qualification.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-007/2026-09-15T10-20-00Z/adversarial.log",
+      "sha256": "8b8ddcd2e7b63fe945152ea4c56d7e74f75ec09c6df6f5afe0311439df55ede7",
+      "bytes": 98
+    },
+    {
+      "path": "evidence/QA-007/2026-09-15T10-20-00Z/python-plane.log",
+      "sha256": "081059c99f86cc8643f677d5ee71a464dc9913060a6235c3e03d3fed43a56e0f",
+      "bytes": 593
+    },
+    {
+      "path": "tests/security/test_adversarial_qualification.py",
+      "sha256": "3cf81619f476a818037cbec651bd5fbd0daaf687ba93c9ba4c914c772325c0af",
+      "bytes": 10677
+    }
+  ]
+}

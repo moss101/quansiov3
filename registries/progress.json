@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T10:10:00Z",
+  "updated_at": "2026-09-15T10:20:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2201,17 +2201,22 @@
     },
     "QA-007": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T10:10:00Z",
-      "updated_at": "2026-09-15T10:10:00Z",
+      "updated_at": "2026-09-15T10:20:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/security/test_adversarial_qualification.py (9 passed: injection corpus zero unauthorized and detection >= 0.95; injected text demoted to evidence reference; deleted/quarantined/superseded knowledge never retrievable; tenant poisoning cannot cross isolation; capability escalation excluded never granted; malicious artifact content refused before preview; secret canaries absent from logs and bundles; tampered SearchProgram refused on replay; stale-generation fence wired)"
+      ],
+      "artifacts": [
+        "evidence/QA-007/2026-09-15T10-20-00Z/summary.json",
+        "tests/security/test_adversarial_qualification.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed."
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while OPS-001 and OPS-002 are BLOCKED_EXTERNAL. Unblock: flip OPS-001/OPS-002 to PASS (live OIDC sandbox for OPS-001 via QUANSIO_TEST_OIDC_ISSUER) and re-run the adversarial suite.",
+      "notes": "Adversarial campaign drives the shipped defenses through their real entry points. No P0/P1 finding open; every ambiguous attack input fails closed with a typed refusal or a zero."
     },
     "QA-008": {
       "coverage": null,
