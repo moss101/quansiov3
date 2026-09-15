@@ -8,6 +8,9 @@ fn restart_does_not_duplicate_a_scheduled_fire() {
     let mut seen = Vec::new();
     assert!(should_fire(&seen, &key));
     seen.push(key.clone());
-    assert!(!should_fire(&seen, &key), "restart redelivery must not fire twice");
+    assert!(
+        !should_fire(&seen, &key),
+        "restart redelivery must not fire twice"
+    );
     assert_eq!(ROUTINE_COMMAND, "TriggerRoutineNow");
 }
