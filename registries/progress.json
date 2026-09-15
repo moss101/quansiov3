@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T08:51:00Z",
+  "updated_at": "2026-09-15T09:00:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2064,18 +2064,24 @@
       "notes": "Offline supply-chain gate: lockfile pinning (Rust/pnpm/uv), deny.toml completeness and licence allow-list, deterministic CycloneDX SBOM with drift verification, a real RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill/pack quarantine lifecycle checks. cargo-deny is optional and reports an explicit informational result when absent, so the gate never silently passes and never requires network. Wired into scripts/ci/ci_summary.py so ci.sh and the GitHub workflow both run it."
     },
     "OPS-008": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T08:55:00Z",
+      "updated_at": "2026-09-15T09:00:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "cargo test -p quansio-server --test ops_kill_switches (4 passed: audited engage/release; worker quarantine; provider outage + effect freeze keeps evidence; all seven \u00a721.5 switches exist)"
+      ],
+      "artifacts": [
+        "evidence/OPS-008/2026-09-15T09-00-00Z/summary.json",
+        "crates/server/src/control/ops/mod.rs",
+        "docs/runbooks/kill-switches.md"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while OPS-003 and OPS-005 are BLOCKED_EXTERNAL. Unblock: complete the live PITR drill (OPS-005) and flip OPS-003/OPS-005 to PASS.",
+      "notes": "Kill switches are audited and reversible. Effect freeze blocks new tier \u2265 2 actions without corrupting reads or evidence."
     },
     "QA-001": {
       "coverage": null,

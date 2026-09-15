@@ -1,0 +1,42 @@
+{
+  "task_id": "OPS-008",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T09:00:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test ops_kill_switches",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-008/2026-09-15T09-00-00Z/tests.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test ops_kill_switches",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-008/2026-09-15T09-00-00Z/tests.log",
+      "sha256": "07f03d79a6354db1f9ee01d187631b80b38ff7853618dee4cf2f6b5cbdd19a64",
+      "bytes": 117
+    },
+    {
+      "path": "crates/server/src/control/ops/mod.rs",
+      "sha256": "d857cfd96a39c24de3abff75c0186b96311fd15b979127d7b3db725a6c1005b2",
+      "bytes": 4750
+    },
+    {
+      "path": "crates/server/tests/ops_kill_switches.rs",
+      "sha256": "cc52daeeaca5b20a0a58cf0834d13c82a51e94a7c5f6930f9121dd62ab653db2",
+      "bytes": 2845
+    },
+    {
+      "path": "docs/runbooks/kill-switches.md",
+      "sha256": "f9de6d61486afff6a661968b642dbbb9eb207ec7c940ea6743d06d218b325c61",
+      "bytes": 731
+    }
+  ]
+}
