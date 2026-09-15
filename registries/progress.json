@@ -1559,18 +1559,18 @@
       "notes": "Composer maps objectives to wn_/run_ identities, persists attachments and answered questions across reload, exposes a turn inspector (route/context/trust/tools), and cancel is CancelRun. Server path crates/server/src/api/threads.rs projects the conversation owner."
     },
     "APP-005": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T05:10:00Z",
+      "updated_at": "2026-09-15T05:10:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed. Owner apps/desktop/src/work. Edits go through graph commands, not local mutation."
     },
     "APP-006": {
       "coverage": null,
