@@ -1,0 +1,64 @@
+{
+  "task_id": "QA-002",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T11:20:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/architecture",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-002/2026-09-15T11-20-00Z/architecture-suite.log"
+    },
+    {
+      "command": "python scripts/ci/arch_check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-002/2026-09-15T11-20-00Z/arch-check.log"
+    },
+    {
+      "command": "python scripts/ci/workspace_check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-002/2026-09-15T11-20-00Z/workspace-check.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/architecture",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python scripts/ci/arch_check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python scripts/ci/workspace_check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-002/2026-09-15T11-20-00Z/architecture-suite.log",
+      "sha256": "edddc500cff395d0d4609b35856fffba154584ff55e4346ce97b969978bbcf2b",
+      "bytes": 180
+    },
+    {
+      "path": "evidence/QA-002/2026-09-15T11-20-00Z/arch-check.log",
+      "sha256": "e21ec95c40f80096c895c49c31516efbf7167162f9c6897751f50284504eff3c",
+      "bytes": 51
+    },
+    {
+      "path": "evidence/QA-002/2026-09-15T11-20-00Z/workspace-check.log",
+      "sha256": "7f5d62d9d44edb6ed1aeb7c6e092eb899718bb01011921976461a9a6f82e03de",
+      "bytes": 53
+    },
+    {
+      "path": "tests/architecture/test_qa002_consistency.py",
+      "sha256": "0eab754d5c4b376cb3c1885f6e14c547ffe5b468fb22c853e65f399b5f61a6fb",
+      "bytes": 2532
+    }
+  ]
+}
