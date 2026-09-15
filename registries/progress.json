@@ -1663,7 +1663,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T05:30:00Z",
       "updated_at": "2026-09-15T05:35:00Z",
-      "git_commit": null,
+      "git_commit": "45263685e513eb24e6b619a6a9d76b8c0ee0db33",
       "tests": [
         "pnpm --filter @quansio/desktop test (deleted memory leaves retrieval; unapproved skill cannot activate; recovery fields are not memory)"
       ],
