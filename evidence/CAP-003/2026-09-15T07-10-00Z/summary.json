@@ -1,0 +1,52 @@
+{
+  "task_id": "CAP-003",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T07:10:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/intelligence/test_artifact_workflows.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-003/2026-09-15T07-10-00Z/pytest.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/intelligence/test_artifact_workflows.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-003/2026-09-15T07-10-00Z/pytest.log",
+      "sha256": "9f7f2f886ba5970cd80b038d24740ffd3c9e086a53fb9a10a492b30def50350d",
+      "bytes": 300
+    },
+    {
+      "path": "python/intelligence/artifacts/workflow.py",
+      "sha256": "0a6b6b97a715c5ec59784987c75dffac3655482d0ecf2e6df4ee9af9f26068ab",
+      "bytes": 7277
+    },
+    {
+      "path": "python/intelligence/artifacts/formats.py",
+      "sha256": "4e312edacf213cd03618377e0dca70c1dc1de31d58663fdd3fd52a48f938bfd6",
+      "bytes": 17830
+    },
+    {
+      "path": "python/intelligence/artifacts/models.py",
+      "sha256": "cba2d80fb442341b2f44a20d9da52f3efa8fb5050fcad894dbb2c1db5036337f",
+      "bytes": 7762
+    },
+    {
+      "path": "python/tests/intelligence/test_artifact_workflows.py",
+      "sha256": "ed2ab72459c6f13a535a5c0077dafc342aa3c47b51318398d80693321f2eaf41",
+      "bytes": 8803
+    },
+    {
+      "path": "packs/skills/artifacts/skill.yaml",
+      "sha256": "ae6b74df0065276f97445d881bb54183bdb8c3ef058460603c7ac00c3778d2df",
+      "bytes": 1100
+    }
+  ]
+}

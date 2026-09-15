@@ -1,0 +1,4 @@
+metric,value,unit
+navigation_recall,1.0,ratio
+provenance_preserved,1.0,ratio
+budget_tokens,128,count
