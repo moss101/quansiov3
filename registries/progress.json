@@ -1559,18 +1559,23 @@
       "notes": "Composer maps objectives to wn_/run_ identities, persists attachments and answered questions across reload, exposes a turn inspector (route/context/trust/tools), and cancel is CancelRun. Server path crates/server/src/api/threads.rs projects the conversation owner."
     },
     "APP-005": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T05:10:00Z",
+      "updated_at": "2026-09-15T05:15:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "pnpm --filter @quansio/desktop test (graph projection matches revision; concurrent edit is CONFLICT_REVISION not silent overwrite)"
+      ],
+      "artifacts": [
+        "evidence/APP-005/2026-09-15T05-15-00Z/summary.json",
+        "apps/desktop/src/work/monitor.ts"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while APP-004 is BLOCKED_EXTERNAL (INT-002). Unblock: flip INT-002 then APP-004 to PASS.",
+      "notes": "Work monitor projects a canonical graph revision. User edits are ProposeGraphEdit-style; a stale revision returns CONFLICT_REVISION."
     },
     "APP-006": {
       "coverage": null,
