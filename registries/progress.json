@@ -1493,18 +1493,18 @@
       "notes": "Units landed: public v1 API with \u00a715 errors, tenant scope, command log idempotency, CancelRun/PauseRun/ResumeRun through the runtime, CreateThread/PostMessage through the conversation owner, walking skeleton (PostMessage -> run_turn with conformance-stub fs.read -> Effect Ledger -> read projections), WebSocket GET /v1/stream with cursor reconnect, per-tenant rate limits, feature flags from config/flags.yaml, OpenAPI/catalog contract. Remaining catalog commands fail closed naming the missing handler rather than writing foreign tables. The API module still writes only `commands`."
     },
     "APP-002": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T04:30:00Z",
+      "updated_at": "2026-09-15T04:30:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed. Owner crates/server/src/control/identity and apps/desktop/src/onboarding."
     },
     "APP-003": {
       "coverage": "GENUINE_GAP",
