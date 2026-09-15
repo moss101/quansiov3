@@ -1753,18 +1753,18 @@
       "notes": "Standing instructions cannot add grants. Archive keeps agt_/ath_ identities. Default templates live in config/teammates.yaml."
     },
     "APP-015": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T06:40:00Z",
+      "updated_at": "2026-09-15T06:40:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed. Owner crates/server/src/notify/webhooks and api/webhooks."
     },
     "CAP-001": {
       "coverage": null,
