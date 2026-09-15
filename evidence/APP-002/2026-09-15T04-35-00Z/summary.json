@@ -1,0 +1,68 @@
+{
+  "task_id": "APP-002",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T04:35:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test identity",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-15T04-35-00Z/identity.log"
+    },
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-15T04-35-00Z/desktop.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test identity",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-002/2026-09-15T04-35-00Z/identity.log",
+      "sha256": "9a85da6ad6549ab955ec845fb40d70b2286e9e812761adb511c3174d6cc02f84",
+      "bytes": 525
+    },
+    {
+      "path": "evidence/APP-002/2026-09-15T04-35-00Z/desktop.log",
+      "sha256": "a57223509b161031a4697c191fceb51ea051faaa0279dc5c294801d6bf3932db",
+      "bytes": 382
+    },
+    {
+      "path": "crates/server/src/control/identity/mod.rs",
+      "sha256": "9d7ac0549ead1b51181f920035b8af42d2ed45444db8a3061010a0021cab4aee",
+      "bytes": 8232
+    },
+    {
+      "path": "crates/server/src/control/identity/settings.rs",
+      "sha256": "c9c7a8f9612230a70472fa78e376e186a88ce46b9b20c2bd0b98a9b6f3858b02",
+      "bytes": 2277
+    },
+    {
+      "path": "crates/server/tests/identity.rs",
+      "sha256": "c39314ff5fc3abd3c570bbbc00f38deb5916e06ce58b52c2d55397ce6a24fa51",
+      "bytes": 3526
+    },
+    {
+      "path": "apps/desktop/src/onboarding/flow.ts",
+      "sha256": "47cb9808f3e72d3ba6ccec0ff60d0511550ef8d89a6c581e7d776427e01a01d5",
+      "bytes": 1107
+    },
+    {
+      "path": "migrations/0012_identity_settings.sql",
+      "sha256": "7e196d0f3e4be7f7f508ad49c63af6b00ab57f5d8a4741c1799d86fe2a17535c",
+      "bytes": 449
+    }
+  ]
+}

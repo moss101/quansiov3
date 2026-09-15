@@ -1493,18 +1493,27 @@
       "notes": "Units landed: public v1 API with \u00a715 errors, tenant scope, command log idempotency, CancelRun/PauseRun/ResumeRun through the runtime, CreateThread/PostMessage through the conversation owner, walking skeleton (PostMessage -> run_turn with conformance-stub fs.read -> Effect Ledger -> read projections), WebSocket GET /v1/stream with cursor reconnect, per-tenant rate limits, feature flags from config/flags.yaml, OpenAPI/catalog contract. Remaining catalog commands fail closed naming the missing handler rather than writing foreign tables. The API module still writes only `commands`."
     },
     "APP-002": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T04:30:00Z",
+      "updated_at": "2026-09-15T04:35:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test identity (3 passed: most-restrictive settings merge, fresh user onboarded without a config file with personal tenant+workspace, raw secrets refused)",
+        "pnpm --filter @quansio/desktop test (onboarding plan requiresConfigFile false and sec_ handles)"
+      ],
+      "artifacts": [
+        "evidence/APP-002/2026-09-15T04-35-00Z/summary.json",
+        "crates/server/src/control/identity/mod.rs",
+        "crates/server/src/control/identity/settings.rs",
+        "apps/desktop/src/onboarding/flow.ts",
+        "migrations/0012_identity_settings.sql"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while dependency APP-001 is BLOCKED_EXTERNAL (INT-002 live credentials). Unblock: flip INT-002 then APP-001 to PASS; APP-002 then flips to PASS with evidence already in evidence/APP-002/.",
+      "notes": "Onboard_email provisions a personal tenant and default workspace with magic-link + OAuth method names and a sec_ credential handle only. Settings layers merge deterministically; security booleans deny-wins and retention_days takes the minimum."
     },
     "APP-003": {
       "coverage": "GENUINE_GAP",

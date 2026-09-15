@@ -1,0 +1,11 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.57s
+     Running tests/identity.rs (target/debug/deps/identity-a2898e63546790e2)
+
+running 3 tests
+test security_settings_merge_is_deterministic_and_most_restrictive ... ok
+test onboarding_refuses_a_raw_secret ... ok
+test a_fresh_user_is_onboarded_without_a_config_file ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+

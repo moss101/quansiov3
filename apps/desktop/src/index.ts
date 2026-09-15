@@ -28,3 +28,5 @@ export { DesktopSessionStore } from "./renderer/session.js";
 export type { ActiveRunSession } from "./renderer/session.js";
 export { commandUrl, streamUrl, tenantHeaders } from "./client/server.js";
 export { STRINGS } from "./i18n/strings.js";
+export { onboardingPlan } from "./onboarding/flow.js";
+export type { OnboardingInput, OnboardingPlan } from "./onboarding/flow.js";
