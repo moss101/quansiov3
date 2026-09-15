@@ -1511,8 +1511,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T04:15:00Z",
-      "updated_at": "2026-09-15T04:20:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T04:22:00Z",
+      "git_commit": "fe621ea154ac04b57fedee21183cad01e333d1f8",
       "tests": [
         "pnpm --filter @quansio/desktop test (8 passed: surface catalog, nodeIntegration/contextIsolation/sandbox CSP baseline, preload allowlist without fs/child_process, permission deny, run+cursor reconnect)"
       ],
