@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T10:05:00Z",
+  "updated_at": "2026-09-15T10:06:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2146,8 +2146,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T09:50:00Z",
-      "updated_at": "2026-09-15T10:05:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T10:06:00Z",
+      "git_commit": "262361de8333eeb8b655cc1eb1d2be2a486eb1de",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... uv run --project python pytest tests/evaluation/test_qa004_campaign.py (5 passed: retrieval recall 1.0 on the real pgvector derived table; cross-tenant and deleted-memory retrieval zero on the adversarial set; route determinism 1.0 via the conformance catalog; injection corpus zero unauthorized and detection >= 0.95; campaign gated on frozen thresholds with no promotion block; WikiSkill campaign holds; tenant poisoning does not leak)",
         "uv run --project python pytest tests/evaluation (61 passed)",
