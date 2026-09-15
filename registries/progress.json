@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T11:10:00Z",
+  "updated_at": "2026-09-15T11:20:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2108,17 +2108,24 @@
     },
     "QA-002": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T11:10:00Z",
-      "updated_at": "2026-09-15T11:10:00Z",
+      "updated_at": "2026-09-15T11:20:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/architecture (117 passed: composed QA-002 consistency suite plus the per-rule negative corpus; forbidden wiring, owner/dependency map, authority writes, manifest/DAG, and the V8.1 validator all clean)",
+        "python scripts/ci/arch_check.py (exit 0)",
+        "python scripts/ci/workspace_check.py (exit 0)"
+      ],
+      "artifacts": [
+        "evidence/QA-002/2026-09-15T11-20-00Z/summary.json",
+        "tests/architecture/test_qa002_consistency.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed."
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while QA-001 is BLOCKED_EXTERNAL. Unblock: flip QA-001 to PASS (APP-013) and re-run the composed consistency suite.",
+      "notes": "The final build has exactly one authority per concern: every negative fixture is caught by the per-rule corpus, and the V8.1 validator reports zero consistency errors on the composed tree."
     },
     "QA-003": {
       "coverage": "GENUINE_GAP",
