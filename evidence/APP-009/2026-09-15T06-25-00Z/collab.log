@@ -1,0 +1,9 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.24s
+     Running tests/collaboration.rs (target/debug/deps/collaboration-261bfa13517c2efb)
+
+running 2 tests
+test concurrent_messages_have_stable_order ... ok
+test removed_participant_cannot_receive_protected_events ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1636,17 +1636,22 @@
     },
     "APP-009": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T06:20:00Z",
-      "updated_at": "2026-09-15T06:20:00Z",
+      "updated_at": "2026-09-15T06:25:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "cargo test -p quansio-server --test collaboration (stable seq/id order; removed cannot receive)"
+      ],
+      "artifacts": [
+        "evidence/APP-009/2026-09-15T06-25-00Z/summary.json",
+        "crates/server/src/control/collaboration/mod.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed. Owners crates/server/src/control/collaboration and apps/desktop/src/collaboration."
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while APP-001 is BLOCKED_EXTERNAL (INT-002). Unblock: flip INT-002 then APP-001 to PASS.",
+      "notes": "Messages sort by seq then id. Removed/suspended participants cannot receive protected events."
     },
     "APP-010": {
       "coverage": null,
