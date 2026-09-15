@@ -1602,7 +1602,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T06:10:00Z",
       "updated_at": "2026-09-15T06:15:00Z",
-      "git_commit": null,
+      "git_commit": "aeb0619b8efa6f374e46e3dd5dc032ad669905f9",
       "tests": [
         "pnpm --filter @quansio/desktop test (takeover keeps session id; agent input fenced while user owns control; reconnect restores the same session)"
       ],
