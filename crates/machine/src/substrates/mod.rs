@@ -4,3 +4,4 @@
 //! platform operation. They own no lifecycle state or effect record of their own.
 
 pub mod macos_capsule;
+pub mod windows;

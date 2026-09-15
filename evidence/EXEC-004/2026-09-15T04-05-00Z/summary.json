@@ -1,0 +1,78 @@
+{
+  "task_id": "EXEC-004",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T04:05:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-machine --test windows_capsule",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-004/2026-09-15T04-05-00Z/windows-capsule.log"
+    },
+    {
+      "command": "cargo test -p quansio-native-windows",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/EXEC-004/2026-09-15T04-05-00Z/native-windows.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-machine --test windows_capsule",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-native-windows",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/EXEC-004/2026-09-15T04-05-00Z/windows-capsule.log",
+      "sha256": "159ae0c937b13038d2913e757127be84a64dcb147f33d7c83fd5a5973401e105",
+      "bytes": 596
+    },
+    {
+      "path": "evidence/EXEC-004/2026-09-15T04-05-00Z/native-windows.log",
+      "sha256": "8943836e87f9cb4280eda00d1727992d3c6ef14cfe6e5fb2bf25690ce0f38d97",
+      "bytes": 1079
+    },
+    {
+      "path": "evidence/EXEC-004/RECONCILIATION.md",
+      "sha256": "a9b7ed623f2cdfbd9a6deb7ffc60166f28035ac0acdc4ea6c16fcf48eb808d59",
+      "bytes": 2009
+    },
+    {
+      "path": "crates/machine/src/substrates/windows/mod.rs",
+      "sha256": "a584af2908c19dd1d0f6d0c043d8e85b2abbe3386f8b3078c6d605636487807d",
+      "bytes": 8307
+    },
+    {
+      "path": "crates/machine/tests/windows_capsule.rs",
+      "sha256": "26502d68ad9927b1f39711ff19184cc4ec1ad69b3782b91303ceab019aa36213",
+      "bytes": 5977
+    },
+    {
+      "path": "native/windows/src/wsl.rs",
+      "sha256": "6c8ab7b6530f678330593943d237ce9352210db814177523a00c27a583f5dc3a",
+      "bytes": 3357
+    },
+    {
+      "path": "native/windows/src/computer_use.rs",
+      "sha256": "cc7c75ba35a19b82c372dc26a83a973621547680aba49a0df34acad3156b6a6c",
+      "bytes": 12324
+    },
+    {
+      "path": "config/guest-images.yaml",
+      "sha256": "e81f2ad819803be4af02b3a9077b53b2e6b283802ff1c633cf73a26f0ad17090",
+      "bytes": 1098
+    },
+    {
+      "path": "evidence/EXEC-004/2026-09-15T04-05-00Z/NOTES.md",
+      "sha256": "8eeabe0d949d1f5516050799ae00be8baf2d189de69c61932feb82aca5ebe5fb",
+      "bytes": 880
+    }
+  ]
+}

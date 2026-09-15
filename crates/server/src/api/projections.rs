@@ -25,10 +25,7 @@ pub async fn thread(
     let identity = identity(&scope);
     let store = ConversationStore::new(state.pool().clone(), identity)
         .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), "projection"))?;
-    let thread = store
-        .get_thread(&id)
-        .await
-        .map_err(conversation_error)?;
+    let thread = store.get_thread(&id).await.map_err(conversation_error)?;
     Ok(Json(json!({
         "id": thread.id,
         "workspace_id": thread.workspace_id,

@@ -1,0 +1,12 @@
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.21s
+     Running tests/windows_capsule.rs (target/debug/deps/windows_capsule-a8e7d379e3fdeee5)
+
+running 4 tests
+test wsl_guest_channel_is_the_typed_qworkerd_vocabulary ... ok
+test wsl_verbs_are_allowlisted_and_exec_is_absent ... ok
+test stale_generation_is_refused_before_wsl ... ok
+test prepare_stop_checkpoint_are_fenced_and_repeatable ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

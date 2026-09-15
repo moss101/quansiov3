@@ -1215,17 +1215,36 @@
     },
     "EXEC-004": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T03:59:43Z",
-      "updated_at": "2026-09-15T03:59:43Z",
+      "updated_at": "2026-09-15T04:05:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
-      "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed. Canonical owners native/windows (allowlisted UIA broker + WSL launch) and crates/machine/src/substrates/windows (lifecycle over ExecutionTarget/Lease)."
+      "tests": [
+        "cargo test -p quansio-machine --test windows_capsule (4 passed: WSL verb allowlist without --exec, stale generation refused before WSL, prepare/checkpoint/stop sequencing, closed qworkerd vocabulary)",
+        "cargo test -p quansio-native-windows (5 passed: cmd.exe/--exec refused, caller text base64-encoded, UIA allowlist, BLOCKED_EXTERNAL on this non-Windows host)"
+      ],
+      "artifacts": [
+        "evidence/EXEC-004/RECONCILIATION.md",
+        "evidence/EXEC-004/2026-09-15T04-05-00Z/summary.json",
+        "evidence/EXEC-004/2026-09-15T04-05-00Z/NOTES.md",
+        "crates/machine/src/substrates/windows/mod.rs",
+        "native/windows/src/wsl.rs",
+        "config/guest-images.yaml"
+      ],
+      "real_boundary_evidence": [
+        {
+          "boundary": "Windows 11 WSL2 capsule and UI Automation native broker",
+          "environment": "Windows 11 interactive host with WSL2; QUANSIO_TEST_WINDOWS_CAPSULE=1 and QUANSIO_TEST_WINDOWS_COMPUTER_USE=1",
+          "command": "QUANSIO_TEST_WINDOWS_CAPSULE=1 QUANSIO_TEST_WINDOWS_COMPUTER_USE=1 cargo test -p quansio-native-windows -- --nocapture",
+          "artifact": "evidence/EXEC-004/2026-09-15T04-05-00Z/native-windows.log",
+          "sha256": "8943836e87f9cb4280eda00d1727992d3c6ef14cfe6e5fb2bf25690ce0f38d97",
+          "recorded_at": "2026-09-15T04:05:00Z"
+        }
+      ],
+      "implementation_complete": true,
+      "blocker": "This macOS runner has no Windows 11 host, no wsl.exe and no UI Automation session. Unblock on Windows 11 with WSL2: set QUANSIO_TEST_WINDOWS_CAPSULE=1 and QUANSIO_TEST_WINDOWS_COMPUTER_USE=1, run `cargo test -p quansio-native-windows -- --nocapture` and the shared worker/tool conformance suite against a real WSL distribution imported from the signed V8.1 rootfs, then record live evidence and flip EXEC-004 to PASS.",
+      "notes": "Implementation complete. crates/machine/src/substrates/windows maps local_capsule_windows onto ExecutionTarget/Lease/generation and allowlisted wsl.exe verbs (--exec absent). native/windows reuses the EXEC-010 UIA broker (fixed scripts, base64 caller values) and adds the WSL launcher that refuses cmd.exe and --exec before spawn. The signed rootfs is unpublished; no digest or URL was invented."
     },
     "EXEC-005": {
       "coverage": "GENUINE_GAP",

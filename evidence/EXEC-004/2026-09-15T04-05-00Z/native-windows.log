@@ -1,0 +1,21 @@
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+   Compiling quansio-native-windows v0.1.0 (/Users/mohsin/projects/quansiov3/native/windows)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.54s
+     Running unittests src/lib.rs (target/debug/deps/quansio_native_windows-7cab42623a8ca31b)
+
+running 5 tests
+BLOCKED_EXTERNAL: QUANSIO_TEST_WINDOWS_COMPUTER_USE=1 requires a Windows 11 interactive host
+test wsl::tests::missing_windows_host_is_blocked_external ... ok
+test wsl::tests::exec_and_cmd_are_refused_before_spawn ... ok
+test computer_use::tests::caller_text_is_encoded_not_made_executable ... ok
+test computer_use::tests::non_windows_boundary_reports_blocked_external ... ok
+test computer_use::tests::chord_and_operation_values_are_allowlisted_before_the_platform ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_native_windows
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
