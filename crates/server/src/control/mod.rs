@@ -7,6 +7,7 @@
 pub mod collaboration;
 pub mod conversation;
 pub mod identity;
+pub mod routines;
 pub mod schema;
 pub mod skills;
 pub mod teammates;
