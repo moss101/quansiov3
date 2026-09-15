@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T10:21:00Z",
+  "updated_at": "2026-09-15T10:35:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2219,18 +2219,26 @@
       "notes": "Adversarial campaign drives the shipped defenses through their real entry points. No P0/P1 finding open; every ambiguous attack input fails closed with a typed refusal or a zero."
     },
     "QA-008": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T10:25:00Z",
+      "updated_at": "2026-09-15T10:35:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "pnpm exec vitest run --config tests/e2e/vitest.config.ts (7 passed, 1 skipped: onboarding-to-artifact-review journey, teammate archive lineage + protected delivery, externalized strings, offline/reconnect, a11y baseline zero violations + keyboard-reachable surfaces; served Playwright matrix prints BLOCKED_EXTERNAL)",
+        "pnpm --filter @quansio/desktop test (25 passed)",
+        "pnpm --filter @quansio/desktop typecheck"
+      ],
+      "artifacts": [
+        "evidence/QA-008/2026-09-15T10-35-00Z/summary.json",
+        "tests/e2e/journeys.spec.ts",
+        "tests/e2e/a11y-baseline.json"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. The served Playwright matrix on the DOSSIER \u00a721.1 support matrix is absent (QUANSIO_TEST_E2E=1 with a served build). PASS is also forbidden while APP-003/APP-011/APP-012/APP-014 are BLOCKED_EXTERNAL. Unblock: serve the build, export QUANSIO_TEST_E2E=1 and QUANSIO_E2E_URL, and flip the four APP deps to PASS.",
+      "notes": "Critical journeys drive the shipped desktop modules in-process: onboarding without config, chat/objective, question-answer, exact-preview approval, versioned artifact review, takeover/handback fencing, archive lineage, offline reconnect. Accessibility baseline records zero violations and keyboard-reachable surfaces."
     },
     "QA-009": {
       "coverage": null,
