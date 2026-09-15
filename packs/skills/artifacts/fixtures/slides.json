@@ -1,0 +1,13 @@
+{
+  "schema_version": "v1",
+  "slides": [
+    {
+      "title": "Artifact workflows",
+      "body": "Versioned source files with format validation before completion."
+    },
+    {
+      "title": "Not chat blobs",
+      "body": "Each edit mints a new ArtifactVersion; bytes are immutable."
+    }
+  ]
+}

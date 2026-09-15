@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-14T12:16:00Z",
+  "updated_at": "2026-09-15T07:10:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1801,17 +1801,23 @@
     },
     "CAP-003": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T06:50:00Z",
-      "updated_at": "2026-09-15T06:50:00Z",
+      "updated_at": "2026-09-15T07:10:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/intelligence/test_artifact_workflows.py -q (5 passed: document/spreadsheet/slide fixtures round-trip; edit mints a new immutable version with parent/seq/digest; malformed document/CSV/slides/chat-blob/script block completion; quality-empty body blocks; skill pack tool_needs cannot grant artifact.create)"
+      ],
+      "artifacts": [
+        "evidence/CAP-003/2026-09-15T07-10-00Z/summary.json",
+        "python/intelligence/artifacts/workflow.py",
+        "packs/skills/artifacts/skill.yaml"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed."
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while APP-008 is BLOCKED_EXTERNAL (INT-002 chain). Unblock: flip INT-002 then APP-001/APP-003/APP-008 to PASS.",
+      "notes": "Artifacts are versioned source files (document/spreadsheet/slides/code) with format validation and quality checks that block completion. Skill pack proposes artifact.create/update and cannot grant those tools."
     },
     "CAP-004": {
       "coverage": null,

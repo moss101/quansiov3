@@ -1,0 +1,26 @@
+instructions: |
+  Create and edit artifacts as versioned source files, never as opaque chat blobs.
+  Use artifact.create for the first version and artifact.update for each edit.
+  Each version is immutable: an edit mints a new ArtifactVersion with parent_version_id
+  pointing at the version it replaced.
+  Before proposing completion, run format validation for the kind
+  (document markdown heading, spreadsheet CSV header+rows, presentation slides JSON,
+  code files JSON) and the task-specific quality checks. Failed format validation
+  blocks completion. Preview is digest-and-excerpt evidence and must not execute
+  HTML, JavaScript or SVG with host privileges.
+examples:
+  - write a document
+  - edit the spreadsheet
+  - make slides
+  - create a code artifact
+tool_needs:
+  - artifact.create
+  - artifact.update
+capability_needs:
+  - artifact.write
+eval_suite_id: eval_artifact_workflows
+compatibility:
+  - v8.1
+recovery_guidance: |
+  If format validation fails, do not complete the run. Keep the last valid version
+  current, return the validation errors, and ask for a corrected source file.
