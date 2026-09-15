@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T07:15:00Z",
+  "updated_at": "2026-09-15T07:25:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1849,17 +1849,23 @@
     },
     "CAP-006": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T07:15:00Z",
-      "updated_at": "2026-09-15T07:15:00Z",
+      "updated_at": "2026-09-15T07:25:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/intelligence/test_wiki_skill.py -q (3 passed: pinned eval campaign holds navigation/provenance/link/budget thresholds via INT-010 gate; budget regression records dropped segments; disabling WikiSkill leaves SearchProgram and ContextProjection functional)"
+      ],
+      "artifacts": [
+        "evidence/CAP-006/2026-09-15T07-25-00Z/summary.json",
+        "packs/skills/wiki/navigate.py",
+        "packs/skills/wiki/skill.yaml"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed."
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while INT-010 is BLOCKED_EXTERNAL. Unblock: flip INT-010 to PASS.",
+      "notes": "WikiSkill pack navigates pinned knowledge via typed SearchProgram, active-only Knowledge Fabric hits, provenance-preserving selection and budgeted ContextProjection. Not a new search subsystem. Disable/fallback leaves core search and context packing working."
     },
     "CAP-007": {
       "coverage": null,

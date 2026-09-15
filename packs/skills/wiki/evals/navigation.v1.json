@@ -1,0 +1,59 @@
+{
+  "dataset_id": "wiki_navigation",
+  "version": 1,
+  "kind": "skill_behaviour",
+  "notes": "WikiSkill pinned corpora for navigation, source selection, provenance and budget.",
+  "cases": [
+    {
+      "case_id": "navigate_onboarding",
+      "payload": {
+        "query": "onboarding a teammate",
+        "expected_ids": ["kn_wiki_onboarding"],
+        "budget": 64
+      },
+      "protected": false,
+      "tags": ["navigation"]
+    },
+    {
+      "case_id": "navigate_artifacts",
+      "payload": {
+        "query": "versioned source files",
+        "expected_ids": ["kn_wiki_artifacts"],
+        "budget": 64
+      },
+      "protected": false,
+      "tags": ["navigation", "source_selection"]
+    },
+    {
+      "case_id": "navigate_search_program",
+      "payload": {
+        "query": "typed SearchProgram",
+        "expected_ids": ["kn_wiki_search"],
+        "budget": 64
+      },
+      "protected": false,
+      "tags": ["navigation"]
+    },
+    {
+      "case_id": "deleted_page_excluded",
+      "payload": {
+        "query": "retired onboarding notes",
+        "expected_ids": [],
+        "forbidden_ids": ["kn_wiki_retired"],
+        "budget": 64
+      },
+      "protected": true,
+      "tags": ["navigation", "retrieval"]
+    },
+    {
+      "case_id": "budget_regression",
+      "payload": {
+        "query": "knowledge space",
+        "expected_ids": ["kn_wiki_onboarding", "kn_wiki_artifacts", "kn_wiki_policy", "kn_wiki_search", "kn_wiki_teammates"],
+        "budget": 12
+      },
+      "protected": true,
+      "tags": ["budget"]
+    }
+  ]
+}

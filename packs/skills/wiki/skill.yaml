@@ -1,0 +1,24 @@
+instructions: |
+  Navigate large knowledge and repository spaces with a typed SearchProgram, never
+  a free-form predicate string. Prefer the lexical and exact channels over the
+  Knowledge Fabric; keep every hit's provenance (source kind, ref, digest).
+  Select sources before summarizing. Pack selected passages into a ContextProjection
+  under the caller's token budget and record what was dropped. Cite with
+  knowledge.cite. This skill cannot grant tools or widen authority. If the skill
+  is disabled, core SearchProgram parse and context packing still work.
+examples:
+  - navigate the wiki
+  - find the source page
+  - summarize the knowledge
+  - follow the provenance link
+tool_needs:
+  - knowledge.cite
+capability_needs:
+  - read.internal
+eval_suite_id: eval_wiki_navigation
+compatibility:
+  - v8.1
+recovery_guidance: |
+  If a SearchProgram is refused, do not invent a string query. If the budget is
+  exhausted, report the ledger's dropped segments instead of silently truncating.
+  If the skill is disabled, fall back to SearchProgram + Knowledge Fabric + context packing.
