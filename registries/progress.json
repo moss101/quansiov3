@@ -1218,8 +1218,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T03:59:43Z",
-      "updated_at": "2026-09-15T04:05:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T04:10:00Z",
+      "git_commit": "8c2631b454217294a9668cadab15c881fd366a65",
       "tests": [
         "cargo test -p quansio-machine --test windows_capsule (4 passed: WSL verb allowlist without --exec, stale generation refused before WSL, prepare/checkpoint/stop sequencing, closed qworkerd vocabulary)",
         "cargo test -p quansio-native-windows (5 passed: cmd.exe/--exec refused, caller text base64-encoded, UIA allowlist, BLOCKED_EXTERNAL on this non-Windows host)"
