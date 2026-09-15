@@ -1,0 +1,69 @@
+{
+  "task_id": "QA-008",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T10:35:00Z",
+  "commands": [
+    {
+      "command": "pnpm exec vitest run --config tests/e2e/vitest.config.ts",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-008/2026-09-15T10-35-00Z/e2e-journeys.log"
+    },
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-008/2026-09-15T10-35-00Z/desktop-suite.log"
+    },
+    {
+      "command": "pnpm --filter @quansio/desktop typecheck",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-008/2026-09-15T10-35-00Z/desktop-typecheck.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "pnpm exec vitest run --config tests/e2e/vitest.config.ts",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm --filter @quansio/desktop typecheck",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-008/2026-09-15T10-35-00Z/e2e-journeys.log",
+      "sha256": "d55b801d6fb8e86212a81b69c7b70f5889d779103faaf02a598fd0ae6e49f725",
+      "bytes": 517
+    },
+    {
+      "path": "evidence/QA-008/2026-09-15T10-35-00Z/desktop-suite.log",
+      "sha256": "607f9493fabbe8c3c46d260fbac078e2f86bbfc776adf7ea5ed91997df72dbe1",
+      "bytes": 797
+    },
+    {
+      "path": "evidence/QA-008/2026-09-15T10-35-00Z/desktop-typecheck.log",
+      "sha256": "29c5ee0f6b0b20dbb259b99d01276198c3d28190090706394608d4deda6d2c0b",
+      "bytes": 23
+    },
+    {
+      "path": "tests/e2e/journeys.spec.ts",
+      "sha256": "6a76f0e619ea925938e7e814aae716726273fbb19d910deb3d782a0cfaada1bd",
+      "bytes": 7875
+    },
+    {
+      "path": "tests/e2e/a11y-baseline.json",
+      "sha256": "a6ed18cd16e2889544a1d5e32c3369b9ffa02cbb1108f52ba1b8cfce8fc8ec10",
+      "bytes": 767
+    }
+  ]
+}

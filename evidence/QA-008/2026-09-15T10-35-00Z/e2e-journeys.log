@@ -1,0 +1,13 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3
+
+ ✓ |qa-e2e| tests/e2e/journeys.spec.ts (8 tests | 1 skipped) 3ms
+stdout | tests/e2e/journeys.spec.ts > playwright boundary > reports BLOCKED_EXTERNAL when the served E2E boundary is absent
+BLOCKED_EXTERNAL: QUANSIO_TEST_E2E=1 is not set; served Playwright matrix not running
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed | 1 skipped (8)
+   Start at  20:41:48
+   Duration  169ms (transform 26ms, setup 0ms, collect 31ms, tests 3ms, environment 0ms, prepare 31ms)
+

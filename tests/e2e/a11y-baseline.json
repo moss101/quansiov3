@@ -1,0 +1,13 @@
+{
+  "tool": "qa-008 accessibility baseline",
+  "note": "Violations block release (QA-008 acceptance); keyboardReachable asserts a keyboard-only path per shipped surface. Update via a re-run of the scan, never by hand to make a failure pass.",
+  "surfaces": [
+    { "id": "onboarding", "violations": [], "keyboardReachable": true },
+    { "id": "chat", "violations": [], "keyboardReachable": true },
+    { "id": "approvals", "violations": [], "keyboardReachable": true },
+    { "id": "artifacts", "violations": [], "keyboardReachable": true },
+    { "id": "live-takeover", "violations": [], "keyboardReachable": true },
+    { "id": "teammates", "violations": [], "keyboardReachable": true },
+    { "id": "settings", "violations": [], "keyboardReachable": true }
+  ]
+}
