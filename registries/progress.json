@@ -1214,18 +1214,18 @@
       "notes": "Implementation complete. native/macos owns the Virtualization.framework bridge (no network devices, no host directory shares, one private virtio-socket on port 40581). crates/machine/src/substrates/macos_capsule owns digest verification, generation fencing, the closed qworkerd service vocabulary and repeatable start/stop/reset/checkpoint. Cookie import is refused as a guest service. The unpublished catalog cannot produce a bootable launch."
     },
     "EXEC-004": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T03:59:43Z",
+      "updated_at": "2026-09-15T03:59:43Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed. Canonical owners native/windows (allowlisted UIA broker + WSL launch) and crates/machine/src/substrates/windows (lifecycle over ExecutionTarget/Lease)."
     },
     "EXEC-005": {
       "coverage": "GENUINE_GAP",
