@@ -8,6 +8,14 @@
  */
 export const PUBLIC_API_VERSION = "v1" as const;
 
+/** OpenAPI operationIds the generated client must expose (APP-013 contract fixture). */
+export const GENERATED_OPERATIONS = [
+  "CancelRun",
+  "PostMessage",
+  "CreateWorkspace",
+  "ApproveEffect",
+] as const;
+
 const RESOURCE_PATTERN = /^[a-z0-9][a-z0-9/_-]{0,127}$/;
 
 /** Build a public API path: `/v1/<resource>` with the resource validated. */
