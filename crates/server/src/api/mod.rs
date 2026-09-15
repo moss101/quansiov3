@@ -23,6 +23,7 @@ pub mod projections;
 pub mod seams;
 pub mod stream;
 pub mod threads;
+pub mod webhooks;
 
 use std::collections::BTreeMap;
 use std::sync::Arc;

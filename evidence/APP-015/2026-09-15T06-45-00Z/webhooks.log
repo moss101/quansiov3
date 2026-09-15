@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running tests/webhooks.rs (target/debug/deps/webhooks-f798084ea9ac731d)
+
+running 3 tests
+test consumers_dedupe_on_stable_event_ids ... ok
+test delivery_is_tenant_scoped_and_obeys_egress_and_kill_switch ... ok
+test secrets_are_redacted_from_webhook_payloads ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

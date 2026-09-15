@@ -1,0 +1,37 @@
+{
+  "task_id": "APP-015",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T06:45:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test webhooks",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-015/2026-09-15T06-45-00Z/webhooks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test webhooks",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-015/2026-09-15T06-45-00Z/webhooks.log",
+      "sha256": "fecf62d0293330527b72bf50fb216cbc257e81ceb0caf0c28e8d69428ab9d423",
+      "bytes": 438
+    },
+    {
+      "path": "crates/server/src/notify/webhooks.rs",
+      "sha256": "f05444775c76d5b6fadaefe28340db6ab41612c05eb170204d405b09eb099495",
+      "bytes": 2381
+    },
+    {
+      "path": "crates/server/src/api/webhooks.rs",
+      "sha256": "7fb9e885a1017fb3662fa6e54c5e8d1512f4f360f35c2095fa15d0c65a479d8f",
+      "bytes": 236
+    }
+  ]
+}
