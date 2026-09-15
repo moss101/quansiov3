@@ -60,9 +60,10 @@ mod tests {
             let path = api_path(verb, true).expect("path");
             assert!(path.starts_with("/v1/"), "{verb} -> {path}");
         }
-        assert!(api_path("bypass-policy", true).unwrap_err().contains("never bypasses"));
+        assert!(api_path("bypass-policy", true)
+            .unwrap_err()
+            .contains("never bypasses"));
         assert!(token_is_scoped("access.tn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA"));
         assert!(!token_is_scoped("unscoped-root"));
     }
 }
-
