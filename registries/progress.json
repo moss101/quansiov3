@@ -1564,7 +1564,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T05:10:00Z",
       "updated_at": "2026-09-15T05:15:00Z",
-      "git_commit": null,
+      "git_commit": "64dd1aa0d8350ef8bbf6b705660571e848240294",
       "tests": [
         "pnpm --filter @quansio/desktop test (graph projection matches revision; concurrent edit is CONFLICT_REVISION not silent overwrite)"
       ],
