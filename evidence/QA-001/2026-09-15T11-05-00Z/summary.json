@@ -1,0 +1,80 @@
+{
+  "task_id": "QA-001",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T11:05:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/contract",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-09-15T11-05-00Z/contract-suite.log"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-09-15T11-05-00Z/python-plane.log"
+    },
+    {
+      "command": "uv run --project python mypy intelligence",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-09-15T11-05-00Z/mypy.log"
+    },
+    {
+      "command": "uv run --project python python ../scripts/ci/gen_contracts.py --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-09-15T11-05-00Z/contract-drift.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/contract",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python mypy intelligence",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python ../scripts/ci/gen_contracts.py --check",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-001/2026-09-15T11-05-00Z/contract-suite.log",
+      "sha256": "2b461ddf6f201b999840b0f7053854a9bdf41d89a3a50e36d9e8fbafbc33b119",
+      "bytes": 99
+    },
+    {
+      "path": "evidence/QA-001/2026-09-15T11-05-00Z/python-plane.log",
+      "sha256": "9209446f5d2f03b7eec459a99e576083cbfa75c2dd19635557ec5b9cd701a36b",
+      "bytes": 593
+    },
+    {
+      "path": "evidence/QA-001/2026-09-15T11-05-00Z/mypy.log",
+      "sha256": "a766815ce9137d28823902e2a13996ac5e7021d76946b008d607ddbe5fe9163c",
+      "bytes": 44
+    },
+    {
+      "path": "evidence/QA-001/2026-09-15T11-05-00Z/contract-drift.log",
+      "sha256": "519b10867e57e24fba43794306c68fb0000158eafaea13d4fb48c64104951b28",
+      "bytes": 76
+    },
+    {
+      "path": "tests/contract/test_qa001_gate.py",
+      "sha256": "356c7dbada53e7714a00ecdb7eed23bf66e31f0e58fcc666df1e5bc9210429e4",
+      "bytes": 2872
+    }
+  ]
+}

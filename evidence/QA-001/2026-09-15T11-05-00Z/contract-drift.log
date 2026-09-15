@@ -1,0 +1,2 @@
+contract regeneration check: CLEAN (catalog,openapi,rust,python,ts)
+exit: 0
