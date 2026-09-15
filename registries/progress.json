@@ -1507,18 +1507,27 @@
       "notes": ""
     },
     "APP-003": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T04:15:00Z",
+      "updated_at": "2026-09-15T04:20:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "pnpm --filter @quansio/desktop test (8 passed: surface catalog, nodeIntegration/contextIsolation/sandbox CSP baseline, preload allowlist without fs/child_process, permission deny, run+cursor reconnect)"
+      ],
+      "artifacts": [
+        "evidence/APP-003/RECONCILIATION.md",
+        "evidence/APP-003/2026-09-15T04-20-00Z/summary.json",
+        "apps/desktop/src/main/security.ts",
+        "apps/desktop/src/preload/bridge.ts",
+        "apps/desktop/src/renderer/session.ts",
+        "apps/desktop/tests/security.test.ts"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Implementation is complete and the renderer security baseline plus reconnect tests pass. PASS is forbidden while dependency APP-001 is BLOCKED_EXTERNAL (itself blocked on INT-002 live provider credentials). Unblock: flip INT-002 then APP-001 to PASS; APP-003 then flips to PASS with evidence already in evidence/APP-003/.",
+      "notes": "Electron main applies nodeIntegration=false, contextIsolation=true, sandbox=true and a locked CSP. Preload exposes only commands/stream/session/deepLink/update. Renderer modules do not import node:fs or child_process. DesktopSessionStore restores run_id, generation and stream cursor after reconnect. UI strings are externalized."
     },
     "APP-004": {
       "coverage": null,
