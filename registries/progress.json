@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T07:25:00Z",
+  "updated_at": "2026-09-15T07:26:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1852,8 +1852,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T07:15:00Z",
-      "updated_at": "2026-09-15T07:25:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T07:26:00Z",
+      "git_commit": "8264a73a81693e36b5236b2c28903c62188501cf",
       "tests": [
         "uv run --project python pytest tests/intelligence/test_wiki_skill.py -q (3 passed: pinned eval campaign holds navigation/provenance/link/budget thresholds via INT-010 gate; budget regression records dropped segments; disabling WikiSkill leaves SearchProgram and ContextProjection functional)"
       ],
