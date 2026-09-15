@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T11:20:00Z",
+  "updated_at": "2026-09-15T11:22:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2111,8 +2111,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T11:10:00Z",
-      "updated_at": "2026-09-15T11:20:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T11:22:00Z",
+      "git_commit": "aecb5e6cfbcf3c96ea9122203cb7d508a24d3f3f",
       "tests": [
         "uv run --project python pytest tests/architecture (117 passed: composed QA-002 consistency suite plus the per-rule negative corpus; forbidden wiring, owner/dependency map, authority writes, manifest/DAG, and the V8.1 validator all clean)",
         "python scripts/ci/arch_check.py (exit 0)",
