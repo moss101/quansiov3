@@ -1606,7 +1606,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T05:00:00Z",
       "updated_at": "2026-09-15T05:05:00Z",
-      "git_commit": null,
+      "git_commit": "6b6c0dc45f014554330e9ba424c6836dc8cf48e0",
       "tests": [
         "pnpm --filter @quansio/desktop test (artifact persistence after run close, version history, HTML/JS/SVG preview is safe-text never host-privileged execution)"
       ],
