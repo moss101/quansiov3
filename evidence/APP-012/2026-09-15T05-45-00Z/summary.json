@@ -1,0 +1,37 @@
+{
+  "task_id": "APP-012",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T05:45:00Z",
+  "commands": [
+    {
+      "command": "pnpm --filter @quansio/web test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-012/2026-09-15T05-45-00Z/vitest.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "pnpm --filter @quansio/web test",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-012/2026-09-15T05-45-00Z/vitest.log",
+      "sha256": "78b08c8e2625c7c577b3899ff29fe9fd15c55fbdc8c183e1e0bf97a936373cfe",
+      "bytes": 329
+    },
+    {
+      "path": "apps/web/src/rbac.ts",
+      "sha256": "8e3f5008f64f5c056fd62cd55fb92d4ff03d38363e0cf908a7ac6fd565d5992e",
+      "bytes": 973
+    },
+    {
+      "path": "apps/web/tests/rbac.test.ts",
+      "sha256": "787e71c4d50feec0effdcb5109ce5b3fb42d3f41743c8a8d0ddd0bb1a9ab5067",
+      "bytes": 642
+    }
+  ]
+}
