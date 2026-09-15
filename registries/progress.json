@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T07:10:00Z",
+  "updated_at": "2026-09-15T07:12:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1804,8 +1804,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T06:50:00Z",
-      "updated_at": "2026-09-15T07:10:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T07:12:00Z",
+      "git_commit": "885f7cd467556b855aec0892ab7eb26cd0e2228d",
       "tests": [
         "uv run --project python pytest tests/intelligence/test_artifact_workflows.py -q (5 passed: document/spreadsheet/slide fixtures round-trip; edit mints a new immutable version with parent/seq/digest; malformed document/CSV/slides/chat-blob/script block completion; quality-empty body blocks; skill pack tool_needs cannot grant artifact.create)"
       ],
