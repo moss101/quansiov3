@@ -1,0 +1,20 @@
++ cargo test -p quansio-server --test observability
+
+running 3 tests
+...
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
++ python observability
+...                                                                      [100%]
+3 passed in 0.01s
++ desktop diagnostics
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/diagnostics.test.ts (2 tests) 1ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  08:00:00
+   Duration  157ms (transform 14ms, setup 0ms, collect 13ms, tests 1ms, environment 0ms, prepare 24ms)
+

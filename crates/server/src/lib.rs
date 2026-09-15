@@ -21,6 +21,7 @@ pub mod composition;
 pub mod control;
 pub mod effects;
 pub mod notify;
+pub mod observability;
 pub mod policy;
 pub mod runtime;
 pub mod scheduler;
