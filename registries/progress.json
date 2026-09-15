@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T09:50:00Z",
+  "updated_at": "2026-09-15T10:05:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2143,17 +2143,33 @@
     },
     "QA-004": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T09:50:00Z",
-      "updated_at": "2026-09-15T09:50:00Z",
+      "updated_at": "2026-09-15T10:05:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
-      "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed."
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... uv run --project python pytest tests/evaluation/test_qa004_campaign.py (5 passed: retrieval recall 1.0 on the real pgvector derived table; cross-tenant and deleted-memory retrieval zero on the adversarial set; route determinism 1.0 via the conformance catalog; injection corpus zero unauthorized and detection >= 0.95; campaign gated on frozen thresholds with no promotion block; WikiSkill campaign holds; tenant poisoning does not leak)",
+        "uv run --project python pytest tests/evaluation (61 passed)",
+        "uv run --project python pytest tests (407 passed, 78 skipped live/absent-env)"
+      ],
+      "artifacts": [
+        "evidence/QA-004/2026-09-15T10-05-00Z/summary.json",
+        "tests/evaluation/test_qa004_campaign.py"
+      ],
+      "real_boundary_evidence": [
+        {
+          "boundary": "postgres-dev-stack",
+          "environment": "QUANSIO_TEST_POSTGRES_URL (dev stack, scripts/dev/up)",
+          "command": "uv run --project python pytest tests/evaluation/test_qa004_campaign.py",
+          "artifact": "evidence/QA-004/2026-09-15T10-05-00Z/campaign.log",
+          "sha256": "0f63423895c9108b8bf58f88f05a659cb23e96f01d3361b2261d57bc520de099",
+          "recorded_at": "2026-09-15T10:05:00Z"
+        }
+      ],
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while INT-010, CAP-006 and CAP-008 are BLOCKED_EXTERNAL. Unblock: flip INT-010 then CAP-006/CAP-008 to PASS and re-run the campaign.",
+      "notes": "Campaign gates on the frozen \u00a721.3 thresholds: protected rows (route determinism, cross-tenant, deleted-memory, injection) all hold; the two cross-authority ports (grounding verifier, tool-proposal registry check) are reported unmeasured and fail closed, never faked."
     },
     "QA-005": {
       "coverage": null,
