@@ -1539,18 +1539,18 @@
       "notes": "Electron main applies nodeIntegration=false, contextIsolation=true, sandbox=true and a locked CSP. Preload exposes only commands/stream/session/deepLink/update. Renderer modules do not import node:fs or child_process. DesktopSessionStore restores run_id, generation and stream cursor after reconnect. UI strings are externalized."
     },
     "APP-004": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T04:45:00Z",
+      "updated_at": "2026-09-15T04:45:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed. Desktop conversation composer over APP-001/002/003; server conversation owner already exists."
     },
     "APP-005": {
       "coverage": null,
