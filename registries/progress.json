@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T09:01:00Z",
+  "updated_at": "2026-09-15T09:45:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2112,18 +2112,34 @@
       "notes": ""
     },
     "QA-003": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T09:10:00Z",
+      "updated_at": "2026-09-15T09:45:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
-      "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test qualification (4 passed: crash recovery resumes without duplicating the run; concurrent cancel/suspend race yields exactly one typed outcome; superseded generation fenced with FencedStaleGeneration{1,2}; replay precedence stable under injected fault rows)",
+        "uv run --project python pytest tests/recovery/test_qa003_matrix.py -q (9 passed: fault-matrix permutations, replay order-stability property, fencing property, structural wiring to the shipped owners)"
+      ],
+      "artifacts": [
+        "evidence/QA-003/2026-09-15T09-45-00Z/summary.json",
+        "crates/server/tests/qualification.rs",
+        "tests/recovery/test_qa003_matrix.py"
+      ],
+      "real_boundary_evidence": [
+        {
+          "boundary": "postgres-dev-stack",
+          "environment": "QUANSIO_TEST_POSTGRES_URL (dev stack, scripts/dev/up)",
+          "command": "cargo test -p quansio-server --test qualification",
+          "artifact": "evidence/QA-003/2026-09-15T09-45-00Z/rust-matrix.log",
+          "sha256": "3440f5c29c209f692aaf9eaf5b17d94d3af783d079e3fe5349660ae75c39c12f",
+          "recorded_at": "2026-09-15T09:45:00Z"
+        }
+      ],
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Fault-injection matrix over the real runtime: crash recovery lands on the same safe point without duplicating runs or repeating effects; races end in typed single winners; stale generations are fenced; replay precedence is a pure function of durable state."
     },
     "QA-004": {
       "coverage": null,
