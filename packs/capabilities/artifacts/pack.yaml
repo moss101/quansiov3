@@ -1,0 +1,27 @@
+schema_version: v1
+id: pck_artifacts
+name: artifacts
+owner: product
+semver: 1.0.0
+status: published
+provenance:
+  kind: builtin
+  ref: pack://quansio.builtin.artifacts
+contents:
+  knowledge_ids: []
+  skill_version_ids: [sklv_artifacts_1]
+  tool_names: [artifact.create, artifact.update]
+  connector_requirements: []
+  policy_requirements: []
+  rbac_requirements: []
+  approval_requirements: []
+  workflow_templates: []
+  examples:
+    - write a document
+    - edit the spreadsheet
+  eval_suite_id: eval_artifact_workflows
+  compatibility: [v8.1]
+evidence_requirements:
+  - digest
+installs_daemon: false
+bypasses_runtime_policy: false

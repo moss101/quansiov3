@@ -1,0 +1,23 @@
+instructions: |
+  Change source through fs.read / fs.patch and scm.git / scm.pr tools on an
+  ExecutionTarget. Propose a plan before writes. Never widen policy, never
+  install a daemon, never push credentials. PR bodies cite the run evidence.
+examples:
+  - implement the change
+  - open a pull request
+  - review the diff
+tool_needs:
+  - fs.read
+  - fs.patch
+  - scm.git.diff
+  - scm.pr.create
+  - terminal.exec
+capability_needs:
+  - process.exec.sandboxed
+  - scm.write
+eval_suite_id: eval_coding
+compatibility:
+  - v8.1
+recovery_guidance: |
+  If a patch fails validation, do not retry blindly. Capture evidence and stop.
+  Never install systemd/launchd services or bypass tool policy.

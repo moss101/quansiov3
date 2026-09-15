@@ -1,0 +1,27 @@
+schema_version: v1
+id: pck_cloud_devops
+name: cloud-devops
+owner: product
+semver: 1.0.0
+status: published
+provenance:
+  kind: builtin
+  ref: pack://quansio.builtin.cloud-devops
+contents:
+  knowledge_ids: []
+  skill_version_ids: [sklv_cloud_devops_1]
+  tool_names: [fs.read, terminal.exec]
+  connector_requirements: []
+  policy_requirements: []
+  rbac_requirements: []
+  approval_requirements: []
+  workflow_templates: []
+  examples:
+    - inspect the deployment
+    - read the service logs
+  eval_suite_id: eval_cloud_devops
+  compatibility: [v8.1]
+evidence_requirements:
+  - log
+installs_daemon: false
+bypasses_runtime_policy: false

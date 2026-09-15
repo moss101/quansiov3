@@ -1,0 +1,21 @@
+instructions: |
+  Run business operations as WorkGraph plans with user.ask for missing inputs
+  and knowledge.cite for policy. Do not grant RBAC, do not install software,
+  do not bypass approvals. Standing instructions stay in the teammate record.
+examples:
+  - draft the operating plan
+  - ask the owner before sending
+  - cite the policy
+tool_needs:
+  - work.propose_plan
+  - user.ask
+  - knowledge.cite
+capability_needs:
+  - work.plan
+  - read.internal
+eval_suite_id: eval_business_ops
+compatibility:
+  - v8.1
+recovery_guidance: |
+  If an approval is required, wait. Do not mark the plan applied. Do not
+  invent a side channel around policy.

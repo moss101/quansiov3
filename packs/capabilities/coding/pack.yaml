@@ -1,0 +1,28 @@
+schema_version: v1
+id: pck_coding
+name: coding
+owner: product
+semver: 1.0.0
+status: published
+provenance:
+  kind: builtin
+  ref: pack://quansio.builtin.coding
+contents:
+  knowledge_ids: []
+  skill_version_ids: [sklv_coding_1]
+  tool_names: [fs.read, fs.patch, scm.git.diff, scm.pr.create, terminal.exec]
+  connector_requirements: []
+  policy_requirements: []
+  rbac_requirements: []
+  approval_requirements: []
+  workflow_templates: []
+  examples:
+    - implement the change
+    - open a pull request
+  eval_suite_id: eval_coding
+  compatibility: [v8.1]
+evidence_requirements:
+  - diff
+  - test_result
+installs_daemon: false
+bypasses_runtime_policy: false

@@ -1,0 +1,14 @@
+suite_id: eval_cloud_devops
+cases:
+  - case_id: permitted_resolves
+    task: inspect the deployment and read the service logs
+    snapshot:
+      tools: [fs.read, terminal.exec]
+      capabilities: [process.exec.sandboxed]
+    expect: resolve
+  - case_id: missing_tool_excluded
+    task: inspect the deployment
+    snapshot:
+      tools: [fs.read]
+      capabilities: [read.internal]
+    expect: exclude

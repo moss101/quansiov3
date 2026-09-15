@@ -1,0 +1,14 @@
+suite_id: eval_research
+cases:
+  - case_id: permitted_resolves
+    task: research this topic and gather sources
+    snapshot:
+      tools: [web.search, web.fetch, knowledge.cite]
+      capabilities: [network.egress, read.internal]
+    expect: resolve
+  - case_id: missing_tool_excluded
+    task: research this topic
+    snapshot:
+      tools: [knowledge.cite]
+      capabilities: [read.internal]
+    expect: exclude

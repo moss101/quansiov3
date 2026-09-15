@@ -1,0 +1,20 @@
+instructions: |
+  Operate cloud and DevOps work through terminal.exec and fs.read on a managed
+  ExecutionTarget. Never install a host daemon, never write systemd/launchd
+  units, never bypass runtime or tool policy. Changes go through WorkGraph and
+  approvals like any other effect.
+examples:
+  - inspect the deployment
+  - read the service logs
+  - check the release status
+tool_needs:
+  - fs.read
+  - terminal.exec
+capability_needs:
+  - process.exec.sandboxed
+eval_suite_id: eval_cloud_devops
+compatibility:
+  - v8.1
+recovery_guidance: |
+  If a command's effect is unknown, reconcile before any retry. Do not install
+  daemons. Do not request a policy bypass.

@@ -1,0 +1,28 @@
+schema_version: v1
+id: pck_research
+name: research
+owner: product
+semver: 1.0.0
+status: published
+provenance:
+  kind: builtin
+  ref: pack://quansio.builtin.research
+contents:
+  knowledge_ids: []
+  skill_version_ids: [sklv_research_1]
+  tool_names: [web.search, web.fetch, knowledge.cite]
+  connector_requirements: []
+  policy_requirements: []
+  rbac_requirements: []
+  approval_requirements: []
+  workflow_templates: []
+  examples:
+    - research this topic
+    - gather sources
+  eval_suite_id: eval_research
+  compatibility: [v8.1]
+evidence_requirements:
+  - source_identity
+  - excerpt_digest
+installs_daemon: false
+bypasses_runtime_policy: false
