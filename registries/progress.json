@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T07:55:00Z",
+  "updated_at": "2026-09-15T07:56:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1892,8 +1892,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T07:50:00Z",
-      "updated_at": "2026-09-15T07:55:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T07:56:00Z",
+      "git_commit": "7c59327fe6cde1e490ee53ca439a2315339e4394",
       "tests": [
         "uv run --project python pytest tests/intelligence/test_skill_evolution.py -q (3 passed: silent mutation refused; candidate-to-promotion keeps evidence+eval provenance; protected regression refuses promotion)"
       ],
