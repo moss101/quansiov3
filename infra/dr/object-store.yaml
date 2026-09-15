@@ -1,0 +1,10 @@
+# Artifact/evidence object-store versioning for DR (OPS-005, CORE-007).
+versioning: enabled
+replication:
+  mode: asynchronous
+  rpo_is_measured: true
+retention:
+  noncurrent_days: 30
+bucket_key: artifacts
+# Bytes are content-addressed by sha256; a restore rebuilds the manifest digest
+# in RecoveryConsistencyPoint.artifact_manifest_digest.

@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T08:45:00Z",
+  "updated_at": "2026-09-15T08:50:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1999,17 +1999,32 @@
     },
     "OPS-005": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:45:00Z",
-      "updated_at": "2026-09-15T08:45:00Z",
+      "updated_at": "2026-09-15T08:50:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
-      "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed."
+      "tests": [
+        "cargo test -p quansio-server --test recovery_point (4 passed: consistency point restore; settlement audit; restore drill measures RPO/RTO; live PITR prints BLOCKED_EXTERNAL)"
+      ],
+      "artifacts": [
+        "evidence/OPS-005/2026-09-15T08-50-00Z/summary.json",
+        "crates/server/src/control/recovery_point/mod.rs",
+        "infra/dr/postgres-pitr.yaml"
+      ],
+      "real_boundary_evidence": [
+        {
+          "boundary": "pitr",
+          "environment": "QUANSIO_TEST_PITR unset",
+          "command": "cargo test -p quansio-server --test recovery_point",
+          "artifact": "evidence/OPS-005/2026-09-15T08-50-00Z/tests.log",
+          "sha256": "f3321f6aa3d38d505f33c7d89ef931297987ecc0081bef2581df2633c0e652fc",
+          "recorded_at": "2026-09-15T08:50:00Z"
+        }
+      ],
+      "implementation_complete": true,
+      "blocker": "Host PostgreSQL PITR and object-store replica drill is absent (QUANSIO_TEST_PITR=1 unset). Unblock: export QUANSIO_TEST_PITR=1 against a WAL-archiving Postgres and versioned MinIO, then re-run cargo test -p quansio-server --test recovery_point.",
+      "notes": "RecoveryConsistencyPoint spans event sequence, artifact manifest digest, target snapshots and settled-effect watermark. Restore keeps settled effects settled. RPO/RTO are measured durations."
     },
     "OPS-006": {
       "coverage": null,
