@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T10:36:00Z",
+  "updated_at": "2026-09-15T10:50:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2241,18 +2241,35 @@
       "notes": "Critical journeys drive the shipped desktop modules in-process: onboarding without config, chat/objective, question-answer, exact-preview approval, versioned artifact review, takeover/handback fencing, archive lineage, offline reconnect. Accessibility baseline records zero violations and keyboard-reachable surfaces."
     },
     "QA-009": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T10:40:00Z",
+      "updated_at": "2026-09-15T10:50:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
-      "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "tests": [
+        "uv run --project python pytest tests/performance/test_slos.py (5 passed: SLO table pinned to DOSSIER \u00a721.2 verbatim; in-process index query and deletion-visibility inside the \u00a721.2 budgets; bounded-queue STREAM_BACKPRESSURE wiring asserted; usage-accuracy suites wired)",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-events --test stream_backpressure (slow consumer disconnected with typed STREAM_BACKPRESSURE instead of unbounded buffering)",
+        "cargo test -p quansio-server --test usage (4 passed: deterministic rebuild, soft alert, hard-quota refusal, one-winner race)"
+      ],
+      "artifacts": [
+        "evidence/QA-009/2026-09-15T10-50-00Z/summary.json",
+        "tests/performance/test_slos.py",
+        "tests/performance/slos.yaml"
+      ],
+      "real_boundary_evidence": [
+        {
+          "boundary": "postgres-dev-stack",
+          "environment": "QUANSIO_TEST_POSTGRES_URL (dev stack)",
+          "command": "cargo test -p quansio-events --test stream_backpressure",
+          "artifact": "evidence/QA-009/2026-09-15T10-50-00Z/backpressure.log",
+          "sha256": "0380f209307b028775231f25b44a585896fb4e86a6471b7cac3cfe3931429fab",
+          "recorded_at": "2026-09-15T10:50:00Z"
+        }
+      ],
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while OPS-003 is BLOCKED_EXTERNAL, and the served load/soak runs on the DOSSIER \u00a721.1 support matrix are absent (QUANSIO_TEST_PERF=1). Unblock: flip OPS-003 to PASS, serve the stack, export QUANSIO_TEST_PERF=1 and run the load/soak harness.",
+      "notes": "SLO configuration is pinned to DOSSIER \u00a721.2 (provisional until owner ratification). Overload degrades through bounded queues with a typed disconnect, not memory growth; usage rebuild is deterministic and quotas refuse atomically."
     },
     "QA-010": {
       "coverage": null,

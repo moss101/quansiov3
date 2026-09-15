@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running tests/usage.rs (target/debug/deps/usage-84493069b9c8093e)
+
+running 4 tests
+test quota_failure_does_not_partially_commit_a_new_effect ... ok
+test budget_alert_on_soft_quota_still_admits ... ok
+test quota_race_admits_at_most_one_winner ... ok
+test usage_rebuild_from_source_events_is_deterministic ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
