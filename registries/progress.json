@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T07:46:00Z",
+  "updated_at": "2026-09-15T07:55:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1888,18 +1888,23 @@
       "notes": "Built-in skill+capability packs for research, coding, artifacts, data analysis, cloud/DevOps and business operations. Owner/version/provenance/evals present. Packs cannot install daemons or bypass runtime/tool policy."
     },
     "CAP-008": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T07:50:00Z",
+      "updated_at": "2026-09-15T07:55:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/intelligence/test_skill_evolution.py -q (3 passed: silent mutation refused; candidate-to-promotion keeps evidence+eval provenance; protected regression refuses promotion)"
+      ],
+      "artifacts": [
+        "evidence/CAP-008/2026-09-15T07-55-00Z/summary.json",
+        "python/intelligence/skills/evolution/candidates.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while INT-010 and CAP-007 are BLOCKED_EXTERNAL. Unblock: flip INT-010 then CAP-007 to PASS.",
+      "notes": "Skill evolution detects repeated verified evidence, proposes candidate patches with evidence+eval provenance, and refuses silent ACTIVE mutation. Promotion requires the INT-010 gate."
     },
     "OPS-001": {
       "coverage": null,
