@@ -1659,17 +1659,22 @@
     },
     "APP-011": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T05:30:00Z",
-      "updated_at": "2026-09-15T05:30:00Z",
+      "updated_at": "2026-09-15T05:35:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "pnpm --filter @quansio/desktop test (deleted memory leaves retrieval; unapproved skill cannot activate; recovery fields are not memory)"
+      ],
+      "artifacts": [
+        "evidence/APP-011/2026-09-15T05-35-00Z/summary.json",
+        "apps/desktop/src/knowledge/controls.ts"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed. Owner apps/desktop/src/knowledge."
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while INT-006/INT-007/APP-003/APP-004 are BLOCKED_EXTERNAL (INT-002 live credentials). Unblock: flip INT-002 then those tasks to PASS.",
+      "notes": "Deleted knowledge/memory is dropped from retrievalIndex. Only APPROVED/ACTIVE skills can be activated. Recovery field names are rejected as memory."
     },
     "APP-012": {
       "coverage": null,
