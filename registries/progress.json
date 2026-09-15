@@ -1507,18 +1507,18 @@
       "notes": ""
     },
     "APP-003": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T04:15:00Z",
+      "updated_at": "2026-09-15T04:15:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed. Canonical owner apps/desktop. Existing surface catalog is APP-003 input; Electron main/preload/renderer are a genuine gap."
     },
     "APP-004": {
       "coverage": null,
