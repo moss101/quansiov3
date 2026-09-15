@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T10:21:00Z",
+  "updated_at": "2026-09-15T10:25:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2219,18 +2219,18 @@
       "notes": "Adversarial campaign drives the shipped defenses through their real entry points. No P0/P1 finding open; every ambiguous attack input fails closed with a typed refusal or a zero."
     },
     "QA-008": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T10:25:00Z",
+      "updated_at": "2026-09-15T10:25:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed."
     },
     "QA-009": {
       "coverage": null,
