@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T08:05:00Z",
+  "updated_at": "2026-09-15T08:06:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1939,8 +1939,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:00:00Z",
-      "updated_at": "2026-09-15T08:05:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T08:06:00Z",
+      "git_commit": "1e055ce30a28970a2e74c1be1c19c905ff231def",
       "tests": [
         "cargo test -p quansio-server --test observability (3 passed: e2e correlation, canary scan, bounded bundle)",
         "uv run --project python pytest tests/intelligence/test_observability.py -q (3 passed)",
