@@ -1758,7 +1758,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T06:40:00Z",
       "updated_at": "2026-09-15T06:45:00Z",
-      "git_commit": null,
+      "git_commit": "1e9dd04d15dd64adfe26952e8c064a7209c289ce",
       "tests": [
         "cargo test -p quansio-server --test webhooks (tenant/workspace scope, egress deny, kill switch, event_id dedupe, secret redaction)"
       ],
