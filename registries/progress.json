@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T07:56:00Z",
+  "updated_at": "2026-09-15T08:05:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1935,18 +1935,27 @@
       "notes": ""
     },
     "OPS-003": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T08:00:00Z",
+      "updated_at": "2026-09-15T08:05:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "cargo test -p quansio-server --test observability (3 passed: e2e correlation, canary scan, bounded bundle)",
+        "uv run --project python pytest tests/intelligence/test_observability.py -q (3 passed)",
+        "pnpm exec vitest run tests/diagnostics.test.ts (2 passed)"
+      ],
+      "artifacts": [
+        "evidence/OPS-003/2026-09-15T08-05-00Z/summary.json",
+        "crates/server/src/observability/mod.rs",
+        "python/intelligence/observability/redact.py",
+        "apps/desktop/src/diagnostics/bundle.ts"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while APP-001 is BLOCKED_EXTERNAL (INT-002). Unblock: flip INT-002 then APP-001 to PASS.",
+      "notes": "Correlated traces across runtime/intelligence/desktop, secret-canary redaction, Prometheus text metrics, bounded diagnostic bundles."
     },
     "OPS-004": {
       "coverage": null,

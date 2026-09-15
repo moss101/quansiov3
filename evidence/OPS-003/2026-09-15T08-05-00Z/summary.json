@@ -1,0 +1,42 @@
+{
+  "task_id": "OPS-003",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T08:05:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test observability && pytest test_observability.py && vitest diagnostics",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-003/2026-09-15T08-05-00Z/tests.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test observability && pytest test_observability.py && vitest diagnostics",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-003/2026-09-15T08-05-00Z/tests.log",
+      "sha256": "af29e4e45bc29c961f76fc3fcf6c20250da9e60e435794fb678f851656c52611",
+      "bytes": 596
+    },
+    {
+      "path": "crates/server/src/observability/mod.rs",
+      "sha256": "6a714d1c1d48cbe181192227a92e2f15bff1a80a106e36266a1aaf0c3cf78d32",
+      "bytes": 766
+    },
+    {
+      "path": "python/intelligence/observability/redact.py",
+      "sha256": "610ff8e5043f088578844fe1e0056b0eb24c0a964a7d069f1a528c49d0bf97d2",
+      "bytes": 3926
+    },
+    {
+      "path": "apps/desktop/src/diagnostics/bundle.ts",
+      "sha256": "fc1df7d365bb4c52fab1baaff6eec7c6e4ce558283fda4e4fa7e2930821f399f",
+      "bytes": 1787
+    }
+  ]
+}
