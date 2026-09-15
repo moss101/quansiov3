@@ -1583,7 +1583,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T05:20:00Z",
       "updated_at": "2026-09-15T05:25:00Z",
-      "git_commit": null,
+      "git_commit": "c896afafafa1a26a2e39588dbdf94af54609e2da",
       "tests": [
         "pnpm --filter @quansio/desktop test (changed payload after preview is APPROVAL_SUPERSEDED; OUTCOME_UNKNOWN remains unresolved)"
       ],
