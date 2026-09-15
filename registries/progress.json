@@ -1702,7 +1702,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T06:00:00Z",
       "updated_at": "2026-09-15T06:05:00Z",
-      "git_commit": null,
+      "git_commit": "c0ab34288c6d120e03fd498d88a7692df0ecbbba",
       "tests": [
         "cargo test -p quansio-cli (verbs are /v1 paths; bypass-policy refused; tokens must be tenant-scoped)",
         "sdk/typescript vitest (OpenAPI operationIds present; unversioned paths refused)"
