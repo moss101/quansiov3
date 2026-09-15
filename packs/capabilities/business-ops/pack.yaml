@@ -1,0 +1,27 @@
+schema_version: v1
+id: pck_business_ops
+name: business-ops
+owner: product
+semver: 1.0.0
+status: published
+provenance:
+  kind: builtin
+  ref: pack://quansio.builtin.business-ops
+contents:
+  knowledge_ids: []
+  skill_version_ids: [sklv_business_ops_1]
+  tool_names: [work.propose_plan, user.ask, knowledge.cite]
+  connector_requirements: []
+  policy_requirements: []
+  rbac_requirements: []
+  approval_requirements: []
+  workflow_templates: []
+  examples:
+    - draft the operating plan
+    - cite the policy
+  eval_suite_id: eval_business_ops
+  compatibility: [v8.1]
+evidence_requirements:
+  - digest
+installs_daemon: false
+bypasses_runtime_policy: false

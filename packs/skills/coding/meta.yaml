@@ -1,0 +1,7 @@
+schema_version: v1
+id: skl_coding
+name: coding
+owner: product
+semver: 1.0.0
+status: active
+provenance: pack://quansio.builtin.coding

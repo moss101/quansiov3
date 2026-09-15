@@ -1,0 +1,14 @@
+suite_id: eval_business_ops
+cases:
+  - case_id: permitted_resolves
+    task: draft the operating plan and cite the policy
+    snapshot:
+      tools: [work.propose_plan, user.ask, knowledge.cite]
+      capabilities: [work.plan, read.internal]
+    expect: resolve
+  - case_id: missing_tool_excluded
+    task: draft the operating plan
+    snapshot:
+      tools: [knowledge.cite]
+      capabilities: [read.internal]
+    expect: exclude

@@ -1,0 +1,27 @@
+schema_version: v1
+id: pck_wiki
+name: wiki
+owner: product
+semver: 1.0.0
+status: published
+provenance:
+  kind: builtin
+  ref: pack://quansio.builtin.wiki
+contents:
+  knowledge_ids: []
+  skill_version_ids: [sklv_wiki_1]
+  tool_names: [knowledge.cite]
+  connector_requirements: []
+  policy_requirements: []
+  rbac_requirements: []
+  approval_requirements: []
+  workflow_templates: []
+  examples:
+    - navigate the wiki
+    - find the source page
+  eval_suite_id: eval_wiki_navigation
+  compatibility: [v8.1]
+evidence_requirements:
+  - digest
+installs_daemon: false
+bypasses_runtime_policy: false

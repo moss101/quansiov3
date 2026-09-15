@@ -1,0 +1,14 @@
+suite_id: eval_artifact_workflows
+cases:
+  - case_id: permitted_resolves
+    task: write a document then edit the spreadsheet
+    snapshot:
+      tools: [artifact.create, artifact.update]
+      capabilities: [artifact.write]
+    expect: resolve
+  - case_id: missing_tool_excluded
+    task: write a document
+    snapshot:
+      tools: [fs.read]
+      capabilities: [read.internal]
+    expect: exclude

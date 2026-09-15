@@ -1,0 +1,27 @@
+schema_version: v1
+id: pck_data_analysis
+name: data-analysis
+owner: product
+semver: 1.0.0
+status: published
+provenance:
+  kind: builtin
+  ref: pack://quansio.builtin.data-analysis
+contents:
+  knowledge_ids: []
+  skill_version_ids: [sklv_data_analysis_1]
+  tool_names: [fs.read, artifact.create, artifact.update]
+  connector_requirements: []
+  policy_requirements: []
+  rbac_requirements: []
+  approval_requirements: []
+  workflow_templates: []
+  examples:
+    - analyze the spreadsheet
+    - summarize these metrics
+  eval_suite_id: eval_data_analysis
+  compatibility: [v8.1]
+evidence_requirements:
+  - digest
+installs_daemon: false
+bypasses_runtime_policy: false

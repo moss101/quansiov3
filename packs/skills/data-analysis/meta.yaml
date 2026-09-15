@@ -1,0 +1,7 @@
+schema_version: v1
+id: skl_data_analysis
+name: data-analysis
+owner: product
+semver: 1.0.0
+status: active
+provenance: pack://quansio.builtin.data-analysis

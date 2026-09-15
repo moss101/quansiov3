@@ -1,0 +1,47 @@
+{
+  "task_id": "CAP-007",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T07:45:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/intelligence/test_builtin_packs.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-007/2026-09-15T07-45-00Z/pytest.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/intelligence/test_builtin_packs.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-007/2026-09-15T07-45-00Z/pytest.log",
+      "sha256": "0c9e3ef5aed4e16e302410aa0050efe85bed3a4abf82a4eb6f75b018a77dcaa4",
+      "bytes": 151
+    },
+    {
+      "path": "python/tests/intelligence/test_builtin_packs.py",
+      "sha256": "32a477193a84de90e2d644acb2522308ddee5fe3054f4b9fb1716d18ba08ff98",
+      "bytes": 10888
+    },
+    {
+      "path": "packs/capabilities/research/pack.yaml",
+      "sha256": "12bcbf50d358cd005f6f430e378845d62e5d317d3fe4de439a78ebe9115a240d",
+      "bytes": 650
+    },
+    {
+      "path": "packs/skills/research/skill.yaml",
+      "sha256": "6eebc59ff1fa106757555e9934a9fd1041242558265607c0e4b296c71bcc3436",
+      "bytes": 786
+    },
+    {
+      "path": "packs/skills/coding/skill.yaml",
+      "sha256": "7b98d253116ae528855c682b8f0fa10f1fb6ea8cbc69ebdbc86d0cbdb3287bbb",
+      "bytes": 688
+    }
+  ]
+}

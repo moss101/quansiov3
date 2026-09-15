@@ -1,0 +1,14 @@
+suite_id: eval_wiki_navigation
+cases:
+  - case_id: permitted_resolves
+    task: navigate the wiki for the source page
+    snapshot:
+      tools: [knowledge.cite]
+      capabilities: [read.internal]
+    expect: resolve
+  - case_id: missing_tool_excluded
+    task: navigate the wiki
+    snapshot:
+      tools: [fs.read]
+      capabilities: [read.internal]
+    expect: exclude

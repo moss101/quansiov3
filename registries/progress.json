@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T07:26:00Z",
+  "updated_at": "2026-09-15T07:45:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1868,18 +1868,24 @@
       "notes": "WikiSkill pack navigates pinned knowledge via typed SearchProgram, active-only Knowledge Fabric hits, provenance-preserving selection and budgeted ContextProjection. Not a new search subsystem. Disable/fallback leaves core search and context packing working."
     },
     "CAP-007": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T07:35:00Z",
+      "updated_at": "2026-09-15T07:45:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/intelligence/test_builtin_packs.py -q (3 passed: schema/eval for research/coding/artifacts/data-analysis/cloud-devops/business-ops; capability scan refuses unknown tools/daemons/policy bypass; tool availability is INT-009 resolver)"
+      ],
+      "artifacts": [
+        "evidence/CAP-007/2026-09-15T07-45-00Z/summary.json",
+        "packs/skills/research/skill.yaml",
+        "packs/capabilities/research/pack.yaml"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while CAP-003 and CAP-006 are BLOCKED_EXTERNAL. Unblock: flip INT-002 then APP-008/CAP-003 and INT-010 then CAP-006 to PASS.",
+      "notes": "Built-in skill+capability packs for research, coding, artifacts, data analysis, cloud/DevOps and business operations. Owner/version/provenance/evals present. Packs cannot install daemons or bypass runtime/tool policy."
     },
     "CAP-008": {
       "coverage": null,
