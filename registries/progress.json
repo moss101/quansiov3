@@ -1659,7 +1659,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T06:30:00Z",
       "updated_at": "2026-09-15T06:35:00Z",
-      "git_commit": null,
+      "git_commit": "d4f96dc36db2b924400766a85ccdf679b7491864",
       "tests": [
         "cargo test -p quansio-server --test routines (fire key (routine, scheduled_at) is not re-run on restart; TriggerRoutineNow is the interactive command)"
       ],
