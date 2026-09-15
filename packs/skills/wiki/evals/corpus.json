@@ -1,0 +1,84 @@
+{
+  "snapshot": "wiki_eval_v1",
+  "tenant_id": "tn_wiki_eval",
+  "pages": [
+    {
+      "id": "kn_wiki_onboarding",
+      "title": "Onboarding",
+      "kind": "wiki_page",
+      "status": "active",
+      "body": "Onboarding a teammate in this knowledge space: create the personal tenant, install WikiSkill, then run the first objective. See Artifacts for deliverable format.",
+      "links": ["kn_wiki_artifacts", "kn_wiki_teammates"],
+      "provenance": {
+        "source_kind": "approved_source",
+        "ref": "art_wiki_onboarding",
+        "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "id": "kn_wiki_artifacts",
+      "title": "Artifacts",
+      "kind": "wiki_page",
+      "status": "active",
+      "body": "Artifacts in this knowledge space are versioned source files: documents, spreadsheets and slides. Format validation blocks completion. Provenance links back to the producing run.",
+      "links": ["kn_wiki_policy"],
+      "provenance": {
+        "source_kind": "approved_source",
+        "ref": "art_wiki_artifacts",
+        "digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    {
+      "id": "kn_wiki_policy",
+      "title": "Policy",
+      "kind": "wiki_page",
+      "status": "active",
+      "body": "Capability only narrows in this knowledge space. Skills cannot grant permissions. Policy deny wins over ask and always.",
+      "links": ["kn_wiki_search"],
+      "provenance": {
+        "source_kind": "approved_source",
+        "ref": "art_wiki_policy",
+        "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    },
+    {
+      "id": "kn_wiki_search",
+      "title": "Search index",
+      "kind": "wiki_page",
+      "status": "active",
+      "body": "The typed SearchProgram in this knowledge space addresses exact, lexical, semantic, graph, history and memory channels. Predicates are a closed vocabulary. No free-form query strings.",
+      "links": ["kn_wiki_onboarding"],
+      "provenance": {
+        "source_kind": "approved_source",
+        "ref": "art_wiki_search",
+        "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      }
+    },
+    {
+      "id": "kn_wiki_teammates",
+      "title": "Teammates",
+      "kind": "wiki_page",
+      "status": "active",
+      "body": "A teammate in this knowledge space is a standing instruction plus a mailbox. Archiving keeps lineage; it does not invent a second agent runtime.",
+      "links": ["kn_wiki_onboarding"],
+      "provenance": {
+        "source_kind": "approved_source",
+        "ref": "art_wiki_teammates",
+        "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      }
+    },
+    {
+      "id": "kn_wiki_retired",
+      "title": "Retired onboarding notes",
+      "kind": "wiki_page",
+      "status": "deleted",
+      "body": "This retired onboarding page must not answer retrieval even if the query says onboarding.",
+      "links": [],
+      "provenance": {
+        "source_kind": "approved_source",
+        "ref": "art_wiki_retired",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    }
+  ]
+}

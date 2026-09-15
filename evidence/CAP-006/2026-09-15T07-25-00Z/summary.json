@@ -1,0 +1,52 @@
+{
+  "task_id": "CAP-006",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T07:25:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/intelligence/test_wiki_skill.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-006/2026-09-15T07-25-00Z/pytest.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/intelligence/test_wiki_skill.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-006/2026-09-15T07-25-00Z/pytest.log",
+      "sha256": "19d3f0fc0b89fedd895ef687e287f0e115b9a9473bdbc620a967f566f5e320fc",
+      "bytes": 241
+    },
+    {
+      "path": "packs/skills/wiki/navigate.py",
+      "sha256": "d9c1f04b3c82da0ca12fc7c25b3915e59eeb1315f8468d151d4fe7c9859a3183",
+      "bytes": 11378
+    },
+    {
+      "path": "packs/skills/wiki/skill.yaml",
+      "sha256": "57305950bfa0b8cc44aef516dcdbd95206c9e2a5d40be2caf56c2206367fbfce",
+      "bytes": 1084
+    },
+    {
+      "path": "packs/skills/wiki/evals/corpus.json",
+      "sha256": "4f5718a33557cdaeaea6e2483dc8cadfe396d9526e7a71adb4239d022ff5ed70",
+      "bytes": 3218
+    },
+    {
+      "path": "packs/skills/wiki/evals/thresholds.yaml",
+      "sha256": "103633b9887cff74b270ee8c3ddc87009989babed32dec11fc3a753b901ac262",
+      "bytes": 957
+    },
+    {
+      "path": "python/tests/intelligence/test_wiki_skill.py",
+      "sha256": "e53049c56f529c7c05438b2a4dc3067848045c4dfdb9cad938233dcc6bb4fc11",
+      "bytes": 6281
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+version: 1
+ratified: false
+source: "packs/skills/wiki/evals (CAP-006 WikiSkill pinned campaign)"
+metrics:
+  navigation_recall:
+    description: "share of pinned navigation cases whose expected active pages were retrieved"
+    comparison: at_least
+    threshold: 1.0
+    unit: ratio
+    protected: true
+    blocks_promotion: true
+  provenance_preserved:
+    description: "share of hits that still carry source kind, ref and digest"
+    comparison: at_least
+    threshold: 1.0
+    unit: ratio
+    protected: true
+    blocks_promotion: true
+  link_preservation:
+    description: "share of selected pages whose declared wiki links are still present on the hit"
+    comparison: at_least
+    threshold: 1.0
+    unit: ratio
+    protected: false
+  budget_respected:
+    description: "share of cases whose packed context used at most the pinned token budget"
+    comparison: at_least
+    threshold: 1.0
+    unit: ratio
+    protected: true
+    blocks_promotion: true

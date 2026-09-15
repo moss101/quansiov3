@@ -1,0 +1,6 @@
++ uv run --frozen pytest tests/intelligence/test_wiki_skill.py -q
+...                                                                      [100%]
+3 passed in 0.06s
++ ruff check / format
+[1;32mAll checks passed![0m
+1 file already formatted
