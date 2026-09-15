@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T09:00:00Z",
+  "updated_at": "2026-09-15T09:01:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2068,8 +2068,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:55:00Z",
-      "updated_at": "2026-09-15T09:00:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T09:01:00Z",
+      "git_commit": "85ca3934ed0d5afd979e016adeb64fb52a71aeb9",
       "tests": [
         "cargo test -p quansio-server --test ops_kill_switches (4 passed: audited engage/release; worker quarantine; provider outage + effect freeze keeps evidence; all seven \u00a721.5 switches exist)"
       ],
