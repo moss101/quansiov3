@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T08:50:00Z",
+  "updated_at": "2026-09-15T08:51:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2002,8 +2002,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:45:00Z",
-      "updated_at": "2026-09-15T08:50:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T08:51:00Z",
+      "git_commit": "5cabff959f4b60a6ebcf67abcf6b23d99ed27e4b",
       "tests": [
         "cargo test -p quansio-server --test recovery_point (4 passed: consistency point restore; settlement audit; restore drill measures RPO/RTO; live PITR prints BLOCKED_EXTERNAL)"
       ],
