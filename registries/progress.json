@@ -1716,7 +1716,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T05:50:00Z",
       "updated_at": "2026-09-15T05:55:00Z",
-      "git_commit": null,
+      "git_commit": "86cbc64f7fd4e2dd7a486bec2cf859ddd5c29dd4",
       "tests": [
         "cargo test -p quansio-server --test teammates (standing instructions cannot widen grants; archive retains lineage; templates from config/teammates.yaml)"
       ],
