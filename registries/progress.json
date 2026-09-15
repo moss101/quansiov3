@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T11:06:00Z",
+  "updated_at": "2026-09-15T11:10:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2107,18 +2107,18 @@
       "notes": "Fixed a real schema finding: EXEC-010 evidence summary carried string commands and status/detail results outside the evidence schema; normalized to the canonical shape without changing any recorded fact. Added the QA-001 gate: release-blocking suites may skip only for absent QUANSIO_TEST_* variables."
     },
     "QA-002": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T11:10:00Z",
+      "updated_at": "2026-09-15T11:10:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed."
     },
     "QA-003": {
       "coverage": "GENUINE_GAP",
