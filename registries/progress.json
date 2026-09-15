@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T08:10:00Z",
+  "updated_at": "2026-09-15T08:15:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1908,17 +1908,31 @@
     },
     "OPS-001": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:10:00Z",
-      "updated_at": "2026-09-15T08:10:00Z",
+      "updated_at": "2026-09-15T08:15:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
-      "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed."
+      "tests": [
+        "cargo test -p quansio-server --test enterprise_identity (3 passed: SSO ignores client roles; SCIM deprovision revokes sessions; service scopes explicit and auditable; live OIDC prints BLOCKED_EXTERNAL)"
+      ],
+      "artifacts": [
+        "evidence/OPS-001/2026-09-15T08-15-00Z/summary.json",
+        "crates/server/src/control/identity/enterprise.rs"
+      ],
+      "real_boundary_evidence": [
+        {
+          "boundary": "oidc",
+          "environment": "QUANSIO_TEST_OIDC_ISSUER unset",
+          "command": "cargo test -p quansio-server --test enterprise_identity",
+          "artifact": "evidence/OPS-001/2026-09-15T08-15-00Z/tests.log",
+          "sha256": "94dfbbf1f0c2e65cccd36074a14682fa7cce97914f12d3736d38bd14fcc2faad",
+          "recorded_at": "2026-09-15T08:15:00Z"
+        }
+      ],
+      "implementation_complete": true,
+      "blocker": "Live OIDC sandbox is absent (QUANSIO_TEST_OIDC_ISSUER unset). Unblock: export QUANSIO_TEST_OIDC_ISSUER to a sandbox issuer and re-run cargo test -p quansio-server --test enterprise_identity. PASS is also forbidden while APP-001/APP-002 are BLOCKED_EXTERNAL.",
+      "notes": "SSO group mapping ignores client role claims. SCIM deprovision revokes sessions immediately. Service principals require explicit scopes and audit the key hash only."
     },
     "OPS-002": {
       "coverage": null,
