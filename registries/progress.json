@@ -1602,17 +1602,22 @@
     },
     "APP-008": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T05:00:00Z",
-      "updated_at": "2026-09-15T05:00:00Z",
+      "updated_at": "2026-09-15T05:05:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "pnpm --filter @quansio/desktop test (artifact persistence after run close, version history, HTML/JS/SVG preview is safe-text never host-privileged execution)"
+      ],
+      "artifacts": [
+        "evidence/APP-008/2026-09-15T05-05-00Z/summary.json",
+        "apps/desktop/src/artifacts/workspace.ts"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed. Owner apps/desktop/src/artifacts over CORE-007 metadata."
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while APP-003's dependency chain includes INT-002 BLOCKED_EXTERNAL. Unblock: flip INT-002 then APP-001/APP-003 to PASS.",
+      "notes": "Artifact records outlive the producing run. Preview maps HTML/JS/SVG to safe-text so they cannot execute with host privileges."
     },
     "APP-009": {
       "coverage": null,
