@@ -1,0 +1,11 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.34s
+     Running tests/teammates.rs (target/debug/deps/teammates-47c2486ce4f789b1)
+
+running 3 tests
+test archive_keeps_lineage ... ok
+test standing_instructions_cannot_widen_capability ... ok
+test templates_are_configuration_not_code ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

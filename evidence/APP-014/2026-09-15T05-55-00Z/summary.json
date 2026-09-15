@@ -1,0 +1,53 @@
+{
+  "task_id": "APP-014",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T05:55:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test teammates",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-014/2026-09-15T05-55-00Z/teammates.log"
+    },
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-014/2026-09-15T05-55-00Z/desktop.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test teammates",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-014/2026-09-15T05-55-00Z/teammates.log",
+      "sha256": "24da4559303b68541632d3e5d6ec778adc4f9cc1783ffc099a66217c7732febe",
+      "bytes": 490
+    },
+    {
+      "path": "crates/server/src/control/teammates/mod.rs",
+      "sha256": "8956ec78df72478d2dc663718a4ace20960d2a434c7a644481a0a4efb02bd9b0",
+      "bytes": 1779
+    },
+    {
+      "path": "config/teammates.yaml",
+      "sha256": "ddf0d23eca63bca61a4ba78697a4293e2998998f1f62c2e4d6298ff953177d39",
+      "bytes": 697
+    },
+    {
+      "path": "apps/desktop/src/teammates/roster.ts",
+      "sha256": "d495c8127f937698713069d2017b14311159372cbc25b43dc8cb0e742a28dc51",
+      "bytes": 540
+    }
+  ]
+}

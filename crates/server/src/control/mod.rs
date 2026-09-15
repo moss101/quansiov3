@@ -8,3 +8,4 @@ pub mod conversation;
 pub mod identity;
 pub mod schema;
 pub mod skills;
+pub mod teammates;
