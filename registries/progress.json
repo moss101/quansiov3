@@ -1598,17 +1598,22 @@
     },
     "APP-007": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T06:10:00Z",
-      "updated_at": "2026-09-15T06:10:00Z",
+      "updated_at": "2026-09-15T06:15:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "pnpm --filter @quansio/desktop test (takeover keeps session id; agent input fenced while user owns control; reconnect restores the same session)"
+      ],
+      "artifacts": [
+        "evidence/APP-007/2026-09-15T06-15-00Z/summary.json",
+        "apps/desktop/src/live/session.ts"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed. Owner apps/desktop/src/live. Real browser/computer stream needs EXEC-009/010 live hosts."
+      "implementation_complete": true,
+      "blocker": "Live browser/computer frames require EXEC-009 Chrome CDP and EXEC-010 macOS/Windows native streams on an interactive host. The UI fence is implemented; the live pixel/PTY boundary is not available in this session. Unblock: run EXEC-009/010 live suites and drive GET /v1/stream live frames into this surface.",
+      "notes": "Takeover does not mint a replacement session id. Agent input is fenced while controller=user. Reconnect restores the same session and terminal cursor."
     },
     "APP-008": {
       "coverage": "GENUINE_GAP",

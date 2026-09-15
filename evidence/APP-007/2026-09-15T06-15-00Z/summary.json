@@ -1,0 +1,37 @@
+{
+  "task_id": "APP-007",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T06:15:00Z",
+  "commands": [
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-09-15T06-15-00Z/vitest.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-007/2026-09-15T06-15-00Z/vitest.log",
+      "sha256": "a11a77021afe86e5f57d4945ec1680d0c472ffd299e97314e6b42792f1a44e79",
+      "bytes": 676
+    },
+    {
+      "path": "apps/desktop/src/live/session.ts",
+      "sha256": "240d81c4bac37f18f6d4b1e2dfe430c58e7aa5fcfe2e526e066405e9053d663a",
+      "bytes": 1104
+    },
+    {
+      "path": "apps/desktop/tests/live.test.ts",
+      "sha256": "fdf6d8e43d2425b6c1d3cea0649574d5b5ada1d1772d8534cb02349441bb99b4",
+      "bytes": 793
+    }
+  ]
+}
