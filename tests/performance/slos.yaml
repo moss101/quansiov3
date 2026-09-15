@@ -1,0 +1,57 @@
+# Provisional SLOs — DOSSIER.md §21.2 verbatim (QA-009).
+#
+# `ratified: false` records §21.2's own status: owner ratification is required
+# before REL-001, so a run measured against these is a measurement, not a
+# release bar. `tests/performance/test_slos.py` parses the table out of
+# DOSSIER.md and fails if this file and the authority disagree.
+
+version: 1
+ratified: false
+source: "DOSSIER.md §21.2 (provisional; owner ratification required)"
+
+slos:
+  api_read_p95_ms:
+    target: 200
+    unit: ms
+  api_command_accepted_p95_ms:
+    target: 500
+    unit: ms
+  event_delivery_lag_p95_ms:
+    target: 1000
+    unit: ms
+    dossier: "≤ 1 s"
+  model_stream_first_token_over_baseline_ms:
+    target: 300
+    unit: ms
+  runtime_scheduling_latency_p95_ms:
+    target: 500
+    unit: ms
+  index_query_p95_ms:
+    target: 300
+    unit: ms
+  browser_action_round_trip_ms:
+    target: 1500
+    unit: ms
+    dossier: "≤ 1.5 s"
+  cloud_microvm_warm_start_s:
+    target: 3
+    unit: s
+  cloud_microvm_cold_start_s:
+    target: 30
+    unit: s
+  macos_local_capsule_warm_start_s:
+    target: 15
+    unit: s
+  memory_knowledge_deletion_visible_s:
+    target: 60
+    unit: s
+  server_availability_monthly:
+    target: 99.9
+    unit: percent
+    dossier: "99.9 % monthly"
+  dr_rpo_min:
+    target: 5
+    unit: min
+  dr_rto_min:
+    target: 60
+    unit: min

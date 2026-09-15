@@ -1,0 +1,69 @@
+{
+  "task_id": "QA-009",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T10:50:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/performance/test_slos.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-009/2026-09-15T10-50-00Z/slo-suite.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-events --test stream_backpressure",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-009/2026-09-15T10-50-00Z/backpressure.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test usage",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-009/2026-09-15T10-50-00Z/usage-accuracy.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/performance/test_slos.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-events --test stream_backpressure",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test usage",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-009/2026-09-15T10-50-00Z/slo-suite.log",
+      "sha256": "ce1f519fa6e1b452010290282332dcf806e510c2abc5a75bbaf2ada555b13993",
+      "bytes": 98
+    },
+    {
+      "path": "evidence/QA-009/2026-09-15T10-50-00Z/backpressure.log",
+      "sha256": "0380f209307b028775231f25b44a585896fb4e86a6471b7cac3cfe3931429fab",
+      "bytes": 359
+    },
+    {
+      "path": "evidence/QA-009/2026-09-15T10-50-00Z/usage-accuracy.log",
+      "sha256": "0e97a5c1312c34f9b976d1c576450efc9d86e7dce66b3eb463d312e4b5bb9fe5",
+      "bytes": 485
+    },
+    {
+      "path": "tests/performance/test_slos.py",
+      "sha256": "237aa06d5a7cd1fc30c343c043bb78e3976e2b4f7b042e7d7735fc93c990f0fb",
+      "bytes": 6322
+    },
+    {
+      "path": "tests/performance/slos.yaml",
+      "sha256": "2c77f2e1b57627d011492234dc56bf464580c8416ef82a8759e1c3f119e64aad",
+      "bytes": 1349
+    }
+  ]
+}
