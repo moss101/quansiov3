@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T07:45:00Z",
+  "updated_at": "2026-09-15T07:46:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1872,8 +1872,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T07:35:00Z",
-      "updated_at": "2026-09-15T07:45:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T07:46:00Z",
+      "git_commit": "12592b551ab01d0b700e8cb742cfccacbf3087bd",
       "tests": [
         "uv run --project python pytest tests/intelligence/test_builtin_packs.py -q (3 passed: schema/eval for research/coding/artifacts/data-analysis/cloud-devops/business-ops; capability scan refuses unknown tools/daemons/policy bypass; tool availability is INT-009 resolver)"
       ],
