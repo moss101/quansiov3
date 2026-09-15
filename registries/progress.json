@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T08:40:00Z",
+  "updated_at": "2026-09-15T08:41:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1982,8 +1982,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:35:00Z",
-      "updated_at": "2026-09-15T08:40:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T08:41:00Z",
+      "git_commit": "21d96c4462e3943035f31ed4048262f4f11178cd",
       "tests": [
         "cargo test -p quansio-server --test usage (4 passed: rebuild is a pure function of the event set; soft quota alerts and still admits; hard quota refuses without committing an effect; concurrent admits produce one winner)"
       ],
