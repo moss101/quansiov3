@@ -1677,18 +1677,18 @@
       "notes": "Deleted knowledge/memory is dropped from retrievalIndex. Only APPROVED/ACTIVE skills can be activated. Recovery field names are rejected as memory."
     },
     "APP-012": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T05:40:00Z",
+      "updated_at": "2026-09-15T05:40:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed. Owner apps/web. Surfaces catalog exists; RBAC gate is the remaining acceptance."
     },
     "APP-013": {
       "coverage": null,
