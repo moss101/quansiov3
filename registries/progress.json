@@ -1640,7 +1640,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T06:20:00Z",
       "updated_at": "2026-09-15T06:25:00Z",
-      "git_commit": null,
+      "git_commit": "c7c6008fc1e05b88af919673da69a89e1de6b064",
       "tests": [
         "cargo test -p quansio-server --test collaboration (stable seq/id order; removed cannot receive)"
       ],
