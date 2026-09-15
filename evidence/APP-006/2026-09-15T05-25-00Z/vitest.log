@@ -1,0 +1,17 @@
+$ vitest run
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/onboarding.test.ts (1 test) 1ms
+ ✓ tests/artifacts.test.ts (2 tests) 2ms
+ ✓ tests/surfaces.test.ts (3 tests) 2ms
+ ✓ tests/conversation.test.ts (2 tests) 2ms
+ ✓ tests/trust.test.ts (2 tests) 1ms
+ ✓ tests/work.test.ts (2 tests) 1ms
+ ✓ tests/security.test.ts (5 tests) 2ms
+
+ Test Files  7 passed (7)
+      Tests  17 passed (17)
+   Start at  07:18:12
+   Duration  182ms (transform 108ms, setup 0ms, collect 161ms, tests 11ms, environment 0ms, prepare 218ms)
+
