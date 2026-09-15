@@ -1,0 +1,53 @@
+{
+  "task_id": "QA-003",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T09:45:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test qualification",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-003/2026-09-15T09-45-00Z/rust-matrix.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/recovery/test_qa003_matrix.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-003/2026-09-15T09-45-00Z/py-matrix.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test qualification",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/recovery/test_qa003_matrix.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-003/2026-09-15T09-45-00Z/rust-matrix.log",
+      "sha256": "3440f5c29c209f692aaf9eaf5b17d94d3af783d079e3fe5349660ae75c39c12f",
+      "bytes": 519
+    },
+    {
+      "path": "evidence/QA-003/2026-09-15T09-45-00Z/py-matrix.log",
+      "sha256": "9acd31e10db46689f41e483bd47d34e3542fb4ceaa9230e52769742c670ddc3f",
+      "bytes": 98
+    },
+    {
+      "path": "crates/server/tests/qualification.rs",
+      "sha256": "a03da3713580ee400afb60ffe2c4cfbcdf57228266be883822f22d35f9109593",
+      "bytes": 9775
+    },
+    {
+      "path": "tests/recovery/test_qa003_matrix.py",
+      "sha256": "0d6fdd9602c78bb0325832992d187c6fd6414b2aa6030e21ab74f9c61d551328",
+      "bytes": 7067
+    }
+  ]
+}

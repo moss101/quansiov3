@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running tests/qualification.rs (target/debug/deps/qualification-d5000dd9d47b2424)
+
+running 4 tests
+test concurrent_cancel_and_suspend_race_is_typed_and_single ... ok
+test crash_recovery_resumes_without_duplicating_a_run ... ok
+test replay_matrix_is_stable_across_injected_faults ... ok
+test stale_generation_cannot_mutate_but_current_may ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.17s
+
