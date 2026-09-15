@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T08:41:00Z",
+  "updated_at": "2026-09-15T08:45:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1998,18 +1998,18 @@
       "notes": "UsageRecords rebuild deterministically from RuntimeEvents. Hard quotas refuse before effect commit. Soft quotas emit a budget alert and still admit. Billing is this projection, not runtime truth."
     },
     "OPS-005": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T08:45:00Z",
+      "updated_at": "2026-09-15T08:45:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed."
     },
     "OPS-006": {
       "coverage": null,
