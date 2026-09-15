@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T08:26:00Z",
+  "updated_at": "2026-09-15T08:40:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1978,18 +1978,24 @@
       "notes": "Correlated traces across runtime/intelligence/desktop, secret-canary redaction, Prometheus text metrics, bounded diagnostic bundles."
     },
     "OPS-004": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "PASS",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T08:35:00Z",
+      "updated_at": "2026-09-15T08:40:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "cargo test -p quansio-server --test usage (4 passed: rebuild is a pure function of the event set; soft quota alerts and still admits; hard quota refuses without committing an effect; concurrent admits produce one winner)"
+      ],
+      "artifacts": [
+        "evidence/OPS-004/2026-09-15T08-40-00Z/summary.json",
+        "crates/server/src/usage/project.rs",
+        "crates/server/src/usage/quota.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "UsageRecords rebuild deterministically from RuntimeEvents. Hard quotas refuse before effect commit. Soft quotas emit a budget alert and still admit. Billing is this projection, not runtime truth."
     },
     "OPS-005": {
       "coverage": null,

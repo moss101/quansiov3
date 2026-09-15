@@ -1,0 +1,47 @@
+{
+  "task_id": "OPS-004",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T08:40:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test usage",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-15T08-40-00Z/tests.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test usage",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-004/2026-09-15T08-40-00Z/tests.log",
+      "sha256": "07f03d79a6354db1f9ee01d187631b80b38ff7853618dee4cf2f6b5cbdd19a64",
+      "bytes": 117
+    },
+    {
+      "path": "crates/server/src/usage/mod.rs",
+      "sha256": "c7e77df9d4524cdb6be4cd4b1e14ebc1b240dbc65e5b028e3feb3897747ffaef",
+      "bytes": 1545
+    },
+    {
+      "path": "crates/server/src/usage/project.rs",
+      "sha256": "6aedfa41c75cfaae42cb672c12ec30cd378479e232d66e4088a9c41ef3707c54",
+      "bytes": 9026
+    },
+    {
+      "path": "crates/server/src/usage/quota.rs",
+      "sha256": "30c73acee7863460e5468f0df3d9aee1ced584deaa589c67c1addb6e0d8e41cf",
+      "bytes": 4410
+    },
+    {
+      "path": "crates/server/tests/usage.rs",
+      "sha256": "5e4a14526cb6764b3a71ba1a32511488f37d78a2ee691581f0c8813d1a0a8d33",
+      "bytes": 7340
+    }
+  ]
+}
