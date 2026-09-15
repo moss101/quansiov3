@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T10:35:00Z",
+  "updated_at": "2026-09-15T10:36:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2223,8 +2223,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T10:25:00Z",
-      "updated_at": "2026-09-15T10:35:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T10:36:00Z",
+      "git_commit": "6e6085876c188a120e0e382e5a27adf9644a8a01",
       "tests": [
         "pnpm exec vitest run --config tests/e2e/vitest.config.ts (7 passed, 1 skipped: onboarding-to-artifact-review journey, teammate archive lineage + protected delivery, externalized strings, offline/reconnect, a11y baseline zero violations + keyboard-reachable surfaces; served Playwright matrix prints BLOCKED_EXTERNAL)",
         "pnpm --filter @quansio/desktop test (25 passed)",
