@@ -1498,7 +1498,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T04:30:00Z",
       "updated_at": "2026-09-15T04:35:00Z",
-      "git_commit": null,
+      "git_commit": "ef7002221cb097fe0074c774444ded9ee2ad608f",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test identity (3 passed: most-restrictive settings merge, fresh user onboarded without a config file with personal tenant+workspace, raw secrets refused)",
         "pnpm --filter @quansio/desktop test (onboarding plan requiresConfigFile false and sec_ handles)"
