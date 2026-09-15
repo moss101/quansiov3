@@ -1597,18 +1597,18 @@
       "notes": "Approval is bound to the preview digest. Unknown effects stay unresolved in the timeline."
     },
     "APP-007": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T06:10:00Z",
+      "updated_at": "2026-09-15T06:10:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed. Owner apps/desktop/src/live. Real browser/computer stream needs EXEC-009/010 live hosts."
     },
     "APP-008": {
       "coverage": "GENUINE_GAP",
