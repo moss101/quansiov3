@@ -1697,18 +1697,25 @@
       "notes": "Web surfaces are serverOnly. Admin pages are gated by server role. Commands use /v1 public contracts, not host-privileged APIs."
     },
     "APP-013": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T06:00:00Z",
+      "updated_at": "2026-09-15T06:05:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "cargo test -p quansio-cli (verbs are /v1 paths; bypass-policy refused; tokens must be tenant-scoped)",
+        "sdk/typescript vitest (OpenAPI operationIds present; unversioned paths refused)"
+      ],
+      "artifacts": [
+        "evidence/APP-013/2026-09-15T06-05-00Z/summary.json",
+        "crates/cli/src/lib.rs",
+        "sdk/typescript/src/index.ts"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while APP-001 is BLOCKED_EXTERNAL (INT-002). Unblock: flip INT-002 then APP-001 to PASS.",
+      "notes": "CLI verbs map only to /v1 public paths and cannot bypass policy. SDK contract fixture asserts generated OpenAPI operationIds."
     },
     "APP-014": {
       "coverage": "GENUINE_GAP",

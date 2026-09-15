@@ -1,0 +1,53 @@
+{
+  "task_id": "APP-013",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T06:05:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-cli",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-013/2026-09-15T06-05-00Z/cli.log"
+    },
+    {
+      "command": "pnpm --filter @quansio/sdk test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-013/2026-09-15T06-05-00Z/sdk.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-cli",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm test in sdk/typescript",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-013/2026-09-15T06-05-00Z/cli.log",
+      "sha256": "523ad5d00d05eeb7b125c726149388cfbbd614fefa118e6dcd5acf399205b94c",
+      "bytes": 456
+    },
+    {
+      "path": "crates/cli/src/lib.rs",
+      "sha256": "ce7d94cfd98208f67c25ef93af21a53e14c5052580be8cda5c434f2a597503d0",
+      "bytes": 2253
+    },
+    {
+      "path": "sdk/typescript/src/index.ts",
+      "sha256": "f1032d49c928a9e74b7c0159e05a1ada70047e801b9e0bca5b76dff2544a4cea",
+      "bytes": 990
+    },
+    {
+      "path": "sdk/typescript/tests/client.test.ts",
+      "sha256": "56b6b75a9eaa14ddf92f489957c9265ebfe4109656431dcf5d9373836e7d6233",
+      "bytes": 1129
+    }
+  ]
+}
