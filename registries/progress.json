@@ -1540,17 +1540,23 @@
     },
     "APP-004": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T04:45:00Z",
-      "updated_at": "2026-09-15T04:45:00Z",
+      "updated_at": "2026-09-15T04:50:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "pnpm --filter @quansio/desktop test (conversation reload, WorkGraph/Run mapping, attachments/questions, cancel, inspector)"
+      ],
+      "artifacts": [
+        "evidence/APP-004/2026-09-15T04-50-00Z/summary.json",
+        "apps/desktop/src/conversation/composer.ts",
+        "crates/server/src/api/threads.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed. Desktop conversation composer over APP-001/002/003; server conversation owner already exists."
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while INT-002 (and therefore APP-001) is BLOCKED_EXTERNAL. Unblock: live provider credentials for INT-002, then flip APP-004 to PASS with existing evidence.",
+      "notes": "Composer maps objectives to wn_/run_ identities, persists attachments and answered questions across reload, exposes a turn inspector (route/context/trust/tools), and cancel is CancelRun. Server path crates/server/src/api/threads.rs projects the conversation owner."
     },
     "APP-005": {
       "coverage": null,

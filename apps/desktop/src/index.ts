@@ -30,3 +30,22 @@ export { commandUrl, streamUrl, tenantHeaders } from "./client/server.js";
 export { STRINGS } from "./i18n/strings.js";
 export { onboardingPlan } from "./onboarding/flow.js";
 export type { OnboardingInput, OnboardingPlan } from "./onboarding/flow.js";
+export {
+  ANSWER_COMMAND,
+  CANCEL_COMMAND,
+  POST_COMMAND,
+  answerQuestion,
+  attachArtifact,
+  bindObjective,
+  cancelRun,
+  inspectTurn,
+  newChatSession,
+  postMessage,
+  reload,
+} from "./conversation/composer.js";
+export type {
+  AnsweredQuestion,
+  ComposerAttachment,
+  ConversationSession,
+  TurnInspector,
+} from "./conversation/composer.js";

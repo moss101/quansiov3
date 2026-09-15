@@ -22,6 +22,7 @@ pub mod limits;
 pub mod projections;
 pub mod seams;
 pub mod stream;
+pub mod threads;
 
 use std::collections::BTreeMap;
 use std::sync::Arc;

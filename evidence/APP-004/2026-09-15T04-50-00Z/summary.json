@@ -1,0 +1,42 @@
+{
+  "task_id": "APP-004",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T04:50:00Z",
+  "commands": [
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-004/2026-09-15T04-50-00Z/vitest.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-004/2026-09-15T04-50-00Z/vitest.log",
+      "sha256": "867ffa9e45c3f102953efd9606332e4dd222bc433b31530c20de969531d4d879",
+      "bytes": 429
+    },
+    {
+      "path": "apps/desktop/src/conversation/composer.ts",
+      "sha256": "d6f82b69ad9c7ec79abb9795af6739dea7e4fd73c725f4977c6e3c39e9706a3a",
+      "bytes": 3091
+    },
+    {
+      "path": "apps/desktop/tests/conversation.test.ts",
+      "sha256": "66274810799c8657e22d230342a4663299b1839231f41666b95865a87bcf6282",
+      "bytes": 1753
+    },
+    {
+      "path": "crates/server/src/api/threads.rs",
+      "sha256": "4c26dc09bcb8842307e79491bceae39e99af646ca5d2a98994f2266b485695c7",
+      "bytes": 370
+    }
+  ]
+}
