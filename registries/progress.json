@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T11:05:00Z",
+  "updated_at": "2026-09-15T11:06:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2088,8 +2088,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T10:55:00Z",
-      "updated_at": "2026-09-15T11:05:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T11:06:00Z",
+      "git_commit": "d30a8246021682afe6850e8d8437f25705b78e85",
       "tests": [
         "uv run --project python pytest tests/contract (23 passed: catalog/OpenAPI/proto parity, refs resolve, schema suite validates real evidence summaries, proto compat baseline, and the new QA-001 gate banning unexplained skips/xfails in release-blocking suites)",
         "uv run --project python pytest tests (407 passed, 78 skipped live/absent-env)",
