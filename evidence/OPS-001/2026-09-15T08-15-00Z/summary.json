@@ -1,0 +1,37 @@
+{
+  "task_id": "OPS-001",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T08:15:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test enterprise_identity",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/OPS-001/2026-09-15T08-15-00Z/tests.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test enterprise_identity",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-001/2026-09-15T08-15-00Z/tests.log",
+      "sha256": "94dfbbf1f0c2e65cccd36074a14682fa7cce97914f12d3736d38bd14fcc2faad",
+      "bytes": 536
+    },
+    {
+      "path": "crates/server/src/control/identity/enterprise.rs",
+      "sha256": "6cd412e7a7cf37359d072274daf72299066348f48f61a9f63c2c6a1db97ffd4b",
+      "bytes": 5355
+    },
+    {
+      "path": "crates/server/tests/enterprise_identity.rs",
+      "sha256": "c460e16bf6c58b9e027afdd43658895174d7ce17e8cc2760d22c3c80acf25a93",
+      "bytes": 2935
+    }
+  ]
+}

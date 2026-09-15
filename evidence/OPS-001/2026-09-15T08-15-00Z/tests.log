@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running tests/enterprise_identity.rs (target/debug/deps/enterprise_identity-62216acb1b5884b9)
+
+running 3 tests
+BLOCKED_EXTERNAL: QUANSIO_TEST_OIDC_ISSUER is not set; live OIDC sandbox not running
+test scim_deprovision_revokes_access_promptly ... ok
+test sso_sandbox_does_not_trust_client_roles ... ok
+test token_revocation_and_service_scopes_are_explicit ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

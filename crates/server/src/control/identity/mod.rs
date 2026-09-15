@@ -4,6 +4,7 @@
 //! configuration file. Secrets remain `sec_` handles. Settings merge is deterministic
 //! and most-restrictive for security controls.
 
+pub mod enterprise;
 pub mod settings;
 
 use quansio_core::{CanonicalId, Prefix, UlidGenerator};
@@ -14,6 +15,10 @@ use sqlx::PgPool;
 use crate::control::schema;
 use crate::runtime::state_machine::RuntimeIdentity;
 
+pub use enterprise::{
+    live_oidc_configured, DirectoryUser, GroupRoleMap, ServicePrincipal, Session, SsoAssertion,
+    LIVE_OIDC_ISSUER,
+};
 pub use settings::{effective_settings, merge_settings, platform_defaults};
 
 /// Errors from identity/onboarding.
