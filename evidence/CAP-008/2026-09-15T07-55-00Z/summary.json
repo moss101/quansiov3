@@ -1,0 +1,42 @@
+{
+  "task_id": "CAP-008",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T07:55:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/intelligence/test_skill_evolution.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-008/2026-09-15T07-55-00Z/pytest.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/intelligence/test_skill_evolution.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-008/2026-09-15T07-55-00Z/pytest.log",
+      "sha256": "86288ee89a493b657a4f02c2118272c4f6a9a7afa049f10741e60f3a564db934",
+      "bytes": 98
+    },
+    {
+      "path": "python/intelligence/skills/evolution/candidates.py",
+      "sha256": "6c9e03fa4e0506e895c370620e6038ba3ea8517a30fc7a3794d6f18af18307a3",
+      "bytes": 6749
+    },
+    {
+      "path": "python/intelligence/skills/evolution/patterns.py",
+      "sha256": "691cd39d534565862cc8a96e0fc341f804c15ca972857acd0bc5bf119e4539ff",
+      "bytes": 3747
+    },
+    {
+      "path": "python/tests/intelligence/test_skill_evolution.py",
+      "sha256": "415bcfee0dcfd0421feb48f842b75df2c5412705270eb9fe042ad9bc4a7c2de2",
+      "bytes": 6368
+    }
+  ]
+}
