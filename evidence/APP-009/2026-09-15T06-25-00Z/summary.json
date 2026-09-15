@@ -1,0 +1,37 @@
+{
+  "task_id": "APP-009",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T06:25:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test collaboration",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-09-15T06-25-00Z/collab.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test collaboration",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-009/2026-09-15T06-25-00Z/collab.log",
+      "sha256": "dd3f1888884a5b15646ab3cf0331d6bdb5797d560dafd8d7398494fc20d2d536",
+      "bytes": 387
+    },
+    {
+      "path": "crates/server/src/control/collaboration/mod.rs",
+      "sha256": "4b08f4461386295ba7ebe8f01cb01c4db80da3651bcd652858cedea5e909e03d",
+      "bytes": 874
+    },
+    {
+      "path": "apps/desktop/src/collaboration/participants.ts",
+      "sha256": "b365a9128332d1821ef943dab39da10ec87f0657bb84d1219f96b4f8c05d8ddd",
+      "bytes": 271
+    }
+  ]
+}
