@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T08:16:00Z",
+  "updated_at": "2026-09-15T08:25:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1935,18 +1935,24 @@
       "notes": "SSO group mapping ignores client role claims. SCIM deprovision revokes sessions immediately. Service principals require explicit scopes and audit the key hash only."
     },
     "OPS-002": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T08:20:00Z",
+      "updated_at": "2026-09-15T08:25:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "cargo test -p quansio-server --test audit_lifecycle (3 passed: audit immutability+hash chain; export/delete with legal hold; derived deletion of tantivy/pgvector/memory/cache)"
+      ],
+      "artifacts": [
+        "evidence/OPS-002/2026-09-15T08-25-00Z/summary.json",
+        "crates/server/src/audit/mod.rs",
+        "crates/server/src/control/data_lifecycle/mod.rs"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while INT-006, INT-007 and INT-011 are BLOCKED_EXTERNAL. Unblock: flip those to PASS.",
+      "notes": "AuditEntry is append-only and hash-chained per tenant. Deletion walks authoritative then derived planes unless a legal hold applies."
     },
     "OPS-003": {
       "coverage": "GENUINE_GAP",
