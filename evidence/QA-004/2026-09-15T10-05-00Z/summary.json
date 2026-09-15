@@ -1,0 +1,64 @@
+{
+  "task_id": "QA-004",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T10:05:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... uv run --project python pytest tests/evaluation/test_qa004_campaign.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-004/2026-09-15T10-05-00Z/campaign.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... uv run --project python pytest tests/evaluation",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-004/2026-09-15T10-05-00Z/evaluation-suite.log"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-004/2026-09-15T10-05-00Z/python-plane.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... uv run --project python pytest tests/evaluation/test_qa004_campaign.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... uv run --project python pytest tests/evaluation",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-004/2026-09-15T10-05-00Z/campaign.log",
+      "sha256": "0f63423895c9108b8bf58f88f05a659cb23e96f01d3361b2261d57bc520de099",
+      "bytes": 98
+    },
+    {
+      "path": "evidence/QA-004/2026-09-15T10-05-00Z/evaluation-suite.log",
+      "sha256": "be52f2ecb0ef36574d094658de22e0b3b74d8fb93e11c4372ca43d9616a9b15c",
+      "bytes": 99
+    },
+    {
+      "path": "evidence/QA-004/2026-09-15T10-05-00Z/python-plane.log",
+      "sha256": "308c60a5fad80f2c8c6373d04d11d975b7f317fa4f71353f9de7d0de9e891403",
+      "bytes": 593
+    },
+    {
+      "path": "tests/evaluation/test_qa004_campaign.py",
+      "sha256": "1307a73db09309c3fcb2479903e5493d01d062cb602c296f62221257e7a2d873",
+      "bytes": 19025
+    }
+  ]
+}
