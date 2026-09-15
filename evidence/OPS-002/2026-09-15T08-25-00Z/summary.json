@@ -1,0 +1,42 @@
+{
+  "task_id": "OPS-002",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T08:25:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test audit_lifecycle",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-002/2026-09-15T08-25-00Z/tests.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test audit_lifecycle",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-002/2026-09-15T08-25-00Z/tests.log",
+      "sha256": "fff0282d231fa708bf57e4a10c4201df329816f4fe8dad8ef04238075882c525",
+      "bytes": 116
+    },
+    {
+      "path": "crates/server/src/audit/mod.rs",
+      "sha256": "7263f84606ab0f55a20687402409df5883cd07240b80402f87119073ed65ce25",
+      "bytes": 3522
+    },
+    {
+      "path": "crates/server/src/control/data_lifecycle/mod.rs",
+      "sha256": "4bd2ca0d540baf1e463f5c7746e07b676df3f004f280a62123edfb39df504c06",
+      "bytes": 2860
+    },
+    {
+      "path": "crates/server/tests/audit_lifecycle.rs",
+      "sha256": "637f8c4350df4104ad604966c007dddb88ac635ed8d723894341c0cf044df342",
+      "bytes": 2698
+    }
+  ]
+}
