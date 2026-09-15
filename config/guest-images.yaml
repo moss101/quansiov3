@@ -18,3 +18,26 @@ macos_local_capsule:
   blocker: >-
     The signed V8.1 Linux guest image and its update-catalog SHA-256 digests have not been
     published. The machine authority refuses to boot an unpinned or mismatched artifact.
+windows_local_capsule:
+  status: BLOCKED_EXTERNAL
+  substrate: local_capsule_windows
+  required_artifacts:
+    - linux-rootfs
+  contents:
+    - qworkerd
+    - chromium
+    - base-tooling
+  launcher:
+    executable: wsl.exe
+    verbs:
+      - --import
+      - --export
+      - --terminate
+      - --shutdown
+      - --list
+  isolation:
+    host_bind_mounts: 0
+    arbitrary_exec: false
+  blocker: >-
+    WSL2 and the signed V8.1 Linux rootfs are required on a Windows 11 host. This runner is
+    not that host, and no digest or URL is published for the rootfs.

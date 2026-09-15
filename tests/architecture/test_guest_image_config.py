@@ -28,3 +28,11 @@ def test_macos_capsule_catalog_is_explicit_and_fail_closed() -> None:
     # An unavailable release must not carry an invented digest or URL that could be accepted as real.
     assert "sha256" not in capsule
     assert "url" not in capsule
+
+    windows = catalog["windows_local_capsule"]
+    assert windows["status"] == "BLOCKED_EXTERNAL"
+    assert windows["launcher"]["executable"] == "wsl.exe"
+    assert "--exec" not in windows["launcher"]["verbs"]
+    assert windows["isolation"]["arbitrary_exec"] is False
+    assert "sha256" not in windows
+    assert "url" not in windows

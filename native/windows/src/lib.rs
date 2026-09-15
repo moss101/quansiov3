@@ -8,3 +8,4 @@
 pub const CANONICAL_OWNER: &str = "native/windows";
 
 pub mod computer_use;
+pub mod wsl;
