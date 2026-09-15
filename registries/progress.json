@@ -1544,7 +1544,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T04:45:00Z",
       "updated_at": "2026-09-15T04:50:00Z",
-      "git_commit": null,
+      "git_commit": "8adaf4cd43244889886795db3b4f62c5a75c3340",
       "tests": [
         "pnpm --filter @quansio/desktop test (conversation reload, WorkGraph/Run mapping, attachments/questions, cancel, inspector)"
       ],
