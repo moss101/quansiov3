@@ -1,0 +1,32 @@
+{
+  "task_id": "APP-010",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T06:35:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test routines",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-010/2026-09-15T06-35-00Z/routines.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test routines",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-010/2026-09-15T06-35-00Z/routines.log",
+      "sha256": "b511fb85a03ae48a106df3d03e92e0d3cd090b9ce74119398f9598641ef1d6f5",
+      "bytes": 318
+    },
+    {
+      "path": "crates/server/src/control/routines/mod.rs",
+      "sha256": "04031f3a0617b5d96971b2e0f181307b8836dfad038b65a616d7608c84e5715a",
+      "bytes": 692
+    }
+  ]
+}
