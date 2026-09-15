@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T09:46:00Z",
+  "updated_at": "2026-09-15T09:50:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2142,18 +2142,18 @@
       "notes": "Fault-injection matrix over the real runtime: crash recovery lands on the same safe point without duplicating runs or repeating effects; races end in typed single winners; stale generations are fenced; replay precedence is a pure function of durable state."
     },
     "QA-004": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T09:50:00Z",
+      "updated_at": "2026-09-15T09:50:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed."
     },
     "QA-005": {
       "coverage": null,
