@@ -1678,17 +1678,23 @@
     },
     "APP-012": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T05:40:00Z",
-      "updated_at": "2026-09-15T05:40:00Z",
+      "updated_at": "2026-09-15T05:45:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "pnpm --filter @quansio/web test (admin pages require server admin/owner role; all surfaces serverOnly; /v1 public contracts)"
+      ],
+      "artifacts": [
+        "evidence/APP-012/2026-09-15T05-45-00Z/summary.json",
+        "apps/web/src/rbac.ts",
+        "apps/web/src/surfaces.ts"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed. Owner apps/web. Surfaces catalog exists; RBAC gate is the remaining acceptance."
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while APP-001/APP-002/APP-006 are BLOCKED_EXTERNAL (INT-002). Unblock: flip INT-002 then those tasks to PASS.",
+      "notes": "Web surfaces are serverOnly. Admin pages are gated by server role. Commands use /v1 public contracts, not host-privileged APIs."
     },
     "APP-013": {
       "coverage": null,
