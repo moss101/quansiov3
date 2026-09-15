@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T10:50:00Z",
+  "updated_at": "2026-09-15T10:51:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2245,8 +2245,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T10:40:00Z",
-      "updated_at": "2026-09-15T10:50:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T10:51:00Z",
+      "git_commit": "bcd6ffdc4bf116c269d63ec5cdcddc06dbacaef8",
       "tests": [
         "uv run --project python pytest tests/performance/test_slos.py (5 passed: SLO table pinned to DOSSIER \u00a721.2 verbatim; in-process index query and deletion-visibility inside the \u00a721.2 budgets; bounded-queue STREAM_BACKPRESSURE wiring asserted; usage-accuracy suites wired)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-events --test stream_backpressure (slow consumer disconnected with typed STREAM_BACKPRESSURE instead of unbounded buffering)",
