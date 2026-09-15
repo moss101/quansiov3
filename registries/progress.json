@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T09:45:00Z",
+  "updated_at": "2026-09-15T09:46:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2116,8 +2116,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T09:10:00Z",
-      "updated_at": "2026-09-15T09:45:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-15T09:46:00Z",
+      "git_commit": "1ee475082bf0b96a9acae18e6ddc3911eb4458ef",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test qualification (4 passed: crash recovery resumes without duplicating the run; concurrent cancel/suspend race yields exactly one typed outcome; superseded generation fenced with FencedStaleGeneration{1,2}; replay precedence stable under injected fault rows)",
         "uv run --project python pytest tests/recovery/test_qa003_matrix.py -q (9 passed: fault-matrix permutations, replay order-stability property, fencing property, structural wiring to the shipped owners)"
