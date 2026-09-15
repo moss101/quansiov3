@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T10:51:00Z",
+  "updated_at": "2026-09-15T11:05:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2084,18 +2084,27 @@
       "notes": "Kill switches are audited and reversible. Effect freeze blocks new tier \u2265 2 actions without corrupting reads or evidence."
     },
     "QA-001": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T10:55:00Z",
+      "updated_at": "2026-09-15T11:05:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/contract (23 passed: catalog/OpenAPI/proto parity, refs resolve, schema suite validates real evidence summaries, proto compat baseline, and the new QA-001 gate banning unexplained skips/xfails in release-blocking suites)",
+        "uv run --project python pytest tests (407 passed, 78 skipped live/absent-env)",
+        "uv run --project python mypy intelligence (clean, 83 files)",
+        "uv run --project python python ../scripts/ci/gen_contracts.py --check (contract regeneration CLEAN across catalog/openapi/rust/python/ts)"
+      ],
+      "artifacts": [
+        "evidence/QA-001/2026-09-15T11-05-00Z/summary.json",
+        "tests/contract/test_qa001_gate.py",
+        "evidence/EXEC-010/2026-09-14T07-20-49Z/summary.json"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while APP-013 is BLOCKED_EXTERNAL. Unblock: flip APP-013 to PASS and re-run the verification sweep.",
+      "notes": "Fixed a real schema finding: EXEC-010 evidence summary carried string commands and status/detail results outside the evidence schema; normalized to the canonical shape without changing any recorded fact. Added the QA-001 gate: release-blocking suites may skip only for absent QUANSIO_TEST_* variables."
     },
     "QA-002": {
       "coverage": null,

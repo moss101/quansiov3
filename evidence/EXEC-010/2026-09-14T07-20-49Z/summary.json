@@ -2,35 +2,67 @@
   "task_id": "EXEC-010",
   "git_commit": "75dff091be291f068cf0acddf0f573765a92385e",
   "commands": [
-    "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:***@127.0.0.1:55440/quansio cargo test -p quansio-machine --test computer_use -- --nocapture",
-    "QUANSIO_TEST_MACOS_COMPUTER_USE=1 swift test --package-path native/macos --filter ComputerUseTests",
-    "cargo test -p quansio-native-windows non_windows_boundary_reports_blocked_external -- --nocapture",
-    "cargo test --workspace",
-    "cargo fmt --all --check",
-    "cargo clippy --workspace --all-targets -- -D warnings",
-    "uv run --project python python scripts/ci/gen_contracts.py --check",
-    "bash scripts/ci/ci.sh"
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:***@127.0.0.1:55440/quansio cargo test -p quansio-machine --test computer_use -- --nocapture",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_MACOS_COMPUTER_USE=1 swift test --package-path native/macos --filter ComputerUseTests",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-native-windows non_windows_boundary_reports_blocked_external -- --nocapture",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL"
+    },
+    {
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
   ],
   "results": [
     {
-      "command": "PostgreSQL computer-use suite",
-      "status": "PASS",
-      "detail": "6 tests: permission ladder, unknown-app refusal, row-locked takeover race, durable restart/handback, tenant and exact-ToolCall fencing, and unknown-effect reconciliation"
+      "command": "PostgreSQL computer-use suite: 6 tests: permission ladder, unknown-app refusal, row-locked takeover race, durable restart/handback, tenant and exact-ToolCall fencing, and unknown-effect reconciliation",
+      "exit_code": 0,
+      "result": "PASS"
     },
     {
-      "command": "live macOS computer-use suite",
-      "status": "PASS",
-      "detail": "8 tests against NSWorkspace, Accessibility AX, Screen Recording and NSPasteboard; exact foreground mismatch and hard screenshot bounds fail closed"
+      "command": "live macOS computer-use suite: 8 tests against NSWorkspace, Accessibility AX, Screen Recording and NSPasteboard; exact foreground mismatch and hard screenshot bounds fail closed",
+      "exit_code": 0,
+      "result": "PASS"
     },
     {
-      "command": "Windows native boundary",
-      "status": "BLOCKED_EXTERNAL",
-      "detail": "This runner is macOS; a Windows 11 interactive UIA session with QUANSIO_TEST_WINDOWS_COMPUTER_USE=1 is required"
+      "command": "Windows native boundary: This runner is macOS; a Windows 11 interactive UIA session with QUANSIO_TEST_WINDOWS_COMPUTER_USE=1 is required",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL"
     },
     {
-      "command": "workspace qualification",
-      "status": "PASS",
-      "detail": "workspace Rust tests, fmt, clippy, contract regeneration and all 11 CI gates passed; CI summary is from parent implementation commit 9efdf9e, followed only by the explicit Windows blocker marker test at 75dff09"
+      "command": "workspace qualification: workspace Rust tests, fmt, clippy, contract regeneration and all 11 CI gates passed; CI summary is from parent implementation commit 9efdf9e, followed only by the explicit Windows blocker marker test at 75dff09",
+      "exit_code": 0,
+      "result": "PASS"
     }
   ],
   "artifacts": [
