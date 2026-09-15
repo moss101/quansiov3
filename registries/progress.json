@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-15T08:51:00Z",
+  "updated_at": "2026-09-15T08:55:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2064,18 +2064,18 @@
       "notes": "Offline supply-chain gate: lockfile pinning (Rust/pnpm/uv), deny.toml completeness and licence allow-list, deterministic CycloneDX SBOM with drift verification, a real RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill/pack quarantine lifecycle checks. cargo-deny is optional and reports an explicit informational result when absent, so the gate never silently passes and never requires network. Wired into scripts/ci/ci_summary.py so ci.sh and the GitHub workflow both run it."
     },
     "OPS-008": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T08:55:00Z",
+      "updated_at": "2026-09-15T08:55:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed."
     },
     "QA-001": {
       "coverage": null,
