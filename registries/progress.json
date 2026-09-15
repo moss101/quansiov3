@@ -1578,18 +1578,18 @@
       "notes": "Work monitor projects a canonical graph revision. User edits are ProposeGraphEdit-style; a stale revision returns CONFLICT_REVISION."
     },
     "APP-006": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T05:20:00Z",
+      "updated_at": "2026-09-15T05:20:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed. Owner apps/desktop/src/trust."
     },
     "APP-007": {
       "coverage": null,
