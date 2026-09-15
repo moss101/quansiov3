@@ -1654,18 +1654,18 @@
       "notes": "Messages sort by seq then id. Removed/suspended participants cannot receive protected events."
     },
     "APP-010": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T06:30:00Z",
+      "updated_at": "2026-09-15T06:30:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed. Owners control/routines, notify, desktop automation."
     },
     "APP-011": {
       "coverage": "GENUINE_GAP",
