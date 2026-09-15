@@ -8,6 +8,7 @@ pub mod collaboration;
 pub mod conversation;
 pub mod data_lifecycle;
 pub mod identity;
+pub mod recovery_point;
 pub mod routines;
 pub mod schema;
 pub mod skills;

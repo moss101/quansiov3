@@ -1,0 +1,9 @@
+# PostgreSQL PITR settings for V8.1 recovery drills (OPS-005).
+# Applied by the operator; the runtime never starts Postgres itself.
+wal_level: replica
+archive_mode: on
+archive_timeout: 60s
+archive_command: "test ! -f /var/lib/postgresql/archive/%f && cp %p /var/lib/postgresql/archive/%f"
+restore_command: "cp /var/lib/postgresql/archive/%f %p"
+max_wal_senders: 4
+wal_keep_size: 1GB

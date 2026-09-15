@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running tests/recovery_point.rs (target/debug/deps/recovery_point-e63b2eb539ca2202)
+
+running 4 tests
+BLOCKED_EXTERNAL: QUANSIO_TEST_PITR=1 is not set; host PostgreSQL PITR / object-store replica drill not running
+test captured_point_names_every_required_surface ... ok
+test effect_settlement_audit_rejects_pending_or_repeat ... ok
+test automated_restore_drill_measures_rpo_rto ... ok
+test consistency_point_validation_survives_restore ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

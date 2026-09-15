@@ -1,0 +1,42 @@
+{
+  "task_id": "OPS-005",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T08:50:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test recovery_point",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/OPS-005/2026-09-15T08-50-00Z/tests.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test recovery_point",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-005/2026-09-15T08-50-00Z/tests.log",
+      "sha256": "f3321f6aa3d38d505f33c7d89ef931297987ecc0081bef2581df2633c0e652fc",
+      "bytes": 616
+    },
+    {
+      "path": "crates/server/src/control/recovery_point/mod.rs",
+      "sha256": "87dc7428904d74e7106013216eeb8ce101bb2feb5b27ab2286e4db5ff9ca28a5",
+      "bytes": 7681
+    },
+    {
+      "path": "crates/server/tests/recovery_point.rs",
+      "sha256": "d7a97b9bad5db8a29ae5dde8c376c273deafb7453af1563b0dcac183bb7eef09",
+      "bytes": 4308
+    },
+    {
+      "path": "infra/dr/postgres-pitr.yaml",
+      "sha256": "28c71a342bda297cff4b382214558772c308002ce1bc0a55aa484962dab17bc8",
+      "bytes": 383
+    }
+  ]
+}
