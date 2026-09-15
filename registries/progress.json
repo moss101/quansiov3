@@ -1560,17 +1560,22 @@
     },
     "APP-005": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T05:10:00Z",
-      "updated_at": "2026-09-15T05:10:00Z",
+      "updated_at": "2026-09-15T05:15:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "pnpm --filter @quansio/desktop test (graph projection matches revision; concurrent edit is CONFLICT_REVISION not silent overwrite)"
+      ],
+      "artifacts": [
+        "evidence/APP-005/2026-09-15T05-15-00Z/summary.json",
+        "apps/desktop/src/work/monitor.ts"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Claimed. Owner apps/desktop/src/work. Edits go through graph commands, not local mutation."
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. PASS is forbidden while APP-004 is BLOCKED_EXTERNAL (INT-002). Unblock: flip INT-002 then APP-004 to PASS.",
+      "notes": "Work monitor projects a canonical graph revision. User edits are ProposeGraphEdit-style; a stale revision returns CONFLICT_REVISION."
     },
     "APP-006": {
       "coverage": null,
