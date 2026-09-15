@@ -1658,18 +1658,18 @@
       "notes": ""
     },
     "APP-011": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-15T05:30:00Z",
+      "updated_at": "2026-09-15T05:30:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed. Owner apps/desktop/src/knowledge."
     },
     "APP-012": {
       "coverage": null,
