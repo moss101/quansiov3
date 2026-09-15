@@ -1,0 +1,12 @@
+$ vitest run
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/surfaces.test.ts (3 tests) 2ms
+ ✓ tests/security.test.ts (5 tests) 2ms
+
+ Test Files  2 passed (2)
+      Tests  8 passed (8)
+   Start at  07:08:41
+   Duration  170ms (transform 35ms, setup 0ms, collect 48ms, tests 3ms, environment 0ms, prepare 66ms)
+

@@ -1,0 +1,57 @@
+{
+  "task_id": "APP-003",
+  "git_commit": null,
+  "recorded_at": "2026-09-15T04:20:00Z",
+  "commands": [
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-15T04-20-00Z/vitest.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "pnpm --filter @quansio/desktop test",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-003/2026-09-15T04-20-00Z/vitest.log",
+      "sha256": "ab924c430f91d5ad42549e6fb01f763080d5da06edfc4c051d51429f62710155",
+      "bytes": 337
+    },
+    {
+      "path": "evidence/APP-003/RECONCILIATION.md",
+      "sha256": "e4551b2ed3bcffd6faaf87d288e7764b4197c9c174334dde405b05e58f334350",
+      "bytes": 1042
+    },
+    {
+      "path": "apps/desktop/src/main/security.ts",
+      "sha256": "1c21343710b5d09c94df939cdd7da80fd74265732027a55a6b87f0274c3588f5",
+      "bytes": 1968
+    },
+    {
+      "path": "apps/desktop/src/preload/bridge.ts",
+      "sha256": "761594d5d977bef390162988ca4a5f3efb4d3c1cce7c56e12758bbb167b532a4",
+      "bytes": 1946
+    },
+    {
+      "path": "apps/desktop/src/renderer/session.ts",
+      "sha256": "aeacb7d23e166ffeb2f72873e297e5978bb622fffabd500a7f7b46408e078990",
+      "bytes": 1100
+    },
+    {
+      "path": "apps/desktop/src/main/shell.ts",
+      "sha256": "b29a29c15ba8b043a5588bb288e0decb17bab3e0996ec2f299b6c7144c5699ea",
+      "bytes": 1217
+    },
+    {
+      "path": "apps/desktop/tests/security.test.ts",
+      "sha256": "d5a9ad686b1c072d059694cf3e7d020d75ef7ef2b0cf795fc0a6c4461115311b",
+      "bytes": 3355
+    }
+  ]
+}
