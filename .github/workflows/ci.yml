@@ -74,3 +74,15 @@ jobs:
           name: ci-summary
           path: artifacts/ci/summary-*.json
           if-no-files-found: warn
+
+      # Every gate's full stdout+stderr (the summary's own `tail` field is 25
+      # lines -- enough to see a gate is red, not enough to see why for a
+      # verbose one like `cargo test --workspace`). Uploaded even on success so
+      # a future failure is diagnosable from the artifact alone.
+      - name: Upload full gate logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-gate-logs
+          path: artifacts/ci/logs/
+          if-no-files-found: warn
