@@ -5,6 +5,7 @@
 //! tasks extend this module without introducing a second store (DOSSIER.md §5).
 
 pub mod collaboration;
+pub mod connectors;
 pub mod conversation;
 pub mod data_lifecycle;
 pub mod identity;
