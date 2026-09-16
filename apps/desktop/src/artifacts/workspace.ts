@@ -55,7 +55,16 @@ export function previewMode(mediaType: string): "safe-text" | "safe-image" | "do
   return "download-only";
 }
 
-/** Preview must not run script or navigate with host privilege. */
+/**
+ * Preview must not run script or navigate with host privilege.
+ *
+ * The parameter is kept, unused, so the answer is legible per media type at the call
+ * site and in tests (`previewExecutesWithHostPrivileges("text/html")` reads as "for
+ * this type") and so the signature stays uniform with `previewMode`/`previewIsSafe`
+ * above -- the answer is always `false` today because every active type is already
+ * forced through `safe-text`, not because this function ignores its input.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- see doc comment above
 export function previewExecutesWithHostPrivileges(_mediaType: string): boolean {
   // Every active type is forced through `safe-text`; nothing is loaded as a document.
   return false;

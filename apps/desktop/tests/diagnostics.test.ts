@@ -27,7 +27,7 @@ describe("desktop diagnostics", () => {
     const frames = Array.from({ length: 40 }, (_, i) => ({
       correlationId: "corr_b",
       service: "desktop" as const,
-      msg: `line ${i} ${DEFAULT_SECRET_CANARY}`,
+      msg: `line ${String(i)} ${DEFAULT_SECRET_CANARY}`,
     }));
     const bundle = exportBundle("corr_b", frames, 400);
     expect(bundle.truncated).toBe(true);
