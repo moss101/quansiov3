@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T11:31:00Z",
+  "updated_at": "2026-09-16T11:55:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1870,18 +1870,24 @@
       "notes": "Compiler output is a candidate PackDraft: per-element provenance (source id, verbatim span, digest), credential-shaped content refused at ingestion, cross-tenant sources refused, and a content digest pinning what qualification would review. Nothing here promotes or executes."
     },
     "CAP-005": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-16T11:40:00Z",
+      "updated_at": "2026-09-16T11:55:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/capability_compiler (7 passed: qualification gates promotion on failed and protected cases; resolution intersects the caller's authority and never widens; versions promote digest-pinned; rollback is deterministic)"
+      ],
+      "artifacts": [
+        "evidence/CAP-005/2026-09-16T11-55-00Z/summary.json",
+        "python/intelligence/capability_compiler/lifecycle.py",
+        "python/tests/capability_compiler/test_pack_lifecycle.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "The lifecycle (qualify \u2192 promote \u2192 resolve \u2192 rollback) is implemented against the candidate compiler output; resolution names the WorkGraph/skills/tools/knowledge view. Runtime resolution *execution* resolves through the Rust runtime's WorkGraph/Skills owners and is exercised by QA-010's journeys; executing a published pack needs those journeys live.",
+      "notes": "Promotion is gated on the evaluation (protected first). Resolution intersects the caller's authority \u2014 a pack can never widen it. Rollback re-points at the previous digest deterministically."
     },
     "CAP-006": {
       "coverage": "GENUINE_GAP",
