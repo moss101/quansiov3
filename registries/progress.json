@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T12:11:00Z",
+  "updated_at": "2026-09-16T18:43:39Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1894,40 +1894,42 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T07:15:00Z",
-      "updated_at": "2026-09-15T07:26:00Z",
-      "git_commit": "8264a73a81693e36b5236b2c28903c62188501cf",
+      "updated_at": "2026-09-16T18:43:39Z",
+      "git_commit": "e031b8a82777474dcf02431719ec8f9d77ed8275",
       "tests": [
         "uv run --project python pytest tests/intelligence/test_wiki_skill.py -q (3 passed: pinned eval campaign holds navigation/provenance/link/budget thresholds via INT-010 gate; budget regression records dropped segments; disabling WikiSkill leaves SearchProgram and ContextProjection functional)"
       ],
       "artifacts": [
         "evidence/CAP-006/2026-09-15T07-25-00Z/summary.json",
         "packs/skills/wiki/navigate.py",
-        "packs/skills/wiki/skill.yaml"
+        "packs/skills/wiki/skill.yaml",
+        "evidence/OPS-007/2026-09-16T18-43-39Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": "Implementation is complete. PASS is forbidden while INT-010 is BLOCKED_EXTERNAL. Unblock: flip INT-010 to PASS.",
-      "notes": "WikiSkill pack navigates pinned knowledge via typed SearchProgram, active-only Knowledge Fabric hits, provenance-preserving selection and budgeted ContextProjection. Not a new search subsystem. Disable/fallback leaves core search and context packing working."
+      "notes": "WikiSkill pack navigates pinned knowledge via typed SearchProgram, active-only Knowledge Fabric hits, provenance-preserving selection and budgeted ContextProjection. Not a new search subsystem. Disable/fallback leaves core search and context packing working. CORRECTION 2026-09-16: the original implementation_complete=true claim was verified only against targeted test files (test_wiki_skill.py), not the full test suite. packs/skills/wiki/{skill.yaml,meta.yaml} did not actually satisfy OPS-007's own quarantine-lifecycle gate (a real, then-undetected defect -- see evidence/OPS-007/2026-09-16T18-43-39Z/). Fixed forward by adding the lifecycle record to packs/skills/wiki/meta.yaml (skill.yaml's closed vocabulary is untouched); packs/skills/wiki now passes scripts/ci/supply_chain/check.py and the full `pytest tests -q`. implementation_complete remains true and the blocker is unchanged (INT-010, via INT-002's live provider credentials) -- this correction removes a second, independent reason it could not have reached PASS even after INT-010 clears."
     },
     "CAP-007": {
       "coverage": "GENUINE_GAP",
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T07:35:00Z",
-      "updated_at": "2026-09-15T07:46:00Z",
-      "git_commit": "12592b551ab01d0b700e8cb742cfccacbf3087bd",
+      "updated_at": "2026-09-16T18:43:39Z",
+      "git_commit": "e031b8a82777474dcf02431719ec8f9d77ed8275",
       "tests": [
         "uv run --project python pytest tests/intelligence/test_builtin_packs.py -q (3 passed: schema/eval for research/coding/artifacts/data-analysis/cloud-devops/business-ops; capability scan refuses unknown tools/daemons/policy bypass; tool availability is INT-009 resolver)"
       ],
       "artifacts": [
         "evidence/CAP-007/2026-09-15T07-45-00Z/summary.json",
         "packs/skills/research/skill.yaml",
-        "packs/capabilities/research/pack.yaml"
+        "packs/capabilities/research/pack.yaml",
+        "evidence/OPS-007/2026-09-16T18-43-39Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": "Implementation is complete. PASS is forbidden while CAP-003 and CAP-006 are BLOCKED_EXTERNAL. Unblock: flip INT-002 then APP-008/CAP-003 and INT-010 then CAP-006 to PASS.",
-      "notes": "Built-in skill+capability packs for research, coding, artifacts, data analysis, cloud/DevOps and business operations. Owner/version/provenance/evals present. Packs cannot install daemons or bypass runtime/tool policy."
+      "notes": "Built-in skill+capability packs for research, coding, artifacts, data analysis, cloud/DevOps and business operations. Owner/version/provenance/evals present. Packs cannot install daemons or bypass runtime/tool policy. CORRECTION 2026-09-16: the original implementation_complete=true claim was verified only against targeted test files (test_builtin_packs.py), not the full test suite -- a separate gate (OPS-007's scripts/ci/supply_chain, wired into `pytest tests -q` at the repository root, not python/) was failing on all 14 shipped manifests, undetected until an independent full-suite run on 2026-09-16. See evidence/OPS-007/2026-09-16T18-43-39Z/ for the fix: pack.yaml gained the quarantine lifecycle inline (provenance.source/digest folded into the existing provenance dict); skill.yaml itself was never touched (its closed vocabulary in python/intelligence/skills/models.py has no room for governance fields) -- the record instead lives in each skill's existing meta.yaml sidecar under a new quarantine_record key. All 6 capability packs and 6 skill packs (plus the previously-exempted 'artifacts' pack/skill -- a separate quarantine-gate scope bug fixed in the same commit) now pass scripts/ci/supply_chain/check.py and the full `pytest tests -q`. implementation_complete remains true and the blocker chain is unchanged."
     },
     "CAP-008": {
       "coverage": "GENUINE_GAP",
@@ -2087,23 +2089,27 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-ops007",
       "started_at": "2026-09-12T01:34:38Z",
-      "updated_at": "2026-09-12T01:34:38Z",
-      "git_commit": "c61cbe70aa2beec3a411aba264be4fb1f14d0de6",
+      "updated_at": "2026-09-16T18:43:39Z",
+      "git_commit": "e031b8a82777474dcf02431719ec8f9d77ed8275",
       "tests": [
-        "python3.12 scripts/ci/supply_chain/check.py",
-        "uv run --project python pytest tests/ci -q",
-        "bash scripts/ci/ci.sh"
+        "uv run --project python python scripts/ci/supply_chain/check.py",
+        "uv run --project python python -m pytest tests/ci/test_supply_chain.py -q",
+        "uv run --project python python -m pytest tests -q",
+        "python3 scripts/validate_v81.py"
       ],
       "artifacts": [
         "evidence/OPS-007/2026-09-12T01-32-36Z/summary.json",
+        "evidence/OPS-007/2026-09-16T18-43-39Z/summary.json",
+        "evidence/OPS-007/2026-09-16T18-43-39Z/NOTES.md",
         "scripts/ci/supply_chain/check.py",
+        "scripts/ci/supply_chain/skills.py",
         "deny.toml",
         "tests/ci/test_supply_chain.py"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Offline supply-chain gate: lockfile pinning (Rust/pnpm/uv), deny.toml completeness and licence allow-list, deterministic CycloneDX SBOM with drift verification, a real RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill/pack quarantine lifecycle checks. cargo-deny is optional and reports an explicit informational result when absent, so the gate never silently passes and never requires network. Wired into scripts/ci/ci_summary.py so ci.sh and the GitHub workflow both run it."
+      "notes": "Offline supply-chain gate: lockfile pinning (Rust/pnpm/uv), deny.toml completeness and licence allow-list, deterministic CycloneDX SBOM with drift verification, a real RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill/pack quarantine lifecycle checks. cargo-deny is optional and reports an explicit informational result when absent, so the gate never silently passes and never requires network. Wired into scripts/ci/ci_summary.py so ci.sh and the GitHub workflow both run it. REGRESSION FOUND AND FIXED 2026-09-16 (evidence/OPS-007/2026-09-16T18-43-39Z/): the quarantine-scan directory walk excluded any path segment literally named 'artifacts' anywhere in the tree (meant to skip the repo's own top-level artifacts/ci/), which silently exempted packs/capabilities/artifacts/ and packs/skills/artifacts/ from the scan -- a fail-open on a real shipped package, not a cosmetic miss. Once narrowed to the top-level directory only, the now-actually-scanned tree also surfaced that CAP-006/CAP-007's 14 built-in pack/skill manifests (shipped 2026-09-15, after this task) never carried the quarantine lifecycle this gate requires -- 4 tests were failing on main (tests/ci/test_supply_chain.py) until this fix. See NOTES.md for the full design rationale (why the lifecycle record lives in a meta.yaml sidecar for skills rather than skill.yaml, which SkillManifest's closed vocabulary must never carry it)."
     },
     "OPS-008": {
       "coverage": "GENUINE_GAP",

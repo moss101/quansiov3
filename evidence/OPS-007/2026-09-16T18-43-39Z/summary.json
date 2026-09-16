@@ -1,0 +1,109 @@
+{
+  "task_id": "OPS-007",
+  "git_commit": "e031b8a82777474dcf02431719ec8f9d77ed8275",
+  "recorded_at": "2026-09-16T18:43:39Z",
+  "commands": [
+    {
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-16T18-43-39Z/supply-chain-gate.log"
+    },
+    {
+      "command": "uv run --project python python -m pytest tests/ci/test_supply_chain.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-16T18-43-39Z/test-supply-chain.log"
+    },
+    {
+      "command": "cd python && uv run --frozen pytest tests/intelligence/test_builtin_packs.py tests/intelligence/test_wiki_skill.py tests/intelligence/test_artifact_workflows.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-16T18-43-39Z/test-plane-packs.log"
+    },
+    {
+      "command": "uv run --project python python -m pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-16T18-43-39Z/test-root.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-16T18-43-39Z/gate-architecture.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-16T18-43-39Z/gate-workspace.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-16T18-43-39Z/gate-authority.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-16T18-43-39Z/gate-dossier.log"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-16T18-43-39Z/validator.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python -m pytest tests/ci/test_supply_chain.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd python && uv run --frozen pytest tests/intelligence/test_builtin_packs.py tests/intelligence/test_wiki_skill.py tests/intelligence/test_artifact_workflows.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python -m pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": []
+}
