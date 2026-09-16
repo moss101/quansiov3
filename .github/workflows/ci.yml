@@ -19,24 +19,6 @@ jobs:
   baseline:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    services:
-      # Schema/persistence tests exercise a real database (CORE-001); the image ships pgvector.
-      postgres:
-        image: pgvector/pgvector:pg17
-        env:
-          POSTGRES_USER: quansio
-          POSTGRES_PASSWORD: quansio-ci-only
-          POSTGRES_DB: quansio
-        ports:
-          - 55440:5432
-        options: >-
-          --health-cmd "pg_isready -U quansio"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
-          --shm-size 1g
-          -c max_locks_per_transaction=1024
-          -c max_connections=100
     steps:
       - uses: actions/checkout@v4
         with:
@@ -66,9 +48,23 @@ jobs:
           pnpm install --frozen-lockfile
           (cd python && uv sync --python 3.12 --frozen)
 
-      - name: Run the baseline pipeline
+      # The same deterministic stack GOV-007 built for local development
+      # (infra/compose/compose.yaml via config/dev.yaml), not a second, hand-
+      # maintained container definition: a `services:` block here previously
+      # duplicated postgres's settings and got the -c max_locks_per_transaction/
+      # max_connections flags wrong (`options:` is docker-create flags only, not
+      # the container's command -- see this commit's evidence for the failure
+      # mode). scripts/dev/up writes a gitignored .env from
+      # config/dev.yaml + dev-only defaults; ci_summary.py's dev_database_url()
+      # already reads it automatically, so no explicit QUANSIO_TEST_POSTGRES_URL
+      # is needed here. A longer health timeout than the local default accounts
+      # for cold image pulls on a fresh runner.
+      - name: Start the deterministic dev stack
         env:
-          QUANSIO_TEST_POSTGRES_URL: postgres://quansio:quansio-ci-only@127.0.0.1:55440/quansio
+          QUANSIO_DEV_HEALTH_TIMEOUT: "180"
+        run: bash scripts/dev/up
+
+      - name: Run the baseline pipeline
         run: bash scripts/ci/ci.sh
 
       - name: Upload the machine-readable summary
