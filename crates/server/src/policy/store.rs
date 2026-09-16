@@ -11,7 +11,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex, PoisonError};
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, SubsecRound, Utc};
 use quansio_capability::{Decision, ResourceSelector, Tier, UserRuleDecision};
 use quansio_core::{CanonicalId, Digest, Generation, Prefix, UlidGenerator};
 use quansio_events::{EventBatch, EventDraft, EventError, EventStore, EventType};
@@ -510,6 +510,15 @@ impl PolicyStore {
         signer: &ApprovalSigner,
         now: DateTime<Utc>,
     ) -> Result<ApprovalReceipt, PolicyError> {
+        // `granted_at` is signed below, then persisted into a TIMESTAMPTZ column
+        // (microsecond precision); a caller's `now` (chrono `DateTime` carries
+        // nanoseconds) is truncated first so the value that is signed is the exact
+        // value Postgres will store and later hand back to `verify` -- otherwise
+        // whether this ever mismatches depends on the host OS clock's actual
+        // sub-microsecond resolution, which is why it passed on every local run
+        // (macOS) and failed under CI's Linux runner: `SignatureInvalid` on a
+        // receipt that was, in fact, correctly granted (RUN-006, DOMAIN.md §7.3).
+        let now = now.trunc_subsecs(6);
         let tenant_id = self.identity.tenant_id.clone();
         let identity = self.identity.clone();
         let request_id = request_id.to_string();
