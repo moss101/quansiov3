@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T09:41:00Z",
+  "updated_at": "2026-09-16T10:00:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1460,18 +1460,18 @@
       "notes": "Increment 2: GA adapter layer implemented in python/intelligence/adapters/connectors \u2014 GitHub, Google Workspace (gmail/drive/calendar), Slack and the web-search adapter behind web.search, with a closed operation vocabulary, consequential-op flags, and the shared conformance suite (contract tier always runs; sandbox tier emits an explicit BLOCKED_EXTERNAL marker naming QUANSIO_TEST_CONNECTOR_<NAME> when absent). Token isolation: adapters accept sec_ handles only and pass them opaquely to the transport; webhook redelivery is idempotent per (tenant, event_id). Remaining for the close: running the conformance sandbox tier against the four provider sandboxes (QUANSIO_TEST_CONNECTOR_* flags with credentials)."
     },
     "EXEC-012": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-16T10:00:00Z",
+      "updated_at": "2026-09-16T10:00:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed."
     },
     "APP-001": {
       "coverage": "GENUINE_GAP",
