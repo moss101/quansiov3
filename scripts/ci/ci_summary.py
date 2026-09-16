@@ -38,7 +38,15 @@ GATES: List[tuple] = [
     ("architecture", "python3.12 scripts/ci/arch_check.py"),
     ("authority-pointers", "python3.12 scripts/ci/check_authority.py --check"),
     ("workspace", "python3.12 scripts/ci/workspace_check.py"),
-    ("supply-chain", "python3.12 scripts/ci/supply_chain/check.py"),
+    # Routed through the pinned venv (unlike the standard-library-only gates above):
+    # its YAML manifest scan needs PyYAML, which is a python/ project dependency, not
+    # a guarantee about whatever `python3.12` happens to resolve to on PATH. A bare
+    # interpreter without PyYAML makes every manifest "unparsable" and the gate fails
+    # closed -- not a code defect, but a real pipeline-correctness bug: the same
+    # commit reports FAIL or PASS depending on the *host's* ambient site-packages,
+    # which is exactly what DOSSIER.md section 18's pinned-environment policy exists
+    # to prevent. Reproduced and fixed 2026-09-16 (evidence/OPS-007/).
+    ("supply-chain", "uv run --project python python scripts/ci/supply_chain/check.py"),
     ("legacy-map", "python3.12 scripts/ci/legacy_map_check.py"),
     ("contract-drift", "uv run --project python python scripts/ci/gen_contracts.py --check"),
     ("contract-lint-compat", "uv run --project python python scripts/ci/contract_compat.py"),
