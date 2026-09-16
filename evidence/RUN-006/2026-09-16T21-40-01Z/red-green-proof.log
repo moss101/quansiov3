@@ -1,0 +1,63 @@
+Red/green verification of the new regression test against the fix, performed
+directly (not simulated): store.rs was reverted with `git stash push --
+crates/server/src/policy/store.rs`, rebuilt, and the new test alone was run.
+
+=== RED (store.rs reverted, fix absent) ===
+$ cargo test -p quansio-server --test policy a_receipt_granted_with_sub_microsecond_precision --nocapture
+
+running 1 test
+
+thread 'a_receipt_granted_with_sub_microsecond_precision_still_verifies_after_reload' (11256019) panicked at crates/server/tests/policy.rs:949:10:
+a correctly granted receipt must verify after reload, not SignatureInvalid: ApprovalInvalid(SignatureInvalid)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test a_receipt_granted_with_sub_microsecond_precision_still_verifies_after_reload ... FAILED
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.31s
+
+Exact same SignatureInvalid failure mode as the real GitHub Actions run
+(crates/server/tests/policy.rs:1202 / :1106), confirming the reproduction is
+the same bug, not a coincidentally similar one.
+
+=== store.rs fix restored (`git stash pop`) ===
+
+=== GREEN (fix present) ===
+$ cargo test -p quansio-server --test policy a_receipt_granted_with_sub_microsecond_precision --nocapture
+
+running 1 test
+test a_receipt_granted_with_sub_microsecond_precision_still_verifies_after_reload ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.50s
+
+=== Full file, fix present ===
+$ cargo test -p quansio-server --test policy
+
+running 12 tests
+test default_policy_evaluation_is_fail_closed_for_missing_inputs ... ok
+test protected_egress_without_a_grant_is_denied_and_settlement_before_reservation_is_refused ... ok
+test a_tier_four_always_user_rule_is_rejected_and_never_stored ... ok
+test a_policy_decision_is_recorded_with_exactly_one_policy_event ... ok
+test escalation_forbids_always_and_the_preview_carries_the_untrusted_origin ... ok
+test a_receipt_granted_with_sub_microsecond_precision_still_verifies_after_reload ... ok
+test policy_deny_wins_over_user_always_and_a_missing_rule_denies ... ok
+test expired_and_superseded_requests_cannot_be_granted_and_changes_supersede ... ok
+test approval_substitution_fails_closed_and_writes_nothing ... ok
+test a_run_parks_in_waiting_approval_and_resumes_only_on_its_matching_receipt ... ok
+test a_tampered_receipt_fails_verification_and_writes_nothing ... ok
+test exactly_one_approval_event_per_transition_and_denial_changes_no_effect_state ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.27s
+
+All 12 pass, including the two other tests CI's fuller run had also failed
+(approval_substitution_fails_closed_and_writes_nothing,
+exactly_one_approval_event_per_transition_and_denial_changes_no_effect_state)
+-- confirming those were the same bug wearing different assertions, not
+separate defects.
+
+=== Standalone confirmation of the mechanism (chrono semantics only, not the
+=== product's own signing/storage code) ===
+in-memory (would be signed with, OLD code): 2026-09-16T20:32:01.123456789+00:00
+after DB round-trip (verify reads this):    2026-09-16T20:32:01.123456+00:00
+OLD behavior: signing vs stored match?      false
+
+NEW: truncated before signing:               2026-09-16T20:32:01.123456+00:00
+NEW behavior: signing vs stored match?      true

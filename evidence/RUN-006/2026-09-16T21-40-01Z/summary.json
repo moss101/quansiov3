@@ -1,0 +1,65 @@
+{
+  "task_id": "RUN-006",
+  "git_commit": "b69b31dc457678e6a0e77c1e8ab7e5855527b680",
+  "recorded_at": "2026-09-16T21:40:01Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test policy",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-006/2026-09-16T21-40-01Z/policy-suite.log"
+    },
+    {
+      "command": "red/green verification: git stash the fix, confirm the new test fails with SignatureInvalid, restore, confirm it passes",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-006/2026-09-16T21-40-01Z/red-green-proof.log"
+    },
+    {
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-006/2026-09-16T21-40-01Z/workspace-suite-tail.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-006/2026-09-16T21-40-01Z/fmt-check.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-006/2026-09-16T21-40-01Z/clippy.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test policy",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "red/green verification",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": []
+}

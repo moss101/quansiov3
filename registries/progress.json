@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T21:06:36Z",
+  "updated_at": "2026-09-16T21:40:01Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -561,24 +561,27 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-run006",
       "started_at": "2026-09-12T04:56:37Z",
-      "updated_at": "2026-09-12T04:56:37Z",
-      "git_commit": "fcb833603ff136c53bde9ef1af935578a66011a2",
+      "updated_at": "2026-09-16T21:40:01Z",
+      "git_commit": "b69b31dc457678e6a0e77c1e8ab7e5855527b680",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test policy",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server",
-        "bash scripts/ci/ci.sh"
+        "bash scripts/ci/ci.sh",
+        "red/green: git stash the fix, confirm the new regression test fails with the exact SignatureInvalid CI hit, restore, confirm it passes; cargo test --workspace 102/102 clean"
       ],
       "artifacts": [
         "evidence/RUN-006/2026-09-12T04-53-43Z/summary.json",
         "crates/server/src/policy/approval.rs",
         "crates/server/src/policy/evaluation.rs",
         "crates/server/src/policy/store.rs",
-        "crates/server/tests/policy.rs"
+        "crates/server/tests/policy.rs",
+        "evidence/RUN-006/2026-09-16T21-40-01Z/summary.json",
+        "evidence/RUN-006/2026-09-16T21-40-01Z/NOTES.md"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Evaluation order is RBAC -> capability projection -> trust escalation -> privacy -> sequence guards -> policy rules -> receipt requirement -> user rules, with tenant and workspace policies merged most-restrictively (deny>ask>allow) and no matching rule at effective tier >= 1 denying. Tier 4 always asks: an always user rule is rejected on store and ignored on evaluation. Receipts bind id/request/effect/approver/params_digest/scope/generation/expiry and are signed with HMAC-SHA256 under a server key from QUANSIO_APPROVAL_SIGNING_KEY (absent key fails closed); verification is constant-time and single-use, so a receipt for one action cannot authorize a changed one, and nothing is written on failure. A parameter change supersedes a pending request with one approval.superseded event. Escalation follows DOMAIN \u00a712 rule 2 (tier >= 2 derived from UNTRUSTED_EXTERNAL escalates one tier) rather than the brief's paraphrase, and escalated proposals cannot use always. Trust labelling arrives through an injected source, fail-closed until INT-012."
+      "notes": "Evaluation order is RBAC -> capability projection -> trust escalation -> privacy -> sequence guards -> policy rules -> receipt requirement -> user rules, with tenant and workspace policies merged most-restrictively (deny>ask>allow) and no matching rule at effective tier >= 1 denying. Tier 4 always asks: an always user rule is rejected on store and ignored on evaluation. Receipts bind id/request/effect/approver/params_digest/scope/generation/expiry and are signed with HMAC-SHA256 under a server key from QUANSIO_APPROVAL_SIGNING_KEY (absent key fails closed); verification is constant-time and single-use, so a receipt for one action cannot authorize a changed one, and nothing is written on failure. A parameter change supersedes a pending request with one approval.superseded event. Escalation follows DOMAIN \u00a712 rule 2 (tier >= 2 derived from UNTRUSTED_EXTERNAL escalates one tier) rather than the brief's paraphrase, and escalated proposals cannot use always. Trust labelling arrives through an injected source, fail-closed until INT-012. SIGNATURE PRECISION FIX 2026-09-16 (evidence/RUN-006/2026-09-16T21-40-01Z/): GitHub Actions' first-ever real run of this suite (once OPS-007's postgres fix let the pipeline reach it, and GOV-005's full-log capture preserved enough output to see it) failed 3 tests with SignatureInvalid -- ApprovalReceipt::signing_message() signs granted_at via to_rfc3339() (nanosecond precision), but grant_approval then persists that same value into a TIMESTAMPTZ column (microsecond precision, silently truncated on write); every later verify reloads a granted_at with different low-order digits than what was signed, so the HMAC never matches. Passed on every local run this whole session because this Mac's Utc::now() happens to already be microsecond-aligned; Linux CI's genuinely nanosecond-resolution clock exposed it reliably. Fixed by truncating now to microseconds (chrono SubsecRound::trunc_subsecs(6)) before it is signed or persisted. Added a permanent, host-independent regression test using a forced nanosecond-precision timestamp; verified red (fails with the identical SignatureInvalid CI hit) then green directly against the fix via git stash, plus a clean full cargo test --workspace (102/102, 0 failures) since grant_approval/grant_and_resume are shared with turn_loop.rs and others. Checked: only one other HMAC usage in the codebase (artifacts/sigv4.rs), signs outbound requests at send-time, not subject to this bug class."
     },
     "RUN-007": {
       "coverage": "GENUINE_GAP",

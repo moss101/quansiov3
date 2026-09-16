@@ -1,0 +1,21 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.86s
+     Running tests/policy.rs (target/debug/deps/policy-4890621850fbd252)
+
+running 12 tests
+test default_policy_evaluation_is_fail_closed_for_missing_inputs ... ok
+test protected_egress_without_a_grant_is_denied_and_settlement_before_reservation_is_refused ... ok
+test policy_deny_wins_over_user_always_and_a_missing_rule_denies ... ok
+test approval_substitution_fails_closed_and_writes_nothing ... ok
+test a_receipt_granted_with_sub_microsecond_precision_still_verifies_after_reload ... ok
+test exactly_one_approval_event_per_transition_and_denial_changes_no_effect_state ... ok
+test a_run_parks_in_waiting_approval_and_resumes_only_on_its_matching_receipt ... ok
+test a_tier_four_always_user_rule_is_rejected_and_never_stored ... ok
+test expired_and_superseded_requests_cannot_be_granted_and_changes_supersede ... ok
+test a_tampered_receipt_fails_verification_and_writes_nothing ... ok
+test escalation_forbids_always_and_the_preview_carries_the_untrusted_origin ... ok
+test a_policy_decision_is_recorded_with_exactly_one_policy_event ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.26s
+
+exit: 0
