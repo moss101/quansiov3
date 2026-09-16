@@ -51,7 +51,8 @@ impl Browser {
             let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind");
             listener.local_addr().expect("addr").port()
         };
-        let child = Command::new(chrome)
+        let mut command = Command::new(chrome);
+        command
             .arg("--headless=new")
             .arg("--disable-gpu")
             .arg("--no-first-run")
@@ -60,7 +61,23 @@ impl Browser {
             .arg("--disable-sync")
             .arg("--remote-allow-origins=*")
             .arg(format!("--remote-debugging-port={port}"))
-            .arg(format!("--user-data-dir={}", profile.path().display()))
+            .arg(format!("--user-data-dir={}", profile.path().display()));
+        // Chrome's own sandbox needs kernel privileges (user namespaces / a setuid helper)
+        // that a CI runner routinely restricts; without --no-sandbox it can crash moments
+        // after the debugging port starts accepting connections -- the port answers a bare
+        // TCP probe (below) but is refusing real requests by the time a caller follows up,
+        // which is indistinguishable from "never started" without watching for it. Chrome
+        // also uses /dev/shm for shared memory, which CI images size far smaller than a
+        // developer machine's; --disable-dev-shm-usage falls back to a temp-file backing
+        // store instead of crashing when it fills. Real production browser sessions run
+        // inside a microVM (DOSSIER.md §12/§8), not this test's own process -- a full
+        // sandbox there is expected and unaffected; these flags apply only to *this* test
+        // binary's throwaway Chrome, and only when a CI environment is detected, so a
+        // developer running the suite locally still exercises the real sandboxed path.
+        if std::env::var_os("CI").is_some() {
+            command.arg("--no-sandbox").arg("--disable-dev-shm-usage");
+        }
+        let child = command
             .arg("about:blank")
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
