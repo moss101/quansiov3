@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T11:31:00Z",
+  "updated_at": "2026-09-16T11:40:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1870,18 +1870,18 @@
       "notes": "Compiler output is a candidate PackDraft: per-element provenance (source id, verbatim span, digest), credential-shaped content refused at ingestion, cross-tenant sources refused, and a content digest pinning what qualification would review. Nothing here promotes or executes."
     },
     "CAP-005": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-16T11:40:00Z",
+      "updated_at": "2026-09-16T11:40:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed."
     },
     "CAP-006": {
       "coverage": "GENUINE_GAP",
