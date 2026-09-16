@@ -1,0 +1,65 @@
+{
+  "task_id": "RUN-011",
+  "git_commit": "7ad7d98347c5c286b53e6f7d3b9992ad90025954",
+  "recorded_at": "2026-09-16T18:56:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test turn_loop",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-16T18-56-00Z/turn-loop-suite.log"
+    },
+    {
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-16T18-56-00Z/workspace-suite.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-16T18-56-00Z/fmt-check.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-16T18-56-00Z/clippy.log"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-16T18-56-00Z/validator.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test turn_loop",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": []
+}

@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T18:43:39Z",
+  "updated_at": "2026-09-16T18:56:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -687,8 +687,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T05:44:48Z",
-      "updated_at": "2026-09-12T07:01:53Z",
-      "git_commit": "69a7d20f4c7f3d7e97cad41859febe845000bf26",
+      "updated_at": "2026-09-16T18:56:00Z",
+      "git_commit": "7ad7d98347c5c286b53e6f7d3b9992ad90025954",
       "tests": [
         "bash scripts/ci/ci.sh (all eleven baseline gates PASS)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test turn_loop (11 tests)",
@@ -698,7 +698,8 @@
         "uv run --project python pytest tests -q (188 passed)",
         "(cd python && uv run --frozen pytest -q) (173 passed, 6 skipped live-provider cases)",
         "pnpm build && pnpm typecheck && pnpm test && pnpm lint",
-        "python3 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py"
+        "python3 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py",
+        "cargo test --workspace (regression run after the ON CONFLICT fix: 102 suites, 0 failures)"
       ],
       "artifacts": [
         "evidence/RUN-011/2026-09-12T06-58-44Z/summary.json",
@@ -712,12 +713,14 @@
         "crates/server/src/runtime/turn_loop/parallel.rs",
         "crates/server/src/runtime/turn_loop/usage.rs",
         "crates/server/tests/turn_loop.rs",
-        "migrations/0007_tool_call_declaration_version.sql"
+        "migrations/0007_tool_call_declaration_version.sql",
+        "evidence/RUN-011/2026-09-16T18-56-00Z/summary.json",
+        "evidence/RUN-011/2026-09-16T18-56-00Z/NOTES.md"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "The turn loop now owns a real ToolCall path. crates/tools holds the Tool contract and a control-plane Tool Registry loaded from config/tools.yaml: namespaced versioned declarations, a strict JSON-Schema subset whose unknown keywords fail the load (so a schema can never be silently under-enforced), every object schema closing additionalProperties, argument validation that rejects unknown or missing fields, derivation of effect class (static or arg-driven, e.g. fs.write scope), resource selector, canonical parameter digest and idempotency key, per-tool host, output bound, timeout, cancellability, evidence capture and source trust, plus exposure filtered by the capability projection. The generated catalog (schemas/catalog/tools.yaml) and the registry must cover each other exactly; connector/scm families are reserved catalog entries that are not callable until CAP-003 and EXEC-009/012 register concrete operations. crates/server/src/runtime/turn_loop implements DOMAIN \u00a77.4 in the fixed order registry -> schema -> capability projection -> policy/RBAC/user rules -> approval park -> Effect Ledger reservation with a dispatch token -> host execution -> settlement, with the durable tool_calls row (migration 0007 records the declaration version) and tool.* RuntimeEvents. Independent calls are dispatched concurrently and their results applied in proposal order; the engine now parks a run for approval, resumes the recorded call instead of re-proposing it, and reports an unsettled effect for reconciliation rather than re-dispatching. The question protocol (user.ask and the model's question) writes a durable Question with the policy TTL, parks WAITING_QUESTION and resumes on the answer or expires the run; delegation, plan and memory routes go to their owning ports and fail closed with the owner named. Fail-closed choices: a refusal before the reservation writes no EffectRecord and reaches no host; the proposal's causal chain is evaluated from UNTRUSTED_EXTERNAL until INT-005 supplies real context labels, so a tier >= 2 call is escalated and needs a receipt. Host incident during this run (now resolved): for part of the session the machine would not execute newly created binaries, so `cargo test` could not spawn freshly linked binaries; the suites were run by writing the linked binary into a pre-existing inode and the counts were later reproduced exactly by a clean `cargo test`. Once the host recovered, `bash scripts/ci/ci.sh` ran green on main (all eleven baseline gates) at the RUN-011 merge 69a7d20f4c7f. See HANDOFF.md 'Environment requirements' for the incident, the workaround and the artifact repair. No test was skipped, weakened or excused."
+      "notes": "The turn loop now owns a real ToolCall path. crates/tools holds the Tool contract and a control-plane Tool Registry loaded from config/tools.yaml: namespaced versioned declarations, a strict JSON-Schema subset whose unknown keywords fail the load (so a schema can never be silently under-enforced), every object schema closing additionalProperties, argument validation that rejects unknown or missing fields, derivation of effect class (static or arg-driven, e.g. fs.write scope), resource selector, canonical parameter digest and idempotency key, per-tool host, output bound, timeout, cancellability, evidence capture and source trust, plus exposure filtered by the capability projection. The generated catalog (schemas/catalog/tools.yaml) and the registry must cover each other exactly; connector/scm families are reserved catalog entries that are not callable until CAP-003 and EXEC-009/012 register concrete operations. crates/server/src/runtime/turn_loop implements DOMAIN \u00a77.4 in the fixed order registry -> schema -> capability projection -> policy/RBAC/user rules -> approval park -> Effect Ledger reservation with a dispatch token -> host execution -> settlement, with the durable tool_calls row (migration 0007 records the declaration version) and tool.* RuntimeEvents. Independent calls are dispatched concurrently and their results applied in proposal order; the engine now parks a run for approval, resumes the recorded call instead of re-proposing it, and reports an unsettled effect for reconciliation rather than re-dispatching. The question protocol (user.ask and the model's question) writes a durable Question with the policy TTL, parks WAITING_QUESTION and resumes on the answer or expires the run; delegation, plan and memory routes go to their owning ports and fail closed with the owner named. Fail-closed choices: a refusal before the reservation writes no EffectRecord and reaches no host; the proposal's causal chain is evaluated from UNTRUSTED_EXTERNAL until INT-005 supplies real context labels, so a tier >= 2 call is escalated and needs a receipt. Host incident during this run (now resolved): for part of the session the machine would not execute newly created binaries, so `cargo test` could not spawn freshly linked binaries; the suites were run by writing the linked binary into a pre-existing inode and the counts were later reproduced exactly by a clean `cargo test`. Once the host recovered, `bash scripts/ci/ci.sh` ran green on main (all eleven baseline gates) at the RUN-011 merge 69a7d20f4c7f. See HANDOFF.md 'Environment requirements' for the incident, the workaround and the artifact repair. No test was skipped, weakened or excused. REGRESSION FOUND AND FIXED 2026-09-16 (evidence/RUN-011/2026-09-16T18-56-00Z/): the 'turn_loop.rs protocol-state write races under parallel load' item this task's own notes left as a known, undiagnosed defect (protocol_states_pkey duplicate-key panic under load) is root-caused and fixed. ProtocolState::store's deterministic row id (pst_<run_id suffix>) always collides with the primary key in lockstep with run_id, but the upsert's ON CONFLICT (run_id) named a different unique constraint than the one that actually collides -- Postgres does not arbitrate a conflict via a clause that does not name the colliding constraint, so a race between two concurrent first-ever writes for the same run (e.g. two independent tool calls settling in parallel) hit a raw, uncaught PK violation instead of the intended upsert. Fixed by targeting ON CONFLICT (id) instead. Verified with 30 serial + 32 concurrent-process runs of the specific test (0 failures, was intermittent), a clean 12/12 turn_loop suite, and a clean full cargo test --workspace (the exact load condition that originally surfaced it) -- 102 suites, 0 failures. Checked every other ON CONFLICT site in the workspace for the same anti-pattern (deterministic PK + mismatched conflict target); none found. See NOTES.md for the full root-cause analysis."
     },
     "INT-001": {
       "coverage": "GENUINE_GAP",
