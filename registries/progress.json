@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T11:02:00Z",
+  "updated_at": "2026-09-16T11:30:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1810,18 +1810,24 @@
       "notes": "Research composes typed SearchProgram, bounded branches, UNTRUSTED_EXTERNAL context segments and digest-addressed evidence descriptors. No second orchestrator or memory store; claims that do not resolve to collected evidence block completion; cancellation is a stage."
     },
     "CAP-002": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-16T11:15:00Z",
+      "updated_at": "2026-09-16T11:30:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/research (7 passed: broken citations refused at build and verify; claim coverage requires citations; the bundle rebuilds to the same digest across a provider/model change and re-verifies; digest drift fails verification)"
+      ],
+      "artifacts": [
+        "evidence/CAP-002/2026-09-16T11-30-00Z/summary.json",
+        "python/intelligence/research/evidence.py",
+        "python/tests/research/test_evidence_bundle.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "The EvidenceBundle and deterministic citation checks are implemented; verified research completion runs them before any completion claim. PASS is gated on INT-002 (live providers) and the web.search sandbox (QUANSIO_TEST_CONNECTOR_WEBSEARCH=1) for the live E2E.",
+      "notes": "EvidenceBundle is content-addressed and provider-independent: the same claims and descriptors rebuild the same digest whatever made them. Existence and coverage checks are deterministic; digest drift in cited evidence fails verification."
     },
     "CAP-003": {
       "coverage": "GENUINE_GAP",

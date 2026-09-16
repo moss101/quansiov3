@@ -1,0 +1,53 @@
+{
+  "task_id": "CAP-002",
+  "git_commit": null,
+  "recorded_at": "2026-09-16T11:30:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/research",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-002/2026-09-16T11-30-00Z/evidence.log"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-002/2026-09-16T11-30-00Z/python-plane.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/research",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-002/2026-09-16T11-30-00Z/evidence.log",
+      "sha256": "f82ef5dfe7698ffb764de054a81d190d7df4e7119218d436d12350d7af175f80",
+      "bytes": 98
+    },
+    {
+      "path": "evidence/CAP-002/2026-09-16T11-30-00Z/python-plane.log",
+      "sha256": "cd312a1568882b1f2e95fbb6ac1a25d8eadaa5f2ccf63382fb2766c2965b9187",
+      "bytes": 593
+    },
+    {
+      "path": "python/intelligence/research/evidence.py",
+      "sha256": "daf002f72a94da4670dde31842884860920a696677eb673bdc2c41c332f5247f",
+      "bytes": 5291
+    },
+    {
+      "path": "python/tests/research/test_evidence_bundle.py",
+      "sha256": "262f294d386d9e5602d303d296bb9d39f0981089a250d6f005c79a4b35ae4cac",
+      "bytes": 4602
+    }
+  ]
+}
