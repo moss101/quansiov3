@@ -1,0 +1,83 @@
+{
+  "task_id": "EXEC-011",
+  "git_commit": null,
+  "recorded_at": "2026-09-16T09:40:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/adapters/test_connector_adapters.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-011/2026-09-16T09-40-00Z/adapters.log"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-011/2026-09-16T09-40-00Z/python-plane.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/adapters/test_connector_adapters.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/EXEC-011/2026-09-16T09-40-00Z/adapters.log",
+      "sha256": "9310d484212a1fe2c33b4b8accdf50a2639f09ba039354f8448f8aa8d173e1ff",
+      "bytes": 98
+    },
+    {
+      "path": "evidence/EXEC-011/2026-09-16T09-40-00Z/python-plane.log",
+      "sha256": "4e00eb2c64814e6d947221bedd4b94d51392e8f1ea12aa97a379faee5174d3ed",
+      "bytes": 593
+    },
+    {
+      "path": "python/intelligence/adapters/connectors/base.py",
+      "sha256": "939472a48fb508d68796f2133fe95022e5ae6ca7803be2b3e4d77f3cf8cfc66a",
+      "bytes": 4598
+    },
+    {
+      "path": "python/intelligence/adapters/connectors/github.py",
+      "sha256": "e50840e35004876f817837de913325e8c63ad0b657bbd6b1c28752988deb6e17",
+      "bytes": 1091
+    },
+    {
+      "path": "python/intelligence/adapters/connectors/google.py",
+      "sha256": "4c3b90af9e492fe2b00ffe17ce6324b88d2a47154befc3d47d36a560484d40e9",
+      "bytes": 1469
+    },
+    {
+      "path": "python/intelligence/adapters/connectors/slack.py",
+      "sha256": "45f70e5c55bec3a64fbd448bc11c019e54e2b4aec01daab5d2e48a20f818c4a3",
+      "bytes": 709
+    },
+    {
+      "path": "python/intelligence/adapters/connectors/websearch.py",
+      "sha256": "b423e300916bcde42350306ffc1a94d8fc42d5408fd464f473081b830f0a2032",
+      "bytes": 539
+    },
+    {
+      "path": "python/intelligence/adapters/connectors/webhooks.py",
+      "sha256": "ecc8ff5c5601bf08c999dfcdcc72daf75511330d42025cc7542231ed0e560229",
+      "bytes": 1075
+    },
+    {
+      "path": "python/intelligence/adapters/connectors/conformance.py",
+      "sha256": "b2a6758fad114c3cb404e97e79c5e06c376680fea4c2d0a8253bcdc4a2cecb94",
+      "bytes": 5343
+    },
+    {
+      "path": "python/tests/adapters/test_connector_adapters.py",
+      "sha256": "004b5bb45af54f0e9aa1111d32048447e67a98e8d6ed857f4ccf1e7c4be92ea3",
+      "bytes": 3877
+    }
+  ]
+}

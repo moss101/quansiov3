@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T09:21:00Z",
+  "updated_at": "2026-09-16T09:40:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1441,20 +1441,23 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T09:50:00Z",
-      "updated_at": "2026-09-16T09:21:00Z",
+      "updated_at": "2026-09-16T09:40:00Z",
       "git_commit": null,
       "tests": [
-        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test connector_broker (4 passed: begin/complete stores a sec_ handle and never token material; replayed state refused after digest consumption; degrade keeps the credential, revocation clears it and is terminal; raw token material and foreign states refused before any write)"
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test connector_broker (4 passed: begin/complete stores a sec_ handle and never token material; replayed state refused after digest consumption; degrade keeps the credential, revocation clears it and is terminal; raw token material and foreign states refused before any write)",
+        "uv run --project python pytest tests/adapters/test_connector_adapters.py (5 passed: all four GA adapters pass the contract tier; sandbox tier reports BLOCKED_EXTERNAL naming its flag; operation vocabulary closed; web.search served by the websearch adapter; raw token material refused at every seam; webhook redelivery idempotent and tenant scoped)",
+        "uv run --project python pytest tests (412 passed, 78 skipped live/absent-env)"
       ],
       "artifacts": [
-        "evidence/EXEC-011/2026-09-16T09-20-00Z/summary.json",
+        "evidence/EXEC-011/2026-09-16T09-40-00Z/summary.json",
         "crates/server/src/control/connectors/mod.rs",
-        "crates/server/tests/connector_broker.rs"
+        "python/intelligence/adapters/connectors/conformance.py",
+        "python/tests/adapters/test_connector_adapters.py"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": "The acceptance statement requires each GA connector to pass the shared conformance suite *in its provider sandbox*: GitHub, Google Workspace (Gmail/Drive/Calendar), Slack and a web-search provider. No sandbox credentials, OAuth client registrations or provider egress exist on this host, and no mock can substitute for the boundary the statement names. Unblock: register OAuth apps for the four providers, provide sandbox credentials for each, and run the conformance suite against them. Note the connector broker's local halves are implementable without a provider and are unstarted rather than done -- crates/server/control/connectors/ and python/intelligence/adapters/connectors/ do not exist yet, and connector_instances (0001) is unused.",
-      "notes": "Increment: connector broker control plane implemented over connector_instances \u2014 OAuth begin/complete with server-side state digests (replay/CSRF refused), connected/degraded/revoked lifecycle with typed transitions, revocation clears the credential handle, tokens are sec_ handles only and token material never reaches a row or event. Remaining for the close: GA adapters (GitHub, Google Workspace, Slack, web-search) behind the shared conformance suite and the in-sandbox runs."
+      "notes": "Increment 2: GA adapter layer implemented in python/intelligence/adapters/connectors \u2014 GitHub, Google Workspace (gmail/drive/calendar), Slack and the web-search adapter behind web.search, with a closed operation vocabulary, consequential-op flags, and the shared conformance suite (contract tier always runs; sandbox tier emits an explicit BLOCKED_EXTERNAL marker naming QUANSIO_TEST_CONNECTOR_<NAME> when absent). Token isolation: adapters accept sec_ handles only and pass them opaquely to the transport; webhook redelivery is idempotent per (tenant, event_id). Remaining for the close: running the conformance sandbox tier against the four provider sandboxes (QUANSIO_TEST_CONNECTOR_* flags with credentials)."
     },
     "EXEC-012": {
       "coverage": null,
