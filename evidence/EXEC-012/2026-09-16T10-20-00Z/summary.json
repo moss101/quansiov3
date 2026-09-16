@@ -1,0 +1,63 @@
+{
+  "task_id": "EXEC-012",
+  "git_commit": null,
+  "recorded_at": "2026-09-16T10:20:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-qworkerd --test scm_tools",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-012/2026-09-16T10-20-00Z/scm-rust.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/adapters/test_connector_adapters.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-012/2026-09-16T10-20-00Z/pr-ci-adapters.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-qworkerd --test scm_tools",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/adapters/test_connector_adapters.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/EXEC-012/2026-09-16T10-20-00Z/scm-rust.log",
+      "sha256": "22d1c85fca4cec323c37586ea34e42f3893b317dd064fc10eef255212f14ddfc",
+      "bytes": 440
+    },
+    {
+      "path": "evidence/EXEC-012/2026-09-16T10-20-00Z/pr-ci-adapters.log",
+      "sha256": "3ab69c44c0781c70d7a226d92c2a74efdd9fbb158b6a5cd1669d62cace44568c",
+      "bytes": 98
+    },
+    {
+      "path": "crates/qworkerd/src/tools/scm/mod.rs",
+      "sha256": "432748adbf96c495fa10c8653cca2514239b5e8fbc37ef03cfedd4d9e2599314",
+      "bytes": 7589
+    },
+    {
+      "path": "crates/qworkerd/tests/scm_tools.rs",
+      "sha256": "8e16266e6aba76f93cb65efa77233b159ad0ab7bdac6edda851052944b94d48e",
+      "bytes": 6043
+    },
+    {
+      "path": "python/intelligence/adapters/connectors/github/pr.py",
+      "sha256": "caf52c9b34825e5b7d2fa513622fade193e5f6fcef4f436209d94fedab4f2ba6",
+      "bytes": 1386
+    },
+    {
+      "path": "python/intelligence/adapters/connectors/github/ci.py",
+      "sha256": "a612b8c105397f7a4c7e08168f86bc26ee642b10d4467f89295f79331345a6ac",
+      "bytes": 1158
+    }
+  ]
+}

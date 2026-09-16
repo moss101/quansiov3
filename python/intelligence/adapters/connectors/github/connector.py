@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .base import ConnectorAdapter, Operation
+from intelligence.adapters.connectors.base import ConnectorAdapter, Operation
 
 GITHUB = ConnectorAdapter(
     connector_id="github",
