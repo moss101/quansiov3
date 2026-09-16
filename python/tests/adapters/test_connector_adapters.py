@@ -13,9 +13,12 @@ import pytest
 from intelligence.adapters.connectors import (
     GA_ADAPTERS,
     GITHUB,
+    GITHUB_CI,
+    GITHUB_PR,
     WEB_SEARCH,
     AdapterError,
     WebhookReplay,
+    run_contract_tier,
     run_suite,
     sandbox_flag,
 )
@@ -82,3 +85,21 @@ def test_webhook_redelivery_is_idempotent_and_tenant_scoped() -> None:
     assert replay.deliver(tenant_id="tn_b", event_id="evt_1", payload={"n": 2}) is True
     assert len(replay.log) == 2
     assert {tenant for tenant, _, _ in replay.log} == {"tn_a", "tn_b"}
+
+
+def test_pr_and_ci_adapters_pass_the_contract_tier() -> None:
+    """Named test (EXEC-012): the PR/CI adapters clear the same shared suite."""
+    for adapter in (GITHUB_PR, GITHUB_CI):
+        results = {item.tier: item for item in run_suite([adapter], sandbox_transport=object())}
+        assert results["contract"].passed, f"{adapter.connector_id}: {results['contract'].detail}"
+        sandbox = results["sandbox"]
+        assert not sandbox.passed
+        assert sandbox.detail.startswith("BLOCKED_EXTERNAL"), sandbox.detail
+        assert sandbox_flag(adapter) in sandbox.detail
+
+    # Every PR/CI write is consequential and therefore approval-gated by policy.
+    writes = {op.name for adapter in (GITHUB_PR, GITHUB_CI) for op in adapter.operations if op.consequential}
+    assert {"pr.create", "pr.comment", "pr.merge", "ci.rerun"} <= writes
+    # Reads are not consequential.
+    assert not GITHUB_CI.operation("ci.runs").consequential
+    assert not GITHUB_PR.operation("pr.read").consequential

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from .base import HANDLE_PREFIX, AdapterError, ConnectorAdapter, HttpTransport, Operation, require_handle
 from .conformance import TierResult, run_contract_tier, run_sandbox_tier, run_suite, sandbox_flag
-from .github import GITHUB
+from .github import GITHUB, GITHUB_CI, GITHUB_PR
 from .google import GOOGLE
 from .slack import SLACK
 from .webhooks import WebhookReplay
@@ -20,6 +20,8 @@ GA_ADAPTERS: tuple[ConnectorAdapter, ...] = (GITHUB, GOOGLE, SLACK, WEB_SEARCH)
 __all__ = [
     "GA_ADAPTERS",
     "GITHUB",
+    "GITHUB_CI",
+    "GITHUB_PR",
     "GOOGLE",
     "HANDLE_PREFIX",
     "SLACK",

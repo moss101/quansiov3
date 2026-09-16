@@ -19,6 +19,7 @@
 pub mod files;
 pub mod process;
 pub mod sandbox;
+pub mod scm;
 pub mod terminal;
 
 pub use files::{DirEntry, DirListing, FileHost, FilePatch, FileRead, FileWrite};

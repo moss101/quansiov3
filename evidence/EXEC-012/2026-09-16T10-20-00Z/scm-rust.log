@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running tests/scm_tools.rs (target/debug/deps/scm_tools-b1489b57b0376dbb)
+
+running 3 tests
+test remote_writes_are_classified_and_keyed_not_executed ... ok
+test local_read_operations_work_offline ... ok
+test commit_is_a_local_write_settling_the_callers_effect ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
