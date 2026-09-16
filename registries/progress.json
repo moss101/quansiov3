@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T12:10:00Z",
+  "updated_at": "2026-09-16T12:11:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2248,8 +2248,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-16T12:00:00Z",
-      "updated_at": "2026-09-16T12:10:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-16T12:11:00Z",
+      "git_commit": "02e71926e8e938773f9f40ecc16563cf95f0ab08",
       "tests": [
         "uv run --project python pytest tests/adapters/test_qa006_qualification.py (13 passed: contract tier passes for all six connectors incl. PR/CI; sandbox tier reports BLOCKED_EXTERNAL naming QUANSIO_TEST_CONNECTOR_*; external-effect contract \u2014 reads non-consequential, writes ledger-flagged \u2014 holds; webhook replay idempotent and tenant scoped)",
         "uv run --project python pytest tests (427 passed, 78 skipped live/absent-env)"
