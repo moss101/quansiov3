@@ -28,7 +28,21 @@ REQUIRED_DOMAINS: tuple[str, ...] = (
     "business-ops",
 )
 
-SKILL_META_KEYS = frozenset({"schema_version", "id", "name", "owner", "semver", "status", "provenance"})
+SKILL_META_KEYS = frozenset(
+    {
+        "schema_version",
+        "id",
+        "name",
+        "owner",
+        "semver",
+        "status",
+        "provenance",
+        # OPS-007 quarantine lifecycle, nested so it cannot collide with the scalar
+        # `provenance` identity pointer above (scripts/ci/supply_chain/skills.py
+        # GOVERNANCE_RECORD_KEY).
+        "quarantine_record",
+    }
+)
 PACK_KEYS = frozenset(
     {
         "schema_version",
@@ -42,6 +56,14 @@ PACK_KEYS = frozenset(
         "evidence_requirements",
         "installs_daemon",
         "bypasses_runtime_policy",
+        # OPS-007 quarantine lifecycle (pack.yaml has no separate meta.yaml sidecar,
+        # so these sections are inline; `provenance.source`/`provenance.digest` fold
+        # into the existing provenance dict above instead of a new top-level key).
+        "quarantine",
+        "review",
+        "normalization",
+        "evaluation",
+        "approved",
     }
 )
 CONTENTS_KEYS = frozenset(

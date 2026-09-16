@@ -7,6 +7,28 @@ status: published
 provenance:
   kind: builtin
   ref: pack://quansio.builtin.data-analysis
+  # First-party artifact authored in this repository, not fetched from an
+  # external registry; source/digest still make it provenance-addressable
+  # (DOSSIER.md section 16 / DOMAIN.md section 11.5).
+  source: builtin-repository
+  digest: sha256:f8d62e2cb51ec842676d05fb046d1091257061760f4f6a8269657bb52d1ca34c
+quarantine:
+  status: cleared
+  imported_at: "2026-09-15T04:50:55Z"
+review:
+  reviewed_by: quansio-cap007-governance
+  reviewed_at: "2026-09-15T04:50:55Z"
+  outcome: approved
+normalization:
+  normalized_at: "2026-09-15T04:50:55Z"
+  normalizer: CAP-007 built-in pack pipeline (packs/capabilities schema_version v1)
+evaluation:
+  eval_suite_id: eval_data_analysis
+  result: pass
+  evaluated_at: "2026-09-15T04:50:55Z"
+approved:
+  approved_by: quansio-cap007-governance
+  approved_at: "2026-09-15T04:50:55Z"
 contents:
   knowledge_ids: []
   skill_version_ids: [sklv_data_analysis_1]

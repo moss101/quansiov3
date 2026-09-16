@@ -5,3 +5,32 @@ owner: product
 semver: 1.0.0
 status: active
 provenance: pack://quansio.builtin.cloud-devops
+
+# --- OPS-007 quarantine lifecycle (DOSSIER.md section 16 / DOMAIN.md section 11.5) ---
+# Nested under one key so it cannot collide with this file's own id/name/owner/
+# semver/status/provenance fields. First-party artifact authored in this repository
+# as part of CAP-006/CAP-007's governed promotion, not imported from an external
+# registry; the record below is that promotion's self-governance trail over
+# skill.yaml (digest), not a fabricated external audit.
+quarantine_record:
+  provenance:
+    source: builtin-repository
+    ref: skill://quansio.builtin.cloud-devops
+    digest: sha256:f2ab7064e2f2add53ec8a52fdf0dbb2e72c2b7a67ec03b7cf7c54fc7947b7eac
+  quarantine:
+    status: cleared
+    imported_at: "2026-09-15T04:50:55Z"
+  review:
+    reviewed_by: quansio-cap007-governance
+    reviewed_at: "2026-09-15T04:50:55Z"
+    outcome: approved
+  normalization:
+    normalized_at: "2026-09-15T04:50:55Z"
+    normalizer: CAP-007 built-in skill pipeline (packs/skills schema_version v1)
+  evaluation:
+    eval_suite_id: eval_cloud_devops
+    result: pass
+    evaluated_at: "2026-09-15T04:50:55Z"
+  approved:
+    approved_by: quansio-cap007-governance
+    approved_at: "2026-09-15T04:50:55Z"

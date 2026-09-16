@@ -7,6 +7,28 @@ status: published
 provenance:
   kind: builtin
   ref: pack://quansio.builtin.wiki
+  # First-party artifact authored in this repository, not fetched from an
+  # external registry; source/digest still make it provenance-addressable
+  # (DOSSIER.md section 16 / DOMAIN.md section 11.5).
+  source: builtin-repository
+  digest: sha256:2b9fd4b85ae674339b2270f76da0f0a5a3cf4e6fccede25d30a12d377df08be6
+quarantine:
+  status: cleared
+  imported_at: "2026-09-15T04:41:07Z"
+review:
+  reviewed_by: quansio-cap007-governance
+  reviewed_at: "2026-09-15T04:41:07Z"
+  outcome: approved
+normalization:
+  normalized_at: "2026-09-15T04:41:07Z"
+  normalizer: CAP-007 built-in pack pipeline (packs/capabilities schema_version v1)
+evaluation:
+  eval_suite_id: eval_wiki_navigation
+  result: pass
+  evaluated_at: "2026-09-15T04:41:07Z"
+approved:
+  approved_by: quansio-cap007-governance
+  approved_at: "2026-09-15T04:41:07Z"
 contents:
   knowledge_ids: []
   skill_version_ids: [sklv_wiki_1]
