@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+     Running tests/connector_broker.rs (target/debug/deps/connector_broker-78afbdd7a0b3e98f)
+
+running 4 tests
+BLOCKED_EXTERNAL: QUANSIO_TEST_CONNECTOR_GITHUB=1 (and the other GA connector sandbox flags) are not set; in-sandbox conformance runs are not executing
+test sandbox_boundary_is_reported_when_absent ... ok
+test lifecycle_degrades_and_revocation_clears_the_handle ... ok
+test raw_token_material_and_foreign_state_are_refused ... ok
+test begin_and_complete_auth_stores_a_handle_and_never_token_material ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+

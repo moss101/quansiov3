@@ -1,0 +1,37 @@
+{
+  "task_id": "EXEC-011",
+  "git_commit": null,
+  "recorded_at": "2026-09-16T09:20:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test connector_broker",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-011/2026-09-16T09-20-00Z/broker.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test connector_broker",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/EXEC-011/2026-09-16T09-20-00Z/broker.log",
+      "sha256": "c9df93f88a4b2b9db2246266220400d74482ea11fcc0acba8cd204dfd7d47a58",
+      "bytes": 686
+    },
+    {
+      "path": "crates/server/src/control/connectors/mod.rs",
+      "sha256": "c472994a9f0d0838a5f9c34047de8ca3f37e25c79a2508a2874b4fc8d586509a",
+      "bytes": 17654
+    },
+    {
+      "path": "crates/server/tests/connector_broker.rs",
+      "sha256": "7e05642f68e74a32198bac76c3c159919ff754433bb0499da92fe2bfa7d2e60d",
+      "bytes": 8953
+    }
+  ]
+}
