@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T10:26:00Z",
+  "updated_at": "2026-09-16T10:45:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1790,18 +1790,24 @@
       "notes": "Webhook delivery is at-least-once with stable event ids, tenant/workspace scoped, redacted, and refused when egress denies or the kill switch is on."
     },
     "CAP-001": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-16T10:30:00Z",
+      "updated_at": "2026-09-16T10:45:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/research (4 passed: multi-source E2E with claims resolving to digest-addressed descriptors; unsupported claims block completion; cancel/resume never refetches collected sources; the plan is a typed SearchProgram and context segments are UNTRUSTED_EXTERNAL)"
+      ],
+      "artifacts": [
+        "evidence/CAP-001/2026-09-16T10-45-00Z/summary.json",
+        "python/intelligence/research/workflow.py",
+        "packs/skills/research/skill.yaml"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "The workflow is implemented and its contract tier passes offline. The live multi-source E2E requires web.search/web.fetch under egress policy in a provider sandbox: set QUANSIO_TEST_CONNECTOR_WEBSEARCH=1 (EXEC-011 sandbox tier) and re-run. PASS is also gated on INT-002 (live model providers).",
+      "notes": "Research composes typed SearchProgram, bounded branches, UNTRUSTED_EXTERNAL context segments and digest-addressed evidence descriptors. No second orchestrator or memory store; claims that do not resolve to collected evidence block completion; cancellation is a stage."
     },
     "CAP-002": {
       "coverage": null,

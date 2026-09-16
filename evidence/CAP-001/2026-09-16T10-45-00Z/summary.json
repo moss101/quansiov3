@@ -1,0 +1,63 @@
+{
+  "task_id": "CAP-001",
+  "git_commit": null,
+  "recorded_at": "2026-09-16T10:45:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/research",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-001/2026-09-16T10-45-00Z/research.log"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-001/2026-09-16T10-45-00Z/python-plane.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/research",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-001/2026-09-16T10-45-00Z/research.log",
+      "sha256": "4250d1f2029068ddc50a143f438d48c0e151e05c734fe713ffea94436ecf9381",
+      "bytes": 98
+    },
+    {
+      "path": "evidence/CAP-001/2026-09-16T10-45-00Z/python-plane.log",
+      "sha256": "7720942e6a80cded69d8d90783788256294e4daffd6dfeef101de68ae899f197",
+      "bytes": 593
+    },
+    {
+      "path": "evidence/CAP-001/2026-09-16T10-45-00Z/mypy.log",
+      "sha256": "f9b031e5c45aa702cd4fef028d465551cb20a2c4698e0913c7b00766b20ac4d8",
+      "bytes": 43
+    },
+    {
+      "path": "python/intelligence/research/workflow.py",
+      "sha256": "10fc2ce8c5ebe5d561d45bbe76fc3fc88a58dcb76caf394cacef29b9503c0a69",
+      "bytes": 8233
+    },
+    {
+      "path": "python/tests/research/test_research_workflow.py",
+      "sha256": "36d815b4777a6dd3be0d67b2e30f6aa40dc764bb56e026d3f02021c44255986b",
+      "bytes": 4458
+    },
+    {
+      "path": "packs/skills/research/skill.yaml",
+      "sha256": "6eebc59ff1fa106757555e9934a9fd1041242558265607c0e4b296c71bcc3436",
+      "bytes": 786
+    }
+  ]
+}
