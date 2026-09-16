@@ -6,6 +6,7 @@ descriptors. No second orchestrator, no second memory store.
 
 from __future__ import annotations
 
+from .evidence import CitedClaim, EvidenceBundle, EvidenceError, verify
 from .workflow import (
     STAGES,
     Claim,
@@ -23,8 +24,11 @@ from .workflow import (
 
 __all__ = [
     "STAGES",
+    "CitedClaim",
     "Claim",
+    "EvidenceBundle",
     "EvidenceDescriptor",
+    "EvidenceError",
     "ResearchAnswer",
     "ResearchError",
     "ResearchPlan",
@@ -34,4 +38,5 @@ __all__ = [
     "collected_segments",
     "compile_intent",
     "synthesize",
+    "verify",
 ]
