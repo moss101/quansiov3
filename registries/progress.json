@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T10:46:00Z",
+  "updated_at": "2026-09-16T11:00:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1845,17 +1845,23 @@
     },
     "CAP-004": {
       "coverage": null,
-      "status": "NOT_STARTED",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": null,
       "started_at": null,
-      "updated_at": null,
+      "updated_at": "2026-09-16T11:00:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/capability_compiler (4 passed: ingestion provenance quotes source spans verbatim with digests; credential-laden SOPs refused with compiler.credential; cross-tenant sources refused with compiler.tenant; output is candidate data, digest-pinned, never executable)"
+      ],
+      "artifacts": [
+        "evidence/CAP-004/2026-09-16T11-00-00Z/summary.json",
+        "python/intelligence/capability_compiler/compiler.py",
+        "python/tests/capability_compiler/test_capability_compiler.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "The ingestion/decomposition pipeline is implemented and its contract tier passes offline. Ingesting real enterprise material (documents, verified historical work) requires the customer's authoritative sources; PASS additionally follows CAP-005's qualification/promotion landing. The compiler itself stays a candidate generator.",
+      "notes": "Compiler output is a candidate PackDraft: per-element provenance (source id, verbatim span, digest), credential-shaped content refused at ingestion, cross-tenant sources refused, and a content digest pinning what qualification would review. Nothing here promotes or executes."
     },
     "CAP-005": {
       "coverage": null,
