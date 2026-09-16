@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T18:56:00Z",
+  "updated_at": "2026-09-16T19:09:58Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -117,8 +117,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T00:59:52Z",
-      "updated_at": "2026-09-12T00:59:52Z",
-      "git_commit": "ec02ffb33319f83535005b54c10ebbc81a1bc104",
+      "updated_at": "2026-09-16T19:09:58Z",
+      "git_commit": "da92f71327976033125535fde696a1f300f5fb89",
       "tests": [
         "bash scripts/ci/ci.sh",
         "python3.12 scripts/ci/dossier_consistency.py",
@@ -130,12 +130,14 @@
         "evidence/GOV-005/2026-09-12T00-59-30Z/ci-summary.json",
         "evidence/GOV-005/2026-09-12T01-03-30Z/summary.json",
         "scripts/ci/ci_summary.py",
-        "scripts/ci/dossier_consistency.py"
+        "scripts/ci/dossier_consistency.py",
+        "evidence/GOV-005/2026-09-16T19-09-58Z/summary.json",
+        "evidence/GOV-005/2026-09-16T19-09-58Z/NOTES.md"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Baseline pipeline runs the same gate list locally (scripts/ci/ci.sh) and in GitHub Actions (.github/workflows/ci.yml), publishing a commit-bound summary to artifacts/ci/; the workflow provisions Postgres+pgvector so schema tests run in CI. Negative tests cover manifest tamper, dependency cycle, unknown dependency, acceptance-scope shrink, generated-view drift, fabricated PASS and unreachable PASS/evidence commits."
+      "notes": "Baseline pipeline runs the same gate list locally (scripts/ci/ci.sh) and in GitHub Actions (.github/workflows/ci.yml), publishing a commit-bound summary to artifacts/ci/; the workflow provisions Postgres+pgvector so schema tests run in CI. Negative tests cover manifest tamper, dependency cycle, unknown dependency, acceptance-scope shrink, generated-view drift, fabricated PASS and unreachable PASS/evidence commits. FIXED 2026-09-16 (evidence/GOV-005/2026-09-16T19-09-58Z/): the supply-chain gate's command depended on the ambient host's bare python3.12 having PyYAML installed globally rather than the pinned python/ venv -- the same commit could report PASS or FAIL purely based on host site-packages (reproduced on a clean pre-fix commit, confirming it was pre-existing and independent of the OPS-007/RUN-011 fixes). Routed through `uv run --project python python` like the other venv-dependent gates. Also removed one dead import (ruff-flagged, unused) in tests/adapters/test_connector_adapters.py found in the same pipeline run. The toolchains gate's TypeScript/ESLint half has a separate, larger, pre-existing failure (14 problems across 4 files) not addressed here -- flagged to the user rather than fixed without scope confirmation."
     },
     "GOV-006": {
       "coverage": "GENUINE_GAP",

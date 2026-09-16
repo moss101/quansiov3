@@ -1,0 +1,54 @@
+{
+  "task_id": "GOV-005",
+  "git_commit": "da92f71327976033125535fde696a1f300f5fb89",
+  "recorded_at": "2026-09-16T19:09:58Z",
+  "commands": [
+    {
+      "command": "cd python && uv run --frozen pytest tests/adapters/test_connector_adapters.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T19-09-58Z/test-connector-adapters.log"
+    },
+    {
+      "command": "cd python && uv run ruff check .",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T19-09-58Z/ruff-check.log"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T19-09-58Z/supply-chain-gate-via-uv.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/GOV-005/2026-09-16T19-09-58Z/final-ci-run.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cd python && uv run --frozen pytest tests/adapters/test_connector_adapters.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd python && uv run ruff check .",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 1,
+      "result": "FAIL"
+    }
+  ],
+  "artifacts": []
+}
