@@ -18,7 +18,6 @@ from intelligence.adapters.connectors import (
     WEB_SEARCH,
     AdapterError,
     WebhookReplay,
-    run_contract_tier,
     run_suite,
     sandbox_flag,
 )
