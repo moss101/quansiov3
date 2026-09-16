@@ -297,6 +297,19 @@ impl ProtocolStateStore {
 
     /// Persist the protocol state for a run, replacing any previous value.
     ///
+    /// `row_id` is deterministic (`pst_<run_id-suffix>`), so two concurrent
+    /// first-ever writes for the same run always collide on the SAME primary key,
+    /// not merely on the (also unique) `run_id` column -- the `ON CONFLICT` target
+    /// below must be the primary key `id` so Postgres routes that race into the
+    /// `DO UPDATE` arbitration instead of raising a raw `protocol_states_pkey`
+    /// violation. A conflict target naming a *different* unique constraint than the
+    /// one that actually collides is not caught by `ON CONFLICT` at all -- it only
+    /// happened not to matter here because `id` and `run_id` always collide
+    /// together, so any concurrent write to the same run's protocol state (e.g. two
+    /// independent tool calls settling in parallel within one turn) intermittently
+    /// panicked instead of upserting. Regression test:
+    /// `independent_tool_calls_run_together_and_settle_in_proposal_order`.
+    ///
     /// # Errors
     /// Returns an error when the run does not exist for this tenant or the write fails.
     pub async fn store(
@@ -312,7 +325,7 @@ impl ProtocolStateStore {
              terminal_sessions, child_agent_threads, cancellation_requested, cancellation_at, \
              last_compaction_epoch_id) \
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::timestamptz, $15) \
-             ON CONFLICT (run_id) DO UPDATE SET generation = EXCLUDED.generation, \
+             ON CONFLICT (id) DO UPDATE SET generation = EXCLUDED.generation, \
              pending_model_call = EXCLUDED.pending_model_call, \
              pending_tool_calls = EXCLUDED.pending_tool_calls, \
              pending_approvals = EXCLUDED.pending_approvals, \
