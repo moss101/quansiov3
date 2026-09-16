@@ -1,0 +1,9 @@
+$ pnpm -r --if-present typecheck
+Scope: 3 of 4 workspace projects
+apps/desktop typecheck$ tsc -p tsconfig.json
+apps/web typecheck$ tsc -p tsconfig.json
+sdk/typescript typecheck$ tsc -p tsconfig.json
+sdk/typescript typecheck: Done
+apps/web typecheck: Done
+apps/desktop typecheck: Done
+exit: 0

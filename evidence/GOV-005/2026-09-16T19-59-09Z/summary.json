@@ -1,0 +1,87 @@
+{
+  "task_id": "GOV-005",
+  "git_commit": "089a73cc809c02e1e72f61aabf1cf09bfddd7f2c",
+  "recorded_at": "2026-09-16T19:59:09Z",
+  "commands": [
+    {
+      "command": "pnpm lint",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T19-59-09Z/eslint.log"
+    },
+    {
+      "command": "pnpm build",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T19-59-09Z/pnpm-build.log"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T19-59-09Z/pnpm-typecheck.log"
+    },
+    {
+      "command": "pnpm test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T19-59-09Z/pnpm-test.log"
+    },
+    {
+      "command": "npx tsc -p tests/e2e/tsconfig.json --noEmit",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T19-59-09Z/tsc-e2e.log"
+    },
+    {
+      "command": "npx vitest run --config tests/e2e/vitest.config.ts",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T19-59-09Z/vitest-e2e.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T19-59-09Z/final-ci-run.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "pnpm lint",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm build",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm test",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "npx tsc -p tests/e2e/tsconfig.json --noEmit",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "npx vitest run --config tests/e2e/vitest.config.ts",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": []
+}

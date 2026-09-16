@@ -1,0 +1,9 @@
+$ pnpm -r --if-present build
+Scope: 3 of 4 workspace projects
+apps/desktop build$ tsc -p tsconfig.build.json
+apps/web build$ tsc -p tsconfig.build.json
+sdk/typescript build$ tsc -p tsconfig.build.json
+sdk/typescript build: Done
+apps/web build: Done
+apps/desktop build: Done
+exit: 0
