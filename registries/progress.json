@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T11:55:00Z",
+  "updated_at": "2026-09-16T11:56:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1874,8 +1874,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-16T11:40:00Z",
-      "updated_at": "2026-09-16T11:55:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-16T11:56:00Z",
+      "git_commit": "0359e3b56f71f02b4fa9b6e9a6e8243d8b73a8c3",
       "tests": [
         "uv run --project python pytest tests/capability_compiler (7 passed: qualification gates promotion on failed and protected cases; resolution intersects the caller's authority and never widens; versions promote digest-pinned; rollback is deterministic)"
       ],
