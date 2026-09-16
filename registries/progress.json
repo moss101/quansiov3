@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T10:21:00Z",
+  "updated_at": "2026-09-16T10:24:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1464,8 +1464,8 @@
       "status": "RECONCILING",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-16T10:00:00Z",
-      "updated_at": "2026-09-16T10:21:00Z",
-      "git_commit": "415d3b0ce84d74d14f54dd18090b4579d17dc0c9",
+      "updated_at": "2026-09-16T10:24:00Z",
+      "git_commit": "96fca123183097ca9c738fa3b1500ad32dfc757a",
       "tests": [
         "cargo test -p quansio-qworkerd --test scm_tools (3 passed: local reads work offline through the path sandbox \u2014 status/diff/branches/worktrees; commit is a local write settling the caller's effect and refuses empty commits; remote writes are classified per DOMAIN.md \u00a77.1 (push-to-own-branch allow+log, PR/merge ask) with derived idempotency keys and are never executed locally)",
         "uv run --project python pytest tests/adapters/test_connector_adapters.py (6 passed: PR/CI adapters pass the shared contract tier; pr.create/pr.comment/pr.merge/ci.rerun are consequential (approval-gated); sandbox tier BLOCKED_EXTERNAL naming QUANSIO_TEST_CONNECTOR_GITHUB)"
