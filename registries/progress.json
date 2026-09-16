@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T11:01:00Z",
+  "updated_at": "2026-09-16T11:02:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1844,11 +1844,11 @@
       "notes": "Artifacts are versioned source files (document/spreadsheet/slides/code) with format validation and quality checks that block completion. Skill pack proposes artifact.create/update and cannot grant those tools."
     },
     "CAP-004": {
-      "coverage": null,
+      "coverage": "GENUINE_GAP",
       "status": "BLOCKED_EXTERNAL",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-16T11:01:00Z",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-16T10:55:00Z",
+      "updated_at": "2026-09-16T11:02:00Z",
       "git_commit": "d035737b90f29e84aa6db9f7d06fe1fb795f901b",
       "tests": [
         "uv run --project python pytest tests/capability_compiler (4 passed: ingestion provenance quotes source spans verbatim with digests; credential-laden SOPs refused with compiler.credential; cross-tenant sources refused with compiler.tenant; output is candidate data, digest-pinned, never executable)"
