@@ -1,0 +1,32 @@
+{
+  "task_id": "GOV-005",
+  "git_commit": "6646067be2cebd3e113e49c283b492ff515fc65b",
+  "recorded_at": "2026-09-16T20:55:27Z",
+  "commands": [
+    {
+      "command": "uv run --project python python -m pytest tests/ci/ -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T20-55-27Z/test-ci-suite.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T20-55-27Z/local-ci-run.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python python -m pytest tests/ci/ -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": []
+}
