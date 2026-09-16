@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T19:59:09Z",
+  "updated_at": "2026-09-16T20:22:27Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -117,14 +117,15 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T00:59:52Z",
-      "updated_at": "2026-09-16T19:59:09Z",
-      "git_commit": "089a73cc809c02e1e72f61aabf1cf09bfddd7f2c",
+      "updated_at": "2026-09-16T20:22:27Z",
+      "git_commit": "f5529cd25086ba43e9c1a1e286abaa7659baf85c",
       "tests": [
         "bash scripts/ci/ci.sh",
         "python3.12 scripts/ci/dossier_consistency.py",
         "uv run --project python pytest tests/ci -q",
         "uv run --project python pytest tests/architecture/test_arch_check.py -q",
-        "bash scripts/ci/ci.sh (full 11/11 gates PASS on the merge commit)"
+        "bash scripts/ci/ci.sh (full 11/11 gates PASS on the merge commit)",
+        "bash scripts/dev/up + docker exec psql SHOW max_locks_per_transaction/max_connections + cargo test -p quansio-server --test schema_bootstrap, against an isolated simulated CI runner"
       ],
       "artifacts": [
         ".github/workflows/ci.yml",
@@ -135,12 +136,14 @@
         "evidence/GOV-005/2026-09-16T19-09-58Z/summary.json",
         "evidence/GOV-005/2026-09-16T19-09-58Z/NOTES.md",
         "evidence/GOV-005/2026-09-16T19-59-09Z/summary.json",
-        "evidence/GOV-005/2026-09-16T19-59-09Z/NOTES.md"
+        "evidence/GOV-005/2026-09-16T19-59-09Z/NOTES.md",
+        "evidence/GOV-005/2026-09-16T20-22-27Z/summary.json",
+        "evidence/GOV-005/2026-09-16T20-22-27Z/NOTES.md"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Baseline pipeline runs the same gate list locally (scripts/ci/ci.sh) and in GitHub Actions (.github/workflows/ci.yml), publishing a commit-bound summary to artifacts/ci/; the workflow provisions Postgres+pgvector so schema tests run in CI. Negative tests cover manifest tamper, dependency cycle, unknown dependency, acceptance-scope shrink, generated-view drift, fabricated PASS and unreachable PASS/evidence commits. FIXED 2026-09-16 (evidence/GOV-005/2026-09-16T19-09-58Z/): the supply-chain gate's command depended on the ambient host's bare python3.12 having PyYAML installed globally rather than the pinned python/ venv -- the same commit could report PASS or FAIL purely based on host site-packages (reproduced on a clean pre-fix commit, confirming it was pre-existing and independent of the OPS-007/RUN-011 fixes). Routed through `uv run --project python python` like the other venv-dependent gates. Also removed one dead import (ruff-flagged, unused) in tests/adapters/test_connector_adapters.py found in the same pipeline run. The toolchains gate's TypeScript/ESLint half has a separate, larger, pre-existing failure (14 problems across 4 files) not addressed here -- flagged to the user rather than fixed without scope confirmation. FOLLOW-UP FIXED 2026-09-16 (evidence/GOV-005/2026-09-16T19-59-09Z/): the toolchains gate's separate pre-existing ESLint failure (14 problems across apps/desktop/src/artifacts/workspace.ts, apps/desktop/src/main/security.ts, apps/desktop/tests/diagnostics.test.ts and tests/e2e/journeys.spec.ts, including a tsconfig coverage gap for tests/e2e/) is root-caused and fixed -- see NOTES.md for detail per file. `bash scripts/ci/ci.sh` now reports pipeline: PASS, 11/11 gates, the first fully green baseline run recorded this session. Side finding, not fixed here: tests/e2e/ (QA-008's critical-journey suite) is not a pnpm workspace package and is never invoked by pnpm test/pnpm -r -- it passes when run directly (7/1 skipped) but has never run as part of any CI gate; flagged to the user as a QA-008 wiring decision."
+      "notes": "Baseline pipeline runs the same gate list locally (scripts/ci/ci.sh) and in GitHub Actions (.github/workflows/ci.yml), publishing a commit-bound summary to artifacts/ci/; the workflow provisions Postgres+pgvector so schema tests run in CI. Negative tests cover manifest tamper, dependency cycle, unknown dependency, acceptance-scope shrink, generated-view drift, fabricated PASS and unreachable PASS/evidence commits. FIXED 2026-09-16 (evidence/GOV-005/2026-09-16T19-09-58Z/): the supply-chain gate's command depended on the ambient host's bare python3.12 having PyYAML installed globally rather than the pinned python/ venv -- the same commit could report PASS or FAIL purely based on host site-packages (reproduced on a clean pre-fix commit, confirming it was pre-existing and independent of the OPS-007/RUN-011 fixes). Routed through `uv run --project python python` like the other venv-dependent gates. Also removed one dead import (ruff-flagged, unused) in tests/adapters/test_connector_adapters.py found in the same pipeline run. The toolchains gate's TypeScript/ESLint half has a separate, larger, pre-existing failure (14 problems across 4 files) not addressed here -- flagged to the user rather than fixed without scope confirmation. FOLLOW-UP FIXED 2026-09-16 (evidence/GOV-005/2026-09-16T19-59-09Z/): the toolchains gate's separate pre-existing ESLint failure (14 problems across apps/desktop/src/artifacts/workspace.ts, apps/desktop/src/main/security.ts, apps/desktop/tests/diagnostics.test.ts and tests/e2e/journeys.spec.ts, including a tsconfig coverage gap for tests/e2e/) is root-caused and fixed -- see NOTES.md for detail per file. `bash scripts/ci/ci.sh` now reports pipeline: PASS, 11/11 gates, the first fully green baseline run recorded this session. Side finding, not fixed here: tests/e2e/ (QA-008's critical-journey suite) is not a pnpm workspace package and is never invoked by pnpm test/pnpm -r -- it passes when run directly (7/1 skipped) but has never run as part of any CI gate; flagged to the user as a QA-008 wiring decision. CRITICAL FIX 2026-09-16 (evidence/GOV-005/2026-09-16T20-22-27Z/): GitHub Actions CI had failed on every one of its last 100 runs (0 successes; confirmed via `gh run list`), unrelated to any fix earlier this session -- the postgres services: block's `options:` field cannot carry a container command override (only docker-create flags), so the `-c max_locks_per_transaction=1024` EXEC-008 added there was parsed as an invalid --cpu-shares value and `docker create` failed with exit 125 at job setup, before any pipeline step ran. All prior PASS evidence in this registry was produced by local `bash scripts/ci/ci.sh` runs only; GitHub itself has never once gone green. Fixed by removing the duplicated, broken services: block and running `bash scripts/dev/up` instead -- the same deterministic stack GOV-007 built for local development (scripts/dev/healthcheck's own comment already said it is \"used by scripts/dev/up and CI\"), which applies these settings correctly via infra/compose/compose.yaml's command: field. ci_summary.py's existing dev_database_url() auto-detects the resulting .env, so no hand-typed QUANSIO_TEST_POSTGRES_URL is needed on the workflow step either -- removing that second, independently-maintained description of the same settings is what actually closes the class of bug, not just this one instance of it. Verified by simulating a clean CI runner locally (isolated project/env, real local dev stack unaffected) and confirming the postgres container actually serves max_locks_per_transaction=1024 this time. Not independently re-verifiable from this sandbox (no GitHub Actions runner here) -- the pushed commit's next real Actions run is the authoritative confirmation."
     },
     "GOV-006": {
       "coverage": "GENUINE_GAP",

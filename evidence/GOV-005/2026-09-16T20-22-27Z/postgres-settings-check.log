@@ -1,0 +1,5 @@
+$ docker exec quansio-ci-sim-postgres-1 psql -U quansio -d quansio -tAc \
+  "SHOW max_locks_per_transaction; SHOW max_connections;"
+1024
+100
+exit: 0

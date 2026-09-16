@@ -1,0 +1,65 @@
+{
+  "task_id": "GOV-005",
+  "git_commit": "f5529cd25086ba43e9c1a1e286abaa7659baf85c",
+  "recorded_at": "2026-09-16T20:22:27Z",
+  "commands": [
+    {
+      "command": "python3 -c \"import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))\"",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T20-22-27Z/yaml-sanity.log"
+    },
+    {
+      "command": "uv run --project python python -m pytest tests/ci/ -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T20-22-27Z/test-ci-suite.log"
+    },
+    {
+      "command": "bash scripts/dev/up (isolated simulation: fresh .env, separate project/ports)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T20-22-27Z/dev-up-simulation.log"
+    },
+    {
+      "command": "docker exec <sim-postgres> psql -U quansio -d quansio -tAc 'SHOW max_locks_per_transaction; SHOW max_connections;'",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T20-22-27Z/postgres-settings-check.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=postgres://quansio:***@127.0.0.1:55441/quansio cargo test -p quansio-server --test schema_bootstrap",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-005/2026-09-16T20-22-27Z/schema-bootstrap-against-sim.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "python3 -c \"import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))\"",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python -m pytest tests/ci/ -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/dev/up (isolated simulation)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "docker exec <sim-postgres> psql ... SHOW max_locks_per_transaction/max_connections",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test schema_bootstrap (against sim)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": []
+}

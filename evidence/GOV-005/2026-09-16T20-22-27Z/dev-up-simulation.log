@@ -1,0 +1,26 @@
+$ mkdir -p /tmp/ci-sim && rm -f /tmp/ci-sim/.env
+$ QUANSIO_DEV_COMPOSE_PROJECT=quansio-ci-sim QUANSIO_DEV_ENV_FILE=/tmp/ci-sim/.env \
+  QUANSIO_DEV_POSTGRES_PORT=55441 QUANSIO_DEV_NATS_PORT=54232 QUANSIO_DEV_NATS_MONITOR_PORT=54233 \
+  QUANSIO_DEV_MINIO_PORT=59012 QUANSIO_DEV_MINIO_CONSOLE_PORT=59013 QUANSIO_DEV_STUB_PROVIDER_PORT=59021 \
+  QUANSIO_DEV_HEALTH_TIMEOUT=180 bash scripts/dev/up
+ Container quansio-ci-sim-nats-1 Creating
+ Container quansio-ci-sim-minio-1 Created
+ Container quansio-ci-sim-minio-init-1 Creating
+ Container quansio-ci-sim-nats-1 Created
+ Container quansio-ci-sim-postgres-1 Created
+ Container quansio-ci-sim-stub-provider-1 Created
+ Container quansio-ci-sim-minio-init-1 Created
+ Container quansio-ci-sim-nats-1 Starting
+ Container quansio-ci-sim-stub-provider-1 Starting
+ Container quansio-ci-sim-postgres-1 Starting
+ Container quansio-ci-sim-minio-1 Starting
+ Container quansio-ci-sim-nats-1 Started
+ Container quansio-ci-sim-stub-provider-1 Started
+ Container quansio-ci-sim-postgres-1 Started
+ Container quansio-ci-sim-minio-1 Started
+ Container quansio-ci-sim-minio-1 Waiting
+ Container quansio-ci-sim-minio-1 Healthy
+ Container quansio-ci-sim-minio-init-1 Starting
+ Container quansio-ci-sim-minio-init-1 Started
+dev stack: HEALTHY (postgres+pgvector, nats jetstream, minio)
+exit: 0
