@@ -1442,7 +1442,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T09:50:00Z",
       "updated_at": "2026-09-16T09:41:00Z",
-      "git_commit": null,
+      "git_commit": "852e3675b0c1e541a983683dd333a101cfb94901",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test connector_broker (4 passed: begin/complete stores a sec_ handle and never token material; replayed state refused after digest consumption; degrade keeps the credential, revocation clears it and is terminal; raw token material and foreign states refused before any write)",
         "uv run --project python pytest tests/adapters/test_connector_adapters.py (5 passed: all four GA adapters pass the contract tier; sandbox tier reports BLOCKED_EXTERNAL naming its flag; operation vocabulary closed; web.search served by the websearch adapter; raw token material refused at every seam; webhook redelivery idempotent and tenant scoped)",
