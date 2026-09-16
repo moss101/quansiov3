@@ -1,0 +1,48 @@
+{
+  "task_id": "QA-006",
+  "git_commit": null,
+  "recorded_at": "2026-09-16T12:10:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/adapters/test_qa006_qualification.py",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/QA-006/2026-09-16T12-10-00Z/qualification.log"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-006/2026-09-16T12-10-00Z/python-plane.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/adapters/test_qa006_qualification.py",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL"
+    },
+    {
+      "command": "uv run --project python pytest tests",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-006/2026-09-16T12-10-00Z/qualification.log",
+      "sha256": "edf3d333fef3a773826ab22829091a2348d9f8a79032da0074fd997d1b9f76d9",
+      "bytes": 99
+    },
+    {
+      "path": "evidence/QA-006/2026-09-16T12-10-00Z/python-plane.log",
+      "sha256": "f794f69d13ce84480d158748b1f1ce6e4a0538295331a69b5e322375d6c91a7d",
+      "bytes": 673
+    },
+    {
+      "path": "python/tests/adapters/test_qa006_qualification.py",
+      "sha256": "e2453e09388b796aa716d7c9e8f193f676fa2090196f4bb2364e901f67fe6160",
+      "bytes": 2056
+    }
+  ]
+}

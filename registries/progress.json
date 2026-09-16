@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T11:56:00Z",
+  "updated_at": "2026-09-16T12:10:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -2244,18 +2244,24 @@
       "notes": ""
     },
     "QA-006": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-16T12:00:00Z",
+      "updated_at": "2026-09-16T12:10:00Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "uv run --project python pytest tests/adapters/test_qa006_qualification.py (13 passed: contract tier passes for all six connectors incl. PR/CI; sandbox tier reports BLOCKED_EXTERNAL naming QUANSIO_TEST_CONNECTOR_*; external-effect contract \u2014 reads non-consequential, writes ledger-flagged \u2014 holds; webhook replay idempotent and tenant scoped)",
+        "uv run --project python pytest tests (427 passed, 78 skipped live/absent-env)"
+      ],
+      "artifacts": [
+        "evidence/QA-006/2026-09-16T12-10-00Z/summary.json",
+        "python/tests/adapters/test_qa006_qualification.py"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "implementation_complete": true,
+      "blocker": "The offline qualification passes in full. The provider-sandbox tier is boundary-gated: set QUANSIO_TEST_CONNECTOR_GITHUB/GOOGLE/SLACK/WEBSEARCH=1 with sandbox credentials and OAuth clients, then re-run pytest tests/adapters/test_qa006_qualification.py to execute the live tier.",
+      "notes": "Contract qualification: all six connectors (four GA + PR/CI) pass the closed-vocabulary, handle-only, effect-flagged contract tier. Sandbox tier emits explicit BLOCKED_EXTERNAL markers."
     },
     "QA-007": {
       "coverage": "GENUINE_GAP",
