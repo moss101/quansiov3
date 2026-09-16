@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T11:02:00Z",
+  "updated_at": "2026-09-16T11:15:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1810,18 +1810,18 @@
       "notes": "Research composes typed SearchProgram, bounded branches, UNTRUSTED_EXTERNAL context segments and digest-addressed evidence descriptors. No second orchestrator or memory store; claims that do not resolve to collected evidence block completion; cancellation is a stage."
     },
     "CAP-002": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-16T11:15:00Z",
+      "updated_at": "2026-09-16T11:15:00Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,
-      "notes": ""
+      "notes": "Claimed."
     },
     "CAP-003": {
       "coverage": "GENUINE_GAP",
