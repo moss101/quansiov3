@@ -165,6 +165,10 @@ describe("accessibility baseline", () => {
 });
 
 describe("playwright boundary", () => {
+  // `playwright` is a real-boundary dependency, deliberately not a package.json
+  // dependency of this workspace (QA-008's served-build tier only runs under
+  // QUANSIO_TEST_E2E=1, on a host that installs it separately) -- see
+  // playwright.d.ts for the minimal ambient types that stand in for it here.
   it.skipIf(!E2E_FLAG)("runs the served build on the support matrix", async () => {
     const { chromium, firefox, webkit } = await import("playwright");
     for (const browserType of [chromium, firefox, webkit]) {

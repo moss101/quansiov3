@@ -10,8 +10,26 @@
 export const RENDERER_CSP =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: wss:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
 
+/**
+ * The shape of {@link RENDERER_WEB_PREFERENCES}, typed with `boolean` rather than
+ * inferred as `as const` literals -- widening it is what makes
+ * {@link rendererSecurityBaselineHolds}'s checks a genuine runtime assertion instead
+ * of a comparison the type checker already knows the answer to (see that function's
+ * doc comment).
+ */
+interface RendererWebPreferences {
+  readonly nodeIntegration: boolean;
+  readonly nodeIntegrationInWorker: boolean;
+  readonly nodeIntegrationInSubFrames: boolean;
+  readonly contextIsolation: boolean;
+  readonly sandbox: boolean;
+  readonly enableRemoteModule: boolean;
+  readonly preload: string;
+  readonly webviewTag: boolean;
+}
+
 /** Electron webPreferences the main process applies to every renderer. */
-export const RENDERER_WEB_PREFERENCES = {
+export const RENDERER_WEB_PREFERENCES: RendererWebPreferences = {
   nodeIntegration: false,
   nodeIntegrationInWorker: false,
   nodeIntegrationInSubFrames: false,
@@ -20,7 +38,7 @@ export const RENDERER_WEB_PREFERENCES = {
   enableRemoteModule: false,
   preload: "preload/bridge.js",
   webviewTag: false,
-} as const;
+};
 
 /** Permission handler: deny everything the renderer asks the OS for. */
 export const DENIED_PERMISSIONS = [
@@ -45,11 +63,11 @@ export function permissionAllowed(permission: string): boolean {
 /** True when the shipped webPreferences meet the renderer security baseline. */
 export function rendererSecurityBaselineHolds(): boolean {
   return (
-    RENDERER_WEB_PREFERENCES.nodeIntegration === false &&
-    RENDERER_WEB_PREFERENCES.contextIsolation === true &&
-    RENDERER_WEB_PREFERENCES.sandbox === true &&
-    RENDERER_WEB_PREFERENCES.enableRemoteModule === false &&
-    RENDERER_WEB_PREFERENCES.webviewTag === false &&
+    !RENDERER_WEB_PREFERENCES.nodeIntegration &&
+    RENDERER_WEB_PREFERENCES.contextIsolation &&
+    RENDERER_WEB_PREFERENCES.sandbox &&
+    !RENDERER_WEB_PREFERENCES.enableRemoteModule &&
+    !RENDERER_WEB_PREFERENCES.webviewTag &&
     RENDERER_CSP.includes("object-src 'none'") &&
     RENDERER_CSP.includes("script-src 'self'")
   );
