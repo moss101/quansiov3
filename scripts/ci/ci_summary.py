@@ -108,8 +108,10 @@ def run_gate(
     root: Path,
     timeout: int = 3600,
     env: Optional[Dict[str, str]] = None,
+    log_dir: Optional[Path] = None,
 ) -> Dict[str, object]:
     started = time.monotonic()
+    full_output: Optional[str] = None
     try:
         result = subprocess.run(
             command,
@@ -121,13 +123,14 @@ def run_gate(
             env=env,
         )
         exit_code: Optional[int] = result.returncode
-        tail = "\n".join((result.stdout + result.stderr).splitlines()[-25:])
+        full_output = result.stdout + result.stderr
+        tail = "\n".join(full_output.splitlines()[-25:])
     except subprocess.TimeoutExpired:
         exit_code = None
         tail = f"gate timed out after {timeout}s"
     duration = round(time.monotonic() - started, 3)
     status = "PASS" if exit_code == 0 else ("TIMEOUT" if exit_code is None else "FAIL")
-    return {
+    entry: Dict[str, object] = {
         "gate": name,
         "command": command,
         "status": status,
@@ -135,6 +138,21 @@ def run_gate(
         "duration_s": duration,
         "tail": tail,
     }
+    # The summary's own `tail` is 25 lines -- enough for an "it's red" glance, not
+    # enough to diagnose most real failures (a single verbose gate, e.g. `cargo test
+    # --workspace`, prints far more than that before the actual failure). Every
+    # gate's complete stdout+stderr is written alongside it so a red run is
+    # diagnosable from the uploaded artifact alone, with no need to reproduce it
+    # (or, worse, guess at it) to find out what actually happened.
+    if log_dir is not None and full_output is not None:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / f"{name}.log"
+        log_path.write_text(full_output)
+        try:
+            entry["log"] = str(log_path.relative_to(root))
+        except ValueError:
+            entry["log"] = str(log_path)
+    return entry
 
 
 def run(
@@ -152,6 +170,8 @@ def run(
     database_url = dev_database_url(root)
     if database_url:
         env["QUANSIO_TEST_POSTGRES_URL"] = database_url
+    commit = git_commit(root) or "nogit"
+    log_dir = (out.parent if out else DEFAULT_OUT_DIR) / "logs" / commit[:12]
 
     results: List[Dict[str, object]] = []
     for name, command in gates:
@@ -169,7 +189,7 @@ def run(
                     }
                 )
                 continue
-        results.append(run_gate(name, command, root, env=env))
+        results.append(run_gate(name, command, root, env=env, log_dir=log_dir))
 
     artifacts: Dict[str, str] = {}
     for relative in ("registries/progress.json", "TASKS.md", "MANIFEST.json"):
@@ -178,7 +198,7 @@ def run(
             artifacts[relative] = sha256_file(path)
 
     summary = {
-        "commit": git_commit(root),
+        "commit": commit if commit != "nogit" else None,
         "recorded_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "results": results,
         "artifacts": artifacts,
