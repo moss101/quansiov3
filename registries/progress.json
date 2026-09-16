@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-16T10:45:00Z",
+  "updated_at": "2026-09-16T10:46:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1794,8 +1794,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-16T10:30:00Z",
-      "updated_at": "2026-09-16T10:45:00Z",
-      "git_commit": null,
+      "updated_at": "2026-09-16T10:46:00Z",
+      "git_commit": "bcc69eb2185b884afc2cb6fb513746f5b6536680",
       "tests": [
         "uv run --project python pytest tests/research (4 passed: multi-source E2E with claims resolving to digest-addressed descriptors; unsupported claims block completion; cancel/resume never refetches collected sources; the plan is a typed SearchProgram and context segments are UNTRUSTED_EXTERNAL)"
       ],
