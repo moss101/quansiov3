@@ -878,6 +878,84 @@ async fn expired_and_superseded_requests_cannot_be_granted_and_changes_supersede
     drop_pool(&f.pool, &f.name).await;
 }
 
+/// A receipt granted with sub-microsecond precision on `granted_at` still verifies
+/// after it round-trips through Postgres, which stores `TIMESTAMPTZ` at microsecond
+/// precision and silently drops anything finer. `grant_approval` signs `granted_at`
+/// (DOMAIN.md §7.3's `signing_message`) before that round-trip; if the value it signs
+/// still carries nanosecond digits the database is about to discard, the signature
+/// covers a string `verify` can never reproduce once it reloads the persisted row —
+/// this fails wherever the host clock's actual resolution is finer than a microsecond,
+/// which `Utc::now()` alone does not reliably avoid on every platform.
+#[tokio::test]
+async fn a_receipt_granted_with_sub_microsecond_precision_still_verifies_after_reload() {
+    let Some(f) = prepare("policy_subsecond_precision").await else {
+        blocked_marker();
+        return;
+    };
+    let run = started_run(&f).await;
+    let run_id = run.id.to_string();
+    let generation = run.generation;
+    let params = Digest::of(b"params-a");
+    insert_effect(
+        &f,
+        &run_id,
+        EFFECT,
+        "message.send",
+        3,
+        &params,
+        generation.get() as i64,
+    )
+    .await;
+    let record = f
+        .approvals
+        .store()
+        .create_approval_request(&request_for(
+            &run_id,
+            EFFECT,
+            &params,
+            preview(),
+            Utc::now() + Duration::seconds(600),
+        ))
+        .await
+        .expect("create request");
+
+    // A timestamp with a non-zero sub-microsecond digit, exactly what a genuinely
+    // nanosecond-resolution clock produces -- forced rather than relying on this
+    // host's own clock, so the test is deterministic everywhere.
+    let granted_at: chrono::DateTime<Utc> = "2026-09-16T20:32:01.123456789Z"
+        .parse()
+        .expect("fixed instant");
+    let signer = signer();
+    let receipt = f
+        .approvals
+        .store()
+        .grant_approval(
+            &record.id.to_string(),
+            USER,
+            generation,
+            &signer,
+            granted_at,
+        )
+        .await
+        .expect("grant");
+
+    f.approvals
+        .store()
+        .verify_and_consume_receipt(
+            &receipt.id.to_string(),
+            &DispatchBinding {
+                effect_id: EFFECT.to_string(),
+                params_digest: params,
+                generation,
+            },
+            &signer,
+            Utc::now(),
+        )
+        .await
+        .expect("a correctly granted receipt must verify after reload, not SignatureInvalid");
+    drop_pool(&f.pool, &f.name).await;
+}
+
 #[tokio::test]
 async fn escalation_forbids_always_and_the_preview_carries_the_untrusted_origin() {
     let Some(f) = prepare("policy_escalation").await else {
