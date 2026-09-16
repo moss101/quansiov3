@@ -1,0 +1,13 @@
+   Compiling quansio-qworkerd v0.1.0 (/Users/mohsin/projects/quansiov3/crates/qworkerd)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.66s
+     Running tests/browser.rs (target/debug/deps/browser-57929126b37f236c)
+
+running 4 tests
+test a_takeover_fences_agent_input_without_creating_a_second_session ... ok
+test a_click_is_classified_from_the_page_s_own_semantics_before_it_happens ... ok
+test web_fetch_is_bounded_labelled_and_digested ... ok
+test the_dom_is_read_first_and_a_screenshot_only_when_it_says_nothing ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.57s
+
+exit: 0
