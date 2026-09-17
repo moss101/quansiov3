@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-17T17:42:38Z",
+  "updated_at": "2026-09-17T17:56:34Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -385,24 +385,27 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-core008",
       "started_at": "2026-09-12T02:53:53Z",
-      "updated_at": "2026-09-12T02:53:53Z",
-      "git_commit": "4ed7dc304c979b63a893d14a79f34aa70122846f",
+      "updated_at": "2026-09-17T17:56:34Z",
+      "git_commit": "564f0da9e696c6afd10e416d3cee8f5dc38acda5",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test scheduler",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
-        "bash scripts/ci/ci.sh"
+        "bash scripts/ci/ci.sh",
+        "red/green: git stash the fix, confirm behavior without it, restore, confirm with it; cargo test --workspace 102/102 clean"
       ],
       "artifacts": [
         "evidence/CORE-008/2026-09-12T02-52-02Z/summary.json",
         "crates/server/src/scheduler/timer.rs",
         "crates/server/src/scheduler/wait.rs",
         "crates/server/tests/scheduler.rs",
-        "migrations/0004_durable_timers.sql"
+        "migrations/0004_durable_timers.sql",
+        "evidence/CORE-008/2026-09-17T17-56-34Z/summary.json",
+        "evidence/CORE-008/2026-09-17T17-56-34Z/NOTES.md"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Durable timers and a wait registry persisted in PostgreSQL (migration 0004) with exactly-once firing proven under two concurrent scheduler loops, survival across a pool drop/reconnect, fencing by generation, a typed saturated-queue error instead of silent drops, run dispatch through the canonical Run state machine, and routine due-time computation with skip/queue/catch_up_once absence policies. Integrated and re-verified by the principal agent after the delegating subagent was killed by a full disk."
+      "notes": "Durable timers and a wait registry persisted in PostgreSQL (migration 0004) with exactly-once firing proven under two concurrent scheduler loops, survival across a pool drop/reconnect, fencing by generation, a typed saturated-queue error instead of silent drops, run dispatch through the canonical Run state machine, and routine due-time computation with skip/queue/catch_up_once absence policies. Integrated and re-verified by the principal agent after the delegating subagent was killed by a full disk. TEST PRECISION FIX 2026-09-17 (evidence/CORE-008/2026-09-17T17-56-34Z/): GitHub Actions surfaced the same precision-loss class of bug RUN-006 fixed in production code, this time in the test file only. absence_policy_applies_skip_queue_and_catch_up_once computed 'missed' at full chrono nanosecond precision, seeded routines with it (persisted into a TIMESTAMPTZ column, microsecond precision, silently truncated), then asserted the scheduler's returned fire_window == missed by exact equality; scheduler/routine.rs's own tick() is correct -- it just returns what the database actually stored. Fixed by truncating 'missed' to microseconds once, before both uses. Passed on every local run this session (macOS clock already microsecond-aligned) and failed on Linux CI, same as RUN-006. Swept the workspace for the same == DateTime-after-round-trip pattern; no other occurrences. Verified red/green directly (git stash) plus a clean full cargo test --workspace (102/102)."
     },
     "CORE-009": {
       "coverage": "GENUINE_GAP",

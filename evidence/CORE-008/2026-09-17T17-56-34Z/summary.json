@@ -1,0 +1,65 @@
+{
+  "task_id": "CORE-008",
+  "git_commit": "564f0da9e696c6afd10e416d3cee8f5dc38acda5",
+  "recorded_at": "2026-09-17T17:56:34Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test scheduler",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-17T17-56-34Z/scheduler-suite.log"
+    },
+    {
+      "command": "red/green: git stash the fix, confirm behavior without it, restore, confirm with it",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-17T17-56-34Z/red-green-proof.log"
+    },
+    {
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-17T17-56-34Z/workspace-suite-tail.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-17T17-56-34Z/fmt-check.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-17T17-56-34Z/clippy.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test scheduler",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "red/green verification",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": []
+}

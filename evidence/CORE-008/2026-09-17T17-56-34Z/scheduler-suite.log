@@ -1,0 +1,19 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.52s
+     Running tests/scheduler.rs (target/debug/deps/scheduler-5b62a81410c57629)
+
+running 10 tests
+test stale_generation_timer_is_fenced_and_never_wakes_the_run ... ok
+test due_timer_fires_once_clears_the_wait_and_emits_one_event ... ok
+test resolving_wait_a_cannot_resume_run_b ... ok
+test absence_policy_applies_skip_queue_and_catch_up_once ... ok
+test scheduled_timer_registers_a_wait_and_emits_run_waiting ... ok
+test queued_run_is_offered_to_the_graph_dispatch_port ... ok
+test two_concurrent_loops_fire_a_timer_exactly_once ... ok
+test fire_reports_a_lost_claim_without_emitting ... ok
+test saturated_due_queue_returns_a_typed_error_and_drops_nothing ... ok
+test durable_timer_survives_a_pool_drop_and_still_fires_at_its_due_time ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.66s
+
+exit: 0

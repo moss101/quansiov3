@@ -1,0 +1,45 @@
+Red/green verification, performed directly (not simulated): scheduler.rs was
+reverted with `git stash push -- crates/server/tests/scheduler.rs`, rebuilt,
+and the specific test was run both without and with the fix.
+
+=== RED (scheduler.rs reverted, fix absent) ===
+$ cargo test -p quansio-server --test scheduler absence_policy_applies_skip_queue_and_catch_up_once
+
+running 1 test
+test absence_policy_applies_skip_queue_and_catch_up_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.49s
+
+Passes on this host even without the fix -- this Mac's Utc::now() happens to
+already be microsecond-aligned, the exact same reason RUN-006's bug never
+reproduced locally either. This is not a failure of the diagnosis: the real
+GitHub Actions run (Linux, genuinely nanosecond-resolution clock) already
+demonstrated the failure this fix addresses; this local run is recorded for
+completeness, not as the primary proof.
+
+=== scheduler.rs fix restored (`git stash pop`) ===
+
+=== GREEN (fix present) ===
+$ cargo test -p quansio-server --test scheduler absence_policy_applies_skip_queue_and_catch_up_once
+
+running 1 test
+test absence_policy_applies_skip_queue_and_catch_up_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.60s
+
+=== Full file, fix present ===
+$ cargo test -p quansio-server --test scheduler
+
+running 10 tests
+test queued_run_is_offered_to_the_graph_dispatch_port ... ok
+test stale_generation_timer_is_fenced_and_never_wakes_the_run ... ok
+test absence_policy_applies_skip_queue_and_catch_up_once ... ok
+test fire_reports_a_lost_claim_without_emitting ... ok
+test saturated_due_queue_returns_a_typed_error_and_drops_nothing ... ok
+test scheduled_timer_registers_a_wait_and_emits_run_waiting ... ok
+test resolving_wait_a_cannot_resume_run_b ... ok
+test two_concurrent_loops_fire_a_timer_exactly_once ... ok
+test due_timer_fires_once_clears_the_wait_and_emits_one_event ... ok
+test durable_timer_survives_a_pool_drop_and_still_fires_at_its_due_time ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.90s
