@@ -1,0 +1,59 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running tests/browser.rs (target/debug/deps/browser-57929126b37f236c)
+
+running 4 tests
+--- chrome stdout+stderr (/var/folders/_1/1xvpd9n50m97rq8_c4ylpw940000gn/T/.tmpeNTHFS) ---
+
+DevTools listening on ws://127.0.0.1:54768/devtools/browser/3ec7fd1e-569c-4cb7-83bf-ae60351cd86a
+Trying to load the allocator multiple times. This is *not* supported.
+[68188:13667929:0917/204244.068754:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68188:13667929:0917/204244.069049:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68188:13667929:0917/204244.069139:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68188:13667929:0917/204244.069214:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68188:13667929:0917/204244.069287:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68188:13667929:0917/204244.069350:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68237:13668537:0917/204244.738129:ERROR:base/apple/mach_port_rendezvous_mac.cc:256] bootstrap_look_up com.google.Chrome.MachPortRendezvousServer.68174: Unknown service name (1102)
+[68237:13668537:0917/204244.738300:ERROR:base/memory/shared_memory_switch.cc:261] No rendezvous client, terminating process (parent died?)
+
+test web_fetch_is_bounded_labelled_and_digested ... ok
+--- chrome stdout+stderr (/var/folders/_1/1xvpd9n50m97rq8_c4ylpw940000gn/T/.tmp8m2Sfs) ---
+
+DevTools listening on ws://127.0.0.1:54766/devtools/browser/4c8452e1-1477-423d-a134-5bd12672e0b5
+Trying to load the allocator multiple times. This is *not* supported.
+[68193:13667940:0917/204244.068663:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68193:13667940:0917/204244.069014:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68193:13667940:0917/204244.069080:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68193:13667940:0917/204244.069174:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68193:13667940:0917/204244.069243:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68193:13667940:0917/204244.598203:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+
+test a_takeover_fences_agent_input_without_creating_a_second_session ... ok
+--- chrome stdout+stderr (/var/folders/_1/1xvpd9n50m97rq8_c4ylpw940000gn/T/.tmpnbzl0z) ---
+
+DevTools listening on ws://127.0.0.1:54765/devtools/browser/a4e1e54d-09dc-4155-8918-a8ea4be7107c
+Trying to load the allocator multiple times. This is *not* supported.
+[68187:13667885:0917/204244.033173:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68187:13667885:0917/204244.033581:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68187:13667885:0917/204244.033657:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68187:13667885:0917/204244.033717:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68187:13667885:0917/204244.033786:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68187:13667885:0917/204244.541125:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+
+test a_click_is_classified_from_the_page_s_own_semantics_before_it_happens ... ok
+--- chrome stdout+stderr (/var/folders/_1/1xvpd9n50m97rq8_c4ylpw940000gn/T/.tmpfqYRG1) ---
+
+DevTools listening on ws://127.0.0.1:54767/devtools/browser/9447af57-8543-4e81-b254-ec554b3ef4f0
+Trying to load the allocator multiple times. This is *not* supported.
+[68189:13667928:0917/204244.068737:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68189:13667928:0917/204244.069045:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68189:13667928:0917/204244.069135:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68189:13667928:0917/204244.069222:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68189:13667928:0917/204244.069291:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68189:13667928:0917/204244.577811:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[68189:13667928:0917/204245.758693:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+
+test the_dom_is_read_first_and_a_screenshot_only_when_it_says_nothing ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.23s
+
+exit: 0

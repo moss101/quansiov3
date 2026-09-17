@@ -1,0 +1,54 @@
+{
+  "task_id": "EXEC-009",
+  "git_commit": "5c88488f9012238f4796231a178102b24c1cd056",
+  "recorded_at": "2026-09-17T17:42:38Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-qworkerd --test browser",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-09-17T17-42-38Z/browser-suite-quiet.log"
+    },
+    {
+      "command": "cargo test -p quansio-qworkerd --test browser -- --nocapture",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-09-17T17-42-38Z/browser-suite-nocapture-proof.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-09-17T17-42-38Z/fmt-check.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-09-17T17-42-38Z/clippy.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-qworkerd --test browser",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-qworkerd --test browser -- --nocapture",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": []
+}
