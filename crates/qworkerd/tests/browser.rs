@@ -39,12 +39,27 @@ struct Browser {
     child: Child,
     port: u16,
     _profile: tempfile::TempDir,
+    // Chrome's own stdout+stderr, redirected to a real file rather than a pipe (a pipe
+    // nobody reads risks Chrome blocking on a full OS buffer over a long-running
+    // session) so a CDP timeout -- like `Page.captureScreenshot` hanging -- can be
+    // diagnosed from what the browser itself said, not just "it didn't answer in
+    // time". Printed in `Drop`, unconditionally: cargo test's own harness only
+    // *displays* a test's captured output when that test fails, so this stays silent
+    // for the tests that pass and shows up for the one that doesn't -- no per-test
+    // code, no new CI upload path, the existing full-gate-log capture already covers
+    // whatever cargo test itself prints.
+    log_path: std::path::PathBuf,
 }
 
 impl Browser {
     fn launch() -> Option<Self> {
         let chrome = chrome_path()?;
         let profile = tempfile::tempdir().expect("profile dir");
+        let named_log = tempfile::NamedTempFile::new().expect("chrome log file");
+        // `.keep()` detaches the file from NamedTempFile's own delete-on-drop, since
+        // `Drop` below removes it explicitly after printing it.
+        let (log_file, log_path) = named_log.keep().expect("keep chrome log file");
+        let stderr_file = log_file.try_clone().expect("clone chrome log handle");
         // A free port, taken by binding and releasing it: the window is small and the alternative is a
         // fixed port that collides with whatever else is running.
         let port = {
@@ -79,8 +94,8 @@ impl Browser {
         }
         let child = command
             .arg("about:blank")
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
+            .stdout(log_file)
+            .stderr(stderr_file)
             .spawn()
             .ok()?;
         let deadline = Instant::now() + Duration::from_secs(25);
@@ -90,6 +105,7 @@ impl Browser {
                     child,
                     port,
                     _profile: profile,
+                    log_path,
                 });
             }
             std::thread::sleep(Duration::from_millis(200));
@@ -104,6 +120,15 @@ impl Drop for Browser {
     fn drop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
+        if let Ok(log) = std::fs::read_to_string(&self.log_path) {
+            if !log.trim().is_empty() {
+                eprintln!(
+                    "--- chrome stdout+stderr ({}) ---\n{log}",
+                    self.log_path.display()
+                );
+            }
+        }
+        let _ = std::fs::remove_file(&self.log_path);
     }
 }
 
