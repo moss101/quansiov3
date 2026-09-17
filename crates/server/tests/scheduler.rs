@@ -17,7 +17,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use chrono::{DateTime, Duration as ChronoDuration, Utc};
+use chrono::{DateTime, Duration as ChronoDuration, SubsecRound, Utc};
 use quansio_core::{CanonicalId, Prefix, UlidGenerator};
 use quansio_server::control::schema;
 use quansio_server::runtime::protocol_state::{Wait, WaitKind};
@@ -522,7 +522,14 @@ async fn absence_policy_applies_skip_queue_and_catch_up_once() {
         return;
     };
     let now = Utc::now();
-    let missed = now - ChronoDuration::minutes(3);
+    // Truncated to microseconds before it is used at all: `seed_routine` persists
+    // this same value into a TIMESTAMPTZ column (Postgres's own precision), and
+    // `tick()`'s production code correctly hands back exactly what was stored --
+    // the DB round-trip, not tick(), decides the value `fire_window` carries. An
+    // un-truncated `missed` here only ever matched that round-tripped value by
+    // coincidence of this host's own clock resolution (see RUN-006's identical fix
+    // in crates/server/src/policy/store.rs for the full mechanism).
+    let missed = (now - ChronoDuration::minutes(3)).trunc_subsecs(6);
     let skip = seed_routine(&fixture.pool, AbsencePolicy::Skip, missed).await;
     let queue = seed_routine(&fixture.pool, AbsencePolicy::Queue, missed).await;
     let catch_up = seed_routine(&fixture.pool, AbsencePolicy::CatchUpOnce, missed).await;
