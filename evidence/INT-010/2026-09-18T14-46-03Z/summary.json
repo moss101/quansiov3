@@ -1,0 +1,104 @@
+{
+  "task_id": "INT-010",
+  "git_commit": "803f2cd251dbe6ff86f3469c97d25e22928cf9f2",
+  "recorded_at": "2026-09-18T15:02:47Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/evaluation -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-18T14-46-03Z/evaluation.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/ci -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-18T14-46-03Z/ci-tests.log"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-18T14-46-03Z/repo-tests.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-18T14-46-03Z/pytest-python.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-18T14-46-03Z/lint-type.log"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-18T14-46-03Z/gates.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-18T14-46-03Z/validate.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-010/2026-09-18T14-46-03Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/evaluation -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/ci -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py && python3.12 scripts/ci/arch_check.py && python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/evaluation/__init__.py",
+      "sha256": "340669139aeacccadaa9bf59a64406e137a47f8b444c74ab6cc8a0aed7f5291a",
+      "bytes": 3955
+    }
+  ]
+}
