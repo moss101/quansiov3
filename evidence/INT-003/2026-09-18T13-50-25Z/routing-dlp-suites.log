@@ -1,0 +1,4 @@
+......sss                                                                [100%]
+=========================== short test summary info ============================
+SKIPPED [3] tests/intelligence/test_model_routing_live.py:66: BLOCKED_EXTERNAL: no live provider is configured; set the QUANSIO_TEST_* variables of any one provider (see test_model_gateway_live.py)
+6 passed, 3 skipped in 1.11s

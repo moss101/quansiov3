@@ -1,0 +1,113 @@
+{
+  "task_id": "INT-003",
+  "git_commit": "9282089582b5359abfe83cf7728c77912fe65d43",
+  "recorded_at": "2026-09-18T13:57:40Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL=https://api.z.ai/api/coding/paas/v4 QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_routing_live.py -v -rs)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-003/2026-09-18T13-50-25Z/live-routing-openai-compatible-zai.log"
+    },
+    {
+      "command": "QUANSIO_TEST_ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic QUANSIO_TEST_ANTHROPIC_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_ANTHROPIC_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_routing_live.py -v -rs)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-003/2026-09-18T13-50-25Z/live-routing-anthropic-wire-zai.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_routing.py tests/intelligence/test_model_dlp.py tests/intelligence/test_model_routing_live.py -q -rs)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-003/2026-09-18T13-50-25Z/routing-dlp-suites.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-003/2026-09-18T13-50-25Z/pytest-python.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-003/2026-09-18T13-50-25Z/lint-type.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-003/2026-09-18T13-50-25Z/validate.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-003/2026-09-18T13-50-25Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL=https://api.z.ai/api/coding/paas/v4 QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_routing_live.py -v -rs)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic QUANSIO_TEST_ANTHROPIC_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_ANTHROPIC_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_routing_live.py -v -rs)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_routing.py tests/intelligence/test_model_dlp.py tests/intelligence/test_model_routing_live.py -q -rs)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-003/2026-09-18T13-50-25Z/live-routing-openai-compatible-zai.log",
+      "sha256": "d6a1d33a49e44a0e15597dd5488cb2aaf9c75e64f08e74789afc03e396e77fde",
+      "bytes": 784
+    },
+    {
+      "path": "evidence/INT-003/2026-09-18T13-50-25Z/live-routing-anthropic-wire-zai.log",
+      "sha256": "30bd77447ef6ffdaccb27e634ac2d4209655894e5d68209e646368514049b43f",
+      "bytes": 784
+    },
+    {
+      "path": "python/intelligence/model_gateway/dlp/guard.py",
+      "sha256": "ef65e4ca7869a6de21873ad5a3f06bede8654563ec028e96f95945920068699d",
+      "bytes": 9634
+    },
+    {
+      "path": "python/tests/intelligence/test_model_routing_live.py",
+      "sha256": "535ff092a928485bfbd64dfdd59b39881e5ed270028cc3f808c6bb48616dad2e",
+      "bytes": 11445
+    },
+    {
+      "path": "python/tests/intelligence/test_model_dlp.py",
+      "sha256": "6c09b626c2551a9bc04564102a3f52b10644f25f5cfbeb9c3851e30cd9dbc3df",
+      "bytes": 6212
+    }
+  ]
+}

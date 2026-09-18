@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3/python
+configfile: pyproject.toml
+collecting ... collected 3 items
+
+tests/intelligence/test_model_routing_live.py::test_live_route_is_deterministic_and_is_the_only_model_called PASSED [ 33%]
+tests/intelligence/test_model_routing_live.py::test_live_dlp_denial_keeps_the_request_off_the_wire PASSED [ 66%]
+tests/intelligence/test_model_routing_live.py::test_live_failover_lands_on_the_live_provider_with_the_same_request PASSED [100%]
+
+============================== 3 passed in 19.09s ==============================

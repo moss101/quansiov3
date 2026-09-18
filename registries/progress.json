@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 5,
-  "updated_at": "2026-09-18T13:40:06Z",
+  "updated_at": "2026-09-18T13:57:40Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -830,30 +830,49 @@
     },
     "INT-003": {
       "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T09:46:13Z",
-      "updated_at": "2026-09-12T09:59:06Z",
-      "git_commit": "47365327f7ca8a6cf09691cce22d0127c7363a5b",
+      "updated_at": "2026-09-18T13:57:40Z",
+      "git_commit": "9282089582b5359abfe83cf7728c77912fe65d43",
       "tests": [
-        "(cd python && uv run --frozen pytest tests/intelligence/test_model_routing.py tests/intelligence/test_model_dlp.py -q) (6 tests: route determinism, no-auxiliary-call, bounded failover, DLP denial, redaction, model clearance)",
-        "(cd python && uv run --frozen pytest -q) (194 passed, 6 skipped live-provider cases)",
-        "(cd python && ruff check . && ruff format --check . && mypy intelligence)",
+        "(cd python && uv run --frozen pytest tests/intelligence/test_model_routing.py tests/intelligence/test_model_dlp.py tests/intelligence/test_model_routing_live.py -q -rs) (offline: route determinism, no-auxiliary-call, bounded failover, DLP denial, redaction, model clearance for protected classes; live: the three named tests against a real provider, BLOCKED_EXTERNAL skips without QUANSIO_TEST_*)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd python && uv run --frozen pytest -q)",
+        "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
         "bash scripts/ci/ci.sh"
       ],
       "artifacts": [
+        "evidence/INT-003/2026-09-18T13-50-25Z/summary.json",
         "evidence/INT-003/2026-09-12T09-58-52Z/summary.json",
         "python/intelligence/model_gateway/routing/policy.py",
         "python/intelligence/model_gateway/routing/selector.py",
         "python/intelligence/model_gateway/dlp/guard.py",
         "python/intelligence/model_gateway/gateway.py",
         "python/tests/intelligence/test_model_routing.py",
-        "python/tests/intelligence/test_model_dlp.py"
+        "python/tests/intelligence/test_model_dlp.py",
+        "python/tests/intelligence/test_model_routing_live.py"
       ],
-      "real_boundary_evidence": [],
+      "real_boundary_evidence": [
+        {
+          "boundary": "openai-compatible-live (Z.ai coding endpoint, GLM-5.3-Flash)",
+          "environment": "developer macOS host; routing/DLP/failover live module over the real transport (wrapped to count connections); credentials from QUANSIO_TEST_* (never recorded)",
+          "command": "QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL=https://api.z.ai/api/coding/paas/v4 QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_routing_live.py -v -rs)",
+          "artifact": "evidence/INT-003/2026-09-18T13-50-25Z/live-routing-openai-compatible-zai.log",
+          "sha256": "d6a1d33a49e44a0e15597dd5488cb2aaf9c75e64f08e74789afc03e396e77fde",
+          "recorded_at": "2026-09-18T13:57:40Z"
+        },
+        {
+          "boundary": "anthropic-wire-live (Z.ai Anthropic-compatible endpoint, not api.anthropic.com)",
+          "environment": "developer macOS host; routing/DLP/failover live module over the real transport (wrapped to count connections); credentials from QUANSIO_TEST_* (never recorded)",
+          "command": "QUANSIO_TEST_ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic QUANSIO_TEST_ANTHROPIC_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_ANTHROPIC_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_routing_live.py -v -rs)",
+          "artifact": "evidence/INT-003/2026-09-18T13-50-25Z/live-routing-anthropic-wire-zai.log",
+          "sha256": "30bd77447ef6ffdaccb27e634ac2d4209655894e5d68209e646368514049b43f",
+          "recorded_at": "2026-09-18T13:57:40Z"
+        }
+      ],
       "implementation_complete": true,
-      "blocker": "Real-boundary evidence needs live provider credentials: the task is real_boundary=true and its provider path is INT-002's live suite, which is BLOCKED_EXTERNAL for exactly the same reason. Unblock condition: provider credentials in the environment (INT-002's QUANSIO_TEST_* provider variables), after which the routing, DLP and failover suites can be run against a live provider.",
-      "notes": "Deterministic model selection, DLP and bounded failover, implemented offline and blocked only on live provider credentials for its real-boundary evidence. routing/ holds the policy (seven request classes, capability demand, cost/quality preference, bounded fallbacks) and the pure, I/O-free PolicyRouteSelector that records a rule id on every decision; dlp/ holds the data-class guard that refuses a disallowed data/provider combination before anything is transmitted and redacts secret-shaped content from what is. Acceptance 1 is proven on the real path: with INT-003's selector injected, a normal call reaches exactly one provider (the stub records one call, naming the selected model). Acceptance 2 is proven the same way: a confidential request against a public-only provider raises DLP_DENIED and the stub records zero calls, and a request carrying a secret reaches the provider with the placeholder instead. The selector deliberately does not re-litigate data clearance or output bounds: the DLP guard enforces the first before transmission and prepare() raises VALIDATION_BOUNDS for the second, so routing decides fitness for the task and the downstream authorities keep their own decisions. Recorded integration decision: INT-002's gateway keeps its proven default selector and runs the DLP guard only when one is installed, because swapping the default broke 22 of INT-002's existing assertions about rule ids and eligibility; INT-003's selector and guard are injectable through the seams INT-002 left, and wiring them as the deployment default belongs to the composition root (APP-001). An explicit route hint keeps INT-002's rule id (catalog.route_hint) because that decision is unchanged and the vocabulary is the contract a route is explained with."
+      "blocker": null,
+      "notes": "Deterministic model selection, DLP and bounded failover, implemented offline and blocked only on live provider credentials for its real-boundary evidence. routing/ holds the policy (seven request classes, capability demand, cost/quality preference, bounded fallbacks) and the pure, I/O-free PolicyRouteSelector that records a rule id on every decision; dlp/ holds the data-class guard that refuses a disallowed data/provider combination before anything is transmitted and redacts secret-shaped content from what is. Acceptance 1 is proven on the real path: with INT-003's selector injected, a normal call reaches exactly one provider (the stub records one call, naming the selected model). Acceptance 2 is proven the same way: a confidential request against a public-only provider raises DLP_DENIED and the stub records zero calls, and a request carrying a secret reaches the provider with the placeholder instead. The selector deliberately does not re-litigate data clearance or output bounds: the DLP guard enforces the first before transmission and prepare() raises VALIDATION_BOUNDS for the second, so routing decides fitness for the task and the downstream authorities keep their own decisions. Recorded integration decision: INT-002's gateway keeps its proven default selector and runs the DLP guard only when one is installed, because swapping the default broke 22 of INT-002's existing assertions about rule ids and eligibility; INT-003's selector and guard are injectable through the seams INT-002 left, and wiring them as the deployment default belongs to the composition root (APP-001). An explicit route hint keeps INT-002's rule id (catalog.route_hint) because that decision is unchanged and the vocabulary is the contract a route is explained with. 2026-09-18 (9282089) PASS: live proof on INT-002's two Z.ai boundaries \u2014 route determinism with exactly one connection to the selected provider, DLP denial with zero connections, bounded failover from a refused primary onto the live fallback with the same call_id. The boundary exposed a guard defect: dlp_eligible=false models were refused for every class although the catalog defines the flag as 'no content above the default class'; the model rule now fires only for protected classes. Evidence: evidence/INT-003/2026-09-18T13-50-25Z/."
     },
     "INT-004": {
       "coverage": "GENUINE_GAP",
