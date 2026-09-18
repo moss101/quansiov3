@@ -1,0 +1,86 @@
+{
+  "task_id": "INT-002",
+  "git_commit": "589ecb472088b913f4a59a3aac010394556b734b",
+  "recorded_at": "2026-09-18T06:52:09Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T06-37-45Z/pytest-python.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T06-37-45Z/live-suite-blocked-external.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T06-37-45Z/lint-type.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T06-37-45Z/validate.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T06-37-45Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/model_gateway/conformance/suite.py",
+      "sha256": "0bef324bab0071138719df5103852c6309fa96da13e1a835a17f366daf7711fc",
+      "bytes": 18079
+    },
+    {
+      "path": "python/intelligence/model_gateway/conformance/__init__.py",
+      "sha256": "647d6f5e5e1299f89f14079ddf9e6448cc9ead66c4da4bd8e73cf09819ec1e09",
+      "bytes": 1830
+    },
+    {
+      "path": "python/intelligence/model_gateway/conformance/stub_provider.py",
+      "sha256": "afb3707722d619dcd7df34121379624e4eaf26837094bbec1e445f38073a367f",
+      "bytes": 25794
+    },
+    {
+      "path": "python/tests/intelligence/test_model_gateway_live.py",
+      "sha256": "c58cd9af50ffad720bb5a2db85b8f946f85c389eb9a8d438139374d72d9d4d3c",
+      "bytes": 14350
+    }
+  ]
+}
