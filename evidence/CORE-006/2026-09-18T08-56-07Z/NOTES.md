@@ -100,7 +100,20 @@ transactions per fresh run, 1000 runs per variant (`repro-race-variants.log`):
   pytest 444 passed / 82 skipped (`toolchains-python.log`) — and the TypeScript workspace, the
   architecture check and the macOS bridge (`toolchains-typescript-native.log`); the `tests` gate's
   own suite is 280 passed with only `test_generated_bindings_are_current` failing on that build
-  step. The full pipeline is re-run on `main` in the primary checkout when this branch merges.
+  step. Re-run on `main` at the merge commit `90e0aee` in the primary checkout (`ci-main.log`):
+  `contract-drift` now passes, but three gates fail for two reasons, neither in the fix. (a)
+  `supply-chain` and four `tests/ci/test_supply_chain.py` cases scan the checkout's tree and find the
+  nested worktree's copy of the deliberately non-compliant fixture
+  `.claude/worktrees/…/tests/ci/fixtures/supply_chain/skills/self-promoted/skill.json`; the scan
+  does not skip `.claude/worktrees`, so any nested worktree contaminates a run from the primary
+  checkout. (b) `toolchains` (via `uv run … dossier_consistency.py`) and two `tests` cases rejected
+  this bundle's first `summary.json`, which carried a top-level `regression` key and per-command
+  `note` keys that `schemas/json/evidence-summary.schema.json` forbids — a defect of the bundle,
+  corrected in the commit that records this paragraph (the notes now live in the command strings and
+  in this file). The standalone `dossier-consistency` gate had passed because system `python3.12`
+  lacks `jsonschema` and `validate_evidence` silently skips schema validation without it.
+  The pipeline was then re-run on `main` from a detached worktree outside the checkout, where neither
+  environment effect applies: see `ci-main-external-worktree.log`.
 
 ## Status bookkeeping
 
