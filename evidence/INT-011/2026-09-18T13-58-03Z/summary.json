@@ -1,0 +1,126 @@
+{
+  "task_id": "INT-011",
+  "git_commit": "e631fb509f1ab29ea8a3e0cbc791deb6e9d3125e",
+  "recorded_at": "2026-09-18T14:06:14Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_embed_rpc.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-18T13-58-03Z/embed-rpc.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_embedding_sources.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-18T13-58-03Z/embedding-sources.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_embeddings.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-18T13-58-03Z/embeddings.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd python && uv run --frozen pytest tests/integration -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-18T13-58-03Z/integration-postgres-minio.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_server_launch_embed.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-18T13-58-03Z/server-launch-embed.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-18T13-58-03Z/pytest-python.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-18T13-58-03Z/lint-type.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-18T13-58-03Z/architecture-contract.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-18T13-58-03Z/validate.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-011/2026-09-18T13-58-03Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_embed_rpc.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_embedding_sources.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_embeddings.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd python && uv run --frozen pytest tests/integration -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_server_launch_embed.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "python/intelligence/embeddings/__init__.py",
+      "sha256": "6b8c851f2c4b24ab386b34715360aae42e9d21c41bf629e68ff5f340db6b190b",
+      "bytes": 2563
+    }
+  ]
+}
