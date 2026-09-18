@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 from .finding import Finding
+from .tree import in_nested_checkout, nested_checkout_roots
 
 try:  # Python 3.11+
     import tomllib
@@ -90,9 +91,12 @@ def declared_licenses(root: Path) -> Set[str]:
         elif isinstance(license_value, str) and license_value.strip():
             licenses.add(license_value.strip())
 
+    nested = nested_checkout_roots(root)
     for manifest in sorted(root.rglob("package.json")):
         if any(part in {".git", "node_modules", "dist", "target"} for part in manifest.parts):
             continue
+        if in_nested_checkout(manifest, nested):
+            continue  # a worktree or clone below the root is another checkout's tree
         try:
             data = json.loads(manifest.read_text())
         except json.JSONDecodeError:

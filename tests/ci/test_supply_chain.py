@@ -175,6 +175,35 @@ def test_unparseable_skill_manifest_fails_closed(tmp_path):
     assert "skill-manifest-unparsable" in _rules(findings)
 
 
+def test_nested_checkout_is_another_tree(tmp_path):
+    """A worktree or clone below the root is not scanned as this checkout's tree.
+
+    `.claude/worktrees/<name>/` is a complete checkout, negative fixtures included; before
+    this rule the gate reported that tree's `self-promoted` fixture against this one. The
+    marker is the nested `.git` entry, not the path: the same files without it are scanned.
+    """
+    unlisted = FIXTURES / "license-unlisted"
+    (tmp_path / "deny.toml").write_text((unlisted / "deny.toml").read_text())
+    (tmp_path / "Cargo.toml").write_text((ROOT / "Cargo.toml").read_text())
+    nested = tmp_path / ".claude" / "worktrees" / "other"
+    nested.mkdir(parents=True)
+    (nested / "skill.json").write_text((FIXTURES / "skills" / "self-promoted" / "skill.json").read_text())
+    (nested / "package.json").write_text(json.dumps({"name": "other", "license": "GPL-3.0-only"}))
+
+    # Without a checkout marker the same files are this tree's and are reported.
+    assert _rules(skills.scan(tmp_path)) & {"skill-self-promoted", "skill-lifecycle-incomplete"}
+    assert "GPL-3.0-only" in _details(policy.check_config(tmp_path))
+
+    (nested / ".git").write_text("gitdir: /elsewhere/.git/worktrees/other\n")  # a worktree's marker
+    assert skills.scan(tmp_path) == []
+    assert "GPL-3.0-only" not in _details(policy.check_config(tmp_path))
+
+    (nested / ".git").unlink()
+    (nested / ".git").mkdir()  # a clone's marker
+    assert skills.scan(tmp_path) == []
+    assert "GPL-3.0-only" not in _details(policy.check_config(tmp_path))
+
+
 # --- SBOM -------------------------------------------------------------------------
 def test_sbom_is_deterministic(tmp_path):
     first = sbom.generate(ROOT, tmp_path / "first.json", commit="fixture-commit")
