@@ -76,10 +76,18 @@ class VerificationMode:
     exact_deltas: bool
     exact_usage: bool
     exact_tool_args: bool
+    #: Whether the number of thinking summaries is fixed. The stub decides when it thinks; a
+    #: live reasoning model (`reasoning_content` deltas) thinks when it likes, and whether it
+    #: does is model output, not normalization behavior.
+    exact_thinking: bool
 
 
-STUB_MODE = VerificationMode(name="stub", exact_deltas=True, exact_usage=True, exact_tool_args=True)
-LIVE_MODE = VerificationMode(name="live", exact_deltas=False, exact_usage=False, exact_tool_args=False)
+STUB_MODE = VerificationMode(
+    name="stub", exact_deltas=True, exact_usage=True, exact_tool_args=True, exact_thinking=True
+)
+LIVE_MODE = VerificationMode(
+    name="live", exact_deltas=False, exact_usage=False, exact_tool_args=False, exact_thinking=False
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -208,7 +216,14 @@ def conformance_tool_schemas() -> MappingToolSchemaSource:
 
 
 def stub_catalog(base_url: str, *, catalog_path: Path | None = None) -> ModelCatalog:
-    """The repository catalog with every provider pointed at the offline stub endpoint."""
+    """The repository catalog with every provider pointed at the offline stub endpoint.
+
+    The stub serves the versioned paths (`/v1/messages`, `/v1/chat/completions`,
+    `/v1/embeddings`). First-party providers are addressed from the stub's root and version
+    the path themselves; the OpenAI-compatible provider takes an SDK-style base URL that
+    already carries the version segment, so it is pointed at `<stub>/v1`, exactly as a
+    deployment points it at `http://127.0.0.1:11434/v1`.
+    """
     path = catalog_path if catalog_path is not None else default_catalog_path()
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
@@ -217,9 +232,15 @@ def stub_catalog(base_url: str, *, catalog_path: Path | None = None) -> ModelCat
         entry.pop("base_url_env", None)
         entry.pop("credential_handle", None)
         entry.pop("credential_handle_env", None)
-        entry["base_url"] = base_url
+        entry["base_url"] = stub_base_url_for_kind(base_url, ProviderKind(str(entry.get("kind"))))
         entry["credential_handle"] = CONFORMANCE_CREDENTIAL_HANDLE
     return ModelCatalog.from_mapping(data, source=f"{path} (conformance stub)")
+
+
+def stub_base_url_for_kind(stub_root: str, kind: ProviderKind) -> str:
+    """The base URL a provider of `kind` needs to reach the stub's versioned paths."""
+    root = stub_root.rstrip("/")
+    return f"{root}/v1" if kind is ProviderKind.OPENAI_COMPATIBLE else root
 
 
 def credential_environ(value: str = CONFORMANCE_CREDENTIAL_VALUE) -> dict[str, str]:
@@ -408,10 +429,11 @@ def _verify_content(
         assert tool_calls[0].tool_call_id
         if mode.exact_tool_args:
             assert tool_calls[0].tool_args_json == CONFORMANCE_TOOL_ARGS
-    assert (
-        len(report.of_kind(intelligence_pb2.ModelEvent.KIND_THINKING_SUMMARY))
-        == expectation.thinking_summaries
-    )
+    if mode.exact_thinking:
+        assert (
+            len(report.of_kind(intelligence_pb2.ModelEvent.KIND_THINKING_SUMMARY))
+            == expectation.thinking_summaries
+        )
     usage = report.of_kind(intelligence_pb2.ModelEvent.KIND_USAGE)[0].usage
     if mode.exact_usage:
         if expectation.input_tokens is not None:

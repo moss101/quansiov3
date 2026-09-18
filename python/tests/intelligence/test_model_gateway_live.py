@@ -11,9 +11,10 @@ Environment variables this module reads (only these, and never logs their values
   * `QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL`, `QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY` and
     `QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID` — live conformance of the generic adapter against
     any endpoint speaking the OpenAI chat-completions wire format with streaming and tool
-    calling (vLLM, llama.cpp, Ollama, LM Studio, TGI, or a hosted service). The base URL is the
-    endpoint root without a version segment (`http://127.0.0.1:11434`, not `.../v1`). The
-    model id is the name that endpoint serves, because a self-hosted model's name is
+    calling (vLLM, llama.cpp, Ollama, LM Studio, TGI, or a hosted service such as Z.ai). The
+    base URL is SDK-style and includes the service's version segment
+    (`http://127.0.0.1:11434/v1`, `https://api.z.ai/api/paas/v4`), and `/chat/completions` is
+    served under it. The model id is the name that endpoint serves, because a self-hosted model's name is
     deployment data like its base URL; the catalog entry's capabilities and policy still come
     from `config/models.yaml`. An endpoint that does not authenticate still needs a non-empty
     placeholder key, since the gateway fails closed without a materialized credential.
@@ -46,6 +47,7 @@ from intelligence.model_gateway.conformance import (
     catalog_with_wire_model_id,
     conformance_tool_schemas,
     run_scenario,
+    stub_base_url_for_kind,
 )
 from intelligence.model_gateway.credentials import env_var_for_handle
 from intelligence.model_gateway.errors import GatewayError
@@ -236,7 +238,7 @@ def test_openai_compatible_boundary_is_built_only_from_its_test_variables() -> N
     variables and secret handle, without touching `config/models.yaml` or the process environment.
     """
     environ = {
-        OPENAI_COMPATIBLE_BASE_URL_VARIABLE: "http://127.0.0.1:11434/",
+        OPENAI_COMPATIBLE_BASE_URL_VARIABLE: "http://127.0.0.1:11434/v1/",
         OPENAI_COMPATIBLE_API_KEY_VARIABLE: "not-a-credential",
         OPENAI_COMPATIBLE_MODEL_ID_VARIABLE: "served-model-name",
     }
@@ -252,7 +254,7 @@ def test_openai_compatible_boundary_is_built_only_from_its_test_variables() -> N
         committed.cost_class,
         committed.dlp_eligible,
     )
-    assert provider.resolve_base_url(boundary.environ) == "http://127.0.0.1:11434"
+    assert provider.resolve_base_url(boundary.environ) == "http://127.0.0.1:11434/v1"
     assert provider.resolve_credential_handle(boundary.environ) == OPENAI_COMPATIBLE_CREDENTIAL_HANDLE
     prepared = (
         boundary.gateway()
@@ -284,7 +286,9 @@ def test_openai_compatible_live_wiring_reaches_the_endpoint_the_variables_name()
         boundary = live_boundary(
             ProviderKind.OPENAI_COMPATIBLE,
             {
-                OPENAI_COMPATIBLE_BASE_URL_VARIABLE: stub.base_url,
+                OPENAI_COMPATIBLE_BASE_URL_VARIABLE: stub_base_url_for_kind(
+                    stub.base_url, ProviderKind.OPENAI_COMPATIBLE
+                ),
                 OPENAI_COMPATIBLE_API_KEY_VARIABLE: "not-a-credential",
                 OPENAI_COMPATIBLE_MODEL_ID_VARIABLE: "served-model-name",
             },

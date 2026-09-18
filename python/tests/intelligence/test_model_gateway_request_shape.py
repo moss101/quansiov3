@@ -132,7 +132,8 @@ def test_cache_hints_mark_a_leading_stable_prefix(gateway: ModelGateway, kind_va
         # OpenAI caches automatically and exposes no request-side flag: order only.
         assert "cache_control" not in json.dumps(body)
         roles = [message["role"] for message in body["messages"]]
-        assert roles == ["system", "developer", "user"]
+        operator_role = "developer" if prepared.provider_kind is ProviderKind.OPENAI else "system"
+        assert roles == ["system", operator_role, "user"]
 
 
 @pytest.mark.parametrize("kind_value", KIND_IDS)
@@ -181,10 +182,18 @@ def test_operator_instructions_use_the_provider_operator_channel(
     if prepared.provider_kind is ProviderKind.ANTHROPIC:
         system_text = json.dumps(body["system"], sort_keys=True)
         assert operator_text in system_text
-    else:
+    elif prepared.provider_kind is ProviderKind.OPENAI:
         developer = [message for message in body["messages"] if message.get("role") == "developer"]
         assert len(developer) == 1
         assert operator_text in developer[0]["content"]
+    else:
+        # The shared dialect has no `developer` role: the operator channel is a `system`
+        # message of its own, after the system prompt and never merged into it.
+        assert "developer" not in [message.get("role") for message in body["messages"]]
+        system_messages = [message for message in body["messages"] if message.get("role") == "system"]
+        assert len(system_messages) == 2
+        assert operator_text not in system_messages[0]["content"]
+        assert operator_text in system_messages[1]["content"]
 
 
 @pytest.mark.parametrize("kind_value", KIND_IDS)

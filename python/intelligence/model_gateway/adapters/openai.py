@@ -14,7 +14,8 @@ Channel mapping (DOMAIN.md §11.1):
 * OpenAI performs prompt caching automatically and exposes no request-side cache flag, so the
   cache hint only orders content (stable prefix first); no cache parameter is invented.
 * `max_completion_tokens` is the current chat-completions field; the OpenAI-compatible adapter
-  overrides it for older self-hosted servers.
+  overrides it for older self-hosted servers, as it does the `developer` role and the
+  versioned wire path, which are OpenAI's own rather than the shared dialect.
 """
 
 from __future__ import annotations
@@ -48,8 +49,6 @@ from intelligence.model_gateway.credentials import SecretValue
 from intelligence.model_gateway.errors import GatewayError, GatewayErrorCode
 from intelligence.model_gateway.events import EventFactory, UsageTotals
 
-CHAT_COMPLETIONS_PATH = "/v1/chat/completions"
-
 _FINISH_REASONS: dict[str, int] = {
     "stop": intelligence_pb2.MODEL_STOP_REASON_END_TURN,
     "tool_calls": intelligence_pb2.MODEL_STOP_REASON_TOOL_USE,
@@ -74,6 +73,10 @@ class OpenAIAdapter:
     kind = ProviderKind.OPENAI
 
     # Family switches; the OpenAI-compatible adapter narrows them for self-hosted servers.
+    # The first-party endpoint is addressed from its root, so the path carries the version.
+    CHAT_COMPLETIONS_PATH = "/v1/chat/completions"
+    # The operator channel: OpenAI's `developer` role; the shared dialect only has `system`.
+    OPERATOR_WIRE_ROLE = "developer"
     MAX_TOKENS_FIELD = "max_completion_tokens"
     SEND_STREAM_OPTIONS = True
     SEND_PARALLEL_TOOL_CALLS = True
@@ -136,7 +139,7 @@ class OpenAIAdapter:
             provider=context.route.provider.name,
             provider_kind=self.kind,
             model_catalog_id=model.id,
-            url=f"{context.base_url}{CHAT_COMPLETIONS_PATH}",
+            url=f"{context.base_url}{self.CHAT_COMPLETIONS_PATH}",
             headers=headers,
             body=payload,
             timeout_seconds=max(call.timeout_ms / 1000.0, 0.001),
@@ -152,7 +155,7 @@ class OpenAIAdapter:
             if message.role == SYSTEM_ROLE:
                 messages.append({"role": "system", "content": message.content.text()})
             elif message.role == OPERATOR_ROLE:
-                messages.append({"role": "developer", "content": message.content.text()})
+                messages.append({"role": self.OPERATOR_WIRE_ROLE, "content": message.content.text()})
             elif message.role == TOOL_ROLE:
                 messages.append(
                     {

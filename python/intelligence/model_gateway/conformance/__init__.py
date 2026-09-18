@@ -36,6 +36,7 @@ from intelligence.model_gateway.conformance.suite import (
     conformance_tool_schemas,
     credential_environ,
     run_scenario,
+    stub_base_url_for_kind,
     stub_catalog,
     verify,
 )
@@ -67,6 +68,7 @@ __all__ = [
     "conformance_tool_schemas",
     "credential_environ",
     "run_scenario",
+    "stub_base_url_for_kind",
     "stub_catalog",
     "verify",
 ]
