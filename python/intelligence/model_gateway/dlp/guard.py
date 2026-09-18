@@ -6,8 +6,11 @@ request that is actually transmitted, and every decision names its rule id.
 
 Two levels are checked, because they fail for different reasons:
 
-* the **model** (`ModelSpec.dlp_eligible`) — this deployment's model-level clearance, already part
-  of route eligibility; and
+* the **model** (`ModelSpec.dlp_eligible`) — this deployment's model-level clearance for
+  *protected* content: `config/models.yaml` defines the flag as whether the model may receive
+  content classified above the default data-handling class, so a model with `dlp_eligible: false`
+  (a self-hosted route, typically) still serves public and default-class content and is refused
+  only for the classes above the policy's default; and
 * the **provider** (`DlpPolicy.allowed_by_provider`) — which data classes are contractually
   allowed to leave for that provider at all.
 
@@ -85,6 +88,10 @@ class DlpPolicy:
         if not profile:
             return self.default_data_class
         return self.data_class_by_profile.get(profile, self.default_data_class)
+
+    def is_protected(self, data_class: DataClass) -> bool:
+        """True for a class above the default data-handling class (the catalog's `dlp_eligible` line)."""
+        return DATA_CLASSES.index(data_class.value) > DATA_CLASSES.index(self.default_data_class.value)
 
     @classmethod
     def from_catalog(cls, catalog: object, *, allowed: frozenset[DataClass] | None = None) -> DlpPolicy:
@@ -170,7 +177,7 @@ class DlpGuard:
             for rule in self._policy.redactions
             if any(rule.pattern.search(_message_text(message)) for message in request.messages)
         )
-        if not model.dlp_eligible:
+        if not model.dlp_eligible and self._policy.is_protected(data_class):
             raise GatewayError(
                 GatewayErrorCode.DLP_DENIED,
                 f"model '{model.id}' is not cleared for {data_class} content (rule {RULE_MODEL_CLEARANCE})",
