@@ -81,6 +81,12 @@
       "exit_code": 1,
       "result": "FAIL",
       "log": "evidence/CORE-006/2026-09-18T08-56-07Z/ci-main.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # on main at b548372 from a detached worktree outside the checkout: 11/11 gates PASS (Rust 102 suites/589 passed, Python 444 passed/82 skipped, tests 281 passed)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-006/2026-09-18T08-56-07Z/ci-main-external-worktree.log"
     }
   ],
   "results": [
@@ -153,6 +159,11 @@
       "command": "bash scripts/ci/ci.sh  # on main at 90e0aee in the primary checkout: FAIL -- supply-chain/tests scanned the nested worktree's deliberately-bad fixture under .claude/worktrees/, and toolchains/tests rejected this summary's extra 'note'/'regression' keys (fixed by the commit that records this line)",
       "exit_code": 1,
       "result": "FAIL"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh  # on main at b548372 from a detached worktree outside the checkout: 11/11 gates PASS (Rust 102 suites/589 passed, Python 444 passed/82 skipped, tests 281 passed)",
+      "exit_code": 0,
+      "result": "PASS"
     }
   ],
   "artifacts": [
@@ -203,8 +214,8 @@
     },
     {
       "path": "evidence/CORE-006/2026-09-18T08-56-07Z/NOTES.md",
-      "sha256": "b6b9233cc861eb379e49056f082040660eecbb49faa37bc9ddfcb0a79224b92e",
-      "bytes": 9707
+      "sha256": "7022ff2503415f7fb2f408715b946d2879e7951f8afdc886142b89c6e4841fff",
+      "bytes": 9920
     },
     {
       "path": "evidence/CORE-006/2026-09-18T08-56-07Z/repro_protocol_state_race.py",
@@ -255,6 +266,11 @@
       "path": "evidence/CORE-006/2026-09-18T08-56-07Z/ci-main.log",
       "sha256": "fe8c6ec9238815edf0b1c6f55942b9a6b74965bbca3d61518fd5aaf1eefc1e0d",
       "bytes": 1057
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/ci-main-external-worktree.log",
+      "sha256": "4b348a204a523631eb37ed2b554f7fe5e9485f13d321f7197d7d4132eb86467f",
+      "bytes": 1189
     }
   ]
 }

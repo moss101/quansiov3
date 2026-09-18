@@ -113,7 +113,9 @@ transactions per fresh run, 1000 runs per variant (`repro-race-variants.log`):
   in this file). The standalone `dossier-consistency` gate had passed because system `python3.12`
   lacks `jsonschema` and `validate_evidence` silently skips schema validation without it.
   The pipeline was then re-run on `main` from a detached worktree outside the checkout, where neither
-  environment effect applies: see `ci-main-external-worktree.log`.
+  environment effect applies, at `b548372` (the merge plus the summary correction): all eleven gates PASS —
+  Rust 102 suites / 589 passed / 0 failed, Python 444 passed / 82 skipped, TypeScript and the macOS
+  bridge green, `tests` 281 passed (`ci-main-external-worktree.log`).
 
 ## Status bookkeeping
 

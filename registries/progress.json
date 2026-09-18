@@ -1,7 +1,7 @@
 {
   "version": "8.1",
-  "revision": 4,
-  "updated_at": "2026-09-18T09:35:24Z",
+  "revision": 5,
+  "updated_at": "2026-09-18T09:52:16Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -339,7 +339,7 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T01:14:33Z",
-      "updated_at": "2026-09-18T09:35:24Z",
+      "updated_at": "2026-09-18T09:52:16Z",
       "git_commit": "90e0aeecb32398c1161d9f6aa5c16b74f5b16e7a",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test protocol_state",
@@ -348,7 +348,8 @@
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test protocol_state (8 tests; the two concurrency regression tests fail on the previous store, see evidence)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test turn_loop (x25, 12 tests each)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace (x2: 102 suites, 589 passed, 0 failed)",
-        "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings"
+        "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings",
+        "bash scripts/ci/ci.sh on main at b548372 from an external detached worktree (11/11 gates PASS)"
       ],
       "artifacts": [
         "evidence/CORE-006/2026-09-12T01-28-12Z/summary.json",
@@ -716,7 +717,7 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T05:44:48Z",
-      "updated_at": "2026-09-18T09:35:24Z",
+      "updated_at": "2026-09-18T09:52:16Z",
       "git_commit": "90e0aeecb32398c1161d9f6aa5c16b74f5b16e7a",
       "tests": [
         "bash scripts/ci/ci.sh (all eleven baseline gates PASS)",
@@ -730,7 +731,8 @@
         "python3 scripts/validate_v81.py && python3.12 scripts/ci/arch_check.py",
         "cargo test --workspace (regression run after the ON CONFLICT fix: 102 suites, 0 failures)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test turn_loop (x25 after the CORE-006 protocol-state fix, 12 tests each)",
-        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace (x2 after the CORE-006 protocol-state fix: 102 suites, 589 passed, 0 failed)"
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace (x2 after the CORE-006 protocol-state fix: 102 suites, 589 passed, 0 failed)",
+        "bash scripts/ci/ci.sh on main at b548372 from an external detached worktree (11/11 gates PASS)"
       ],
       "artifacts": [
         "evidence/RUN-011/2026-09-12T06-58-44Z/summary.json",
