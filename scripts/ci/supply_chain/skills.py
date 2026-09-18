@@ -41,6 +41,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from .finding import Finding
+from .tree import in_nested_checkout, nested_checkout_roots
 
 try:  # Python 3.11+
     import tomllib
@@ -167,11 +168,14 @@ def is_manifest(path: Path, root: Path) -> bool:
 
 
 def _walk(root: Path) -> Iterable[Path]:
+    nested = nested_checkout_roots(root)
     for path in sorted(root.rglob("*")):
         if not path.is_file():
             continue
         if any(part in EXCLUDED_DIR_SEGMENTS for part in path.parts):
             continue
+        if in_nested_checkout(path, nested):
+            continue  # a worktree or clone below the root is another checkout's tree
         relative_parts = path.relative_to(root).parts if root in path.parents else ()
         if relative_parts and relative_parts[0] in TOP_LEVEL_EXCLUDED_DIRS:
             continue
