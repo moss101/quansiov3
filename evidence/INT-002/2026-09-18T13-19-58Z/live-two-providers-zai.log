@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3/python
+configfile: pyproject.toml
+collecting ... collected 17 items
+
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[text-anthropic] PASSED [  5%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[text-openai] SKIPPED [ 11%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[text-openai_compatible] PASSED [ 17%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[tool_call-anthropic] PASSED [ 23%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[tool_call-openai] SKIPPED [ 29%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[tool_call-openai_compatible] PASSED [ 35%]
+tests/intelligence/test_model_gateway_live.py::test_at_least_two_live_providers_pass_the_same_suite PASSED [ 41%]
+tests/intelligence/test_model_gateway_live.py::test_live_request_shape_is_compaction_free_and_operator_channelled[anthropic] PASSED [ 47%]
+tests/intelligence/test_model_gateway_live.py::test_live_request_shape_is_compaction_free_and_operator_channelled[openai] SKIPPED [ 52%]
+tests/intelligence/test_model_gateway_live.py::test_live_request_shape_is_compaction_free_and_operator_channelled[openai_compatible] PASSED [ 58%]
+tests/intelligence/test_model_gateway_live.py::test_live_gateway_fails_closed_without_a_credential[anthropic] PASSED [ 64%]
+tests/intelligence/test_model_gateway_live.py::test_live_gateway_fails_closed_without_a_credential[openai] PASSED [ 70%]
+tests/intelligence/test_model_gateway_live.py::test_live_gateway_fails_closed_without_a_credential[openai_compatible] PASSED [ 76%]
+tests/intelligence/test_model_gateway_live.py::test_openai_compatible_boundary_is_built_only_from_its_test_variables PASSED [ 82%]
+tests/intelligence/test_model_gateway_live.py::test_first_party_boundary_runs_as_committed_unless_overridden[anthropic] PASSED [ 88%]
+tests/intelligence/test_model_gateway_live.py::test_first_party_boundary_runs_as_committed_unless_overridden[openai] PASSED [ 94%]
+tests/intelligence/test_model_gateway_live.py::test_openai_compatible_live_wiring_reaches_the_endpoint_the_variables_name PASSED [100%]
+
+=========================== short test summary info ============================
+SKIPPED [3] tests/intelligence/test_model_gateway_live.py:160: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY is not set; live openai conformance requires it
+======================== 14 passed, 3 skipped in 52.04s ========================

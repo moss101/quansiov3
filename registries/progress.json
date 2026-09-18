@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 5,
-  "updated_at": "2026-09-18T09:52:16Z",
+  "updated_at": "2026-09-18T13:40:06Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -782,11 +782,11 @@
     },
     "INT-002": {
       "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
+      "status": "PASS",
       "claimed_by": "agent:subagent-int002",
       "started_at": "2026-09-12T03:52:23Z",
-      "updated_at": "2026-09-18T08:30:57Z",
-      "git_commit": "344527480433bb131f575762dbc9526debbb245f",
+      "updated_at": "2026-09-18T13:40:06Z",
+      "git_commit": "376d614026a738394a3bf81b7310a30be952e69a",
       "tests": [
         "(cd python && uv run --frozen pytest -q)",
         "(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)",
@@ -795,6 +795,7 @@
       ],
       "artifacts": [
         "evidence/INT-002/2026-09-12T03-49-40Z/summary.json",
+        "evidence/INT-002/2026-09-18T13-19-58Z/summary.json",
         "evidence/INT-002/2026-09-18T08-19-07Z/summary.json",
         "evidence/INT-002/2026-09-18T06-37-45Z/summary.json",
         "python/intelligence/model_gateway/gateway.py",
@@ -813,11 +814,19 @@
           "artifact": "evidence/INT-002/2026-09-18T08-19-07Z/live-openai-compatible-zai.log",
           "sha256": "d97e4854a6d06684a9665e736a0e7cc979b23cb717bd2db56d1b4c307b0623d2",
           "recorded_at": "2026-09-18T08:30:57Z"
+        },
+        {
+          "boundary": "anthropic-wire-live (Z.ai Anthropic-compatible endpoint, not api.anthropic.com)",
+          "environment": "developer macOS host; https://api.z.ai/api/anthropic, wire model GLM-5.3-Flash; credential from QUANSIO_TEST_ANTHROPIC_API_KEY (never recorded); run together with the openai-compatible boundary so the acceptance test executed",
+          "command": "QUANSIO_TEST_ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic QUANSIO_TEST_ANTHROPIC_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_ANTHROPIC_API_KEY=<secret custody> QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL=https://api.z.ai/api/coding/paas/v4 QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -v -rs)",
+          "artifact": "evidence/INT-002/2026-09-18T13-19-58Z/live-two-providers-zai.log",
+          "sha256": "2afea3ae643df3d49c7c073490c72ce2f00376e975cf4e9a333257ca0524c5dd",
+          "recorded_at": "2026-09-18T13:40:06Z"
         }
       ],
       "implementation_complete": true,
-      "blocker": "One of the two live providers DOSSIER.md \u00a72.1 requires has passed: the OpenAI-compatible adapter against Z.ai GLM-5.3-Flash (real_boundary_evidence). The second adapter has not: QUANSIO_TEST_ANTHROPIC_API_KEY and QUANSIO_TEST_OPENAI_API_KEY are both unset, so test_at_least_two_live_providers_pass_the_same_suite skips BLOCKED_EXTERNAL (1 of 3 configured). Unblock: set either variable (with egress to that provider) alongside the three QUANSIO_TEST_OPENAI_COMPATIBLE_* variables, run '(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)' \u2014 the acceptance test must pass, not skip \u2014 and record that run as a second real_boundary_evidence object.",
-      "notes": "Implementation complete and verified offline: three adapters (Anthropic primary, OpenAI, OpenAI-compatible) normalized to the DOMAIN \u00a711.1 stream through one EventFactory (exactly one usage/stop/terminal outcome per call), cancellable streaming that interrupts a silent provider, strict tool schemas, operator-channel instructions, multimodal mapping with capability checks from config/models.yaml only, provider-side compaction/context-editing rejected on the prepared bytes, and credential custody proven by a canary secret-leak scan. The deterministic stub proves wire-level behaviour for all three adapters and is explicitly NOT real-boundary evidence; the live suite reports BLOCKED_EXTERNAL with the missing variable named (6 skipped). One earlier pipeline run in an evidence bundle at 03-45-20Z failed only in the tests gate because a parallel worktree was building against the shared dev stack; the immediate re-run passed every gate and this bundle records the passing run. 2026-09-18 (589ecb4): the live suite covered only Anthropic and OpenAI although the acceptance and DOSSIER.md \u00a72.1 require any two of the three adapters; it now has a live boundary for the OpenAI-compatible adapter (QUANSIO_TEST_OPENAI_COMPATIBLE_*), an acceptance test that counts fully passing live providers against LIVE_PROVIDERS_REQUIRED=2 and skips BLOCKED_EXTERNAL naming every unconfigured provider below that, and offline wiring proof through the OpenAI-format stub (explicitly not real-boundary evidence). No product code path changed. Evidence: evidence/INT-002/2026-09-18T06-37-45Z/ (NOTES.md explains two dev-stack-availability CI failures of the same commit before the recorded PASS). 2026-09-18 (3445274): first live real-boundary run. The generic adapter could not reach a hosted OpenAI-compatible service until two of its own conventions were narrowed for the compatible profile (SDK-style base URL including the service's version segment with relative /chat/completions and /embeddings paths; operator channel as a second system message instead of OpenAI's developer role) and the live verifier stopped fixing the thinking-summary count, which no reasoning model can meet. With those, the OpenAI-compatible adapter passes every live case against Z.ai GLM-5.3-Flash (text -> END_TURN; tool_call -> exactly one fs.read {\"value\":\"42\"} with TOOL_USE; usage and prompt-cache reads normalized), repeatably. Evidence: evidence/INT-002/2026-09-18T08-19-07Z/."
+      "blocker": null,
+      "notes": "Implementation complete and verified offline: three adapters (Anthropic primary, OpenAI, OpenAI-compatible) normalized to the DOMAIN \u00a711.1 stream through one EventFactory (exactly one usage/stop/terminal outcome per call), cancellable streaming that interrupts a silent provider, strict tool schemas, operator-channel instructions, multimodal mapping with capability checks from config/models.yaml only, provider-side compaction/context-editing rejected on the prepared bytes, and credential custody proven by a canary secret-leak scan. The deterministic stub proves wire-level behaviour for all three adapters and is explicitly NOT real-boundary evidence; the live suite reports BLOCKED_EXTERNAL with the missing variable named (6 skipped). One earlier pipeline run in an evidence bundle at 03-45-20Z failed only in the tests gate because a parallel worktree was building against the shared dev stack; the immediate re-run passed every gate and this bundle records the passing run. 2026-09-18 (589ecb4): the live suite covered only Anthropic and OpenAI although the acceptance and DOSSIER.md \u00a72.1 require any two of the three adapters; it now has a live boundary for the OpenAI-compatible adapter (QUANSIO_TEST_OPENAI_COMPATIBLE_*), an acceptance test that counts fully passing live providers against LIVE_PROVIDERS_REQUIRED=2 and skips BLOCKED_EXTERNAL naming every unconfigured provider below that, and offline wiring proof through the OpenAI-format stub (explicitly not real-boundary evidence). No product code path changed. Evidence: evidence/INT-002/2026-09-18T06-37-45Z/ (NOTES.md explains two dev-stack-availability CI failures of the same commit before the recorded PASS). 2026-09-18 (3445274): first live real-boundary run. The generic adapter could not reach a hosted OpenAI-compatible service until two of its own conventions were narrowed for the compatible profile (SDK-style base URL including the service's version segment with relative /chat/completions and /embeddings paths; operator channel as a second system message instead of OpenAI's developer role) and the live verifier stopped fixing the thinking-summary count, which no reasoning model can meet. With those, the OpenAI-compatible adapter passes every live case against Z.ai GLM-5.3-Flash (text -> END_TURN; tool_call -> exactly one fs.read {\"value\":\"42\"} with TOOL_USE; usage and prompt-cache reads normalized), repeatably. Evidence: evidence/INT-002/2026-09-18T08-19-07Z/. 2026-09-18 (376d614) PASS: second live adapter. The product owner chose Z.ai's Anthropic-compatible endpoint (https://api.z.ai/api/anthropic, GLM-5.3-Flash) as the Anthropic adapter's live boundary via the new optional QUANSIO_TEST_ANTHROPIC_BASE_URL/_MODEL_ID overrides; with both boundaries configured the acceptance test test_at_least_two_live_providers_pass_the_same_suite ran and passed (14 passed, 3 skipped = first-party OpenAI only). This proves the Anthropic wire format against a real server with the request shape unchanged, not api.anthropic.com itself; the evidence names the endpoint, and a run with QUANSIO_TEST_ANTHROPIC_API_KEY alone is the drop-in upgrade. Baseline CI recorded at 6913a23 (carries the OPS-007 nested-checkout fix the run needed). Evidence: evidence/INT-002/2026-09-18T13-19-58Z/."
     },
     "INT-003": {
       "coverage": "GENUINE_GAP",
@@ -2146,8 +2155,8 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-ops007",
       "started_at": "2026-09-12T01:34:38Z",
-      "updated_at": "2026-09-16T18:43:39Z",
-      "git_commit": "e031b8a82777474dcf02431719ec8f9d77ed8275",
+      "updated_at": "2026-09-18T13:40:06Z",
+      "git_commit": "6913a237732d78df5be3b28d2c3512d27209d7c3",
       "tests": [
         "uv run --project python python scripts/ci/supply_chain/check.py",
         "uv run --project python python -m pytest tests/ci/test_supply_chain.py -q",
@@ -2155,6 +2164,7 @@
         "python3 scripts/validate_v81.py"
       ],
       "artifacts": [
+        "evidence/OPS-007/2026-09-18T13-37-50Z/summary.json",
         "evidence/OPS-007/2026-09-12T01-32-36Z/summary.json",
         "evidence/OPS-007/2026-09-16T18-43-39Z/summary.json",
         "evidence/OPS-007/2026-09-16T18-43-39Z/NOTES.md",
@@ -2166,7 +2176,7 @@
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Offline supply-chain gate: lockfile pinning (Rust/pnpm/uv), deny.toml completeness and licence allow-list, deterministic CycloneDX SBOM with drift verification, a real RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill/pack quarantine lifecycle checks. cargo-deny is optional and reports an explicit informational result when absent, so the gate never silently passes and never requires network. Wired into scripts/ci/ci_summary.py so ci.sh and the GitHub workflow both run it. REGRESSION FOUND AND FIXED 2026-09-16 (evidence/OPS-007/2026-09-16T18-43-39Z/): the quarantine-scan directory walk excluded any path segment literally named 'artifacts' anywhere in the tree (meant to skip the repo's own top-level artifacts/ci/), which silently exempted packs/capabilities/artifacts/ and packs/skills/artifacts/ from the scan -- a fail-open on a real shipped package, not a cosmetic miss. Once narrowed to the top-level directory only, the now-actually-scanned tree also surfaced that CAP-006/CAP-007's 14 built-in pack/skill manifests (shipped 2026-09-15, after this task) never carried the quarantine lifecycle this gate requires -- 4 tests were failing on main (tests/ci/test_supply_chain.py) until this fix. See NOTES.md for the full design rationale (why the lifecycle record lives in a meta.yaml sidecar for skills rather than skill.yaml, which SkillManifest's closed vocabulary must never carry it)."
+      "notes": "Offline supply-chain gate: lockfile pinning (Rust/pnpm/uv), deny.toml completeness and licence allow-list, deterministic CycloneDX SBOM with drift verification, a real RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill/pack quarantine lifecycle checks. cargo-deny is optional and reports an explicit informational result when absent, so the gate never silently passes and never requires network. Wired into scripts/ci/ci_summary.py so ci.sh and the GitHub workflow both run it. REGRESSION FOUND AND FIXED 2026-09-16 (evidence/OPS-007/2026-09-16T18-43-39Z/): the quarantine-scan directory walk excluded any path segment literally named 'artifacts' anywhere in the tree (meant to skip the repo's own top-level artifacts/ci/), which silently exempted packs/capabilities/artifacts/ and packs/skills/artifacts/ from the scan -- a fail-open on a real shipped package, not a cosmetic miss. Once narrowed to the top-level directory only, the now-actually-scanned tree also surfaced that CAP-006/CAP-007's 14 built-in pack/skill manifests (shipped 2026-09-15, after this task) never carried the quarantine lifecycle this gate requires -- 4 tests were failing on main (tests/ci/test_supply_chain.py) until this fix. See NOTES.md for the full design rationale (why the lifecycle record lives in a meta.yaml sidecar for skills rather than skill.yaml, which SkillManifest's closed vocabulary must never carry it). 2026-09-18 regression (fixed same day, fix/OPS-007-nested-checkouts merged as 6913a23): tests/ci/test_supply_chain.py::test_real_repository_passes_the_gate and the three real-tree tests beside it failed at 376d614 when a concurrent session created .claude/worktrees/<name>/; the skill-lifecycle and package.json licence walks descended into the nested checkout and reported its negative fixtures as this tree's. No commit exposed it. Both scanners now stop at any directory carrying its own .git entry (scripts/ci/supply_chain/tree.py); test_nested_checkout_is_another_tree covers worktree and clone markers for both walks. Evidence: evidence/OPS-007/2026-09-18T13-37-50Z/."
     },
     "OPS-008": {
       "coverage": "GENUINE_GAP",

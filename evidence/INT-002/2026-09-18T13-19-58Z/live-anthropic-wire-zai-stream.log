@@ -1,0 +1,15 @@
+boundary: anthropic (wire format) | endpoint: https://api.z.ai/api/anthropic
+wire model id: GLM-5.3-Flash | catalog model: anthropic-sonnet
+
+== scenario text ==
+event kinds (ordered, collapsed): KIND_CALL_STARTED KIND_THINKING_SUMMARY KIND_DELTA KIND_USAGE KIND_STOP KIND_CALL_COMPLETED | counts: {'KIND_CALL_STARTED': 1, 'KIND_THINKING_SUMMARY': 1, 'KIND_DELTA': 9, 'KIND_USAGE': 1, 'KIND_STOP': 1, 'KIND_CALL_COMPLETED': 1}
+stop reason: MODEL_STOP_REASON_END_TURN | terminal: True | cancelled: False
+usage: input=45 output=58 cache_read=0 cache_write=0
+text: 'Hello! How can I help you today?'
+
+== scenario tool_call ==
+event kinds (ordered, collapsed): KIND_CALL_STARTED KIND_THINKING_SUMMARY KIND_TOOL_CALL KIND_USAGE KIND_STOP KIND_CALL_COMPLETED | counts: {'KIND_CALL_STARTED': 1, 'KIND_THINKING_SUMMARY': 1, 'KIND_TOOL_CALL': 1, 'KIND_USAGE': 1, 'KIND_STOP': 1, 'KIND_CALL_COMPLETED': 1}
+stop reason: MODEL_STOP_REASON_TOOL_USE | terminal: True | cancelled: False
+usage: input=213 output=50 cache_read=0 cache_write=0
+text: ''
+tool call: fs.read {"value":"42"}

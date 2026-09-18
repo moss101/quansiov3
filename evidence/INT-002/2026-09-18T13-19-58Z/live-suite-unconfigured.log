@@ -1,0 +1,7 @@
+ssssssssss.......                                                        [100%]
+=========================== short test summary info ============================
+SKIPPED [3] tests/intelligence/test_model_gateway_live.py:160: BLOCKED_EXTERNAL: QUANSIO_TEST_ANTHROPIC_API_KEY is not set; live anthropic conformance requires it
+SKIPPED [3] tests/intelligence/test_model_gateway_live.py:160: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY is not set; live openai conformance requires it
+SKIPPED [3] tests/intelligence/test_model_gateway_live.py:160: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID is not set; live openai_compatible conformance requires it
+SKIPPED [1] tests/intelligence/test_model_gateway_live.py:195: BLOCKED_EXTERNAL: 0 of 3 live providers configured; at least 2 are required. Unconfigured: anthropic (QUANSIO_TEST_ANTHROPIC_API_KEY); openai (QUANSIO_TEST_OPENAI_API_KEY); openai_compatible (QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID)
+7 passed, 10 skipped in 0.57s

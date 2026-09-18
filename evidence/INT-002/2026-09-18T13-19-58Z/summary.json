@@ -1,0 +1,97 @@
+{
+  "task_id": "INT-002",
+  "git_commit": "376d614026a738394a3bf81b7310a30be952e69a",
+  "recorded_at": "2026-09-18T13:39:26Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic QUANSIO_TEST_ANTHROPIC_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_ANTHROPIC_API_KEY=<secret custody> QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL=https://api.z.ai/api/coding/paas/v4 QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -v -rs)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T13-19-58Z/live-two-providers-zai.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T13-19-58Z/pytest-python.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T13-19-58Z/live-suite-unconfigured.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T13-19-58Z/lint-type.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T13-19-58Z/validate.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T13-19-58Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic QUANSIO_TEST_ANTHROPIC_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_ANTHROPIC_API_KEY=<secret custody> QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL=https://api.z.ai/api/coding/paas/v4 QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -v -rs)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-002/2026-09-18T13-19-58Z/live-two-providers-zai.log",
+      "sha256": "2afea3ae643df3d49c7c073490c72ce2f00376e975cf4e9a333257ca0524c5dd",
+      "bytes": 2923
+    },
+    {
+      "path": "evidence/INT-002/2026-09-18T13-19-58Z/live-anthropic-wire-zai-stream.log",
+      "sha256": "89504b38726463a0a7aac74c283179d41a393435e76f0cdb113ce9c72aa4a9bf",
+      "bytes": 1068
+    },
+    {
+      "path": "python/intelligence/model_gateway/conformance/suite.py",
+      "sha256": "90da9e90c41607f13c46466eaabb59a086f57994735b3d9abe4e8689cac1362f",
+      "bytes": 19763
+    },
+    {
+      "path": "python/tests/intelligence/test_model_gateway_live.py",
+      "sha256": "259a0acde007b997c366b10724768fb543b3c06b53ad34c60ffddbd1a7c14d0e",
+      "bytes": 18245
+    }
+  ]
+}

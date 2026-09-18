@@ -1,0 +1,64 @@
+{
+  "task_id": "OPS-007",
+  "git_commit": "6913a237732d78df5be3b28d2c3512d27209d7c3",
+  "recorded_at": "2026-09-18T13:38:51Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/ci/test_supply_chain.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-18T13-37-50Z/supply-chain-tests.log"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-18T13-37-50Z/supply-chain-gate.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-007/2026-09-18T13-37-50Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/ci/test_supply_chain.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "scripts/ci/supply_chain/tree.py",
+      "sha256": "2b5f7123bd091570ee3d2022e9ca234708687e551f9de8d43b2dd307efc30a6d",
+      "bytes": 1603
+    },
+    {
+      "path": "scripts/ci/supply_chain/skills.py",
+      "sha256": "2786de1eb11a01e176690ab88261b697d4eac59d548f207b0525128820773318",
+      "bytes": 12525
+    },
+    {
+      "path": "scripts/ci/supply_chain/policy.py",
+      "sha256": "daac14250b66ca45ecddad9118fad738fdcecd52ba0109c6f2721d6c69398f03",
+      "bytes": 11172
+    },
+    {
+      "path": "tests/ci/test_supply_chain.py",
+      "sha256": "3457d24687531fbb19e98f780fa9d1c210eaf3f99807263b664e8f4210715002",
+      "bytes": 13574
+    }
+  ]
+}
