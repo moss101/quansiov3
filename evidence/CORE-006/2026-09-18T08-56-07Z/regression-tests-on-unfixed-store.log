@@ -1,0 +1,41 @@
+# Regression tests run against the UNFIXED store (store(): shipped ON CONFLICT (id) DO UPDATE; lock(): plain load, no FOR UPDATE)
+# command: cargo test -p quansio-server --test protocol_state concurrent
+434 | async fn claim(
+
+
+running 2 tests
+test concurrent_cycles_keep_every_writers_change ... FAILED
+test concurrent_first_writes_for_one_run_never_raise_and_keep_one_row ... FAILED
+
+failures:
+
+---- concurrent_cycles_keep_every_writers_change stdout ----
+
+thread 'concurrent_cycles_keep_every_writers_change' (15679527) panicked at crates/server/tests/protocol_state.rs:532:9:
+assertion `left == right` failed: both writers' pending calls must survive (round 0)
+  left: ["tc_b"]
+ right: ["tc_a", "tc_b"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+---- concurrent_first_writes_for_one_run_never_raise_and_keep_one_row stdout ----
+
+thread 'concurrent_first_writes_for_one_run_never_raise_and_keep_one_row' (15679528) panicked at crates/server/tests/protocol_state.rs:478:5:
+a concurrent first-ever write must upsert, not raise:
+round 37 writer b: protocol state store: error returned from database: duplicate key value violates unique constraint "protocol_states_run_id_key"
+round 46 writer a: protocol state store: error returned from database: duplicate key value violates unique constraint "protocol_states_run_id_key"
+round 76 writer a: protocol state store: error returned from database: duplicate key value violates unique constraint "protocol_states_run_id_key"
+round 79 writer a: protocol state store: error returned from database: duplicate key value violates unique constraint "protocol_states_run_id_key"
+round 83 writer b: protocol state store: error returned from database: duplicate key value violates unique constraint "protocol_states_run_id_key"
+round 85 writer a: protocol state store: error returned from database: duplicate key value violates unique constraint "protocol_states_run_id_key"
+round 90 writer b: protocol state store: error returned from database: duplicate key value violates unique constraint "protocol_states_run_id_key"
+round 91 writer a: protocol state store: error returned from database: duplicate key value violates unique constraint "protocol_states_run_id_key"
+round 92 writer a: protocol state store: error returned from database: duplicate key value violates unique constraint "protocol_states_run_id_key"
+round 113 writer b: protocol state store: error returned from database: duplicate key value violates unique constraint "protocol_states_run_id_key"
+round 118 writer b: protocol state store: error returned from database: duplicate key value violates unique constraint "protocol_states_run_id_key"
+
+
+failures:
+    concurrent_cycles_keep_every_writers_change
+    concurrent_first_writes_for_one_run_never_raise_and_keep_one_row
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.90s
+error: test failed, to rerun pass `-p quansio-server --test protocol_state`

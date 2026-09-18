@@ -1,0 +1,22 @@
+# QUANSIO_REPO=<repo> QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd python && uv run --frozen python evidence/CORE-006/2026-09-18T08-56-07Z/repro_protocol_state_race.py <variant> 1000)
+# Two transactions perform a fresh run's first-ever protocol-state write at the same moment, 1000 fresh runs per variant.
+variant=run_id iterations=1000
+unique violations by constraint: {'protocol_states_pkey': 112}
+other errors: {}
+
+variant=current iterations=1000
+unique violations by constraint: {'protocol_states_run_id_key': 67}
+other errors: {}
+
+variant=claim iterations=1000
+unique violations by constraint: {}
+other errors: {}
+
+variant=rmw_unlocked iterations=1000
+unique violations by constraint: {}
+other errors: {"lost update: final pending markers ['b']": 430, "lost update: final pending markers ['a']": 570}
+
+variant=rmw_locked iterations=1000
+unique violations by constraint: {}
+other errors: {}
+
