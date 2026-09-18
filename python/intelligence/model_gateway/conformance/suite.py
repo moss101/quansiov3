@@ -248,26 +248,41 @@ def credential_environ(value: str = CONFORMANCE_CREDENTIAL_VALUE) -> dict[str, s
     return {env_var_for_handle(CONFORMANCE_CREDENTIAL_HANDLE): value}
 
 
-def catalog_with_wire_model_id(
-    kind: ProviderKind, wire_model_id: str, *, catalog_path: Path | None = None
+def live_catalog_for_kind(
+    kind: ProviderKind,
+    *,
+    wire_model_id: str | None = None,
+    base_url: str | None = None,
+    catalog_path: Path | None = None,
 ) -> ModelCatalog:
-    """The repository catalog with the wire model id of `kind`'s first model replaced.
+    """The repository catalog with `kind`'s first model pointed where a live run needs it.
 
-    A self-hosted endpoint's model name is deployment data exactly like its base URL, which the
-    catalog already takes from the environment for the OpenAI-compatible provider. The entry's
-    capabilities, context window, cost class and DLP eligibility stay the catalog's; only the
-    identifier sent on the wire changes, and it still never appears as a source constant.
+    `wire_model_id` replaces the identifier sent on the wire: a self-hosted endpoint's model
+    name is deployment data exactly like its base URL, which the catalog already takes from
+    the environment for the OpenAI-compatible provider. `base_url` replaces the provider's
+    endpoint, which lets a first-party adapter run against another server that speaks its
+    wire format. The entry's capabilities, context window, cost class and DLP eligibility stay
+    the catalog's, and neither value becomes a source constant.
     """
     path = catalog_path if catalog_path is not None else default_catalog_path()
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise AssertionError(f"{path} is not a model catalog mapping")
-    catalog_model_id = catalog_model_for_kind(ModelCatalog.from_mapping(data, source=str(path)), kind)
+    committed = ModelCatalog.from_mapping(data, source=str(path))
+    spec = committed.model(catalog_model_for_kind(committed, kind))
     for entry in data["models"]:
-        if entry.get("id") == catalog_model_id:
+        if entry.get("id") == spec.id and wire_model_id is not None:
             entry["model_id"] = wire_model_id
-            break
-    return ModelCatalog.from_mapping(data, source=f"{path} ({kind.value} live: {wire_model_id})")
+    if base_url is not None:
+        provider = data["providers"][spec.provider]
+        provider.pop("base_url_env", None)
+        provider["base_url"] = base_url
+    overrides = ", ".join(
+        f"{name}={value}" for name, value in (("model", wire_model_id), ("endpoint", base_url)) if value
+    )
+    return ModelCatalog.from_mapping(
+        data, source=f"{path} ({kind.value} live: {overrides or 'as committed'})"
+    )
 
 
 def catalog_model_for_kind(catalog: ModelCatalog, kind: ProviderKind) -> str:

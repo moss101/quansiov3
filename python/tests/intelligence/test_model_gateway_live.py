@@ -8,6 +8,14 @@ Environment variables this module reads (only these, and never logs their values
 
   * `QUANSIO_TEST_ANTHROPIC_API_KEY` — live Anthropic (primary provider) conformance.
   * `QUANSIO_TEST_OPENAI_API_KEY` — live OpenAI conformance.
+  * `QUANSIO_TEST_ANTHROPIC_BASE_URL` / `QUANSIO_TEST_ANTHROPIC_MODEL_ID` and
+    `QUANSIO_TEST_OPENAI_BASE_URL` / `QUANSIO_TEST_OPENAI_MODEL_ID` — optional. Absent, the
+    first-party adapters run against the committed catalog (the provider's own endpoint and
+    model). Set, they run the same adapter against another server that speaks its wire format
+    (for example Z.ai's Anthropic-compatible endpoint, `https://api.z.ai/api/anthropic`, with
+    the model it serves); the base URL is the endpoint root the adapter versions itself
+    (`/v1/messages`, `/v1/chat/completions`). The recorded evidence then names that endpoint,
+    not the first-party provider, and proves the wire format rather than the provider itself.
   * `QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL`, `QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY` and
     `QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID` — live conformance of the generic adapter against
     any endpoint speaking the OpenAI chat-completions wire format with streaming and tool
@@ -44,8 +52,8 @@ from intelligence.model_gateway.conformance import (
     StubProvider,
     build_call,
     catalog_model_for_kind,
-    catalog_with_wire_model_id,
     conformance_tool_schemas,
+    live_catalog_for_kind,
     run_scenario,
     stub_base_url_for_kind,
 )
@@ -67,6 +75,11 @@ LIVE_VARIABLES: dict[ProviderKind, tuple[str, ...]] = {
         OPENAI_COMPATIBLE_API_KEY_VARIABLE,
         OPENAI_COMPATIBLE_MODEL_ID_VARIABLE,
     ),
+}
+# Optional (endpoint, model) overrides for the first-party adapters; see the module header.
+LIVE_OVERRIDES: dict[ProviderKind, tuple[str, str]] = {
+    ProviderKind.ANTHROPIC: ("QUANSIO_TEST_ANTHROPIC_BASE_URL", "QUANSIO_TEST_ANTHROPIC_MODEL_ID"),
+    ProviderKind.OPENAI: ("QUANSIO_TEST_OPENAI_BASE_URL", "QUANSIO_TEST_OPENAI_MODEL_ID"),
 }
 LIVE_TIMEOUT_MS = 120_000
 PROVIDER_IDS = [kind.value for kind in LIVE_PROVIDER_KINDS]
@@ -113,7 +126,7 @@ def live_boundary(kind: ProviderKind, environ: Mapping[str, str] | None = None) 
         raise LookupError(", ".join(missing))
     values = {name: source[name].strip() for name in LIVE_VARIABLES[kind]}
     if kind is ProviderKind.OPENAI_COMPATIBLE:
-        catalog = catalog_with_wire_model_id(kind, values[OPENAI_COMPATIBLE_MODEL_ID_VARIABLE])
+        catalog = live_catalog_for_kind(kind, wire_model_id=values[OPENAI_COMPATIBLE_MODEL_ID_VARIABLE])
         provider = catalog.provider_for(catalog.model(catalog_model_for_kind(catalog, kind)))
         assert provider.base_url_env and provider.credential_handle_env, (
             "the OpenAI-compatible provider is configured by indirection only (OD-004)"
@@ -126,7 +139,12 @@ def live_boundary(kind: ProviderKind, environ: Mapping[str, str] | None = None) 
             ],
         }
         return LiveBoundary(kind=kind, catalog=catalog, environ=gateway_environ)
-    catalog = ModelCatalog.load()
+    base_url_variable, model_id_variable = LIVE_OVERRIDES[kind]
+    catalog = live_catalog_for_kind(
+        kind,
+        base_url=source.get(base_url_variable, "").strip() or None,
+        wire_model_id=source.get(model_id_variable, "").strip() or None,
+    )
     handle = catalog.provider_for(
         catalog.model(catalog_model_for_kind(catalog, kind))
     ).resolve_credential_handle({})
@@ -272,6 +290,57 @@ def test_openai_compatible_boundary_is_built_only_from_its_test_variables() -> N
             ProviderKind.OPENAI_COMPATIBLE,
             {name: value for name, value in environ.items() if name != OPENAI_COMPATIBLE_MODEL_ID_VARIABLE},
         )
+
+
+@pytest.mark.parametrize("kind_id", [ProviderKind.ANTHROPIC.value, ProviderKind.OPENAI.value])
+def test_first_party_boundary_runs_as_committed_unless_overridden(kind_id: str) -> None:
+    """Offline: a first-party adapter targets the committed catalog, or exactly the overrides.
+
+    Without overrides the committed endpoint and model are used; with them, only the endpoint
+    and the wire model id change while the entry's capabilities and policy stay the catalog's,
+    and the credential still flows through the provider's own handle.
+    """
+    kind = PROVIDER_BY_ID[kind_id]
+    (key_variable,) = LIVE_VARIABLES[kind]
+    base_url_variable, model_id_variable = LIVE_OVERRIDES[kind]
+    committed_catalog = ModelCatalog.load()
+    committed = committed_catalog.model(catalog_model_for_kind(committed_catalog, kind))
+    committed_provider = committed_catalog.provider_for(committed)
+
+    as_committed = live_boundary(kind, {key_variable: "not-a-credential"})
+    spec = as_committed.catalog.model(as_committed.model_id)
+    assert spec.model_id == committed.model_id
+    assert as_committed.catalog.provider_for(spec).resolve_base_url(
+        {}
+    ) == committed_provider.resolve_base_url({})
+
+    overridden = live_boundary(
+        kind,
+        {
+            key_variable: "not-a-credential",
+            base_url_variable: "https://compatible.example/api/",
+            model_id_variable: "served-model-name",
+        },
+    )
+    spec = overridden.catalog.model(overridden.model_id)
+    provider = overridden.catalog.provider_for(spec)
+    assert spec.model_id == "served-model-name"
+    assert provider.resolve_base_url({}) == "https://compatible.example/api"
+    assert (spec.capabilities, spec.context_window, spec.cost_class, spec.dlp_eligible) == (
+        committed.capabilities,
+        committed.context_window,
+        committed.cost_class,
+        committed.dlp_eligible,
+    )
+    assert provider.resolve_credential_handle({}) == committed_provider.resolve_credential_handle({})
+    prepared = (
+        overridden.gateway()
+        .prepare(build_call(model_catalog_id=overridden.model_id, scenario="text", timeout_ms=1_000))
+        .prepared_request
+    )
+    assert prepared.url.startswith("https://compatible.example/api/v1/")
+    assert prepared.body_json()["model"] == "served-model-name"
+    assert "not-a-credential" not in repr(prepared)
 
 
 def test_openai_compatible_live_wiring_reaches_the_endpoint_the_variables_name() -> None:
