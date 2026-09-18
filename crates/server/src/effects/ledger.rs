@@ -39,7 +39,7 @@ use crate::effects::model::{
 };
 use crate::effects::taxonomy::EffectTaxonomy;
 use crate::effects::EFFECTS_OWNER;
-use crate::runtime::protocol_state::{PendingToolCall, ProtocolState, ProtocolStateStore};
+use crate::runtime::protocol_state::{PendingToolCall, ProtocolStateStore};
 use crate::runtime::state_machine::RuntimeIdentity;
 
 /// Columns selected or returned for one effect record, in canonical order.
@@ -1243,6 +1243,11 @@ async fn next_aggregate_version(
 /// `next_safe_action` returns `ReconcileEffect` for a dispatched or unknown effect and
 /// resumes only once the effect settled or was manually reconciled. A terminal record
 /// removes the pending call.
+///
+/// The state is taken under [`ProtocolStateStore::lock`]: independent tool calls of one
+/// turn settle in parallel, each transition in its own transaction, and the run's row is
+/// what serializes them, so every transition adds or removes only its own pending call
+/// on top of the previous committed state.
 async fn sync_pending_tool_call(
     tx: &mut Transaction<'static, Postgres>,
     tenant_id: &str,
@@ -1252,11 +1257,11 @@ async fn sync_pending_tool_call(
     let (Some(run_id), Some(tool_call_id)) = (&record.run_id, &record.tool_call_id) else {
         return Ok(());
     };
-    let mut state = ProtocolStateStore::load(tx, tenant_id, run_id)
+    let generation = generation_i64(record.generation)?;
+    let mut state = ProtocolStateStore::lock(tx, tenant_id, run_id, generation)
         .await
-        .map_err(|error| EffectError::ProtocolState(error.to_string()))?
-        .unwrap_or_else(|| ProtocolState::new(run_id.clone(), 0));
-    state.generation = generation_i64(record.generation)?;
+        .map_err(|error| EffectError::ProtocolState(error.to_string()))?;
+    state.generation = generation;
     let existing_name = state
         .pending_tool_calls
         .iter()

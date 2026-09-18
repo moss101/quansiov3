@@ -751,18 +751,23 @@ impl RuntimeStore {
                             id: run_id.to_string(),
                         });
                     }
-                    if let Some(mut state) =
-                        ProtocolStateStore::load(tx, &tenant_id, &run_id.to_string())
-                            .await
-                            .map_err(RuntimeError::from)?
-                    {
-                        state.cancellation_requested = true;
-                        state.cancellation_at = current.updated_at.to_rfc3339().into();
-                        state.generation = current.generation.get() as i64;
-                        ProtocolStateStore::store(tx, &tenant_id, &state)
-                            .await
-                            .map_err(RuntimeError::from)?;
-                    }
+                    // Taken under the row lock: a tool call of this run may be settling in
+                    // its own transaction right now, and neither write may overwrite the
+                    // other's -- recovery must see the cancellation (DOMAIN.md §5.7).
+                    let mut state = ProtocolStateStore::lock(
+                        tx,
+                        &tenant_id,
+                        &run_id.to_string(),
+                        current.generation.get() as i64,
+                    )
+                    .await
+                    .map_err(RuntimeError::from)?;
+                    state.cancellation_requested = true;
+                    state.cancellation_at = current.updated_at.to_rfc3339().into();
+                    state.generation = current.generation.get() as i64;
+                    ProtocolStateStore::store(tx, &tenant_id, &state)
+                        .await
+                        .map_err(RuntimeError::from)?;
                     apply_run_transition(
                         tx,
                         batch,
@@ -1449,7 +1454,12 @@ impl RuntimeStore {
         Ok(state)
     }
 
-    /// Replace a Run's durable protocol state (used by recovery and the turn loop).
+    /// Replace a Run's durable protocol state wholesale.
+    ///
+    /// This is the seeding write (recovery fixtures, tests). A caller that changes part of
+    /// the state it just read uses [`Self::update_protocol_state`], which runs the whole
+    /// cycle under the run's row lock; reading in one transaction and replacing in another
+    /// would overwrite whatever a concurrent transition committed in between.
     ///
     /// # Errors
     /// Returns [`RuntimeError::NotFound`] when the Run is not visible in this tenant.
@@ -1469,6 +1479,48 @@ impl RuntimeStore {
             .map_err(RuntimeError::from)?;
         tx.commit().await?;
         Ok(())
+    }
+
+    /// Modify a Run's durable protocol state in one transaction (turn-loop parking).
+    ///
+    /// The state is read under [`ProtocolStateStore::lock`] and written back in the same
+    /// transaction, so `modify` always starts from the latest committed state and is
+    /// serialized with every concurrent writer for the run: an Effect Ledger transition of
+    /// a parallel tool call, an approval request, a cancellation. The state's generation is
+    /// set to `generation` before `modify` runs. Returns the state as stored.
+    ///
+    /// # Errors
+    /// Returns [`RuntimeError::NotFound`] when the Run is not visible in this tenant.
+    pub async fn update_protocol_state<F>(
+        &self,
+        run_id: &CanonicalId,
+        generation: Generation,
+        modify: F,
+    ) -> Result<ProtocolState, RuntimeError>
+    where
+        F: FnOnce(&mut ProtocolState) + Send,
+    {
+        let tenant_id = self.identity.tenant_id.clone();
+        let mut tx = self.events.begin_tenant_transaction(&tenant_id).await?;
+        if load_run_tx(&mut tx, &tenant_id, run_id).await.is_err() {
+            return Err(RuntimeError::NotFound {
+                entity: "run",
+                id: run_id.to_string(),
+                tenant_id,
+            });
+        }
+        let generation = generation.get() as i64;
+        let mut state =
+            ProtocolStateStore::lock(&mut tx, &tenant_id, &run_id.to_string(), generation)
+                .await
+                .map_err(RuntimeError::from)?;
+        state.generation = generation;
+        modify(&mut state);
+        ProtocolStateStore::store(&mut tx, &tenant_id, &state)
+            .await
+            .map_err(RuntimeError::from)?;
+        tx.commit().await?;
+        Ok(state)
     }
 }
 
