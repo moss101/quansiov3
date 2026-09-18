@@ -28,10 +28,12 @@ import yaml
 from quansio.v1.intelligence import service_pb2, service_pb2_grpc
 
 from intelligence.embeddings import INDEX_DIMENSIONS
+from intelligence.model_gateway.catalog import ProviderKind
 from intelligence.model_gateway.conformance import (
     CONFORMANCE_CREDENTIAL_HANDLE,
     CONFORMANCE_CREDENTIAL_VALUE,
     StubProvider,
+    stub_base_url_for_kind,
 )
 from intelligence.model_gateway.credentials import env_var_for_handle
 
@@ -64,7 +66,7 @@ def _stub_catalog(path: Path, base_url: str) -> Path:
         entry.pop("base_url_env", None)
         entry.pop("credential_handle", None)
         entry.pop("credential_handle_env", None)
-        entry["base_url"] = base_url
+        entry["base_url"] = stub_base_url_for_kind(base_url, ProviderKind(str(entry.get("kind"))))
         entry["credential_handle"] = CONFORMANCE_CREDENTIAL_HANDLE
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
     return path

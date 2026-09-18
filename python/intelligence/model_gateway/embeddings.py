@@ -37,7 +37,6 @@ from intelligence.model_gateway.errors import GatewayError, GatewayErrorCode
 
 #: OpenAI-compatible embeddings endpoint. The version segment lives in the path, like the
 #: chat-completions path, because a catalog `base_url` is an endpoint root.
-EMBEDDINGS_PATH = "/v1/embeddings"
 
 #: Rule ids, named so a caller can tell which refusal fired.
 RULE_WIRE = "embedding.wire"
@@ -88,9 +87,11 @@ class EmbeddingWire(Protocol):
 
 
 class OpenAIEmbeddingWire:
-    """OpenAI embeddings (`POST {base_url}/embeddings`); the compatible profile reuses it."""
+    """OpenAI embeddings (`POST {base_url}/v1/embeddings`); the compatible profile reuses it."""
 
     kind = ProviderKind.OPENAI
+    # The first-party endpoint is addressed from its root; the path carries OpenAI's version.
+    EMBEDDINGS_PATH = "/v1/embeddings"
 
     __slots__ = ()
 
@@ -101,7 +102,7 @@ class OpenAIEmbeddingWire:
             provider=context.provider,
             provider_kind=self.kind,
             model_catalog_id=context.model_catalog_id,
-            url=f"{context.base_url}{EMBEDDINGS_PATH}",
+            url=f"{context.base_url}{self.EMBEDDINGS_PATH}",
             headers={
                 "content-type": "application/json",
                 "accept": "application/json",
@@ -120,9 +121,14 @@ class OpenAIEmbeddingWire:
 
 
 class OpenAICompatibleEmbeddingWire(OpenAIEmbeddingWire):
-    """The generic endpoint profile: the same endpoint and payload, a self-hosted base URL."""
+    """The generic endpoint profile: the same payload, relative to an SDK-style base URL.
+
+    The base URL carries the service's own version segment (`.../v1`, `.../v4`), exactly as
+    the chat adapter's does, so the path is `/embeddings`.
+    """
 
     kind = ProviderKind.OPENAI_COMPATIBLE
+    EMBEDDINGS_PATH = "/embeddings"
 
     __slots__ = ()
 
