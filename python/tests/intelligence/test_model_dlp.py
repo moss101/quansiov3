@@ -110,13 +110,19 @@ def test_secret_shaped_content_is_redacted_before_transmission(stub: StubProvide
 
 
 def test_the_guard_refuses_a_model_that_is_not_cleared(stub: StubProvider) -> None:
-    """A model's own clearance is checked as well as the provider's."""
+    """A model's own clearance is checked as well as the provider's — for protected content.
+
+    `dlp_eligible: false` means the model must not receive content above the default
+    data-handling class (config/models.yaml); it still serves the default class, or a
+    self-hosted route could never be used at all.
+    """
     catalog = stub_catalog(stub.base_url)
     providers = {config.name for config in catalog.providers.values()}
-    gateway = gateway_for(
-        stub,
-        DlpPolicy(allowed_by_provider={name: frozenset(DataClass) for name in providers}),
+    policy = DlpPolicy(
+        allowed_by_provider={name: frozenset(DataClass) for name in providers},
+        data_class_by_profile={"strict": DataClass.CONFIDENTIAL},
     )
+    gateway = gateway_for(stub, policy)
     route = gateway.resolve_route(call_with("anything"))
     model = catalog.models[route.model.id]
     policy_model = type(model)(
@@ -128,9 +134,13 @@ def test_the_guard_refuses_a_model_that_is_not_cleared(stub: StubProvider) -> No
         cost_class=model.cost_class,
         dlp_eligible=False,
     )
+    guard = DlpGuard(policy)
     with pytest.raises(GatewayError) as raised:
-        DlpGuard(gateway.dlp_decision and DlpGuard().policy).check(
-            call_with("anything"), policy_model, route.provider
-        )
+        guard.check(call_with("board pack", profile="strict"), policy_model, route.provider)
     assert raised.value.code == GatewayErrorCode.DLP_DENIED
     assert "dlp.model_eligibility" in raised.value.message
+
+    decision = guard.check(call_with("anything"), policy_model, route.provider)
+    assert decision.allowed and decision.data_class is policy.default_data_class
+    assert policy.is_protected(DataClass.CONFIDENTIAL) and policy.is_protected(DataClass.RESTRICTED)
+    assert not policy.is_protected(DataClass.PUBLIC) and not policy.is_protected(DataClass.INTERNAL)
