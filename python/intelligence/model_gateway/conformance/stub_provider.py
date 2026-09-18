@@ -9,8 +9,9 @@ tool name and arguments come from the request itself.
 
 This stub is test infrastructure. It is **never** real-boundary evidence for INT-002: the live
 provider suite in `python/tests/intelligence/test_model_gateway_live.py` is the only
-real-boundary proof, and it is gated on `QUANSIO_TEST_ANTHROPIC_API_KEY` /
-`QUANSIO_TEST_OPENAI_API_KEY`.
+real-boundary proof, and it is gated on `QUANSIO_TEST_ANTHROPIC_API_KEY`,
+`QUANSIO_TEST_OPENAI_API_KEY` and `QUANSIO_TEST_OPENAI_COMPATIBLE_*`, any two of which are
+enough (DOSSIER.md §2.1).
 """
 
 from __future__ import annotations
