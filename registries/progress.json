@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 2,
-  "updated_at": "2026-09-18T06:52:27Z",
+  "updated_at": "2026-09-18T08:30:57Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -767,8 +767,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:subagent-int002",
       "started_at": "2026-09-12T03:52:23Z",
-      "updated_at": "2026-09-18T06:52:27Z",
-      "git_commit": "589ecb472088b913f4a59a3aac010394556b734b",
+      "updated_at": "2026-09-18T08:30:57Z",
+      "git_commit": "344527480433bb131f575762dbc9526debbb245f",
       "tests": [
         "(cd python && uv run --frozen pytest -q)",
         "(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)",
@@ -777,17 +777,29 @@
       ],
       "artifacts": [
         "evidence/INT-002/2026-09-12T03-49-40Z/summary.json",
+        "evidence/INT-002/2026-09-18T08-19-07Z/summary.json",
         "evidence/INT-002/2026-09-18T06-37-45Z/summary.json",
         "python/intelligence/model_gateway/gateway.py",
         "python/intelligence/model_gateway/credentials.py",
         "python/intelligence/model_gateway/adapters/anthropic.py",
         "python/tests/intelligence/test_model_gateway_live.py",
-        "python/intelligence/model_gateway/conformance/suite.py"
+        "python/intelligence/model_gateway/conformance/suite.py",
+        "python/intelligence/model_gateway/adapters/openai_compatible.py",
+        "python/intelligence/model_gateway/adapters/openai.py"
       ],
-      "real_boundary_evidence": [],
+      "real_boundary_evidence": [
+        {
+          "boundary": "openai-compatible-live",
+          "environment": "developer macOS host; Z.ai https://api.z.ai/api/coding/paas/v4, wire model GLM-5.3-Flash; credential from QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY (never recorded)",
+          "command": "QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL=https://api.z.ai/api/coding/paas/v4 QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -v -rs)",
+          "artifact": "evidence/INT-002/2026-09-18T08-19-07Z/live-openai-compatible-zai.log",
+          "sha256": "d97e4854a6d06684a9665e736a0e7cc979b23cb717bd2db56d1b4c307b0623d2",
+          "recorded_at": "2026-09-18T08:30:57Z"
+        }
+      ],
       "implementation_complete": true,
-      "blocker": "Live real-boundary conformance cannot run in this environment: no provider is configured. DOSSIER.md \u00a72.1 needs any TWO of the three adapters to pass the live suite, so the unblock condition is any two of: QUANSIO_TEST_ANTHROPIC_API_KEY (Anthropic), QUANSIO_TEST_OPENAI_API_KEY (OpenAI), or QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL + QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY + QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID (any endpoint speaking the OpenAI chat-completions wire format with streaming and tool calling: vLLM, llama.cpp, Ollama, LM Studio, TGI or a hosted service; a non-authenticating endpoint takes any non-empty placeholder key). Egress to the chosen providers is required. Unblock: set the variables for two providers, run '(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)' \u2014 test_at_least_two_live_providers_pass_the_same_suite must pass, not skip \u2014 and record the run as real_boundary_evidence (one object per provider boundary).",
-      "notes": "Implementation complete and verified offline: three adapters (Anthropic primary, OpenAI, OpenAI-compatible) normalized to the DOMAIN \u00a711.1 stream through one EventFactory (exactly one usage/stop/terminal outcome per call), cancellable streaming that interrupts a silent provider, strict tool schemas, operator-channel instructions, multimodal mapping with capability checks from config/models.yaml only, provider-side compaction/context-editing rejected on the prepared bytes, and credential custody proven by a canary secret-leak scan. The deterministic stub proves wire-level behaviour for all three adapters and is explicitly NOT real-boundary evidence; the live suite reports BLOCKED_EXTERNAL with the missing variable named (6 skipped). One earlier pipeline run in an evidence bundle at 03-45-20Z failed only in the tests gate because a parallel worktree was building against the shared dev stack; the immediate re-run passed every gate and this bundle records the passing run. 2026-09-18 (589ecb4): the live suite covered only Anthropic and OpenAI although the acceptance and DOSSIER.md \u00a72.1 require any two of the three adapters; it now has a live boundary for the OpenAI-compatible adapter (QUANSIO_TEST_OPENAI_COMPATIBLE_*), an acceptance test that counts fully passing live providers against LIVE_PROVIDERS_REQUIRED=2 and skips BLOCKED_EXTERNAL naming every unconfigured provider below that, and offline wiring proof through the OpenAI-format stub (explicitly not real-boundary evidence). No product code path changed. Evidence: evidence/INT-002/2026-09-18T06-37-45Z/ (NOTES.md explains two dev-stack-availability CI failures of the same commit before the recorded PASS)."
+      "blocker": "One of the two live providers DOSSIER.md \u00a72.1 requires has passed: the OpenAI-compatible adapter against Z.ai GLM-5.3-Flash (real_boundary_evidence). The second adapter has not: QUANSIO_TEST_ANTHROPIC_API_KEY and QUANSIO_TEST_OPENAI_API_KEY are both unset, so test_at_least_two_live_providers_pass_the_same_suite skips BLOCKED_EXTERNAL (1 of 3 configured). Unblock: set either variable (with egress to that provider) alongside the three QUANSIO_TEST_OPENAI_COMPATIBLE_* variables, run '(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)' \u2014 the acceptance test must pass, not skip \u2014 and record that run as a second real_boundary_evidence object.",
+      "notes": "Implementation complete and verified offline: three adapters (Anthropic primary, OpenAI, OpenAI-compatible) normalized to the DOMAIN \u00a711.1 stream through one EventFactory (exactly one usage/stop/terminal outcome per call), cancellable streaming that interrupts a silent provider, strict tool schemas, operator-channel instructions, multimodal mapping with capability checks from config/models.yaml only, provider-side compaction/context-editing rejected on the prepared bytes, and credential custody proven by a canary secret-leak scan. The deterministic stub proves wire-level behaviour for all three adapters and is explicitly NOT real-boundary evidence; the live suite reports BLOCKED_EXTERNAL with the missing variable named (6 skipped). One earlier pipeline run in an evidence bundle at 03-45-20Z failed only in the tests gate because a parallel worktree was building against the shared dev stack; the immediate re-run passed every gate and this bundle records the passing run. 2026-09-18 (589ecb4): the live suite covered only Anthropic and OpenAI although the acceptance and DOSSIER.md \u00a72.1 require any two of the three adapters; it now has a live boundary for the OpenAI-compatible adapter (QUANSIO_TEST_OPENAI_COMPATIBLE_*), an acceptance test that counts fully passing live providers against LIVE_PROVIDERS_REQUIRED=2 and skips BLOCKED_EXTERNAL naming every unconfigured provider below that, and offline wiring proof through the OpenAI-format stub (explicitly not real-boundary evidence). No product code path changed. Evidence: evidence/INT-002/2026-09-18T06-37-45Z/ (NOTES.md explains two dev-stack-availability CI failures of the same commit before the recorded PASS). 2026-09-18 (3445274): first live real-boundary run. The generic adapter could not reach a hosted OpenAI-compatible service until two of its own conventions were narrowed for the compatible profile (SDK-style base URL including the service's version segment with relative /chat/completions and /embeddings paths; operator channel as a second system message instead of OpenAI's developer role) and the live verifier stopped fixing the thinking-summary count, which no reasoning model can meet. With those, the OpenAI-compatible adapter passes every live case against Z.ai GLM-5.3-Flash (text -> END_TURN; tool_call -> exactly one fs.read {\"value\":\"42\"} with TOOL_USE; usage and prompt-cache reads normalized), repeatably. Evidence: evidence/INT-002/2026-09-18T08-19-07Z/."
     },
     "INT-003": {
       "coverage": "GENUINE_GAP",

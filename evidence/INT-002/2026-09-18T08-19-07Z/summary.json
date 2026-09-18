@@ -1,0 +1,117 @@
+{
+  "task_id": "INT-002",
+  "git_commit": "344527480433bb131f575762dbc9526debbb245f",
+  "recorded_at": "2026-09-18T08:30:10Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL=https://api.z.ai/api/coding/paas/v4 QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -v -rs)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T08-19-07Z/live-openai-compatible-zai.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T08-19-07Z/pytest-python.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T08-19-07Z/live-suite-unconfigured.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T08-19-07Z/lint-type.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T08-19-07Z/validate.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-18T08-19-07Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL=https://api.z.ai/api/coding/paas/v4 QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID=GLM-5.3-Flash QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY=<secret custody> (cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -v -rs)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_model_gateway_live.py -q -rs)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-002/2026-09-18T08-19-07Z/live-openai-compatible-zai.log",
+      "sha256": "d97e4854a6d06684a9665e736a0e7cc979b23cb717bd2db56d1b4c307b0623d2",
+      "bytes": 3060
+    },
+    {
+      "path": "evidence/INT-002/2026-09-18T08-19-07Z/live-openai-compatible-zai-stream.log",
+      "sha256": "2608619812ac18cf4adc263d1723963bccc2424fc3b2b4065a6db8b119a64dd6",
+      "bytes": 3960
+    },
+    {
+      "path": "python/intelligence/model_gateway/adapters/openai.py",
+      "sha256": "94ba5f68e7933aa1935524fb6f4a57ae3cd7e75e630af0944cfd46e2d77ed23c",
+      "bytes": 12935
+    },
+    {
+      "path": "python/intelligence/model_gateway/adapters/openai_compatible.py",
+      "sha256": "d6de32e5cb8fa0cd760ff1fe0d2038f75083f4462c24f9a2e44493bfe82a1205",
+      "bytes": 2220
+    },
+    {
+      "path": "python/intelligence/model_gateway/embeddings.py",
+      "sha256": "3e7c1240de81ebcd155b3c261423aa9caa64c20100ea69493444161b233a87cb",
+      "bytes": 11429
+    },
+    {
+      "path": "python/intelligence/model_gateway/conformance/suite.py",
+      "sha256": "98aa2ae779a556d4fec8c83d97ce8724cf95dc48d33ce986995cbca10397bbb6",
+      "bytes": 19190
+    },
+    {
+      "path": "python/tests/intelligence/test_model_gateway_live.py",
+      "sha256": "cb2be468397b74b32d60ed6df8c2648d5b205209defdd8360dc5dfa9b8176784",
+      "bytes": 14569
+    },
+    {
+      "path": "config/models.yaml",
+      "sha256": "588615c0528c084119f7187f0c9f31ecba0305b8099a74a28464121b381e401a",
+      "bytes": 4039
+    }
+  ]
+}
