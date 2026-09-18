@@ -270,10 +270,36 @@ pub enum ProtocolStateError {
 }
 
 /// Durable protocol-state store (one row per run, CORE-006).
+///
+/// `protocol_states` carries two unique indexes, the primary key `id` (derived from the run
+/// id, `pst_<run id suffix>`) and `run_id`. PostgreSQL arbitrates `INSERT ... ON CONFLICT DO UPDATE`
+/// only on the index the clause names; every other unique index keeps its ordinary
+/// error-raising check. Two transactions performing a run's first-ever write at the same
+/// moment (two independent tool calls of one turn settling in parallel) both pass the
+/// arbiter's pre-check before either row is visible, and the loser then raises on the
+/// index that was *not* named -- whichever one that is, since `id` and `run_id` always
+/// collide together. Every write here therefore starts by claiming the row with a
+/// target-less `ON CONFLICT DO NOTHING`, which every unique index arbitrates, and
+/// then updates the row that is now guaranteed to exist. Callers that read the state
+/// before modifying it take [`ProtocolStateStore::lock`] first, so a cycle can never
+/// overwrite a concurrent writer's change with stale state.
 pub struct ProtocolStateStore;
+
+/// The columns of one `protocol_states` row, in the order `decode_state` reads them.
+const STATE_COLUMNS: &str = "run_id, generation, pending_model_call, pending_tool_calls, \
+     pending_approvals, open_questions, waits, browser_control, terminal_sessions, \
+     child_agent_threads, cancellation_requested, cancellation_at, last_compaction_epoch_id";
+
+/// The deterministic row id of a run's protocol state (`pst_<run id suffix>`).
+fn row_id(run_id: &str) -> String {
+    format!("pst_{}", run_id.trim_start_matches("run_"))
+}
 
 impl ProtocolStateStore {
     /// Load the protocol state for a run, or `None` when nothing was persisted yet.
+    ///
+    /// This is the read-only view. A caller that modifies what it reads must use
+    /// [`ProtocolStateStore::lock`] instead.
     ///
     /// # Errors
     /// Returns an error when the query fails or a JSON column cannot be decoded.
@@ -283,62 +309,77 @@ impl ProtocolStateStore {
         run_id: &str,
     ) -> Result<Option<ProtocolState>, ProtocolStateError> {
         set_tenant_context_conn(conn, tenant_id).await?;
-        let row = sqlx::query(
-            "SELECT run_id, generation, pending_model_call, pending_tool_calls, pending_approvals, \
-             open_questions, waits, browser_control, terminal_sessions, child_agent_threads, \
-             cancellation_requested, cancellation_at, last_compaction_epoch_id \
-             FROM protocol_states WHERE run_id = $1",
-        )
+        let row = sqlx::query(&format!(
+            "SELECT {STATE_COLUMNS} FROM protocol_states WHERE run_id = $1"
+        ))
         .bind(run_id)
         .fetch_optional(&mut *conn)
         .await?;
         row.map(|row| decode_state(&row)).transpose()
     }
 
-    /// Persist the protocol state for a run, replacing any previous value.
+    /// Claim a run's protocol state for a read-modify-write cycle.
     ///
-    /// `row_id` is deterministic (`pst_<run_id-suffix>`), so two concurrent
-    /// first-ever writes for the same run always collide on the SAME primary key,
-    /// not merely on the (also unique) `run_id` column -- the `ON CONFLICT` target
-    /// below must be the primary key `id` so Postgres routes that race into the
-    /// `DO UPDATE` arbitration instead of raising a raw `protocol_states_pkey`
-    /// violation. A conflict target naming a *different* unique constraint than the
-    /// one that actually collides is not caught by `ON CONFLICT` at all -- it only
-    /// happened not to matter here because `id` and `run_id` always collide
-    /// together, so any concurrent write to the same run's protocol state (e.g. two
-    /// independent tool calls settling in parallel within one turn) intermittently
-    /// panicked instead of upserting. Regression test:
-    /// `independent_tool_calls_run_together_and_settle_in_proposal_order`.
+    /// Creates the run's empty state (DOMAIN.md §5.7, at `generation`) when nothing was
+    /// persisted yet, then reads the row `FOR UPDATE`. Concurrent cycles for the same run
+    /// serialize for the rest of this transaction, so each one starts from the previous
+    /// committed state instead of overwriting it: two independent tool calls settling in
+    /// parallel within one turn each keep the other's pending call, and a cancellation
+    /// requested while a tool call settles is not lost. The claim is a target-less
+    /// `ON CONFLICT DO NOTHING`, so a concurrent first-ever write is arbitrated whichever
+    /// unique index it collides on and never raises.
+    ///
+    /// Call it inside the transaction that will [`store`](Self::store) the modified state;
+    /// the lock is released when that transaction ends.
     ///
     /// # Errors
-    /// Returns an error when the run does not exist for this tenant or the write fails.
+    /// Returns [`ProtocolStateError::NotFound`] when the run is not visible in this tenant,
+    /// or a database error when the query fails.
+    pub async fn lock(
+        conn: &mut PgConnection,
+        tenant_id: &str,
+        run_id: &str,
+        generation: i64,
+    ) -> Result<ProtocolState, ProtocolStateError> {
+        set_tenant_context_conn(conn, tenant_id).await?;
+        claim(conn, tenant_id, run_id, generation).await?;
+        let row = sqlx::query(&format!(
+            "SELECT {STATE_COLUMNS} FROM protocol_states WHERE run_id = $1 FOR UPDATE"
+        ))
+        .bind(run_id)
+        .fetch_optional(&mut *conn)
+        .await?
+        .ok_or_else(|| ProtocolStateError::NotFound(run_id.to_string()))?;
+        decode_state(&row)
+    }
+
+    /// Persist the protocol state for a run, replacing any previous value.
+    ///
+    /// The row is claimed first (see the type-level documentation for why a single
+    /// `ON CONFLICT (...) DO UPDATE` cannot be made safe on this table), then replaced
+    /// under its row lock. Callers that modify a loaded state hold the row through
+    /// [`ProtocolStateStore::lock`] already; for them the claim is a no-op. Regression
+    /// tests: `concurrent_first_writes_for_one_run_never_raise_and_keep_one_row` and
+    /// `concurrent_cycles_keep_every_writers_change` (crates/server/tests/protocol_state.rs).
+    ///
+    /// # Errors
+    /// Returns [`ProtocolStateError::NotFound`] when the run is not visible in this tenant,
+    /// or a database error when the write fails.
     pub async fn store(
         conn: &mut PgConnection,
         tenant_id: &str,
         state: &ProtocolState,
     ) -> Result<(), ProtocolStateError> {
-        let row_id = format!("pst_{}", state.run_id.trim_start_matches("run_"));
         set_tenant_context_conn(conn, tenant_id).await?;
-        sqlx::query(
-            "INSERT INTO protocol_states (id, tenant_id, run_id, generation, pending_model_call, \
-             pending_tool_calls, pending_approvals, open_questions, waits, browser_control, \
-             terminal_sessions, child_agent_threads, cancellation_requested, cancellation_at, \
-             last_compaction_epoch_id) \
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::timestamptz, $15) \
-             ON CONFLICT (id) DO UPDATE SET generation = EXCLUDED.generation, \
-             pending_model_call = EXCLUDED.pending_model_call, \
-             pending_tool_calls = EXCLUDED.pending_tool_calls, \
-             pending_approvals = EXCLUDED.pending_approvals, \
-             open_questions = EXCLUDED.open_questions, waits = EXCLUDED.waits, \
-             browser_control = EXCLUDED.browser_control, \
-             terminal_sessions = EXCLUDED.terminal_sessions, \
-             child_agent_threads = EXCLUDED.child_agent_threads, \
-             cancellation_requested = EXCLUDED.cancellation_requested, \
-             cancellation_at = EXCLUDED.cancellation_at, \
-             last_compaction_epoch_id = EXCLUDED.last_compaction_epoch_id",
+        claim(conn, tenant_id, &state.run_id, state.generation).await?;
+        let updated = sqlx::query(
+            "UPDATE protocol_states SET generation = $2, pending_model_call = $3, \
+             pending_tool_calls = $4, pending_approvals = $5, open_questions = $6, waits = $7, \
+             browser_control = $8, terminal_sessions = $9, child_agent_threads = $10, \
+             cancellation_requested = $11, cancellation_at = $12::timestamptz, \
+             last_compaction_epoch_id = $13 \
+             WHERE run_id = $1",
         )
-        .bind(row_id)
-        .bind(tenant_id)
         .bind(&state.run_id)
         .bind(state.generation)
         .bind(json(&state.pending_model_call)?)
@@ -353,7 +394,11 @@ impl ProtocolStateStore {
         .bind(&state.cancellation_at)
         .bind(&state.last_compaction_epoch_id)
         .execute(&mut *conn)
-        .await?;
+        .await?
+        .rows_affected();
+        if updated != 1 {
+            return Err(ProtocolStateError::NotFound(state.run_id.clone()));
+        }
         Ok(())
     }
 
@@ -371,6 +416,35 @@ impl ProtocolStateStore {
             .ok_or_else(|| ProtocolStateError::NotFound(run_id.to_string()))?;
         Ok(next_safe_action(&state))
     }
+}
+
+/// Ensure the run's protocol-state row exists, without touching an existing one.
+///
+/// Target-less `ON CONFLICT DO NOTHING`: every unique index arbitrates, so a concurrent
+/// first-ever write for the same run waits for the other transaction and then does
+/// nothing instead of raising on the index the clause did not name. The row is derived
+/// from the `runs` row as this tenant sees it, so a run of another tenant (which the
+/// foreign key alone would accept, since constraint checks bypass row-level security)
+/// claims nothing and the caller's read or update then finds no row. The tenant context
+/// is the caller's.
+async fn claim(
+    conn: &mut PgConnection,
+    tenant_id: &str,
+    run_id: &str,
+    generation: i64,
+) -> Result<(), ProtocolStateError> {
+    sqlx::query(
+        "INSERT INTO protocol_states (id, tenant_id, run_id, generation) \
+         SELECT $1, $2, id, $4 FROM runs WHERE id = $3 \
+         ON CONFLICT DO NOTHING",
+    )
+    .bind(row_id(run_id))
+    .bind(tenant_id)
+    .bind(run_id)
+    .bind(generation)
+    .execute(&mut *conn)
+    .await?;
+    Ok(())
 }
 
 fn json<T: Serialize>(value: &T) -> Result<Option<serde_json::Value>, ProtocolStateError> {

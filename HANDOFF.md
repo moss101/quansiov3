@@ -359,9 +359,8 @@ holds EXEC-003, EXEC-004, EXEC-005, APP-001, CAP-006, OPS-002, OPS-004, OPS-005 
 task that unblocks the most downstream work, and if a task's toolchain or substrate cannot execute on
 this host, record that and take the next one.
 
-Also outstanding: the residual Postgres lock-table capacity limit under parallel migration, and the
-`turn_loop.rs` protocol-state race that has not recurred in 7 clean runs but was never diagnosed. Both
-under Known defects. Seven of the ten remaining ready tasks are `real_boundary: true` (EXEC-003/004/005
+Also outstanding: the residual Postgres lock-table capacity limit under parallel migration (under
+Known defects; the `turn_loop.rs` protocol-state race listed there is now diagnosed and fixed). Seven of the ten remaining ready tasks are `real_boundary: true` (EXEC-003/004/005
 need a microVM host, Windows or a cloud account; EXEC-009 needs a browser; EXEC-011 needs provider
 sandboxes; OPS-005 and QA-003 also declare it), so the executable set is APP-001, CAP-006, OPS-002 and
 OPS-004 — all `real_boundary: false`.
@@ -502,13 +501,21 @@ rather than fabricated.
   Measured: the workspace suite went from clean in 8 of 10 runs at `dd5e024` and 9 of 10 at `fb50673` to
   **7 of 7 clean**, 496 tests across 80 suites. Recorded as a measurement, not as proof that the earlier
   flakes were the same defect — the cancel over-report was a genuine product bug fixed separately.
-- **`turn_loop.rs` protocol-state write races under parallel load.**
-  `a_turn_executes_tool_proposals_through_capability_policy_and_the_effect_ledger` failed once with
-  `duplicate key value violates unique constraint "protocol_states_pkey"` when the whole workspace
-  suite ran in parallel, and passes standalone. It did not reappear in the 28 workspace runs after the
-  cancel fix. Scratch databases are not shared (each test names its own), so this is a
-  concurrency-sensitive write in the turn loop rather than a harness collision. *Not yet diagnosed past
-  the symptom.*
+- **`turn_loop.rs` protocol-state write races under parallel load — diagnosed and fixed (CORE-006,
+  2026-09-18).** `a_turn_executes_tool_proposals_through_capability_policy_and_the_effect_ledger`
+  failed once with `duplicate key value violates unique constraint "protocol_states_pkey"` when the
+  whole workspace suite ran in parallel, and passed standalone; after RUN-011's 2026-09-16 change of
+  the upsert's conflict target to `id` it failed the same way on `protocol_states_run_id_key`.
+  Root cause: `protocol_states` has two unique indexes (`id`, derived from the run id, and `run_id`),
+  and PostgreSQL arbitrates `INSERT ... ON CONFLICT DO UPDATE` only on the index the clause names, so
+  two transactions performing a run's first-ever write at the same moment (two independent tool calls
+  of one round, each Effect Ledger transition in its own transaction) both passed the arbiter's
+  pre-check and the loser raised on the other index. The same overlap also let one transition's
+  unlocked load → modify → store overwrite the other's pending tool call. `ProtocolStateStore` now
+  claims the row with a target-less `ON CONFLICT DO NOTHING` (every unique index arbitrates) before
+  updating it, and every read-modify-write cycle takes the row `FOR UPDATE` through
+  `ProtocolStateStore::lock` / `RunStore::update_protocol_state`. Reproduced and verified against the
+  real schema; see `evidence/CORE-006/2026-09-18T08-56-07Z/`.
 - No other known defects: the intermittent intelligence-plane failure (the route-id clock dependency)
   remains fixed with its regression test, and the determinism audit found no further leaks.
 

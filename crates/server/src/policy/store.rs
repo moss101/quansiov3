@@ -1137,17 +1137,18 @@ mod rows {
     }
 
     /// Add the request to the run's durable protocol state in the same transaction.
+    ///
+    /// The state is taken under [`ProtocolStateStore::lock`], so a request raised while a
+    /// parallel tool call of the same turn settles cannot be overwritten by that
+    /// transition's write (or overwrite it).
     pub(super) async fn append_pending_approval(
         tx: &mut Transaction<'static, Postgres>,
         tenant_id: &str,
         record: &ApprovalRequestRecord,
     ) -> Result<(), PolicyError> {
-        let mut state = ProtocolStateStore::load(tx, tenant_id, &record.run_id)
+        let mut state = ProtocolStateStore::lock(tx, tenant_id, &record.run_id, 0)
             .await
-            .map_err(|error| PolicyError::InvalidArgument(error.to_string()))?
-            .unwrap_or_else(|| {
-                crate::runtime::protocol_state::ProtocolState::new(&record.run_id, 0)
-            });
+            .map_err(|error| PolicyError::InvalidArgument(error.to_string()))?;
         let id = record.id.to_string();
         if !state.pending_approvals.contains(&id) {
             state.pending_approvals.push(id);

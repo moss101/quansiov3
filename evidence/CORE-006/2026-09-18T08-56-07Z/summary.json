@@ -1,0 +1,265 @@
+{
+  "task_id": "CORE-006",
+  "git_commit": "f0fcf58df77e932fa9608d4256d99bfb32e1b885",
+  "recorded_at": "2026-09-18T09:16:48Z",
+  "regression": {
+    "failing_test": "crates/server/tests/turn_loop.rs::a_turn_executes_tool_proposals_through_capability_policy_and_the_effect_ledger",
+    "exposed_at": "9eb27942957be7938b0f4ee6d73b0e6d65075bb1",
+    "introduced_by": "d6bad3ae1a8094ef26441bdd60524bdd5a610765",
+    "also_reverified": [
+      "RUN-011"
+    ]
+  },
+  "commands": [
+    {
+      "command": "QUANSIO_REPO=<repo> QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd python && uv run --frozen python ../evidence/CORE-006/2026-09-18T08-56-07Z/repro_protocol_state_race.py <run_id|current|claim|rmw_unlocked|rmw_locked> 1000)",
+      "exit_code": 0,
+      "result": "PASS",
+      "note": "run_id: 112 pkey violations; current: 67 run_id_key violations; claim: 0; rmw_unlocked: 1000 lost updates; rmw_locked: 0",
+      "log": "evidence/CORE-006/2026-09-18T08-56-07Z/repro-race-variants.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test protocol_state concurrent  # against the UNFIXED store (expected FAIL)",
+      "exit_code": 101,
+      "result": "FAIL",
+      "note": "both regression tests fail on the previous store: 11 unique violations on protocol_states_run_id_key in 120 rounds, lost update in round 0",
+      "log": "evidence/CORE-006/2026-09-18T08-56-07Z/regression-tests-on-unfixed-store.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test protocol_state",
+      "exit_code": 0,
+      "result": "PASS",
+      "note": "8 passed"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test turn_loop --test effects --test policy --test runtime_state_machine --test recovery --test agents --test scheduler --test protocol_state",
+      "exit_code": 0,
+      "result": "PASS",
+      "note": "79 passed across the touched owners' suites"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> for i in $(seq 1 25); do cargo test -p quansio-server --test turn_loop; done",
+      "exit_code": 0,
+      "result": "PASS",
+      "note": "25/25 runs: 12 passed each",
+      "log": "evidence/CORE-006/2026-09-18T08-56-07Z/turn-loop-repeated.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "note": "clean"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "note": "clean"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test --workspace  # run 1",
+      "exit_code": 0,
+      "result": "PASS",
+      "note": "102 suites, 589 passed, 0 failed",
+      "log": "evidence/CORE-006/2026-09-18T08-56-07Z/cargo-test-workspace-run1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test --workspace  # run 2",
+      "exit_code": 0,
+      "result": "PASS",
+      "note": "102 suites, 589 passed, 0 failed",
+      "log": "evidence/CORE-006/2026-09-18T08-56-07Z/cargo-test-workspace-run2.log"
+    },
+    {
+      "command": "(cd python && uv sync --python 3.12 --frozen --quiet && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "note": "444 passed, 82 skipped",
+      "log": "evidence/CORE-006/2026-09-18T08-56-07Z/toolchains-python.log"
+    },
+    {
+      "command": "pnpm install --frozen-lockfile && pnpm build && pnpm typecheck && pnpm test && pnpm lint && python3.12 scripts/ci/arch_check.py && swift test --package-path native/macos",
+      "exit_code": 0,
+      "result": "PASS",
+      "note": "all pass",
+      "log": "evidence/CORE-006/2026-09-18T08-56-07Z/toolchains-typescript-native.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "note": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh  # in the nested worktree",
+      "exit_code": 1,
+      "result": "FAIL",
+      "note": "8/11 gates PASS; contract-drift, toolchains and tests fail at the contract-gen build, a nested-worktree environment property (NOTES.md); every gate behind it was run individually above and passes; re-run on main at merge",
+      "log": "evidence/CORE-006/2026-09-18T08-56-07Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_REPO=<repo> QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd python && uv run --frozen python ../evidence/CORE-006/2026-09-18T08-56-07Z/repro_protocol_state_race.py <run_id|current|claim|rmw_unlocked|rmw_locked> 1000)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test protocol_state concurrent  # against the UNFIXED store (expected FAIL)",
+      "exit_code": 101,
+      "result": "FAIL"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test protocol_state",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test turn_loop --test effects --test policy --test runtime_state_machine --test recovery --test agents --test scheduler --test protocol_state",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> for i in $(seq 1 25); do cargo test -p quansio-server --test turn_loop; done",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test --workspace  # run 1",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test --workspace  # run 2",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv sync --python 3.12 --frozen --quiet && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm install --frozen-lockfile && pnpm build && pnpm typecheck && pnpm test && pnpm lint && python3.12 scripts/ci/arch_check.py && swift test --package-path native/macos",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh  # in the nested worktree",
+      "exit_code": 1,
+      "result": "FAIL"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/runtime/protocol_state/mod.rs",
+      "sha256": "e7ca718eb0cb88d17a63c4b6443bbfe22ba287c07d5e45c69cc6fc84877d00c9",
+      "bytes": 19940
+    },
+    {
+      "path": "crates/server/src/effects/ledger.rs",
+      "sha256": "2112a744a211117b8fa94d937ff4570adb8aaf006c2b253049e6d45f1aa64e80",
+      "bytes": 60991
+    },
+    {
+      "path": "crates/server/src/policy/store.rs",
+      "sha256": "ff427917c2d4d2d1f9de36afb9f013c4c2014435302aa4cdd0821928b571bd78",
+      "bytes": 48511
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/store.rs",
+      "sha256": "f16f743046ced94dde66170389d587b9c841b3d8d85c8b6533077d18fd887cbf",
+      "bytes": 76862
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/engine.rs",
+      "sha256": "fc04b9e493c6891798ff6b4775cb5ad13d846642c0dbad890d1ebaf6dc1cdce7",
+      "bytes": 43460
+    },
+    {
+      "path": "crates/server/src/runtime/turn_loop/dispatch.rs",
+      "sha256": "636d45e908aded17a53a8ecf5995ec6ff2037cbc7879208f6e88625a8fc51099",
+      "bytes": 66522
+    },
+    {
+      "path": "crates/server/tests/protocol_state.rs",
+      "sha256": "76c664ddc12d30db5e8788c113e591b2a49ef40852a1d8cb15631c9bb9e9ed86",
+      "bytes": 24554
+    },
+    {
+      "path": "HANDOFF.md",
+      "sha256": "92ac793aa8bc277e9779246cfbc979389b2a0146777f75ade53c7d5e2e0eca24",
+      "bytes": 57377
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/RECONCILIATION.md",
+      "sha256": "f8e1683855ce53a7a9e15babae4cdad4e05091c15e738caa7424739aaeb5289f",
+      "bytes": 6464
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/NOTES.md",
+      "sha256": "d650d9128958141f1527667b1e23647b2447d98d8fb8298c403f740ebaa7a818",
+      "bytes": 8493
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/repro_protocol_state_race.py",
+      "sha256": "15a98d3c14fe5e903abe3d8f7f7a90762298e80185746db5c18ce056dd97e1ee",
+      "bytes": 10313
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/repro-race-variants.log",
+      "sha256": "4a06140e05446e6583838cf5de91d2802d8ac6f334533fb346f73fa0ff66aad0",
+      "bytes": 896
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/regression-tests-on-unfixed-store.log",
+      "sha256": "a30da929e23d213493d7784cc150f7a8c070ff1f9ff049d587d8ccae5e28efd6",
+      "bytes": 2986
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/turn-loop-repeated.log",
+      "sha256": "43babda857d16d46c1d203e6d285d1deb4ee82f8e780c0343ee403ba9b280a49",
+      "bytes": 2596
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/cargo-test-workspace-run1.log",
+      "sha256": "9d4aa2a4d5f3249781c5c95940e84773da551dac2e26c176befcc0a2fd370305",
+      "bytes": 52652
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/cargo-test-workspace-run2.log",
+      "sha256": "eca44be90104856659e9f6bf76eff6940339bd12a89a09b09e97c80215077277",
+      "bytes": 60874
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/toolchains-python.log",
+      "sha256": "3d5df2f8ff0b92c996b30c44eb4790f540169180759fed5c01f93f0c2a6e2db0",
+      "bytes": 331
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/toolchains-typescript-native.log",
+      "sha256": "062a24f52ba17232f47971b88d20f9cc53bdd7ab9173af0e5a5cea92da95cfa5",
+      "bytes": 843
+    },
+    {
+      "path": "evidence/CORE-006/2026-09-18T08-56-07Z/ci.log",
+      "sha256": "7f9421a357a4d7cea61398b0453cf129df6a65d48a66664b7f1bfeca836d5f72",
+      "bytes": 1105
+    }
+  ]
+}

@@ -44,7 +44,7 @@ use crate::policy::{
     PolicyStore, SequenceContext, TrustLevel, UntrustedOrigin, FAIL_CLOSED_TRUST,
 };
 use crate::runtime::planning::PLAN_GRAPH_OWNER;
-use crate::runtime::protocol_state::{is_unsettled, PendingToolCall, ProtocolState};
+use crate::runtime::protocol_state::{is_unsettled, PendingToolCall};
 
 use super::super::state_machine::{
     DelegationContext, DelegationOutcome, DelegationPort, DelegationRequest, ProposedToolCall, Run,
@@ -1401,21 +1401,20 @@ impl ToolDispatchService {
             .await?;
 
         // ProtocolState records the pending call with its dispatch token, so a resumed
-        // runtime continues this call instead of proposing it again.
-        let mut state = self
-            .runs
-            .load_protocol_state(&run.id)
-            .await?
-            .unwrap_or_else(|| ProtocolState::new(run.id.to_string(), run.generation.get() as i64));
-        state.generation = run.generation.get() as i64;
-        state.pending_tool_calls.push(PendingToolCall {
-            tool_call_id: tool_call_id.to_string(),
-            tool_name: plan.tool.clone(),
-            dispatch_token: effect.dispatch_token.clone().unwrap_or_default(),
-            effect_id: effect.id.clone(),
-            effect_status: "PROPOSED".to_string(),
-        });
-        self.runs.store_protocol_state(&state).await?;
+        // runtime continues this call instead of proposing it again. The cycle runs under
+        // the run's row lock: the other calls of this round settle in parallel and write
+        // the same state.
+        self.runs
+            .update_protocol_state(&run.id, run.generation, |state| {
+                state.pending_tool_calls.push(PendingToolCall {
+                    tool_call_id: tool_call_id.to_string(),
+                    tool_name: plan.tool.clone(),
+                    dispatch_token: effect.dispatch_token.clone().unwrap_or_default(),
+                    effect_id: effect.id.clone(),
+                    effect_status: "PROPOSED".to_string(),
+                });
+            })
+            .await?;
 
         Ok(ToolDispatchOutcome::Parked {
             state: RunStatus::WaitingApproval,

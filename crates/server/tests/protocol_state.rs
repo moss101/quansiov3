@@ -8,8 +8,12 @@
 //! Environment: `QUANSIO_TEST_POSTGRES_URL` (see `tests/common/mod.rs`). Absent →
 //! `BLOCKED_EXTERNAL` marker.
 
+use std::sync::Arc;
+
+use futures_util::future::BoxFuture;
 use quansio_core::{CanonicalId, Prefix, UlidGenerator};
 use sqlx::PgPool;
+use tokio::sync::Barrier;
 
 use quansio_server::control::schema;
 use quansio_server::runtime::checkpoints::{
@@ -17,7 +21,7 @@ use quansio_server::runtime::checkpoints::{
 };
 use quansio_server::runtime::protocol_state::{
     next_safe_action, BrowserControl, BrowserControlHolder, NextAction, PendingToolCall,
-    ProtocolState, ProtocolStateStore, Wait, WaitKind,
+    ProtocolState, ProtocolStateError, ProtocolStateStore, Wait, WaitKind,
 };
 
 mod common;
@@ -128,6 +132,81 @@ async fn prepare(prefix: &str) -> Option<Fixture> {
 async fn finish(fixture: Fixture) {
     drop_pool(&fixture.pool, &fixture.name).await;
 }
+
+/// Insert another run on the fixture's agent thread and return its id.
+async fn new_run(fixture: &Fixture) -> String {
+    let run_id = CanonicalId::generate(Prefix::Run, &mut UlidGenerator::new()).to_string();
+    let mut tx = fixture.pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant context");
+    sqlx::query(
+        "INSERT INTO runs (id, tenant_id, workspace_id, work_node_id, agent_thread_id, generation, \
+         status, trigger_kind) VALUES ($1, $2, $3, $4, $5, 1, 'RUNNING', 'manual')",
+    )
+    .bind(&run_id)
+    .bind(TENANT)
+    .bind(WORKSPACE)
+    .bind(WORK_NODE)
+    .bind(&fixture.agent_thread_id)
+    .execute(&mut *tx)
+    .await
+    .expect("run");
+    tx.commit().await.expect("commit");
+    run_id
+}
+
+/// One writer of a [`race`]: a store operation on the caller's connection.
+type Writer =
+    Box<dyn for<'c> FnOnce(&'c mut sqlx::PgConnection) -> BoxFuture<'c, Result<(), String>> + Send>;
+
+/// Run `writers` at the same moment, each in its own committed transaction.
+///
+/// Every writer waits on a barrier after acquiring its connection, so the transactions
+/// overlap the way two independent tool calls of one turn overlap when their Effect
+/// Ledger transitions settle in parallel (`parallel::join_all` in the turn loop).
+async fn race(pool: &PgPool, writers: Vec<Writer>) -> Vec<Result<(), String>> {
+    let barrier = Arc::new(Barrier::new(writers.len()));
+    let mut handles = Vec::with_capacity(writers.len());
+    for writer in writers {
+        let pool = pool.clone();
+        let barrier = Arc::clone(&barrier);
+        handles.push(tokio::spawn(async move {
+            let mut tx = pool.begin().await.map_err(|error| error.to_string())?;
+            schema::set_tenant_context(&mut tx, TENANT)
+                .await
+                .map_err(|error| error.to_string())?;
+            barrier.wait().await;
+            match writer(&mut tx).await {
+                Ok(()) => tx.commit().await.map_err(|error| error.to_string()),
+                Err(error) => {
+                    let _ = tx.rollback().await;
+                    Err(error)
+                }
+            }
+        }));
+    }
+    let mut results = Vec::with_capacity(handles.len());
+    for handle in handles {
+        results.push(handle.await.expect("writer task"));
+    }
+    results
+}
+
+fn pending_call(marker: &str) -> PendingToolCall {
+    PendingToolCall {
+        tool_call_id: format!("tc_{marker}"),
+        tool_name: "fs.read".to_string(),
+        dispatch_token: format!("dispatch-{marker}"),
+        effect_id: format!("eff_{marker}"),
+        effect_status: "DISPATCHED".to_string(),
+    }
+}
+
+/// Rounds of two overlapping writers per race test. The race is timing-dependent; the
+/// unfixed upsert lost a first-ever write in roughly one round in fifteen, so this many
+/// rounds fail the test with near certainty on that code while staying fast.
+const RACE_ROUNDS: usize = 120;
 
 #[tokio::test]
 async fn crash_restart_reconstructs_the_next_safe_action() {
@@ -334,6 +413,192 @@ async fn protocol_state_is_tenant_scoped() {
         .await
         .expect("reset role");
     drop(conn);
+
+    finish(fixture).await;
+}
+
+/// Two independent tool calls of one turn settle in parallel, each Effect Ledger
+/// transition in its own transaction, so a run's first-ever protocol-state write races
+/// with itself. `protocol_states` has two unique indexes (`id`, `run_id`); PostgreSQL
+/// arbitrates an upsert only on the index its `ON CONFLICT` names and raised a raw
+/// unique violation on the other one for the losing writer (`protocol_states_pkey`
+/// before d6bad3a, `protocol_states_run_id_key` after it). The store must upsert either
+/// way and leave exactly one row.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn concurrent_first_writes_for_one_run_never_raise_and_keep_one_row() {
+    let Some(fixture) = prepare("protocol_first_write_race").await else {
+        blocked_marker();
+        return;
+    };
+
+    let mut failures = Vec::new();
+    for round in 0..RACE_ROUNDS {
+        let run_id = new_run(&fixture).await;
+        let writers = ["a", "b"]
+            .into_iter()
+            .map(|marker| -> Writer {
+                let mut state = ProtocolState::new(&run_id, 1);
+                state.pending_tool_calls.push(pending_call(marker));
+                Box::new(move |conn| {
+                    Box::pin(async move {
+                        ProtocolStateStore::store(conn, TENANT, &state)
+                            .await
+                            .map_err(|error| error.to_string())
+                    })
+                })
+            })
+            .collect();
+        for (marker, result) in ["a", "b"]
+            .into_iter()
+            .zip(race(&fixture.pool, writers).await)
+        {
+            if let Err(error) = result {
+                failures.push(format!("round {round} writer {marker}: {error}"));
+            }
+        }
+        let rows: i64 = with_tenant!(fixture.pool, TENANT, |conn| {
+            sqlx::query_scalar("SELECT count(*) FROM protocol_states WHERE run_id = $1")
+                .bind(&run_id)
+                .fetch_one(&mut *conn)
+                .await
+        })
+        .expect("count");
+        assert_eq!(rows, 1, "one protocol-state row per run (round {round})");
+        let stored = with_tenant!(fixture.pool, TENANT, |conn| {
+            ProtocolStateStore::load(conn, TENANT, &run_id).await
+        })
+        .expect("load")
+        .expect("state");
+        assert_eq!(
+            stored.pending_tool_calls.len(),
+            1,
+            "a whole-state write is one writer's state, never a blend (round {round})"
+        );
+    }
+    assert!(
+        failures.is_empty(),
+        "a concurrent first-ever write must upsert, not raise:\n{}",
+        failures.join("\n")
+    );
+
+    finish(fixture).await;
+}
+
+/// The same race, one level up: each transition loads the state, adds or removes its own
+/// pending call and stores the whole state. Taken under [`ProtocolStateStore::lock`], the
+/// cycles serialize on the run's row and every writer's change survives; read with a
+/// plain load, the second writer overwrote the first one's pending call with the state it
+/// had read before, and recovery would not have seen that call.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn concurrent_cycles_keep_every_writers_change() {
+    let Some(fixture) = prepare("protocol_cycle_race").await else {
+        blocked_marker();
+        return;
+    };
+
+    for round in 0..RACE_ROUNDS {
+        let run_id = new_run(&fixture).await;
+        let writers = ["a", "b"]
+            .into_iter()
+            .map(|marker| -> Writer {
+                let run_id = run_id.clone();
+                Box::new(move |conn| {
+                    Box::pin(async move {
+                        let mut state = ProtocolStateStore::lock(conn, TENANT, &run_id, 1)
+                            .await
+                            .map_err(|error| error.to_string())?;
+                        state.pending_tool_calls.push(pending_call(marker));
+                        ProtocolStateStore::store(conn, TENANT, &state)
+                            .await
+                            .map_err(|error| error.to_string())
+                    })
+                })
+            })
+            .collect();
+        for result in race(&fixture.pool, writers).await {
+            result.expect("a locked cycle never fails");
+        }
+        let stored = with_tenant!(fixture.pool, TENANT, |conn| {
+            ProtocolStateStore::load(conn, TENANT, &run_id).await
+        })
+        .expect("load")
+        .expect("state");
+        let mut markers: Vec<&str> = stored
+            .pending_tool_calls
+            .iter()
+            .map(|call| call.tool_call_id.as_str())
+            .collect();
+        markers.sort_unstable();
+        assert_eq!(
+            markers,
+            ["tc_a", "tc_b"],
+            "both writers' pending calls must survive (round {round})"
+        );
+    }
+
+    finish(fixture).await;
+}
+
+/// The claim behind `lock` and `store` derives the row from the run as this tenant sees
+/// it, so neither can create or touch protocol state for a run the tenant cannot see —
+/// the foreign key alone would accept it, since constraint checks bypass row-level
+/// security — and an unknown run fails closed the same way.
+#[tokio::test]
+async fn lock_and_store_fail_closed_for_foreign_and_unknown_runs() {
+    let Some(fixture) = prepare("protocol_lock_fail_closed").await else {
+        blocked_marker();
+        return;
+    };
+
+    let unknown = "run_01J8Z3K6F1N8VQ2X5W9Y0ZZZZZ";
+    let error = with_tenant!(fixture.pool, TENANT, |conn| {
+        ProtocolStateStore::lock(conn, TENANT, unknown, 1).await
+    })
+    .expect_err("locking an unknown run");
+    assert!(matches!(error, ProtocolStateError::NotFound(id) if id == unknown));
+    let error = with_tenant!(fixture.pool, TENANT, |conn| {
+        ProtocolStateStore::store(conn, TENANT, &ProtocolState::new(unknown, 1)).await
+    })
+    .expect_err("storing an unknown run");
+    assert!(matches!(error, ProtocolStateError::NotFound(id) if id == unknown));
+
+    let other = "tn_01J8Z3K6F1N8VQ2X5W9Y0EEEEE";
+    let mut tx = fixture.pool.begin().await.expect("begin");
+    sqlx::query("INSERT INTO tenants (id, name) VALUES ($1, 'other')")
+        .bind(other)
+        .execute(&mut *tx)
+        .await
+        .expect("other tenant");
+    tx.commit().await.expect("commit");
+
+    // RLS only constrains non-superusers, so the probe runs as the application role.
+    let mut tx = fixture.pool.begin().await.expect("begin");
+    sqlx::query("SET ROLE quansio_app")
+        .execute(&mut *tx)
+        .await
+        .expect("set role");
+    let error = ProtocolStateStore::lock(&mut tx, other, &fixture.run_id, 1)
+        .await
+        .expect_err("locking another tenant's run");
+    assert!(matches!(error, ProtocolStateError::NotFound(_)));
+    let error = ProtocolStateStore::store(&mut tx, other, &ProtocolState::new(&fixture.run_id, 1))
+        .await
+        .expect_err("storing another tenant's run");
+    assert!(matches!(error, ProtocolStateError::NotFound(_)));
+    tx.commit().await.expect("commit");
+
+    // Nothing was created for the run, by either tenant.
+    let rows: i64 = with_tenant!(fixture.pool, TENANT, |conn| {
+        sqlx::query_scalar("SELECT count(*) FROM protocol_states WHERE run_id = $1")
+            .bind(&fixture.run_id)
+            .fetch_one(&mut *conn)
+            .await
+    })
+    .expect("count");
+    assert_eq!(
+        rows, 0,
+        "a foreign tenant's claim must not create protocol state"
+    );
 
     finish(fixture).await;
 }

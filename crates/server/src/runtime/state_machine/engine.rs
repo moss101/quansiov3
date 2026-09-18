@@ -866,26 +866,26 @@ impl RuntimeEngine {
         wait_key: &str,
         _effect_id: Option<String>,
     ) -> Result<TurnOutcome, RuntimeError> {
-        let mut record = self.pending_state(run).await?;
-        match state {
-            RunStatus::WaitingApproval
-                if !record.pending_approvals.iter().any(|id| id == wait_key) =>
-            {
-                record.pending_approvals.push(wait_key.to_string());
-            }
-            RunStatus::WaitingQuestion
-                if !record.open_questions.iter().any(|id| id == wait_key) =>
-            {
-                record.open_questions.push(wait_key.to_string());
-            }
-            RunStatus::WaitingChild
-                if !record.child_agent_threads.iter().any(|id| id == wait_key) =>
-            {
-                record.child_agent_threads.push(wait_key.to_string());
-            }
-            _ => {}
-        }
-        self.store.store_protocol_state(&record).await?;
+        self.store
+            .update_protocol_state(&run.id, run.generation, |record| match state {
+                RunStatus::WaitingApproval
+                    if !record.pending_approvals.iter().any(|id| id == wait_key) =>
+                {
+                    record.pending_approvals.push(wait_key.to_string());
+                }
+                RunStatus::WaitingQuestion
+                    if !record.open_questions.iter().any(|id| id == wait_key) =>
+                {
+                    record.open_questions.push(wait_key.to_string());
+                }
+                RunStatus::WaitingChild
+                    if !record.child_agent_threads.iter().any(|id| id == wait_key) =>
+                {
+                    record.child_agent_threads.push(wait_key.to_string());
+                }
+                _ => {}
+            })
+            .await?;
         self.store
             .transition_run(&run.id, generation, state, Some("tool wait".to_string()))
             .await?;
@@ -908,11 +908,13 @@ impl RuntimeEngine {
         generation: Generation,
         question_id: &str,
     ) -> Result<TurnOutcome, RuntimeError> {
-        let mut state = self.pending_state(run).await?;
-        if !state.open_questions.iter().any(|id| id == question_id) {
-            state.open_questions.push(question_id.to_string());
-        }
-        self.store.store_protocol_state(&state).await?;
+        self.store
+            .update_protocol_state(&run.id, run.generation, |state| {
+                if !state.open_questions.iter().any(|id| id == question_id) {
+                    state.open_questions.push(question_id.to_string());
+                }
+            })
+            .await?;
         self.store
             .transition_run(
                 &run.id,
@@ -1048,17 +1050,19 @@ impl RuntimeEngine {
         generation: Generation,
         child_agent_thread_id: &str,
     ) -> Result<TurnOutcome, RuntimeError> {
-        let mut state = self.pending_state(run).await?;
-        if !state
-            .child_agent_threads
-            .iter()
-            .any(|id| id == child_agent_thread_id)
-        {
-            state
-                .child_agent_threads
-                .push(child_agent_thread_id.to_string());
-        }
-        self.store.store_protocol_state(&state).await?;
+        self.store
+            .update_protocol_state(&run.id, run.generation, |state| {
+                if !state
+                    .child_agent_threads
+                    .iter()
+                    .any(|id| id == child_agent_thread_id)
+                {
+                    state
+                        .child_agent_threads
+                        .push(child_agent_thread_id.to_string());
+                }
+            })
+            .await?;
         self.store
             .transition_run(
                 &run.id,
@@ -1086,28 +1090,31 @@ impl RuntimeEngine {
         call: &ProposedToolCall,
         effect_id: Option<String>,
     ) -> Result<TurnOutcome, RuntimeError> {
-        let mut state = self.pending_state(run).await?;
-        if let Some(effect_id) = &effect_id {
-            // The dispatch token and settlement belong to RUN-011's effect reservation;
-            // the runtime records only what it knows so recovery reconciles instead of
-            // retrying (DOMAIN.md §7.2).
-            if !state
-                .pending_tool_calls
-                .iter()
-                .any(|pending| &pending.effect_id == effect_id)
-            {
-                state
+        self.store
+            .update_protocol_state(&run.id, run.generation, |state| {
+                let Some(effect_id) = &effect_id else {
+                    return;
+                };
+                // The dispatch token and settlement belong to RUN-011's effect reservation;
+                // the runtime records only what it knows so recovery reconciles instead of
+                // retrying (DOMAIN.md §7.2).
+                if !state
                     .pending_tool_calls
-                    .push(crate::runtime::protocol_state::PendingToolCall {
-                        tool_call_id: call.call_id.clone(),
-                        tool_name: call.tool.clone(),
-                        dispatch_token: String::new(),
-                        effect_id: effect_id.clone(),
-                        effect_status: "OUTCOME_UNKNOWN".to_string(),
-                    });
-            }
-        }
-        self.store.store_protocol_state(&state).await?;
+                    .iter()
+                    .any(|pending| &pending.effect_id == effect_id)
+                {
+                    state.pending_tool_calls.push(
+                        crate::runtime::protocol_state::PendingToolCall {
+                            tool_call_id: call.call_id.clone(),
+                            tool_name: call.tool.clone(),
+                            dispatch_token: String::new(),
+                            effect_id: effect_id.clone(),
+                            effect_status: "OUTCOME_UNKNOWN".to_string(),
+                        },
+                    );
+                }
+            })
+            .await?;
         self.store
             .finish_turn(&turn.id, generation, TurnStatus::Completed)
             .await?;

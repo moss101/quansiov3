@@ -1,0 +1,24 @@
+== typescript workspace ==
+
+Done in 1.4s using pnpm v11.8.0
+sdk/typescript build: Done
+apps/web build: Done
+apps/desktop build: Done
+sdk/typescript typecheck: Done
+apps/web typecheck: Done
+apps/desktop typecheck: Done
+apps/desktop test:  ✓ tests/security.test.ts (5 tests) 3ms
+apps/desktop test:  Test Files  13 passed (13)
+apps/desktop test:       Tests  25 passed (25)
+apps/desktop test:    Start at  12:15:34
+apps/desktop test:    Duration  697ms (transform 639ms, setup 0ms, collect 1.26s, tests 66ms, environment 4ms, prepare 1.07s)
+apps/desktop test: Done
+$ eslint .
+typescript exit: 0
+== architecture conformance ==
+architecture check: CLEAN (0 findings)
+== native bridges ==
+↳ Testing Library Version: 1902
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
+swift exit: 0
