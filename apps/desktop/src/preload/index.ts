@@ -16,7 +16,7 @@ const send: BridgeSend = (channel, payload) => {
   if (!preloadAllows(channel)) {
     return Promise.reject(new Error(`channel not allowed: ${channel}`));
   }
-  return ipcRenderer.invoke(channel, payload);
+  return ipcRenderer.invoke(channel, payload) as Promise<unknown>;
 };
 
 const subscribe: BridgeSubscribe = (channel, listener) => {

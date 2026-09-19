@@ -1,0 +1,31 @@
+# Quansio V8.1 baseline authentication (DOMAIN.md §2, OD-002). Provider endpoints and
+# client ids are configuration; client secrets are secret handles materialized from the
+# environment variable named by `client_secret_env` (never written here). A provider whose
+# client id variable is unset is not offered and fails closed with PROVIDER_UNAVAILABLE.
+version: 1
+access_token_ttl_seconds: 900
+refresh_token_ttl_seconds: 2592000
+magic_link_ttl_seconds: 900
+oauth_state_ttl_seconds: 600
+providers:
+  google:
+    authorization_url: https://accounts.google.com/o/oauth2/v2/auth
+    token_url: https://oauth2.googleapis.com/token
+    userinfo_url: https://openidconnect.googleapis.com/v1/userinfo
+    scopes: [openid, email, profile]
+    client_id_env: QUANSIO_OAUTH_GOOGLE_CLIENT_ID
+    client_secret_env: QUANSIO_SECRET_OAUTH_GOOGLE
+  microsoft:
+    authorization_url: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+    token_url: https://login.microsoftonline.com/common/oauth2/v2.0/token
+    userinfo_url: https://graph.microsoft.com/oidc/userinfo
+    scopes: [openid, email, profile]
+    client_id_env: QUANSIO_OAUTH_MICROSOFT_CLIENT_ID
+    client_secret_env: QUANSIO_SECRET_OAUTH_MICROSOFT
+  github:
+    authorization_url: https://github.com/login/oauth/authorize
+    token_url: https://github.com/login/oauth/access_token
+    userinfo_url: https://api.github.com/user
+    scopes: [read:user, user:email]
+    client_id_env: QUANSIO_OAUTH_GITHUB_CLIENT_ID
+    client_secret_env: QUANSIO_SECRET_OAUTH_GITHUB

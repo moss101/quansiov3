@@ -48,6 +48,14 @@ describe("preload bridge", () => {
     expect(Object.keys(api).sort()).toEqual(
       [
         "activeRun",
+        "sessionState",
+        "me",
+        "startMagicLink",
+        "completeMagicLink",
+        "startOAuth",
+        "signOut",
+        "updateWorkspace",
+        "updateUserSettings",
         "invokeCommand",
         "openDeepLink",
         "reconnectStream",
@@ -56,6 +64,7 @@ describe("preload bridge", () => {
         "onStreamFrame",
         "onStreamState",
         "onStreamError",
+        "onSessionState",
         "onDeepLink",
         "onUpdateStatus",
       ].sort(),
@@ -80,6 +89,14 @@ describe("preload bridge", () => {
     await api.subscribeStream();
     await api.reconnectStream("cursor-1");
     await api.activeRun();
+    await api.sessionState();
+    await api.me();
+    await api.startMagicLink("ada@example.com", "Ada");
+    await api.completeMagicLink("qml_token");
+    await api.startOAuth("github");
+    await api.signOut();
+    await api.updateWorkspace("ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", { settings: { execution_target: "cloud" } });
+    await api.updateUserSettings("ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", { theme: "dark" });
     await api.openDeepLink("quansio://thread/thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.updateStatus();
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
@@ -115,11 +132,11 @@ describe("preload bridge", () => {
           throw new Error("never");
         }
         calls.push(channel);
-        return payload;
+        return Promise.resolve(payload);
       },
       () => () => undefined,
     );
-    api.activeRun();
+    void api.activeRun();
     expect(calls).toEqual(["session.activeRun"]);
     expect(preloadAllows("fs.read")).toBe(false);
     expect(preloadAllows("child_process.exec")).toBe(false);

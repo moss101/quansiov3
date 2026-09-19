@@ -26,6 +26,18 @@ export const STRINGS = {
   updateError: "Update check failed.",
   deepLinkOpened: "Opened from a link.",
   commandFailed: "The command was refused.",
+  signIn: "Sign in",
+  emailPlaceholder: "you@example.com",
+  displayNamePlaceholder: "Your name (optional)",
+  sendMagicLink: "Email me a sign-in link",
+  continueWith: "Continue with",
+  checkInbox: "Check your inbox",
+  pasteToken: "Paste the sign-in token",
+  continue: "Continue",
+  chooseExecutionTarget: "Where should your work run?",
+  securityDefaults: "Security defaults",
+  confirm: "Confirm",
+  signOut: "Sign out",
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

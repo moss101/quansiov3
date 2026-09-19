@@ -209,6 +209,46 @@ def generate_openapi(out: Path, catalog: Optional[Dict[str, object]] = None) -> 
             }
         }
 
+    auth_endpoints: List[Dict[str, object]] = catalog.get("auth_endpoints", [])  # type: ignore[assignment]
+    schemas["Session"] = {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["session_id", "user_id", "tenant_id", "access_token", "access_expires_at", "refresh_token", "refresh_expires_at"],
+        "properties": {
+            "session_id": {"type": "string"},
+            "user_id": {"type": "string"},
+            "tenant_id": {"type": "string"},
+            "access_token": {"type": "string", "description": "ES256 JWT, at most 15 minutes (DOMAIN.md §2)."},
+            "access_expires_at": {"type": "string", "format": "date-time"},
+            "refresh_token": {"type": "string", "description": "Opaque, rotating; stored in the OS keychain on desktop."},
+            "refresh_expires_at": {"type": "string", "format": "date-time"},
+            "workspace_id": {"type": "string"},
+            "onboarded": {"type": "boolean"},
+        },
+    }
+    for endpoint in auth_endpoints:
+        path = str(endpoint["path"])
+        method = str(endpoint["method"]).lower()
+        operation_id = "".join(
+            piece.title() for part in path.replace("/v1/", "").split("/") if part for piece in part.strip("{}").split("-")
+        )
+        operation_id = operation_id if operation_id.startswith("Auth") else "Auth" + operation_id
+        operation: Dict[str, object] = {
+            "operationId": operation_id,
+            "summary": f"Session endpoint {endpoint['method']} {path} (DOMAIN.md §2).",
+            "tags": ["Identity"],
+            "security": [{"bearerAuth": []}] if endpoint["bearer"] else [],
+            "responses": {
+                "200": {"description": "Session, identity or acknowledgement.", "content": {"application/json": {"schema": {"type": "object"}}}},
+                "default": {"description": "Typed error (DOMAIN.md §15).", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}},
+            },
+        }
+        if "{provider}" in path:
+            operation["parameters"] = [{"name": "provider", "in": "path", "required": True, "schema": {"type": "string", "enum": ["google", "microsoft", "github"]}}]
+        if method == "post":
+            operation["requestBody"] = {"required": True, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": True}}}}
+        paths.setdefault(path, {})[method] = operation  # type: ignore[index]
+
     document = {
         "openapi": "3.1.0",
         "info": {

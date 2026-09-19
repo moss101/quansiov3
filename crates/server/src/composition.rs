@@ -80,7 +80,17 @@ impl Composition {
             .run(&pool)
             .await
             .map_err(|error| format!("cannot apply the schema: {error}"))?;
-        let api = ApiState::new(pool.clone()).map_err(|error| error.message)?;
+        // The deployable believes bearer sessions only; a development harness may opt into the
+        // trusted tenant/user headers explicitly, and the choice is logged so it is never silent.
+        let trust = if env::var("QUANSIO_TRUST_SCOPE_HEADERS").as_deref() == Ok("1") {
+            eprintln!("quansio-server: QUANSIO_TRUST_SCOPE_HEADERS=1: x-quansio-tenant/x-quansio-user headers are trusted (development only)");
+            crate::api::ScopeTrust::TrustedHeaders
+        } else {
+            crate::api::ScopeTrust::SessionOnly
+        };
+        let api = ApiState::new(pool.clone())
+            .map_err(|error| error.message)?
+            .with_scope_trust(trust);
         Ok(Self { config, pool, api })
     }
 

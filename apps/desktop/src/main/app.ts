@@ -14,12 +14,12 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { app, autoUpdater, BrowserWindow, ipcMain, protocol, session, shell } from "electron";
+import { app, autoUpdater, BrowserWindow, ipcMain, protocol, safeStorage, session, shell } from "electron";
 import WebSocket from "ws";
 
 import type { SocketFactory, SocketLike } from "../client/stream.js";
 import { deepLinkFromArgv, DEEP_LINK_SCHEME } from "./deeplinks.js";
-import { DesktopBridge, registerBridgeHandlers } from "./ipc.js";
+import { DesktopBridge, registerBridgeHandlers, type DesktopAuth } from "./ipc.js";
 import {
   navigationAllowed,
   permissionRequestDecision,
@@ -30,31 +30,33 @@ import {
   withContentSecurityPolicy,
 } from "./security.js";
 import { SessionFile } from "./session-file.js";
+import { TokenStore } from "./token-store.js";
 import { parseUpdateChannel, updateFeedUrl, UpdateHooks } from "./updates.js";
 
-/** Where the desktop gets its session scope until APP-002 supplies it from the keychain. */
+/**
+ * The shell's environment. A real desktop signs in (session mode, refresh token in the OS
+ * keychain). A development harness may instead pin a tenant/user/workspace with
+ * `QUANSIO_TENANT_ID`/`QUANSIO_USER_ID`/`QUANSIO_WORKSPACE_ID` against a server started with
+ * `QUANSIO_TRUST_SCOPE_HEADERS=1`; all three or none.
+ */
 export interface ShellEnvironment {
   readonly serverOrigin: string;
-  readonly tenantId: string;
-  readonly userId: string;
-  readonly workspaceId: string;
+  readonly harness: { readonly tenantId: string; readonly userId: string; readonly workspaceId: string } | null;
   readonly updateChannel: "stable" | "beta";
   readonly signed: boolean;
 }
 
 export function shellEnvironment(env: NodeJS.ProcessEnv): ShellEnvironment {
-  const required = (name: string): string => {
-    const value = env[name]?.trim();
-    if (!value) {
-      throw new Error(`${name} is not set; the desktop has no session scope (APP-002 supplies it from the keychain)`);
-    }
-    return value;
-  };
+  const tenantId = env["QUANSIO_TENANT_ID"]?.trim() ?? "";
+  const userId = env["QUANSIO_USER_ID"]?.trim() ?? "";
+  const workspaceId = env["QUANSIO_WORKSPACE_ID"]?.trim() ?? "";
+  const provided = [tenantId, userId, workspaceId].filter(Boolean).length;
+  if (provided !== 0 && provided !== 3) {
+    throw new Error("QUANSIO_TENANT_ID, QUANSIO_USER_ID and QUANSIO_WORKSPACE_ID must be set together (harness mode) or not at all");
+  }
   return {
     serverOrigin: env["QUANSIO_SERVER_ORIGIN"]?.trim() || "http://127.0.0.1:8080",
-    tenantId: required("QUANSIO_TENANT_ID"),
-    userId: required("QUANSIO_USER_ID"),
-    workspaceId: required("QUANSIO_WORKSPACE_ID"),
+    harness: provided === 3 ? { tenantId, userId, workspaceId } : null,
     updateChannel: parseUpdateChannel(env["QUANSIO_UPDATE_CHANNEL"]),
     signed: env["QUANSIO_DESKTOP_SIGNED"] === "1",
   };
@@ -123,10 +125,14 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
     return { action: decision.action };
   });
 
+  const auth: DesktopAuth = environment.harness
+    ? { kind: "trusted-headers", scope: { tenantId: environment.harness.tenantId, userId: environment.harness.userId }, workspaceId: environment.harness.workspaceId }
+    : { kind: "session", tokens: new TokenStore(app.getPath("userData"), safeStorage) };
   const bridge = new DesktopBridge({
     serverOrigin: environment.serverOrigin,
-    scope: { tenantId: environment.tenantId, userId: environment.userId },
-    workspaceId: environment.workspaceId,
+    auth,
+    // OAuth: the authorization URL opens in the system browser, never in the renderer.
+    openExternal: (url) => shell.openExternal(url),
     session: sessionFile,
     openSocket,
     updates,
@@ -144,17 +150,28 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
     }
   });
 
+  const openLink = (url: string): void => {
+    const intent = bridge.openDeepLink(url);
+    if (intent?.kind === "oauth-callback") {
+      // The provider's return trip: main completes the exchange; the renderer only learns
+      // the resulting session state.
+      bridge.completeOAuth(intent.code, intent.state).catch((error: unknown) => {
+        process.stderr.write(`quansio desktop: OAuth sign-in failed: ${error instanceof Error ? error.message : String(error)}\n`);
+      });
+    }
+  };
   app.on("open-url", (event, url) => {
     event.preventDefault();
-    bridge.openDeepLink(url);
+    openLink(url);
   });
   app.on("second-instance", (_event, argv) => {
     const link = deepLinkFromArgv(argv);
     if (link) {
-      bridge.openDeepLink(link);
+      openLink(link);
     }
     window.show();
   });
+
   app.on("before-quit", () => {
     bridge.close();
   });
@@ -162,6 +179,7 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
   window.once("ready-to-show", () => {
     window.show();
   });
+  await bridge.resume();
   await window.loadURL(RENDERER_ENTRY_URL);
   return { window, bridge };
 }
@@ -179,7 +197,10 @@ export function main(): void {
     // The first instance's own argv may carry the deep link on Windows/Linux.
     const link = deepLinkFromArgv(process.argv);
     if (link) {
-      bridge.openDeepLink(link);
+      const intent = bridge.openDeepLink(link);
+      if (intent?.kind === "oauth-callback") {
+        await bridge.completeOAuth(intent.code, intent.state);
+      }
     }
   }).catch((error: unknown) => {
     process.stderr.write(`quansio desktop: ${error instanceof Error ? error.message : String(error)}\n`);

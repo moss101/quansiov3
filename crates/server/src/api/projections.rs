@@ -21,7 +21,7 @@ pub async fn thread(
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<Value>, ApiError> {
-    let scope = TenantScope::from_headers(&headers)?;
+    let scope = TenantScope::resolve(&state, &headers).await?;
     let identity = identity(&scope);
     let store = ConversationStore::new(state.pool().clone(), identity)
         .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), "projection"))?;
@@ -47,7 +47,7 @@ pub async fn messages(
     Query(query): Query<MessageQuery>,
     headers: HeaderMap,
 ) -> Result<Json<Value>, ApiError> {
-    let scope = TenantScope::from_headers(&headers)?;
+    let scope = TenantScope::resolve(&state, &headers).await?;
     let thread_id = query.thread_id.ok_or_else(|| {
         ApiError::new(
             ApiErrorCode::ValidationSchema,
@@ -79,7 +79,7 @@ pub async fn run(
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<Value>, ApiError> {
-    let scope = TenantScope::from_headers(&headers)?;
+    let scope = TenantScope::resolve(&state, &headers).await?;
     let run_id = CanonicalId::parse_typed(&id, Prefix::Run).map_err(|error| {
         ApiError::new(
             ApiErrorCode::ValidationBounds,
@@ -115,7 +115,7 @@ pub async fn effects(
     Query(query): Query<EffectQuery>,
     headers: HeaderMap,
 ) -> Result<Json<Value>, ApiError> {
-    let scope = TenantScope::from_headers(&headers)?;
+    let scope = TenantScope::resolve(&state, &headers).await?;
     let run_id = query.run_id.ok_or_else(|| {
         ApiError::new(
             ApiErrorCode::ValidationSchema,
