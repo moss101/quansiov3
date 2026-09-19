@@ -14,7 +14,8 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { onboardingPlan } from "../../apps/desktop/src/onboarding/flow.js";
-import { answerQuestion, attachArtifact, bindObjective, newChatSession, postMessage } from "../../apps/desktop/src/conversation/composer.js";
+import { answerParams, postParams } from "../../apps/desktop/src/conversation/composer.js";
+import { conversationReducer, decodeQuestions, initialConversation, openQuestions } from "../../apps/desktop/src/conversation/state.js";
 import { approve, digestPayload, preview } from "../../apps/desktop/src/trust/approvals.js";
 import { addVersion, previewIsSafe } from "../../apps/desktop/src/artifacts/workspace.js";
 import { agentInputAllowed, handback, takeover } from "../../apps/desktop/src/live/session.js";
@@ -48,18 +49,25 @@ describe("critical journeys", () => {
       }),
     ).toThrow();
 
-    // 2. Chat/objective: bind an objective and post a message.
-    let session = newChatSession("thr_journey");
-    session = bindObjective(session, "wn_journey", "run_journey");
-    session = postMessage(session, "prepare the notes");
-    expect(session.messages.some((m) => m === "prepare the notes")).toBe(true);
+    // 2. Chat/objective: the message is a PostMessage command and the objective is the
+    //    run/thread the server assigns, never a UI-only identity.
+    let session = conversationReducer(initialConversation("ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA"), { type: "composer.text", text: "prepare the notes" });
+    expect(postParams(session)).toEqual({ workspace_id: "ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", content: "prepare the notes" });
+    session = conversationReducer(session, { type: "composer.posted", threadId: "thr_journey", runId: "run_journey", messageId: "msg_journey" });
+    expect(session.threadId).toBe("thr_journey");
+    expect(session.activeRunId).toBe("run_journey");
 
-    // 3. A question interrupts; the answer routes back into the thread, and the
-    //    produced artifact is attached for review.
-    session = answerQuestion(session, { questionId: "q_1", answer: "markdown" });
-    session = attachArtifact(session, { artifactId: "art_journey", title: "notes" });
-    expect(session.answeredQuestions.map((item) => item.questionId)).toEqual(["q_1"]);
-    expect(session.attachments.map((item) => item.artifactId)).toEqual(["art_journey"]);
+    // 3. A question interrupts; the answer is an AnswerQuestion command back into the
+    //    thread, and the produced artifact is attached (by identity) for review.
+    session = conversationReducer(session, {
+      type: "questions.loaded",
+      questions: decodeQuestions({ questions: [{ id: "q_1", run_id: "run_journey", kind: "free_text", prompt: "format?", status: "open" }] }),
+    });
+    expect(openQuestions(session).map((item) => item.id)).toEqual(["q_1"]);
+    expect(answerParams("q_1", "markdown")).toEqual({ question_id: "q_1", value: "markdown" });
+    session = conversationReducer(session, { type: "composer.attach", attachment: { artifactId: "art_journey", title: "notes", sizeBytes: 1 } });
+    session = conversationReducer(session, { type: "composer.text", text: "review these" });
+    expect(postParams(session)["attachments"]).toEqual(["art_journey"]);
 
     // 4. Approval: exact preview or superseded — never approve-on-faith.
     const payload = { effect: "message.send", to: "ops@example.com" };
