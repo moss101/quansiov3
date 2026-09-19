@@ -1771,7 +1771,6 @@ dependencies = [
  "async-trait",
  "chrono",
  "quansio-core",
- "quansio-server",
  "serde",
  "serde_json",
  "sqlx",
