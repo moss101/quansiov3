@@ -19,8 +19,9 @@ lines of URL/param helpers) and a 7-line `crates/server/src/api/threads.rs` faca
 - **Contracts (DOMAIN.md §14, all catalogued):** commands `AnswerQuestion`, `CancelTurn`,
   `PostMessage` (with `attachments`), `CreateThread`; read projections `/v1/threads`,
   `/v1/runs/{id}/timeline`, `/v1/questions`, `/v1/artifacts`, `/v1/artifacts/{id}/versions`.
-  Upload is `POST /v1/artifacts` (JSON, base64, bounded) — the projection path gains a
-  write verb; added to DOMAIN.md §10 in the same commit. Live frames `model.delta` and
+  Upload is the catalogued command `CreateArtifact` ("upload init/complete", §14) taking a
+  bounded base64 body in one step; no new route, and idempotent by `command_id` like every
+  command (the plan's `POST /v1/artifacts` was dropped for it). Live frames `model.delta` and
   `progress` (§9.3) are published by the runtime through a `LiveFramePort` and forwarded by
   `/v1/stream` from an in-process hub; they are transient and never persisted.
 - **External effects:** none new (object writes go through CORE-007's store).

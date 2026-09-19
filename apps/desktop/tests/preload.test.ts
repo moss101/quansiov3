@@ -61,6 +61,14 @@ describe("preload bridge", () => {
         "reconnectStream",
         "subscribeStream",
         "updateStatus",
+        "listThreads",
+        "threadMessages",
+        "listQuestions",
+        "runTimeline",
+        "postMessage",
+        "answerQuestion",
+        "cancelTurn",
+        "uploadAttachment",
         "onStreamFrame",
         "onStreamState",
         "onStreamError",
@@ -99,6 +107,14 @@ describe("preload bridge", () => {
     await api.updateUserSettings("ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", { theme: "dark" });
     await api.openDeepLink("quansio://thread/thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.updateStatus();
+    await api.listThreads();
+    await api.threadMessages("thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.listQuestions({ threadId: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.runTimeline("run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.postMessage({ threadId: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", content: "hi", attachments: ["art_01J8Z3K6F1N8VQ2X5W9Y0AAAAA"] });
+    await api.answerQuestion("q_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", "alpha");
+    await api.cancelTurn("run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.uploadAttachment({ name: "a.bin", mediaType: "application/octet-stream", bytesBase64: "AAEC" });
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

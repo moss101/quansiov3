@@ -7,12 +7,14 @@
 //! what a command means.
 
 use std::env;
+use std::sync::Arc;
 use std::time::Duration;
 
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 
 use crate::api::{self, ApiState};
+use crate::artifacts::{ObjectStore, S3Config, S3ObjectStore};
 
 /// How the process is configured. Every value comes from the environment so the same binary runs in dev,
 /// CI and a deployment.
@@ -24,6 +26,8 @@ pub struct ServerConfig {
     pub bind: String,
     /// How many connections the pool holds.
     pub max_connections: u32,
+    /// Where attachments are written (CORE-007's object store), when the deployment has one.
+    pub object_store: Option<S3Config>,
 }
 
 impl ServerConfig {
@@ -45,10 +49,20 @@ impl ServerConfig {
             .ok()
             .and_then(|value| value.parse().ok())
             .unwrap_or(8);
+        // The object store is opt-in: `QUANSIO_OBJECT_STORE=1` reads the `QUANSIO_TEST_MINIO_*`
+        // boundary (CORE-007's contract, dev-stack defaults included). Without it uploads fail
+        // closed with `TARGET_UNAVAILABLE` rather than silently pointing a deployment at the
+        // dev MinIO.
+        let object_store = if env::var("QUANSIO_OBJECT_STORE").as_deref() == Ok("1") {
+            Some(S3Config::from_env().map_err(|error| format!("object store: {error}"))?)
+        } else {
+            None
+        };
         Ok(Self {
             database_url,
             bind,
             max_connections,
+            object_store,
         })
     }
 }
@@ -88,9 +102,19 @@ impl Composition {
         } else {
             crate::api::ScopeTrust::SessionOnly
         };
-        let api = ApiState::new(pool.clone())
+        let mut api = ApiState::new(pool.clone())
             .map_err(|error| error.message)?
             .with_scope_trust(trust);
+        if let Some(store) = config.object_store.clone() {
+            eprintln!(
+                "quansio-server: QUANSIO_OBJECT_STORE=1: attachments go to bucket {:?} at {}",
+                store.bucket, store.endpoint
+            );
+            let objects: Arc<dyn ObjectStore> = Arc::new(
+                S3ObjectStore::new(store).map_err(|error| format!("object store: {error}"))?,
+            );
+            api = api.with_object_store(objects);
+        }
         Ok(Self { config, pool, api })
     }
 

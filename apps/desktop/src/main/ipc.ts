@@ -13,6 +13,7 @@ import { ServerClient, type CommandResponse, type Credential, type FetchLike, ty
 import { StreamClient, type EventFrame, type LiveFrame, type SocketFactory, type StreamErrorFrame, type StreamState } from "../client/stream.js";
 import { PRELOAD_ALLOWLIST, PRELOAD_PUSH_CHANNELS, type BridgeCommand, type PreloadChannel, type PushChannel } from "../preload/bridge.js";
 import { newCommandId } from "../client/ids.js";
+import { ANSWER_COMMAND, CANCEL_COMMAND, MAX_UPLOAD_BYTES, POST_COMMAND, UPLOAD_COMMAND, answerParams, cancelParams } from "../conversation/composer.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { SessionFile, type ActiveRunSession, type DesktopSession } from "./session-file.js";
 import { SessionManager, type SessionState } from "./session-manager.js";
@@ -157,7 +158,91 @@ export class DesktopBridge {
       "settings.updateUser": (payload) => Promise.resolve(payload).then((raw) => this.updateUserSettings(raw)),
       "deepLink.open": (payload) => Promise.resolve(payload).then((raw) => this.openDeepLink(asUrl(raw))),
       "update.status": () => Promise.resolve().then(() => this.updateStatus()),
+      "threads.list": () => this.server.threads(this.#requireWorkspace()),
+      "threads.messages": (payload) => Promise.resolve(payload).then((raw) => this.server.messages(asThreadId(raw, "threads.messages"))),
+      "questions.list": (payload) => Promise.resolve(payload).then((raw) => this.server.questions(asQuestionScope(raw))),
+      "runs.timeline": (payload) => Promise.resolve(payload).then((raw) => this.server.timeline(asRunId(raw, "runs.timeline"))),
+      "messages.post": (payload) => Promise.resolve(payload).then((raw) => this.postMessage(raw)),
+      "questions.answer": (payload) => Promise.resolve(payload).then((raw) => this.answerQuestion(raw)),
+      "turns.cancel": (payload) => Promise.resolve(payload).then((raw) => this.cancelTurn(raw)),
+      "artifacts.upload": (payload) => Promise.resolve(payload).then((raw) => this.uploadAttachment(raw)),
     };
+  }
+
+  // ---- the conversation surface (APP-004) ----
+
+  /** `PostMessage` with optional thread and attachments; the run it starts becomes the active run. */
+  async postMessage(raw: unknown): Promise<unknown> {
+    const { threadId, content, attachments } = asPost(raw);
+    const params: Record<string, unknown> = { workspace_id: this.#requireWorkspace(), content };
+    if (threadId) {
+      params["thread_id"] = threadId;
+    }
+    if (attachments.length > 0) {
+      params["attachments"] = attachments;
+    }
+    return (await this.invoke({ name: POST_COMMAND, commandId: newCommandId(), params })).result;
+  }
+
+  /** `AnswerQuestion`: the answer resumes the parked run and the reply follows. */
+  async answerQuestion(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "questions.answer");
+    const questionId = record["questionId"];
+    if (typeof questionId !== "string" || !questionId.startsWith("q_")) {
+      throw new Error("questions.answer needs a q_ id");
+    }
+    if (!("value" in record)) {
+      throw new Error("questions.answer needs a value");
+    }
+    return (await this.server.invoke(ANSWER_COMMAND, newCommandId(), answerParams(questionId, record["value"]))).result;
+  }
+
+  /** `CancelTurn`: stop the run the turn belongs to. */
+  async cancelTurn(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "turns.cancel");
+    const runId = asRunId(record, "turns.cancel");
+    const generation = typeof record["generation"] === "number" && record["generation"] >= 1 ? record["generation"] : 1;
+    return (await this.server.invoke(CANCEL_COMMAND, newCommandId(), cancelParams(runId, generation))).result;
+  }
+
+  /**
+   * `CreateArtifact` from bytes the renderer read from a file it was given; main never
+   * opens a path on the renderer's behalf, and the size bound is checked before the send.
+   */
+  async uploadAttachment(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "artifacts.upload");
+    const name = record["name"];
+    const mediaType = record["mediaType"];
+    const bytesBase64 = record["bytesBase64"];
+    if (typeof name !== "string" || !name.trim() || typeof bytesBase64 !== "string" || !bytesBase64) {
+      throw new Error("artifacts.upload needs {name, mediaType, bytesBase64}");
+    }
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(bytesBase64)) {
+      throw new Error("artifacts.upload bytesBase64 is not base64");
+    }
+    const decodedLength = Math.floor((bytesBase64.length * 3) / 4) - (bytesBase64.endsWith("==") ? 2 : bytesBase64.endsWith("=") ? 1 : 0);
+    if (decodedLength > MAX_UPLOAD_BYTES) {
+      throw new Error(`artifacts.upload exceeds ${String(MAX_UPLOAD_BYTES)} bytes`);
+    }
+    const params: Record<string, unknown> = {
+      workspace_id: this.#requireWorkspace(),
+      title: name.trim().slice(0, 200),
+      media_type: typeof mediaType === "string" && mediaType ? mediaType.slice(0, 120) : "application/octet-stream",
+      bytes_base64: bytesBase64,
+    };
+    const threadId = record["threadId"];
+    if (typeof threadId === "string" && threadId.startsWith("thr_")) {
+      params["thread_id"] = threadId;
+    }
+    return (await this.server.invoke(UPLOAD_COMMAND, newCommandId(), params)).result;
+  }
+
+  #requireWorkspace(): string {
+    const workspaceId = this.workspaceId();
+    if (!workspaceId) {
+      throw new Error("no workspace: sign in first");
+    }
+    return workspaceId;
   }
 
   async invoke(command: BridgeCommand): Promise<CommandResponse> {
@@ -468,6 +553,59 @@ function asUserSettingsUpdate(payload: unknown): { workspaceId: string; settings
     throw new Error("settings.updateUser needs a ws_ id");
   }
   return { workspaceId, settings: asSettings(record["settings"], "settings.updateUser") };
+}
+
+function asThreadId(payload: unknown, what: string): string {
+  const threadId = asRecord(payload, what)["threadId"];
+  if (typeof threadId !== "string" || !threadId.startsWith("thr_")) {
+    throw new Error(`${what} needs a thr_ id`);
+  }
+  return threadId;
+}
+
+function asRunId(payload: unknown, what: string): string {
+  const runId = asRecord(payload, what)["runId"];
+  if (typeof runId !== "string" || !runId.startsWith("run_")) {
+    throw new Error(`${what} needs a run_ id`);
+  }
+  return runId;
+}
+
+function asQuestionScope(payload: unknown): { readonly threadId: string } | { readonly runId: string } {
+  const record = asRecord(payload, "questions.list");
+  if (typeof record["threadId"] === "string" && record["threadId"].startsWith("thr_")) {
+    return { threadId: record["threadId"] };
+  }
+  if (typeof record["runId"] === "string" && record["runId"].startsWith("run_")) {
+    return { runId: record["runId"] };
+  }
+  throw new Error("questions.list needs a thr_ or run_ id");
+}
+
+function asPost(payload: unknown): { threadId: string | null; content: string; attachments: string[] } {
+  const record = asRecord(payload, "messages.post");
+  const content = record["content"];
+  if (typeof content !== "string" || !content.trim()) {
+    throw new Error("messages.post needs content");
+  }
+  const threadId = record["threadId"];
+  if (threadId !== undefined && threadId !== null && (typeof threadId !== "string" || !threadId.startsWith("thr_"))) {
+    throw new Error("messages.post threadId must be a thr_ id");
+  }
+  const rawAttachments = record["attachments"];
+  const attachments: string[] = [];
+  if (rawAttachments !== undefined) {
+    if (!Array.isArray(rawAttachments)) {
+      throw new Error("messages.post attachments must be a list of art_ ids");
+    }
+    for (const item of rawAttachments) {
+      if (typeof item !== "string" || !item.startsWith("art_")) {
+        throw new Error("messages.post attachments must be a list of art_ ids");
+      }
+      attachments.push(item);
+    }
+  }
+  return { threadId: typeof threadId === "string" ? threadId : null, content, attachments };
 }
 
 function asUrl(payload: unknown): string {

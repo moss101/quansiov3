@@ -10,6 +10,7 @@
 //! effect path or orchestration loop.
 
 pub mod dispatch;
+pub mod model_calls;
 pub mod parallel;
 pub mod questions;
 pub mod usage;
@@ -21,6 +22,7 @@ pub use dispatch::{
     UnavailableMemoryProposals, UnavailablePlanApplication, UnavailableProposalTrust,
     UnavailableRoles, UnavailableToolHost, INTERNAL_TOOLS,
 };
+pub use model_calls::{ModelCallLedger, RecordedCall};
 pub use parallel::{is_control_tool, join_all, plan_rounds, CONTROL_TOOLS};
 pub use questions::{
     AnsweredQuestion, NewQuestion, QuestionAnswer, QuestionRecord, QuestionService, QuestionStatus,

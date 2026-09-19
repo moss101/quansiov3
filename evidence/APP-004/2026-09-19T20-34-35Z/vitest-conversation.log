@@ -1,0 +1,17 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/conversation.test.ts (9 tests) 4ms
+ ✓ tests/preload.test.ts (4 tests) 5ms
+ ✓ tests/conversation.e2e.test.ts (4 tests) 8416ms
+   ✓ desktop conversation E2E against quansio-server > streams the reply, lands it as a durable message, and a reload rebuilds the same thread with its inspector 613ms
+   ✓ desktop conversation E2E against quansio-server > asks a question in the thread, waits, and continues from the answer 2385ms
+   ✓ desktop conversation E2E against quansio-server > cancels a turn and the run stops: the page loses its cancel, the question is withdrawn, a late answer is refused 2332ms
+   ✓ desktop conversation E2E against quansio-server > uploads a real binary as an artifact and attaches it to a message the inspector shows 1016ms
+
+ Test Files  3 passed (3)
+      Tests  17 passed (17)
+   Start at  23:34:57
+   Duration  8.65s (transform 106ms, setup 0ms, collect 237ms, tests 8.42s, environment 0ms, prepare 102ms)
+
+exit=0

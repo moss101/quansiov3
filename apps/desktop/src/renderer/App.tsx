@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState, type ReactElement } from "react";
 
 import { DESKTOP_SURFACES } from "../surfaces.js";
 import { t } from "../i18n/strings.js";
-import { newCommandId } from "./bridge-types.js";
+import { Conversation } from "./Conversation.js";
 import { Onboarding } from "./Onboarding.js";
 
 interface RunProjection {
@@ -71,7 +71,6 @@ export function App(): ReactElement {
 function Shell(): ReactElement {
   const [projection, setProjection] = useState<RunProjection | null>(null);
   const [log, setLog] = useState<readonly LogLine[]>([]);
-  const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -98,24 +97,6 @@ function Shell(): ReactElement {
     };
   }, [refresh]);
 
-  const send = useCallback(async () => {
-    const content = draft.trim();
-    if (!content || !projection?.workspaceId) {
-      return;
-    }
-    try {
-      await window.quansio.invokeCommand({
-        name: "PostMessage",
-        commandId: newCommandId(),
-        params: { workspace_id: projection.workspaceId, content },
-      });
-      setDraft("");
-      await refresh();
-    } catch {
-      setNotice(t("commandFailed"));
-    }
-  }, [draft, projection, refresh]);
-
   return (
     <main className="shell">
       <header>
@@ -133,35 +114,32 @@ function Shell(): ReactElement {
             <li key={surface.id}>{surface.id}</li>
           ))}
         </ul>
+        <section className="run">
+          <h2>{t("activeRun")}</h2>
+          {projection?.activeRun ? (
+            <dl>
+              <dt>{t("workspace")}</dt>
+              <dd>{projection.workspaceId}</dd>
+              <dt>run</dt>
+              <dd>{projection.activeRun.runId}</dd>
+              <dt>thread</dt>
+              <dd>{projection.activeRun.threadId}</dd>
+            </dl>
+          ) : (
+            <p>{t("noActiveRun")}</p>
+          )}
+          {notice ? <p className="notice">{notice}</p> : null}
+        </section>
       </nav>
-      <section className="run">
-        <h2>{t("activeRun")}</h2>
-        {projection?.activeRun ? (
-          <dl>
-            <dt>{t("workspace")}</dt>
-            <dd>{projection.workspaceId}</dd>
-            <dt>run</dt>
-            <dd>{projection.activeRun.runId}</dd>
-            <dt>thread</dt>
-            <dd>{projection.activeRun.threadId}</dd>
-          </dl>
-        ) : (
-          <p>{t("noActiveRun")}</p>
-        )}
-        {notice ? <p className="notice">{notice}</p> : null}
-      </section>
-      <section className="composer">
-        <textarea
-          value={draft}
-          placeholder={t("composerPlaceholder")}
-          onChange={(event) => {
-            setDraft(event.target.value);
-          }}
+      {projection?.workspaceId ? (
+        <Conversation
+          key={projection.workspaceId}
+          workspaceId={projection.workspaceId}
+          initialThreadId={projection.activeRun?.threadId ?? null}
         />
-        <button type="button" onClick={() => void send()} disabled={!draft.trim()}>
-          {t("send")}
-        </button>
-      </section>
+      ) : (
+        <p>{t("connecting")}</p>
+      )}
       <section className="stream">
         <h2>{t("streamTitle")}</h2>
         {log.length === 0 ? (

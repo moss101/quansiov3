@@ -53,19 +53,37 @@ export type { OnboardingInput, OnboardingPlan } from "./onboarding/flow.js";
 export {
   ANSWER_COMMAND,
   CANCEL_COMMAND,
+  MAX_UPLOAD_BYTES,
   POST_COMMAND,
-  answerQuestion,
-  attachArtifact,
-  bindObjective,
-  cancelRun,
-  inspectTurn,
-  newChatSession,
-  postMessage,
-  reload,
+  UPLOAD_COMMAND,
+  answerParams,
+  attachmentFromUpload,
+  cancelParams,
+  postParams,
+  postedIdentities,
+  uploadParams,
 } from "./conversation/composer.js";
+export type { UploadInput } from "./conversation/composer.js";
+export {
+  cancellableRun,
+  conversationReducer,
+  decodeMessages,
+  decodeQuestions,
+  initialConversation,
+  openQuestions,
+  ownsRun,
+} from "./conversation/state.js";
 export type {
-  AnsweredQuestion,
+  ActivityCard,
+  AuthorKind,
   ComposerAttachment,
-  ConversationSession,
-  TurnInspector,
-} from "./conversation/composer.js";
+  ComposerState,
+  ConversationAction,
+  ConversationMessage,
+  ConversationQuestion,
+  ConversationState,
+  QuestionStatus,
+  RunActivity,
+} from "./conversation/state.js";
+export { decodeTimeline } from "./conversation/inspector.js";
+export type { InspectedQuestion, InspectedSource, InspectedTool, InspectedTurn, RunInspection } from "./conversation/inspector.js";

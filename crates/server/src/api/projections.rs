@@ -67,8 +67,12 @@ pub async fn messages(
         "id": message.id,
         "thread_id": message.thread_id,
         "seq": message.seq,
+        "author_kind": message.author_kind,
         "author_id": message.author_id,
+        "run_id": message.run_id,
+        "turn_id": message.turn_id,
         "content_blocks": message.content_blocks,
+        "attachments": message.attachments,
     })).collect::<Vec<_>>() }),
     ))
 }

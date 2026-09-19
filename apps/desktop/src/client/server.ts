@@ -237,6 +237,25 @@ export class ServerClient {
     return this.#request("GET", `${this.origin}/v1/effects?run_id=${encodeURIComponent(runId)}`);
   }
 
+  // ---- the conversation surface (APP-004) ----
+
+  threads(workspaceId: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/threads?workspace_id=${encodeURIComponent(workspaceId)}`);
+  }
+
+  timeline(runId: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/runs/${encodeURIComponent(runId)}/timeline`);
+  }
+
+  questions(scope: { readonly threadId: string } | { readonly runId: string }): Promise<unknown> {
+    const query = "threadId" in scope ? `thread_id=${encodeURIComponent(scope.threadId)}` : `run_id=${encodeURIComponent(scope.runId)}`;
+    return this.#request("GET", `${this.origin}/v1/questions?${query}`);
+  }
+
+  artifacts(workspaceId: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/artifacts?workspace_id=${encodeURIComponent(workspaceId)}`);
+  }
+
   async #request<T>(method: "GET" | "POST", url: string, body?: string, authenticated = true): Promise<T> {
     const attempt = async (headers: Record<string, string>): Promise<{ status: number; ok: boolean; decoded: unknown }> => {
       const controller = new AbortController();

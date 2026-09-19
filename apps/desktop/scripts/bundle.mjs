@@ -19,6 +19,10 @@ await build({
   target: "node22",
   external: ["electron", "ws"],
   sourcemap: true,
+  // `app.ts` locates the renderer from `import.meta.url`; a CommonJS bundle has none, so
+  // the bundle derives it from `__filename` and would otherwise crash on startup.
+  banner: { js: "const __quansio_import_meta_url = require('node:url').pathToFileURL(__filename).href;" },
+  define: { "import.meta.url": "__quansio_import_meta_url" },
 });
 await build({
   entryPoints: [join(root, "src/preload/index.ts")],
