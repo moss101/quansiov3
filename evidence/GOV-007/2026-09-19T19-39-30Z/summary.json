@@ -1,0 +1,101 @@
+{
+  "task_id": "GOV-007",
+  "git_commit": "de6937fc79b8d43f608cda9e71c88c66ca739e70",
+  "recorded_at": "2026-09-19T19:45:43Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py::test_bootstrap_smoke -q -rA  # against the PRE-FIX run_dev (no QUANSIO_DEV_ENV_FILE; temporary edit, not committed), create case: expected FAIL; scripts/dev/up created <checkout>/.env with quansio-dev-test and the developer_env_file_untouched guard errors at teardown",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/GOV-007/2026-09-19T19-39-30Z/guard-catches-prefix-run-dev.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py::test_bootstrap_smoke -q  # against the PRE-FIX run_dev, modification case: expected FAIL; a canonical-valued .env (quansio-dev/55440/59010, sha256 ee63410e...) staged in the checkout is rewritten to quansio-dev-test/56440/59110 (sha256 e4612c9d..., byte-identical to the developer's clobbered file) and the guard errors at teardown",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/GOV-007/2026-09-19T19-39-30Z/guard-catches-prefix-run-dev-existing-env.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -q -rA  # fixed suite, no .env in the checkout: 2 passed; none created; the suite's env file landed in the pytest temp dir with the test project and ports; primary checkout .env sha256 unchanged",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-19T19-39-30Z/pytest-dev-stack.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -q  # fixed suite with a canonical-valued .env staged in the checkout: 2 passed; sha256 ee63410e... before and after",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-19T19-39-30Z/pytest-dev-stack-existing-env.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> uv run --project python pytest tests -q  # ci.sh `tests` gate from this nested worktree: 281 passed, 1 failed = tests/contract/test_contracts.py::test_generated_bindings_are_current, the known scripts/dev/contract-gen cargo-workspace resolution failure under .claude/worktrees (environment property, unrelated to this change; re-run on main after the merge)",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/GOV-007/2026-09-19T19-39-30Z/pytest-tests-gate.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py  # PASS (99 tasks, 10 milestones, 50 PASS, 7 ready)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py::test_bootstrap_smoke -q -rA  # against the PRE-FIX run_dev (no QUANSIO_DEV_ENV_FILE; temporary edit, not committed), create case: expected FAIL; scripts/dev/up created <checkout>/.env with quansio-dev-test and the developer_env_file_untouched guard errors at teardown",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py::test_bootstrap_smoke -q  # against the PRE-FIX run_dev, modification case: expected FAIL; a canonical-valued .env (quansio-dev/55440/59010, sha256 ee63410e...) staged in the checkout is rewritten to quansio-dev-test/56440/59110 (sha256 e4612c9d..., byte-identical to the developer's clobbered file) and the guard errors at teardown",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -q -rA  # fixed suite, no .env in the checkout: 2 passed; none created; the suite's env file landed in the pytest temp dir with the test project and ports; primary checkout .env sha256 unchanged",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -q  # fixed suite with a canonical-valued .env staged in the checkout: 2 passed; sha256 ee63410e... before and after",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> uv run --project python pytest tests -q  # ci.sh `tests` gate from this nested worktree: 281 passed, 1 failed = tests/contract/test_contracts.py::test_generated_bindings_are_current, the known scripts/dev/contract-gen cargo-workspace resolution failure under .claude/worktrees (environment property, unrelated to this change; re-run on main after the merge)",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py  # PASS (99 tasks, 10 milestones, 50 PASS, 7 ready)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "tests/integration/test_dev_stack.py",
+      "sha256": "cc3553ff62b8598d6ded5e3f6a416f341a9b17c42d79588c6e2da67b216ea0ae",
+      "bytes": 13117
+    },
+    {
+      "path": "scripts/dev/_common.sh",
+      "sha256": "f10422b1b34923697d4c7a21952bafee32094a5d237a69199887e4697503392a",
+      "bytes": 9015
+    },
+    {
+      "path": "infra/compose/README.md",
+      "sha256": "51fb800be2fb1a5059a7514dcbe4544dc44487fc4bfe306ca16bfbdcb55c346a",
+      "bytes": 3291
+    },
+    {
+      "path": "evidence/GOV-007/2026-09-19T19-39-30Z/NOTES.md",
+      "sha256": "74330110d8c3f3cef60990fda57b5354039ba8111be8402561ca87ed3a593406",
+      "bytes": 4191
+    },
+    {
+      "path": "evidence/GOV-007/2026-09-19T19-39-30Z/RECONCILIATION.md",
+      "sha256": "74e21374db70da43f0d8c7e6778478118486186e43250091d9d91b7173d64f37",
+      "bytes": 3565
+    }
+  ]
+}

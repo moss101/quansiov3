@@ -8,6 +8,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CONFIG="$ROOT/config/dev.yaml"
+# The generated env file. write_env_file refreshes its non-credential settings from the
+# process environment on every run, so anything that starts a second stack with
+# overridden project/ports (tests/integration/test_dev_stack.py) must point this at its
+# own file, or it rewrites the developer's .env with that stack's settings.
 ENV_FILE="${QUANSIO_DEV_ENV_FILE:-$ROOT/.env}"
 
 if command -v python3.12 >/dev/null 2>&1; then

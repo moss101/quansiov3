@@ -1,0 +1,9 @@
+$ uv run --project python pytest tests/integration/test_dev_stack.py -q  # fixed suite with a canonical-valued .env staged in the checkout (quansio-dev, 55440, 59010): must stay byte-identical
+sha256(.env) before: ee63410e74c0677c0ffa173ec888f99e5be0a5a215d4ac4669f941040c4ed9c9
+..                                                                       [100%]
+2 passed in 18.02s
+exit_code: 0
+sha256(.env) after:  ee63410e74c0677c0ffa173ec888f99e5be0a5a215d4ac4669f941040c4ed9c9
+QUANSIO_DEV_COMPOSE_PROJECT=quansio-dev
+QUANSIO_DEV_POSTGRES_PORT=55440
+QUANSIO_DEV_MINIO_PORT=59010
