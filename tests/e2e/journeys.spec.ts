@@ -9,6 +9,7 @@
 import { describe, expect, it } from "vitest";
 
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -20,7 +21,7 @@ import { agentInputAllowed, handback, takeover } from "../../apps/desktop/src/li
 import { archiveInRoster, visibleRoster } from "../../apps/desktop/src/teammates/roster.js";
 import { receivesProtected } from "../../apps/desktop/src/collaboration/participants.js";
 import { STRINGS } from "../../apps/desktop/src/i18n/strings.js";
-import { DesktopSessionStore } from "../../apps/desktop/src/renderer/session.js";
+import { SessionFile } from "../../apps/desktop/src/main/session-file.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const E2E_FLAG = process.env.QUANSIO_TEST_E2E === "1";
@@ -128,21 +129,27 @@ describe("critical journeys", () => {
   });
 
   it("degraded and offline states recover through the reconnect path", () => {
-    const store = new DesktopSessionStore();
-    const session = {
-      runId: "run_offline",
-      generation: 3,
-      streamCursor: "c1",
-      workspaceId: "ws_offline",
-    };
-    store.attach(session);
-    expect(store.active()).toEqual(session);
-    store.clear();
-    expect(store.active()).toBeNull();
-    // Reconnect after the drop replays from the same durable cursor.
-    store.attach({ ...session, streamCursor: "c2" });
-    expect(store.reconnect()?.streamCursor).toBe("c2");
-    expect(store.reconnect()?.runId).toBe("run_offline");
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "quansio-journeys-"));
+    try {
+      const store = new SessionFile(dir);
+      store.begin("http://127.0.0.1:8080", "ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+      store.attach({
+        runId: "run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA",
+        threadId: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA",
+        generation: 3,
+        streamCursor: "c1",
+        workspaceId: "ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA",
+      });
+      store.advance("c2");
+      // A restart reads the same durable run and cursor back from disk: reconnect replays from c2.
+      const restored = new SessionFile(dir).current();
+      expect(restored?.activeRun?.runId).toBe("run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+      expect(restored?.streamCursor).toBe("c2");
+      store.clear();
+      expect(new SessionFile(dir).current()).toBeNull();
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 
