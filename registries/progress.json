@@ -1755,10 +1755,10 @@
     },
     "APP-008": {
       "coverage": "PARTIAL",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:claude-opus-5",
+      "started_at": "2026-09-19T20:44:15Z",
+      "updated_at": "2026-09-19T20:44:15Z",
       "git_commit": null,
       "tests": [
         "pnpm --filter @quansio/desktop test (artifact persistence after run close, version history, HTML/JS/SVG preview is safe-text never host-privileged execution)"
