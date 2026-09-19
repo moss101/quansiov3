@@ -1,0 +1,22 @@
+   Compiling quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/crates/core)
+   Compiling quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/crates/events)
+   Compiling quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/crates/capability)
+   Compiling quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/crates/tools)
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.73s
+     Running tests/identity.rs (target/debug/deps/identity-6a1ed97b6cdd5b22)
+
+running 10 tests
+test security_settings_merge_is_deterministic_and_most_restrictive ... ok
+test access_tokens_are_es256_and_expire ... ok
+test a_fresh_user_is_onboarded_without_a_config_file ... ok
+test a_fresh_user_signs_up_by_magic_link_and_gets_a_governed_workspace ... ok
+test onboarding_refuses_a_raw_secret ... ok
+test the_whole_sign_in_flow_works_as_the_application_role_under_rls ... ok
+test sign_out_revokes_and_session_only_refuses_trusted_headers ... ok
+test identity_commands_manage_workspaces_and_settings_with_secrets_as_handles ... ok
+test oauth_signs_in_with_pkce_and_single_use_state ... ok
+test refresh_rotates_and_a_replayed_token_revokes_the_family ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.90s
+

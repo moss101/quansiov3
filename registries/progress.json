@@ -174,7 +174,7 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-gov007",
       "started_at": "2026-09-12T00:40:29Z",
-      "updated_at": "2026-09-19T19:46:09Z",
+      "updated_at": "2026-09-19T19:47:24Z",
       "git_commit": "ef33e1b03ebfab8ae3699fd6b9cd95c5ad8d51b3",
       "tests": [
         "bash scripts/dev/up && bash scripts/dev/healthcheck",
@@ -1603,26 +1603,37 @@
     },
     "APP-002": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-19T18:54:15Z",
-      "updated_at": "2026-09-19T18:54:15Z",
-      "git_commit": null,
+      "updated_at": "2026-09-19T19:46:23Z",
+      "git_commit": "fe88d7ef3852e0ca15cde87f8190043aaabe351a",
       "tests": [
-        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test identity (3 passed: most-restrictive settings merge, fresh user onboarded without a config file with personal tenant+workspace, raw secrets refused)",
-        "pnpm --filter @quansio/desktop test (onboarding plan requiresConfigFile false and sec_ handles)"
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test identity (10: magic-link sign-up/returning user, ES256, rotation+replay revocation, sign-out, session-only scope, identity commands, OAuth PKCE, whole flow as quansio_app under RLS)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server",
+        "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings",
+        "pnpm build",
+        "pnpm typecheck",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run) (custody, session manager, onboarding, bridge channels, both E2Es)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run tests/onboarding.e2e.test.ts) (new-user E2E, real quansio-server, session-only, unseeded)",
+        "pnpm test",
+        "pnpm lint",
+        "uv run --project python python scripts/ci/gen_contracts.py --check",
+        "python3.12 scripts/validate_v81.py",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> bash scripts/ci/ci.sh"
       ],
       "artifacts": [
-        "evidence/APP-002/2026-09-15T04-35-00Z/summary.json",
-        "crates/server/src/control/identity/mod.rs",
-        "crates/server/src/control/identity/settings.rs",
-        "apps/desktop/src/onboarding/flow.ts",
-        "migrations/0012_identity_settings.sql"
+        "evidence/APP-002/2026-09-19T19-26-21Z/summary.json",
+        "evidence/APP-002/2026-09-19T19-26-21Z/NOTES.md",
+        "evidence/APP-002/RECONCILIATION.md",
+        "crates/server/src/control/identity/auth.rs",
+        "apps/desktop/src/main/session-manager.ts",
+        "apps/desktop/tests/onboarding.e2e.test.ts"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Onboard_email provisions a personal tenant and default workspace with magic-link + OAuth method names and a sec_ credential handle only. Settings layers merge deterministically; security booleans deny-wins and retention_days takes the minimum. 2026-09-19 correction: was BLOCKED_EXTERNAL at ef7002221cb097fe0074c774444ded9ee2ad608f claimed by agent:principal-1 (started 2026-09-15T04:30:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: a real IdentityStore (onboarding, layered settings) exists at crates/server/src/control/identity/ but nothing calls it; OAuth/magic link are names only; no JWT/refresh/keychain; the desktop onboarding module is a 35-line plan object. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "Onboard_email provisions a personal tenant and default workspace with magic-link + OAuth method names and a sec_ credential handle only. Settings layers merge deterministically; security booleans deny-wins and retention_days takes the minimum. 2026-09-19 correction: was BLOCKED_EXTERNAL at ef7002221cb097fe0074c774444ded9ee2ad608f claimed by agent:principal-1 (started 2026-09-15T04:30:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: a real IdentityStore (onboarding, layered settings) exists at crates/server/src/control/identity/ but nothing calls it; OAuth/magic link are names only; no JWT/refresh/keychain; the desktop onboarding module is a 35-line plan object. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-19 (fe88d7e) PASS: real identity \u2014 ES256 sessions with rotating refresh families, magic link, OAuth with PKCE, Bearer scope everywhere (headers trusted only in an explicit harness mode), CreateWorkspace/UpdateWorkspace/UpdateUserSettings with secrets as sec_ handles and restart/reindex effects, root objective per workspace, keychain custody on the desktop, onboarding flow; acceptance 1 proven by the new-user E2E against the real binary in session-only mode on an unseeded database. See evidence/APP-002/2026-09-19T19-26-21Z/NOTES.md."
     },
     "APP-003": {
       "coverage": "PARTIAL",
@@ -1657,10 +1668,10 @@
     },
     "APP-004": {
       "coverage": "PARTIAL",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:claude-opus-5",
+      "started_at": "2026-09-19T19:47:00Z",
+      "updated_at": "2026-09-19T19:47:00Z",
       "git_commit": null,
       "tests": [
         "pnpm --filter @quansio/desktop test (conversation reload, WorkGraph/Run mapping, attachments/questions, cancel, inspector)"

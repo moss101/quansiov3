@@ -1,0 +1,198 @@
+{
+  "task_id": "APP-002",
+  "git_commit": "fe88d7ef3852e0ca15cde87f8190043aaabe351a",
+  "recorded_at": "2026-09-19T19:46:23Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test identity (10: magic-link sign-up/returning user, ES256, rotation+replay revocation, sign-out, session-only scope, identity commands, OAuth PKCE, whole flow as quansio_app under RLS)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/cargo-test-identity.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/cargo-test-server.log"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/clippy.log"
+    },
+    {
+      "command": "pnpm build",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/pnpm-build.log"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/pnpm-typecheck.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run) (custody, session manager, onboarding, bridge channels, both E2Es)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/desktop-vitest.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run tests/onboarding.e2e.test.ts) (new-user E2E, real quansio-server, session-only, unseeded)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/new-user-e2e-real-server.log"
+    },
+    {
+      "command": "pnpm test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/pnpm-test.log"
+    },
+    {
+      "command": "pnpm lint",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/pnpm-lint.log"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/contract-drift.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/validate.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-19T19-26-21Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test identity (10: magic-link sign-up/returning user, ES256, rotation+replay revocation, sign-out, session-only scope, identity commands, OAuth PKCE, whole flow as quansio_app under RLS)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm build",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run) (custody, session manager, onboarding, bridge channels, both E2Es)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run tests/onboarding.e2e.test.ts) (new-user E2E, real quansio-server, session-only, unseeded)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm test",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm lint",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/control/identity/auth.rs",
+      "sha256": "e2349a83be28e48e014ea067671959624df917c7b649c754c7ea987296010b4b",
+      "bytes": 31603
+    },
+    {
+      "path": "crates/server/src/control/identity/oauth.rs",
+      "sha256": "05edef729c30e5a2a808017b0dbaeee39305cf70b2be048b259c70502b4b6211",
+      "bytes": 16700
+    },
+    {
+      "path": "crates/server/src/control/identity/mod.rs",
+      "sha256": "cae3562085fb10bcfb520a390aba66b45bb1cbf94afebbe93d529ead5b7103e5",
+      "bytes": 20733
+    },
+    {
+      "path": "crates/server/src/api/auth.rs",
+      "sha256": "9231dd0c4bc114bf80417b385ee3d6e25b9f018f014c8ca22ddfd334030f6f42",
+      "bytes": 10085
+    },
+    {
+      "path": "migrations/0013_auth_sessions.sql",
+      "sha256": "0680f6bfe5846f25c8f8be4b6f8b49f3d1edf71fad951b25730e43554f56941e",
+      "bytes": 3698
+    },
+    {
+      "path": "config/auth.yaml",
+      "sha256": "44f7ffed6a0acb0a452c3e2c6c11bc0958db21ca909e5d7b35421d882931cc9f",
+      "bytes": 1526
+    },
+    {
+      "path": "apps/desktop/src/main/session-manager.ts",
+      "sha256": "719a472d422101ce1ab0577b87f1bed916aa0f26ddfdfcedd820cbf772d19dd5",
+      "bytes": 6012
+    },
+    {
+      "path": "apps/desktop/src/main/token-store.ts",
+      "sha256": "f4233978582ef7f1362c9ae4c5628d88e86012149cff6c619298a6ce8afffc93",
+      "bytes": 3905
+    },
+    {
+      "path": "apps/desktop/src/onboarding/flow.ts",
+      "sha256": "df28ef02f6a0ca4953885b142d9103909e400787c0d790099617517cb613899a",
+      "bytes": 5599
+    },
+    {
+      "path": "apps/desktop/tests/onboarding.e2e.test.ts",
+      "sha256": "e4d11b26382c709397862185874b9fefa72a21d5eda6641cf36ae769232b8f4a",
+      "bytes": 13564
+    },
+    {
+      "path": "crates/server/tests/identity.rs",
+      "sha256": "7d14c766bf490a1202fcfb4da24766df0285ba716afd902d0ce417af813f0280",
+      "bytes": 29190
+    }
+  ]
+}

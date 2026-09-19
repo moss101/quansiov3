@@ -1,0 +1,29 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/work.test.ts (2 tests) 1ms
+ ✓ tests/collaboration.test.ts (1 test) 1ms
+ ✓ tests/live.test.ts (1 test) 1ms
+ ✓ tests/teammates.test.ts (1 test) 1ms
+ ✓ tests/conversation.test.ts (2 tests) 3ms
+ ✓ tests/trust.test.ts (2 tests) 2ms
+ ✓ tests/knowledge.test.ts (2 tests) 2ms
+ ✓ tests/onboarding.test.ts (1 test) 1ms
+ ✓ tests/surfaces.test.ts (3 tests) 2ms
+ ✓ tests/artifacts.test.ts (2 tests) 2ms
+ ✓ tests/diagnostics.test.ts (2 tests) 2ms
+ ✓ tests/security.test.ts (5 tests) 7ms
+ ✓ tests/preload.test.ts (4 tests) 7ms
+ ✓ tests/shell-modules.test.ts (11 tests) 14ms
+ ✓ tests/identity.test.ts (5 tests) 16ms
+ ✓ tests/automation.test.ts (1 test) 1ms
+ ✓ tests/onboarding.e2e.test.ts (1 test) 3341ms
+   ✓ new-user onboarding E2E against quansio-server (session-only) > takes a fresh user from a magic link to a governed workspace with a running stream, then resumes from the keychain 667ms
+ ✓ tests/reconnect.e2e.test.ts (1 test) 3652ms
+   ✓ desktop reconnect E2E against quansio-server > posts a message, persists the run and cursor, drops the socket, and resumes the same run from the cursor 1105ms
+
+ Test Files  18 passed (18)
+      Tests  47 passed (47)
+   Start at  22:28:21
+   Duration  3.93s (transform 575ms, setup 0ms, collect 1.25s, tests 7.06s, environment 2ms, prepare 890ms)
+

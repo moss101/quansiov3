@@ -4,7 +4,9 @@
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/node_modules/**", "**/.pnpm-store/**"] },
+  // A worktree or clone below the root is another checkout's tree (see
+  // scripts/ci/supply_chain/tree.py for the same rule in the supply-chain scanners).
+  { ignores: ["**/dist/**", "**/node_modules/**", "**/.pnpm-store/**", "**/.claude/worktrees/**"] },
   ...tseslint.configs.strictTypeChecked,
   {
     languageOptions: {
