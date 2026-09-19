@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 5,
-  "updated_at": "2026-09-19T18:54:15Z",
+  "updated_at": "2026-09-19",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -174,22 +174,26 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-gov007",
       "started_at": "2026-09-12T00:40:29Z",
-      "updated_at": "2026-09-12T00:54:20Z",
+      "updated_at": "2026-09-19T19:46:09Z",
       "git_commit": "ef33e1b03ebfab8ae3699fd6b9cd95c5ad8d51b3",
       "tests": [
         "bash scripts/dev/up && bash scripts/dev/healthcheck",
-        "uv run --project python pytest tests/integration/test_dev_stack.py -q"
+        "uv run --project python pytest tests/integration/test_dev_stack.py -q",
+        "uv run --project python pytest tests/integration/test_dev_stack.py -q (2 passed; developer_env_file_untouched guard around both tests; fails on the previous run_dev, see evidence)"
       ],
       "artifacts": [
         "evidence/GOV-007/2026-09-12T00-39-38Z/summary.json",
         "evidence/GOV-007/2026-09-12T00-56-09Z/summary.json",
         "infra/compose/compose.yaml",
-        "config/dev.yaml"
+        "config/dev.yaml",
+        "evidence/GOV-007/2026-09-19T19-39-30Z/summary.json",
+        "evidence/GOV-007/2026-09-19T19-39-30Z/NOTES.md",
+        "tests/integration/test_dev_stack.py"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Regression fixed at 47f1ce1: Docker Desktop's credential helper was missing from PATH and minio/mc had moved registries, so a cold environment could not pull images (test_bootstrap_smoke failed at 7add8c5). Verified from a cleared image cache: scripts/dev/up pulls, reaches HEALTHY and the integration test passes (2 passed)."
+      "notes": "Regression fixed at 47f1ce1: Docker Desktop's credential helper was missing from PATH and minio/mc had moved registries, so a cold environment could not pull images (test_bootstrap_smoke failed at 7add8c5). Verified from a cleared image cache: scripts/dev/up pulls, reaches HEALTHY and the integration test passes (2 passed). REGRESSION FOUND AND FIXED 2026-09-19 (evidence/GOV-007/2026-09-19T19-39-30Z/): tests/integration/test_dev_stack.py rewrote the developer's gitignored .env with its own compose project (quansio-dev-test) and offset ports (Postgres 56440, MinIO 59110) after every run -- run_dev put the isolation overrides in the process environment but never set QUANSIO_DEV_ENV_FILE, so scripts/dev/_common.sh::write_env_file refreshed $ROOT/.env from them (exposed by 4af68c9, which made the refresh unconditional; seen in evidence/INT-002/2026-09-18T06-37-45Z and evidence/APP-003/2026-09-19T18-40-42Z: ci_summary.py::dev_database_url then derived QUANSIO_TEST_POSTGRES_URL from the test stack and the crates/server MinIO tests on the canonical 59010 failed whenever quansio-dev was down). Fix de6937f: the suite hands the dev scripts a module-scoped pytest temp env file through QUANSIO_DEV_ENV_FILE (already honoured by _common.sh) and uses it for its own docker compose call; test_bootstrap_smoke asserts the generated file carries the suite's project/ports; the autouse developer_env_file_untouched fixture asserts $ROOT/.env is byte-identical (or still absent) before and after test_bootstrap_smoke and test_reset_then_reseed_is_deterministic. Against the previous run_dev the guard errors at teardown in both the create and the modification case; the fixed suite passes (2 passed) with .env untouched in both. No product code changed."
     },
     "GOV-008": {
       "coverage": "GENUINE_GAP",

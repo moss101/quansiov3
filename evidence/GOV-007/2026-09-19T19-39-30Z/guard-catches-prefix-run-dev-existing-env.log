@@ -1,0 +1,13 @@
+$ uv run --project python pytest tests/integration/test_dev_stack.py::test_bootstrap_smoke -q  # PRE-FIX run_dev (no QUANSIO_DEV_ENV_FILE) with the canonical-valued .env staged in the checkout: expected guard ERROR and .env rewritten to the test project/ports
+sha256(.env) before: ee63410e74c0677c0ffa173ec888f99e5be0a5a215d4ac4669f941040c4ed9c9
+__________________ ERROR at teardown of test_bootstrap_smoke ___________________
+E       AssertionError: /Users/mohsin/projects/quansiov3/.claude/worktrees/funny-villani-02c4a9/.env was rewritten by this test: the dev scripts must be run with QUANSIO_DEV_ENV_FILE pointing at the suite's own env file
+        assert up.returncode == 0, f"scripts/dev/up failed:\n{up.stdout}\n{up.stderr}"
+>       assert dev_env_file.is_file(), f"scripts/dev/up did not write QUANSIO_DEV_ENV_FILE={dev_env_file}"
+E       AssertionError: scripts/dev/up did not write QUANSIO_DEV_ENV_FILE=/private/var/folders/_1/1xvpd9n50m97rq8_c4ylpw940000gn/T/pytest-of-mohsin/pytest-17/dev-stack0/.env
+1 failed, 1 error in 1.56s
+exit_code: 1
+sha256(.env) after:  e4612c9d8456da0c18c41862129685f70413863f994a8ae7c5cb09727c8f3687
+QUANSIO_DEV_COMPOSE_PROJECT=quansio-dev-test
+QUANSIO_DEV_POSTGRES_PORT=56440
+QUANSIO_DEV_MINIO_PORT=59110

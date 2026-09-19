@@ -1,0 +1,55 @@
+$ QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, canonical quansio-dev 55440> uv run --project python pytest tests -q  # the ci.sh `tests` gate from this nested worktree; the single failure is tests/contract/test_contracts.py::test_generated_bindings_are_current (scripts/dev/contract-gen cargo workspace resolution under .claude/worktrees, an environment property unrelated to this change)
+........................................................................ [ 25%]
+........................................................................ [ 51%]
+..........................................F............................. [ 76%]
+..................................................................       [100%]
+=================================== FAILURES ===================================
+_____________________ test_generated_bindings_are_current ______________________
+
+    def test_generated_bindings_are_current():
+        """Rust (prost/tonic), Python (protoc) and TypeScript bindings must be regenerable."""
+>       assert gen_contracts.check(["rust", "python", "ts"]) == []
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/contract/test_contracts.py:195: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/ci/gen_contracts.py:393: in check
+    out = generate_rust(tmp_path / "rust")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+out = PosixPath('/var/folders/_1/1xvpd9n50m97rq8_c4ylpw940000gn/T/tmpz51v8g22/rust')
+
+    def generate_rust(out: Path) -> Path:
+        require("cargo")
+        result = subprocess.run(
+            [
+                "cargo",
+                "run",
+                "--quiet",
+                "--manifest-path",
+                "scripts/dev/contract-gen/Cargo.toml",
+                "--",
+                "--out",
+                str(out),
+            ],
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+>           raise SystemExit(f"rust binding generation failed:\n{result.stdout}\n{result.stderr}")
+E           SystemExit: rust binding generation failed:
+E           
+E           error: current package believes it's in a workspace when it's not:
+E           current:   /Users/mohsin/projects/quansiov3/.claude/worktrees/funny-villani-02c4a9/scripts/dev/contract-gen/Cargo.toml
+E           workspace: /Users/mohsin/projects/quansiov3/Cargo.toml
+E           
+E           this may be fixable by adding `.claude/worktrees/funny-villani-02c4a9/scripts/dev/contract-gen` to the `workspace.members` array of the manifest located at: /Users/mohsin/projects/quansiov3/Cargo.toml
+E           Alternatively, to keep it out of the workspace, add the package to the `workspace.exclude` array, or add an empty `[workspace]` table to the package's manifest.
+
+scripts/ci/gen_contracts.py:302: SystemExit
+=========================== short test summary info ============================
+FAILED tests/contract/test_contracts.py::test_generated_bindings_are_current
+1 failed, 281 passed in 37.19s
+exit_code: 1
