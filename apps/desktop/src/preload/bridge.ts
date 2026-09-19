@@ -23,6 +23,14 @@ export const PRELOAD_ALLOWLIST = [
   "settings.updateUser",
   "deepLink.open",
   "update.status",
+  "threads.list",
+  "threads.messages",
+  "questions.list",
+  "runs.timeline",
+  "messages.post",
+  "questions.answer",
+  "turns.cancel",
+  "artifacts.upload",
 ] as const;
 
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
@@ -98,6 +106,17 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
       send("settings.updateUser", { workspaceId, settings }),
     openDeepLink: (url: string) => send("deepLink.open", { url }),
     updateStatus: () => send("update.status", {}),
+    // The conversation surface (APP-004): projections and commands, never bytes to disk.
+    listThreads: () => send("threads.list", {}),
+    threadMessages: (threadId: string) => send("threads.messages", { threadId }),
+    listQuestions: (scope: { threadId: string } | { runId: string }) => send("questions.list", scope),
+    runTimeline: (runId: string) => send("runs.timeline", { runId }),
+    postMessage: (message: { threadId?: string | null; content: string; attachments?: readonly string[] }) =>
+      send("messages.post", message),
+    answerQuestion: (questionId: string, value: unknown) => send("questions.answer", { questionId, value }),
+    cancelTurn: (runId: string, generation?: number) => send("turns.cancel", { runId, generation }),
+    uploadAttachment: (file: { name: string; mediaType: string; bytesBase64: string; threadId?: string | null }) =>
+      send("artifacts.upload", file),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),
