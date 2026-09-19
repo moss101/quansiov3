@@ -1,0 +1,11 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/onboarding.e2e.test.ts (1 test) 3126ms
+   ✓ new-user onboarding E2E against quansio-server (session-only) > takes a fresh user from a magic link to a governed workspace with a running stream, then resumes from the keychain 728ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:30:51
+   Duration  3.33s (transform 51ms, setup 0ms, collect 67ms, tests 3.13s, environment 0ms, prepare 28ms)
+

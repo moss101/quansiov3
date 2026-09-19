@@ -1,0 +1,46 @@
+$ pnpm -r --if-present test
+Scope: 3 of 4 workspace projects
+apps/desktop test$ vitest run
+apps/web test$ vitest run
+sdk/typescript test$ vitest run
+apps/desktop test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+sdk/typescript test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/sdk/typescript
+apps/web test:  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/web
+sdk/typescript test:  ✓ tests/client.test.ts (3 tests) 3ms
+sdk/typescript test:  Test Files  1 passed (1)
+sdk/typescript test:       Tests  3 passed (3)
+sdk/typescript test:    Start at  22:28:27
+sdk/typescript test:    Duration  405ms (transform 19ms, setup 0ms, collect 20ms, tests 3ms, environment 0ms, prepare 89ms)
+apps/web test:  ✓ tests/surfaces.test.ts (3 tests) 6ms
+apps/web test:  ✓ tests/rbac.test.ts (2 tests) 1ms
+apps/web test:  Test Files  2 passed (2)
+apps/web test:       Tests  5 passed (5)
+apps/web test:    Start at  22:28:27
+apps/web test:    Duration  418ms (transform 32ms, setup 0ms, collect 52ms, tests 7ms, environment 0ms, prepare 192ms)
+sdk/typescript test: Done
+apps/web test: Done
+apps/desktop test:  ✓ tests/conversation.test.ts (2 tests) 2ms
+apps/desktop test:  ✓ tests/live.test.ts (1 test) 1ms
+apps/desktop test:  ✓ tests/onboarding.test.ts (1 test) 3ms
+apps/desktop test:  ✓ tests/surfaces.test.ts (3 tests) 2ms
+apps/desktop test:  ✓ tests/artifacts.test.ts (2 tests) 2ms
+apps/desktop test:  ✓ tests/work.test.ts (2 tests) 1ms
+apps/desktop test:  ✓ tests/knowledge.test.ts (2 tests) 2ms
+apps/desktop test:  ✓ tests/teammates.test.ts (1 test) 1ms
+apps/desktop test:  ✓ tests/trust.test.ts (2 tests) 1ms
+apps/desktop test:  ✓ tests/diagnostics.test.ts (2 tests) 2ms
+apps/desktop test:  ✓ tests/collaboration.test.ts (1 test) 1ms
+apps/desktop test:  ✓ tests/security.test.ts (5 tests) 7ms
+apps/desktop test:  ✓ tests/preload.test.ts (4 tests) 12ms
+apps/desktop test:  ✓ tests/shell-modules.test.ts (11 tests) 18ms
+apps/desktop test:  ✓ tests/identity.test.ts (5 tests) 18ms
+apps/desktop test:  ✓ tests/automation.test.ts (1 test) 1ms
+apps/desktop test:  ✓ tests/onboarding.e2e.test.ts (1 test) 1345ms
+apps/desktop test:    ✓ new-user onboarding E2E against quansio-server (session-only) > takes a fresh user from a magic link to a governed workspace with a running stream, then resumes from the keychain 491ms
+apps/desktop test:  ✓ tests/reconnect.e2e.test.ts (1 test) 1626ms
+apps/desktop test:    ✓ desktop reconnect E2E against quansio-server > posts a message, persists the run and cursor, drops the socket, and resumes the same run from the cursor 892ms
+apps/desktop test:  Test Files  18 passed (18)
+apps/desktop test:       Tests  47 passed (47)
+apps/desktop test:    Start at  22:28:27
+apps/desktop test:    Duration  2.15s (transform 522ms, setup 0ms, collect 1.41s, tests 3.05s, environment 2ms, prepare 1.21s)
+apps/desktop test: Done
