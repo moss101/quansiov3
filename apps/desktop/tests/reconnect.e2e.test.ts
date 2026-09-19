@@ -3,20 +3,22 @@
  * without losing active run state — against the real `quansio-server` binary on a scratch
  * PostgreSQL database, driven through the shell's own bridge, clients and session file.
  *
- * Environment: `QUANSIO_TEST_POSTGRES_URL` (superuser DSN; a scratch database is created
- * and dropped) and either `QUANSIO_TEST_SERVER_BIN` or the workspace's
- * `target/debug/quansio-server`. Without the DSN or a binary the suite skips with an explicit
+ * The scratch database and its tenant come from `quansio-dev-seed` (Rust, APP-001): a client
+ * is never persistence authority and never writes a canonical table, not even in a harness.
+ *
+ * Environment: `QUANSIO_TEST_POSTGRES_URL` (superuser DSN) and the workspace's
+ * `target/debug/quansio-server` + `quansio-dev-seed` (or `QUANSIO_TEST_SERVER_BIN` /
+ * `QUANSIO_TEST_SEED_BIN`). Without the DSN or the binaries the suite skips with an explicit
  * `BLOCKED_EXTERNAL` marker (AGENTS.md "Real boundaries"): the dev stack is not running.
  */
 
-import { spawn, type ChildProcess } from "node:child_process";
+import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import pg from "pg";
 import WebSocket from "ws";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -25,6 +27,7 @@ import { DesktopBridge, SessionFile, UpdateHooks, type SocketLike } from "../src
 const ADMIN_URL = process.env["QUANSIO_TEST_POSTGRES_URL"]?.trim() ?? "";
 const WORKSPACE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const SERVER_BIN = process.env["QUANSIO_TEST_SERVER_BIN"]?.trim() || join(WORKSPACE_ROOT, "target", "debug", "quansio-server");
+const SEED_BIN = process.env["QUANSIO_TEST_SEED_BIN"]?.trim() || join(WORKSPACE_ROOT, "target", "debug", "quansio-dev-seed");
 
 const TENANT = "tn_01J8Z3K6F1N8VQ2X5W9Y0DDDDD";
 const USER = "usr_01J8Z3K6F1N8VQ2X5W9Y0DDDDD";
@@ -35,14 +38,26 @@ const CMD2 = "cmd_01J8Z3K6F1N8VQ2X5W9Y0DDDD2";
 
 const blocked = !ADMIN_URL
   ? "BLOCKED_EXTERNAL: QUANSIO_TEST_POSTGRES_URL is not set; the dev stack is not running"
-  : !existsSync(SERVER_BIN)
-    ? `BLOCKED_EXTERNAL: quansio-server binary not found at ${SERVER_BIN}; build it with cargo build -p quansio-server or set QUANSIO_TEST_SERVER_BIN`
+  : !existsSync(SERVER_BIN) || !existsSync(SEED_BIN)
+    ? `BLOCKED_EXTERNAL: ${SERVER_BIN} and ${SEED_BIN} are needed; build them with cargo build -p quansio-server --bins`
     : null;
 
-function scratchUrl(admin: string, database: string): string {
-  const url = new URL(admin);
-  url.pathname = `/${database}`;
-  return url.toString();
+/** Create the scratch database and its tenant through the Rust seed; returns the scratch DSN. */
+function seedScratchDatabase(database: string): string {
+  const output = execFileSync(
+    SEED_BIN,
+    ["create", "--database", database, "--tenant", TENANT, "--user", USER, "--workspace", WORKSPACE, "--node", NODE],
+    { env: { ...process.env, QUANSIO_DATABASE_URL: ADMIN_URL }, encoding: "utf8" },
+  );
+  const line = output.split("\n").find((candidate) => candidate.startsWith("database_url="));
+  if (!line) {
+    throw new Error(`quansio-dev-seed printed no database_url: ${output}`);
+  }
+  return line.slice("database_url=".length);
+}
+
+function dropScratchDatabase(database: string): void {
+  execFileSync(SEED_BIN, ["drop", "--database", database], { env: { ...process.env, QUANSIO_DATABASE_URL: ADMIN_URL } });
 }
 
 async function freePort(): Promise<number> {
@@ -60,29 +75,6 @@ async function freePort(): Promise<number> {
       });
     });
   });
-}
-
-async function seed(databaseUrl: string): Promise<void> {
-  const client = new pg.Client({ connectionString: databaseUrl });
-  await client.connect();
-  try {
-    await client.query("BEGIN");
-    await client.query("INSERT INTO tenants (id, name) VALUES ($1, 'desktop e2e')", [TENANT]);
-    await client.query("INSERT INTO users (id, primary_email, display_name) VALUES ($1, $2, 'desktop e2e')", [USER, `${USER}@example.com`]);
-    await client.query("INSERT INTO workspaces (id, tenant_id, name) VALUES ($1, $2, 'desktop e2e')", [WORKSPACE, TENANT]);
-    await client.query("SELECT set_config('quansio.tenant_id', $1, true)", [TENANT]);
-    await client.query(
-      "INSERT INTO work_nodes (id, tenant_id, workspace_id, kind, title, created_by) VALUES ($1, $2, $3, 'objective', 'desktop e2e', '{\"kind\":\"user\",\"id\":\"usr_seed\"}'::jsonb)",
-      [NODE, TENANT, WORKSPACE],
-    );
-    await client.query(
-      "INSERT INTO policies (id, tenant_id, workspace_id, scope, rules) VALUES ('pol_01J8Z3K6F1N8VQ2X5W9Y0DDDDD', $1, NULL, 'tenant', $2)",
-      [TENANT, JSON.stringify([{ effect_class: "read.internal", resource: { kind: "fs", selector: "**" }, decision: "allow" }])],
-    );
-    await client.query("COMMIT");
-  } finally {
-    await client.end();
-  }
 }
 
 async function waitForHealth(origin: string, child: ChildProcess, stderr: string[]): Promise<void> {
@@ -124,7 +116,6 @@ function waitFor<T>(poll: () => T | undefined, what: string, timeoutMs = 15_000)
 }
 
 describe.skipIf(blocked !== null)("desktop reconnect E2E against quansio-server", () => {
-  let admin: pg.Client;
   let databaseName: string;
   let child: ChildProcess;
   let origin: string;
@@ -133,11 +124,7 @@ describe.skipIf(blocked !== null)("desktop reconnect E2E against quansio-server"
 
   beforeAll(async () => {
     databaseName = `quansio_desktop_e2e_${String(process.pid)}`;
-    admin = new pg.Client({ connectionString: ADMIN_URL });
-    await admin.connect();
-    await admin.query(`DROP DATABASE IF EXISTS ${databaseName} WITH (FORCE)`);
-    await admin.query(`CREATE DATABASE ${databaseName}`);
-    const databaseUrl = scratchUrl(ADMIN_URL, databaseName);
+    const databaseUrl = seedScratchDatabase(databaseName);
     const port = await freePort();
     origin = `http://127.0.0.1:${String(port)}`;
     child = spawn(SERVER_BIN, [], {
@@ -146,15 +133,17 @@ describe.skipIf(blocked !== null)("desktop reconnect E2E against quansio-server"
     });
     child.stderr?.on("data", (chunk: Buffer) => stderr.push(chunk.toString()));
     await waitForHealth(origin, child, stderr);
-    await seed(databaseUrl);
     userData = mkdtempSync(join(tmpdir(), "quansio-desktop-e2e-"));
   }, 90_000);
 
   afterAll(async () => {
     child.kill("SIGTERM");
     await new Promise((resolve) => setTimeout(resolve, 200));
-    await admin.query(`DROP DATABASE IF EXISTS ${databaseName} WITH (FORCE)`).catch(() => undefined);
-    await admin.end().catch(() => undefined);
+    try {
+      dropScratchDatabase(databaseName);
+    } catch {
+      /* the scratch database is named by pid; a leftover is harmless */
+    }
     rmSync(userData, { recursive: true, force: true });
   }, 30_000);
 
