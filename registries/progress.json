@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 5,
-  "updated_at": "2026-09-19T19:46:23Z",
+  "updated_at": "2026-09-19T19:47:00Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1664,10 +1664,10 @@
     },
     "APP-004": {
       "coverage": "PARTIAL",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:claude-opus-5",
+      "started_at": "2026-09-19T19:47:00Z",
+      "updated_at": "2026-09-19T19:47:00Z",
       "git_commit": null,
       "tests": [
         "pnpm --filter @quansio/desktop test (conversation reload, WorkGraph/Run mapping, attachments/questions, cancel, inspector)"
