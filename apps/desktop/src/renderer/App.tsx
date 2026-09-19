@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState, type ReactElement } from "react";
 
 import { DESKTOP_SURFACES } from "../surfaces.js";
 import { t } from "../i18n/strings.js";
+import { Artifacts } from "./Artifacts.js";
 import { Conversation } from "./Conversation.js";
 import { Onboarding } from "./Onboarding.js";
 
@@ -72,6 +73,7 @@ function Shell(): ReactElement {
   const [projection, setProjection] = useState<RunProjection | null>(null);
   const [log, setLog] = useState<readonly LogLine[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
+  const [surface, setSurface] = useState<"conversation" | "artifacts">("conversation");
 
   const refresh = useCallback(async () => {
     const next = (await window.quansio.activeRun()) as RunProjection;
@@ -110,8 +112,14 @@ function Shell(): ReactElement {
       </header>
       <nav aria-label={t("surfaces")}>
         <ul>
-          {DESKTOP_SURFACES.map((surface) => (
-            <li key={surface.id}>{surface.id}</li>
+          {DESKTOP_SURFACES.map((entry) => (
+            <li key={entry.id} className={entry.id === surface ? "selected" : undefined}>
+              {entry.id === "conversation" || entry.id === "artifacts" ? (
+                <button type="button" onClick={() => { setSurface(entry.id === "artifacts" ? "artifacts" : "conversation"); }}>{entry.id}</button>
+              ) : (
+                entry.id
+              )}
+            </li>
           ))}
         </ul>
         <section className="run">
@@ -132,11 +140,15 @@ function Shell(): ReactElement {
         </section>
       </nav>
       {projection?.workspaceId ? (
-        <Conversation
-          key={projection.workspaceId}
-          workspaceId={projection.workspaceId}
-          initialThreadId={projection.activeRun?.threadId ?? null}
-        />
+        surface === "artifacts" ? (
+          <Artifacts key={`artifacts-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+        ) : (
+          <Conversation
+            key={projection.workspaceId}
+            workspaceId={projection.workspaceId}
+            initialThreadId={projection.activeRun?.threadId ?? null}
+          />
+        )
       ) : (
         <p>{t("connecting")}</p>
       )}

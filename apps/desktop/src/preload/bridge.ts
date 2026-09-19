@@ -31,6 +31,13 @@ export const PRELOAD_ALLOWLIST = [
   "questions.answer",
   "turns.cancel",
   "artifacts.upload",
+  "artifacts.list",
+  "artifacts.versions",
+  "artifacts.content",
+  "artifacts.save",
+  "artifacts.open",
+  "evidence.get",
+  "search.query",
 ] as const;
 
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
@@ -115,8 +122,17 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
       send("messages.post", message),
     answerQuestion: (questionId: string, value: unknown) => send("questions.answer", { questionId, value }),
     cancelTurn: (runId: string, generation?: number) => send("turns.cancel", { runId, generation }),
-    uploadAttachment: (file: { name: string; mediaType: string; bytesBase64: string; threadId?: string | null }) =>
+    uploadAttachment: (file: { name: string; mediaType: string; bytesBase64: string; threadId?: string | null; artifactId?: string | null }) =>
       send("artifacts.upload", file),
+    // The artifact workspace (APP-008): projections, bounded bytes for an in-process
+    // preview, and file operations main performs only after the user asked.
+    listArtifacts: (filter: { kind?: string | null; runId?: string | null } = {}) => send("artifacts.list", filter),
+    artifactVersions: (artifactId: string) => send("artifacts.versions", { artifactId }),
+    artifactContent: (artifactId: string, versionId: string) => send("artifacts.content", { artifactId, versionId }),
+    saveArtifact: (artifactId: string, versionId: string) => send("artifacts.save", { artifactId, versionId }),
+    openArtifact: (artifactId: string, versionId: string) => send("artifacts.open", { artifactId, versionId }),
+    getEvidence: (evidenceId: string) => send("evidence.get", { evidenceId }),
+    search: (request: { q: string; channels?: readonly string[]; maxResults?: number }) => send("search.query", request),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),

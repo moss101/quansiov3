@@ -11,10 +11,11 @@
  * Electron binary; this file wires them.
  */
 
+import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { app, autoUpdater, BrowserWindow, ipcMain, protocol, safeStorage, session, shell } from "electron";
+import { app, autoUpdater, BrowserWindow, dialog, ipcMain, protocol, safeStorage, session, shell } from "electron";
 import WebSocket from "ws";
 
 import type { SocketFactory, SocketLike } from "../client/stream.js";
@@ -133,6 +134,29 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
     auth,
     // OAuth: the authorization URL opens in the system browser, never in the renderer.
     openExternal: (url) => shell.openExternal(url),
+    // Artifact files (APP-008): saved where the user chooses, or written under userData and
+    // handed to the OS handler; the bridge refuses pages, scripts and programs before this.
+    files: {
+      saveAs: async (suggestedName, bytes) => {
+        const chosen = await dialog.showSaveDialog(window, { defaultPath: suggestedName });
+        if (chosen.canceled || !chosen.filePath) {
+          return null;
+        }
+        writeFileSync(chosen.filePath, bytes, { mode: 0o600 });
+        return chosen.filePath;
+      },
+      openWithOs: async (suggestedName, bytes) => {
+        const directory = join(app.getPath("userData"), "artifacts");
+        mkdirSync(directory, { recursive: true, mode: 0o700 });
+        const path = join(directory, suggestedName);
+        writeFileSync(path, bytes, { mode: 0o600 });
+        const failure = await shell.openPath(path);
+        if (failure) {
+          throw new Error(failure);
+        }
+        return path;
+      },
+    },
     session: sessionFile,
     openSocket,
     updates,
