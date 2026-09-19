@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
+     Running tests/artifact_workspace.rs (target/debug/deps/artifact_workspace-f2eed6d85af37a52)
+
+running 3 tests
+test bytes_are_served_as_an_attachment_never_as_a_document_and_only_to_a_reader ... ok
+test artifacts_outlive_the_run_and_keep_their_version_history_with_links ... ok
+test search_is_one_typed_program_across_artifacts_threads_knowledge_and_evidence ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.73s
+
+exit=0
