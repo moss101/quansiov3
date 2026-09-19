@@ -1,5 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "noEmit": true, "rootDir": "." },
-  "include": ["src", "tests", "vitest.config.ts"]
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "src",
+    "tests",
+    "vitest.config.ts"
+  ]
 }

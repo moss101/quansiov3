@@ -12,7 +12,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["**/*.config.js", "**/eslint.config.js"],
+    files: ["**/*.config.js", "**/eslint.config.js", "**/scripts/*.mjs"],
     ...tseslint.configs.disableTypeChecked,
   },
 );

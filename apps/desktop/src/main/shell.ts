@@ -1,39 +1,34 @@
 /**
- * Desktop shell composition (APP-003).
+ * Desktop shell description (APP-003).
  *
- * Main process wiring: security baseline, preload path, deep-link and update hooks.
- * It does not own runs, effects or secrets.
+ * The baseline `app.ts` applies, as data: the webPreferences and CSP every window gets,
+ * the permission decision, and the public API endpoints for a server origin. `app.ts` is
+ * the only module that touches Electron; this one lets tests and diagnostics see exactly
+ * what it will apply without starting it.
  */
 
-import {
-  RENDERER_CSP,
-  RENDERER_WEB_PREFERENCES,
-  permissionAllowed,
-} from "./security.js";
-import { DesktopSessionStore } from "../renderer/session.js";
 import { commandUrl, streamUrl } from "../client/server.js";
+import { RENDERER_CSP, RENDERER_ENTRY_URL, RENDERER_WEB_PREFERENCES, permissionAllowed } from "./security.js";
 
 export interface ShellConfig {
   readonly serverOrigin: string;
-  readonly tenantId: string;
 }
 
 export interface DesktopShell {
   readonly webPreferences: typeof RENDERER_WEB_PREFERENCES;
   readonly csp: string;
-  readonly session: DesktopSessionStore;
+  readonly rendererEntry: string;
   readonly commandUrl: (name: string) => string;
   readonly streamUrl: string;
   permissionAllowed: (permission: string) => boolean;
 }
 
-/** Compose the shell the Electron main process would start. */
+/** Describe the shell the Electron main process starts for `config`. */
 export function createDesktopShell(config: ShellConfig): DesktopShell {
-  const session = new DesktopSessionStore();
   return {
     webPreferences: RENDERER_WEB_PREFERENCES,
     csp: RENDERER_CSP,
-    session,
+    rendererEntry: RENDERER_ENTRY_URL,
     commandUrl: (name: string) => commandUrl(config.serverOrigin, name),
     streamUrl: streamUrl(config.serverOrigin),
     permissionAllowed,

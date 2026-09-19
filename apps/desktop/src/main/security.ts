@@ -36,7 +36,7 @@ export const RENDERER_WEB_PREFERENCES: RendererWebPreferences = {
   contextIsolation: true,
   sandbox: true,
   enableRemoteModule: false,
-  preload: "preload/bridge.js",
+  preload: "preload.cjs",
   webviewTag: false,
 };
 
@@ -71,4 +71,67 @@ export function rendererSecurityBaselineHolds(): boolean {
     RENDERER_CSP.includes("object-src 'none'") &&
     RENDERER_CSP.includes("script-src 'self'")
   );
+}
+
+// ---------------------------------------------------------------------------------------
+// Handlers the main process installs. They are written over the narrowest slice of the
+// Electron objects they touch so the CSP/preload and permission-boundary tests drive the
+// very functions `app.ts` registers, without an Electron binary.
+// ---------------------------------------------------------------------------------------
+
+/** Origins the renderer may navigate to: only the bundled renderer itself. */
+export const RENDERER_ORIGIN_SCHEME = "app:";
+
+/** The renderer document, served from the bundle under the `app:` scheme. */
+export const RENDERER_ENTRY_URL = "app://desktop/index.html";
+
+export interface HeadersReceivedDetails {
+  readonly responseHeaders?: Record<string, string[]> | undefined;
+  readonly url: string;
+}
+
+/** `session.webRequest.onHeadersReceived` handler: every renderer response carries the CSP. */
+export function withContentSecurityPolicy(
+  details: HeadersReceivedDetails,
+): { responseHeaders: Record<string, string[]> } {
+  const headers: Record<string, string[]> = {};
+  for (const [key, value] of Object.entries(details.responseHeaders ?? {})) {
+    if (key.toLowerCase() !== "content-security-policy") {
+      headers[key] = value;
+    }
+  }
+  headers["Content-Security-Policy"] = [RENDERER_CSP];
+  return { responseHeaders: headers };
+}
+
+/** `session.setPermissionRequestHandler` decision; `permissionAllowed` is the single source. */
+export function permissionRequestDecision(permission: string): boolean {
+  return permissionAllowed(permission);
+}
+
+/** `will-navigate` guard: the renderer stays on the bundled document. */
+export function navigationAllowed(targetUrl: string): boolean {
+  try {
+    const url = new URL(targetUrl);
+    return url.protocol === RENDERER_ORIGIN_SCHEME && url.host === "desktop";
+  } catch {
+    return false;
+  }
+}
+
+/** `setWindowOpenHandler` decision: the renderer never opens windows; links go to the OS. */
+export function windowOpenDecision(targetUrl: string): { action: "deny"; openExternally: boolean } {
+  let openExternally = false;
+  try {
+    const url = new URL(targetUrl);
+    openExternally = url.protocol === "https:";
+  } catch {
+    openExternally = false;
+  }
+  return { action: "deny", openExternally };
+}
+
+/** The preload script path the window must be created with, relative to the bundle root. */
+export function preloadPath(bundleRoot: string): string {
+  return `${bundleRoot.replace(/\/+$/, "")}/preload.cjs`;
 }
