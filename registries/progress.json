@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 5,
-  "updated_at": "2026-09-19T18:14:46Z",
+  "updated_at": "2026-09-19T18:15:13Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1620,10 +1620,10 @@
     },
     "APP-003": {
       "coverage": "PARTIAL",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:claude-opus-5",
+      "started_at": "2026-09-19T18:15:13Z",
+      "updated_at": "2026-09-19T18:15:13Z",
       "git_commit": null,
       "tests": [
         "pnpm --filter @quansio/desktop test (8 passed: surface catalog, nodeIntegration/contextIsolation/sandbox CSP baseline, preload allowlist without fs/child_process, permission deny, run+cursor reconnect)"
