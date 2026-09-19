@@ -28,13 +28,12 @@ use super::store::{
     Attempt, Budget, NewRun, NewStep, Run, RuntimeStore, Step, Turn, TurnInput, WaitResolution,
 };
 use super::turn_loop::{
-    CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort, ModelCallRequest,
-    ModelProposalSource, ProposedToolCall, QuestionContext, QuestionOutcome, QuestionPort,
-    ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest, TurnOutcome, UnavailableDelegation,
-    LiveFramePort, NoLiveFrames, UnavailableModelProposalSource, UnavailableQuestions,
-    UnavailableToolDispatch,
-    UnavailableVerification, VerificationContext, VerificationOutcome, VerificationPort,
-    MEMORY_OWNER, PLAN_VALIDATION_OWNER,
+    CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort, LiveFramePort,
+    ModelCallRequest, ModelProposalSource, NoLiveFrames, ProposedToolCall, QuestionContext,
+    QuestionOutcome, QuestionPort, ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest,
+    TurnOutcome, UnavailableDelegation, UnavailableModelProposalSource, UnavailableQuestions,
+    UnavailableToolDispatch, UnavailableVerification, VerificationContext, VerificationOutcome,
+    VerificationPort, MEMORY_OWNER, PLAN_VALIDATION_OWNER,
 };
 use super::{fence, RuntimeError, RuntimeIdentity};
 use crate::runtime::turn_loop::parallel;
@@ -143,13 +142,22 @@ impl RuntimeEngine {
         let tenant_id = self.store.identity().tenant_id.clone();
         let mut frame = frame;
         if let serde_json::Value::Object(map) = &mut frame {
-            map.insert("run_id".to_string(), serde_json::Value::String(run.id.to_string()));
-            map.insert("turn_id".to_string(), serde_json::Value::String(turn_id.to_string()));
+            map.insert(
+                "run_id".to_string(),
+                serde_json::Value::String(run.id.to_string()),
+            );
+            map.insert(
+                "turn_id".to_string(),
+                serde_json::Value::String(turn_id.to_string()),
+            );
         }
         self.live
             .publish(&tenant_id, &format!("run:{}", run.id), frame.clone());
-        self.live
-            .publish(&tenant_id, &format!("workspace:{}", run.workspace_id), frame);
+        self.live.publish(
+            &tenant_id,
+            &format!("workspace:{}", run.workspace_id),
+            frame,
+        );
     }
 
     /// Install the human question protocol (DOMAIN.md §3.4).

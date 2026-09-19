@@ -32,7 +32,10 @@ impl LiveHub {
     }
 
     fn sender(&self, tenant_id: &str) -> broadcast::Sender<LiveFrame> {
-        let mut tenants = self.tenants.lock().unwrap_or_else(|error| error.into_inner());
+        let mut tenants = self
+            .tenants
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
         tenants
             .entry(tenant_id.to_string())
             .or_insert_with(|| broadcast::channel(LIVE_CAPACITY).0)

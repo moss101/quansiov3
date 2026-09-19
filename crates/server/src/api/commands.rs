@@ -12,7 +12,9 @@ use crate::runtime::state_machine::{
     NewRun, Run, RunTriggerKind, RuntimeEngine, RuntimeError, RuntimeIdentity, TurnInput,
     TurnOutcome,
 };
-use crate::runtime::turn_loop::{StoredProjectionProvider, ToolDispatchService};
+use crate::runtime::turn_loop::{
+    QuestionAnswer, QuestionService, StoredProjectionProvider, ToolDispatchService,
+};
 use axum::extract::{Path, State};
 use axum::http::HeaderMap;
 use axum::Json;
@@ -95,6 +97,27 @@ pub async fn invoke(
                 &identity,
                 &request.params,
                 user_id.as_deref(),
+                &correlation,
+            )
+            .await?
+        }
+        "AnswerQuestion" => {
+            answer_question(
+                &state,
+                &identity,
+                &request.params,
+                user_id.as_deref(),
+                &correlation,
+            )
+            .await?
+        }
+        "CancelTurn" => cancel_turn(&state, &identity, &request.params, &correlation).await?,
+        "CreateArtifact" => {
+            super::threads::create_artifact(
+                &state,
+                &scope.tenant_id,
+                user_id.as_deref(),
+                &request.params,
                 &correlation,
             )
             .await?
@@ -250,10 +273,32 @@ async fn post_message(
     let author = user_id
         .or_else(|| params.get("author_id").and_then(Value::as_str))
         .unwrap_or("usr_api");
+    let attachments = match params.get("attachments") {
+        None | Some(Value::Null) => Vec::new(),
+        Some(Value::Array(items)) => items
+            .iter()
+            .map(|item| {
+                item.as_str().map(str::to_string).ok_or_else(|| {
+                    ApiError::new(
+                        ApiErrorCode::ValidationSchema,
+                        "attachments must be artifact ids",
+                        correlation,
+                    )
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?,
+        Some(_) => {
+            return Err(ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                "attachments must be an array of artifact ids",
+                correlation,
+            ))
+        }
+    };
     let store = ConversationStore::new(state.pool().clone(), identity.clone())
         .map_err(|error| internal(error, correlation))?;
     let posted = store
-        .post_message(workspace_id, thread_id, author, content)
+        .post_message_with_attachments(workspace_id, thread_id, author, content, &attachments)
         .await
         .map_err(|error| conversation_error(error, correlation))?;
 
@@ -295,13 +340,171 @@ async fn post_message(
         )
         .await
         .map_err(|error| runtime_error(error, correlation))?;
+    let reply = post_agent_reply(
+        &store,
+        &posted.thread.id,
+        &agent_thread.to_string(),
+        &run.id.to_string(),
+        &outcome,
+        correlation,
+    )
+    .await?;
     Ok(json!({
         "thread_id": posted.thread.id,
         "message_id": posted.message.id,
         "run_id": run.id.to_string(),
         "run_status": run.status.as_db_str(),
         "turn": turn_json(&outcome),
+        "reply_message_id": reply,
     }))
+}
+
+/// The assistant text of a completed turn becomes the agent's durable message in the thread.
+async fn post_agent_reply(
+    store: &ConversationStore,
+    thread_id: &str,
+    agent_id: &str,
+    run_id: &str,
+    outcome: &TurnOutcome,
+    correlation: &str,
+) -> Result<Option<String>, ApiError> {
+    let TurnOutcome::Completed {
+        turn_id,
+        assistant_text: Some(text),
+    } = outcome
+    else {
+        return Ok(None);
+    };
+    if text.trim().is_empty() {
+        return Ok(None);
+    }
+    let message = store
+        .post_agent_message(thread_id, agent_id, text, run_id, turn_id)
+        .await
+        .map_err(|error| conversation_error(error, correlation))?;
+    Ok(Some(message.id))
+}
+
+/// `AnswerQuestion {question_id, value}`: record the answer, release the parked run and
+/// run its next turn (RUN-011 resume) so the reply follows the answer.
+async fn answer_question(
+    state: &ApiState,
+    identity: &RuntimeIdentity,
+    params: &Value,
+    user_id: Option<&str>,
+    correlation: &str,
+) -> Result<Value, ApiError> {
+    let question_id = required_str(params, "question_id", correlation)?;
+    let value = params.get("value").cloned().ok_or_else(|| {
+        ApiError::new(
+            ApiErrorCode::ValidationSchema,
+            "AnswerQuestion needs a value",
+            correlation,
+        )
+    })?;
+    let answering_user = user_id
+        .or_else(|| params.get("user_id").and_then(Value::as_str))
+        .unwrap_or("usr_api")
+        .to_string();
+    let questions = QuestionService::new(state.pool().clone(), identity.clone())
+        .map_err(|error| internal(error, correlation))?;
+    let answered = questions
+        .answer(
+            question_id,
+            QuestionAnswer {
+                user_id: answering_user,
+                value,
+            },
+        )
+        .await
+        .map_err(|error| runtime_error(error, correlation))?;
+    let mut result = json!({
+        "question_id": answered.question.id,
+        "run_id": answered.question.run_id,
+        "status": answered.question.status.as_str(),
+        "resumed_run_id": answered.resumed_run_id,
+    });
+    let Some(resumed) = answered.resumed_run_id.as_deref() else {
+        return Ok(result);
+    };
+    let run_id = CanonicalId::parse_typed(resumed, Prefix::Run)
+        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
+    let engine =
+        chat_engine(state, identity.clone()).map_err(|error| internal(error, correlation))?;
+    let run = engine
+        .store()
+        .load_run(&run_id)
+        .await
+        .map_err(|error| runtime_error(error, correlation))?;
+    let outcome = engine
+        .run_turn(
+            &run.id,
+            run.generation,
+            TurnInput::new(RunTriggerKind::Wake).with_reference(question_id.to_string()),
+        )
+        .await
+        .map_err(|error| runtime_error(error, correlation))?;
+    result["turn"] = turn_json(&outcome);
+    if let Some(thread_id) = thread_of_run(state, &identity.tenant_id, resumed).await? {
+        let store = ConversationStore::new(state.pool().clone(), identity.clone())
+            .map_err(|error| internal(error, correlation))?;
+        result["reply_message_id"] = json!(
+            post_agent_reply(
+                &store,
+                &thread_id,
+                &run.agent_thread_id.to_string(),
+                resumed,
+                &outcome,
+                correlation,
+            )
+            .await?
+        );
+        result["thread_id"] = json!(thread_id);
+    }
+    Ok(result)
+}
+
+/// `CancelTurn {run_id, generation?}`: cancel the run the turn belongs to and withdraw its
+/// open questions; the durable `run.cancelled` event tells every client the turn stopped.
+async fn cancel_turn(
+    state: &ApiState,
+    identity: &RuntimeIdentity,
+    params: &Value,
+    correlation: &str,
+) -> Result<Value, ApiError> {
+    let (run_id, generation) = run_ref(params, correlation)?;
+    let engine = RuntimeEngine::new(state.pool().clone(), identity.clone())
+        .map_err(|error| internal(error, correlation))?;
+    let run = engine
+        .cancel(&run_id, generation)
+        .await
+        .map_err(|error| runtime_error(error, correlation))?;
+    let questions = QuestionService::new(state.pool().clone(), identity.clone())
+        .map_err(|error| internal(error, correlation))?;
+    let cancelled = questions
+        .cancel_for_run(&run_id.to_string())
+        .await
+        .map_err(|error| runtime_error(error, correlation))?;
+    let mut result = run_json(&run);
+    result["cancelled_questions"] = json!(cancelled);
+    Ok(result)
+}
+
+/// The conversation thread a run was triggered from, when its trigger was a message.
+async fn thread_of_run(
+    state: &ApiState,
+    tenant_id: &str,
+    run_id: &str,
+) -> Result<Option<String>, ApiError> {
+    sqlx::query_scalar(
+        "SELECT m.thread_id FROM runs r JOIN messages m ON m.id = r.trigger_ref AND m.tenant_id = r.tenant_id \
+         WHERE r.tenant_id = $1 AND r.id = $2",
+    )
+    .bind(tenant_id)
+    .bind(run_id)
+    .fetch_optional(state.pool())
+    .await
+    .map_err(database_error)
 }
 
 fn chat_engine(state: &ApiState, identity: RuntimeIdentity) -> Result<RuntimeEngine, RuntimeError> {
@@ -317,10 +520,14 @@ fn chat_engine(state: &ApiState, identity: RuntimeIdentity) -> Result<RuntimeEng
         state.host(),
         Arc::clone(&delegation),
     )?;
+    let questions = QuestionService::new(state.pool().clone(), identity.clone())?;
+    let live: Arc<dyn crate::runtime::state_machine::LiveFramePort> = state.live().clone();
     Ok(RuntimeEngine::new(state.pool().clone(), identity)?
         .with_model_source(state.model())
         .with_tool_dispatch(Arc::new(dispatcher))
-        .with_delegation(delegation))
+        .with_delegation(delegation)
+        .with_question_port(Arc::new(questions))
+        .with_live_frames(live))
 }
 
 async fn ensure_teammate(
@@ -565,12 +772,15 @@ fn conversation_error(
 }
 
 fn runtime_error(error: RuntimeError, correlation: &str) -> ApiError {
+    // The runtime's codes are the catalog's spellings (`RuntimeError::code`); a code the
+    // catalog does not know is an internal fault, not a client error.
     let code = match error.code() {
         "RUNTIME_ILLEGAL_TRANSITION" => ApiErrorCode::RuntimeIllegalTransition,
         "FENCED_STALE_GENERATION" => ApiErrorCode::FencedStaleGeneration,
-        "RUNTIME_NOT_FOUND" => ApiErrorCode::NotFound,
-        "RUNTIME_SCHEMA" => ApiErrorCode::ValidationSchema,
-        "RUNTIME_STATE_CONFLICT" => ApiErrorCode::ConflictState,
+        "NOT_FOUND" => ApiErrorCode::NotFound,
+        "VALIDATION_SCHEMA" => ApiErrorCode::ValidationSchema,
+        "CONFLICT_STATE" => ApiErrorCode::ConflictState,
+        "CAPABILITY_DENIED" => ApiErrorCode::CapabilityDenied,
         "RUNTIME_LEASE_LOST" => ApiErrorCode::LeaseLost,
         _ => ApiErrorCode::Internal,
     };

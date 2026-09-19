@@ -318,7 +318,7 @@ impl ApiState {
     /// # Errors
     /// Returns [`ApiError`] when a catalog or `config/auth.yaml` is not the shape the contract defines.
     pub fn new(pool: PgPool) -> Result<Self, ApiError> {
-        let (model, host, roles) = seams::skeleton_seams(None);
+        let (model, host, roles) = seams::skeleton_seams(pool.clone(), None);
         let auth_file = AuthFile::load()
             .map_err(|error| ApiError::new(ApiErrorCode::Internal, error, "startup"))?;
         let key = SigningKey::from_env()
@@ -500,8 +500,11 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/runs/:id", get(projections::run))
         .route("/v1/runs/:id/timeline", get(threads::timeline))
         .route("/v1/questions", get(threads::questions))
-        .route("/v1/artifacts", get(threads::list_artifacts).post(threads::upload_artifact))
-        .route("/v1/artifacts/:id/versions", get(threads::artifact_versions))
+        .route("/v1/artifacts", get(threads::list_artifacts))
+        .route(
+            "/v1/artifacts/:id/versions",
+            get(threads::artifact_versions),
+        )
         .route("/v1/effects", get(projections::effects))
         .with_state(state)
 }

@@ -91,12 +91,28 @@ pub struct Message {
     pub workspace_id: String,
     /// Thread-monotonic sequence.
     pub seq: i64,
+    /// `user`, `agent` or `system`.
+    pub author_kind: String,
     /// Author principal.
     pub author_id: String,
+    /// Run that produced an agent message.
+    pub run_id: Option<String>,
+    /// Turn that produced an agent message.
+    pub turn_id: Option<String>,
     /// Content blocks.
     pub content_blocks: Value,
     /// Attached artifact ids (`art_`), in the order the author attached them.
     pub attachments: Vec<String>,
+}
+
+/// A message to insert (private: the public entry points fix the author kind).
+struct NewMessage {
+    author_kind: &'static str,
+    author_id: String,
+    content: String,
+    attachments: Vec<String>,
+    run_id: Option<String>,
+    turn_id: Option<String>,
 }
 
 /// Result of posting a message, possibly creating the thread.
@@ -170,7 +186,8 @@ impl ConversationStore {
             .begin_tenant_transaction(&self.identity.tenant_id)
             .await?;
         let rows = sqlx::query(
-            "SELECT id, thread_id, workspace_id, seq, author_id, content_blocks, attachments \
+            "SELECT id, thread_id, workspace_id, seq, author_kind, author_id, run_id, turn_id, \
+             content_blocks, attachments \
              FROM messages WHERE tenant_id = $1 AND thread_id = $2 \
              AND deleted_at IS NULL ORDER BY seq",
         )
@@ -188,7 +205,10 @@ impl ConversationStore {
                     thread_id: row.get("thread_id"),
                     workspace_id: row.get("workspace_id"),
                     seq: row.get("seq"),
+                    author_kind: row.get("author_kind"),
                     author_id: row.get("author_id"),
+                    run_id: row.get("run_id"),
+                    turn_id: row.get("turn_id"),
                     content_blocks: row.get("content_blocks"),
                     attachments: attachments
                         .as_array()
@@ -208,7 +228,10 @@ impl ConversationStore {
     ///
     /// # Errors
     /// Returns a database error.
-    pub async fn list_threads(&self, workspace_id: &str) -> Result<Vec<ThreadSummary>, ConversationError> {
+    pub async fn list_threads(
+        &self,
+        workspace_id: &str,
+    ) -> Result<Vec<ThreadSummary>, ConversationError> {
         CanonicalId::parse_typed(workspace_id, Prefix::Workspace)
             .map_err(|error| ConversationError::Schema(error.to_string()))?;
         let mut tx = self
@@ -336,7 +359,10 @@ impl ConversationStore {
             }
         }
         if !attachments.is_empty() {
-            let mut tx = self.events.begin_tenant_transaction(&self.identity.tenant_id).await?;
+            let mut tx = self
+                .events
+                .begin_tenant_transaction(&self.identity.tenant_id)
+                .await?;
             let known: Vec<(String,)> = sqlx::query_as(
                 "SELECT id FROM artifacts WHERE tenant_id = $1 AND workspace_id = $2 \
                  AND id = ANY($3) AND deleted_at IS NULL",
@@ -360,73 +386,127 @@ impl ConversationStore {
             Some(id) => self.get_thread(id).await?,
             None => self.create_thread(workspace_id, "direct", None).await?,
         };
-        let tenant_id = self.identity.tenant_id.clone();
-        let identity = self.identity.clone();
-        let author = author_id.to_string();
-        let blocks = json!([{ "type": "text", "text": content }]);
-        let thread_for_insert = thread.clone();
         let message = self
-            .commit(move |tx, batch| {
-                Box::pin(async move {
-                    let next: i64 = sqlx::query_scalar(
-                        "SELECT COALESCE(MAX(seq), 0) + 1 FROM messages \
-                         WHERE tenant_id = $1 AND thread_id = $2",
-                    )
-                    .bind(&tenant_id)
-                    .bind(&thread_for_insert.id)
-                    .fetch_one(&mut **tx)
-                    .await?;
-                    let id = CanonicalId::generate(Prefix::Message, &mut UlidGenerator::new())
-                        .to_string();
-                    sqlx::query(
-                        "INSERT INTO messages (id, tenant_id, workspace_id, thread_id, seq, \
-                         author_kind, author_id, content_blocks, attachments) \
-                         VALUES ($1, $2, $3, $4, $5, 'user', $6, $7, $8)",
-                    )
-                    .bind(&id)
-                    .bind(&tenant_id)
-                    .bind(&thread_for_insert.workspace_id)
-                    .bind(&thread_for_insert.id)
-                    .bind(next)
-                    .bind(&author)
-                    .bind(&blocks)
-                    .bind(json!(attachments))
-                    .execute(&mut **tx)
-                    .await?;
-                    sqlx::query(
-                        "UPDATE threads SET last_activity_at = now(), updated_at = now() \
-                         WHERE tenant_id = $1 AND id = $2",
-                    )
-                    .bind(&tenant_id)
-                    .bind(&thread_for_insert.id)
-                    .execute(&mut **tx)
-                    .await?;
-                    let message = Message {
-                        id: id.clone(),
-                        thread_id: thread_for_insert.id.clone(),
-                        workspace_id: thread_for_insert.workspace_id.clone(),
-                        seq: next,
-                        author_id: author,
-                        content_blocks: blocks.clone(),
-                        attachments: attachments.clone(),
-                    };
-                    emit_thread_event(
-                        &identity,
-                        batch,
-                        &thread_for_insert,
-                        "thread.message_posted",
-                        json!({
-                            "thread_id": message.thread_id,
-                            "message_id": message.id,
-                            "seq": message.seq,
-                            "workspace_id": message.workspace_id,
-                        }),
-                    )?;
-                    Ok(message)
-                })
-            })
+            .insert_message(
+                &thread,
+                NewMessage {
+                    author_kind: "user",
+                    author_id: author_id.to_string(),
+                    content: content.to_string(),
+                    attachments,
+                    run_id: None,
+                    turn_id: None,
+                },
+            )
             .await?;
         Ok(PostedMessage { thread, message })
+    }
+
+    /// Post the agent's reply to a thread (APP-004): the durable assistant message a run's
+    /// turn produced, stamped with the run and turn so the inspector can find it.
+    ///
+    /// # Errors
+    /// Returns [`ConversationError::NotFound`] when the thread is missing.
+    pub async fn post_agent_message(
+        &self,
+        thread_id: &str,
+        agent_id: &str,
+        content: &str,
+        run_id: &str,
+        turn_id: &str,
+    ) -> Result<Message, ConversationError> {
+        let thread = self.get_thread(thread_id).await?;
+        self.insert_message(
+            &thread,
+            NewMessage {
+                author_kind: "agent",
+                author_id: agent_id.to_string(),
+                content: content.to_string(),
+                attachments: Vec::new(),
+                run_id: Some(run_id.to_string()),
+                turn_id: Some(turn_id.to_string()),
+            },
+        )
+        .await
+    }
+
+    async fn insert_message(
+        &self,
+        thread: &Thread,
+        new: NewMessage,
+    ) -> Result<Message, ConversationError> {
+        let tenant_id = self.identity.tenant_id.clone();
+        let identity = self.identity.clone();
+        let blocks = json!([{ "type": "text", "text": new.content }]);
+        let thread_for_insert = thread.clone();
+        self.commit(move |tx, batch| {
+            Box::pin(async move {
+                let next: i64 = sqlx::query_scalar(
+                    "SELECT COALESCE(MAX(seq), 0) + 1 FROM messages \
+                     WHERE tenant_id = $1 AND thread_id = $2",
+                )
+                .bind(&tenant_id)
+                .bind(&thread_for_insert.id)
+                .fetch_one(&mut **tx)
+                .await?;
+                let id =
+                    CanonicalId::generate(Prefix::Message, &mut UlidGenerator::new()).to_string();
+                sqlx::query(
+                    "INSERT INTO messages (id, tenant_id, workspace_id, thread_id, seq, \
+                     author_kind, author_id, run_id, turn_id, content_blocks, attachments) \
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+                )
+                .bind(&id)
+                .bind(&tenant_id)
+                .bind(&thread_for_insert.workspace_id)
+                .bind(&thread_for_insert.id)
+                .bind(next)
+                .bind(new.author_kind)
+                .bind(&new.author_id)
+                .bind(&new.run_id)
+                .bind(&new.turn_id)
+                .bind(&blocks)
+                .bind(json!(new.attachments))
+                .execute(&mut **tx)
+                .await?;
+                sqlx::query(
+                    "UPDATE threads SET last_activity_at = now(), updated_at = now() \
+                     WHERE tenant_id = $1 AND id = $2",
+                )
+                .bind(&tenant_id)
+                .bind(&thread_for_insert.id)
+                .execute(&mut **tx)
+                .await?;
+                let message = Message {
+                    id: id.clone(),
+                    thread_id: thread_for_insert.id.clone(),
+                    workspace_id: thread_for_insert.workspace_id.clone(),
+                    seq: next,
+                    author_kind: new.author_kind.to_string(),
+                    author_id: new.author_id,
+                    run_id: new.run_id,
+                    turn_id: new.turn_id,
+                    content_blocks: blocks.clone(),
+                    attachments: new.attachments,
+                };
+                emit_thread_event(
+                    &identity,
+                    batch,
+                    &thread_for_insert,
+                    "thread.message_posted",
+                    json!({
+                        "thread_id": message.thread_id,
+                        "message_id": message.id,
+                        "seq": message.seq,
+                        "workspace_id": message.workspace_id,
+                        "author_kind": message.author_kind,
+                        "run_id": message.run_id,
+                    }),
+                )?;
+                Ok(message)
+            })
+        })
+        .await
     }
 
     async fn commit<T, F>(&self, mutation: F) -> Result<T, ConversationError>

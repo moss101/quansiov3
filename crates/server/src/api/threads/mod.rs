@@ -8,8 +8,6 @@
 //! context projection's segments with their trust labels, the tool calls with their effect
 //! status, the questions asked and answered, and the attachments the trigger carried.
 
-use std::sync::Arc;
-
 use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use axum::Json;
@@ -28,7 +26,6 @@ use crate::artifacts::{
 use crate::control::conversation::ConversationStore;
 use crate::control::schema;
 use crate::runtime::state_machine::RuntimeIdentity;
-use crate::runtime::turn_loop::QuestionService;
 
 pub use crate::control::conversation::{Message, PostedMessage, Thread, ThreadSummary};
 
@@ -40,8 +37,13 @@ fn projection_error(error: impl std::fmt::Display) -> ApiError {
 }
 
 fn identity_for(scope: &TenantScope) -> Result<RuntimeIdentity, ApiError> {
-    let correlation = quansio_core::CorrelationId::generate(&mut quansio_core::UlidGenerator::new());
-    Ok(RuntimeIdentity::system(&scope.tenant_id, "api", correlation))
+    let correlation =
+        quansio_core::CorrelationId::generate(&mut quansio_core::UlidGenerator::new());
+    Ok(RuntimeIdentity::system(
+        &scope.tenant_id,
+        "api",
+        correlation,
+    ))
 }
 
 /// `?workspace_id=` on the list projections.
@@ -62,7 +64,13 @@ pub async fn list_threads(
     let threads = store
         .list_threads(&query.workspace_id)
         .await
-        .map_err(|error| ApiError::new(ApiErrorCode::ValidationBounds, error.to_string(), "projection"))?;
+        .map_err(|error| {
+            ApiError::new(
+                ApiErrorCode::ValidationBounds,
+                error.to_string(),
+                "projection",
+            )
+        })?;
     Ok(Json(json!({
         "threads": threads.iter().map(|thread| json!({
             "id": thread.id,
@@ -104,8 +112,11 @@ pub async fn questions(
         .map_err(projection_error)?;
     let rows = sqlx::query(
         "SELECT id, run_id, step_id, thread_id, kind, prompt, options, required, status, answer, expires_at, created_at, updated_at \
-         FROM questions WHERE tenant_id = $1 AND ($2::text IS NULL OR run_id = $2) AND ($3::text IS NULL OR thread_id = $3) \
-         ORDER BY created_at ASC",
+         FROM questions q WHERE q.tenant_id = $1 AND ($2::text IS NULL OR q.run_id = $2) \
+         AND ($3::text IS NULL OR q.thread_id = $3 OR EXISTS ( \
+             SELECT 1 FROM runs r JOIN messages m ON m.id = r.trigger_ref AND m.tenant_id = r.tenant_id \
+             WHERE r.tenant_id = q.tenant_id AND r.id = q.run_id AND m.thread_id = $3)) \
+         ORDER BY q.created_at ASC",
     )
     .bind(&scope.tenant_id)
     .bind(&query.run_id)
@@ -114,7 +125,9 @@ pub async fn questions(
     .await
     .map_err(projection_error)?;
     tx.commit().await.map_err(projection_error)?;
-    Ok(Json(json!({ "questions": rows.iter().map(question_json).collect::<Vec<_>>() })))
+    Ok(Json(
+        json!({ "questions": rows.iter().map(question_json).collect::<Vec<_>>() }),
+    ))
 }
 
 fn question_json(row: &sqlx::postgres::PgRow) -> Value {
@@ -142,8 +155,13 @@ pub async fn timeline(
     Path(run_id): Path<String>,
 ) -> Result<Json<Value>, ApiError> {
     let scope = TenantScope::resolve(&state, &headers).await?;
-    CanonicalId::parse_typed(&run_id, quansio_core::Prefix::Run)
-        .map_err(|error| ApiError::new(ApiErrorCode::ValidationBounds, error.to_string(), "projection"))?;
+    CanonicalId::parse_typed(&run_id, quansio_core::Prefix::Run).map_err(|error| {
+        ApiError::new(
+            ApiErrorCode::ValidationBounds,
+            error.to_string(),
+            "projection",
+        )
+    })?;
     let mut tx = state.pool().begin().await.map_err(projection_error)?;
     schema::set_tenant_context(&mut tx, &scope.tenant_id)
         .await
@@ -270,15 +288,18 @@ pub async fn timeline(
                     .fetch_all(&mut *tx)
                     .await
                     .map_err(projection_error)?;
-                    view["tool_calls"] = json!(calls.iter().map(|row| json!({
-                        "id": row.get::<String, _>("id"),
-                        "tool_name": row.get::<String, _>("tool_name"),
-                        "args_digest": row.get::<String, _>("args_digest"),
-                        "status": row.get::<String, _>("status"),
-                        "effect_id": row.get::<Option<String>, _>("effect_id"),
-                        "effect_class": row.get::<Option<String>, _>("effect_class"),
-                        "effect_status": row.get::<Option<String>, _>("effect_status"),
-                    })).collect::<Vec<_>>());
+                    view["tool_calls"] = json!(calls
+                        .iter()
+                        .map(|row| json!({
+                            "id": row.get::<String, _>("id"),
+                            "tool_name": row.get::<String, _>("tool_name"),
+                            "args_digest": row.get::<String, _>("args_digest"),
+                            "status": row.get::<String, _>("status"),
+                            "effect_id": row.get::<Option<String>, _>("effect_id"),
+                            "effect_class": row.get::<Option<String>, _>("effect_class"),
+                            "effect_status": row.get::<Option<String>, _>("effect_status"),
+                        }))
+                        .collect::<Vec<_>>());
                 }
                 "wait" => {
                     // A wait step whose ref is a question: the question itself, answered or not.
@@ -375,7 +396,8 @@ pub async fn timeline(
     })))
 }
 
-/// Body of `POST /v1/artifacts`: a bounded, base64-encoded upload from the composer.
+/// Params of the `CreateArtifact` command (DOMAIN.md §14, "upload init/complete" in one
+/// bounded step): a base64-encoded upload from the composer.
 #[derive(Debug, Deserialize)]
 pub struct UploadRequest {
     workspace_id: String,
@@ -400,35 +422,61 @@ fn kind_for(media_type: &str) -> ArtifactKind {
     }
 }
 
-/// `POST /v1/artifacts`: upload → Artifact (CORE-007) so a message can attach it.
-pub async fn upload_artifact(
-    State(state): State<ApiState>,
-    headers: HeaderMap,
-    Json(request): Json<UploadRequest>,
-) -> Result<Json<Value>, ApiError> {
-    let scope = TenantScope::resolve(&state, &headers).await?;
-    let Some(user_id) = scope.user_id.clone() else {
-        return Err(ApiError::new(ApiErrorCode::AuthRequired, "uploads need an acting user", "upload"));
+/// `CreateArtifact`: upload → Artifact + first version (CORE-007) so a message can attach it.
+///
+/// # Errors
+/// `AUTH_REQUIRED` without an acting user, `TARGET_UNAVAILABLE` when no object store is
+/// configured, `VALIDATION_*` for a bad title, encoding or size.
+pub async fn create_artifact(
+    state: &ApiState,
+    tenant_id: &str,
+    user_id: Option<&str>,
+    params: &Value,
+    correlation: &str,
+) -> Result<Value, ApiError> {
+    let request: UploadRequest = serde_json::from_value(params.clone()).map_err(|error| {
+        ApiError::new(
+            ApiErrorCode::ValidationSchema,
+            error.to_string(),
+            correlation,
+        )
+    })?;
+    let Some(user_id) = user_id.map(str::to_string) else {
+        return Err(ApiError::new(
+            ApiErrorCode::AuthRequired,
+            "uploads need an acting user",
+            correlation,
+        ));
     };
     let Some(objects) = state.objects().cloned() else {
         return Err(ApiError::new(
             ApiErrorCode::TargetUnavailable,
             "no object store is configured on this deployment; attachments are unavailable",
-            "upload",
+            correlation,
         ));
     };
     let title = request.title.trim();
     if title.is_empty() || title.len() > 200 {
-        return Err(ApiError::new(ApiErrorCode::ValidationBounds, "title must be 1..=200 characters", "upload"));
+        return Err(ApiError::new(
+            ApiErrorCode::ValidationBounds,
+            "title must be 1..=200 characters",
+            correlation,
+        ));
     }
     let bytes = STANDARD
         .decode(request.bytes_base64.trim())
-        .map_err(|error| ApiError::new(ApiErrorCode::ValidationSchema, format!("bytes_base64: {error}"), "upload"))?;
+        .map_err(|error| {
+            ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                format!("bytes_base64: {error}"),
+                correlation,
+            )
+        })?;
     if bytes.is_empty() || bytes.len() > MAX_UPLOAD_BYTES {
         return Err(ApiError::new(
             ApiErrorCode::ValidationBounds,
             format!("upload must be 1..={MAX_UPLOAD_BYTES} bytes"),
-            "upload",
+            correlation,
         ));
     }
     let mut conn = state.pool().acquire().await.map_err(projection_error)?;
@@ -436,7 +484,7 @@ pub async fn upload_artifact(
     let artifact = store
         .create(
             &mut conn,
-            &scope.tenant_id,
+            tenant_id,
             &user_id,
             &NewArtifact {
                 workspace_id: request.workspace_id.clone(),
@@ -447,16 +495,25 @@ pub async fn upload_artifact(
                     kind: OriginKind::Upload,
                     reference: request.thread_id.clone().unwrap_or_else(|| user_id.clone()),
                 },
-                grants: vec![ArtifactGrant { principal: user_id.clone(), level: GrantLevel::Write }],
+                grants: vec![ArtifactGrant {
+                    principal: user_id.clone(),
+                    level: GrantLevel::Write,
+                }],
                 retention: Retention::default(),
             },
         )
         .await
-        .map_err(|error| ApiError::new(ApiErrorCode::ValidationBounds, error.to_string(), "upload"))?;
+        .map_err(|error| {
+            ApiError::new(
+                ApiErrorCode::ValidationBounds,
+                error.to_string(),
+                correlation,
+            )
+        })?;
     let stored = store
         .add_version(
             &mut conn,
-            &scope.tenant_id,
+            tenant_id,
             &user_id,
             &artifact.id,
             &NewVersion {
@@ -467,8 +524,8 @@ pub async fn upload_artifact(
             },
         )
         .await
-        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), "upload"))?;
-    Ok(Json(json!({
+        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
+    Ok(json!({
         "artifact_id": artifact.id.to_canonical(),
         "version_id": stored.version.id.to_canonical(),
         "workspace_id": artifact.workspace_id,
@@ -478,7 +535,7 @@ pub async fn upload_artifact(
         "size_bytes": stored.version.size_bytes,
         "content_digest": stored.version.content_digest.to_string(),
         "replayed": stored.replayed,
-    })))
+    }))
 }
 
 /// `GET /v1/artifacts?workspace_id=`: the workspace's artifacts, newest first.
@@ -531,7 +588,8 @@ pub async fn artifact_versions(
         .await
         .map_err(projection_error)?;
     let rows = sqlx::query(
-        "SELECT id, seq, content_digest, size_bytes, media_type, produced_by, parent_version_id, created_at \
+        "SELECT id, seq, content_digest, size_bytes, media_type, produced_by_run_id, produced_by_step_id, \
+                produced_by_user_id, parent_version_id, created_at \
          FROM artifact_versions WHERE tenant_id = $1 AND artifact_id = $2 ORDER BY seq",
     )
     .bind(&scope.tenant_id)
@@ -546,17 +604,12 @@ pub async fn artifact_versions(
         "content_digest": row.get::<String, _>("content_digest"),
         "size_bytes": row.get::<i64, _>("size_bytes"),
         "media_type": row.get::<String, _>("media_type"),
-        "produced_by": row.get::<Value, _>("produced_by"),
+        "produced_by": {
+            "run_id": row.get::<Option<String>, _>("produced_by_run_id"),
+            "step_id": row.get::<Option<String>, _>("produced_by_step_id"),
+            "user_id": row.get::<Option<String>, _>("produced_by_user_id"),
+        },
         "parent_version_id": row.get::<Option<String>, _>("parent_version_id"),
         "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
     })).collect::<Vec<_>>() })))
 }
-
-/// The question service bound to the caller's tenant (for `AnswerQuestion`).
-pub fn question_service(state: &ApiState, identity: &RuntimeIdentity) -> Result<QuestionService, ApiError> {
-    QuestionService::new(state.pool().clone(), identity.clone())
-        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), "questions"))
-}
-
-/// Shared object-store handle type.
-pub type SharedObjects = Arc<dyn crate::artifacts::ObjectStore>;

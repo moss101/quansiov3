@@ -510,6 +510,39 @@ impl QuestionService {
         Ok(expired_ids)
     }
 
+    /// Withdraw every open question of a run that is no longer waiting for one (APP-004
+    /// `CancelTurn`): the questions become `cancelled` and `question.cancelled` is emitted.
+    ///
+    /// The run's own transition is the caller's; this never touches `runs`.
+    ///
+    /// # Errors
+    /// Returns a database error when a read or update fails.
+    pub async fn cancel_for_run(&self, run_id: &str) -> Result<Vec<String>, RuntimeError> {
+        let mut tx = self.tenant_transaction().await?;
+        let cancelled: Vec<(String, String)> = sqlx::query_as(
+            "UPDATE questions SET status = 'cancelled', updated_at = now() \
+             WHERE tenant_id = $1 AND run_id = $2 AND status = 'open' RETURNING id, workspace_id",
+        )
+        .bind(&self.identity.tenant_id)
+        .bind(run_id)
+        .fetch_all(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        let mut ids = Vec::with_capacity(cancelled.len());
+        for (question_id, workspace_id) in cancelled {
+            self.emit(
+                &question_id,
+                &workspace_id,
+                3,
+                "question.cancelled",
+                json!({ "question_id": question_id, "run_id": run_id }),
+            )
+            .await?;
+            ids.push(question_id);
+        }
+        Ok(ids)
+    }
+
     /// The effective `question_default_ttl` for a workspace, when a policy sets one.
     ///
     /// # Errors
