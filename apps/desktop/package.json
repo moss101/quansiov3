@@ -18,13 +18,11 @@
     "start": "electron dist/app/main.cjs"
   },
   "devDependencies": {
-    "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/ws": "^8.18.1",
     "electron": "^44.4.3",
-    "esbuild": "^0.28.2",
-    "pg": "^8.23.0"
+    "esbuild": "^0.28.2"
   },
   "dependencies": {
     "react": "^19.3.0",
