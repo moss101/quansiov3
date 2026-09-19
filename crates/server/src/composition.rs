@@ -28,6 +28,8 @@ pub struct ServerConfig {
     pub max_connections: u32,
     /// Where attachments are written (CORE-007's object store), when the deployment has one.
     pub object_store: Option<S3Config>,
+    /// Root directory of INT-004's derived search index (`/v1/search` content channel), when set.
+    pub search_index_root: Option<String>,
 }
 
 impl ServerConfig {
@@ -58,11 +60,15 @@ impl ServerConfig {
         } else {
             None
         };
+        let search_index_root = env::var("QUANSIO_SEARCH_INDEX_ROOT")
+            .ok()
+            .filter(|value| !value.is_empty());
         Ok(Self {
             database_url,
             bind,
             max_connections,
             object_store,
+            search_index_root,
         })
     }
 }
@@ -114,6 +120,14 @@ impl Composition {
                 S3ObjectStore::new(store).map_err(|error| format!("object store: {error}"))?,
             );
             api = api.with_object_store(objects);
+        }
+        if let Some(root) = config.search_index_root.as_deref() {
+            // Derived files only: the index is rebuilt from the canonical tables and the
+            // object store whenever the corpus changed, so losing this directory loses nothing.
+            let index = quansio_indexer::SearchIndex::open(root)
+                .map_err(|error| format!("search index at {root}: {error}"))?;
+            eprintln!("quansio-server: QUANSIO_SEARCH_INDEX_ROOT={root}: /v1/search indexes artifact content");
+            api = api.with_search_index(Arc::new(index));
         }
         Ok(Self { config, pool, api })
     }

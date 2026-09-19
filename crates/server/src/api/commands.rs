@@ -113,7 +113,7 @@ pub async fn invoke(
         }
         "CancelTurn" => cancel_turn(&state, &identity, &request.params, &correlation).await?,
         "CreateArtifact" => {
-            super::threads::create_artifact(
+            super::artifacts::create_artifact(
                 &state,
                 &scope.tenant_id,
                 user_id.as_deref(),
