@@ -145,7 +145,5 @@
       "sha256": "03f72bd32e866b08b6d7a3950adbf99ee531d274b4244e928498e09433ff4b8c",
       "bytes": 18776
     }
-  ],
-  "real_boundary_evidence": [],
-  "notes": "Task branch task/APP-004-conversation-surface; the merge commit is recorded in registries/progress.json. Tests ran against the canonical dev stack (Postgres 55440, MinIO 59010) with scratch databases created by quansio-dev-seed."
+  ]
 }

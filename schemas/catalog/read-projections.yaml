@@ -11,6 +11,7 @@ read_projections:
 - /v1/questions
 - /v1/artifacts
 - /v1/artifacts/{id}/versions
+- /v1/artifacts/{id}/versions/{vid}/content
 - /v1/evidence/{id}
 - /v1/targets
 - /v1/browser-sessions/{id}

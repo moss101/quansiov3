@@ -527,7 +527,7 @@ Commands are `POST /v1/commands/<Name>` (one endpoint per command; OpenAPI-gener
 | Connectors | `BeginConnectorAuth`, `CompleteConnectorAuth`, `RevokeConnector`, `CreateWebhookSubscription`, `DeleteWebhookSubscription` |
 | Notifications | `UpdateNotificationPreferences`, `MarkNotificationRead` |
 | Admin/ops | `SetPolicy`, `FreezeEffects`, `UnfreezeEffects`, `DisableProvider`, `EnableProvider`, `QuarantineWorker`, `DrainTarget`, `ExportTenantData`, `DeleteUserData` |
-| Read projections | `GET /v1/threads/{id}`, `/messages`, `/workgraph`, `/runs/{id}`, `/runs/{id}/timeline`, `/effects`, `/approvals`, `/questions`, `/artifacts`, `/artifacts/{id}/versions`, `/evidence/{id}`, `/targets`, `/browser-sessions/{id}`, `/knowledge`, `/memory`, `/skills`, `/packs`, `/routines`, `/connectors`, `/notifications`, `/usage`, `/audit`, `/search?q=` (typed SearchProgram), `GET /v1/stream` (WS) |
+| Read projections | `GET /v1/threads/{id}`, `/messages`, `/workgraph`, `/runs/{id}`, `/runs/{id}/timeline`, `/effects`, `/approvals`, `/questions`, `/artifacts`, `/artifacts/{id}/versions`, `/artifacts/{id}/versions/{vid}/content`, `/evidence/{id}`, `/targets`, `/browser-sessions/{id}`, `/knowledge`, `/memory`, `/skills`, `/packs`, `/routines`, `/connectors`, `/notifications`, `/usage`, `/audit`, `/search?q=` (typed SearchProgram), `GET /v1/stream` (WS) |
 
 Agent-originated intents (`work.delegate`, `work.propose_plan`, `user.ask`, `memory.propose`) are Tools (§7.5), not public commands.
 

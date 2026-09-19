@@ -17,7 +17,8 @@ import { onboardingPlan } from "../../apps/desktop/src/onboarding/flow.js";
 import { answerParams, postParams } from "../../apps/desktop/src/conversation/composer.js";
 import { conversationReducer, decodeQuestions, initialConversation, openQuestions } from "../../apps/desktop/src/conversation/state.js";
 import { approve, digestPayload, preview } from "../../apps/desktop/src/trust/approvals.js";
-import { addVersion, previewIsSafe } from "../../apps/desktop/src/artifacts/workspace.js";
+import { decodeHistory, diffLines } from "../../apps/desktop/src/artifacts/workspace.js";
+import { openAllowed, previewIsSafe, previewPlan } from "../../apps/desktop/src/artifacts/preview.js";
 import { agentInputAllowed, handback, takeover } from "../../apps/desktop/src/live/session.js";
 import { archiveInRoster, visibleRoster } from "../../apps/desktop/src/teammates/roster.js";
 import { receivesProtected } from "../../apps/desktop/src/collaboration/participants.js";
@@ -79,20 +80,21 @@ describe("critical journeys", () => {
       code: "APPROVAL_SUPERSEDED",
     });
 
-    // 5. Artifact review: the produced document is versioned and safe to preview.
-    const artifact = addVersion(
-      {
-        id: "art_journey",
-        title: "notes",
-        kind: "document",
-        runId: "run_journey",
-        versions: [{ id: "artv_1", seq: 1, contentDigest: digestPayload("v1"), mediaType: "text/markdown" }],
-        sourceEvidenceIds: ["evd_1"],
-      },
-      { id: "artv_2", seq: 2, contentDigest: digestPayload("v2"), mediaType: "text/html" },
-    );
-    expect(artifact.versions).toHaveLength(2);
+    // 5. Artifact review: the produced document is versioned (the server's history
+    //    projection), diffable, and safe to preview — active content is text, never opened.
+    const history = decodeHistory({
+      artifact: { id: "art_journey", title: "notes", kind: "document", origin: { kind: "tool", ref: "tc_1" }, current_version_id: "artv_2" },
+      versions: [
+        { id: "artv_1", seq: 1, content_digest: digestPayload("v1"), size_bytes: 2, media_type: "text/markdown", produced_by: { run_id: "run_journey" }, evidence_ids: ["evd_1"] },
+        { id: "artv_2", seq: 2, content_digest: digestPayload("v2"), size_bytes: 2, media_type: "text/html", produced_by: { run_id: "run_journey" }, evidence_ids: [], parent_version_id: "artv_1" },
+      ],
+    });
+    expect(history.versions).toHaveLength(2);
+    expect(history.versions[0]?.evidenceIds).toEqual(["evd_1"]);
+    expect(diffLines("v1", "v2")?.map((line) => line.kind)).toEqual(["removed", "added"]);
     expect(previewIsSafe("text/html")).toBe(true);
+    expect(previewPlan("text/html", 2).mode).toBe("text");
+    expect(openAllowed("text/html")).toBe(false);
 
     // 6. Live takeover then handback: takeover gives the user control and pauses
     //    the agent; handback returns control and unpauses.

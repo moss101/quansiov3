@@ -22,8 +22,8 @@ export {
 } from "./main/security.js";
 export { createDesktopShell } from "./main/shell.js";
 export type { DesktopShell, ShellConfig } from "./main/shell.js";
-export { DesktopBridge, registerBridgeHandlers } from "./main/ipc.js";
-export type { ActiveRunProjection, DesktopBridgeOptions, IpcMainLike, PushSender } from "./main/ipc.js";
+export { DesktopBridge, MAX_FILE_BYTES, MAX_PREVIEW_FETCH_BYTES, registerBridgeHandlers, suggestedFilename } from "./main/ipc.js";
+export type { ActiveRunProjection, DesktopBridgeOptions, DesktopFiles, IpcMainLike, PushSender } from "./main/ipc.js";
 export { SessionFile, parseSession, serializeSession } from "./main/session-file.js";
 export type { ActiveRunSession, DesktopSession } from "./main/session-file.js";
 export { DEEP_LINK_SCHEME, deepLinkFromArgv, parseDeepLink } from "./main/deeplinks.js";
@@ -87,3 +87,47 @@ export type {
 } from "./conversation/state.js";
 export { decodeTimeline } from "./conversation/inspector.js";
 export type { InspectedQuestion, InspectedSource, InspectedTool, InspectedTurn, RunInspection } from "./conversation/inspector.js";
+export {
+  ARTIFACT_KINDS,
+  MAX_DIFF_LINES,
+  artifactWorkspaceReducer,
+  comparedVersion,
+  decodeArtifacts,
+  decodeEvidence,
+  decodeHistory,
+  diffApplicable,
+  diffLines,
+  initialArtifactWorkspace,
+  selectedVersion,
+} from "./artifacts/workspace.js";
+export type {
+  ArtifactHistory,
+  ArtifactKind,
+  ArtifactRow,
+  ArtifactVersion,
+  ArtifactWorkspaceAction,
+  ArtifactWorkspaceState,
+  DiffLine,
+  EvidenceLink,
+  LoadedPreview,
+  ProducedBy,
+  WorkspaceFilter,
+} from "./artifacts/workspace.js";
+export {
+  MAX_IMAGE_PREVIEW_BYTES,
+  MAX_TEXT_PREVIEW_BYTES,
+  MAX_TEXT_PREVIEW_CHARS,
+  imageDataUrl,
+  isActiveContent,
+  isExecutable,
+  isTextLike,
+  mediaKind,
+  openAllowed,
+  previewExecutesWithHostPrivileges,
+  previewIsSafe,
+  previewPlan,
+  textPreview,
+} from "./artifacts/preview.js";
+export type { PreviewMode, PreviewPlan } from "./artifacts/preview.js";
+export { MAX_QUERY_CHARS as MAX_SEARCH_QUERY_CHARS, MAX_RESULTS as MAX_SEARCH_RESULTS, SEARCH_CHANNELS, decodeSearch, searchQueryString, searchRequest } from "./artifacts/search.js";
+export type { SearchChannel, SearchHit, SearchRequest, SearchResults } from "./artifacts/search.js";

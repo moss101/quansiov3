@@ -44,7 +44,10 @@ pub async fn fresh_database(name: &str) -> Option<PgPool> {
         .connect(&url)
         .await
         .expect("connect to the scratch database");
-    quansio_server::control::schema::migrate(&pool)
+    // The canonical schema, applied by the same embedded runner the server uses; the
+    // indexer test must not depend on the server crate (the server depends on the indexer).
+    sqlx::migrate!("../../migrations")
+        .run(&pool)
         .await
         .expect("apply migrations");
     Some(pool)

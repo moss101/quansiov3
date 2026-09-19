@@ -14,6 +14,8 @@ import { StreamClient, type EventFrame, type LiveFrame, type SocketFactory, type
 import { PRELOAD_ALLOWLIST, PRELOAD_PUSH_CHANNELS, type BridgeCommand, type PreloadChannel, type PushChannel } from "../preload/bridge.js";
 import { newCommandId } from "../client/ids.js";
 import { ANSWER_COMMAND, CANCEL_COMMAND, MAX_UPLOAD_BYTES, POST_COMMAND, UPLOAD_COMMAND, answerParams, cancelParams } from "../conversation/composer.js";
+import { MAX_IMAGE_PREVIEW_BYTES, MAX_TEXT_PREVIEW_BYTES, isActiveContent, isExecutable, mediaKind, openAllowed, previewPlan } from "../artifacts/preview.js";
+import { searchQueryString, searchRequest } from "../artifacts/search.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { SessionFile, type ActiveRunSession, type DesktopSession } from "./session-file.js";
 import { SessionManager, type SessionState } from "./session-manager.js";
@@ -57,7 +59,25 @@ export interface DesktopBridgeOptions {
   readonly openExternal?: (url: string) => Promise<void>;
   /** Injectable for tests; defaults to the global `fetch`. */
   readonly fetch?: FetchLike;
+  /**
+   * File operations main performs for the artifact workspace (APP-008). `saveAs` asks the
+   * user where to put a file (Electron's save dialog) and writes it there; `openWithOs`
+   * writes a file under the app's own directory and hands it to the OS (`shell.openPath`).
+   * Absent both, save and open are refused; the preview never needs them.
+   */
+  readonly files?: DesktopFiles;
 }
+
+/** The slice of the host's file/shell surface the bridge uses; main supplies the real one. */
+export interface DesktopFiles {
+  readonly saveAs: (suggestedName: string, bytes: Uint8Array) => Promise<string | null>;
+  readonly openWithOs: (suggestedName: string, bytes: Uint8Array, mediaType: string) => Promise<string>;
+}
+
+/** Largest artifact main fetches for the renderer's preview. */
+export const MAX_PREVIEW_FETCH_BYTES = Math.max(MAX_TEXT_PREVIEW_BYTES, MAX_IMAGE_PREVIEW_BYTES);
+/** Largest artifact main saves or opens on the user's behalf. */
+export const MAX_FILE_BYTES = 256 * 1024 * 1024;
 
 export class DesktopBridge {
   readonly server: ServerClient;
@@ -166,8 +186,98 @@ export class DesktopBridge {
       "questions.answer": (payload) => Promise.resolve(payload).then((raw) => this.answerQuestion(raw)),
       "turns.cancel": (payload) => Promise.resolve(payload).then((raw) => this.cancelTurn(raw)),
       "artifacts.upload": (payload) => Promise.resolve(payload).then((raw) => this.uploadAttachment(raw)),
+      "artifacts.list": (payload) => Promise.resolve(payload).then((raw) => this.server.artifacts(this.#requireWorkspace(), asArtifactFilter(raw))),
+      "artifacts.versions": (payload) => Promise.resolve(payload).then((raw) => this.server.artifactVersions(asArtifactId(raw, "artifacts.versions"))),
+      "artifacts.content": (payload) => Promise.resolve(payload).then((raw) => this.artifactContent(raw)),
+      "artifacts.save": (payload) => Promise.resolve(payload).then((raw) => this.saveArtifact(raw)),
+      "artifacts.open": (payload) => Promise.resolve(payload).then((raw) => this.openArtifact(raw)),
+      "evidence.get": (payload) => Promise.resolve(payload).then((raw) => this.server.evidence(asEvidenceId(raw))),
+      "search.query": (payload) => Promise.resolve(payload).then((raw) => this.search(raw)),
     };
   }
+
+  // ---- the artifact workspace (APP-008) ----
+
+  /**
+   * Bytes for the renderer's in-process preview, with the preview plan main computed from
+   * the media type the server labelled them with. Active content is delivered with a
+   * `text` plan and a `text/plain` label; the renderer has no path that renders it.
+   */
+  async artifactContent(raw: unknown): Promise<{ bytesBase64: string; mediaType: string; sizeBytes: number; plan: ReturnType<typeof previewPlan> }> {
+    const { artifactId, versionId } = asVersionRef(raw, "artifacts.content");
+    const fetched = await this.server.artifactContent(artifactId, versionId);
+    const plan = previewPlan(fetched.mediaType, fetched.bytes.byteLength);
+    if (plan.mode === "download-only" || fetched.bytes.byteLength > MAX_PREVIEW_FETCH_BYTES) {
+      return { bytesBase64: "", mediaType: fetched.mediaType, sizeBytes: fetched.bytes.byteLength, plan: { mode: "download-only", reason: plan.mode === "download-only" ? plan.reason : "too large to preview" } };
+    }
+    return { bytesBase64: Buffer.from(fetched.bytes).toString("base64"), mediaType: fetched.mediaType, sizeBytes: fetched.bytes.byteLength, plan };
+  }
+
+  /** Save a version where the user chooses; null when they cancelled. */
+  async saveArtifact(raw: unknown): Promise<{ path: string | null; sizeBytes: number }> {
+    const files = this.#requireFiles();
+    const { artifactId, versionId } = asVersionRef(raw, "artifacts.save");
+    const { bytes, title } = await this.#fetchForFile(artifactId, versionId);
+    const path = await files.saveAs(suggestedFilename(title, versionId), bytes);
+    return { path, sizeBytes: bytes.byteLength };
+  }
+
+  /**
+   * Open a version with the OS handler. Refused for pages, scripts, programs and unlabelled
+   * bytes: those are shown as text or saved, never handed to something that would run them.
+   */
+  async openArtifact(raw: unknown): Promise<{ path: string; mediaType: string }> {
+    const files = this.#requireFiles();
+    const { artifactId, versionId } = asVersionRef(raw, "artifacts.open");
+    const { bytes, title, mediaType } = await this.#fetchForFile(artifactId, versionId);
+    if (!openAllowed(mediaType) || isActiveContent(mediaType) || isExecutable(mediaType)) {
+      throw new Error(`${mediaKind(mediaType) || "unlabelled content"} is not opened with the OS; preview it as text or save it`);
+    }
+    const path = await files.openWithOs(suggestedFilename(title, versionId), bytes, mediaType);
+    return { path, mediaType };
+  }
+
+  /** Global search through the typed endpoint. */
+  async search(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "search.query");
+    const q = record["q"];
+    if (typeof q !== "string") {
+      throw new Error("search.query needs q");
+    }
+    const channels = record["channels"];
+    const maxResults = record["maxResults"];
+    const request = searchRequest(
+      q,
+      Array.isArray(channels) ? channels.filter((item): item is string => typeof item === "string") : undefined,
+      typeof maxResults === "number" ? maxResults : undefined,
+    );
+    return this.server.search(searchQueryString(this.#requireWorkspace(), request));
+  }
+
+  async #fetchForFile(artifactId: string, versionId: string): Promise<{ bytes: Uint8Array; title: string; mediaType: string }> {
+    const history = (await this.server.artifactVersions(artifactId)) as { artifact?: { title?: unknown }; versions?: { id?: unknown; media_type?: unknown; size_bytes?: unknown }[] };
+    const version = history.versions?.find((candidate) => candidate.id === versionId);
+    if (!version) {
+      throw new Error(`${versionId} is not a version of ${artifactId}`);
+    }
+    if (typeof version.size_bytes === "number" && version.size_bytes > MAX_FILE_BYTES) {
+      throw new Error(`the version exceeds ${String(MAX_FILE_BYTES)} bytes`);
+    }
+    const fetched = await this.server.artifactContent(artifactId, versionId);
+    const title = typeof history.artifact?.title === "string" ? history.artifact.title : artifactId;
+    // The recorded media type, not the served label: the server relabels active content as
+    // text for transport, and the open decision must see what the bytes really are.
+    const mediaType = typeof version.media_type === "string" ? version.media_type : fetched.mediaType;
+    return { bytes: fetched.bytes, title, mediaType };
+  }
+
+  #requireFiles(): DesktopFiles {
+    if (!this.#options.files) {
+      throw new Error("file operations are not available in this session");
+    }
+    return this.#options.files;
+  }
+
 
   // ---- the conversation surface (APP-004) ----
 
@@ -233,6 +343,10 @@ export class DesktopBridge {
     const threadId = record["threadId"];
     if (typeof threadId === "string" && threadId.startsWith("thr_")) {
       params["thread_id"] = threadId;
+    }
+    const artifactId = record["artifactId"];
+    if (typeof artifactId === "string" && artifactId.startsWith("art_")) {
+      params["artifact_id"] = artifactId;
     }
     return (await this.server.invoke(UPLOAD_COMMAND, newCommandId(), params)).result;
   }
@@ -606,6 +720,54 @@ function asPost(payload: unknown): { threadId: string | null; content: string; a
     }
   }
   return { threadId: typeof threadId === "string" ? threadId : null, content, attachments };
+}
+
+function asArtifactFilter(payload: unknown): { kind?: string | null; runId?: string | null } {
+  const record = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+  const filter: { kind?: string | null; runId?: string | null } = {};
+  if (typeof record["kind"] === "string" && /^[a-z]{1,20}$/.test(record["kind"])) {
+    filter.kind = record["kind"];
+  }
+  if (typeof record["runId"] === "string" && record["runId"].startsWith("run_")) {
+    filter.runId = record["runId"];
+  }
+  return filter;
+}
+
+function asArtifactId(payload: unknown, what: string): string {
+  const artifactId = asRecord(payload, what)["artifactId"];
+  if (typeof artifactId !== "string" || !artifactId.startsWith("art_")) {
+    throw new Error(`${what} needs an art_ id`);
+  }
+  return artifactId;
+}
+
+function asVersionRef(payload: unknown, what: string): { artifactId: string; versionId: string } {
+  const artifactId = asArtifactId(payload, what);
+  const versionId = asRecord(payload, what)["versionId"];
+  if (typeof versionId !== "string" || !versionId.startsWith("artv_")) {
+    throw new Error(`${what} needs an artv_ id`);
+  }
+  return { artifactId, versionId };
+}
+
+function asEvidenceId(payload: unknown): string {
+  const evidenceId = asRecord(payload, "evidence.get")["evidenceId"];
+  if (typeof evidenceId !== "string" || !evidenceId.startsWith("evd_")) {
+    throw new Error("evidence.get needs an evd_ id");
+  }
+  return evidenceId;
+}
+
+/** A filename the OS accepts, from the artifact's title and the version's identity. */
+export function suggestedFilename(title: string, versionId: string): string {
+  // No separators, no leading dots (hidden files, `..`), a bounded length, and only a
+  // short alphanumeric suffix counts as the extension.
+  const cleaned = title.replace(/[^A-Za-z0-9._ -]/g, "_").replace(/^[. ]+/, "").trim().slice(0, 120) || "artifact";
+  const match = /^(.*?)(\.[A-Za-z0-9]{1,8})?$/.exec(cleaned);
+  const stem = (match?.[1] ?? cleaned) || "artifact";
+  const extension = match?.[2] ?? "";
+  return `${stem}-${versionId.slice(-8)}${extension}`;
 }
 
 function asUrl(payload: unknown): string {

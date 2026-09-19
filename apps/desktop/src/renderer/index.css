@@ -32,3 +32,22 @@ nav { grid-row: 2 / -1; } nav ul { list-style: none; padding: 0; margin: 0; } na
 .inspector { font-size: 13px; overflow: auto; } .inspector dt { font-weight: 600; margin-top: 6px; } .inspector dd { margin: 0; }
 .inspector .turn { margin-top: 12px; } .inspector h3 { font-size: 13px; margin: 0; }
 .stream { grid-column: 1 / -1; } .stream ol { max-height: 20vh; }
+
+nav li.selected button { font-weight: 600; } nav button { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; }
+.artifacts { display: grid; grid-template-columns: 300px 1fr; gap: 12px; min-height: 0; }
+.artifacts .search { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.artifacts .channels { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; }
+.artifacts .results ul, .artifact-list, .artifacts .evidence ul { list-style: none; padding: 0; margin: 4px 0; }
+.artifacts .hit { padding: 4px 0; border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent); }
+.artifacts .hit .channel { font-size: 11px; text-transform: uppercase; opacity: 0.6; margin-right: 6px; }
+.artifacts .hit .snippet { margin: 2px 0; font-size: 12px; } .artifacts .provenance { font-family: ui-monospace, monospace; font-size: 11px; opacity: 0.6; }
+.artifact-list li.selected button { font-weight: 600; } .artifact-list button, .artifacts .link, .artifacts .hit button { background: none; border: 0; padding: 2px 0; cursor: pointer; text-align: left; font: inherit; }
+.artifacts .link { color: royalblue; margin-left: 8px; font-size: 12px; }
+.artifacts .kind { font-size: 11px; text-transform: uppercase; opacity: 0.6; margin-right: 6px; }
+.artifacts .detail header { display: flex; gap: 12px; align-items: baseline; }
+.artifacts .versions ol { padding-left: 18px; } .artifacts .versions li.selected > button { font-weight: 600; }
+.artifacts .actions { display: flex; gap: 8px; align-items: center; margin: 8px 0; } .artifacts .digest { font-size: 11px; opacity: 0.6; }
+.artifacts .preview { border: 1px solid color-mix(in srgb, currentColor 20%, transparent); border-radius: 8px; padding: 8px; max-height: 60vh; overflow: auto; }
+.artifacts .preview pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; }
+.artifacts .preview img { max-width: 100%; }
+.artifacts .line-added { color: green; } .artifacts .line-removed { color: crimson; }

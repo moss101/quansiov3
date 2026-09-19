@@ -21,8 +21,7 @@ tantivy = "0.26"
 thiserror = "2"
 
 [dev-dependencies]
-quansio-server = { path = "../server" }
 async-trait = "0.1"
-sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "json", "chrono"] }
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "json", "chrono", "migrate", "macros"] }
 tempfile = "3"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

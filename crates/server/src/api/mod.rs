@@ -15,6 +15,7 @@
 //!   deployment cannot serve a catalog its own binary was not built from;
 //! * `/v1/read-projections` reports the §10 read projections the same way.
 
+pub mod artifacts;
 pub mod auth;
 pub mod commands;
 pub mod error;
@@ -23,6 +24,7 @@ pub mod limits;
 pub mod live;
 pub mod projections;
 pub mod seams;
+pub mod search;
 pub mod stream;
 pub mod threads;
 pub mod webhooks;
@@ -305,6 +307,7 @@ pub struct ApiState {
     scope_trust: ScopeTrust,
     live: Arc<live::LiveHub>,
     objects: Option<Arc<dyn ObjectStore>>,
+    search: Option<Arc<search::SearchService>>,
 }
 
 impl ApiState {
@@ -343,6 +346,7 @@ impl ApiState {
             scope_trust: ScopeTrust::TrustedHeaders,
             live: live::LiveHub::new(),
             objects: None,
+            search: None,
         })
     }
 
@@ -364,6 +368,25 @@ impl ApiState {
     #[must_use]
     pub fn objects(&self) -> Option<&Arc<dyn ObjectStore>> {
         self.objects.as_ref()
+    }
+
+    /// Install INT-004's derived search index (`/v1/search` artifacts channel over content).
+    #[must_use]
+    pub fn with_search_index(mut self, index: Arc<quansio_indexer::SearchIndex>) -> Self {
+        self.search = Some(Arc::new(search::SearchService::new(index)));
+        self
+    }
+
+    /// The search index, when one is configured.
+    #[must_use]
+    pub fn search_index(&self) -> Option<&Arc<quansio_indexer::SearchIndex>> {
+        self.search.as_ref().map(|service| service.index())
+    }
+
+    /// The search service, when an index is configured.
+    #[must_use]
+    pub fn search(&self) -> Option<&Arc<search::SearchService>> {
+        self.search.as_ref()
     }
 
     /// Choose how requests establish their scope.
@@ -500,11 +523,17 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/runs/:id", get(projections::run))
         .route("/v1/runs/:id/timeline", get(threads::timeline))
         .route("/v1/questions", get(threads::questions))
-        .route("/v1/artifacts", get(threads::list_artifacts))
+        .route("/v1/artifacts", get(artifacts::list_artifacts))
         .route(
             "/v1/artifacts/:id/versions",
-            get(threads::artifact_versions),
+            get(artifacts::artifact_versions),
         )
+        .route(
+            "/v1/artifacts/:id/versions/:vid/content",
+            get(artifacts::artifact_content),
+        )
+        .route("/v1/evidence/:id", get(artifacts::evidence))
+        .route("/v1/search", get(search::search))
         .route("/v1/effects", get(projections::effects))
         .with_state(state)
 }

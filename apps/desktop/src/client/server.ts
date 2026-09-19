@@ -93,6 +93,12 @@ export interface PostMessageResult {
   readonly run_id: string;
 }
 
+/** Bytes of an artifact version as the server served them (with the label it gave them). */
+export interface ArtifactBytes {
+  readonly bytes: Uint8Array;
+  readonly mediaType: string;
+}
+
 export interface RunProjection {
   readonly id: string;
   readonly state?: string;
@@ -252,8 +258,55 @@ export class ServerClient {
     return this.#request("GET", `${this.origin}/v1/questions?${query}`);
   }
 
-  artifacts(workspaceId: string): Promise<unknown> {
-    return this.#request("GET", `${this.origin}/v1/artifacts?workspace_id=${encodeURIComponent(workspaceId)}`);
+  artifacts(workspaceId: string, filter: { readonly kind?: string | null; readonly runId?: string | null } = {}): Promise<unknown> {
+    const params = new URLSearchParams({ workspace_id: workspaceId });
+    if (filter.kind) {
+      params.set("kind", filter.kind);
+    }
+    if (filter.runId) {
+      params.set("run_id", filter.runId);
+    }
+    return this.#request("GET", `${this.origin}/v1/artifacts?${params.toString()}`);
+  }
+
+  // ---- the artifact workspace (APP-008) ----
+
+  artifactVersions(artifactId: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/artifacts/${encodeURIComponent(artifactId)}/versions`);
+  }
+
+  /** A version's bytes, digest-verified by the server; never interpreted here. */
+  artifactContent(artifactId: string, versionId: string): Promise<ArtifactBytes> {
+    return this.#requestBytes(`${this.origin}/v1/artifacts/${encodeURIComponent(artifactId)}/versions/${encodeURIComponent(versionId)}/content`);
+  }
+
+  evidence(evidenceId: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/evidence/${encodeURIComponent(evidenceId)}`);
+  }
+
+  /** `GET /v1/search?…` with a query string the typed builder produced. */
+  search(queryString: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/search?${queryString}`);
+  }
+
+  async #requestBytes(url: string): Promise<ArtifactBytes> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort();
+    }, this.#timeoutMs);
+    try {
+      const response = await this.#fetch(url, { method: "GET", headers: credentialHeaders(this.#credential), signal: controller.signal });
+      if (!response.ok) {
+        const text = await response.text();
+        const decoded: unknown = text ? JSON.parse(text) : null;
+        throw new ApiError(response.status, asErrorBody(decoded, response.status));
+      }
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const mediaType = response.headers.get("content-type") ?? "application/octet-stream";
+      return { bytes, mediaType };
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   async #request<T>(method: "GET" | "POST", url: string, body?: string, authenticated = true): Promise<T> {

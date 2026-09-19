@@ -69,6 +69,13 @@ describe("preload bridge", () => {
         "answerQuestion",
         "cancelTurn",
         "uploadAttachment",
+        "listArtifacts",
+        "artifactVersions",
+        "artifactContent",
+        "saveArtifact",
+        "openArtifact",
+        "getEvidence",
+        "search",
         "onStreamFrame",
         "onStreamState",
         "onStreamError",
@@ -115,6 +122,13 @@ describe("preload bridge", () => {
     await api.answerQuestion("q_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", "alpha");
     await api.cancelTurn("run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.uploadAttachment({ name: "a.bin", mediaType: "application/octet-stream", bytesBase64: "AAEC" });
+    await api.listArtifacts({ kind: "document" });
+    await api.artifactVersions("art_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.artifactContent("art_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", "artv_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.saveArtifact("art_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", "artv_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.openArtifact("art_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", "artv_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.getEvidence("evd_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.search({ q: "quokka", channels: ["artifacts"] });
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

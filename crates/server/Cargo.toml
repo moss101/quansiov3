@@ -20,6 +20,7 @@ hmac = "0.12"
 quansio-capability = { path = "../capability" }
 quansio-core = { path = "../core" }
 quansio-events = { path = "../events" }
+quansio-indexer = { path = "../indexer" }
 quansio-tools = { path = "../tools" }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "http2", "json"] }
 ring = "0.17"
@@ -39,3 +40,4 @@ tower = { version = "0.5", features = ["util"] }
 tokio-tungstenite = "0.24"
 quansio-core = { path = "../core" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+tempfile = "3"

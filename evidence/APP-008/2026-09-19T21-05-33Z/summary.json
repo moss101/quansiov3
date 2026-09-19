@@ -1,0 +1,139 @@
+{
+  "task_id": "APP-008",
+  "git_commit": "76ccc6ba804681b56b8cea03367c15df8d38d5de",
+  "recorded_at": "2026-09-19T21:05:33Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> QUANSIO_TEST_MINIO_ENDPOINT=http://127.0.0.1:59010 cargo test -p quansio-server --test artifact_workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-008/2026-09-19T21-05-33Z/cargo-artifact-workspace.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/artifacts.test.ts tests/artifacts.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed + dev MinIO + temp search index)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-008/2026-09-19T21-05-33Z/vitest-artifacts.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-008/2026-09-19T21-05-33Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> QUANSIO_TEST_MINIO_ENDPOINT=http://127.0.0.1:59010 cargo test -p quansio-server --test artifact_workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/artifacts.test.ts tests/artifacts.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed + dev MinIO + temp search index)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-008/2026-09-19T21-05-33Z/NOTES.md",
+      "sha256": "1255157bd68fe266fd94ff1bc77330c2ebfb56788d9159a18afeda3ee6725957",
+      "bytes": 6240
+    },
+    {
+      "path": "evidence/APP-008/2026-09-19T21-05-33Z/cargo-artifact-workspace.log",
+      "sha256": "0171b427c7aef02bb31db2e1b2b7c5421083bfe359738e5e9d835a6dd98d1b56",
+      "bytes": 545
+    },
+    {
+      "path": "evidence/APP-008/2026-09-19T21-05-33Z/vitest-artifacts.log",
+      "sha256": "a79e404387bae8c957200413ffdf182196e1b36d50c18fad9079af44d0e709cd",
+      "bytes": 579
+    },
+    {
+      "path": "evidence/APP-008/2026-09-19T21-05-33Z/ci-summary.json",
+      "sha256": "643af2df0dbcd34f24aaf448153376e3b5d5499aa0497b158dab85231e047600",
+      "bytes": 6786
+    },
+    {
+      "path": "evidence/APP-008/RECONCILIATION.md",
+      "sha256": "409fb4babe44363fc8870ceb9455f1f44a819ef3a97e4352659e68b77041d185",
+      "bytes": 4449
+    },
+    {
+      "path": "crates/server/src/api/artifacts.rs",
+      "sha256": "ff05d0af7830429150ba386882a6d69645bf426c462a4c5d2352987cba02bfa3",
+      "bytes": 26034
+    },
+    {
+      "path": "crates/server/src/api/search.rs",
+      "sha256": "33f13de063b27256c360e0cf017f8345b103c9be3b73b14a38e1695505dddad5",
+      "bytes": 22741
+    },
+    {
+      "path": "crates/server/src/composition.rs",
+      "sha256": "a71600c996c3c5d4b8f4c1db44152c45e1d9f0ace8c02b0bb36d50cd77195d54",
+      "bytes": 7044
+    },
+    {
+      "path": "crates/server/tests/artifact_workspace.rs",
+      "sha256": "a281302f1aa357f4a2679bf6c64bcd9393bd3e14c72711437280d1b3afc0ace9",
+      "bytes": 22541
+    },
+    {
+      "path": "DOMAIN.md",
+      "sha256": "d8a8e5684a8f040a10d55a609646a51354e748ed4a9f64d788a99c07da7e1dc0",
+      "bytes": 48423
+    },
+    {
+      "path": "schemas/catalog/read-projections.yaml",
+      "sha256": "9b93ed6dd53050329540cc2757365522349afc1e83378ea36ad81173664e0c09",
+      "bytes": 616
+    },
+    {
+      "path": "apps/desktop/src/artifacts/preview.ts",
+      "sha256": "0394eca1aa0a5583adb11e318a793921a227f0a3770d918b71720d380ba8e98e",
+      "bytes": 6825
+    },
+    {
+      "path": "apps/desktop/src/artifacts/workspace.ts",
+      "sha256": "c7892a5f1b6f58174c1cddd43084cdb6b2f76cecd005928b0b3eb6dc25cddf6f",
+      "bytes": 13537
+    },
+    {
+      "path": "apps/desktop/src/artifacts/search.ts",
+      "sha256": "61423ce921a3806218cf47dfd53a955064197d4fb7123f9d7c2a500bb996ff96",
+      "bytes": 4805
+    },
+    {
+      "path": "apps/desktop/src/renderer/Artifacts.tsx",
+      "sha256": "ebebd2afdd7fb8912578f4fff66ab46e15aae8f923725ca98a09d608bbe00abd",
+      "bytes": 16546
+    },
+    {
+      "path": "apps/desktop/src/main/ipc.ts",
+      "sha256": "ebf8e453a11e2b7777e046a617096d7abb119de822c1debdd3589f8406144f2c",
+      "bytes": 34748
+    },
+    {
+      "path": "apps/desktop/src/main/app.ts",
+      "sha256": "5e3f695c0431580be0e3a9bae8b79133f95964b39c98db48fdfcf9dd52d8ad40",
+      "bytes": 9193
+    },
+    {
+      "path": "apps/desktop/tests/artifacts.test.ts",
+      "sha256": "8ee42be45b7acf17a0bf4276e6fcd7d825b153a9e5b18e748d0a90ca87428c38",
+      "bytes": 11333
+    },
+    {
+      "path": "apps/desktop/tests/artifacts.e2e.test.ts",
+      "sha256": "ab64500529f0736bb0605b8f175fbeba9a2c9a002b55b60c8ad2c2123c6bcc5c",
+      "bytes": 16859
+    }
+  ]
+}
