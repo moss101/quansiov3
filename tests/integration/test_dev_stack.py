@@ -5,6 +5,13 @@ daemon and assert observable state (Postgres rows, the pgvector extension, NATS
 JetStream, MinIO bucket). They skip with an explicit ``BLOCKED_EXTERNAL`` reason
 only when Docker itself is unavailable.
 
+The scripts run against the suite's own compose project AND its own generated env
+file (``QUANSIO_DEV_ENV_FILE`` in a pytest temp directory), so the developer's
+gitignored ``.env`` -- the file `scripts/ci/ci_summary.py` and `quansio-server`
+read the canonical `quansio-dev` stack settings from -- is never rewritten with
+this suite's project name and ports. ``developer_env_file_untouched`` asserts that
+around every test.
+
 Connection settings come from environment variables; each one falls back to the
 documented dev default from `config/dev.yaml`:
 
@@ -34,6 +41,7 @@ import shutil
 import socket
 import subprocess
 import urllib.request
+from collections.abc import Iterator
 from pathlib import Path
 
 import psycopg
@@ -41,7 +49,9 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 COMPOSE_FILE = ROOT / os.environ.get("QUANSIO_TEST_COMPOSE_FILE", "infra/compose/compose.yaml")
-ENV_FILE = ROOT / ".env"
+# The developer's generated env file (`scripts/dev/up` default). This suite only ever
+# reads it, to prove the dev scripts left it alone; they write `dev_env_file` instead.
+DEVELOPER_ENV_FILE = ROOT / ".env"
 
 # The suite exercises its OWN compose project on offset ports by default: it runs
 # `scripts/dev/reset`, which tears the stack down with its volumes, and the default
@@ -92,6 +102,41 @@ def require_docker() -> None:
         )
 
 
+@pytest.fixture(scope="module")
+def dev_env_file(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """The env file `scripts/dev/up` generates for THIS suite's stack.
+
+    `scripts/dev/_common.sh::write_env_file` refreshes every non-credential setting of
+    the file named by QUANSIO_DEV_ENV_FILE (default: the repository's `.env`) from the
+    process environment on each run. Without the override, the suite's project name
+    and ports replaced the developer's canonical `quansio-dev` values, so the next
+    database-backed test run or `quansio-server` start targeted the test stack.
+    One file per module, like a developer's persistent `.env`, so the second `up`
+    exercises the upgrade path as well as the create path.
+    """
+    return tmp_path_factory.mktemp("dev-stack") / ".env"
+
+
+def _developer_env_bytes() -> bytes | None:
+    return DEVELOPER_ENV_FILE.read_bytes() if DEVELOPER_ENV_FILE.exists() else None
+
+
+@pytest.fixture(autouse=True)
+def developer_env_file_untouched() -> Iterator[None]:
+    """Regression guard: each test leaves the developer's `.env` byte-identical.
+
+    Covers creation as well as modification (a missing file must still be missing),
+    so the guard also holds in a checkout that has never run `scripts/dev/up`.
+    """
+    before = _developer_env_bytes()
+    yield
+    after = _developer_env_bytes()
+    assert after == before, (
+        f"{DEVELOPER_ENV_FILE} was rewritten by this test: the dev scripts must be run with "
+        "QUANSIO_DEV_ENV_FILE pointing at the suite's own env file"
+    )
+
+
 # Port and project overrides that keep this suite's stack separate from any other one.
 ISOLATION = {
     "QUANSIO_DEV_COMPOSE_PROJECT": COMPOSE_PROJECT,
@@ -104,10 +149,10 @@ ISOLATION = {
 }
 
 
-def run_dev(command: str, *args: str, timeout: int = 300) -> subprocess.CompletedProcess[str]:
+def run_dev(command: str, *args: str, env_file: Path, timeout: int = 300) -> subprocess.CompletedProcess[str]:
     script = ROOT / "scripts" / "dev" / command
     assert script.is_file(), f"missing committed script: {script}"
-    env = {**os.environ, **ISOLATION}
+    env = {**os.environ, **ISOLATION, "QUANSIO_DEV_ENV_FILE": str(env_file)}
     return subprocess.run(
         ["bash", str(script), *args],
         cwd=ROOT,
@@ -135,11 +180,11 @@ def seeded_identifiers() -> dict[str, str]:
     return {kind: ident for kind, ident in query("SELECT kind, id FROM dev.seed_identity")}
 
 
-def _minio_bucket_present() -> bool:
+def _minio_bucket_present(env_file: Path) -> bool:
     container = subprocess.run(
         [
             "docker", "compose", "-p", COMPOSE_PROJECT, "-f", str(COMPOSE_FILE),
-            "--env-file", str(ENV_FILE), "ps", "-q", "minio",
+            "--env-file", str(env_file), "ps", "-q", "minio",
         ],
         capture_output=True,
         text=True,
@@ -183,14 +228,22 @@ def _stub_completion() -> str:
         return response.read().decode()
 
 
-def test_bootstrap_smoke() -> None:
-    up = run_dev("up")
+def test_bootstrap_smoke(dev_env_file: Path) -> None:
+    up = run_dev("up", env_file=dev_env_file)
     assert up.returncode == 0, f"scripts/dev/up failed:\n{up.stdout}\n{up.stderr}"
 
-    health = run_dev("healthcheck")
+    # The override reached the scripts: the generated file is the suite's, with its
+    # project and ports, not the developer's canonical settings.
+    assert dev_env_file.is_file(), f"scripts/dev/up did not write QUANSIO_DEV_ENV_FILE={dev_env_file}"
+    generated = dev_env_file.read_text()
+    assert f"QUANSIO_DEV_COMPOSE_PROJECT={COMPOSE_PROJECT}\n" in generated
+    assert f"QUANSIO_DEV_POSTGRES_PORT={POSTGRES_PORT}\n" in generated
+    assert f"QUANSIO_DEV_MINIO_PORT={MINIO_PORT}\n" in generated
+
+    health = run_dev("healthcheck", env_file=dev_env_file)
     assert health.returncode == 0, f"scripts/dev/healthcheck failed:\n{health.stdout}\n{health.stderr}"
 
-    seed = run_dev("seed")
+    seed = run_dev("seed", env_file=dev_env_file)
     assert seed.returncode == 0, f"scripts/dev/seed failed:\n{seed.stdout}\n{seed.stderr}"
 
     extensions = {row[0] for row in query("SELECT extname FROM pg_extension")}
@@ -212,22 +265,22 @@ def test_bootstrap_smoke() -> None:
     assert isinstance(jetstream.get("config"), dict), "JetStream is not enabled on the dev NATS server"
 
     assert _http_status(f"http://{MINIO_HOST}:{MINIO_PORT}/minio/health/ready") == 200
-    assert _minio_bucket_present(), f"dev bucket {MINIO_BUCKET!r} is missing from MinIO"
+    assert _minio_bucket_present(dev_env_file), f"dev bucket {MINIO_BUCKET!r} is missing from MinIO"
 
     first_completion = _stub_completion()
     assert '"stub completion' in first_completion
     assert _stub_completion() == first_completion, "stub model provider is not deterministic"
 
 
-def test_reset_then_reseed_is_deterministic() -> None:
-    up = run_dev("up")
+def test_reset_then_reseed_is_deterministic(dev_env_file: Path) -> None:
+    up = run_dev("up", env_file=dev_env_file)
     assert up.returncode == 0, f"scripts/dev/up failed:\n{up.stdout}\n{up.stderr}"
-    seed = run_dev("seed")
+    seed = run_dev("seed", env_file=dev_env_file)
     assert seed.returncode == 0, f"scripts/dev/seed failed:\n{seed.stdout}\n{seed.stderr}"
     before_reset = seeded_identifiers()
     assert before_reset == EXPECTED_IDS
 
-    reset = run_dev("reset", timeout=600)
+    reset = run_dev("reset", env_file=dev_env_file, timeout=600)
     assert reset.returncode == 0, f"scripts/dev/reset failed:\n{reset.stdout}\n{reset.stderr}"
 
     table_exists = query("SELECT to_regclass('dev.seed_identity') IS NOT NULL")[0][0]
@@ -235,7 +288,7 @@ def test_reset_then_reseed_is_deterministic() -> None:
         assert query("SELECT count(*) FROM dev.seed_identity")[0][0] == 0, "reset left seeded rows behind"
 
     for _ in range(2):
-        seed = run_dev("seed")
+        seed = run_dev("seed", env_file=dev_env_file)
         assert seed.returncode == 0, f"scripts/dev/seed failed:\n{seed.stdout}\n{seed.stderr}"
         assert seeded_identifiers() == EXPECTED_IDS
     assert seeded_identifiers() == before_reset

@@ -23,7 +23,12 @@ scripts/dev/down          # stop the stack, keep volumes (--volumes also drops d
 scripts/dev/reset         # destroy volumes and return to a deterministic empty baseline
 ```
 
-`up` writes a generated, gitignored `.env` (dev defaults; never commit it).
+`up` writes a generated, gitignored `.env` (dev defaults; never commit it) and
+refreshes its non-credential settings from the environment on every run. A second
+stack with overridden project/ports (for example `tests/integration/test_dev_stack.py`)
+must set `QUANSIO_DEV_ENV_FILE` to its own file so the developer's `.env` keeps the
+canonical `quansio-dev` settings that `scripts/ci/ci_summary.py` derives the test
+database URL from.
 
 ## Environment variables
 
