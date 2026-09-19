@@ -1,0 +1,151 @@
+{
+  "task_id": "APP-004",
+  "git_commit": "fa4edb00b3272c8eb9896d99ddee12b03a1f2c47",
+  "recorded_at": "2026-09-19T20:34:35Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> QUANSIO_TEST_MINIO_ENDPOINT=http://127.0.0.1:59010 cargo test -p quansio-server --test conversation_surface",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-004/2026-09-19T20-34-35Z/cargo-conversation-surface.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/conversation.test.ts tests/conversation.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed + dev MinIO)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-004/2026-09-19T20-34-35Z/vitest-conversation.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop E2E, eslint ., pytest, contract-drift, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-004/2026-09-19T20-34-35Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> QUANSIO_TEST_MINIO_ENDPOINT=http://127.0.0.1:59010 cargo test -p quansio-server --test conversation_surface",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/conversation.test.ts tests/conversation.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed + dev MinIO)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop E2E, eslint ., pytest, contract-drift, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-004/2026-09-19T20-34-35Z/NOTES.md",
+      "sha256": "a9fa38ac3b0b50c7055f9ecaf0fe667118ec8b5fcaac5eba2385a488b573ad34",
+      "bytes": 6869
+    },
+    {
+      "path": "evidence/APP-004/2026-09-19T20-34-35Z/cargo-conversation-surface.log",
+      "sha256": "5487e96d5fcaf725ed709b4fb91da0d826948e930a220eb99b41b02af4076049",
+      "bytes": 647
+    },
+    {
+      "path": "evidence/APP-004/2026-09-19T20-34-35Z/vitest-conversation.log",
+      "sha256": "ae3a3bad98e3e3aae7ee9dfb2d99ee88ece51d7104b9a3f819a8e152ed033eba",
+      "bytes": 1023
+    },
+    {
+      "path": "evidence/APP-004/2026-09-19T20-34-35Z/ci-summary.json",
+      "sha256": "738259dba5cbe3e2893b9cb0df1496bf45dc2fe055d766e29eb612bf5f1e4f53",
+      "bytes": 6725
+    },
+    {
+      "path": "evidence/APP-004/RECONCILIATION.md",
+      "sha256": "9149caa252ae0c727bc2cb1e7c435ebf69e92809c59678168a1b6a63dacb918b",
+      "bytes": 3432
+    },
+    {
+      "path": "crates/server/src/api/threads/mod.rs",
+      "sha256": "0bd9c040d98c7421f2ea337a557f455b86a6cab7eb8bc4b170a6b83aa09794b9",
+      "bytes": 26341
+    },
+    {
+      "path": "crates/server/src/api/live.rs",
+      "sha256": "c7feda328570b7d77d5a67da8014558277ecc7dd49fe873916444e534aa050db",
+      "bytes": 1948
+    },
+    {
+      "path": "crates/server/src/api/commands.rs",
+      "sha256": "77dfbc7279ef3a394f8c4acd9aded4a290e4a1c5fe1d526610ab591bd5803c60",
+      "bytes": 30237
+    },
+    {
+      "path": "crates/server/src/api/seams.rs",
+      "sha256": "5cef415f0e64df6d877ea75ed4c03e7e79d9605e3b37d36190ba6e191319a4a1",
+      "bytes": 9690
+    },
+    {
+      "path": "crates/server/src/runtime/turn_loop/model_calls.rs",
+      "sha256": "fea9b18e64cba0f10bc865bd775be2ab3091270e7c0af776b1deb65d8f421a96",
+      "bytes": 3591
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/engine.rs",
+      "sha256": "6b5d8d46e809da624b46334543e98a9f7b2d8be37e5c74d4c0c56f97192646fc",
+      "bytes": 45503
+    },
+    {
+      "path": "crates/server/src/control/conversation.rs",
+      "sha256": "5305caee93330f050c82baf383d381b2007520405526f12f96f2feb6e75bdd5d",
+      "bytes": 20693
+    },
+    {
+      "path": "crates/server/tests/conversation_surface.rs",
+      "sha256": "2d26fe82214c3ea1ffbe6aebbb4578488ef54f691332b17f52b910e16c0d107a",
+      "bytes": 18721
+    },
+    {
+      "path": "apps/desktop/src/conversation/state.ts",
+      "sha256": "795b1b53dd9d8b4de987e9b1b6a0a51eed71bcf761d90c4133c0fe322a89ce3a",
+      "bytes": 15812
+    },
+    {
+      "path": "apps/desktop/src/conversation/composer.ts",
+      "sha256": "d714be944b27f78ff9bba9a27c728373386abca371f147ed8f0f9b59e0d926b5",
+      "bytes": 4596
+    },
+    {
+      "path": "apps/desktop/src/conversation/inspector.ts",
+      "sha256": "cf9f8c5c271d4c81f8f868436a852114e9739cd2b7f419b3bfa411817041aa2e",
+      "bytes": 5279
+    },
+    {
+      "path": "apps/desktop/src/renderer/Conversation.tsx",
+      "sha256": "56547eb08fd0ead5d37f4eb0e33ccc1a302bad825e8b6b7c5f8a198f05156bee",
+      "bytes": 16493
+    },
+    {
+      "path": "apps/desktop/src/main/ipc.ts",
+      "sha256": "46b95a7e16a2dc606bae163d650c1702b26f9093ae9afc0f38b767c193fd1921",
+      "bytes": 25888
+    },
+    {
+      "path": "apps/desktop/src/preload/bridge.ts",
+      "sha256": "540b17b0de462c465a462e66baa64cab5cfc8eba96444dc4dbe02b89d17ac90f",
+      "bytes": 5567
+    },
+    {
+      "path": "apps/desktop/tests/conversation.test.ts",
+      "sha256": "e78c753848ce1d8d1f212201b31db2183078522f0be25fde8d164598d708547c",
+      "bytes": 13485
+    },
+    {
+      "path": "apps/desktop/tests/conversation.e2e.test.ts",
+      "sha256": "03f72bd32e866b08b6d7a3950adbf99ee531d274b4244e928498e09433ff4b8c",
+      "bytes": 18776
+    }
+  ],
+  "real_boundary_evidence": [],
+  "notes": "Task branch task/APP-004-conversation-surface; the merge commit is recorded in registries/progress.json. Tests ran against the canonical dev stack (Postgres 55440, MinIO 59010) with scratch databases created by quansio-dev-seed."
+}

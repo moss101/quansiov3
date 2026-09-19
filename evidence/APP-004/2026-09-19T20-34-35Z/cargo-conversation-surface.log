@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 17.61s
+     Running tests/conversation_surface.rs (target/debug/deps/conversation_surface-1dd4ea24d411cc71)
+
+running 5 tests
+test without_an_object_store_uploads_fail_closed ... ok
+test cancel_turn_stops_a_parked_run_and_withdraws_its_question ... ok
+test a_question_parks_the_run_and_the_answer_in_thread_resumes_it ... ok
+test live_frames_reach_a_workspace_subscriber_while_the_turn_runs ... ok
+test an_upload_becomes_an_attachment_the_message_and_the_inspector_carry ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+
+exit=0
