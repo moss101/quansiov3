@@ -34,6 +34,8 @@ pub const MEMORY_OWNER: &str = "INT-007";
 /// What the runtime asks a model for, one model call per turn step.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ModelCallRequest {
+    /// Tenant the run belongs to (a seam that reads conversation state needs the context).
+    pub tenant_id: String,
     /// Run the call belongs to.
     pub run_id: String,
     /// Turn the call belongs to.
@@ -322,6 +324,21 @@ pub trait QuestionPort: Send + Sync {
         question: ProposedQuestion,
         context: QuestionContext,
     ) -> Result<QuestionOutcome, RuntimeError>;
+}
+
+/// Transient live frames for clients (DOMAIN.md §9.3): model deltas and progress, published
+/// as they happen and never persisted. The engine publishes; the API forwards to streams.
+pub trait LiveFramePort: Send + Sync {
+    /// Publish `frame` on `channel` (`workspace:…` or `run:…`) for `tenant_id`; never blocks.
+    fn publish(&self, tenant_id: &str, channel: &str, frame: serde_json::Value);
+}
+
+/// Default live seam: nothing is listening.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct NoLiveFrames;
+
+impl LiveFramePort for NoLiveFrames {
+    fn publish(&self, _tenant_id: &str, _channel: &str, _frame: serde_json::Value) {}
 }
 
 /// Default question seam: the question protocol is RUN-011.

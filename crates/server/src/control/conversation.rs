@@ -63,6 +63,23 @@ pub struct Thread {
     pub title: Option<String>,
 }
 
+/// A thread as the list projection shows it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ThreadSummary {
+    /// `thr_` identity.
+    pub id: String,
+    /// Owning workspace.
+    pub workspace_id: String,
+    /// Thread kind.
+    pub kind: String,
+    /// Optional title.
+    pub title: Option<String>,
+    /// Last activity.
+    pub last_activity_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// Non-deleted messages.
+    pub message_count: i64,
+}
+
 /// A persisted message.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Message {
@@ -78,6 +95,8 @@ pub struct Message {
     pub author_id: String,
     /// Content blocks.
     pub content_blocks: Value,
+    /// Attached artifact ids (`art_`), in the order the author attached them.
+    pub attachments: Vec<String>,
 }
 
 /// Result of posting a message, possibly creating the thread.
@@ -151,7 +170,7 @@ impl ConversationStore {
             .begin_tenant_transaction(&self.identity.tenant_id)
             .await?;
         let rows = sqlx::query(
-            "SELECT id, thread_id, workspace_id, seq, author_id, content_blocks \
+            "SELECT id, thread_id, workspace_id, seq, author_id, content_blocks, attachments \
              FROM messages WHERE tenant_id = $1 AND thread_id = $2 \
              AND deleted_at IS NULL ORDER BY seq",
         )
@@ -162,13 +181,60 @@ impl ConversationStore {
         tx.commit().await?;
         Ok(rows
             .into_iter()
-            .map(|row| Message {
+            .map(|row| {
+                let attachments: Value = row.get("attachments");
+                Message {
+                    id: row.get("id"),
+                    thread_id: row.get("thread_id"),
+                    workspace_id: row.get("workspace_id"),
+                    seq: row.get("seq"),
+                    author_id: row.get("author_id"),
+                    content_blocks: row.get("content_blocks"),
+                    attachments: attachments
+                        .as_array()
+                        .map(|items| {
+                            items
+                                .iter()
+                                .filter_map(|item| item.as_str().map(str::to_string))
+                                .collect()
+                        })
+                        .unwrap_or_default(),
+                }
+            })
+            .collect())
+    }
+
+    /// The workspace's threads, most recently active first (APP-004 thread list).
+    ///
+    /// # Errors
+    /// Returns a database error.
+    pub async fn list_threads(&self, workspace_id: &str) -> Result<Vec<ThreadSummary>, ConversationError> {
+        CanonicalId::parse_typed(workspace_id, Prefix::Workspace)
+            .map_err(|error| ConversationError::Schema(error.to_string()))?;
+        let mut tx = self
+            .events
+            .begin_tenant_transaction(&self.identity.tenant_id)
+            .await?;
+        let rows = sqlx::query(
+            "SELECT t.id, t.workspace_id, t.kind, t.title, t.last_activity_at, \
+                    (SELECT count(*) FROM messages m WHERE m.thread_id = t.id AND m.deleted_at IS NULL) AS message_count \
+             FROM threads t WHERE t.tenant_id = $1 AND t.workspace_id = $2 AND t.archived_at IS NULL \
+             ORDER BY t.last_activity_at DESC NULLS LAST, t.created_at DESC LIMIT 200",
+        )
+        .bind(&self.identity.tenant_id)
+        .bind(workspace_id)
+        .fetch_all(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(rows
+            .into_iter()
+            .map(|row| ThreadSummary {
                 id: row.get("id"),
-                thread_id: row.get("thread_id"),
                 workspace_id: row.get("workspace_id"),
-                seq: row.get("seq"),
-                author_id: row.get("author_id"),
-                content_blocks: row.get("content_blocks"),
+                kind: row.get("kind"),
+                title: row.get("title"),
+                last_activity_at: row.get("last_activity_at"),
+                message_count: row.get("message_count"),
             })
             .collect())
     }
@@ -241,8 +307,55 @@ impl ConversationStore {
         author_id: &str,
         content: &str,
     ) -> Result<PostedMessage, ConversationError> {
+        self.post_message_with_attachments(workspace_id, thread_id, author_id, content, &[])
+            .await
+    }
+
+    /// Post a message carrying artifact attachments (APP-004: upload → Artifact → message).
+    ///
+    /// Every attachment must be an `art_` id of an artifact in `workspace_id` that is not
+    /// deleted; otherwise nothing is posted.
+    ///
+    /// # Errors
+    /// Returns [`ConversationError::Schema`] for an unknown or foreign attachment.
+    pub async fn post_message_with_attachments(
+        &self,
+        workspace_id: &str,
+        thread_id: Option<&str>,
+        author_id: &str,
+        content: &str,
+        attachments: &[String],
+    ) -> Result<PostedMessage, ConversationError> {
         CanonicalId::parse_typed(workspace_id, Prefix::Workspace)
             .map_err(|error| ConversationError::Schema(error.to_string()))?;
+        for artifact_id in attachments {
+            if !artifact_id.starts_with("art_") {
+                return Err(ConversationError::Schema(format!(
+                    "attachment {artifact_id} is not an artifact id"
+                )));
+            }
+        }
+        if !attachments.is_empty() {
+            let mut tx = self.events.begin_tenant_transaction(&self.identity.tenant_id).await?;
+            let known: Vec<(String,)> = sqlx::query_as(
+                "SELECT id FROM artifacts WHERE tenant_id = $1 AND workspace_id = $2 \
+                 AND id = ANY($3) AND deleted_at IS NULL",
+            )
+            .bind(&self.identity.tenant_id)
+            .bind(workspace_id)
+            .bind(attachments)
+            .fetch_all(&mut *tx)
+            .await?;
+            tx.commit().await?;
+            let known: std::collections::HashSet<String> =
+                known.into_iter().map(|(id,)| id).collect();
+            if let Some(missing) = attachments.iter().find(|id| !known.contains(*id)) {
+                return Err(ConversationError::Schema(format!(
+                    "attachment {missing} is not an artifact of workspace {workspace_id}"
+                )));
+            }
+        }
+        let attachments = attachments.to_vec();
         let thread = match thread_id {
             Some(id) => self.get_thread(id).await?,
             None => self.create_thread(workspace_id, "direct", None).await?,
@@ -267,8 +380,8 @@ impl ConversationStore {
                         .to_string();
                     sqlx::query(
                         "INSERT INTO messages (id, tenant_id, workspace_id, thread_id, seq, \
-                         author_kind, author_id, content_blocks) \
-                         VALUES ($1, $2, $3, $4, $5, 'user', $6, $7)",
+                         author_kind, author_id, content_blocks, attachments) \
+                         VALUES ($1, $2, $3, $4, $5, 'user', $6, $7, $8)",
                     )
                     .bind(&id)
                     .bind(&tenant_id)
@@ -277,6 +390,7 @@ impl ConversationStore {
                     .bind(next)
                     .bind(&author)
                     .bind(&blocks)
+                    .bind(json!(attachments))
                     .execute(&mut **tx)
                     .await?;
                     sqlx::query(
@@ -294,6 +408,7 @@ impl ConversationStore {
                         seq: next,
                         author_id: author,
                         content_blocks: blocks.clone(),
+                        attachments: attachments.clone(),
                     };
                     emit_thread_event(
                         &identity,

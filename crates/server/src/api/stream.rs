@@ -148,6 +148,7 @@ async fn handle_socket(
             }
         }
     }
+    let live = state.live().subscribe(&scope.tenant_id);
     tail_events(
         &mut socket,
         &store,
@@ -155,6 +156,7 @@ async fn handle_socket(
         &stream_id,
         &consumer,
         last_cursor,
+        live,
     )
     .await;
 }
@@ -166,7 +168,13 @@ async fn tail_events(
     stream_id: &str,
     consumer: &str,
     mut last_cursor: Option<String>,
+    mut live: tokio::sync::broadcast::Receiver<quansio_events::LiveFrame>,
 ) {
+    let subscribed: Vec<String> = subscription
+        .channels()
+        .iter()
+        .map(|channel| channel.as_str())
+        .collect();
     loop {
         tokio::select! {
             incoming = socket.next() => match incoming {
@@ -175,6 +183,22 @@ async fn tail_events(
                 }
                 Some(Ok(Message::Close(_))) | None | Some(Err(_)) => return,
                 _ => {}
+            },
+            frame = live.recv() => match frame {
+                Ok(frame) => {
+                    // Live frames are transient (DOMAIN.md §9.3): forwarded when on a subscribed
+                    // channel, never buffered beyond the hub's capacity, never persisted.
+                    if subscribed.iter().any(|channel| channel == &frame.channel)
+                        && socket
+                            .send(Message::Text(StreamFrame::Live(frame).to_json_value().to_string()))
+                            .await
+                            .is_err()
+                    {
+                        return;
+                    }
+                }
+                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {}
+                Err(tokio::sync::broadcast::error::RecvError::Closed) => {}
             },
             () = tokio::time::sleep(Duration::from_millis(50)) => {
                 let batch = match store

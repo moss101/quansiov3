@@ -31,7 +31,8 @@ use super::turn_loop::{
     CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort, ModelCallRequest,
     ModelProposalSource, ProposedToolCall, QuestionContext, QuestionOutcome, QuestionPort,
     ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest, TurnOutcome, UnavailableDelegation,
-    UnavailableModelProposalSource, UnavailableQuestions, UnavailableToolDispatch,
+    LiveFramePort, NoLiveFrames, UnavailableModelProposalSource, UnavailableQuestions,
+    UnavailableToolDispatch,
     UnavailableVerification, VerificationContext, VerificationOutcome, VerificationPort,
     MEMORY_OWNER, PLAN_VALIDATION_OWNER,
 };
@@ -81,6 +82,7 @@ pub struct RuntimeEngine {
     delegation: Arc<dyn DelegationPort>,
     verification: Arc<dyn VerificationPort>,
     questions: Arc<dyn QuestionPort>,
+    live: Arc<dyn LiveFramePort>,
 }
 
 impl RuntimeEngine {
@@ -97,6 +99,7 @@ impl RuntimeEngine {
             delegation: Arc::new(UnavailableDelegation),
             verification: Arc::new(UnavailableVerification),
             questions: Arc::new(UnavailableQuestions),
+            live: Arc::new(NoLiveFrames),
         })
     }
 
@@ -126,6 +129,27 @@ impl RuntimeEngine {
     pub fn with_verification(mut self, port: Arc<dyn VerificationPort>) -> Self {
         self.verification = port;
         self
+    }
+
+    /// Install the live-frame publisher (DOMAIN.md §9.3): model deltas and progress to clients.
+    #[must_use]
+    pub fn with_live_frames(mut self, port: Arc<dyn LiveFramePort>) -> Self {
+        self.live = port;
+        self
+    }
+
+    /// Publish a transient frame on the run's and the workspace's channels.
+    fn live(&self, run: &Run, turn_id: &str, frame: serde_json::Value) {
+        let tenant_id = self.store.identity().tenant_id.clone();
+        let mut frame = frame;
+        if let serde_json::Value::Object(map) = &mut frame {
+            map.insert("run_id".to_string(), serde_json::Value::String(run.id.to_string()));
+            map.insert("turn_id".to_string(), serde_json::Value::String(turn_id.to_string()));
+        }
+        self.live
+            .publish(&tenant_id, &format!("run:{}", run.id), frame.clone());
+        self.live
+            .publish(&tenant_id, &format!("workspace:{}", run.workspace_id), frame);
     }
 
     /// Install the human question protocol (DOMAIN.md §3.4).
@@ -400,7 +424,13 @@ impl RuntimeEngine {
                 .await?;
             steps_used += 1;
             let (_, model_attempt) = self.store.dispatch_step(&model_step.id, generation).await?;
+            self.live(
+                &run,
+                &turn.id.to_string(),
+                serde_json::json!({ "kind": "progress", "stage": "model_call", "step_id": model_step.id.to_string(), "seq": model_step.seq }),
+            );
             let request = ModelCallRequest {
+                tenant_id: self.store.identity().tenant_id.clone(),
                 run_id: run.id.to_string(),
                 turn_id: turn.id.to_string(),
                 step_id: model_step.id.to_string(),
@@ -420,6 +450,15 @@ impl RuntimeEngine {
                             Vec::new(),
                         )
                         .await?;
+                    if let Some(text) = &proposal.assistant_text {
+                        // The stub proposes whole; a streaming source publishes per delta through
+                        // the same frame, with `final` closing the sequence.
+                        self.live(
+                            &run,
+                            &turn.id.to_string(),
+                            serde_json::json!({ "kind": "model.delta", "step_id": model_step.id.to_string(), "text": text, "final": true }),
+                        );
+                    }
                     proposal
                 }
                 Err(error) => {

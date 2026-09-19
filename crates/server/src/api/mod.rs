@@ -20,6 +20,7 @@ pub mod commands;
 pub mod error;
 pub mod flags;
 pub mod limits;
+pub mod live;
 pub mod projections;
 pub mod seams;
 pub mod stream;
@@ -37,6 +38,7 @@ use quansio_core::{CanonicalId, CommandId, Prefix};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
+use crate::artifacts::ObjectStore;
 use crate::control::identity::auth::{AuthError, AuthStore, SigningKey};
 use crate::control::identity::oauth::{AuthFile, HttpExchange, OAuthExchange, ReadyProvider};
 
@@ -301,6 +303,8 @@ pub struct ApiState {
     oauth_exchange: Arc<dyn OAuthExchange>,
     magic_link_delivery: auth::SharedDelivery,
     scope_trust: ScopeTrust,
+    live: Arc<live::LiveHub>,
+    objects: Option<Arc<dyn ObjectStore>>,
 }
 
 impl ApiState {
@@ -337,7 +341,29 @@ impl ApiState {
             oauth_exchange: Arc::new(HttpExchange),
             magic_link_delivery: Arc::new(auth::ConsoleDelivery),
             scope_trust: ScopeTrust::TrustedHeaders,
+            live: live::LiveHub::new(),
+            objects: None,
         })
+    }
+
+    /// Install the object store attachments are written to (CORE-007's store; none means
+    /// uploads fail closed with `TARGET_UNAVAILABLE`).
+    #[must_use]
+    pub fn with_object_store(mut self, objects: Arc<dyn ObjectStore>) -> Self {
+        self.objects = Some(objects);
+        self
+    }
+
+    /// The live-frame hub `/v1/stream` forwards from and the runtime publishes to.
+    #[must_use]
+    pub fn live(&self) -> &Arc<live::LiveHub> {
+        &self.live
+    }
+
+    /// The object store, when one is configured.
+    #[must_use]
+    pub fn objects(&self) -> Option<&Arc<dyn ObjectStore>> {
+        self.objects.as_ref()
     }
 
     /// Choose how requests establish their scope.
@@ -468,9 +494,14 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/auth/sign-out", post(auth::sign_out))
         .route("/v1/me", get(auth::me))
         .route("/v1/stream", get(stream::stream))
+        .route("/v1/threads", get(threads::list_threads))
         .route("/v1/threads/:id", get(projections::thread))
         .route("/v1/messages", get(projections::messages))
         .route("/v1/runs/:id", get(projections::run))
+        .route("/v1/runs/:id/timeline", get(threads::timeline))
+        .route("/v1/questions", get(threads::questions))
+        .route("/v1/artifacts", get(threads::list_artifacts).post(threads::upload_artifact))
+        .route("/v1/artifacts/:id/versions", get(threads::artifact_versions))
         .route("/v1/effects", get(projections::effects))
         .with_state(state)
 }
