@@ -128,7 +128,8 @@ describe.skipIf(blocked !== null)("desktop reconnect E2E against quansio-server"
     const port = await freePort();
     origin = `http://127.0.0.1:${String(port)}`;
     child = spawn(SERVER_BIN, [], {
-      env: { ...process.env, QUANSIO_DATABASE_URL: databaseUrl, QUANSIO_BIND: `127.0.0.1:${String(port)}` },
+      // A harness on a seeded tenant: the server is told explicitly to trust the scope headers.
+      env: { ...process.env, QUANSIO_DATABASE_URL: databaseUrl, QUANSIO_BIND: `127.0.0.1:${String(port)}`, QUANSIO_TRUST_SCOPE_HEADERS: "1" },
       stdio: ["ignore", "ignore", "pipe"],
     });
     child.stderr?.on("data", (chunk: Buffer) => stderr.push(chunk.toString()));
@@ -152,8 +153,7 @@ describe.skipIf(blocked !== null)("desktop reconnect E2E against quansio-server"
     const scope = { tenantId: TENANT, userId: USER };
     const bridge = new DesktopBridge({
       serverOrigin: origin,
-      scope,
-      workspaceId: WORKSPACE,
+      auth: { kind: "trusted-headers", scope, workspaceId: WORKSPACE },
       session: new SessionFile(userData),
       openSocket,
       updates: new UpdateHooks("stable", null, `${origin}/feed`, false),
@@ -191,8 +191,7 @@ describe.skipIf(blocked !== null)("desktop reconnect E2E against quansio-server"
     pushed.length = 0;
     const resumed = new DesktopBridge({
       serverOrigin: origin,
-      scope,
-      workspaceId: WORKSPACE,
+      auth: { kind: "trusted-headers", scope, workspaceId: WORKSPACE },
       session: new SessionFile(userData),
       openSocket,
       updates: new UpdateHooks("stable", null, `${origin}/feed`, false),

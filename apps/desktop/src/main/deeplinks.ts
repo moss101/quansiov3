@@ -10,6 +10,7 @@
 export const DEEP_LINK_SCHEME = "quansio";
 
 export type DeepLinkIntent =
+  | { readonly kind: "oauth-callback"; readonly code: string; readonly state: string }
   | { readonly kind: "open-thread"; readonly threadId: string }
   | { readonly kind: "open-run"; readonly runId: string }
   | { readonly kind: "open-approval"; readonly approvalId: string }
@@ -34,7 +35,22 @@ export function parseDeepLink(raw: string): DeepLinkIntent | null {
   } catch {
     return null;
   }
-  if (url.protocol !== `${DEEP_LINK_SCHEME}:` || url.username || url.password || url.search || url.hash) {
+  if (url.protocol !== `${DEEP_LINK_SCHEME}:` || url.username || url.password || url.hash) {
+    return null;
+  }
+  if (url.hostname === "auth") {
+    // quansio://auth/callback?code=…&state=… — the OAuth provider's return trip (APP-002).
+    if (url.pathname !== "/callback") {
+      return null;
+    }
+    const code = url.searchParams.get("code") ?? "";
+    const state = url.searchParams.get("state") ?? "";
+    if (!code || !state || [...url.searchParams.keys()].some((key) => key !== "code" && key !== "state")) {
+      return null;
+    }
+    return { kind: "oauth-callback", code, state };
+  }
+  if (url.search) {
     return null;
   }
   const kind = url.hostname;

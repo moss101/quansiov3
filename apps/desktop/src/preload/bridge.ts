@@ -13,6 +13,14 @@ export const PRELOAD_ALLOWLIST = [
   "stream.subscribe",
   "stream.reconnect",
   "session.activeRun",
+  "session.state",
+  "session.me",
+  "auth.magicLink.start",
+  "auth.magicLink.complete",
+  "auth.oauth.start",
+  "auth.signOut",
+  "settings.updateWorkspace",
+  "settings.updateUser",
   "deepLink.open",
   "update.status",
 ] as const;
@@ -24,6 +32,7 @@ export const PRELOAD_PUSH_CHANNELS = [
   "stream.frame",
   "stream.state",
   "stream.error",
+  "session.state",
   "deepLink.intent",
   "update.status",
 ] as const;
@@ -63,7 +72,7 @@ export function isForbiddenRendererApi(name: string): boolean {
   return (FORBIDDEN_RENDERER_APIS as readonly string[]).includes(name);
 }
 
-export type BridgeSend = (channel: PreloadChannel, payload: unknown) => unknown;
+export type BridgeSend = (channel: PreloadChannel, payload: unknown) => Promise<unknown>;
 export type BridgeSubscribe = (channel: PushChannel, listener: (payload: unknown) => void) => () => void;
 
 /**
@@ -77,11 +86,22 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     subscribeStream: (cursor?: string) => send("stream.subscribe", { cursor }),
     reconnectStream: (cursor: string) => send("stream.reconnect", { cursor }),
     activeRun: () => send("session.activeRun", {}),
+    sessionState: () => send("session.state", {}),
+    me: () => send("session.me", {}),
+    startMagicLink: (email: string, displayName: string) => send("auth.magicLink.start", { email, displayName }),
+    completeMagicLink: (token: string) => send("auth.magicLink.complete", { token }),
+    startOAuth: (provider: string) => send("auth.oauth.start", { provider }),
+    signOut: () => send("auth.signOut", {}),
+    updateWorkspace: (workspaceId: string, changes: { name?: string; settings?: Record<string, unknown> }) =>
+      send("settings.updateWorkspace", { workspaceId, ...changes }),
+    updateUserSettings: (workspaceId: string, settings: Record<string, unknown>) =>
+      send("settings.updateUser", { workspaceId, settings }),
     openDeepLink: (url: string) => send("deepLink.open", { url }),
     updateStatus: () => send("update.status", {}),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),
+    onSessionState: (listener: (payload: unknown) => void) => subscribe("session.state", listener),
     onDeepLink: (listener: (payload: unknown) => void) => subscribe("deepLink.intent", listener),
     onUpdateStatus: (listener: (payload: unknown) => void) => subscribe("update.status", listener),
   };

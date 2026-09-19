@@ -9,11 +9,14 @@
  */
 
 import { LocalRuntimeClient } from "../client/local-runtime.js";
-import { ServerClient, type CommandResponse, type FetchLike, type SessionScope } from "../client/server.js";
+import { ServerClient, type CommandResponse, type Credential, type FetchLike, type OAuthProvider, type SessionScope } from "../client/server.js";
 import { StreamClient, type EventFrame, type LiveFrame, type SocketFactory, type StreamErrorFrame, type StreamState } from "../client/stream.js";
 import { PRELOAD_ALLOWLIST, PRELOAD_PUSH_CHANNELS, type BridgeCommand, type PreloadChannel, type PushChannel } from "../preload/bridge.js";
+import { newCommandId } from "../client/ids.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { SessionFile, type ActiveRunSession, type DesktopSession } from "./session-file.js";
+import { SessionManager, type SessionState } from "./session-manager.js";
+import type { TokenStore } from "./token-store.js";
 import type { UpdateHooks, UpdateStatus } from "./updates.js";
 
 /** The slice of `ipcMain` the bridge registers on. */
@@ -32,15 +35,25 @@ export interface ActiveRunProjection {
   readonly streamState: StreamState;
 }
 
+/**
+ * How the desktop authenticates: a real session (sign-in through the bridge, refresh token in
+ * the keychain) or, for development harnesses only, trusted scope headers with a fixed
+ * workspace (`QUANSIO_TRUST_SCOPE_HEADERS=1` on the server).
+ */
+export type DesktopAuth =
+  | { readonly kind: "session"; readonly tokens: TokenStore }
+  | { readonly kind: "trusted-headers"; readonly scope: SessionScope; readonly workspaceId: string };
+
 export interface DesktopBridgeOptions {
   readonly serverOrigin: string;
-  readonly scope: SessionScope;
-  readonly workspaceId: string;
+  readonly auth: DesktopAuth;
   readonly session: SessionFile;
   readonly openSocket: SocketFactory;
   readonly updates: UpdateHooks;
   readonly consumer: string;
   readonly push: PushSender;
+  /** Opens an OAuth authorization URL in the system browser (main supplies `shell.openExternal`). */
+  readonly openExternal?: (url: string) => Promise<void>;
   /** Injectable for tests; defaults to the global `fetch`. */
   readonly fetch?: FetchLike;
 }
@@ -48,22 +61,70 @@ export interface DesktopBridgeOptions {
 export class DesktopBridge {
   readonly server: ServerClient;
   readonly localRuntime: LocalRuntimeClient;
+  /** Present in session mode; the trusted-header harness has none. */
+  readonly sessions: SessionManager | null;
   readonly #options: DesktopBridgeOptions;
   #stream: StreamClient | null = null;
   #streamState: StreamState = "closed";
 
   constructor(options: DesktopBridgeOptions) {
     this.#options = options;
-    this.server = new ServerClient(
-      options.fetch
-        ? { origin: options.serverOrigin, scope: options.scope, fetch: options.fetch }
-        : { origin: options.serverOrigin, scope: options.scope },
-    );
-    this.localRuntime = new LocalRuntimeClient(this.server);
-    const current = options.session.current();
-    if (!current || current.serverOrigin !== this.server.origin || current.workspaceId !== options.workspaceId) {
-      options.session.begin(this.server.origin, options.workspaceId);
+    const client = (credential: Credential): ServerClient =>
+      new ServerClient(
+        options.fetch
+          ? { origin: options.serverOrigin, credential, fetch: options.fetch }
+          : { origin: options.serverOrigin, credential },
+      );
+    if (options.auth.kind === "session") {
+      this.sessions = new SessionManager({
+        serverOrigin: options.serverOrigin,
+        tokens: options.auth.tokens,
+        client,
+        onState: (state) => {
+          this.#onSessionState(state);
+        },
+      });
+      this.server = this.sessions.client;
+    } else {
+      this.sessions = null;
+      this.server = client({ kind: "trusted-headers", scope: options.auth.scope });
+      this.#ensureSessionFile(options.auth.workspaceId);
     }
+    this.localRuntime = new LocalRuntimeClient(this.server);
+  }
+
+  /** Resume a stored session from the keychain (session mode); false when there is none. */
+  async resume(): Promise<boolean> {
+    if (!this.sessions) {
+      return true;
+    }
+    return this.sessions.resume();
+  }
+
+  /** The workspace the desktop acts in, once known. */
+  workspaceId(): string | null {
+    if (this.#options.auth.kind === "trusted-headers") {
+      return this.#options.auth.workspaceId;
+    }
+    const state = this.sessions?.state();
+    return state?.kind === "signed-in" ? state.workspaceId : null;
+  }
+
+  #ensureSessionFile(workspaceId: string): void {
+    const current = this.#options.session.current();
+    if (!current || current.serverOrigin !== this.server.origin || current.workspaceId !== workspaceId) {
+      this.#options.session.begin(this.server.origin, workspaceId);
+    }
+  }
+
+  #onSessionState(state: SessionState): void {
+    if (state.kind === "signed-in" && state.workspaceId) {
+      this.#ensureSessionFile(state.workspaceId);
+    } else if (state.kind === "signed-out") {
+      this.#stream?.close();
+      this.#stream = null;
+    }
+    this.#options.push("session.state", state);
   }
 
   /** The handlers, keyed by allowlisted channel; `registerBridgeHandlers` installs them. */
@@ -75,6 +136,25 @@ export class DesktopBridge {
       "stream.subscribe": () => Promise.resolve().then(() => this.subscribe()),
       "stream.reconnect": () => Promise.resolve().then(() => this.reconnect()),
       "session.activeRun": () => Promise.resolve().then(() => this.activeRun()),
+      "session.state": () => Promise.resolve().then(() => this.sessionState()),
+      "session.me": () => this.#requireSessions().me(),
+      "auth.magicLink.start": (payload) =>
+        Promise.resolve(payload).then((raw) => {
+          const { email, displayName } = asMagicLinkStart(raw);
+          return this.#requireSessions().startMagicLink(email, displayName);
+        }),
+      "auth.magicLink.complete": (payload) =>
+        Promise.resolve(payload).then((raw) => this.#requireSessions().completeMagicLink(asToken(raw))),
+      "auth.oauth.start": (payload) =>
+        Promise.resolve(payload).then(async (raw) => {
+          const started = await this.#requireSessions().startOAuth(asProvider(raw));
+          await this.#options.openExternal?.(started.authorizationUrl);
+          // The renderer learns that a browser round trip is under way, not the URL itself.
+          return { state: started.state, opened: this.#options.openExternal !== undefined };
+        }),
+      "auth.signOut": () => this.#requireSessions().signOut().then(() => this.sessionState()),
+      "settings.updateWorkspace": (payload) => Promise.resolve(payload).then((raw) => this.updateWorkspace(raw)),
+      "settings.updateUser": (payload) => Promise.resolve(payload).then((raw) => this.updateUserSettings(raw)),
       "deepLink.open": (payload) => Promise.resolve(payload).then((raw) => this.openDeepLink(asUrl(raw))),
       "update.status": () => Promise.resolve().then(() => this.updateStatus()),
     };
@@ -83,7 +163,8 @@ export class DesktopBridge {
   async invoke(command: BridgeCommand): Promise<CommandResponse> {
     const response = await this.server.invoke(command.name, command.commandId, command.params);
     const result = response.result;
-    if (command.name === "PostMessage" && result && typeof result === "object") {
+    const workspaceId = this.workspaceId();
+    if (command.name === "PostMessage" && result && typeof result === "object" && workspaceId) {
       const { run_id: runId, thread_id: threadId } = result as { run_id?: unknown; thread_id?: unknown };
       if (typeof runId === "string" && typeof threadId === "string") {
         const session = this.#options.session.current();
@@ -92,11 +173,56 @@ export class DesktopBridge {
           threadId,
           generation: 1,
           streamCursor: session?.streamCursor ?? "",
-          workspaceId: this.#options.workspaceId,
+          workspaceId,
         });
       }
     }
     return response;
+  }
+
+  /** The session projection the renderer may see: state and identities, never tokens. */
+  sessionState(): SessionState {
+    if (this.#options.auth.kind === "trusted-headers") {
+      return {
+        kind: "signed-in",
+        userId: this.#options.auth.scope.userId,
+        tenantId: this.#options.auth.scope.tenantId,
+        workspaceId: this.#options.auth.workspaceId,
+        onboarded: false,
+      };
+    }
+    return this.#requireSessions().state();
+  }
+
+  /** Complete an OAuth sign-in from the callback deep link (main only). */
+  completeOAuth(code: string, state: string): Promise<SessionState> {
+    return this.#requireSessions().completeOAuth(code, state);
+  }
+
+  /** `UpdateWorkspace`: name and/or settings (execution target, model, provider handles, security). */
+  async updateWorkspace(raw: unknown): Promise<unknown> {
+    const { workspaceId, name, settings } = asWorkspaceUpdate(raw);
+    const params: Record<string, unknown> = { workspace_id: workspaceId };
+    if (name !== undefined) {
+      params["name"] = name;
+    }
+    if (settings !== undefined) {
+      params["settings"] = settings;
+    }
+    return (await this.server.invoke("UpdateWorkspace", newCommandId(), params)).result;
+  }
+
+  /** `UpdateUserSettings` for the caller's own layer. */
+  async updateUserSettings(raw: unknown): Promise<unknown> {
+    const { workspaceId, settings } = asUserSettingsUpdate(raw);
+    return (await this.server.invoke("UpdateUserSettings", newCommandId(), { workspace_id: workspaceId, settings })).result;
+  }
+
+  #requireSessions(): SessionManager {
+    if (!this.sessions) {
+      throw new Error("sign-in is not available in the trusted-header harness mode");
+    }
+    return this.sessions;
   }
 
   /** Subscribe from the durable cursor; the renderer's own idea of a cursor is never used. */
@@ -120,7 +246,7 @@ export class DesktopBridge {
     const session = this.#options.session.current();
     return {
       connected: this.#streamState === "open",
-      workspaceId: session?.workspaceId ?? null,
+      workspaceId: session?.workspaceId ?? this.workspaceId(),
       activeRun: session?.activeRun ?? null,
       streamState: this.#streamState,
     };
@@ -160,15 +286,30 @@ export class DesktopBridge {
    * every run's durable events, and run-scoped subscriptions are for narrower consumers.
    */
   #channels(): string[] {
-    return [`workspace:${this.#options.workspaceId}`];
+    const workspaceId = this.workspaceId();
+    if (!workspaceId) {
+      throw new Error("no workspace: sign in first");
+    }
+    return [`workspace:${workspaceId}`];
+  }
+
+  /** Upgrade headers for the stream, evaluated at each connect so a rotated token is used. */
+  #streamHeaders(): Record<string, string> {
+    const headers: Record<string, string> = { "x-quansio-consumer": this.#options.consumer };
+    if (this.#options.auth.kind === "trusted-headers") {
+      headers["x-quansio-tenant"] = this.#options.auth.scope.tenantId;
+      headers["x-quansio-user"] = this.#options.auth.scope.userId;
+    } else {
+      const token = this.sessions?.accessToken();
+      if (token) {
+        headers["authorization"] = `Bearer ${token}`;
+      }
+    }
+    return headers;
   }
 
   #openStream(cursor: string | null = this.#options.session.current()?.streamCursor ?? null): void {
-    const headers: Record<string, string> = {
-      "x-quansio-tenant": this.#options.scope.tenantId,
-      "x-quansio-user": this.#options.scope.userId,
-      "x-quansio-consumer": this.#options.consumer,
-    };
+    const headers = (): Record<string, string> => this.#streamHeaders();
     // Callbacks check that they belong to the current client: a superseded client's late
     // close must not report on the subscription that replaced it.
     let client: StreamClient | null = null;
@@ -259,6 +400,74 @@ function asBridgeCommand(payload: unknown): BridgeCommand {
     throw new Error("commands.invoke params must be an object");
   }
   return { name, commandId, params: (params as Record<string, unknown> | undefined) ?? {} };
+}
+
+function asRecord(payload: unknown, what: string): Record<string, unknown> {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error(`${what} needs an object payload`);
+  }
+  return payload as Record<string, unknown>;
+}
+
+function asMagicLinkStart(payload: unknown): { email: string; displayName: string } {
+  const record = asRecord(payload, "auth.magicLink.start");
+  const email = record["email"];
+  if (typeof email !== "string" || !email.includes("@") || email.length > 254) {
+    throw new Error("auth.magicLink.start needs an email address");
+  }
+  const displayName = typeof record["displayName"] === "string" ? record["displayName"].slice(0, 120) : "";
+  return { email, displayName };
+}
+
+function asToken(payload: unknown): string {
+  const token = asRecord(payload, "auth.magicLink.complete")["token"];
+  if (typeof token !== "string" || !token.startsWith("qml_") || token.length > 128) {
+    throw new Error("auth.magicLink.complete needs the delivered token");
+  }
+  return token;
+}
+
+function asProvider(payload: unknown): OAuthProvider {
+  const provider = asRecord(payload, "auth.oauth.start")["provider"];
+  if (provider !== "google" && provider !== "microsoft" && provider !== "github") {
+    throw new Error("auth.oauth.start needs google, microsoft or github");
+  }
+  return provider;
+}
+
+function asSettings(value: unknown, what: string): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${what} settings must be an object`);
+  }
+  return value as Record<string, unknown>;
+}
+
+function asWorkspaceUpdate(payload: unknown): { workspaceId: string; name?: string; settings?: Record<string, unknown> } {
+  const record = asRecord(payload, "settings.updateWorkspace");
+  const workspaceId = record["workspaceId"];
+  if (typeof workspaceId !== "string" || !workspaceId.startsWith("ws_")) {
+    throw new Error("settings.updateWorkspace needs a ws_ id");
+  }
+  const result: { workspaceId: string; name?: string; settings?: Record<string, unknown> } = { workspaceId };
+  if (record["name"] !== undefined) {
+    if (typeof record["name"] !== "string") {
+      throw new Error("settings.updateWorkspace name must be a string");
+    }
+    result.name = record["name"];
+  }
+  if (record["settings"] !== undefined) {
+    result.settings = asSettings(record["settings"], "settings.updateWorkspace");
+  }
+  return result;
+}
+
+function asUserSettingsUpdate(payload: unknown): { workspaceId: string; settings: Record<string, unknown> } {
+  const record = asRecord(payload, "settings.updateUser");
+  const workspaceId = record["workspaceId"];
+  if (typeof workspaceId !== "string" || !workspaceId.startsWith("ws_")) {
+    throw new Error("settings.updateUser needs a ws_ id");
+  }
+  return { workspaceId, settings: asSettings(record["settings"], "settings.updateUser") };
 }
 
 function asUrl(payload: unknown): string {

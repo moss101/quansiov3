@@ -110,6 +110,8 @@ pub enum Prefix {
     TerminalSession,
     /// `bsn_` browser session.
     BrowserSession,
+    /// `ses_` authenticated session (access token issuance + rotating refresh).
+    Session,
 }
 
 impl Prefix {
@@ -165,6 +167,7 @@ impl Prefix {
             Self::WebhookSubscription => "whk_",
             Self::TerminalSession => "tsn_",
             Self::BrowserSession => "bsn_",
+            Self::Session => "ses_",
         }
     }
 
@@ -222,6 +225,7 @@ impl Prefix {
             Self::WebhookSubscription => "WEBHOOK_SUBSCRIPTION",
             Self::TerminalSession => "TERMINAL_SESSION",
             Self::BrowserSession => "BROWSER_SESSION",
+            Self::Session => "SESSION",
         }
     }
 
@@ -277,6 +281,7 @@ impl Prefix {
             Self::WebhookSubscription,
             Self::TerminalSession,
             Self::BrowserSession,
+            Self::Session,
         ]
     }
 }

@@ -112,7 +112,8 @@ export type SocketFactory = (url: string, headers: Record<string, string>) => So
 
 export interface StreamClientOptions {
   readonly url: string;
-  readonly headers: Record<string, string>;
+  /** Upgrade headers, or a function evaluated at each connect (the access token rotates). */
+  readonly headers: Record<string, string> | (() => Record<string, string>);
   readonly channels: readonly string[];
   readonly consumer: string;
   readonly openSocket: SocketFactory;
@@ -160,7 +161,8 @@ export class StreamClient {
     this.#closed = false;
     this.#attempt += 1;
     this.#setState(this.#attempt === 1 ? "connecting" : "reconnecting");
-    const socket = this.#options.openSocket(this.#options.url, this.#options.headers);
+    const headers = typeof this.#options.headers === "function" ? this.#options.headers() : this.#options.headers;
+    const socket = this.#options.openSocket(this.#options.url, headers);
     this.#socket = socket;
     socket.addEventListener("open", () => {
       socket.send(JSON.stringify(subscribeRequest(this.#options.channels, this.#cursor, this.#options.consumer)));

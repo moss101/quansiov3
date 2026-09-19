@@ -107,6 +107,7 @@ Use these names in code, contracts, events, UI copy and tests. Do not introduce 
 | ModelRoute | `mr_` | | UsageRecord | `use_` |
 | AuditEntry | `aud_` | | Webhook subscription | `whk_` |
 | TerminalSession | `tsn_` | | BrowserSession | `bsn_` |
+| Session (auth) | `ses_` | | | |
 
 ### 1.2 Replay-safety primitives (CORE-002)
 - `command_id`: client-generated ULID; unique per tenant; duplicate submission returns the original result (idempotent).
@@ -145,6 +146,7 @@ Tenant (organization or personal)
 - `ServicePrincipal`: `id, tenant_id, name, scopes[] (explicit command families), key_hash, status, last_used_at`.
 - Role semantics: `approver` can approve effects within the workspace; `editor` can create work and messages; `viewer` reads; `admin` manages members, policies, connectors, teammates and packs; tenant `owner/admin` inherit workspace `admin` on all workspaces; `billing` sees usage only.
 - Baseline authentication (self-serve): passwordless email link + OAuth sign-in (Google, Microsoft, GitHub). Sessions: short-lived access token (ES256 JWT, ≤15 min) + opaque rotating refresh token (stored in OS keychain on desktop, httpOnly cookie on web). Enterprise SSO/SCIM is OPS-001. API keys for service principals are hashed at rest (argon2id) and prefixed `qsk_`.
+- Session endpoints (public API v1; the two marked *bearer* need an access token, the rest establish one): `POST /v1/auth/magic-link/start`, `POST /v1/auth/magic-link/complete`, `GET /v1/auth/oauth/{provider}/start`, `POST /v1/auth/oauth/{provider}/complete`, `POST /v1/auth/refresh`, `POST /v1/auth/sign-out` (bearer), `GET /v1/me` (bearer). A refresh token presented after it was rotated is a replay and revokes its whole session family.
 
 ---
 

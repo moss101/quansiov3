@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { DESKTOP_SURFACES } from "../surfaces.js";
 import { t } from "../i18n/strings.js";
 import { newCommandId } from "./bridge-types.js";
+import { Onboarding } from "./Onboarding.js";
 
 interface RunProjection {
   readonly connected: boolean;
@@ -57,6 +58,17 @@ function connectionLabel(state: RunProjection["streamState"]): string {
 }
 
 export function App(): ReactElement {
+  const [ready, setReady] = useState(false);
+  const onReady = useCallback(() => {
+    setReady(true);
+  }, []);
+  if (!ready) {
+    return <Onboarding onReady={onReady} />;
+  }
+  return <Shell />;
+}
+
+function Shell(): ReactElement {
   const [projection, setProjection] = useState<RunProjection | null>(null);
   const [log, setLog] = useState<readonly LogLine[]>([]);
   const [draft, setDraft] = useState("");
@@ -111,6 +123,9 @@ export function App(): ReactElement {
         <span className={`status status-${projection?.streamState ?? "closed"}`}>
           {connectionLabel(projection?.streamState ?? "closed")}
         </span>
+        <button type="button" onClick={() => { void window.quansio.signOut(); }}>
+          {t("signOut")}
+        </button>
       </header>
       <nav aria-label={t("surfaces")}>
         <ul>

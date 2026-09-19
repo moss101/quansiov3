@@ -15,6 +15,7 @@
 //!   deployment cannot serve a catalog its own binary was not built from;
 //! * `/v1/read-projections` reports the §10 read projections the same way.
 
+pub mod auth;
 pub mod commands;
 pub mod error;
 pub mod flags;
@@ -35,6 +36,9 @@ use axum::{Json, Router};
 use quansio_core::{CanonicalId, CommandId, Prefix};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+
+use crate::control::identity::auth::{AuthError, AuthStore, SigningKey};
+use crate::control::identity::oauth::{AuthFile, HttpExchange, OAuthExchange, ReadyProvider};
 
 pub use error::{ApiError, ApiErrorCode};
 pub use flags::FeatureFlags;
@@ -159,10 +163,67 @@ pub struct CommandResponse {
 pub struct TenantScope {
     /// The `tn_` identifier.
     pub tenant_id: String,
+    /// The acting `usr_`, when the request carries a session (or a trusted user header).
+    pub user_id: Option<String>,
+    /// The `ses_` the bearer token belongs to, when authenticated by session.
+    pub session_id: Option<String>,
+}
+
+/// Where a request's scope may come from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScopeTrust {
+    /// Only a bearer access token establishes scope (the deployable's default).
+    SessionOnly,
+    /// `x-quansio-tenant` / `x-quansio-user` headers are believed as-is: in-process test
+    /// routers and explicitly configured development harnesses.
+    TrustedHeaders,
 }
 
 impl TenantScope {
-    /// Resolve the scope from the request's tenant header.
+    /// Resolve the scope: a bearer session first, then the trusted headers if the state allows them.
+    ///
+    /// # Errors
+    /// [`ApiErrorCode::AuthRequired`] when nothing establishes a scope, [`ApiErrorCode::AuthInvalidToken`]
+    /// / [`ApiErrorCode::AuthExpired`] for a bearer token that does not verify, and
+    /// [`ApiErrorCode::ValidationBounds`] for a malformed trusted header.
+    pub async fn resolve(state: &ApiState, headers: &HeaderMap) -> Result<Self, ApiError> {
+        if let Some(bearer) = headers
+            .get(axum::http::header::AUTHORIZATION)
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| value.strip_prefix("Bearer "))
+            .map(str::trim)
+            .filter(|token| !token.is_empty())
+        {
+            let session = state
+                .auth()
+                .authenticate(bearer)
+                .await
+                .map_err(|error| match error {
+                    AuthError::Expired(message) => {
+                        ApiError::new(ApiErrorCode::AuthExpired, message, "unresolved")
+                    }
+                    AuthError::InvalidToken(message) => {
+                        ApiError::new(ApiErrorCode::AuthInvalidToken, message, "unresolved")
+                    }
+                    other => ApiError::new(ApiErrorCode::Internal, other.to_string(), "unresolved"),
+                })?;
+            return Ok(Self {
+                tenant_id: session.tenant_id,
+                user_id: Some(session.user_id),
+                session_id: Some(session.session_id),
+            });
+        }
+        match state.scope_trust() {
+            ScopeTrust::TrustedHeaders => Self::from_headers(headers),
+            ScopeTrust::SessionOnly => Err(ApiError::new(
+                ApiErrorCode::AuthRequired,
+                "the request carries no bearer session",
+                "unresolved",
+            )),
+        }
+    }
+
+    /// Resolve the scope from the request's trusted tenant/user headers.
     ///
     /// # Errors
     /// Returns [`ApiErrorCode::AuthRequired`] when no tenant is presented, and
@@ -190,6 +251,11 @@ impl TenantScope {
             })
             .map(|_| Self {
                 tenant_id: raw.to_string(),
+                user_id: headers
+                    .get("x-quansio-user")
+                    .and_then(|value| value.to_str().ok())
+                    .map(str::to_string),
+                session_id: None,
             })
     }
 
@@ -230,15 +296,30 @@ pub struct ApiState {
     model: Arc<dyn ModelProposalSource>,
     host: Arc<dyn ToolHostPort>,
     roles: Arc<dyn RoleProvider>,
+    auth: Arc<AuthStore>,
+    auth_file: Arc<AuthFile>,
+    oauth_exchange: Arc<dyn OAuthExchange>,
+    magic_link_delivery: auth::SharedDelivery,
+    scope_trust: ScopeTrust,
 }
 
 impl ApiState {
     /// Build the state from a pool, reading the embedded catalogs once.
     ///
+    /// The scope trust defaults to [`ScopeTrust::TrustedHeaders`], which is what an in-process
+    /// test router wants; the deployable composition sets [`ScopeTrust::SessionOnly`] unless a
+    /// development harness asks otherwise. The signing key comes from secret custody or is
+    /// ephemeral (see [`SigningKey::from_env`]).
+    ///
     /// # Errors
-    /// Returns [`ApiError`] when a catalog is not the shape the contract defines.
+    /// Returns [`ApiError`] when a catalog or `config/auth.yaml` is not the shape the contract defines.
     pub fn new(pool: PgPool) -> Result<Self, ApiError> {
         let (model, host, roles) = seams::skeleton_seams(None);
+        let auth_file = AuthFile::load()
+            .map_err(|error| ApiError::new(ApiErrorCode::Internal, error, "startup"))?;
+        let key = SigningKey::from_env()
+            .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), "startup"))?;
+        let auth = AuthStore::new(pool.clone(), Arc::new(key), auth_file.auth_config());
         Ok(Self {
             pool,
             catalog: Arc::new(Catalog::from_embedded()?),
@@ -251,7 +332,63 @@ impl ApiState {
             model,
             host,
             roles,
+            auth: Arc::new(auth),
+            auth_file: Arc::new(auth_file),
+            oauth_exchange: Arc::new(HttpExchange),
+            magic_link_delivery: Arc::new(auth::ConsoleDelivery),
+            scope_trust: ScopeTrust::TrustedHeaders,
         })
+    }
+
+    /// Choose how requests establish their scope.
+    #[must_use]
+    pub const fn with_scope_trust(mut self, trust: ScopeTrust) -> Self {
+        self.scope_trust = trust;
+        self
+    }
+
+    /// Replace the magic-link delivery port (tests, or the email channel).
+    #[must_use]
+    pub fn with_magic_link_delivery(mut self, delivery: auth::SharedDelivery) -> Self {
+        self.magic_link_delivery = delivery;
+        self
+    }
+
+    /// Replace the OAuth code exchange (tests against a stub provider).
+    #[must_use]
+    pub fn with_oauth_exchange(mut self, exchange: Arc<dyn OAuthExchange>) -> Self {
+        self.oauth_exchange = exchange;
+        self
+    }
+
+    /// The session authority.
+    #[must_use]
+    pub fn auth(&self) -> &Arc<AuthStore> {
+        &self.auth
+    }
+
+    /// The OAuth providers offered by this deployment (client id present).
+    #[must_use]
+    pub fn oauth_providers(&self) -> Vec<ReadyProvider> {
+        AuthStore::ready_providers(&self.auth_file)
+    }
+
+    /// The OAuth code exchange in use.
+    #[must_use]
+    pub fn oauth_exchange(&self) -> &Arc<dyn OAuthExchange> {
+        &self.oauth_exchange
+    }
+
+    /// The magic-link delivery port in use.
+    #[must_use]
+    pub fn magic_link_delivery(&self) -> &auth::SharedDelivery {
+        &self.magic_link_delivery
+    }
+
+    /// How requests may establish their scope.
+    #[must_use]
+    pub const fn scope_trust(&self) -> ScopeTrust {
+        self.scope_trust
     }
 
     /// The catalog being served.
@@ -317,6 +454,19 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/commands", get(command_catalog))
         .route("/v1/read-projections", get(read_projections))
         .route("/v1/commands/:command", post(commands::invoke))
+        .route("/v1/auth/magic-link/start", post(auth::magic_link_start))
+        .route(
+            "/v1/auth/magic-link/complete",
+            post(auth::magic_link_complete),
+        )
+        .route("/v1/auth/oauth/:provider/start", get(auth::oauth_start))
+        .route(
+            "/v1/auth/oauth/:provider/complete",
+            post(auth::oauth_complete),
+        )
+        .route("/v1/auth/refresh", post(auth::refresh))
+        .route("/v1/auth/sign-out", post(auth::sign_out))
+        .route("/v1/me", get(auth::me))
         .route("/v1/stream", get(stream::stream))
         .route("/v1/threads/:id", get(projections::thread))
         .route("/v1/messages", get(projections::messages))

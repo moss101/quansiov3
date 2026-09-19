@@ -31,7 +31,7 @@ pub async fn invoke(
     headers: HeaderMap,
     Json(request): Json<CommandRequest>,
 ) -> Result<Json<CommandResponse>, ApiError> {
-    let scope = TenantScope::from_headers(&headers)?;
+    let scope = TenantScope::resolve(&state, &headers).await?;
     let command_id = TenantScope::command_id(&request)?;
     let correlation_id = CorrelationId::generate(&mut UlidGenerator::new());
     let correlation = correlation_id.to_string();
@@ -78,13 +78,13 @@ pub async fn invoke(
         return replay(&state, &scope, &command_id, &params_digest, &correlation).await;
     }
 
-    let user_id = headers
-        .get("x-quansio-user")
-        .and_then(|value| value.to_str().ok())
-        .map(str::to_string);
+    let user_id = scope.user_id.clone();
     let identity = RuntimeIdentity::system(&scope.tenant_id, "api", correlation_id)
         .with_command_id(command_id);
     let result = match command.as_str() {
+        "CreateWorkspace" | "UpdateWorkspace" | "UpdateUserSettings" => {
+            identity_command(&state, &scope, &command, &request.params, &correlation).await?
+        }
         "CancelRun" => cancel_run(&state, &identity, &request.params, &correlation).await?,
         "PauseRun" => pause_run(&state, &identity, &request.params, &correlation).await?,
         "ResumeRun" => resume_run(&state, &identity, &request.params, &correlation).await?,
@@ -575,4 +575,80 @@ fn runtime_error(error: RuntimeError, correlation: &str) -> ApiError {
         _ => ApiErrorCode::Internal,
     };
     ApiError::new(code, error.to_string(), correlation)
+}
+
+/// §14 identity commands: `CreateWorkspace`, `UpdateWorkspace`, `UpdateUserSettings` (APP-002).
+///
+/// Every one of them needs an acting user, so a trusted-header request without
+/// `x-quansio-user` and a bearer-less request are both refused with `AUTH_REQUIRED`.
+async fn identity_command(
+    state: &ApiState,
+    scope: &TenantScope,
+    command: &str,
+    params: &Value,
+    correlation: &str,
+) -> Result<Value, ApiError> {
+    let Some(user_id) = scope.user_id.as_deref() else {
+        return Err(ApiError::new(
+            ApiErrorCode::AuthRequired,
+            format!("{command} needs an acting user"),
+            correlation,
+        ));
+    };
+    let identity = state.auth().identity();
+    let text = |key: &str| params.get(key).and_then(Value::as_str);
+    let schema =
+        |message: String| ApiError::new(ApiErrorCode::ValidationSchema, message, correlation);
+    let outcome = match command {
+        "CreateWorkspace" => {
+            let name =
+                text("name").ok_or_else(|| schema("CreateWorkspace needs `name`".to_string()))?;
+            let workspace_id = identity
+                .create_workspace(&scope.tenant_id, user_id, name)
+                .await
+                .map_err(|error| schema(error.to_string()))?;
+            json!({ "workspace_id": workspace_id, "tenant_id": scope.tenant_id, "name": name.trim() })
+        }
+        "UpdateWorkspace" => {
+            let workspace_id = text("workspace_id")
+                .ok_or_else(|| schema("UpdateWorkspace needs `workspace_id`".to_string()))?;
+            let change = identity
+                .update_workspace(
+                    &scope.tenant_id,
+                    user_id,
+                    workspace_id,
+                    text("name"),
+                    params.get("settings"),
+                )
+                .await
+                .map_err(|error| schema(error.to_string()))?;
+            json!({
+                "workspace_id": workspace_id,
+                "effective_settings": change.effective,
+                "effects": change.effects.iter().map(|effect| effect.to_json()).collect::<Vec<_>>(),
+            })
+        }
+        _ => {
+            let workspace_id = text("workspace_id").ok_or_else(|| {
+                schema(
+                    "UpdateUserSettings needs `workspace_id` to report effective settings"
+                        .to_string(),
+                )
+            })?;
+            let settings = params
+                .get("settings")
+                .ok_or_else(|| schema("UpdateUserSettings needs `settings`".to_string()))?;
+            let change = identity
+                .update_user_settings(&scope.tenant_id, workspace_id, user_id, settings)
+                .await
+                .map_err(|error| schema(error.to_string()))?;
+            json!({
+                "user_id": user_id,
+                "workspace_id": workspace_id,
+                "effective_settings": change.effective,
+                "effects": change.effects.iter().map(|effect| effect.to_json()).collect::<Vec<_>>(),
+            })
+        }
+    };
+    Ok(outcome)
 }

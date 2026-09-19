@@ -1,0 +1,24 @@
+# GENERATED from DOMAIN.md by scripts/ci/gen_contracts.py --catalog.
+# Do not hand edit: regenerate instead. DOMAIN.md is the naming/shape authority.
+auth_endpoints:
+- method: POST
+  path: /v1/auth/magic-link/start
+  bearer: false
+- method: POST
+  path: /v1/auth/magic-link/complete
+  bearer: false
+- method: GET
+  path: /v1/auth/oauth/{provider}/start
+  bearer: false
+- method: POST
+  path: /v1/auth/oauth/{provider}/complete
+  bearer: false
+- method: POST
+  path: /v1/auth/refresh
+  bearer: false
+- method: POST
+  path: /v1/auth/sign-out
+  bearer: true
+- method: GET
+  path: /v1/me
+  bearer: true

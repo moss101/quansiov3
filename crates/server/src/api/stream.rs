@@ -37,7 +37,7 @@ pub async fn stream(
     State(state): State<ApiState>,
     headers: HeaderMap,
 ) -> Result<impl IntoResponse, ApiError> {
-    let scope = TenantScope::from_headers(&headers)?;
+    let scope = TenantScope::resolve(&state, &headers).await?;
     let consumer = headers
         .get("x-quansio-consumer")
         .and_then(|value| value.to_str().ok())

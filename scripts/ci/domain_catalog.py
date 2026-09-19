@@ -213,6 +213,20 @@ def parse_tool_names(text: str) -> List[str]:
     return ordered
 
 
+def parse_auth_endpoints(text: str) -> List[Dict[str, object]]:
+    """§2 session endpoints: `METHOD /v1/auth/...` tokens, with `(bearer)` marking the authenticated ones."""
+    body = _section(text, "## 2. Tenancy, identity and roles")
+    endpoints: List[Dict[str, object]] = []
+    for line in body.splitlines():
+        if "Session endpoints" not in line:
+            continue
+        for match in re.finditer(r"`(GET|POST) (/v1/[^`]+)`(\s*\(bearer\))?", line):
+            endpoints.append(
+                {"method": match.group(1), "path": match.group(2), "bearer": bool(match.group(3))}
+            )
+    return endpoints
+
+
 def build_catalog(domain_path: Optional[Path] = None) -> Dict[str, object]:
     text = (domain_path or DOMAIN).read_text()
     return {
@@ -221,6 +235,7 @@ def build_catalog(domain_path: Optional[Path] = None) -> Dict[str, object]:
         "ids": parse_id_prefixes(text),
         "commands": parse_commands(text),
         "read_projections": parse_read_projections(text),
+        "auth_endpoints": parse_auth_endpoints(text),
         "errors": parse_errors(text),
         "effect_classes": parse_effect_classes(text),
         "event_families": parse_event_families(text),
@@ -234,6 +249,7 @@ CATALOG_FILES = {
     "ids": "ids.yaml",
     "commands": "commands.yaml",
     "read_projections": "read-projections.yaml",
+    "auth_endpoints": "auth-endpoints.yaml",
     "errors": "errors.yaml",
     "effect_classes": "effect-classes.yaml",
     "event_families": "event-families.yaml",

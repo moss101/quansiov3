@@ -283,8 +283,11 @@ describe("IPC bridge", () => {
     const sockets: FakeSocket[] = [];
     const bridge = new DesktopBridge({
       serverOrigin: "http://127.0.0.1:8080",
-      scope: { tenantId: "tn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", userId: "usr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" },
-      workspaceId: WORKSPACE,
+      auth: {
+        kind: "trusted-headers",
+        scope: { tenantId: "tn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", userId: "usr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" },
+        workspaceId: WORKSPACE,
+      },
       session: new SessionFile(dir),
       openSocket: () => {
         const socket = new FakeSocket();

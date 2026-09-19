@@ -49,3 +49,4 @@ ids:
   Webhook subscription: whk_
   TerminalSession: tsn_
   BrowserSession: bsn_
+  Session: ses_
