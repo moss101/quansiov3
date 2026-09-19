@@ -1,0 +1,11 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.04s
+     Running tests/walking_skeleton.rs (target/debug/deps/walking_skeleton-02491a9ceaf1d8ee)
+
+running 3 tests
+test walking_skeleton_posts_a_message_through_the_stub_and_the_ledger ... ok
+test websocket_replays_from_cursor_after_reconnect ... ok
+test websocket_delivers_events_committed_after_subscribe ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.86s
+

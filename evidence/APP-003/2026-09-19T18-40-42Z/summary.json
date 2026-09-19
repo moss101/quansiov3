@@ -1,0 +1,165 @@
+{
+  "task_id": "APP-003",
+  "git_commit": "305b3f8e8619b5229761d969fcfdfc101f1307f3",
+  "recorded_at": "2026-09-19T18:53:17Z",
+  "commands": [
+    {
+      "command": "pnpm build",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-19T18-40-42Z/pnpm-build.log"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-19T18-40-42Z/pnpm-typecheck.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run) (CSP/preload, permission boundary, shell modules, reconnect E2E)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-19T18-40-42Z/desktop-vitest.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run tests/reconnect.e2e.test.ts) (real quansio-server + quansio-dev-seed)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-19T18-40-42Z/reconnect-e2e-real-server.log"
+    },
+    {
+      "command": "pnpm test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-19T18-40-42Z/pnpm-test.log"
+    },
+    {
+      "command": "pnpm lint",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-19T18-40-42Z/pnpm-lint.log"
+    },
+    {
+      "command": "pnpm exec vitest run --config tests/e2e/vitest.config.ts",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-19T18-40-42Z/journeys-spec.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-19T18-40-42Z/validate.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-19T18-40-42Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "pnpm build",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run) (CSP/preload, permission boundary, shell modules, reconnect E2E)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run tests/reconnect.e2e.test.ts) (real quansio-server + quansio-dev-seed)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm test",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm lint",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm exec vitest run --config tests/e2e/vitest.config.ts",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "apps/desktop/src/main/app.ts",
+      "sha256": "aedc89b21b47dc4b66cedd775847b995908ae7c2ca8716db51138ba1266bdc50",
+      "bytes": 6725
+    },
+    {
+      "path": "apps/desktop/src/main/ipc.ts",
+      "sha256": "cd3a5585f05d21c33c654d895163fd0b0b55679c7de38a7851dfb53187618cbf",
+      "bytes": 10481
+    },
+    {
+      "path": "apps/desktop/src/main/security.ts",
+      "sha256": "2152146bfe0f1407cf5c6571e3070c24faaa2c95e1aea9e0d53f2f8d42aa3559",
+      "bytes": 5116
+    },
+    {
+      "path": "apps/desktop/src/main/session-file.ts",
+      "sha256": "224aed311fc1b6b9c817d09f590bfdcab40e5b25daf6515babdc05419a443a97",
+      "bytes": 5914
+    },
+    {
+      "path": "apps/desktop/src/preload/index.ts",
+      "sha256": "b5d3c89d17026d5a0aba0be4fc889a8b2bf47aacfb5dc5fbad7dbf88f9d11be9",
+      "bytes": 1264
+    },
+    {
+      "path": "apps/desktop/src/preload/bridge.ts",
+      "sha256": "ca74a29399b785df61af24e6e134d2743a7cb1eb12e03a05e55ee3e1462403d9",
+      "bytes": 3451
+    },
+    {
+      "path": "apps/desktop/src/client/server.ts",
+      "sha256": "a5b8fa70d24470e3c7e45a67e59a128b3b88286cc9f675a4008d9582a3a54ec2",
+      "bytes": 6977
+    },
+    {
+      "path": "apps/desktop/src/client/stream.ts",
+      "sha256": "ccd5ae9eb453ef61e76e292ee37edf84ca338d1245243dbc3c01be823a76523c",
+      "bytes": 8803
+    },
+    {
+      "path": "apps/desktop/src/client/local-runtime.ts",
+      "sha256": "ebeecaee4479d027eec7158a92a6cca7eb0b01200c4c168f712a3c59a4e0391a",
+      "bytes": 3982
+    },
+    {
+      "path": "apps/desktop/src/renderer/App.tsx",
+      "sha256": "ebf2f1ca5350b9107abd7a9c59ac697167b8ce4689bf0f4cdc397f6bcca525a0",
+      "bytes": 5151
+    },
+    {
+      "path": "apps/desktop/tests/reconnect.e2e.test.ts",
+      "sha256": "e0cd0e45b0a5637bcdd3bf661a0fc2c06346e38b02278f6bce57ff89756a42a5",
+      "bytes": 10779
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+$ pnpm -r --if-present build
+Scope: 3 of 4 workspace projects
+apps/desktop build$ tsc -p tsconfig.build.json && node scripts/bundle.mjs
+apps/web build$ tsc -p tsconfig.build.json
+sdk/typescript build$ tsc -p tsconfig.build.json
+sdk/typescript build: Done
+apps/web build: Done
+apps/desktop build: ▲ [WARNING] "import.meta" is not available with the "cjs" output format and will be empty [empty-import-meta]
+apps/desktop build:     src/main/app.ts:66:41:
+apps/desktop build:       66 │ const bundleRoot = dirname(fileURLToPath(import.meta.url));
+apps/desktop build:          ╵                                          ~~~~~~~~~~~
+apps/desktop build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+apps/desktop build: desktop bundle written to /Users/mohsin/projects/quansiov3/apps/desktop/dist/app
+apps/desktop build: Done

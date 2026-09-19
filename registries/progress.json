@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 5,
-  "updated_at": "2026-09-19T18:15:13Z",
+  "updated_at": "2026-09-19T18:53:17Z",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1571,15 +1571,17 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T11:20:00Z",
-      "updated_at": "2026-09-18T14:06:14Z",
-      "git_commit": "e631fb509f1ab29ea8a3e0cbc791deb6e9d3125e",
+      "updated_at": "2026-09-19T18:53:17Z",
+      "git_commit": "094301104a24cf6b1b21d8873d3417173aff2830",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test api (12 passed: \u00a715 vocabulary, ownership scan, OpenAPI/catalog contract, feature flags, per-tenant RATE_LIMITED, CancelRun owner path, composition)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test walking_skeleton (2 passed: HTTP PostMessage -> conformance-stub fs.read -> Effect Ledger -> projections; WebSocket reconnect-from-cursor)",
         "cargo fmt --all --check and cargo clippy -p quansio-server --all-targets -- -D warnings",
-        "python3.12 scripts/validate_v81.py"
+        "python3.12 scripts/validate_v81.py",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test walking_skeleton (3 passed: skeleton, reconnect-from-cursor, events committed after subscribe)"
       ],
       "artifacts": [
+        "evidence/APP-001/2026-09-19T18-41-53Z/summary.json",
         "evidence/APP-001/2026-09-18T13-59-00Z/summary.json",
         "evidence/APP-001/2026-09-14T12-10-00Z/summary.json",
         "evidence/APP-001/2026-09-14T21-10-00Z/summary.json",
@@ -1593,7 +1595,7 @@
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Units landed: public v1 API with \u00a715 errors, tenant scope, command log idempotency, CancelRun/PauseRun/ResumeRun through the runtime, CreateThread/PostMessage through the conversation owner, walking skeleton (PostMessage -> run_turn with conformance-stub fs.read -> Effect Ledger -> read projections), WebSocket GET /v1/stream with cursor reconnect, per-tenant rate limits, feature flags from config/flags.yaml, OpenAPI/catalog contract. Remaining catalog commands fail closed naming the missing handler rather than writing foreign tables. The API module still writes only `commands`. 2026-09-18 (e631fb5) PASS: re-verified in full on main after INT-002 reached PASS; the only blocker was the dependency rule; every recorded suite green (see evidence/APP-001/2026-09-18T13-59-00Z/NOTES.md)."
+      "notes": "Units landed: public v1 API with \u00a715 errors, tenant scope, command log idempotency, CancelRun/PauseRun/ResumeRun through the runtime, CreateThread/PostMessage through the conversation owner, walking skeleton (PostMessage -> run_turn with conformance-stub fs.read -> Effect Ledger -> read projections), WebSocket GET /v1/stream with cursor reconnect, per-tenant rate limits, feature flags from config/flags.yaml, OpenAPI/catalog contract. Remaining catalog commands fail closed naming the missing handler rather than writing foreign tables. The API module still writes only `commands`. 2026-09-18 (e631fb5) PASS: re-verified in full on main after INT-002 reached PASS; the only blocker was the dependency rule; every recorded suite green (see evidence/APP-001/2026-09-18T13-59-00Z/NOTES.md). 2026-09-19 regression (fixed same day, fix/APP-001-stream-tail merged as 0943011): the stream handler kept the live-frame sender alive so tail_events never ran and no client received an event committed after it subscribed; exposed by APP-003's reconnect E2E, reproduced by websocket_delivers_events_committed_after_subscribe, fixed by dropping the sender. quansio-dev-seed added for harness seeding (305b3f8). Evidence: evidence/APP-001/2026-09-19T18-41-53Z/."
     },
     "APP-002": {
       "coverage": "PARTIAL",
@@ -1620,26 +1622,34 @@
     },
     "APP-003": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-19T18:15:13Z",
-      "updated_at": "2026-09-19T18:15:13Z",
-      "git_commit": null,
+      "updated_at": "2026-09-19T18:53:17Z",
+      "git_commit": "305b3f8e8619b5229761d969fcfdfc101f1307f3",
       "tests": [
-        "pnpm --filter @quansio/desktop test (8 passed: surface catalog, nodeIntegration/contextIsolation/sandbox CSP baseline, preload allowlist without fs/child_process, permission deny, run+cursor reconnect)"
+        "pnpm build",
+        "pnpm typecheck",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run) (CSP/preload, permission boundary, shell modules, reconnect E2E)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run tests/reconnect.e2e.test.ts) (real quansio-server + quansio-dev-seed)",
+        "pnpm test",
+        "pnpm lint",
+        "pnpm exec vitest run --config tests/e2e/vitest.config.ts",
+        "python3.12 scripts/validate_v81.py",
+        "bash scripts/ci/ci.sh"
       ],
       "artifacts": [
+        "evidence/APP-003/2026-09-19T18-40-42Z/summary.json",
+        "evidence/APP-003/2026-09-19T18-40-42Z/NOTES.md",
         "evidence/APP-003/RECONCILIATION.md",
-        "evidence/APP-003/2026-09-15T04-20-00Z/summary.json",
-        "apps/desktop/src/main/security.ts",
-        "apps/desktop/src/preload/bridge.ts",
-        "apps/desktop/src/renderer/session.ts",
-        "apps/desktop/tests/security.test.ts"
+        "apps/desktop/src/main/app.ts",
+        "apps/desktop/src/preload/index.ts",
+        "apps/desktop/tests/reconnect.e2e.test.ts"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Electron main applies nodeIntegration=false, contextIsolation=true, sandbox=true and a locked CSP. Preload exposes only commands/stream/session/deepLink/update. Renderer modules do not import node:fs or child_process. DesktopSessionStore restores run_id, generation and stream cursor after reconnect. UI strings are externalized. 2026-09-19 correction: was BLOCKED_EXTERNAL at fe621ea154ac04b57fedee21183cad01e333d1f8 claimed by agent:principal-1 (started 2026-09-15T04:15:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/desktop has no Electron dependency; src/main exports a webPreferences/CSP object and src/preload an allowlist, both asserted by tests; no main process, renderer, deep links, update hooks or typed clients. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "Electron main applies nodeIntegration=false, contextIsolation=true, sandbox=true and a locked CSP. Preload exposes only commands/stream/session/deepLink/update. Renderer modules do not import node:fs or child_process. DesktopSessionStore restores run_id, generation and stream cursor after reconnect. UI strings are externalized. 2026-09-19 correction: was BLOCKED_EXTERNAL at fe621ea154ac04b57fedee21183cad01e333d1f8 claimed by agent:principal-1 (started 2026-09-15T04:15:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/desktop has no Electron dependency; src/main exports a webPreferences/CSP object and src/preload an allowlist, both asserted by tests; no main process, renderer, deep links, update hooks or typed clients. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-19 (305b3f8) PASS: the real shell \u2014 Electron main with the baseline applied through installed handlers, contextBridge preload restricted to the allowlist, typed server/stream/local-runtime clients, React renderer with externalized strings, durable session file, deep links, update hooks; acceptance 2 proven by a reconnect E2E against the real quansio-server binary. The E2E exposed the cursor/channel-set binding (client now keeps one workspace subscription) and an APP-001 defect (events after subscribe never delivered; fixed 0943011). See evidence/APP-003/2026-09-19T18-40-42Z/NOTES.md."
     },
     "APP-004": {
       "coverage": "PARTIAL",

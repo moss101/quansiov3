@@ -1,0 +1,81 @@
+{
+  "task_id": "APP-001",
+  "git_commit": "094301104a24cf6b1b21d8873d3417173aff2830",
+  "recorded_at": "2026-09-19T18:53:17Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test walking_skeleton",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-19T18-41-53Z/cargo-test-walking-skeleton.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test api",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-19T18-41-53Z/cargo-test-api.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-19T18-41-53Z/fmt-check.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-19T18-41-53Z/clippy.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-19T18-41-53Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test walking_skeleton",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test api",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/api/stream.rs",
+      "sha256": "a300f2dffdf73c11d91ce51505e303f84e27cc2582e01ae36c4c4036c0f3aa3a",
+      "bytes": 8128
+    },
+    {
+      "path": "crates/server/src/bin/quansio-dev-seed.rs",
+      "sha256": "83fc9e6371a3ccf950268bada7bc52b4cc1eb2a1c07b665e3a6a9aba8494ac9f",
+      "bytes": 6655
+    },
+    {
+      "path": "crates/server/tests/walking_skeleton.rs",
+      "sha256": "fc563eae77f8967471d47cf3fee4bf8b73534127332b4f837f07605cde01c430",
+      "bytes": 11729
+    }
+  ]
+}
