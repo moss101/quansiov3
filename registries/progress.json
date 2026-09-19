@@ -174,12 +174,13 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-gov007",
       "started_at": "2026-09-12T00:40:29Z",
-      "updated_at": "2026-09-19T21:19:03Z",
+      "updated_at": "2026-09-19T21:26:01Z",
       "git_commit": "f94d84f5f49b7ee911fb389a5b33de58ab882445",
       "tests": [
         "bash scripts/dev/up && bash scripts/dev/healthcheck",
         "uv run --project python pytest tests/integration/test_dev_stack.py -q",
-        "uv run --project python pytest tests/integration/test_dev_stack.py -q (2 passed; developer_env_file_untouched guard around both tests; fails on the previous run_dev, see evidence)"
+        "uv run --project python pytest tests/integration/test_dev_stack.py -q (2 passed; developer_env_file_untouched guard around both tests; fails on the previous run_dev, see evidence)",
+        "bash scripts/ci/ci.sh on main at d5e7322 from an external detached worktree (11/11 gates PASS)"
       ],
       "artifacts": [
         "evidence/GOV-007/2026-09-12T00-39-38Z/summary.json",
