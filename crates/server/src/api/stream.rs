@@ -106,7 +106,13 @@ async fn handle_socket(
     }
     let stream_id = subscription.stream_id();
     let store = EventStore::new(state.pool().clone());
-    let (mut session, _live) = match store
+    // The live sender is dropped at once. Nothing on this path produces live frames yet, and
+    // a live channel that stays open keeps the replay session waiting on it forever: the
+    // initial replay would never end, the tail below would never run, and a client that
+    // subscribed before an event was committed would never receive it. Live frames are
+    // transient by contract (DOMAIN.md §9.3), so their absence is tolerated; durable events
+    // are not optional.
+    let (mut session, live) = match store
         .subscribe(subscription.clone(), StreamConfig::default())
         .await
     {
@@ -118,6 +124,7 @@ async fn handle_socket(
             return;
         }
     };
+    drop(live);
     loop {
         match session.next_frame().await {
             Ok(frame) => {

@@ -269,3 +269,75 @@ async fn websocket_replays_from_cursor_after_reconnect() {
     assert_ne!(frame["cursor"].as_str(), Some(cursor.as_str()), "{frame}");
     common::drop_pool(&pool, &name).await;
 }
+
+/// A client that subscribes *before* anything happens must still receive what happens next:
+/// the initial replay ends and the handler tails the store. Subscribing first is the desktop's
+/// normal order (APP-003), and the earlier test never exercised it.
+#[tokio::test]
+async fn websocket_delivers_events_committed_after_subscribe() {
+    let Some((router, pool, name)) = prepare("skel_tail").await else {
+        common::blocked_marker();
+        return;
+    };
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind");
+    let addr = listener.local_addr().expect("addr");
+    tokio::spawn(async move {
+        axum::serve(listener, router).await.expect("serve");
+    });
+    tokio::time::sleep(Duration::from_millis(50)).await;
+
+    let mut request = format!("ws://{addr}/v1/stream")
+        .into_client_request()
+        .expect("ws request");
+    request
+        .headers_mut()
+        .insert("x-quansio-tenant", TENANT.parse().expect("header"));
+    request
+        .headers_mut()
+        .insert("x-quansio-consumer", "tail".parse().expect("header"));
+    let (mut ws, _) = tokio_tungstenite::connect_async(request)
+        .await
+        .expect("connect");
+    ws.send(Message::Text(
+        json!({
+            "subscribe": [{ "channel": format!("workspace:{WORKSPACE}") }]
+        })
+        .to_string(),
+    ))
+    .await
+    .expect("subscribe");
+    // Nothing exists yet, so nothing is replayed; give the handler time to reach the tail.
+    tokio::time::sleep(Duration::from_millis(100)).await;
+
+    let posted = reqwest::Client::new()
+        .post(format!("http://{addr}/v1/commands/PostMessage"))
+        .header("x-quansio-tenant", TENANT)
+        .header("x-quansio-user", USER)
+        .header("content-type", "application/json")
+        .body(
+            json!({
+                "command_id": CMD1,
+                "params": { "workspace_id": WORKSPACE, "content": "posted after subscribe" }
+            })
+            .to_string(),
+        )
+        .send()
+        .await
+        .expect("post");
+    assert!(posted.status().is_success(), "{}", posted.status());
+
+    let next = tokio::time::timeout(Duration::from_secs(5), ws.next())
+        .await
+        .expect("an event committed after subscribe must be delivered")
+        .expect("frame")
+        .expect("ws");
+    let Message::Text(text) = next else {
+        panic!("expected text frame, got {next:?}");
+    };
+    let frame: Value = serde_json::from_str(&text).expect("json frame");
+    assert_eq!(frame["kind"], "event", "{frame}");
+    assert!(frame["cursor"].as_str().is_some(), "{frame}");
+    common::drop_pool(&pool, &name).await;
+}
