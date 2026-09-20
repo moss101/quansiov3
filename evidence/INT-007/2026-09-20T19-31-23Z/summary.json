@@ -1,0 +1,105 @@
+{
+  "task_id": "INT-007",
+  "git_commit": "9518eed4809dd609a301066b961c65242721ea70",
+  "recorded_at": "2026-09-20T19:31:23Z",
+  "commands": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_memory_models.py tests/intelligence/test_memory_store_boundaries.py tests/intelligence/test_memory_candidates.py tests/intelligence/test_memory_retrieval.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-20T19-31-23Z/memory-units.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd python && uv run --frozen pytest tests/integration/test_memory_store.py tests/integration/test_memory_proposals.py tests/integration/test_memory_semantic_channel.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-20T19-31-23Z/memory-postgres.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-20T19-31-23Z/pytest-python.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-007/2026-09-20T19-31-23Z/lint-type.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd python && uv run --frozen pytest tests/intelligence/test_memory_models.py tests/intelligence/test_memory_store_boundaries.py tests/intelligence/test_memory_candidates.py tests/intelligence/test_memory_retrieval.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd python && uv run --frozen pytest tests/integration/test_memory_store.py tests/integration/test_memory_proposals.py tests/integration/test_memory_semantic_channel.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd python && uv run --frozen pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && uv run --frozen ruff format --check . && uv run --frozen mypy intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-007/2026-09-20T19-31-23Z/NOTES.md",
+      "sha256": "288c17973e4946645175b1eccc5b39902c3463fbdc7a24c3815bbe1f9ae4f4c7",
+      "bytes": 1571
+    },
+    {
+      "path": "evidence/INT-007/2026-09-20T19-31-23Z/memory-units.log",
+      "sha256": "c6801426dadfd2e35c12e9e603a168449afa3764645dfb0add906a192c44084b",
+      "bytes": 106
+    },
+    {
+      "path": "evidence/INT-007/2026-09-20T19-31-23Z/memory-postgres.log",
+      "sha256": "4806cbbd72d492e49f3b30a84870f09beb2c08e6f424bd43fc719c040061c6ca",
+      "bytes": 106
+    },
+    {
+      "path": "evidence/INT-007/2026-09-20T19-31-23Z/pytest-python.log",
+      "sha256": "ef0fdd56d5e3218eb89b7d11f311f1ab3e3ec7cb3d52dd844465d2535de4a913",
+      "bytes": 200
+    },
+    {
+      "path": "evidence/INT-007/2026-09-20T19-31-23Z/lint-type.log",
+      "sha256": "900d16f7f19e9c33714906bd885630d2d5653651b8bf6a007b7d6638ad0d448a",
+      "bytes": 98
+    },
+    {
+      "path": "python/intelligence/memory/models.py",
+      "sha256": "76590481d446acf9ce0205f9b742ef39bd774c24c605ad37824059b1474f65eb",
+      "bytes": 9527
+    },
+    {
+      "path": "python/intelligence/memory/store.py",
+      "sha256": "e1fbbde1f6a12558bcd04e6702c89f205289d85ddb7747f7962924d597cfe599",
+      "bytes": 20315
+    },
+    {
+      "path": "python/intelligence/memory/candidates.py",
+      "sha256": "bc045d92acc1fb71710089c068c8736e7bebab2af215b297754d6478bdb20a95",
+      "bytes": 7949
+    },
+    {
+      "path": "python/intelligence/memory/retrieval.py",
+      "sha256": "79d4a69e393832aaee5728b2ecca46f7ce98bafd8f5653fae4881ce449ef1f80",
+      "bytes": 7581
+    },
+    {
+      "path": "python/tests/integration/test_memory_semantic_channel.py",
+      "sha256": "d5bad0f5111ecbfdf6cccd18e9961a40613e7d794394c66e4cb862260b63681b",
+      "bytes": 9439
+    }
+  ]
+}
