@@ -1,0 +1,64 @@
+{
+  "task_id": "APP-012",
+  "git_commit": "7fb0df8bd91ee34086c648885943b1ebe2d1cb58",
+  "recorded_at": "2026-09-20T21:37:56Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test web_admin_surface --test trust_surface --test api",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-012/2026-09-20T21-09-41Z/cargo-web-admin-surface.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/web && pnpm build && pnpm exec vitest run) (unit + web.e2e.test.ts against the real quansio-server + quansio-dev-seed --member viewer/approver, QUANSIO_WEB_ROOT=dist/web)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-012/2026-09-20T21-09-41Z/vitest-web.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop and web E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-012/2026-09-20T21-09-41Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test web_admin_surface --test trust_surface --test api",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/web && pnpm build && pnpm exec vitest run) (unit + web.e2e.test.ts against the real quansio-server + quansio-dev-seed --member viewer/approver, QUANSIO_WEB_ROOT=dist/web)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop and web E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-012/2026-09-20T21-09-41Z/NOTES.md",
+      "sha256": "4c90ea93f397cd165d98d329b4ca5970d723739f8b24e8af767508511bc1433d",
+      "bytes": 8571
+    },
+    {
+      "path": "evidence/APP-012/2026-09-20T21-09-41Z/cargo-web-admin-surface.log",
+      "sha256": "fe45098f27854095a6de725ed9d809228a2a9052875380dd69f65a48ee525542",
+      "bytes": 1636
+    },
+    {
+      "path": "evidence/APP-012/2026-09-20T21-09-41Z/vitest-web.log",
+      "sha256": "d0433d607113b54887543c14b47ab660d2e2061339eff4ceda774b1ac8dfe436",
+      "bytes": 521
+    },
+    {
+      "path": "evidence/APP-012/2026-09-20T21-09-41Z/ci-summary.json",
+      "sha256": "790049e473938063eaeefe9819d24fc567ccd3514a6144c8c210d80857f0cc0d",
+      "bytes": 6800
+    }
+  ]
+}
