@@ -20,6 +20,7 @@ pub mod auth;
 pub mod commands;
 pub mod error;
 pub mod flags;
+pub mod knowledge;
 pub mod limits;
 pub mod live;
 pub mod projections;
@@ -540,6 +541,9 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/search", get(search::search))
         .route("/v1/workgraph", get(workgraph::workgraph))
         .route("/v1/effects", get(trust::effects))
+        .route("/v1/knowledge", get(knowledge::knowledge))
+        .route("/v1/memory", get(knowledge::memory))
+        .route("/v1/skills", get(knowledge::skills))
         .with_state(state)
 }
 

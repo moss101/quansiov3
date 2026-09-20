@@ -325,6 +325,37 @@ export class ServerClient {
     return { bytes: fetched.bytes, digest: fetched.digest ?? "" };
   }
 
+  // ---- knowledge, memory and skills (APP-011) ----
+
+  knowledge(workspaceId: string, filter: { readonly status?: string; readonly includeDeleted?: boolean } = {}): Promise<unknown> {
+    const params = new URLSearchParams({ workspace_id: workspaceId });
+    if (filter.status) {
+      params.set("status", filter.status);
+    }
+    if (filter.includeDeleted) {
+      params.set("include_deleted", "true");
+    }
+    return this.#request("GET", `${this.origin}/v1/knowledge?${params.toString()}`);
+  }
+
+  memory(workspaceId: string, filter: { readonly scope?: string; readonly subjectRef?: string; readonly includeDeleted?: boolean } = {}): Promise<unknown> {
+    const params = new URLSearchParams({ workspace_id: workspaceId });
+    if (filter.scope) {
+      params.set("scope", filter.scope);
+    }
+    if (filter.subjectRef) {
+      params.set("subject_ref", filter.subjectRef);
+    }
+    if (filter.includeDeleted) {
+      params.set("include_deleted", "true");
+    }
+    return this.#request("GET", `${this.origin}/v1/memory?${params.toString()}`);
+  }
+
+  skills(): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/skills`);
+  }
+
   // ---- the plan / WorkGraph surface (APP-005) ----
 
   workgraph(workspaceId: string): Promise<unknown> {

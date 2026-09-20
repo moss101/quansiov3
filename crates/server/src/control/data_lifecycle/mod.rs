@@ -2,6 +2,17 @@
 //!
 //! Deletion walks authoritative rows then derived planes (Tantivy, pgvector, memory,
 //! caches). A legal hold blocks deletion of the held class. Audit remains.
+//!
+//! [`intelligence`] is the entry-level forgetting path for knowledge and memory (APP-011):
+//! the tombstone, the `derived.embeddings` purge and the lifecycle event, in one transaction.
+
+pub mod intelligence;
+
+pub use intelligence::{
+    DataAdmin, DataLifecycle, DataLifecycleError, Tombstone, DATA_LIFECYCLE_OWNER,
+    KNOWLEDGE_DELETE_FROM, KNOWLEDGE_SUPERSEDE_FROM, MEMORY_DELETE_FROM, SOURCE_KIND_KNOWLEDGE,
+    SOURCE_KIND_MEMORY,
+};
 
 use std::collections::BTreeSet;
 

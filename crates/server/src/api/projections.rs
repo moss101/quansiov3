@@ -98,12 +98,47 @@ pub async fn run(
         .load_run(&run_id)
         .await
         .map_err(|error| ApiError::new(ApiErrorCode::NotFound, error.to_string(), "projection"))?;
+    let capability_projection = capability_projection(&state, &scope.tenant_id, &run_id).await?;
     Ok(Json(json!({
         "id": run.id.to_string(),
         "workspace_id": run.workspace_id,
         "status": run.status.as_db_str(),
         "generation": run.generation.get(),
+        "capability_projection": capability_projection,
     })))
+}
+
+/// The run's task-scoped authority (APP-011): the latest capability projection computed
+/// for it, with its inputs in the fixed layer order and the grants that resulted. The page
+/// shows *why* a run may do what it may; nothing here can widen it.
+async fn capability_projection(
+    state: &ApiState,
+    tenant_id: &str,
+    run_id: &CanonicalId,
+) -> Result<Value, ApiError> {
+    let row = sqlx::query(
+        "SELECT id, inputs, grants, inputs_digest, computed_at, expires_at \
+         FROM capability_projections \
+         WHERE tenant_id = $1 AND subject_kind = 'run' AND subject_id = $2 \
+         ORDER BY computed_at DESC, id DESC LIMIT 1",
+    )
+    .bind(tenant_id)
+    .bind(run_id.to_string())
+    .fetch_optional(state.pool())
+    .await
+    .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), "projection"))?;
+    Ok(row.map_or(Value::Null, |row| {
+        use sqlx::Row;
+        json!({
+            "id": row.get::<String, _>("id"),
+            "subject": { "kind": "run", "id": run_id.to_string() },
+            "inputs": row.get::<Value, _>("inputs"),
+            "grants": row.get::<Value, _>("grants"),
+            "inputs_digest": row.get::<String, _>("inputs_digest"),
+            "computed_at": row.get::<chrono::DateTime<chrono::Utc>, _>("computed_at"),
+            "expires_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("expires_at"),
+        })
+    }))
 }
 
 /// Query string for `GET /v1/effects`.

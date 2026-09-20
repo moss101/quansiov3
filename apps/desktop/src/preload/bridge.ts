@@ -46,6 +46,16 @@ export const PRELOAD_ALLOWLIST = [
   "approvals.deny",
   "effects.list",
   "evidence.content",
+  "knowledge.list",
+  "knowledge.delete",
+  "knowledge.supersede",
+  "memory.list",
+  "memory.delete",
+  "skills.list",
+  "skills.install",
+  "skills.promote",
+  "skills.disable",
+  "runs.capabilities",
 ] as const;
 
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
@@ -152,6 +162,18 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     denyEffect: (approvalRequestId: string) => send("approvals.deny", { approvalRequestId }),
     listEffects: (scope: { runId?: string; status?: string } = {}) => send("effects.list", scope),
     evidenceContent: (evidenceId: string) => send("evidence.content", { evidenceId }),
+    // Knowledge, memory, skills and capability resolution (APP-011): projections and
+    // lifecycle controls; every mutation is one §14 command the server validates again.
+    listKnowledge: (filter: { status?: string; includeDeleted?: boolean } = {}) => send("knowledge.list", filter),
+    deleteKnowledge: (knowledgeId: string) => send("knowledge.delete", { knowledgeId }),
+    supersedeKnowledge: (knowledgeId: string, supersededBy: string) => send("knowledge.supersede", { knowledgeId, supersededBy }),
+    listMemory: (filter: { scope?: string; subjectRef?: string; includeDeleted?: boolean } = {}) => send("memory.list", filter),
+    deleteMemory: (memoryId: string) => send("memory.delete", { memoryId }),
+    listSkills: () => send("skills.list", {}),
+    installSkill: (params: Record<string, unknown>) => send("skills.install", params),
+    promoteSkillVersion: (skillVersionId: string, to: string) => send("skills.promote", { skillVersionId, to }),
+    disableSkill: (skillId: string) => send("skills.disable", { skillId }),
+    runCapabilities: (runId: string) => send("runs.capabilities", { runId }),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),
