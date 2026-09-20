@@ -27,6 +27,7 @@ pub mod seams;
 pub mod search;
 pub mod stream;
 pub mod threads;
+pub mod trust;
 pub mod webhooks;
 pub mod workgraph;
 
@@ -534,9 +535,11 @@ pub fn router(state: ApiState) -> Router {
             get(artifacts::artifact_content),
         )
         .route("/v1/evidence/:id", get(artifacts::evidence))
+        .route("/v1/evidence/:id/content", get(trust::evidence_content))
+        .route("/v1/approvals", get(trust::approvals))
         .route("/v1/search", get(search::search))
         .route("/v1/workgraph", get(workgraph::workgraph))
-        .route("/v1/effects", get(projections::effects))
+        .route("/v1/effects", get(trust::effects))
         .with_state(state)
 }
 

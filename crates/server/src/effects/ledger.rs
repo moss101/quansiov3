@@ -1086,6 +1086,37 @@ impl EffectLedger {
         Ok(records)
     }
 
+    /// Every effect of a workspace, newest first, optionally filtered by status.
+    ///
+    /// # Errors
+    /// Returns a database error.
+    pub async fn list_for_workspace(
+        &self,
+        workspace_id: &str,
+        status: Option<EffectStatus>,
+        limit: i64,
+    ) -> Result<Vec<EffectRecord>, EffectError> {
+        let tenant_id = self.identity.tenant_id.clone();
+        let mut tx = self.events.begin_tenant_transaction(&tenant_id).await?;
+        let sql = format!(
+            "SELECT {EFFECT_COLUMNS} FROM effect_records WHERE tenant_id = $1 AND workspace_id = $2 \
+             AND ($3::text IS NULL OR status = $3) ORDER BY created_at DESC LIMIT $4"
+        );
+        let rows = sqlx::query(&sql)
+            .bind(&tenant_id)
+            .bind(workspace_id)
+            .bind(status.map(|value| value.as_str()))
+            .bind(limit.clamp(1, 1000))
+            .fetch_all(&mut *tx)
+            .await?;
+        let records = rows
+            .iter()
+            .map(row_to_record)
+            .collect::<Result<Vec<_>, _>>()?;
+        tx.commit().await?;
+        Ok(records)
+    }
+
     /// Every effect belonging to one run, optionally filtered by status.
     ///
     /// # Errors
