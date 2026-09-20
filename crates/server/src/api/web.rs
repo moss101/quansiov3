@@ -145,11 +145,9 @@ async fn serve(root: &WebRoot, request_path: &str) -> Result<Response, ApiError>
             .map_err(|_| missing(request_path))?;
     let (file, bytes) = bytes;
     let kind = media_type(&file);
-    let cache = if kind.starts_with("text/html") {
-        "no-cache"
-    } else {
-        "public, max-age=3600"
-    };
+    // Assets are not content-hashed, so every response revalidates: a deploy is visible
+    // on the next load rather than after a cache window.
+    let cache = "no-cache";
     Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, kind)

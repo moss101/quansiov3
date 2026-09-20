@@ -1,0 +1,51 @@
+/** Externalized UI strings (APP-012): product copy is a table, not code. */
+export const STRINGS = {
+  appName: "Quansio",
+  signIn: "Sign in",
+  signOut: "Sign out",
+  email: "you@example.com",
+  displayName: "Your name",
+  sendLink: "Email me a sign-in link",
+  linkSent: "Check your email for the sign-in link.",
+  completing: "Signing you in…",
+  workspace: "Workspace",
+  menu: "Menu",
+  loading: "Loading…",
+  refused: "Not allowed",
+  refusedBody: "The server refused this for your role. Ask an administrator for access.",
+  empty: "Nothing here yet.",
+  reload: "Reload",
+  workReview: "Work review",
+  approvals: "Approvals",
+  artifacts: "Artifacts",
+  policies: "Policies",
+  connectors: "Connectors",
+  users: "Users",
+  capabilities: "Capabilities",
+  audit: "Audit & privacy",
+  usage: "Usage",
+  attention: "Needs attention",
+  approve: "Approve",
+  deny: "Deny",
+  boundTo: "Bound to payload digest",
+  decided: "Decided.",
+  invite: "Invite",
+  role: "Role",
+  status: "Status",
+  suspend: "Suspend",
+  activate: "Activate",
+  remove: "Remove",
+  save: "Save policy",
+  addRule: "Add rule",
+  chainHolds: "audit chain verified",
+  chainBroken: "audit chain broken at",
+  download: "Download",
+  versions: "versions",
+  noWorkspaceRole: "You hold no role in this workspace.",
+} as const;
+
+export type StringKey = keyof typeof STRINGS;
+
+export function t(key: StringKey): string {
+  return STRINGS[key];
+}
