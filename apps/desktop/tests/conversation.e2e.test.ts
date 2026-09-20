@@ -332,6 +332,9 @@ describe.skipIf(blocked !== null)("desktop conversation E2E against quansio-serv
     expect(cancelled.status).toBe("CANCELLED");
     expect(cancelled.cancelled_questions).toEqual([question.id]);
     await waitFor(() => (page.frames().some((f) => f.kind === "event" && f.event["type"] === "run.cancelled") ? true : undefined), "run.cancelled");
+    // The run is cancelled first and its question withdrawn next; the page re-reads the
+    // questions once `question.cancelled` lands, so wait for it before checking them.
+    await waitFor(() => (page.frames().some((f) => f.kind === "event" && f.event["type"] === "question.cancelled") ? true : undefined), "question.cancelled");
     await page.refresh();
     expect(page.state.runs[posted.runId]?.status).toBe("CANCELLED");
     expect(cancellableRun(page.state)).toBeNull();
