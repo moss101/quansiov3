@@ -16,6 +16,7 @@ import { newCommandId } from "../client/ids.js";
 import { ANSWER_COMMAND, CANCEL_COMMAND, MAX_UPLOAD_BYTES, POST_COMMAND, UPLOAD_COMMAND, answerParams, cancelParams } from "../conversation/composer.js";
 import { MAX_IMAGE_PREVIEW_BYTES, MAX_TEXT_PREVIEW_BYTES, isActiveContent, isExecutable, mediaKind, openAllowed, previewPlan } from "../artifacts/preview.js";
 import { searchQueryString, searchRequest } from "../artifacts/search.js";
+import { OBJECTIVE_COMMAND, PROPOSE_COMMAND } from "../work/monitor.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { SessionFile, type ActiveRunSession, type DesktopSession } from "./session-file.js";
 import { SessionManager, type SessionState } from "./session-manager.js";
@@ -193,7 +194,56 @@ export class DesktopBridge {
       "artifacts.open": (payload) => Promise.resolve(payload).then((raw) => this.openArtifact(raw)),
       "evidence.get": (payload) => Promise.resolve(payload).then((raw) => this.server.evidence(asEvidenceId(raw))),
       "search.query": (payload) => Promise.resolve(payload).then((raw) => this.search(raw)),
+      "work.graph": () => this.server.workgraph(this.#requireWorkspace()),
+      "work.propose": (payload) => Promise.resolve(payload).then((raw) => this.proposeGraphEdit(raw)),
+      "work.objective": (payload) => Promise.resolve(payload).then((raw) => this.createObjective(raw)),
     };
+  }
+
+  // ---- the plan / WorkGraph surface (APP-005) ----
+
+  /**
+   * `ProposeGraphEdit` against the revision the renderer observed. The server's
+   * `CONFLICT_REVISION` reaches the renderer as an `ApiError` with that code; main adds
+   * nothing and retries nothing, because rebasing is the user's decision.
+   */
+  async proposeGraphEdit(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "work.propose");
+    const baseRevision = record["base_revision"];
+    if (typeof baseRevision !== "number" || !Number.isInteger(baseRevision) || baseRevision < 1) {
+      throw new Error("work.propose needs an integer base_revision");
+    }
+    const params: Record<string, unknown> = { workspace_id: this.#requireWorkspace(), base_revision: baseRevision };
+    for (const key of ["nodes_add", "nodes_update", "edges_add", "edges_remove"]) {
+      const value = record[key];
+      if (value !== undefined) {
+        if (!Array.isArray(value)) {
+          throw new Error(`work.propose ${key} must be a list`);
+        }
+        params[key] = value;
+      }
+    }
+    params["rationale"] = typeof record["rationale"] === "string" ? record["rationale"].slice(0, 500) : "user edit";
+    params["capability_needs"] = [];
+    return (await this.server.invoke(PROPOSE_COMMAND, newCommandId(), params)).result;
+  }
+
+  /** `CreateObjective`: a root node and its objective thread. */
+  async createObjective(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "work.objective");
+    const title = record["title"];
+    if (typeof title !== "string" || !title.trim() || title.length > 200) {
+      throw new Error("work.objective needs a title of 1..=200 characters");
+    }
+    const params: Record<string, unknown> = { workspace_id: this.#requireWorkspace(), title: title.trim() };
+    if (typeof record["description"] === "string" && record["description"].trim()) {
+      params["description"] = record["description"].trim().slice(0, 2000);
+    }
+    const contract = record["completionContract"];
+    if (contract && typeof contract === "object" && !Array.isArray(contract)) {
+      params["completion_contract"] = contract;
+    }
+    return (await this.server.invoke(OBJECTIVE_COMMAND, newCommandId(), params)).result;
   }
 
   // ---- the artifact workspace (APP-008) ----
