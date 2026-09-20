@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { t } from "../i18n/strings.js";
 import { decodeCapabilityResolution, layersInOrder, skillInputs, type CapabilityResolution } from "../knowledge/capabilities.js";
 import {
+  KNOWLEDGE_SUPERSEDE_FROM,
   decodeKnowledge,
   decodeMemory,
   deleteKnowledge,
@@ -188,7 +189,7 @@ export function Knowledge({ workspaceId, runId = null }: KnowledgeProps): ReactE
               <p className="provenance">{t("provenance")}: {describeProvenance(entry)}</p>
               {entry.supersededBy ? <p className="successor">{t("supersededBy")} <code>{entry.supersededBy}</code></p> : null}
               {deleteKnowledge(entry).ok ? <button type="button" className="forget" onClick={() => void forgetKnowledge(entry)}>{t("forget")}</button> : null}
-              {supersedeKnowledge(entry, { ...entry, id: "kn_" }).ok ? <button type="button" className="supersede" onClick={() => { setSuperseding(entry); }}>{t("supersede")}</button> : null}
+              {KNOWLEDGE_SUPERSEDE_FROM.includes(entry.status) ? <button type="button" className="supersede" onClick={() => { setSuperseding(entry); }}>{t("supersede")}</button> : null}
               {superseding?.id === entry.id ? (
                 <ul className="successors" role="listbox">
                   {successorsFor(entry, knowledge).map((successor) => (
