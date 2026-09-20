@@ -9,7 +9,7 @@
  */
 
 import { LocalRuntimeClient } from "../client/local-runtime.js";
-import { ServerClient, type CommandResponse, type Credential, type FetchLike, type OAuthProvider, type SessionScope } from "../client/server.js";
+import { ApiError, ServerClient, type CommandResponse, type Credential, type FetchLike, type OAuthProvider, type SessionScope } from "../client/server.js";
 import { StreamClient, type EventFrame, type LiveFrame, type SocketFactory, type StreamErrorFrame, type StreamState } from "../client/stream.js";
 import { PRELOAD_ALLOWLIST, PRELOAD_PUSH_CHANNELS, type BridgeCommand, type PreloadChannel, type PushChannel } from "../preload/bridge.js";
 import { newCommandId } from "../client/ids.js";
@@ -197,7 +197,74 @@ export class DesktopBridge {
       "work.graph": () => this.server.workgraph(this.#requireWorkspace()),
       "work.propose": (payload) => Promise.resolve(payload).then((raw) => this.proposeGraphEdit(raw)),
       "work.objective": (payload) => Promise.resolve(payload).then((raw) => this.createObjective(raw)),
+      "approvals.list": (payload) => Promise.resolve(payload).then((raw) => this.server.approvals(this.#trustScope(raw, "approvals.list"))),
+      // Trust decisions and evidence reads return their refusal as data: Electron's IPC
+      // flattens a thrown error to its message, and the page has to branch on the code
+      // (APPROVAL_SUPERSEDED) and the typed details (digest_mismatch).
+      "approvals.approve": (payload) => settled(Promise.resolve(payload).then((raw) => this.approveEffect(raw))),
+      "approvals.deny": (payload) => settled(Promise.resolve(payload).then((raw) => this.denyEffect(raw))),
+      "effects.list": (payload) => Promise.resolve(payload).then((raw) => this.server.effectsIn(this.#trustScope(raw, "effects.list"))),
+      "evidence.content": (payload) => settled(Promise.resolve(payload).then((raw) => this.evidenceContent(raw))),
     };
+  }
+
+  // ---- approvals, effects and evidence (APP-006) ----
+
+  /**
+   * `ApproveEffect` bound to the digest the renderer previewed. Main forwards the digest
+   * as given and adds nothing: if the request changed, the server's `APPROVAL_SUPERSEDED`
+   * reaches the page as an `ApiError`.
+   */
+  async approveEffect(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "approvals.approve");
+    const requestId = record["approvalRequestId"];
+    const digest = record["paramsDigest"];
+    if (typeof requestId !== "string" || !requestId.startsWith("apr_")) {
+      throw new Error("approvals.approve needs an apr_ id");
+    }
+    if (typeof digest !== "string" || !/^[0-9a-f]{64}$/.test(digest)) {
+      throw new Error("approvals.approve needs the previewed sha256 params_digest");
+    }
+    return (await this.server.invoke("ApproveEffect", newCommandId(), { approval_request_id: requestId, params_digest: digest })).result;
+  }
+
+  async denyEffect(raw: unknown): Promise<unknown> {
+    const requestId = asRecord(raw, "approvals.deny")["approvalRequestId"];
+    if (typeof requestId !== "string" || !requestId.startsWith("apr_")) {
+      throw new Error("approvals.deny needs an apr_ id");
+    }
+    return (await this.server.invoke("DenyEffect", newCommandId(), { approval_request_id: requestId })).result;
+  }
+
+  /** Evidence bytes plus the digest the server recorded; the renderer verifies them again. */
+  async evidenceContent(raw: unknown): Promise<{ bytesBase64: string; digest: string; sizeBytes: number }> {
+    const evidenceId = asRecord(raw, "evidence.content")["evidenceId"];
+    if (typeof evidenceId !== "string" || !evidenceId.startsWith("evd_")) {
+      throw new Error("evidence.content needs an evd_ id");
+    }
+    const fetched = await this.server.evidenceContent(evidenceId);
+    if (fetched.bytes.byteLength > MAX_PREVIEW_FETCH_BYTES) {
+      throw new Error(`evidence exceeds ${String(MAX_PREVIEW_FETCH_BYTES)} bytes`);
+    }
+    return { bytesBase64: Buffer.from(fetched.bytes).toString("base64"), digest: fetched.digest, sizeBytes: fetched.bytes.byteLength };
+  }
+
+  #trustScope(raw: unknown, what: string): { workspaceId: string; runId?: string; status?: string } {
+    const record = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+    const scope: { workspaceId: string; runId?: string; status?: string } = { workspaceId: this.#requireWorkspace() };
+    if (record["runId"] !== undefined) {
+      if (typeof record["runId"] !== "string" || !record["runId"].startsWith("run_")) {
+        throw new Error(`${what} runId must be a run_ id`);
+      }
+      scope.runId = record["runId"];
+    }
+    if (record["status"] !== undefined) {
+      if (typeof record["status"] !== "string" || !/^[A-Za-z_]{1,40}$/.test(record["status"])) {
+        throw new Error(`${what} status must be a status name`);
+      }
+      scope.status = record["status"];
+    }
+    return scope;
   }
 
   // ---- the plan / WorkGraph surface (APP-005) ----
@@ -618,6 +685,22 @@ export class DesktopBridge {
     // Live frames (model deltas, terminal bytes, browser frames, progress) reach the renderer
     // only here; they are never persisted and never move the cursor.
     this.#options.push("stream.frame", frame);
+  }
+}
+
+/** A refusal as data, so the renderer sees the §15 code and details across the IPC boundary. */
+export type Settled<T> =
+  | { readonly ok: true; readonly result: T }
+  | { readonly ok: false; readonly error: { readonly code: string; readonly message: string; readonly retryable: boolean; readonly details: unknown } };
+
+async function settled<T>(work: Promise<T>): Promise<Settled<T>> {
+  try {
+    return { ok: true, result: await work };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return { ok: false, error: { code: error.code, message: error.message, retryable: error.retryable, details: error.details } };
+    }
+    return { ok: false, error: { code: "INTERNAL", message: error instanceof Error ? error.message : String(error), retryable: false, details: null } };
   }
 }
 

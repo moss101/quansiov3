@@ -16,7 +16,9 @@ import { fileURLToPath } from "node:url";
 import { onboardingPlan } from "../../apps/desktop/src/onboarding/flow.js";
 import { answerParams, postParams } from "../../apps/desktop/src/conversation/composer.js";
 import { conversationReducer, decodeQuestions, initialConversation, openQuestions } from "../../apps/desktop/src/conversation/state.js";
-import { approve, digestPayload, preview } from "../../apps/desktop/src/trust/approvals.js";
+import { createHash } from "node:crypto";
+
+import { bindApproval, decodeApprovals } from "../../apps/desktop/src/trust/approvals.js";
 import { decodeHistory, diffLines } from "../../apps/desktop/src/artifacts/workspace.js";
 import { openAllowed, previewIsSafe, previewPlan } from "../../apps/desktop/src/artifacts/preview.js";
 import { agentInputAllowed, handback, takeover } from "../../apps/desktop/src/live/session.js";
@@ -70,15 +72,20 @@ describe("critical journeys", () => {
     session = conversationReducer(session, { type: "composer.text", text: "review these" });
     expect(postParams(session)["attachments"]).toEqual(["art_journey"]);
 
-    // 4. Approval: exact preview or superseded — never approve-on-faith.
+    // 4. Approval: exact preview or superseded — never approve-on-faith. The decision
+    //    carries the digest of the previewed request; a request whose digest moved is refused.
+    const digestPayload = (payload: unknown): string => createHash("sha256").update(JSON.stringify(payload)).digest("hex");
     const payload = { effect: "message.send", to: "ops@example.com" };
-    const shown = preview("apr_1", payload);
-    expect(shown.digest).toBe(digestPayload(payload));
-    expect(approve(shown, payload).ok).toBe(true);
-    expect(approve(shown, { ...payload, to: "other@example.com" })).toEqual({
-      ok: false,
-      code: "APPROVAL_SUPERSEDED",
+    const request = (digest: string) => ({
+      approvals: [{ id: "apr_1", workspace_id: "ws_1", run_id: "run_journey", effect_id: "eff_1", summary: "Approve message.send", consequence_preview: { recipients: ["ops@example.com"] }, params_digest: digest, status: "requested", expires_at: "2999-01-01T00:00:00Z", effect: { class: "message.send", tier: 2 } }],
     });
+    const [shown] = decodeApprovals(request(digestPayload(payload)));
+    const [changed] = decodeApprovals(request(digestPayload({ ...payload, to: "other@example.com" })));
+    if (!shown || !changed) {
+      throw new Error("previews expected");
+    }
+    expect(bindApproval(shown, shown)).toEqual({ ok: true, params: { approval_request_id: "apr_1", params_digest: digestPayload(payload) } });
+    expect(bindApproval(shown, changed)).toMatchObject({ ok: false, code: "APPROVAL_SUPERSEDED" });
 
     // 5. Artifact review: the produced document is versioned (the server's history
     //    projection), diffable, and safe to preview — active content is text, never opened.

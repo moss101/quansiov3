@@ -41,6 +41,11 @@ export const PRELOAD_ALLOWLIST = [
   "work.graph",
   "work.propose",
   "work.objective",
+  "approvals.list",
+  "approvals.approve",
+  "approvals.deny",
+  "effects.list",
+  "evidence.content",
 ] as const;
 
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
@@ -141,6 +146,12 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     proposeGraphEdit: (proposal: Record<string, unknown>) => send("work.propose", proposal),
     createObjective: (objective: { title: string; description?: string | null; completionContract?: Record<string, unknown> | null }) =>
       send("work.objective", objective),
+    // Approvals, effects and evidence (APP-006): a decision carries the previewed digest.
+    listApprovals: (scope: { runId?: string; status?: string } = {}) => send("approvals.list", scope),
+    approveEffect: (approvalRequestId: string, paramsDigest: string) => send("approvals.approve", { approvalRequestId, paramsDigest }),
+    denyEffect: (approvalRequestId: string) => send("approvals.deny", { approvalRequestId }),
+    listEffects: (scope: { runId?: string; status?: string } = {}) => send("effects.list", scope),
+    evidenceContent: (evidenceId: string) => send("evidence.content", { evidenceId }),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),

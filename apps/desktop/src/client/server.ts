@@ -25,6 +25,8 @@ export class ApiError extends Error {
   readonly correlationId: string;
   readonly retryable: boolean;
   readonly status: number;
+  /** The §15 `details` object, when the server typed the refusal further. */
+  readonly details: unknown;
 
   constructor(status: number, body: ApiErrorBody) {
     super(`${body.code}: ${body.message}`);
@@ -33,6 +35,7 @@ export class ApiError extends Error {
     this.code = body.code;
     this.correlationId = body.correlation_id;
     this.retryable = body.retryable;
+    this.details = body.details ?? null;
   }
 }
 
@@ -41,6 +44,7 @@ export interface ApiErrorBody {
   readonly message: string;
   readonly correlation_id: string;
   readonly retryable: boolean;
+  readonly details?: unknown;
 }
 
 /** Trusted-header scope, used only by development harnesses (`QUANSIO_TRUST_SCOPE_HEADERS=1`). */
@@ -97,6 +101,21 @@ export interface PostMessageResult {
 export interface ArtifactBytes {
   readonly bytes: Uint8Array;
   readonly mediaType: string;
+  /** The recorded digest, when the server labels the bytes with one (evidence). */
+  readonly digest?: string;
+}
+
+function scopeQuery(scope: { readonly workspaceId?: string; readonly runId?: string; readonly status?: string }): string {
+  const params = new URLSearchParams();
+  if (scope.runId) {
+    params.set("run_id", scope.runId);
+  } else if (scope.workspaceId) {
+    params.set("workspace_id", scope.workspaceId);
+  }
+  if (scope.status) {
+    params.set("status", scope.status);
+  }
+  return params.toString();
 }
 
 export interface RunProjection {
@@ -289,6 +308,23 @@ export class ServerClient {
     return this.#request("GET", `${this.origin}/v1/search?${queryString}`);
   }
 
+  // ---- approvals, effects and evidence (APP-006) ----
+
+  approvals(scope: { readonly workspaceId?: string; readonly runId?: string; readonly status?: string }): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/approvals?${scopeQuery(scope)}`);
+  }
+
+  effectsIn(scope: { readonly workspaceId?: string; readonly runId?: string; readonly status?: string }): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/effects?${scopeQuery(scope)}`);
+  }
+
+  /** Evidence bytes with the digest the server recorded them under (`x-quansio-digest`). */
+  async evidenceContent(evidenceId: string): Promise<{ bytes: Uint8Array; digest: string }> {
+    const url = `${this.origin}/v1/evidence/${encodeURIComponent(evidenceId)}/content`;
+    const fetched = await this.#requestBytes(url);
+    return { bytes: fetched.bytes, digest: fetched.digest ?? "" };
+  }
+
   // ---- the plan / WorkGraph surface (APP-005) ----
 
   workgraph(workspaceId: string): Promise<unknown> {
@@ -309,7 +345,8 @@ export class ServerClient {
       }
       const bytes = new Uint8Array(await response.arrayBuffer());
       const mediaType = response.headers.get("content-type") ?? "application/octet-stream";
-      return { bytes, mediaType };
+      const digest = response.headers.get("x-quansio-digest");
+      return digest ? { bytes, mediaType, digest } : { bytes, mediaType };
     } finally {
       clearTimeout(timer);
     }
@@ -360,6 +397,7 @@ function asErrorBody(decoded: unknown, status: number): ApiErrorBody {
       message: typeof body.message === "string" ? body.message : "",
       correlation_id: typeof body.correlation_id === "string" ? body.correlation_id : "",
       retryable: body.retryable === true,
+      details: body.details ?? null,
     };
   }
   return { code: "INTERNAL", message: `HTTP ${String(status)}`, correlation_id: "", retryable: status >= 500 };

@@ -23,7 +23,7 @@ export {
 export { createDesktopShell } from "./main/shell.js";
 export type { DesktopShell, ShellConfig } from "./main/shell.js";
 export { DesktopBridge, MAX_FILE_BYTES, MAX_PREVIEW_FETCH_BYTES, registerBridgeHandlers, suggestedFilename } from "./main/ipc.js";
-export type { ActiveRunProjection, DesktopBridgeOptions, DesktopFiles, IpcMainLike, PushSender } from "./main/ipc.js";
+export type { ActiveRunProjection, DesktopBridgeOptions, DesktopFiles, IpcMainLike, PushSender, Settled } from "./main/ipc.js";
 export { SessionFile, parseSession, serializeSession } from "./main/session-file.js";
 export type { ActiveRunSession, DesktopSession } from "./main/session-file.js";
 export { DEEP_LINK_SCHEME, deepLinkFromArgv, parseDeepLink } from "./main/deeplinks.js";
@@ -172,3 +172,9 @@ export type {
   WorkNodeView,
   WorkState,
 } from "./work/monitor.js";
+export { bindApproval, decodeApprovals, isDecidable, warnings } from "./trust/approvals.js";
+export type { ApprovalEffect, ApprovalPreview, ApprovalStatus, Binding, ConsequencePreview, Receipt, UntrustedOrigin } from "./trust/approvals.js";
+export { EFFECT_STATUSES, decodeEffects, isUnsettled, resolution, timeline, unresolved } from "./trust/effects.js";
+export type { EffectOutcome, EffectStatus, EffectView, Reconciliation, Resolution, TimelineEntry } from "./trust/effects.js";
+export { errorState, evidenceText, sha256Hex, verifiedState } from "./trust/evidence.js";
+export type { EvidenceState } from "./trust/evidence.js";

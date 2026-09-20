@@ -79,6 +79,11 @@ describe("preload bridge", () => {
         "workGraph",
         "proposeGraphEdit",
         "createObjective",
+        "listApprovals",
+        "approveEffect",
+        "denyEffect",
+        "listEffects",
+        "evidenceContent",
         "onStreamFrame",
         "onStreamState",
         "onStreamError",
@@ -135,6 +140,11 @@ describe("preload bridge", () => {
     await api.workGraph();
     await api.proposeGraphEdit({ base_revision: 1, nodes_add: [] });
     await api.createObjective({ title: "ship" });
+    await api.listApprovals({ runId: "run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.approveEffect("apr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", "a".repeat(64));
+    await api.denyEffect("apr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.listEffects({});
+    await api.evidenceContent("evd_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

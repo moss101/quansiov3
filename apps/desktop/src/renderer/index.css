@@ -66,3 +66,19 @@ nav li.selected button { font-weight: 600; } nav button { background: none; bord
 .work .transitions, .work .add-node, .work .add-edge { display: flex; gap: 6px; margin: 6px 0; flex-wrap: wrap; }
 .work .draft { border: 1px solid royalblue; border-radius: 8px; padding: 8px; margin-top: 8px; } .work .draft ol { padding-left: 18px; }
 .work .conflict { border: 1px solid darkorange; border-radius: 8px; padding: 8px; margin-top: 8px; }
+
+.trust { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: 0; }
+.trust ul, .trust ol { list-style: none; padding: 0; margin: 0; }
+.trust .approval button { background: none; border: 0; cursor: pointer; text-align: left; font: inherit; padding: 4px 0; }
+.trust .status { font-size: 11px; text-transform: uppercase; opacity: 0.6; margin-left: 6px; }
+.trust .preview { border: 1px solid darkorange; border-radius: 8px; padding: 8px; margin-top: 8px; }
+.trust .preview dt { font-weight: 600; margin-top: 6px; } .trust .preview dd { margin: 0; } .trust .args { font-size: 12px; white-space: pre-wrap; }
+.trust .warnings .warning { color: crimson; font-size: 13px; } .trust .decision { display: flex; gap: 8px; margin-top: 8px; }
+.trust .approve { color: green; } .trust .deny { color: crimson; }
+.trust .unresolved { border: 1px solid darkorange; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+.trust .effect-unknown, .trust .entry-unknown { color: crimson; font-weight: 600; } .trust .effect-reconciling, .trust .entry-reconciling { color: darkorange; }
+.trust .effect-needs_human, .trust .entry-needs_human { color: crimson; } .trust .entry-succeeded { opacity: 0.7; }
+.trust .entries li { padding: 3px 0; font-size: 13px; } .trust time { font-family: ui-monospace, monospace; font-size: 11px; opacity: 0.6; margin-right: 6px; }
+.trust .link { background: none; border: 0; color: royalblue; cursor: pointer; font-size: 12px; margin-left: 8px; }
+.trust .evidence { border: 1px solid color-mix(in srgb, currentColor 20%, transparent); border-radius: 8px; padding: 8px; margin-top: 8px; }
+.trust .evidence pre { white-space: pre-wrap; font-size: 12px; } .trust .error { color: crimson; }
