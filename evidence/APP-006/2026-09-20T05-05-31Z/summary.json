@@ -1,0 +1,124 @@
+{
+  "task_id": "APP-006",
+  "git_commit": "ba9d1d4833f568caa5071224c0ccacfde201059f",
+  "recorded_at": "2026-09-20T05:05:31Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> QUANSIO_TEST_MINIO_ENDPOINT=http://127.0.0.1:59010 cargo test -p quansio-server --test trust_surface",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-006/2026-09-20T05-05-31Z/cargo-trust-surface.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/trust.test.ts tests/trust.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed --ask-writes + dev MinIO)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-006/2026-09-20T05-05-31Z/vitest-trust.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-006/2026-09-20T05-05-31Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> QUANSIO_TEST_MINIO_ENDPOINT=http://127.0.0.1:59010 cargo test -p quansio-server --test trust_surface",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/trust.test.ts tests/trust.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed --ask-writes + dev MinIO)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-006/2026-09-20T05-05-31Z/NOTES.md",
+      "sha256": "388af5a01dccede35db0c919f9f394e0f6115c265703bf13d7130b62670164be",
+      "bytes": 6152
+    },
+    {
+      "path": "evidence/APP-006/2026-09-20T05-05-31Z/cargo-trust-surface.log",
+      "sha256": "0727ae96a7f5816f6e20e372e2bd299b41ce6c097bb108e84ec47920fbad2ee1",
+      "bytes": 412
+    },
+    {
+      "path": "evidence/APP-006/2026-09-20T05-05-31Z/vitest-trust.log",
+      "sha256": "0d777033650d3f9f8de245ecda5eb59af8198d899821c74537d008f3aa609303",
+      "bytes": 486
+    },
+    {
+      "path": "evidence/APP-006/2026-09-20T05-05-31Z/ci-summary.json",
+      "sha256": "cc887a94caec590df70ded05cfb302441a1a16fd308b0ed8b6bf03c936aac7a7",
+      "bytes": 6800
+    },
+    {
+      "path": "evidence/APP-006/RECONCILIATION.md",
+      "sha256": "ea92fe9e83625f9030f3bbe9a2d2b8b4521a740a9560e0ad49bfef63788aa53f",
+      "bytes": 4536
+    },
+    {
+      "path": "crates/server/src/api/trust.rs",
+      "sha256": "90ae9c51ceef8eb704bdad0b7f66c3a10ffd270e8f8d1422d804e0f92a06d162",
+      "bytes": 23074
+    },
+    {
+      "path": "crates/server/src/api/seams.rs",
+      "sha256": "267e98668b03c163f47fd624580505d1633ed1c4c669676247c54ed3e5f053b4",
+      "bytes": 11701
+    },
+    {
+      "path": "crates/server/src/bin/quansio-dev-seed.rs",
+      "sha256": "841eb75bca809422aa603cae4770cd195f1fa169f2f8ae69378da6a352463b2d",
+      "bytes": 7424
+    },
+    {
+      "path": "crates/server/tests/trust_surface.rs",
+      "sha256": "4e42d23e7e081700a133a1f7d9948af9207435039fee06ba358561e43af63bfa",
+      "bytes": 19709
+    },
+    {
+      "path": "apps/desktop/src/trust/approvals.ts",
+      "sha256": "da890b0534d1d3b0c44f48b425ddac7446498f43cdb119e363277e99df659526",
+      "bytes": 8625
+    },
+    {
+      "path": "apps/desktop/src/trust/effects.ts",
+      "sha256": "57d2085f8c52cfc0e6ea50e7a6f8e5eb5676f2d1446c1e77874775ae4088c93d",
+      "bytes": 7255
+    },
+    {
+      "path": "apps/desktop/src/trust/evidence.ts",
+      "sha256": "31b6f8c28c5b715d856c5f82dd94ed40b3c103dbdede9646ac3217d4f6c7c1cc",
+      "bytes": 3185
+    },
+    {
+      "path": "apps/desktop/src/renderer/Trust.tsx",
+      "sha256": "a3081718bf6b9addb5260032e53c23f63be8b4cf6a22b9c3c78437dde616e973",
+      "bytes": 11324
+    },
+    {
+      "path": "apps/desktop/src/main/ipc.ts",
+      "sha256": "d8cd1ad1fd3f090d22ab1f5f68e740b5694700c93094e9e66438ba7d7af77fbc",
+      "bytes": 41951
+    },
+    {
+      "path": "apps/desktop/tests/trust.test.ts",
+      "sha256": "7f03dfc1c2a6abc708335ec4413efa2514d9f74a48a7cfedb42ec7431ca231e3",
+      "bytes": 8534
+    },
+    {
+      "path": "apps/desktop/tests/trust.e2e.test.ts",
+      "sha256": "46cd0e824411f60d3a8a793da56f2490c2a0a23d9548a4c2debe4fc6442b673c",
+      "bytes": 13845
+    }
+  ]
+}

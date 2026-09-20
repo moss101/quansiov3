@@ -1,0 +1,6 @@
+test evidence_bytes_that_do_not_hash_to_their_digest_are_a_typed_error_not_bytes ... ok
+test unsettled_effects_stay_visibly_unresolved ... ok
+test an_approval_is_bound_to_the_previewed_digest_and_a_grant_dispatches_the_call ... ok
+test a_denied_approval_records_the_effect_as_denied_and_the_run_moves_on ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.84s
+exit=0
