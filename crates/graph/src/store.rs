@@ -2,7 +2,7 @@
 //!
 //! `GraphStore` is the single entry point to the WorkGraph, AgentGraph and StateGraph
 //! tables. Every method opens a transaction, sets the tenant context with
-//! `quansio_server::control::schema::set_tenant_context`, and additionally scopes every
+//! `quansio_events::schema::set_tenant_context`, and additionally scopes every
 //! statement by `tenant_id`, so a missing or wrong tenant context can never leak a row
 //! (DOSSIER.md §9, §16).
 //!
@@ -31,7 +31,7 @@ impl GraphStore {
     /// Returns [`GraphError::TenantScope`] when `tenant_id` is not a canonical `tn_` id.
     pub fn new(pool: sqlx::PgPool, tenant_id: impl Into<String>) -> Result<Self, GraphError> {
         let tenant_id = tenant_id.into();
-        quansio_server::control::schema::validate_tenant_id(&tenant_id)?;
+        quansio_events::schema::validate_tenant_id(&tenant_id)?;
         Ok(Self {
             pool,
             tenant_id,
@@ -73,7 +73,7 @@ impl GraphStore {
     /// Open a transaction with the tenant context already set.
     pub(crate) async fn begin(&self) -> Result<Transaction<'static, Postgres>, GraphError> {
         let mut tx = self.pool.begin().await?;
-        quansio_server::control::schema::set_tenant_context(&mut tx, &self.tenant_id).await?;
+        quansio_events::schema::set_tenant_context(&mut tx, &self.tenant_id).await?;
         Ok(tx)
     }
 

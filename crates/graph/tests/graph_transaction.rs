@@ -70,7 +70,7 @@ fn transaction(store: GraphStore, pool: &PgPool, correlation: CorrelationId) -> 
 /// exactly as it does for the store (a context-free count would always read zero).
 async fn tenant_count(pool: &PgPool, sql: &str) -> i64 {
     let mut tx = pool.begin().await.expect("begin");
-    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+    quansio_events::schema::set_tenant_context(&mut tx, TENANT)
         .await
         .expect("tenant context");
     let count = sqlx::query_scalar(sql)

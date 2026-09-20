@@ -5,7 +5,7 @@
 //! DOMAIN.md §15 defines an error code, [`GraphError::code`] returns it, so the API layer
 //! never has to reinterpret a store error.
 
-use quansio_server::control::schema::SchemaError;
+use quansio_events::schema::SchemaError;
 
 /// Canonical entity a graph error refers to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

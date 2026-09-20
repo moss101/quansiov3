@@ -51,6 +51,7 @@
 //! apply; extending the frozen CORE-005 seam would be required to accept them.
 
 mod compile;
+mod graph_port;
 mod policy;
 mod port;
 mod service;
@@ -61,6 +62,7 @@ pub use compile::{
     ContractSource, PlanGraphSnapshot, PlanProposerProjection, SnapshotEdge, SnapshotNode,
     DEFAULT_MAX_PLAN_NODES,
 };
+pub use graph_port::{AlgebraNarrowing, GraphPlanWorkspace};
 pub use policy::max_plan_nodes;
 pub use port::{PlanCommitOutcome, PlanWorkspacePort, UnavailablePlanWorkspace, PLAN_GRAPH_OWNER};
 pub use service::{PlanOutcome, Planner};

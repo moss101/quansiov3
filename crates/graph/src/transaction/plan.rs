@@ -450,7 +450,7 @@ async fn max_plan_nodes(
     workspace_id: &str,
 ) -> Result<usize, GraphTransactionError> {
     let mut tx = graph.pool().begin().await.map_err(GraphError::from)?;
-    quansio_server::control::schema::set_tenant_context(&mut tx, graph.tenant_id())
+    quansio_events::schema::set_tenant_context(&mut tx, graph.tenant_id())
         .await
         .map_err(GraphError::TenantScope)?;
     let limit: Option<i32> = sqlx::query_scalar(
