@@ -1904,23 +1904,42 @@
     },
     "APP-012": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-20T20:26:54Z",
-      "updated_at": "2026-09-20T20:26:54Z",
-      "git_commit": null,
+      "updated_at": "2026-09-20T21:38:27Z",
+      "git_commit": "e5a7d57070ba149819abdfa10cf735b9b76de520",
       "tests": [
-        "pnpm --filter @quansio/web test (admin pages require server admin/owner role; all surfaces serverOnly; /v1 public contracts)"
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test web_admin_surface (server RBAC for viewer/approver/billing/no-membership/invited/owner across /v1/members, /v1/policies, /v1/connectors, /v1/usage, /v1/audit, SetPolicy, InviteMember/UpdateMembership/RemoveMember, ApproveEffect/DenyEffect; last-owner guard; membership scope; audit chain order, actors, genesis, tamper detection; /app/ served with CSP/nosniff/index fallback and no path escape)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/web && pnpm build && pnpm exec vitest run) (rbac.test.ts: role table, roles from /v1/me, surfaces pinned to the catalog; client/session/decoder/layout unit tests; web.e2e.test.ts against the real quansio-server + quansio-dev-seed --member: web RBAC E2E, approval E2E, responsive smoke)",
+        "pnpm build",
+        "pnpm typecheck",
+        "pnpm test",
+        "pnpm lint",
+        "python3.12 scripts/validate_v81.py",
+        "bash scripts/ci/ci.sh"
       ],
       "artifacts": [
-        "evidence/APP-012/2026-09-15T05-45-00Z/summary.json",
+        "evidence/APP-012/2026-09-20T21-09-41Z/summary.json",
+        "evidence/APP-012/2026-09-20T21-09-41Z/NOTES.md",
+        "evidence/APP-012/RECONCILIATION.md",
+        "crates/server/src/api/rbac.rs",
+        "crates/server/src/api/admin.rs",
+        "crates/server/src/api/web.rs",
+        "crates/server/src/control/identity/members.rs",
+        "crates/server/src/audit/store.rs",
+        "crates/server/tests/web_admin_surface.rs",
+        "apps/web/src/client.ts",
         "apps/web/src/rbac.ts",
-        "apps/web/src/surfaces.ts"
+        "apps/web/src/surfaces.ts",
+        "apps/web/src/app/App.tsx",
+        "apps/web/src/app/pages.tsx",
+        "apps/web/tests/web.e2e.test.ts"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Web surfaces are serverOnly. Admin pages are gated by server role. Commands use /v1 public contracts, not host-privileged APIs. 2026-09-19 correction: was BLOCKED_EXTERNAL at dd4f457989f49a3c034ec8258ed9c4e62f20417c claimed by agent:principal-1 (started 2026-09-15T05:40:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/web is 125 lines across 6 files. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "Web surfaces are serverOnly. Admin pages are gated by server role. Commands use /v1 public contracts, not host-privileged APIs. 2026-09-19 correction: was BLOCKED_EXTERNAL at dd4f457989f49a3c034ec8258ed9c4e62f20417c claimed by agent:principal-1 (started 2026-09-15T05:40:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/web is 125 lines across 6 files. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-21 (e5a7d57) PASS: reconciliation in evidence/APP-012/RECONCILIATION.md. Authorization is the server's, once, for every client: api/rbac.rs resolves the session user's tenant and workspace roles from the membership rows and applies RUN-006's rbac::check; admin projections (/v1/members, /v1/policies, /v1/connectors, /v1/usage, /v1/audit), admin commands (SetPolicy, InviteMember, UpdateMembership, RemoveMember) and the trust decisions are gated with SCOPE_FORBIDDEN + typed rbac details. Memberships live in the identity owner, SetPolicy in the policy store, and a durable per-tenant hash chain over audit_entries (audit/store.rs, OPS-002's home) records every admin decision and approval in the owner's own transaction. quansio-server serves the built web app under /app/ (QUANSIO_WEB_ROOT; locked CSP, nosniff, index fallback, no path escape). apps/web: browser client of /v1 (bearer session or harness headers), page-side mirror of the role table used only to offer, decoders and validated builders, responsive React shell (drawer/rail/sidebar), one page per surface, esbuild bundle. Acceptance 1 (same contracts and authorization rules as desktop) and 2 (admin pages enforce server RBAC) proven by web.e2e.test.ts and web_admin_surface.rs; verified by hand in the browser at desktop and phone widths. Seeds now create memberships (owner/admin for the seeded user; --member for other roles). DOMAIN.md \u00a714 gains /members and /policies."
     },
     "APP-013": {
       "coverage": "PARTIAL",
