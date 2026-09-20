@@ -38,6 +38,9 @@ export const PRELOAD_ALLOWLIST = [
   "artifacts.open",
   "evidence.get",
   "search.query",
+  "work.graph",
+  "work.propose",
+  "work.objective",
 ] as const;
 
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
@@ -133,6 +136,11 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     openArtifact: (artifactId: string, versionId: string) => send("artifacts.open", { artifactId, versionId }),
     getEvidence: (evidenceId: string) => send("evidence.get", { evidenceId }),
     search: (request: { q: string; channels?: readonly string[]; maxResults?: number }) => send("search.query", request),
+    // The plan / WorkGraph surface (APP-005): the projection and the two validated edits.
+    workGraph: () => send("work.graph", {}),
+    proposeGraphEdit: (proposal: Record<string, unknown>) => send("work.propose", proposal),
+    createObjective: (objective: { title: string; description?: string | null; completionContract?: Record<string, unknown> | null }) =>
+      send("work.objective", objective),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),

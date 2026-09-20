@@ -37,6 +37,12 @@
       "command": "python3.12 scripts/validate_v81.py  # PASS (99 tasks, 10 milestones, 50 PASS, 7 ready)",
       "exit_code": 0,
       "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh  # on main at d5e7322 (the merge f94d84f plus its progress commit) from an external detached worktree: 11/11 gates PASS, database-backed; recorded after the merge",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-19T19-39-30Z/ci-main-external-worktree.log"
     }
   ],
   "results": [
@@ -67,6 +73,11 @@
     },
     {
       "command": "python3.12 scripts/validate_v81.py  # PASS (99 tasks, 10 milestones, 50 PASS, 7 ready)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh  # on main at d5e7322 (the merge f94d84f plus its progress commit) from an external detached worktree: 11/11 gates PASS, database-backed; recorded after the merge",
       "exit_code": 0,
       "result": "PASS"
     }

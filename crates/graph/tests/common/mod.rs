@@ -121,7 +121,7 @@ pub async fn seed_tenant(pool: &PgPool, tenant: &str, user: &str, workspace: &st
         .execute(&mut *tx)
         .await
         .expect("insert workspace");
-    quansio_server::control::schema::set_tenant_context(&mut tx, tenant)
+    quansio_events::schema::set_tenant_context(&mut tx, tenant)
         .await
         .expect("tenant context");
     sqlx::query(
@@ -143,7 +143,7 @@ pub async fn seed_tenant(pool: &PgPool, tenant: &str, user: &str, workspace: &st
 pub async fn prepare_two_tenants(prefix: &str) -> Option<(String, PgPool)> {
     let name = admin_url().map(|_| scratch_name(prefix))?;
     let pool = fresh_database(&name).await?;
-    quansio_server::control::schema::migrate(&pool)
+    quansio_events::schema::migrate(&pool)
         .await
         .expect("migrate");
     seed_tenant(&pool, TENANT, USER, WORKSPACE, SEED_NODE).await;
@@ -155,7 +155,7 @@ pub async fn prepare_two_tenants(prefix: &str) -> Option<(String, PgPool)> {
 pub async fn prepare(prefix: &str) -> Option<(String, PgPool)> {
     let name = admin_url().map(|_| scratch_name(prefix))?;
     let pool = fresh_database(&name).await?;
-    quansio_server::control::schema::migrate(&pool)
+    quansio_events::schema::migrate(&pool)
         .await
         .expect("migrate");
     seed_tenant(&pool, TENANT, USER, WORKSPACE, SEED_NODE).await;

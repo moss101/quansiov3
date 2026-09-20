@@ -92,7 +92,7 @@ fn transaction(store: GraphStore, pool: &PgPool) -> GraphTransaction {
 
 async fn tenant_count(pool: &PgPool, sql: &str) -> i64 {
     let mut tx = pool.begin().await.expect("begin");
-    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+    quansio_events::schema::set_tenant_context(&mut tx, TENANT)
         .await
         .expect("tenant context");
     let count = sqlx::query_scalar(sql)
@@ -118,7 +118,7 @@ async fn setup(prefix: &str) -> Option<(String, PgPool, GraphStore)> {
 
 async fn seed_policy(pool: &PgPool, max_plan_nodes: i32) {
     let mut tx = pool.begin().await.expect("begin");
-    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+    quansio_events::schema::set_tenant_context(&mut tx, TENANT)
         .await
         .expect("tenant context");
     sqlx::query(

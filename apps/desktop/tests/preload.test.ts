@@ -76,6 +76,9 @@ describe("preload bridge", () => {
         "openArtifact",
         "getEvidence",
         "search",
+        "workGraph",
+        "proposeGraphEdit",
+        "createObjective",
         "onStreamFrame",
         "onStreamState",
         "onStreamError",
@@ -129,6 +132,9 @@ describe("preload bridge", () => {
     await api.openArtifact("art_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", "artv_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.getEvidence("evd_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.search({ q: "quokka", channels: ["artifacts"] });
+    await api.workGraph();
+    await api.proposeGraphEdit({ base_revision: 1, nodes_add: [] });
+    await api.createObjective({ title: "ship" });
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

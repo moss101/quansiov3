@@ -28,6 +28,7 @@
 pub mod cancel;
 pub mod capacity;
 pub mod graph;
+pub mod graph_port;
 pub mod queue;
 pub mod service;
 
@@ -40,6 +41,7 @@ pub use graph::{
     DependencyEdge, GraphSnapshot, NodeTransition, ReleaseBatch, ReleaseOutcome, RunRef,
     UnavailableWorkGraph, WorkGraphPort, WorkNodeView, GRAPH_TRANSACTION_OWNER,
 };
+pub use graph_port::GraphWorkGraph;
 pub use queue::{
     ensure_acyclic, join_plan, node_ids, project, release_plan, select, DeferralReason,
     DispatchCandidate, JoinPlan, ReleasePlan, Selection,

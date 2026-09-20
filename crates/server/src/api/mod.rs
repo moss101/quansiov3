@@ -28,6 +28,7 @@ pub mod search;
 pub mod stream;
 pub mod threads;
 pub mod webhooks;
+pub mod workgraph;
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -534,6 +535,7 @@ pub fn router(state: ApiState) -> Router {
         )
         .route("/v1/evidence/:id", get(artifacts::evidence))
         .route("/v1/search", get(search::search))
+        .route("/v1/workgraph", get(workgraph::workgraph))
         .route("/v1/effects", get(projections::effects))
         .with_state(state)
 }

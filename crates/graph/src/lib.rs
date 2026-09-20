@@ -9,7 +9,7 @@
 //! mutation seam that CORE-005's GraphTransaction wraps to add event emission.
 //!
 //! Every method is tenant-scoped: it opens a transaction, sets the tenant context via
-//! `quansio_server::control::schema::set_tenant_context`, and additionally constrains
+//! `quansio_events::schema::set_tenant_context`, and additionally constrains
 //! every statement by `tenant_id`.
 #![forbid(unsafe_code)]
 

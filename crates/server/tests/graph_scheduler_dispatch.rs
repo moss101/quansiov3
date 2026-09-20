@@ -1,166 +1,54 @@
 //! End-to-end scheduler dispatch against the canonical graph store (CORE-008).
 //!
-//! `crates/server` cannot depend on `quansio-graph` (the graph store depends on
-//! `quansio-server` for `control::schema`, and the workspace conformance gate forbids the
-//! package cycle), so the scheduler talks to Runs through its `RunDispatch` port. This
-//! suite supplies the graph-backed implementation and proves that scheduler-driven work
+//! The scheduler talks to Runs through its `RunDispatch` port; the production implementation
+//! is `scheduler::GraphDispatch`. This suite drives it and proves that scheduler-driven work
 //! moves through the canonical Run state machine and the canonical Objective/Run creation
 //! path in the graph store — not through a second state machine.
 //!
 //! Environment: `QUANSIO_TEST_POSTGRES_URL` (see `tests/common/mod.rs`). Absent →
 //! `BLOCKED_EXTERNAL` marker and return.
 
+mod common;
+
+/// Fixture identities (the graph suite's originals, kept so the assertions read the same).
+const TENANT: &str = "tn_01J8Z3K6F1N8VQ2X5W9Y0CCCCC";
+const USER: &str = "usr_01J8Z3K6F1N8VQ2X5W9Y0CCCCC";
+const WORKSPACE: &str = "ws_01J8Z3K6F1N8VQ2X5W9Y0CCCCC";
+const SEED_NODE: &str = "wn_01J8Z3K6F1N8VQ2X5W9Y0CCCCC";
+
+/// Migrate a fresh scratch database and seed the tenant.
+async fn prepare(prefix: &str) -> Option<(String, sqlx::PgPool)> {
+    let name = common::scratch_name(&format!("graph_{prefix}"));
+    let pool = common::fresh_database(&name).await?;
+    quansio_server::control::schema::migrate(&pool)
+        .await
+        .expect("migrate");
+    common::seed_tenant(&pool, TENANT, USER, WORKSPACE, SEED_NODE).await;
+    Some((name, pool))
+}
+
+use common::{blocked_marker, drop_pool};
+
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use chrono::{Duration as ChronoDuration, Utc};
 use quansio_core::CanonicalId;
 use quansio_events::EventStore;
-use quansio_server::control::schema;
-use quansio_server::scheduler::{
-    DispatchOutcome, NewTimer, RoutineFireOutcome, RoutineFireRequest, RunDispatch,
-    RunDispatchRequest, RunResumeRequest, Scheduler, SchedulerConfig, SchedulerError, TimerStore,
+use quansio_graph::{
+    AgentKind, GraphStore, NewAgentThread, NewRun, NewWorkNode, RunStatus, RunTriggerKind,
+    WorkNodeKind, WorkOrigin,
 };
+use quansio_server::control::schema;
+use quansio_server::scheduler::{GraphDispatch, NewTimer, Scheduler, SchedulerConfig, TimerStore};
 use serde_json::json;
 use sqlx::PgPool;
-
-use quansio_graph::{
-    AgentKind, GraphError, GraphStore, NewAgentThread, NewRun, NewWorkNode, RunStatus,
-    RunTriggerKind, WorkNodeKind, WorkOrigin,
-};
-
-mod common;
-use common::{blocked_marker, drop_pool, prepare, TENANT, USER, WORKSPACE};
-
-/// Graph-backed dispatch port: the only implementation that touches Run/WorkGraph state.
-struct GraphDispatch {
-    pool: PgPool,
-}
-
-impl GraphDispatch {
-    fn store(&self) -> GraphStore {
-        GraphStore::new(self.pool.clone(), TENANT).expect("graph store")
-    }
-}
-
-fn failure(run_id: &str, error: GraphError) -> SchedulerError {
-    SchedulerError::RunDispatch {
-        run_id: run_id.to_string(),
-        reason: error.to_string(),
-    }
-}
-
-#[async_trait]
-impl RunDispatch for GraphDispatch {
-    async fn dispatch_queued(
-        &self,
-        request: RunDispatchRequest,
-    ) -> Result<DispatchOutcome, SchedulerError> {
-        let store = self.store();
-        let run_id = run_id(&request.run_id)?;
-        match store
-            .transition_run(&run_id, RunStatus::Running, None)
-            .await
-        {
-            Ok(_) => Ok(DispatchOutcome::Dispatched),
-            Err(GraphError::IllegalTransition { .. }) => Ok(DispatchOutcome::NotDispatchable),
-            Err(error) => Err(failure(&request.run_id, error)),
-        }
-    }
-
-    async fn resume_timer_wait(
-        &self,
-        request: RunResumeRequest,
-    ) -> Result<DispatchOutcome, SchedulerError> {
-        let store = self.store();
-        let run_id = run_id(&request.run_id)?;
-        let run = store
-            .get_run(&run_id)
-            .await
-            .map_err(|error| failure(&request.run_id, error))?;
-        if run.generation.get() != request.generation {
-            return Ok(DispatchOutcome::Fenced);
-        }
-        if run.status == RunStatus::Running {
-            return Ok(DispatchOutcome::AlreadyRunning);
-        }
-        if !run.status.is_waiting() {
-            return Ok(DispatchOutcome::NotDispatchable);
-        }
-        store
-            .transition_run(&run_id, RunStatus::Running, None)
-            .await
-            .map_err(|error| failure(&request.run_id, error))?;
-        Ok(DispatchOutcome::Dispatched)
-    }
-
-    async fn fire_routine(
-        &self,
-        request: RoutineFireRequest,
-    ) -> Result<RoutineFireOutcome, SchedulerError> {
-        let store = self.store();
-        let title = request
-            .objective_template
-            .get("title")
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or("Routine objective")
-            .to_string();
-        let mut node = NewWorkNode::new(
-            &request.workspace_id,
-            WorkNodeKind::Objective,
-            title,
-            json!({ "kind": "routine", "id": request.routine_id }),
-        );
-        node.origin = WorkOrigin::Routine;
-        let objective = store
-            .create_node(node)
-            .await
-            .map_err(|error| failure(&request.routine_id, error))?;
-        let thread = store
-            .create_agent_thread(NewAgentThread::new(
-                &request.workspace_id,
-                AgentKind::Teammate,
-            ))
-            .await
-            .map_err(|error| failure(&request.routine_id, error))?;
-        let mut run = NewRun::new(
-            &request.workspace_id,
-            objective.id,
-            thread.id,
-            RunTriggerKind::Routine,
-        );
-        run.trigger_ref = Some(request.routine_id.clone());
-        let run = store
-            .create_run(run)
-            .await
-            .map_err(|error| failure(&request.routine_id, error))?;
-        // Enter the scheduler's dispatch path through the canonical state machine.
-        store
-            .transition_run(&run.id, RunStatus::Queued, None)
-            .await
-            .map_err(|error| failure(&run.id.to_string(), error))?;
-        Ok(RoutineFireOutcome {
-            objective_id: objective.id.to_string(),
-            run_id: run.id.to_string(),
-        })
-    }
-}
-
-fn run_id(value: &str) -> Result<CanonicalId, SchedulerError> {
-    CanonicalId::parse_typed(value, quansio_core::Prefix::Run).map_err(|error| {
-        SchedulerError::RunDispatch {
-            run_id: value.to_string(),
-            reason: error.to_string(),
-        }
-    })
-}
 
 fn scheduler(pool: PgPool) -> Scheduler {
     Scheduler::new(
         pool.clone(),
         TENANT,
         SchedulerConfig::new("graph-test"),
-        Arc::new(GraphDispatch { pool }),
+        Arc::new(GraphDispatch::new(pool, TENANT)),
     )
     .expect("scheduler")
 }

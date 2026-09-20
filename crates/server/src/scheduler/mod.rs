@@ -17,6 +17,7 @@
 
 pub mod dispatch;
 pub mod engine;
+pub mod graph_dispatch;
 pub mod routine;
 pub mod timer;
 pub mod wait;
@@ -32,6 +33,7 @@ pub use engine::{
     DEFAULT_DUE_QUEUE_CAPACITY, DEFAULT_MAX_ROUTINES_PER_TICK, DEFAULT_MAX_RUNS_PER_TICK,
     DEFAULT_MAX_TIMERS_PER_TICK,
 };
+pub use graph_dispatch::GraphDispatch;
 pub use routine::{
     AbsencePolicy, Routine, RoutineScheduler, RoutineTickReport, RoutineTrigger, RoutineTriggerKind,
 };

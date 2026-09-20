@@ -61,7 +61,7 @@ async fn cross_tenant_reads_and_writes_return_nothing() {
         .execute(&mut *tx)
         .await
         .expect("set role");
-    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT_B)
+    quansio_events::schema::set_tenant_context(&mut tx, TENANT_B)
         .await
         .expect("tenant b context");
     let count: i64 = sqlx::query("SELECT count(*) AS n FROM work_nodes WHERE id = $1")
@@ -72,7 +72,7 @@ async fn cross_tenant_reads_and_writes_return_nothing() {
         .get("n");
     assert_eq!(count, 0, "RLS hides tenant A's rows from tenant B");
 
-    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+    quansio_events::schema::set_tenant_context(&mut tx, TENANT)
         .await
         .expect("tenant a context");
     let count: i64 = sqlx::query("SELECT count(*) AS n FROM work_nodes WHERE id = $1")

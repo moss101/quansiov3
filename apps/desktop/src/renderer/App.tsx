@@ -12,6 +12,7 @@ import { DESKTOP_SURFACES } from "../surfaces.js";
 import { t } from "../i18n/strings.js";
 import { Artifacts } from "./Artifacts.js";
 import { Conversation } from "./Conversation.js";
+import { Work } from "./Work.js";
 import { Onboarding } from "./Onboarding.js";
 
 interface RunProjection {
@@ -73,7 +74,7 @@ function Shell(): ReactElement {
   const [projection, setProjection] = useState<RunProjection | null>(null);
   const [log, setLog] = useState<readonly LogLine[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
-  const [surface, setSurface] = useState<"conversation" | "artifacts">("conversation");
+  const [surface, setSurface] = useState<"conversation" | "artifacts" | "objectives">("conversation");
 
   const refresh = useCallback(async () => {
     const next = (await window.quansio.activeRun()) as RunProjection;
@@ -114,8 +115,8 @@ function Shell(): ReactElement {
         <ul>
           {DESKTOP_SURFACES.map((entry) => (
             <li key={entry.id} className={entry.id === surface ? "selected" : undefined}>
-              {entry.id === "conversation" || entry.id === "artifacts" ? (
-                <button type="button" onClick={() => { setSurface(entry.id === "artifacts" ? "artifacts" : "conversation"); }}>{entry.id}</button>
+              {entry.id === "conversation" || entry.id === "artifacts" || entry.id === "objectives" ? (
+                <button type="button" onClick={() => { setSurface(entry.id === "artifacts" ? "artifacts" : entry.id === "objectives" ? "objectives" : "conversation"); }}>{entry.id}</button>
               ) : (
                 entry.id
               )}
@@ -142,6 +143,8 @@ function Shell(): ReactElement {
       {projection?.workspaceId ? (
         surface === "artifacts" ? (
           <Artifacts key={`artifacts-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+        ) : surface === "objectives" ? (
+          <Work key={`work-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
         ) : (
           <Conversation
             key={projection.workspaceId}

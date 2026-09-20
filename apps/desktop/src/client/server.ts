@@ -289,6 +289,12 @@ export class ServerClient {
     return this.#request("GET", `${this.origin}/v1/search?${queryString}`);
   }
 
+  // ---- the plan / WorkGraph surface (APP-005) ----
+
+  workgraph(workspaceId: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/workgraph?workspace_id=${encodeURIComponent(workspaceId)}`);
+  }
+
   async #requestBytes(url: string): Promise<ArtifactBytes> {
     const controller = new AbortController();
     const timer = setTimeout(() => {

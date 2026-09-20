@@ -17,6 +17,7 @@ pub mod error;
 pub mod event_type;
 pub mod outbox;
 pub mod projection;
+pub mod schema;
 pub mod store;
 pub mod stream;
 
