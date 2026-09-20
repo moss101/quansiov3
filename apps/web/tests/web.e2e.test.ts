@@ -164,11 +164,9 @@ describe.skipIf(blocked !== null)("web E2E against quansio-server", () => {
     // The viewer: review surfaces only; every admin projection and command is refused by
     // the server with a typed RBAC refusal, whatever the page might have addressed.
     const viewer = session(VIEWER).client();
-    const viewerMe = await viewer.get("/v1/me").catch((error: unknown) => error);
-    // /v1/me needs a bearer session; the harness scope has none, so roles come from the
-    // members projection the owner reads below and from the seed itself.
-    expect(viewerMe).toBeInstanceOf(ApiError);
-    const viewerRoles: Roles = { tenant: "member", workspace: "viewer" };
+    // The page reads its roles from /v1/me exactly as the server reports them.
+    const viewerRoles: Roles = rolesFromMe(await viewer.get("/v1/me"), WORKSPACE);
+    expect(viewerRoles).toEqual({ tenant: "member", workspace: "viewer" });
     expect(offered(viewerRoles).map((item) => item.id)).toEqual(["work-review", "approvals", "artifacts"]);
     const graph = decodeWorkGraph(await viewer.get(`/v1/workgraph?workspace_id=${WORKSPACE}`));
     expect(graph.nodes.length).toBeGreaterThan(0);
@@ -191,7 +189,8 @@ describe.skipIf(blocked !== null)("web E2E against quansio-server", () => {
 
     // The owner: every surface, and the administration works end to end.
     const owner = session(OWNER).client();
-    const ownerRoles: Roles = { tenant: "owner", workspace: "admin" };
+    const ownerRoles: Roles = rolesFromMe(await owner.get("/v1/me"), WORKSPACE);
+    expect(ownerRoles).toEqual({ tenant: "owner", workspace: "admin" });
     expect(offered(ownerRoles).map((item) => item.id)).toHaveLength(9);
     let members = decodeMembers(await owner.get("/v1/members"));
     expect(members.map((member) => member.userId).sort()).toEqual([OWNER, VIEWER, APPROVER].sort());
@@ -234,7 +233,10 @@ describe.skipIf(blocked !== null)("web E2E against quansio-server", () => {
     const after = decodePolicies(await owner.get(`/v1/policies?workspace_id=${WORKSPACE}`));
     expect(after.find((policy) => policy.scope === "tenant")?.approvalTtlSeconds).toBe(900);
     expect(decodeUsage(await owner.get("/v1/usage")).meters.length).toBe(8);
-    expect(rolesFromMe({ session: { tenant_id: TENANT }, tenants: [{ id: TENANT, role: "owner" }], workspaces: [{ id: WORKSPACE, role: "admin" }] }, WORKSPACE)).toEqual(ownerRoles);
+    // The approver's roles, from /v1/me too: review surfaces only, and a decision offered.
+    const approverRoles = rolesFromMe(await session(APPROVER).client().get("/v1/me"), WORKSPACE);
+    expect(approverRoles).toEqual({ tenant: "member", workspace: "approver" });
+    expect(offered(approverRoles).map((item) => item.id)).toEqual(["work-review", "approvals", "artifacts"]);
   }, 60_000);
 
   it("approval E2E: a viewer cannot decide, an approver decides bound to the preview, and the audit log says who", async () => {
