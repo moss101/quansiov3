@@ -1,0 +1,173 @@
+/**
+ * The web shell (APP-012): sign-in, the workspace, the navigation the session's roles
+ * allow, and the page for the route — responsive by {@link layoutFor}.
+ *
+ * The shell offers what the roles allow (`offered(roles)`); everything it offers the
+ * server decides again, and a refusal renders as the refusal. There is no host API on
+ * this side: the shell holds a bearer session and talks to `/v1/` only.
+ */
+
+import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
+
+import { type WebClient } from "../client.js";
+import { layoutFor, type Layout } from "../layout.js";
+import { rolesFromMe, type Roles } from "../rbac.js";
+import { type WebSession } from "../session.js";
+import { WEB_SURFACES, offered, type WebSurfaceId } from "../surfaces.js";
+import { Approvals, Artifacts, Audit, Capabilities, Connectors, Policies, Refusal, Usage, Users, WorkReview } from "./pages.js";
+import { pathFor, routeFor, type Route } from "./router.js";
+import { t, type StringKey } from "./strings.js";
+
+const TITLES: Record<Exclude<WebSurfaceId, "sign-in">, StringKey> = {
+  "work-review": "workReview",
+  approvals: "approvals",
+  artifacts: "artifacts",
+  policies: "policies",
+  connectors: "connectors",
+  users: "users",
+  capabilities: "capabilities",
+  "audit-and-privacy": "audit",
+  usage: "usage",
+};
+
+interface MeView {
+  readonly user?: { readonly display_name?: string };
+  readonly workspaces?: readonly { readonly id: string; readonly name: string; readonly role: string }[];
+}
+
+export function App({ session, width }: { readonly session: WebSession; readonly width: number }): ReactElement {
+  const [route, setRoute] = useState<Route>(() => routeFor(window.location.pathname));
+  const [me, setMe] = useState<MeView | null>(null);
+  const [meError, setMeError] = useState<unknown>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(session.current?.workspace_id ?? null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const layout: Layout = layoutFor(width);
+  const client: WebClient | null = useMemo(() => (session.signedIn ? session.client() : null), [session, session.signedIn]);
+
+  useEffect(() => {
+    const onPop = () => { setRoute(routeFor(window.location.pathname)); };
+    window.addEventListener("popstate", onPop);
+    return () => { window.removeEventListener("popstate", onPop); };
+  }, []);
+
+  useEffect(() => {
+    if (!client) {
+      return;
+    }
+    client.get<MeView>("/v1/me").then(
+      (view) => {
+        setMe(view);
+        if (!workspaceId && view.workspaces && view.workspaces.length > 0) {
+          setWorkspaceId(view.workspaces[0]?.id ?? null);
+        }
+      },
+      (error: unknown) => { setMeError(error); },
+    );
+  }, [client]);
+
+  const navigate = useCallback((next: Route) => {
+    window.history.pushState({}, "", pathFor(next));
+    setRoute(next);
+    setMenuOpen(false);
+  }, []);
+
+  if (!session.signedIn || !client) {
+    return <SignIn session={session} />;
+  }
+  const roles: Roles = rolesFromMe(me, workspaceId);
+  const surfaces = offered(roles);
+  const page = (): ReactElement => {
+    if (meError) {
+      return <Refusal error={meError} />;
+    }
+    if (!me) {
+      return <p>{t("loading")}</p>;
+    }
+    if (!workspaceId) {
+      return <p className="muted">{t("noWorkspaceRole")}</p>;
+    }
+    const props = { client, workspaceId, roles };
+    switch (route.surface) {
+      case "approvals":
+        return <Approvals {...props} />;
+      case "artifacts":
+        return <Artifacts {...props} />;
+      case "policies":
+        return <Policies {...props} />;
+      case "connectors":
+        return <Connectors {...props} />;
+      case "users":
+        return <Users {...props} />;
+      case "capabilities":
+        return <Capabilities {...props} />;
+      case "audit-and-privacy":
+        return <Audit {...props} />;
+      case "usage":
+        return <Usage {...props} />;
+      default:
+        return <WorkReview {...props} />;
+    }
+  };
+  return (
+    <div className={`shell layout-${layout.mode} nav-${layout.navigation}${menuOpen ? " menu-open" : ""}`} data-layout={layout.mode} data-columns={String(layout.columns)}>
+      <header>
+        {layout.navigation === "drawer" ? <button type="button" className="menu" aria-label={t("menu")} aria-expanded={menuOpen} onClick={() => { setMenuOpen(!menuOpen); }}>☰</button> : null}
+        <h1>{t("appName")}</h1>
+        <label className="workspace">
+          <span>{t("workspace")}</span>
+          <select value={workspaceId ?? ""} onChange={(event) => { setWorkspaceId(event.target.value || null); }}>
+            {(me?.workspaces ?? []).map((workspace) => <option key={workspace.id} value={workspace.id}>{workspace.name} ({workspace.role})</option>)}
+          </select>
+        </label>
+        <span className="muted">{me?.user?.display_name ?? ""}</span>
+        <button type="button" onClick={() => { void session.signOut().then(() => { window.location.assign("/app/"); }); }}>{t("signOut")}</button>
+      </header>
+      <nav aria-label="surfaces">
+        <ul>
+          {surfaces.map((descriptor) => (
+            <li key={descriptor.id} className={route.surface === descriptor.id ? "selected" : undefined} data-surface={descriptor.id} data-admin={descriptor.adminOnly ? "true" : "false"}>
+              <button type="button" onClick={() => { navigate({ surface: descriptor.id, id: null }); }}>{descriptor.id === "sign-in" ? t("signIn") : t(TITLES[descriptor.id])}</button>
+            </li>
+          ))}
+        </ul>
+        <p className="muted roles">{roles.tenant ?? "no tenant role"} · {roles.workspace ?? "no workspace role"}</p>
+      </nav>
+      <main>{page()}</main>
+    </div>
+  );
+}
+
+function SignIn({ session }: { readonly session: WebSession }): ReactElement {
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [state, setState] = useState<"idle" | "sent" | "completing" | "error">(() => (new URLSearchParams(window.location.search).get("token") ? "completing" : "idle"));
+  const [message, setMessage] = useState<string | null>(null);
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (token) {
+      session.completeMagicLink(token).then(
+        () => { window.location.assign("/app/"); },
+        (error: unknown) => { setState("error"); setMessage(error instanceof Error ? error.message : String(error)); },
+      );
+    }
+  }, [session]);
+  return (
+    <div className="shell sign-in">
+      <main>
+        <h1>{t("appName")}</h1>
+        {state === "completing" ? <p>{t("completing")}</p> : null}
+        {state === "sent" ? <p role="status">{t("linkSent")}</p> : null}
+        {message ? <p className="notice" role="alert">{message}</p> : null}
+        {state === "idle" || state === "error" ? (
+          <form onSubmit={(event) => { event.preventDefault(); session.startMagicLink(email, name || email).then(() => { setState("sent"); }, (error: unknown) => { setState("error"); setMessage(error instanceof Error ? error.message : String(error)); }); }}>
+            <input aria-label={t("email")} placeholder={t("email")} value={email} onChange={(event) => { setEmail(event.target.value); }} />
+            <input aria-label={t("displayName")} placeholder={t("displayName")} value={name} onChange={(event) => { setName(event.target.value); }} />
+            <button type="submit">{t("sendLink")}</button>
+          </form>
+        ) : null}
+      </main>
+    </div>
+  );
+}
+
+export { WEB_SURFACES };

@@ -118,6 +118,29 @@ pub async fn seed_tenant(pool: &PgPool, tenant: &str, user: &str, workspace: &st
     quansio_server::control::schema::set_tenant_context(&mut tx, tenant)
         .await
         .expect("tenant context");
+    // Roles are memberships (DOMAIN.md §2): the seeded user owns the tenant and
+    // administers the workspace, as onboarding would have made them.
+    let suffix = user.trim_start_matches("usr_");
+    sqlx::query(
+        "INSERT INTO tenant_memberships (id, tenant_id, user_id, role, status) VALUES ($1, $2, $3, 'owner', 'active')",
+    )
+    .bind(format!("tm_{suffix}"))
+    .bind(tenant)
+    .bind(user)
+    .execute(&mut *tx)
+    .await
+    .expect("insert tenant membership");
+    sqlx::query(
+        "INSERT INTO workspace_memberships (id, tenant_id, workspace_id, user_id, role, status) \
+         VALUES ($1, $2, $3, $4, 'admin', 'active')",
+    )
+    .bind(format!("wm_{suffix}"))
+    .bind(tenant)
+    .bind(workspace)
+    .bind(user)
+    .execute(&mut *tx)
+    .await
+    .expect("insert workspace membership");
     sqlx::query(
         "INSERT INTO work_nodes (id, tenant_id, workspace_id, kind, title, created_by) \
          VALUES ($1, $2, $3, 'objective', 'seed node', '{\"kind\":\"user\",\"id\":\"usr_seed\"}'::jsonb)",

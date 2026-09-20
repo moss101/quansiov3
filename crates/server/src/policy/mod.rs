@@ -53,4 +53,6 @@ pub use rules::{
     validate_user_rule, Policy, PolicyRule, PolicyScope, PolicySet, RuleConditions, RuleContext,
     UserRule,
 };
-pub use store::{ApprovalRuntime, DecisionRow, ParkedApproval, PolicyStore, POLICY_OWNER_EVENTS};
+pub use store::{
+    ApprovalRuntime, DecisionRow, ParkedApproval, PolicyChange, PolicyStore, POLICY_OWNER_EVENTS,
+};

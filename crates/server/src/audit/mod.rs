@@ -3,7 +3,11 @@
 //! Entries are immutable: `append` is the only write. An in-place edit is refused.
 //! Each tenant has its own chain (`prev_hash` / `hash`).
 
+pub mod store;
+
 use sha2::{Digest, Sha256};
+
+pub use store::{append_in, list, verify, AuditDraft, AuditRecord, ChainCheck};
 
 /// One AuditEntry (DOMAIN.md §16).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -55,7 +59,9 @@ impl AuditEntry {
     }
 }
 
-fn digest(canonical: &str) -> String {
+/// SHA-256 hex of an entry's canonical form: what `hash` is and what a verifier recomputes.
+#[must_use]
+pub fn digest(canonical: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(canonical.as_bytes());
     format!("{:x}", hasher.finalize())

@@ -7,6 +7,7 @@
 
 pub mod auth;
 pub mod enterprise;
+pub mod members;
 pub mod oauth;
 pub mod settings;
 
@@ -25,6 +26,7 @@ pub use enterprise::{
     live_oidc_configured, DirectoryUser, GroupRoleMap, ServicePrincipal, Session, SsoAssertion,
     LIVE_OIDC_ISSUER,
 };
+pub use members::{Invitation, MemberAdmin, MemberView, WorkspaceMembershipView};
 pub use settings::{
     effective_settings, merge_settings, platform_defaults, settings_effects, validate_settings,
     SettingsEffect,
@@ -82,7 +84,29 @@ pub enum IdentityError {
     /// Schema/id error.
     #[error("identity schema: {0}")]
     Schema(String),
+    /// The entity is not in this tenant.
+    #[error("identity not found: {0}")]
+    NotFound(String),
+    /// The change contradicts the current state.
+    #[error("identity conflict: {0}")]
+    Conflict(String),
 }
+
+impl IdentityError {
+    /// The DOMAIN.md §15 code this refusal maps to.
+    #[must_use]
+    pub const fn code(&self) -> &'static str {
+        match self {
+            Self::Event(_) | Self::Database(_) => "INTERNAL",
+            Self::Schema(_) => "VALIDATION_SCHEMA",
+            Self::NotFound(_) => "NOT_FOUND",
+            Self::Conflict(_) => "CONFLICT_STATE",
+        }
+    }
+}
+
+/// Repository path of this module's canonical owner.
+pub const IDENTITY_OWNER: &str = "crates/server/src/control/identity";
 
 /// Result of onboarding a brand-new user.
 #[derive(Debug, Clone, PartialEq, Eq)]

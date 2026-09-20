@@ -15,6 +15,7 @@
 //!   deployment cannot serve a catalog its own binary was not built from;
 //! * `/v1/read-projections` reports the §10 read projections the same way.
 
+pub mod admin;
 pub mod artifacts;
 pub mod auth;
 pub mod commands;
@@ -24,11 +25,13 @@ pub mod knowledge;
 pub mod limits;
 pub mod live;
 pub mod projections;
+pub mod rbac;
 pub mod seams;
 pub mod search;
 pub mod stream;
 pub mod threads;
 pub mod trust;
+pub mod web;
 pub mod webhooks;
 pub mod workgraph;
 
@@ -311,6 +314,7 @@ pub struct ApiState {
     live: Arc<live::LiveHub>,
     objects: Option<Arc<dyn ObjectStore>>,
     search: Option<Arc<search::SearchService>>,
+    web_root: Option<web::WebRoot>,
 }
 
 impl ApiState {
@@ -350,7 +354,21 @@ impl ApiState {
             live: live::LiveHub::new(),
             objects: None,
             search: None,
+            web_root: None,
         })
+    }
+
+    /// Serve the built web app from `root` under `/app/` (APP-012).
+    #[must_use]
+    pub fn with_web_root(mut self, root: web::WebRoot) -> Self {
+        self.web_root = Some(root);
+        self
+    }
+
+    /// The web app's asset root, when the deployable serves it.
+    #[must_use]
+    pub fn web_root(&self) -> Option<&web::WebRoot> {
+        self.web_root.as_ref()
     }
 
     /// Install the object store attachments are written to (CORE-007's store; none means
@@ -544,6 +562,14 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/knowledge", get(knowledge::knowledge))
         .route("/v1/memory", get(knowledge::memory))
         .route("/v1/skills", get(knowledge::skills))
+        .route("/v1/members", get(admin::members))
+        .route("/v1/policies", get(admin::policies))
+        .route("/v1/connectors", get(admin::connectors))
+        .route("/v1/usage", get(admin::usage))
+        .route("/v1/audit", get(admin::audit_log))
+        .route("/app", get(web::index))
+        .route("/app/", get(web::index))
+        .route("/app/*path", get(web::asset))
         .with_state(state)
 }
 

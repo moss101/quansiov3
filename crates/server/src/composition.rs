@@ -30,6 +30,8 @@ pub struct ServerConfig {
     pub object_store: Option<S3Config>,
     /// Root directory of INT-004's derived search index (`/v1/search` content channel), when set.
     pub search_index_root: Option<String>,
+    /// Directory of the built web app served under `/app/` (APP-012), when set.
+    pub web_root: Option<String>,
 }
 
 impl ServerConfig {
@@ -63,11 +65,15 @@ impl ServerConfig {
         let search_index_root = env::var("QUANSIO_SEARCH_INDEX_ROOT")
             .ok()
             .filter(|value| !value.is_empty());
+        let web_root = env::var("QUANSIO_WEB_ROOT")
+            .ok()
+            .filter(|value| !value.is_empty());
         Ok(Self {
             database_url,
             bind,
             max_connections,
             object_store,
+            web_root,
             search_index_root,
         })
     }
@@ -128,6 +134,14 @@ impl Composition {
                 .map_err(|error| format!("search index at {root}: {error}"))?;
             eprintln!("quansio-server: QUANSIO_SEARCH_INDEX_ROOT={root}: /v1/search indexes artifact content");
             api = api.with_search_index(Arc::new(index));
+        }
+        if let Some(root) = config.web_root.as_deref() {
+            let root = crate::api::web::WebRoot::new(root)?;
+            eprintln!(
+                "quansio-server: QUANSIO_WEB_ROOT={}: the web app is served under /app/",
+                root.path().display()
+            );
+            api = api.with_web_root(root);
         }
         Ok(Self { config, pool, api })
     }

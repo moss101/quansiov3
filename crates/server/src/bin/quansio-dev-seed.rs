@@ -11,8 +11,12 @@
 //!
 //! Usage:
 //!   quansio-dev-seed create --database <name> --tenant <tn_…> --user <usr_…> \
-//!       --workspace <ws_…> --node <wn_…> [--ask-writes] [--intelligence]
+//!       --workspace <ws_…> --node <wn_…> [--ask-writes] [--intelligence] \
+//!       [--member <usr_…>:<tenant role>:<workspace role>]…
 //!   quansio-dev-seed drop --database <name>
+//!
+//! The seeded user owns the tenant and administers the workspace; `--member` adds users
+//! with other roles (a viewer, an approver…) so a harness can prove the server's RBAC.
 //!
 //! `--intelligence` also seeds what a knowledge/memory harness deletes (APP-011): three
 //! knowledge entries (active, verified, candidate), one active memory entry, and a derived
@@ -37,6 +41,8 @@ struct Args {
     ask_writes: bool,
     /// Also seed knowledge, memory and their derived index rows.
     intelligence: bool,
+    /// Extra users with roles: `--member <usr_…>:<tenant role>:<workspace role>`.
+    members: Vec<(String, String, String)>,
 }
 
 /// Fixed ids of the `--intelligence` rows: knowledge in three lifecycle states, active
@@ -77,6 +83,7 @@ fn parse_args() -> Result<Args, String> {
         node: String::new(),
         ask_writes: false,
         intelligence: false,
+        members: Vec::new(),
     };
     while let Some(flag) = args.next() {
         if flag == "--ask-writes" {
@@ -94,6 +101,19 @@ fn parse_args() -> Result<Args, String> {
             "--user" => parsed.user = value,
             "--workspace" => parsed.workspace = value,
             "--node" => parsed.node = value,
+            "--member" => {
+                let mut parts = value.splitn(3, ':');
+                let (Some(user), Some(tenant_role), Some(workspace_role)) =
+                    (parts.next(), parts.next(), parts.next())
+                else {
+                    return Err("--member needs <usr_…>:<tenant role>:<workspace role>".to_string());
+                };
+                parsed.members.push((
+                    user.to_string(),
+                    tenant_role.to_string(),
+                    workspace_role.to_string(),
+                ));
+            }
             other => return Err(format!("unknown flag {other}")),
         }
     }
@@ -186,6 +206,35 @@ async fn run(args: Args) -> Result<(), String> {
     schema::set_tenant_context(&mut tx, &args.tenant)
         .await
         .map_err(|error| format!("tenant context: {error}"))?;
+    // Roles are memberships (DOMAIN.md §2): the seeded user owns the tenant and
+    // administers the workspace, as onboarding would have made them.
+    seed_membership(
+        &mut tx,
+        &args.tenant,
+        &args.workspace,
+        &args.user,
+        "owner",
+        "admin",
+    )
+    .await?;
+    for (user, tenant_role, workspace_role) in &args.members {
+        sqlx::query("INSERT INTO users (id, primary_email, display_name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING")
+            .bind(user)
+            .bind(format!("{user}@example.com"))
+            .bind(format!("e2e {tenant_role}/{workspace_role}"))
+            .execute(&mut *tx)
+            .await
+            .map_err(|error| format!("member user {user}: {error}"))?;
+        seed_membership(
+            &mut tx,
+            &args.tenant,
+            &args.workspace,
+            user,
+            tenant_role,
+            workspace_role,
+        )
+        .await?;
+    }
     sqlx::query(
         "INSERT INTO work_nodes (id, tenant_id, workspace_id, kind, title, created_by) \
          VALUES ($1, $2, $3, 'objective', 'e2e seed', '{\"kind\":\"user\",\"id\":\"usr_seed\"}'::jsonb)",
@@ -223,6 +272,42 @@ async fn run(args: Args) -> Result<(), String> {
         .map_err(|error| format!("commit: {error}"))?;
     pool.close().await;
     println!("database_url={database_url}");
+    Ok(())
+}
+
+/// One tenant membership and one workspace membership, ids derived from the user id as
+/// onboarding derives them.
+async fn seed_membership(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    tenant: &str,
+    workspace: &str,
+    user: &str,
+    tenant_role: &str,
+    workspace_role: &str,
+) -> Result<(), String> {
+    let suffix = user.trim_start_matches("usr_");
+    sqlx::query(
+        "INSERT INTO tenant_memberships (id, tenant_id, user_id, role, status) VALUES ($1, $2, $3, $4, 'active')",
+    )
+    .bind(format!("tm_{suffix}"))
+    .bind(tenant)
+    .bind(user)
+    .bind(tenant_role)
+    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("tenant membership {user}: {error}"))?;
+    sqlx::query(
+        "INSERT INTO workspace_memberships (id, tenant_id, workspace_id, user_id, role, status) \
+         VALUES ($1, $2, $3, $4, $5, 'active')",
+    )
+    .bind(format!("wm_{suffix}"))
+    .bind(tenant)
+    .bind(workspace)
+    .bind(user)
+    .bind(workspace_role)
+    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("workspace membership {user}: {error}"))?;
     Ok(())
 }
 

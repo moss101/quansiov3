@@ -1,0 +1,53 @@
+/* Responsive shell (APP-012). Breakpoints mirror src/layout.ts: phone < 720px, tablet < 1080px. */
+:root { --bg: #fff; --fg: #1a1a1a; --muted: #666; --line: #ddd; --accent: #2a5db0; --warn: #b3261e; --ok: #1e7f3a; --panel: #f6f7f9; }
+@media (prefers-color-scheme: dark) { :root { --bg: #121417; --fg: #eaeaea; --muted: #9aa; --line: #333; --accent: #7aa7ff; --warn: #ff6b6b; --ok: #6fd18b; --panel: #1b1f24; } }
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.45 system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+.shell { display: grid; min-height: 100vh; grid-template-areas: "header header" "nav main"; grid-template-columns: 220px 1fr; grid-template-rows: auto 1fr; }
+header { grid-area: header; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+header .workspace select { max-width: 40vw; }
+header h1 { font-size: 18px; margin: 0; }
+header .workspace { display: flex; gap: 6px; align-items: center; }
+nav { grid-area: nav; border-right: 1px solid var(--line); padding: 12px; background: var(--panel); }
+nav ul { list-style: none; margin: 0; padding: 0; }
+nav li button { width: 100%; text-align: left; padding: 8px 10px; border: 0; background: transparent; color: var(--fg); border-radius: 6px; cursor: pointer; }
+nav li.selected button { background: var(--accent); color: #fff; }
+main { grid-area: main; padding: 16px; min-width: 0; }
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: var(--panel); }
+.muted { color: var(--muted); }
+.refusal { border: 1px solid var(--warn); border-radius: 8px; padding: 12px; }
+.notice { padding: 8px 12px; border-left: 3px solid var(--accent); }
+.chain.ok { color: var(--ok); }
+.chain.broken { color: var(--warn); }
+.preview { border: 1px solid var(--accent); border-radius: 8px; padding: 12px; margin-top: 12px; }
+.warnings li { color: var(--warn); }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.menu { display: none; font-size: 20px; background: transparent; border: 0; color: var(--fg); }
+.rule { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+code { word-break: break-all; }
+
+/* Desktop: the full sidebar and three columns (the base rules, stated for the breakpoint). */
+@media (min-width: 1080px) {
+  .shell { grid-template-columns: 220px 1fr; }
+  .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Tablet: an icon-width rail and two columns. */
+@media (min-width: 720px) and (max-width: 1079px) {
+  .shell { grid-template-columns: 140px 1fr; }
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Phone: a drawer behind the menu button, one column, tables scroll. */
+@media (max-width: 719px) {
+  .shell { grid-template-areas: "header" "main"; grid-template-columns: 1fr; }
+  .menu { display: inline-block; }
+  nav { display: none; position: fixed; top: 48px; left: 0; bottom: 0; width: 80vw; max-width: 320px; z-index: 10; box-shadow: 2px 0 12px rgba(0,0,0,.2); }
+  .menu-open nav { display: block; }
+  .cards { grid-template-columns: 1fr; }
+  header .workspace span, header .muted { display: none; }
+  header { gap: 8px; padding: 8px 12px; }
+  main { overflow-x: auto; padding: 12px; }
+}

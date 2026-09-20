@@ -21,6 +21,8 @@ read_projections:
 - /v1/packs
 - /v1/routines
 - /v1/connectors
+- /v1/members
+- /v1/policies
 - /v1/notifications
 - /v1/usage
 - /v1/audit

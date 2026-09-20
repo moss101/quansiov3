@@ -1,6 +1,22 @@
 /** Web app barrel. Canonical owner: `apps/web` (APP-012). */
 export type { WebSurfaceDescriptor, WebSurfaceId } from "./surfaces.js";
-export { WEB_SURFACES, adminSurfaces } from "./surfaces.js";
-export { canOpen, usesPublicContracts, PUBLIC_COMMAND_PREFIX, PUBLIC_ERROR_SHAPE } from "./rbac.js";
-export type { ServerRole } from "./rbac.js";
-
+export { WEB_SURFACES, adminSurfaces, canOpen, offered, surface } from "./surfaces.js";
+export { PUBLIC_COMMAND_PREFIX, PUBLIC_ERROR_SHAPE, TENANT_ROLES, WORKSPACE_ROLES, allows, effectiveWorkspaceRole, rolesFromMe, tenantRole, usesPublicContracts, workspaceRole } from "./rbac.js";
+export type { Action, Roles, TenantRole, WorkspaceRole } from "./rbac.js";
+export { ApiError, WebClient, newCommandId, publicPath } from "./client.js";
+export type { ApiErrorBody, CommandResponse, Credential, FetchLike } from "./client.js";
+export { SESSION_KEY, WebSession, parseStoredSession } from "./session.js";
+export type { SessionStorageLike, StoredSession } from "./session.js";
+export { BREAKPOINTS, layoutFor, mediaQueries } from "./layout.js";
+export type { Layout, LayoutMode, Navigation } from "./layout.js";
+export { APP_BASE, pathFor, routeFor } from "./app/router.js";
+export type { Route } from "./app/router.js";
+export { STRINGS, t } from "./app/strings.js";
+export { decide, decodeApprovals, warnings } from "./review/approvals.js";
+export type { ApprovalStatus, ApprovalView, Decision } from "./review/approvals.js";
+export { decodeWorkGraph, needsAttention } from "./review/work.js";
+export type { WorkGraphView, WorkNodeView } from "./review/work.js";
+export { contentPath, decodeArtifacts } from "./review/artifacts.js";
+export type { ArtifactView } from "./review/artifacts.js";
+export { DECISIONS, decodeAudit, decodeConnectors, decodeMembers, decodePolicies, decodeUsage, invite, removeMember, setPolicy, updateMembership } from "./review/admin.js";
+export type { AuditEntryView, AuditView, ConnectorView, MemberView, PolicyRuleView, PolicyView, Prepared, UsageView } from "./review/admin.js";

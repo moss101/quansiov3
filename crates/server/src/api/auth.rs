@@ -291,14 +291,20 @@ pub async fn me(
     headers: HeaderMap,
 ) -> Result<Json<Value>, ApiError> {
     let scope = TenantScope::resolve(&state, &headers).await?;
-    let (Some(user_id), Some(session_id)) = (scope.user_id.clone(), scope.session_id.clone())
-    else {
+    // A trusted-header scope (development harnesses only; the deployable resolves bearer
+    // sessions alone) has a user but no session row: the view is the same, the session id
+    // says what it is.
+    let Some(user_id) = scope.user_id.clone() else {
         return Err(ApiError::new(
             ApiErrorCode::AuthRequired,
             "/v1/me needs a bearer session",
             "auth",
         ));
     };
+    let session_id = scope
+        .session_id
+        .clone()
+        .unwrap_or_else(|| "trusted-headers".to_string());
     let session_scope = crate::control::identity::SessionScope {
         user_id,
         tenant_id: scope.tenant_id.clone(),
