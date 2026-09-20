@@ -84,6 +84,16 @@ describe("preload bridge", () => {
         "denyEffect",
         "listEffects",
         "evidenceContent",
+        "listKnowledge",
+        "deleteKnowledge",
+        "supersedeKnowledge",
+        "listMemory",
+        "deleteMemory",
+        "listSkills",
+        "installSkill",
+        "promoteSkillVersion",
+        "disableSkill",
+        "runCapabilities",
         "onStreamFrame",
         "onStreamState",
         "onStreamError",
@@ -145,6 +155,16 @@ describe("preload bridge", () => {
     await api.denyEffect("apr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.listEffects({});
     await api.evidenceContent("evd_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.listKnowledge({ includeDeleted: true });
+    await api.deleteKnowledge("kn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.supersedeKnowledge("kn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", "kn_01J8Z3K6F1N8VQ2X5W9Y0AAAAB");
+    await api.listMemory({ scope: "user" });
+    await api.deleteMemory("mem_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.listSkills();
+    await api.installSkill({ scope: "workspace", name: "notes", version: { semver: "1.0.0", manifest: {} } });
+    await api.promoteSkillVersion("sklv_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", "candidate");
+    await api.disableSkill("skl_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.runCapabilities("run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

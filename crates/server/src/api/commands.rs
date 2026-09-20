@@ -19,6 +19,7 @@ use axum::extract::{Path, State};
 use axum::http::HeaderMap;
 use axum::Json;
 use chrono::Utc;
+use quansio_capability::layer::{Layer, ProjectionInput};
 use quansio_capability::persistence::{stage_projected_event, ProjectionArgument, ProjectionRow};
 use quansio_capability::projection::{CapabilityProjection, ProjectionSubject, SubjectKind};
 use quansio_capability::Grant;
@@ -158,6 +159,66 @@ pub async fn invoke(
             super::artifacts::create_artifact(
                 &state,
                 &scope.tenant_id,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "DeleteKnowledge" => {
+            super::knowledge::delete_knowledge(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "SupersedeKnowledge" => {
+            super::knowledge::supersede_knowledge(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "DeleteMemory" => {
+            super::knowledge::delete_memory(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "InstallSkill" => {
+            super::knowledge::install_skill(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "PromoteSkillVersion" => {
+            super::knowledge::promote_skill_version(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "DisableSkill" => {
+            super::knowledge::disable_skill(
+                &state,
+                &identity,
                 user_id.as_deref(),
                 &request.params,
                 &correlation,
@@ -670,8 +731,24 @@ async fn seed_projection(
         "constraints": {},
     }))
     .expect("grant")];
+    // The inputs are recorded (APP-011): which policies and which active skill versions
+    // the run's authority was resolved from, one input per layer in the fixed order, so
+    // the projection says why the run may do what it may. Skills are an input that never
+    // contributes a grant (DOMAIN.md §11.5).
+    let mut inputs: Vec<ProjectionInput> = Vec::new();
     if let Ok(policies) = crate::policy::PolicyStore::new(state.pool().clone(), identity.clone()) {
         if let Ok(set) = policies.load_policy_set(workspace_id).await {
+            for policy in set.in_order() {
+                let layer = match policy.scope {
+                    crate::policy::PolicyScope::Tenant => Layer::TenantPolicy,
+                    crate::policy::PolicyScope::Workspace => Layer::WorkspacePolicy,
+                };
+                inputs.push(ProjectionInput::new(
+                    layer,
+                    format!("{}@{}", policy.id, policy.version),
+                    digest_of(&json!(policy.rules)),
+                ));
+            }
             for rule in set.in_order().iter().flat_map(|policy| policy.rules.iter()) {
                 if matches!(
                     rule.decision,
@@ -690,11 +767,39 @@ async fn seed_projection(
             }
         }
     }
+    if let Ok(active) = crate::control::skills::SkillStore::new(state.pool().clone())
+        .active_versions(&identity.tenant_id)
+        .await
+    {
+        if !active.is_empty() {
+            let versions: Vec<Value> = active
+                .iter()
+                .map(|(skill, version)| {
+                    json!({
+                        "skill_id": skill.id.to_string(),
+                        "skill_version_id": version.id.to_string(),
+                        "semver": version.semver,
+                        "manifest_digest": digest_of(&version.manifest).to_string(),
+                    })
+                })
+                .collect();
+            let reference = active
+                .iter()
+                .map(|(_, version)| version.id.to_string())
+                .collect::<Vec<_>>()
+                .join(",");
+            inputs.push(ProjectionInput::new(
+                Layer::ActiveSkills,
+                reference,
+                digest_of(&json!(versions)),
+            ));
+        }
+    }
     let mut generator = UlidGenerator::new();
     let projection = CapabilityProjection::from_parts(
         CanonicalId::generate(Prefix::CapabilityProjection, &mut generator),
         ProjectionSubject::new(SubjectKind::Run, run.id.to_string()),
-        Vec::new(),
+        inputs,
         grants,
         Utc::now(),
         Some(Utc::now() + chrono::Duration::hours(1)),
@@ -729,6 +834,11 @@ async fn seed_projection(
         .await
         .map_err(|error| error.to_string())?;
     Ok(())
+}
+
+/// SHA-256 over a value's canonical JSON (serde_json objects serialize with sorted keys).
+fn digest_of(value: &Value) -> Digest {
+    Digest::of_canonical_json(&value.to_string())
 }
 
 fn run_ref(params: &Value, correlation: &str) -> Result<(CanonicalId, Generation), ApiError> {

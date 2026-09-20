@@ -205,7 +205,74 @@ export class DesktopBridge {
       "approvals.deny": (payload) => settled(Promise.resolve(payload).then((raw) => this.denyEffect(raw))),
       "effects.list": (payload) => Promise.resolve(payload).then((raw) => this.server.effectsIn(this.#trustScope(raw, "effects.list"))),
       "evidence.content": (payload) => settled(Promise.resolve(payload).then((raw) => this.evidenceContent(raw))),
+      // Knowledge, memory and skills (APP-011): lifecycle refusals (a terminal edge, an
+      // unapproved activation) are data the page branches on, so they are settled.
+      "knowledge.list": (payload) => Promise.resolve(payload).then((raw) => this.server.knowledge(this.#requireWorkspace(), asEntryFilter(raw))),
+      "knowledge.delete": (payload) => settled(Promise.resolve(payload).then((raw) => this.deleteKnowledge(raw))),
+      "knowledge.supersede": (payload) => settled(Promise.resolve(payload).then((raw) => this.supersedeKnowledge(raw))),
+      "memory.list": (payload) => Promise.resolve(payload).then((raw) => this.server.memory(this.#requireWorkspace(), asEntryFilter(raw))),
+      "memory.delete": (payload) => settled(Promise.resolve(payload).then((raw) => this.deleteMemory(raw))),
+      "skills.list": () => this.server.skills(),
+      "skills.install": (payload) => settled(Promise.resolve(payload).then((raw) => this.installSkill(raw))),
+      "skills.promote": (payload) => settled(Promise.resolve(payload).then((raw) => this.promoteSkillVersion(raw))),
+      "skills.disable": (payload) => settled(Promise.resolve(payload).then((raw) => this.disableSkill(raw))),
+      "runs.capabilities": (payload) => Promise.resolve(payload).then((raw) => this.server.run(asRunId(raw, "runs.capabilities"))),
     };
+  }
+
+  // ---- knowledge, memory and skills (APP-011) ----
+
+  async deleteKnowledge(raw: unknown): Promise<unknown> {
+    const knowledgeId = asRecord(raw, "knowledge.delete")["knowledgeId"];
+    if (typeof knowledgeId !== "string" || !knowledgeId.startsWith("kn_")) {
+      throw new Error("knowledge.delete needs a kn_ id");
+    }
+    return (await this.server.invoke("DeleteKnowledge", newCommandId(), { knowledge_id: knowledgeId })).result;
+  }
+
+  async supersedeKnowledge(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "knowledge.supersede");
+    const knowledgeId = record["knowledgeId"];
+    const supersededBy = record["supersededBy"];
+    if (typeof knowledgeId !== "string" || !knowledgeId.startsWith("kn_") || typeof supersededBy !== "string" || !supersededBy.startsWith("kn_")) {
+      throw new Error("knowledge.supersede needs two kn_ ids");
+    }
+    return (await this.server.invoke("SupersedeKnowledge", newCommandId(), { knowledge_id: knowledgeId, superseded_by: supersededBy })).result;
+  }
+
+  async deleteMemory(raw: unknown): Promise<unknown> {
+    const memoryId = asRecord(raw, "memory.delete")["memoryId"];
+    if (typeof memoryId !== "string" || !memoryId.startsWith("mem_")) {
+      throw new Error("memory.delete needs a mem_ id");
+    }
+    return (await this.server.invoke("DeleteMemory", newCommandId(), { memory_id: memoryId })).result;
+  }
+
+  /** `InstallSkill` with the params the page validated (`install()`); main adds nothing. */
+  async installSkill(raw: unknown): Promise<unknown> {
+    const params = asRecord(raw, "skills.install");
+    if (typeof params["name"] !== "string" || typeof params["scope"] !== "string" || !params["version"] || typeof params["version"] !== "object") {
+      throw new Error("skills.install needs scope, name and a version");
+    }
+    return (await this.server.invoke("InstallSkill", newCommandId(), params)).result;
+  }
+
+  async promoteSkillVersion(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "skills.promote");
+    const versionId = record["skillVersionId"];
+    const to = record["to"];
+    if (typeof versionId !== "string" || !versionId.startsWith("sklv_") || typeof to !== "string") {
+      throw new Error("skills.promote needs a sklv_ id and a target state");
+    }
+    return (await this.server.invoke("PromoteSkillVersion", newCommandId(), { skill_version_id: versionId, to })).result;
+  }
+
+  async disableSkill(raw: unknown): Promise<unknown> {
+    const skillId = asRecord(raw, "skills.disable")["skillId"];
+    if (typeof skillId !== "string" || !skillId.startsWith("skl_")) {
+      throw new Error("skills.disable needs a skl_ id");
+    }
+    return (await this.server.invoke("DisableSkill", newCommandId(), { skill_id: skillId })).result;
   }
 
   // ---- approvals, effects and evidence (APP-006) ----
@@ -853,6 +920,24 @@ function asPost(payload: unknown): { threadId: string | null; content: string; a
     }
   }
   return { threadId: typeof threadId === "string" ? threadId : null, content, attachments };
+}
+
+function asEntryFilter(raw: unknown): { status?: string; scope?: string; subjectRef?: string; includeDeleted?: boolean } {
+  const record = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const filter: { status?: string; scope?: string; subjectRef?: string; includeDeleted?: boolean } = {};
+  if (typeof record["status"] === "string") {
+    filter.status = record["status"];
+  }
+  if (typeof record["scope"] === "string") {
+    filter.scope = record["scope"];
+  }
+  if (typeof record["subjectRef"] === "string") {
+    filter.subjectRef = record["subjectRef"];
+  }
+  if (record["includeDeleted"] === true) {
+    filter.includeDeleted = true;
+  }
+  return filter;
 }
 
 function asArtifactFilter(payload: unknown): { kind?: string | null; runId?: string | null } {

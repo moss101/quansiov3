@@ -178,3 +178,29 @@ export { EFFECT_STATUSES, decodeEffects, isUnsettled, resolution, timeline, unre
 export type { EffectOutcome, EffectStatus, EffectView, Reconciliation, Resolution, TimelineEntry } from "./trust/effects.js";
 export { errorState, evidenceText, sha256Hex, verifiedState } from "./trust/evidence.js";
 export type { EvidenceState } from "./trust/evidence.js";
+export {
+  DELETE_KNOWLEDGE_COMMAND,
+  DELETE_MEMORY_COMMAND,
+  KNOWLEDGE_DELETE_FROM,
+  KNOWLEDGE_STATUSES,
+  KNOWLEDGE_SUPERSEDE_FROM,
+  MEMORY_DELETE_FROM,
+  MEMORY_FIELDS,
+  MEMORY_STATUSES,
+  SUPERSEDE_KNOWLEDGE_COMMAND,
+  decodeKnowledge,
+  decodeMemory,
+  deleteKnowledge,
+  deleteMemory,
+  describeProvenance,
+  isRecoveryField,
+  retrievable,
+  successorsFor,
+  supersedeKnowledge,
+  tombstones,
+} from "./knowledge/entries.js";
+export type { Control, DecodedMemory, KnowledgeStatus, KnowledgeView, MemoryStatus, MemoryView, Provenance } from "./knowledge/entries.js";
+export { DISABLE_COMMAND, INSTALL_COMMAND, PROMOTE_COMMAND, SKILL_LADDER, activation, activeVersions, decodeSkills, disable, install, promotion } from "./knowledge/skills.js";
+export type { CapabilityNeed, Disable, Install, InstallInput, Promotion, SkillManifest, SkillStatus, SkillVersionView, SkillView } from "./knowledge/skills.js";
+export { LAYERS, decodeCapabilityResolution, isCurrent, layersInOrder, skillInputs } from "./knowledge/capabilities.js";
+export type { CapabilityResolution, GrantView, Layer, LayerInput, LayerRow } from "./knowledge/capabilities.js";

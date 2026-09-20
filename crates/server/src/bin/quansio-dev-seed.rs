@@ -11,8 +11,12 @@
 //!
 //! Usage:
 //!   quansio-dev-seed create --database <name> --tenant <tn_…> --user <usr_…> \
-//!       --workspace <ws_…> --node <wn_…> [--ask-writes]
+//!       --workspace <ws_…> --node <wn_…> [--ask-writes] [--intelligence]
 //!   quansio-dev-seed drop --database <name>
+//!
+//! `--intelligence` also seeds what a knowledge/memory harness deletes (APP-011): three
+//! knowledge entries (active, verified, candidate), one active memory entry, and a derived
+//! semantic index row for each entry in force, under the fixed ids in [`INTELLIGENCE_IDS`].
 
 use std::env;
 use std::process::exit;
@@ -31,6 +35,34 @@ struct Args {
     node: String,
     /// Also seed `ask` rules for writes, so an `fs.write` parks the run for approval.
     ask_writes: bool,
+    /// Also seed knowledge, memory and their derived index rows.
+    intelligence: bool,
+}
+
+/// Fixed ids of the `--intelligence` rows: knowledge in three lifecycle states, active
+/// memory, and one derived embedding per entry in force.
+pub const INTELLIGENCE_IDS: [(&str, &str); 7] = [
+    ("knowledge_active", "kn_01J8Z3K6F1N8VQ2X5W9Y0E2KN1"),
+    ("knowledge_verified", "kn_01J8Z3K6F1N8VQ2X5W9Y0E2KN2"),
+    ("knowledge_candidate", "kn_01J8Z3K6F1N8VQ2X5W9Y0E2KN3"),
+    ("memory_active", "mem_01J8Z3K6F1N8VQ2X5W9Y0E2MM1"),
+    (
+        "embedding_knowledge_active",
+        "emb_01J8Z3K6F1N8VQ2X5W9Y0E2EM1",
+    ),
+    (
+        "embedding_knowledge_verified",
+        "emb_01J8Z3K6F1N8VQ2X5W9Y0E2EM2",
+    ),
+    ("embedding_memory_active", "emb_01J8Z3K6F1N8VQ2X5W9Y0E2EM3"),
+];
+
+fn intelligence_id(key: &str) -> &'static str {
+    INTELLIGENCE_IDS
+        .iter()
+        .find(|(name, _)| *name == key)
+        .map(|(_, id)| *id)
+        .expect("a fixed intelligence id")
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -44,10 +76,15 @@ fn parse_args() -> Result<Args, String> {
         workspace: String::new(),
         node: String::new(),
         ask_writes: false,
+        intelligence: false,
     };
     while let Some(flag) = args.next() {
         if flag == "--ask-writes" {
             parsed.ask_writes = true;
+            continue;
+        }
+        if flag == "--intelligence" {
+            parsed.intelligence = true;
             continue;
         }
         let value = args.next().ok_or_else(|| format!("{flag} needs a value"))?;
@@ -178,11 +215,88 @@ async fn run(args: Args) -> Result<(), String> {
     .execute(&mut *tx)
     .await
     .map_err(|error| format!("policy: {error}"))?;
+    if args.intelligence {
+        seed_intelligence(&mut tx, &args).await?;
+    }
     tx.commit()
         .await
         .map_err(|error| format!("commit: {error}"))?;
     pool.close().await;
     println!("database_url={database_url}");
+    Ok(())
+}
+
+/// Knowledge, memory and derived index rows shaped exactly as the intelligence plane writes
+/// them (`python/intelligence/knowledge/store.py`, `memory/store.py`, `embeddings/index.py`).
+async fn seed_intelligence(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    args: &Args,
+) -> Result<(), String> {
+    let knowledge = [
+        (intelligence_id("knowledge_active"), "active", "The release checklist requires a signed evidence bundle."),
+        (intelligence_id("knowledge_verified"), "verified", "The release checklist requires a signed evidence bundle and a dossier consistency run."),
+        (intelligence_id("knowledge_candidate"), "candidate", "The release checklist may require a signed evidence bundle, a dossier consistency run and a CI summary."),
+    ];
+    for (id, status, claim) in knowledge {
+        sqlx::query(
+            "INSERT INTO knowledge_entries (id, tenant_id, workspace_id, scope, kind, content, provenance, confidence, status) \
+             VALUES ($1, $2, $3, 'workspace', 'fact', $4, $5, 0.9, $6)",
+        )
+        .bind(id)
+        .bind(&args.tenant)
+        .bind(&args.workspace)
+        .bind(json!({ "claim": claim }))
+        .bind(json!([{ "source_kind": "approved_source", "ref": "doc:release-checklist", "digest": "0".repeat(64), "retrieved_at": "2026-09-20T00:00:00Z" }]))
+        .bind(status)
+        .execute(&mut **tx)
+        .await
+        .map_err(|error| format!("knowledge {id}: {error}"))?;
+    }
+    sqlx::query(
+        "INSERT INTO memory_entries (id, tenant_id, workspace_id, scope, subject_ref, content, provenance_kind, provenance_ref, confidence, status) \
+         VALUES ($1, $2, $3, 'user', $4, 'Prefers evidence bundles summarised before the diff.', 'explicit_user', 'msg_seed', 0.8, 'active')",
+    )
+    .bind(intelligence_id("memory_active"))
+    .bind(&args.tenant)
+    .bind(&args.workspace)
+    .bind(&args.user)
+    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("memory: {error}"))?;
+    let zero = format!("[{}]", vec!["0"; 1536].join(","));
+    let embeddings = [
+        (
+            intelligence_id("embedding_knowledge_active"),
+            "knowledge_entry",
+            intelligence_id("knowledge_active"),
+        ),
+        (
+            intelligence_id("embedding_knowledge_verified"),
+            "knowledge_entry",
+            intelligence_id("knowledge_verified"),
+        ),
+        (
+            intelligence_id("embedding_memory_active"),
+            "memory_entry",
+            intelligence_id("memory_active"),
+        ),
+    ];
+    for (id, source_kind, source_ref) in embeddings {
+        sqlx::query(
+            "INSERT INTO derived.embeddings (id, tenant_id, workspace_id, source_kind, source_ref, model_id, dimensions, embedding, snapshot, content_digest, chunk_index) \
+             VALUES ($1, $2, $3, $4, $5, 'seed-embedding', 1536, $6::vector, 'seed', $7, 0)",
+        )
+        .bind(id)
+        .bind(&args.tenant)
+        .bind(&args.workspace)
+        .bind(source_kind)
+        .bind(source_ref)
+        .bind(&zero)
+        .bind("0".repeat(64))
+        .execute(&mut **tx)
+        .await
+        .map_err(|error| format!("embedding {id}: {error}"))?;
+    }
     Ok(())
 }
 

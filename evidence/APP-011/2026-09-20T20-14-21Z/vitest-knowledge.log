@@ -1,0 +1,11 @@
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+ ✓ tests/knowledge.test.ts (9 tests) 5ms
+ ✓ tests/preload.test.ts (4 tests) 11ms
+ ✓ tests/knowledge.e2e.test.ts (2 tests) 5783ms
+   ✓ desktop knowledge E2E against quansio-server > forgetting memory or knowledge removes it from every future retrieval and leaves a tombstone with its provenance 2002ms
+   ✓ desktop knowledge E2E against quansio-server > a skill climbs the ladder one rung at a time; an unapproved version cannot be activated; the run's resolution names it and grants nothing 841ms
+ Test Files  3 passed (3)
+      Tests  15 passed (15)
+   Start at  23:25:47
+   Duration  6.08s (transform 155ms, setup 0ms, collect 415ms, tests 5.80s, environment 0ms, prepare 124ms)
+exit=0
