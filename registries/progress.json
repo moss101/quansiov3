@@ -1703,22 +1703,39 @@
     },
     "APP-005": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-19T21:18:18Z",
-      "updated_at": "2026-09-19T21:18:18Z",
-      "git_commit": null,
+      "updated_at": "2026-09-20T04:36:47Z",
+      "git_commit": "54d327ee7471aa093ad6b398af8535076c908e85",
       "tests": [
-        "pnpm --filter @quansio/desktop test (graph projection matches revision; concurrent edit is CONFLICT_REVISION not silent overwrite)"
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test workgraph_surface --test graph_planning --test graph_orchestration --test graph_scheduler_dispatch (projection equals revision; CONFLICT_REVISION with nothing written; cycle and widening refused; delegation handoff; the three graph-backed ports over the real store)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run) (work.test.ts: decoder, reducer, proposal, rebase; work.e2e.test.ts against the real quansio-server: graph projection E2E, two-page revision conflict -> rebase, agent handoff UI)",
+        "pnpm build",
+        "pnpm typecheck",
+        "pnpm test",
+        "pnpm lint",
+        "pnpm exec vitest run --config tests/e2e/vitest.config.ts",
+        "python3.12 scripts/ci/workspace_check.py",
+        "python3.12 scripts/validate_v81.py",
+        "bash scripts/ci/ci.sh"
       ],
       "artifacts": [
-        "evidence/APP-005/2026-09-15T05-15-00Z/summary.json",
-        "apps/desktop/src/work/monitor.ts"
+        "evidence/APP-005/2026-09-20T03-40-34Z/summary.json",
+        "evidence/APP-005/2026-09-20T03-40-34Z/NOTES.md",
+        "evidence/APP-005/RECONCILIATION.md",
+        "crates/server/src/api/workgraph.rs",
+        "crates/server/src/runtime/planning/graph_port.rs",
+        "crates/events/src/schema.rs",
+        "apps/desktop/src/work/graph.ts",
+        "apps/desktop/src/work/edits.ts",
+        "apps/desktop/src/renderer/Work.tsx",
+        "apps/desktop/tests/work.e2e.test.ts"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Work monitor projects a canonical graph revision. User edits are ProposeGraphEdit-style; a stale revision returns CONFLICT_REVISION. 2026-09-19 correction: was BLOCKED_EXTERNAL at 64dd1aa0d8350ef8bbf6b705660571e848240294 claimed by agent:principal-1 (started 2026-09-15T05:10:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/desktop/src/work is a 49-line stub. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "Work monitor projects a canonical graph revision. User edits are ProposeGraphEdit-style; a stale revision returns CONFLICT_REVISION. 2026-09-19 correction: was BLOCKED_EXTERNAL at 64dd1aa0d8350ef8bbf6b705660571e848240294 claimed by agent:principal-1 (started 2026-09-15T05:10:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/desktop/src/work is a 49-line stub. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-20 (54d327e) PASS: the real surface \u2014 GET /v1/workgraph (nodes with contracts and current run, edges, agents, handoff edges, typed blockers) at the canonical revision; ProposeGraphEdit compiled/validated by RUN-003's planner with the user as proposer and committed by CORE-005's revision-checked transaction (stale base -> CONFLICT_REVISION, nothing written; cycle refused; widening -> CAPABILITY_DENIED); CreateObjective through the same path. Desktop: projection reducer keyed by revision, typed edit drafts (nodes-then-edges), rebase-on-conflict UX that reports dropped intents, plan tree/agents/handoffs/blockers/contracts renderer. Structural fix on the way: quansio_events::schema absorbed control::schema so the server can depend on the graph; the graph-backed planning/orchestration/dispatch ports moved from graph's tests into the server (GraphPlanWorkspace, GraphWorkGraph, GraphDispatch). See evidence/APP-005/2026-09-20T03-40-34Z/NOTES.md."
     },
     "APP-006": {
       "coverage": "PARTIAL",
