@@ -1,0 +1,9 @@
+     Running tests/graph_orchestration.rs (target/debug/deps/graph_orchestration-ff8aac525fa441a0)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s
+     Running tests/graph_planning.rs (target/debug/deps/graph_planning-8479b57baee4da09)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.81s
+     Running tests/graph_scheduler_dispatch.rs (target/debug/deps/graph_scheduler_dispatch-5c8c4c8613a7845c)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.14s
+     Running tests/workgraph_surface.rs (target/debug/deps/workgraph_surface-53acd575b4093cb2)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.08s
+exit=0

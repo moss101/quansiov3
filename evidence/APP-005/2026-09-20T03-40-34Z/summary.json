@@ -1,0 +1,134 @@
+{
+  "task_id": "APP-005",
+  "git_commit": "2ee08e60e1c30b697d9e6c955d5779c39b8165a2",
+  "recorded_at": "2026-09-20T03:40:34Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test workgraph_surface --test graph_planning --test graph_orchestration --test graph_scheduler_dispatch",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-005/2026-09-20T03-40-34Z/cargo-workgraph.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/work.test.ts tests/work.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed; two pages editing one revision)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-005/2026-09-20T03-40-34Z/vitest-work.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-005/2026-09-20T03-40-34Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test workgraph_surface --test graph_planning --test graph_orchestration --test graph_scheduler_dispatch",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/work.test.ts tests/work.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed; two pages editing one revision)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-005/2026-09-20T03-40-34Z/NOTES.md",
+      "sha256": "f04ba47af6a2b40a6c3206625b2955e00d8387aca70d518dff0a83c9d919547e",
+      "bytes": 5357
+    },
+    {
+      "path": "evidence/APP-005/2026-09-20T03-40-34Z/cargo-workgraph.log",
+      "sha256": "02795b67387c21b4a2986b8d803154ee11cec9e8ea3104535fefe5279fe6375d",
+      "bytes": 775
+    },
+    {
+      "path": "evidence/APP-005/2026-09-20T03-40-34Z/vitest-work.log",
+      "sha256": "f650d49d8f1f147f94019700dc71405ee41a5d12e0aad3effdbaae5163ff2fbd",
+      "bytes": 528
+    },
+    {
+      "path": "evidence/APP-005/2026-09-20T03-40-34Z/ci-summary.json",
+      "sha256": "f38b66f8d2b58b123821822696ba18a7883c0650d783643491cd9bed9b639ef7",
+      "bytes": 6799
+    },
+    {
+      "path": "evidence/APP-005/RECONCILIATION.md",
+      "sha256": "d33368f905c7cd4fe99a648a6546a94bd9c17a6b0910c581ea63fdd9afb20274",
+      "bytes": 4403
+    },
+    {
+      "path": "crates/server/src/api/workgraph.rs",
+      "sha256": "bed272bab11e98f8c2306e9934fa42c46619c623aa7f8941c48b189c24e915ac",
+      "bytes": 22162
+    },
+    {
+      "path": "crates/server/src/runtime/planning/graph_port.rs",
+      "sha256": "dcfbace5ab4f71d49f892090a96e3d0e7cf9fb9d5f6bfb5de553489e80f5afa2",
+      "bytes": 11791
+    },
+    {
+      "path": "crates/server/src/runtime/orchestration/graph_port.rs",
+      "sha256": "dcff428f371db12932dc42376383cc55c10dc500ce8d8e0ce85ec8f9cbe56251",
+      "bytes": 6967
+    },
+    {
+      "path": "crates/server/src/scheduler/graph_dispatch.rs",
+      "sha256": "4cfd36ca96c405d188122870e8ed1d7408d124927cc37e7027d07fb36b227fba",
+      "bytes": 5043
+    },
+    {
+      "path": "crates/events/src/schema.rs",
+      "sha256": "ef08a541458503833606aed6cf65f09b7d78915b14f1656ab9d671446699de54",
+      "bytes": 5091
+    },
+    {
+      "path": "crates/server/src/control/schema/mod.rs",
+      "sha256": "6c63354009160a11a95c55598bae41c10806e1719d03da269ed63fd6bfa91f17",
+      "bytes": 833
+    },
+    {
+      "path": "crates/server/tests/workgraph_surface.rs",
+      "sha256": "9504486043b70a2767a05635bbe509cc37c9719c6bfd41a45fdb97bdcc3d52a8",
+      "bytes": 15340
+    },
+    {
+      "path": "crates/server/tests/graph_planning.rs",
+      "sha256": "efc87d3d8c70898df7955d05b1596ddc967f2831d5583e60957e99b6a674ad24",
+      "bytes": 12231
+    },
+    {
+      "path": "apps/desktop/src/work/graph.ts",
+      "sha256": "081d155fa890f2607fc0a0384752d0e846956ac2c39cc6299a321423f395a5c1",
+      "bytes": 12656
+    },
+    {
+      "path": "apps/desktop/src/work/edits.ts",
+      "sha256": "d8bee637c06ddb55dd9ba7bc4ec3a8559da3b90b968a55dd8eb1504e5063ee99",
+      "bytes": 10738
+    },
+    {
+      "path": "apps/desktop/src/renderer/Work.tsx",
+      "sha256": "ad8b1aba65d79288dfbb3d1fc0e66a38a61c4d53f9dc79a322bff8b8c69f6dab",
+      "bytes": 14186
+    },
+    {
+      "path": "apps/desktop/tests/work.test.ts",
+      "sha256": "85f1dd2a2c4f20377ce9eba0efc19b882b451b5756e94b25192259e4b258685a",
+      "bytes": 10809
+    },
+    {
+      "path": "apps/desktop/tests/work.e2e.test.ts",
+      "sha256": "05386075fd5e481b640dff8eb7fdf3a98c0ba8ccf11ac47658be6394661204e5",
+      "bytes": 14325
+    }
+  ]
+}
