@@ -1964,10 +1964,10 @@
     },
     "APP-014": {
       "coverage": "PARTIAL",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:claude-opus-5",
+      "started_at": "2026-09-20T21:38:46Z",
+      "updated_at": "2026-09-20T21:38:46Z",
       "git_commit": null,
       "tests": [
         "cargo test -p quansio-server --test teammates (standing instructions cannot widen grants; archive retains lineage; templates from config/teammates.yaml)"
