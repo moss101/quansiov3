@@ -19,8 +19,8 @@ use axum::extract::{Path, State};
 use axum::http::HeaderMap;
 use axum::Json;
 use chrono::Utc;
-use quansio_capability::persistence::{stage_projected_event, ProjectionArgument, ProjectionRow};
 use quansio_capability::layer::{Layer, ProjectionInput};
+use quansio_capability::persistence::{stage_projected_event, ProjectionArgument, ProjectionRow};
 use quansio_capability::projection::{CapabilityProjection, ProjectionSubject, SubjectKind};
 use quansio_capability::Grant;
 use quansio_core::{CanonicalId, CorrelationId, Digest, Generation, Prefix, UlidGenerator};
@@ -166,22 +166,64 @@ pub async fn invoke(
             .await?
         }
         "DeleteKnowledge" => {
-            super::knowledge::delete_knowledge(&state, &identity, user_id.as_deref(), &request.params, &correlation).await?
+            super::knowledge::delete_knowledge(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
         }
         "SupersedeKnowledge" => {
-            super::knowledge::supersede_knowledge(&state, &identity, user_id.as_deref(), &request.params, &correlation).await?
+            super::knowledge::supersede_knowledge(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
         }
         "DeleteMemory" => {
-            super::knowledge::delete_memory(&state, &identity, user_id.as_deref(), &request.params, &correlation).await?
+            super::knowledge::delete_memory(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
         }
         "InstallSkill" => {
-            super::knowledge::install_skill(&state, &identity, user_id.as_deref(), &request.params, &correlation).await?
+            super::knowledge::install_skill(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
         }
         "PromoteSkillVersion" => {
-            super::knowledge::promote_skill_version(&state, &identity, user_id.as_deref(), &request.params, &correlation).await?
+            super::knowledge::promote_skill_version(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
         }
         "DisableSkill" => {
-            super::knowledge::disable_skill(&state, &identity, user_id.as_deref(), &request.params, &correlation).await?
+            super::knowledge::disable_skill(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
         }
         other => {
             return Err(ApiError::new(
@@ -732,19 +774,25 @@ async fn seed_projection(
         if !active.is_empty() {
             let versions: Vec<Value> = active
                 .iter()
-                .map(|(skill, version)| json!({
-                    "skill_id": skill.id.to_string(),
-                    "skill_version_id": version.id.to_string(),
-                    "semver": version.semver,
-                    "manifest_digest": digest_of(&version.manifest).to_string(),
-                }))
+                .map(|(skill, version)| {
+                    json!({
+                        "skill_id": skill.id.to_string(),
+                        "skill_version_id": version.id.to_string(),
+                        "semver": version.semver,
+                        "manifest_digest": digest_of(&version.manifest).to_string(),
+                    })
+                })
                 .collect();
             let reference = active
                 .iter()
                 .map(|(_, version)| version.id.to_string())
                 .collect::<Vec<_>>()
                 .join(",");
-            inputs.push(ProjectionInput::new(Layer::ActiveSkills, reference, digest_of(&json!(versions))));
+            inputs.push(ProjectionInput::new(
+                Layer::ActiveSkills,
+                reference,
+                digest_of(&json!(versions)),
+            ));
         }
     }
     let mut generator = UlidGenerator::new();

@@ -46,8 +46,14 @@ pub const INTELLIGENCE_IDS: [(&str, &str); 7] = [
     ("knowledge_verified", "kn_01J8Z3K6F1N8VQ2X5W9Y0E2KN2"),
     ("knowledge_candidate", "kn_01J8Z3K6F1N8VQ2X5W9Y0E2KN3"),
     ("memory_active", "mem_01J8Z3K6F1N8VQ2X5W9Y0E2MM1"),
-    ("embedding_knowledge_active", "emb_01J8Z3K6F1N8VQ2X5W9Y0E2EM1"),
-    ("embedding_knowledge_verified", "emb_01J8Z3K6F1N8VQ2X5W9Y0E2EM2"),
+    (
+        "embedding_knowledge_active",
+        "emb_01J8Z3K6F1N8VQ2X5W9Y0E2EM1",
+    ),
+    (
+        "embedding_knowledge_verified",
+        "emb_01J8Z3K6F1N8VQ2X5W9Y0E2EM2",
+    ),
     ("embedding_memory_active", "emb_01J8Z3K6F1N8VQ2X5W9Y0E2EM3"),
 ];
 
@@ -259,9 +265,21 @@ async fn seed_intelligence(
     .map_err(|error| format!("memory: {error}"))?;
     let zero = format!("[{}]", vec!["0"; 1536].join(","));
     let embeddings = [
-        (intelligence_id("embedding_knowledge_active"), "knowledge_entry", intelligence_id("knowledge_active")),
-        (intelligence_id("embedding_knowledge_verified"), "knowledge_entry", intelligence_id("knowledge_verified")),
-        (intelligence_id("embedding_memory_active"), "memory_entry", intelligence_id("memory_active")),
+        (
+            intelligence_id("embedding_knowledge_active"),
+            "knowledge_entry",
+            intelligence_id("knowledge_active"),
+        ),
+        (
+            intelligence_id("embedding_knowledge_verified"),
+            "knowledge_entry",
+            intelligence_id("knowledge_verified"),
+        ),
+        (
+            intelligence_id("embedding_memory_active"),
+            "memory_entry",
+            intelligence_id("memory_active"),
+        ),
     ];
     for (id, source_kind, source_ref) in embeddings {
         sqlx::query(

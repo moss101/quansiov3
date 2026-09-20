@@ -33,7 +33,8 @@ use crate::runtime::state_machine::RuntimeIdentity;
 pub const MAX_ROWS: i64 = 500;
 
 /// The knowledge projection's statement.
-pub const KNOWLEDGE_SQL: &str = "SELECT id, workspace_id, scope, kind, content_ref, content, provenance, confidence, version, \
+pub const KNOWLEDGE_SQL: &str =
+    "SELECT id, workspace_id, scope, kind, content_ref, content, provenance, confidence, version, \
             status, superseded_by, created_at, updated_at \
      FROM knowledge_entries \
      WHERE tenant_id = $1 AND ($2::text IS NULL OR workspace_id = $2 OR workspace_id IS NULL) \
@@ -228,13 +229,17 @@ fn actor(identity: &RuntimeIdentity, user_id: Option<&str>) -> Actor {
 }
 
 fn required_str<'a>(params: &'a Value, key: &str, correlation: &str) -> Result<&'a str, ApiError> {
-    params.get(key).and_then(Value::as_str).filter(|value| !value.is_empty()).ok_or_else(|| {
-        ApiError::new(
-            ApiErrorCode::ValidationSchema,
-            format!("{key} is required"),
-            correlation,
-        )
-    })
+    params
+        .get(key)
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| {
+            ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                format!("{key} is required"),
+                correlation,
+            )
+        })
 }
 
 fn lifecycle_error(error: DataLifecycleError, correlation: &str) -> ApiError {
@@ -279,7 +284,11 @@ pub async fn delete_knowledge(
     correlation: &str,
 ) -> Result<Value, ApiError> {
     let knowledge_id = required_str(params, "knowledge_id", correlation)?;
-    let admin = DataAdmin::new(identity.tenant_id.clone(), actor(identity, user_id), identity.correlation_id);
+    let admin = DataAdmin::new(
+        identity.tenant_id.clone(),
+        actor(identity, user_id),
+        identity.correlation_id,
+    );
     let tombstone = DataLifecycle::new(state.pool().clone())
         .delete_knowledge(&admin, knowledge_id)
         .await
@@ -297,7 +306,11 @@ pub async fn supersede_knowledge(
 ) -> Result<Value, ApiError> {
     let knowledge_id = required_str(params, "knowledge_id", correlation)?;
     let superseded_by = required_str(params, "superseded_by", correlation)?;
-    let admin = DataAdmin::new(identity.tenant_id.clone(), actor(identity, user_id), identity.correlation_id);
+    let admin = DataAdmin::new(
+        identity.tenant_id.clone(),
+        actor(identity, user_id),
+        identity.correlation_id,
+    );
     let tombstone = DataLifecycle::new(state.pool().clone())
         .supersede_knowledge(&admin, knowledge_id, superseded_by)
         .await
@@ -314,7 +327,11 @@ pub async fn delete_memory(
     correlation: &str,
 ) -> Result<Value, ApiError> {
     let memory_id = required_str(params, "memory_id", correlation)?;
-    let admin = DataAdmin::new(identity.tenant_id.clone(), actor(identity, user_id), identity.correlation_id);
+    let admin = DataAdmin::new(
+        identity.tenant_id.clone(),
+        actor(identity, user_id),
+        identity.correlation_id,
+    );
     let tombstone = DataLifecycle::new(state.pool().clone())
         .delete_memory(&admin, memory_id)
         .await
@@ -323,7 +340,11 @@ pub async fn delete_memory(
 }
 
 fn skill_admin(identity: &RuntimeIdentity, user_id: Option<&str>) -> SkillAdmin {
-    SkillAdmin::new(identity.tenant_id.clone(), actor(identity, user_id), identity.correlation_id)
+    SkillAdmin::new(
+        identity.tenant_id.clone(),
+        actor(identity, user_id),
+        identity.correlation_id,
+    )
 }
 
 fn version_json(version: &crate::control::skills::SkillVersion) -> Value {
@@ -346,22 +367,44 @@ pub async fn install_skill(
     params: &Value,
     correlation: &str,
 ) -> Result<Value, ApiError> {
-    let scope = SkillScope::parse(required_str(params, "scope", correlation)?)
-        .map_err(|error| ApiError::new(ApiErrorCode::ValidationSchema, error.to_string(), correlation))?;
+    let scope =
+        SkillScope::parse(required_str(params, "scope", correlation)?).map_err(|error| {
+            ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                error.to_string(),
+                correlation,
+            )
+        })?;
     let name = required_str(params, "name", correlation)?.to_string();
     let owner = params
         .get("owner")
         .and_then(Value::as_str)
         .map(str::to_string)
         .or_else(|| user_id.map(str::to_string))
-        .ok_or_else(|| ApiError::new(ApiErrorCode::ValidationSchema, "owner is required", correlation))?;
+        .ok_or_else(|| {
+            ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                "owner is required",
+                correlation,
+            )
+        })?;
     let version = params.get("version").cloned().unwrap_or(Value::Null);
     let semver = required_str(&version, "semver", correlation)?.to_string();
-    let manifest = version.get("manifest").cloned().unwrap_or_else(|| json!({}));
+    let manifest = version
+        .get("manifest")
+        .cloned()
+        .unwrap_or_else(|| json!({}));
     if !manifest.is_object() {
-        return Err(ApiError::new(ApiErrorCode::ValidationSchema, "version.manifest must be an object", correlation));
+        return Err(ApiError::new(
+            ApiErrorCode::ValidationSchema,
+            "version.manifest must be an object",
+            correlation,
+        ));
     }
-    let provenance = version.get("provenance").and_then(Value::as_str).map(str::to_string);
+    let provenance = version
+        .get("provenance")
+        .and_then(Value::as_str)
+        .map(str::to_string);
     let admin = skill_admin(identity, user_id);
     let store = SkillStore::new(state.pool().clone());
     let skill = store
@@ -369,7 +412,15 @@ pub async fn install_skill(
         .await
         .map_err(|error| skill_error(error, correlation))?;
     let draft = store
-        .create_version(&admin, &skill.id, NewSkillVersion { semver, manifest, provenance })
+        .create_version(
+            &admin,
+            &skill.id,
+            NewSkillVersion {
+                semver,
+                manifest,
+                provenance,
+            },
+        )
         .await
         .map_err(|error| skill_error(error, correlation))?;
     Ok(json!({
@@ -390,16 +441,32 @@ pub async fn promote_skill_version(
     params: &Value,
     correlation: &str,
 ) -> Result<Value, ApiError> {
-    let version_id = CanonicalId::parse_typed(required_str(params, "skill_version_id", correlation)?, Prefix::SkillVersion)
-        .map_err(|error| ApiError::new(ApiErrorCode::ValidationSchema, error.to_string(), correlation))?;
-    let to = SkillStatus::parse(required_str(params, "to", correlation)?)
-        .map_err(|error| ApiError::new(ApiErrorCode::ValidationSchema, error.to_string(), correlation))?;
+    let version_id = CanonicalId::parse_typed(
+        required_str(params, "skill_version_id", correlation)?,
+        Prefix::SkillVersion,
+    )
+    .map_err(|error| {
+        ApiError::new(
+            ApiErrorCode::ValidationSchema,
+            error.to_string(),
+            correlation,
+        )
+    })?;
+    let to = SkillStatus::parse(required_str(params, "to", correlation)?).map_err(|error| {
+        ApiError::new(
+            ApiErrorCode::ValidationSchema,
+            error.to_string(),
+            correlation,
+        )
+    })?;
     let promotion = SkillStore::new(state.pool().clone())
         .promote(&skill_admin(identity, user_id), &version_id, to)
         .await
         .map_err(|error| skill_error(error, correlation))?;
     let mut result = version_json(&promotion.version);
-    result["previous_active_version_id"] = json!(promotion.previous_active_version_id.map(|id| id.to_string()));
+    result["previous_active_version_id"] = json!(promotion
+        .previous_active_version_id
+        .map(|id| id.to_string()));
     Ok(result)
 }
 
@@ -412,8 +479,17 @@ pub async fn disable_skill(
     params: &Value,
     correlation: &str,
 ) -> Result<Value, ApiError> {
-    let skill_id = CanonicalId::parse_typed(required_str(params, "skill_id", correlation)?, Prefix::Skill)
-        .map_err(|error| ApiError::new(ApiErrorCode::ValidationSchema, error.to_string(), correlation))?;
+    let skill_id = CanonicalId::parse_typed(
+        required_str(params, "skill_id", correlation)?,
+        Prefix::Skill,
+    )
+    .map_err(|error| {
+        ApiError::new(
+            ApiErrorCode::ValidationSchema,
+            error.to_string(),
+            correlation,
+        )
+    })?;
     let store = SkillStore::new(state.pool().clone());
     let active = store
         .active_versions(&identity.tenant_id)
@@ -430,11 +506,17 @@ pub async fn disable_skill(
         ));
     };
     let promotion = store
-        .promote(&skill_admin(identity, user_id), &active.id, SkillStatus::Deprecated)
+        .promote(
+            &skill_admin(identity, user_id),
+            &active.id,
+            SkillStatus::Deprecated,
+        )
         .await
         .map_err(|error| skill_error(error, correlation))?;
     let mut result = version_json(&promotion.version);
-    result["previous_active_version_id"] = json!(promotion.previous_active_version_id.map(|id| id.to_string()));
+    result["previous_active_version_id"] = json!(promotion
+        .previous_active_version_id
+        .map(|id| id.to_string()));
     Ok(result)
 }
 
@@ -454,8 +536,19 @@ mod tests {
             .map(|(_, table)| table)
             .collect();
         assert_eq!(tables, vec!["MEMORY_ENTRIES"]);
-        for forbidden in ["checkpoint", "cursor", "generation", "lease", "protocol_state", "resume_token", "effect"] {
-            assert!(!MEMORY_SQL.contains(forbidden), "{forbidden} leaked into the memory projection");
+        for forbidden in [
+            "checkpoint",
+            "cursor",
+            "generation",
+            "lease",
+            "protocol_state",
+            "resume_token",
+            "effect",
+        ] {
+            assert!(
+                !MEMORY_SQL.contains(forbidden),
+                "{forbidden} leaked into the memory projection"
+            );
         }
     }
 }

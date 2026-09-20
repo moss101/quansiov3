@@ -35,8 +35,13 @@ pub const SOURCE_KIND_KNOWLEDGE: &str = "knowledge_entry";
 pub const SOURCE_KIND_MEMORY: &str = "memory_entry";
 
 /// Knowledge states from which `deleted` is a legal edge (DOMAIN.md §11.4).
-pub const KNOWLEDGE_DELETE_FROM: [&str; 5] =
-    ["candidate", "verified", "active", "superseded", "quarantined"];
+pub const KNOWLEDGE_DELETE_FROM: [&str; 5] = [
+    "candidate",
+    "verified",
+    "active",
+    "superseded",
+    "quarantined",
+];
 /// Knowledge states from which `superseded` is a legal edge (DOMAIN.md §11.4).
 pub const KNOWLEDGE_SUPERSEDE_FROM: [&str; 2] = ["verified", "active"];
 /// Memory states from which `deleted` is a legal edge (DOMAIN.md §11.4).
@@ -185,42 +190,59 @@ impl DataLifecycle {
         }
         let tenant_id = admin.tenant_id.clone();
         let admin = admin.clone();
-        let outcome = self.commit(&tenant_id, move |tx, batch| {
-            Box::pin(async move {
-                let entry = load(tx, &admin.tenant_id, "knowledge_entries", "knowledge entry", &id).await?;
-                if entry.status == "deleted" {
-                    return Err(DataLifecycleError::Raced);
-                }
-                legal(&entry, "knowledge entry", "deleted", &KNOWLEDGE_DELETE_FROM)?;
-                sqlx::query(
-                    "UPDATE knowledge_entries SET status = 'deleted', updated_at = now() \
+        let outcome = self
+            .commit(&tenant_id, move |tx, batch| {
+                Box::pin(async move {
+                    let entry = load(
+                        tx,
+                        &admin.tenant_id,
+                        "knowledge_entries",
+                        "knowledge entry",
+                        &id,
+                    )
+                    .await?;
+                    if entry.status == "deleted" {
+                        return Err(DataLifecycleError::Raced);
+                    }
+                    legal(&entry, "knowledge entry", "deleted", &KNOWLEDGE_DELETE_FROM)?;
+                    sqlx::query(
+                        "UPDATE knowledge_entries SET status = 'deleted', updated_at = now() \
                      WHERE tenant_id = $1 AND id = $2 AND status = $3",
-                )
-                .bind(&admin.tenant_id)
-                .bind(&entry.id)
-                .bind(&entry.status)
-                .execute(&mut **tx)
-                .await?;
-                let removed = purge(tx, &admin.tenant_id, SOURCE_KIND_KNOWLEDGE, &entry.id).await?;
-                stage(&admin, tx, batch, "knowledge", &entry, "knowledge.deleted", json!({
-                    "knowledge_id": entry.id,
-                    "from": entry.status,
-                    "to": "deleted",
-                    "derived_rows_removed": removed,
-                }))
-                .await?;
-                Ok(Tombstone {
-                    id: entry.id,
-                    workspace_id: entry.workspace_id,
-                    previous_status: entry.status,
-                    status: "deleted".to_string(),
-                    superseded_by: None,
-                    derived_rows_removed: removed,
-                    already: false,
+                    )
+                    .bind(&admin.tenant_id)
+                    .bind(&entry.id)
+                    .bind(&entry.status)
+                    .execute(&mut **tx)
+                    .await?;
+                    let removed =
+                        purge(tx, &admin.tenant_id, SOURCE_KIND_KNOWLEDGE, &entry.id).await?;
+                    stage(
+                        &admin,
+                        tx,
+                        batch,
+                        "knowledge",
+                        &entry,
+                        "knowledge.deleted",
+                        json!({
+                            "knowledge_id": entry.id,
+                            "from": entry.status,
+                            "to": "deleted",
+                            "derived_rows_removed": removed,
+                        }),
+                    )
+                    .await?;
+                    Ok(Tombstone {
+                        id: entry.id,
+                        workspace_id: entry.workspace_id,
+                        previous_status: entry.status,
+                        status: "deleted".to_string(),
+                        superseded_by: None,
+                        derived_rows_removed: removed,
+                        already: false,
+                    })
                 })
             })
-        })
-        .await;
+            .await;
         self.settle(outcome, &tenant_id, &target, &id).await
     }
 
@@ -250,9 +272,28 @@ impl DataLifecycle {
         let admin = admin.clone();
         self.commit(&admin.tenant_id.clone(), move |tx, batch| {
             Box::pin(async move {
-                let entry = load(tx, &admin.tenant_id, "knowledge_entries", "knowledge entry", &id).await?;
-                let next = load(tx, &admin.tenant_id, "knowledge_entries", "successor", &successor).await?;
-                legal(&entry, "knowledge entry", "superseded", &KNOWLEDGE_SUPERSEDE_FROM)?;
+                let entry = load(
+                    tx,
+                    &admin.tenant_id,
+                    "knowledge_entries",
+                    "knowledge entry",
+                    &id,
+                )
+                .await?;
+                let next = load(
+                    tx,
+                    &admin.tenant_id,
+                    "knowledge_entries",
+                    "successor",
+                    &successor,
+                )
+                .await?;
+                legal(
+                    &entry,
+                    "knowledge entry",
+                    "superseded",
+                    &KNOWLEDGE_SUPERSEDE_FROM,
+                )?;
                 sqlx::query(
                     "UPDATE knowledge_entries SET status = 'superseded', superseded_by = $4, \
                      updated_at = now() WHERE tenant_id = $1 AND id = $2 AND status = $3",
@@ -264,13 +305,21 @@ impl DataLifecycle {
                 .execute(&mut **tx)
                 .await?;
                 let removed = purge(tx, &admin.tenant_id, SOURCE_KIND_KNOWLEDGE, &entry.id).await?;
-                stage(&admin, tx, batch, "knowledge", &entry, "knowledge.superseded", json!({
-                    "knowledge_id": entry.id,
-                    "from": entry.status,
-                    "to": "superseded",
-                    "superseded_by": next.id,
-                    "derived_rows_removed": removed,
-                }))
+                stage(
+                    &admin,
+                    tx,
+                    batch,
+                    "knowledge",
+                    &entry,
+                    "knowledge.superseded",
+                    json!({
+                        "knowledge_id": entry.id,
+                        "from": entry.status,
+                        "to": "superseded",
+                        "superseded_by": next.id,
+                        "derived_rows_removed": removed,
+                    }),
+                )
                 .await?;
                 Ok(Tombstone {
                     id: entry.id,
@@ -308,42 +357,53 @@ impl DataLifecycle {
         }
         let tenant_id = admin.tenant_id.clone();
         let admin = admin.clone();
-        let outcome = self.commit(&tenant_id, move |tx, batch| {
-            Box::pin(async move {
-                let entry = load(tx, &admin.tenant_id, "memory_entries", "memory entry", &id).await?;
-                if entry.status == "deleted" {
-                    return Err(DataLifecycleError::Raced);
-                }
-                legal(&entry, "memory entry", "deleted", &MEMORY_DELETE_FROM)?;
-                sqlx::query(
-                    "UPDATE memory_entries SET status = 'deleted', updated_at = now() \
+        let outcome = self
+            .commit(&tenant_id, move |tx, batch| {
+                Box::pin(async move {
+                    let entry =
+                        load(tx, &admin.tenant_id, "memory_entries", "memory entry", &id).await?;
+                    if entry.status == "deleted" {
+                        return Err(DataLifecycleError::Raced);
+                    }
+                    legal(&entry, "memory entry", "deleted", &MEMORY_DELETE_FROM)?;
+                    sqlx::query(
+                        "UPDATE memory_entries SET status = 'deleted', updated_at = now() \
                      WHERE tenant_id = $1 AND id = $2 AND status = $3",
-                )
-                .bind(&admin.tenant_id)
-                .bind(&entry.id)
-                .bind(&entry.status)
-                .execute(&mut **tx)
-                .await?;
-                let removed = purge(tx, &admin.tenant_id, SOURCE_KIND_MEMORY, &entry.id).await?;
-                stage(&admin, tx, batch, "memory", &entry, "memory.deleted", json!({
-                    "memory_id": entry.id,
-                    "from": entry.status,
-                    "to": "deleted",
-                    "derived_rows_removed": removed,
-                }))
-                .await?;
-                Ok(Tombstone {
-                    id: entry.id,
-                    workspace_id: entry.workspace_id,
-                    previous_status: entry.status,
-                    status: "deleted".to_string(),
-                    superseded_by: None,
-                    derived_rows_removed: removed,
-                    already: false,
+                    )
+                    .bind(&admin.tenant_id)
+                    .bind(&entry.id)
+                    .bind(&entry.status)
+                    .execute(&mut **tx)
+                    .await?;
+                    let removed =
+                        purge(tx, &admin.tenant_id, SOURCE_KIND_MEMORY, &entry.id).await?;
+                    stage(
+                        &admin,
+                        tx,
+                        batch,
+                        "memory",
+                        &entry,
+                        "memory.deleted",
+                        json!({
+                            "memory_id": entry.id,
+                            "from": entry.status,
+                            "to": "deleted",
+                            "derived_rows_removed": removed,
+                        }),
+                    )
+                    .await?;
+                    Ok(Tombstone {
+                        id: entry.id,
+                        workspace_id: entry.workspace_id,
+                        previous_status: entry.status,
+                        status: "deleted".to_string(),
+                        superseded_by: None,
+                        derived_rows_removed: removed,
+                        already: false,
+                    })
                 })
             })
-        })
-        .await;
+            .await;
         self.settle(outcome, &tenant_id, &target, &id).await
     }
 
@@ -574,8 +634,13 @@ mod tests {
             workspace_id: None,
             status: "candidate".to_string(),
         };
-        let error = legal(&entry, "knowledge entry", "superseded", &KNOWLEDGE_SUPERSEDE_FROM)
-            .expect_err("candidate cannot be superseded");
+        let error = legal(
+            &entry,
+            "knowledge entry",
+            "superseded",
+            &KNOWLEDGE_SUPERSEDE_FROM,
+        )
+        .expect_err("candidate cannot be superseded");
         assert_eq!(error.code(), "CONFLICT_STATE");
         assert!(error.to_string().contains("candidate"));
         assert!(error.to_string().contains("superseded"));
