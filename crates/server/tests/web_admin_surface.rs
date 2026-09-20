@@ -700,7 +700,7 @@ async fn the_web_app_is_served_under_app_with_a_locked_policy_and_no_way_out_of_
     );
     assert_eq!(
         header(&headers, "cache-control").as_deref(),
-        Some("public, max-age=3600")
+        Some("no-cache")
     );
     assert_eq!(body, "console.log('web');");
     let (status, _, body) = fetch(&h.router, "/app/assets/app.css").await;
