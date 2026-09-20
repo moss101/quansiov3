@@ -1867,22 +1867,40 @@
     },
     "APP-011": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-20T19:32:43Z",
-      "updated_at": "2026-09-20T19:32:43Z",
-      "git_commit": null,
+      "updated_at": "2026-09-20T20:26:29Z",
+      "git_commit": "35ef454676570edec17878a04c2e91bb2db8d811",
       "tests": [
-        "pnpm --filter @quansio/desktop test (deleted memory leaves retrieval; unapproved skill cannot activate; recovery fields are not memory)"
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test knowledge_surface (DeleteKnowledge/SupersedeKnowledge/DeleteMemory: tombstone kept with provenance, absent from /v1/knowledge and /v1/search, derived.embeddings rows purged, knowledge.*/memory.* events staged, illegal edges CONFLICT_STATE, idempotent repeat; memory row carries only memory_entries fields; InstallSkill draft -> draft cannot become active (RUNTIME_ILLEGAL_TRANSITION) -> one rung at a time -> active resolves -> run projection records active_skills input and read.internal only -> DisableSkill deprecates and cannot be revived)",
+        "(cd python && pytest tests/intelligence/test_data_lifecycle_edges.py) (Rust tombstone edge tables and derived source kinds pinned to knowledge/models.py and memory/models.py; the control writes no status but deleted/superseded)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run) (knowledge.test.ts: decoders, memory refuses recovery fields, ladder-guarded controls, activation only from approved, layer order; edge tables/ladder/layers pinned to Rust source; knowledge.e2e.test.ts against the real quansio-server + quansio-dev-seed --intelligence: delete propagation E2E, skill activation policy E2E)",
+        "pnpm build",
+        "pnpm typecheck",
+        "pnpm test",
+        "pnpm lint",
+        "python3.12 scripts/validate_v81.py",
+        "bash scripts/ci/ci.sh"
       ],
       "artifacts": [
-        "evidence/APP-011/2026-09-15T05-35-00Z/summary.json",
-        "apps/desktop/src/knowledge/controls.ts"
+        "evidence/APP-011/2026-09-20T20-14-21Z/summary.json",
+        "evidence/APP-011/2026-09-20T20-14-21Z/NOTES.md",
+        "evidence/APP-011/RECONCILIATION.md",
+        "crates/server/src/control/data_lifecycle/intelligence.rs",
+        "crates/server/src/api/knowledge.rs",
+        "crates/server/tests/knowledge_surface.rs",
+        "python/tests/intelligence/test_data_lifecycle_edges.py",
+        "apps/desktop/src/knowledge/entries.ts",
+        "apps/desktop/src/knowledge/skills.ts",
+        "apps/desktop/src/knowledge/capabilities.ts",
+        "apps/desktop/src/renderer/Knowledge.tsx",
+        "apps/desktop/tests/knowledge.e2e.test.ts"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Deleted knowledge/memory is dropped from retrievalIndex. Only APPROVED/ACTIVE skills can be activated. Recovery field names are rejected as memory. 2026-09-19 correction: was BLOCKED_EXTERNAL at 45263685e513eb24e6b619a6a9d76b8c0ee0db33 claimed by agent:principal-1 (started 2026-09-15T05:30:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/desktop/src/knowledge is a 52-line stub. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "Deleted knowledge/memory is dropped from retrievalIndex. Only APPROVED/ACTIVE skills can be activated. Recovery field names are rejected as memory. 2026-09-19 correction: was BLOCKED_EXTERNAL at 45263685e513eb24e6b619a6a9d76b8c0ee0db33 claimed by agent:principal-1 (started 2026-09-15T05:30:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/desktop/src/knowledge is a 52-line stub. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-20 (35ef454) PASS: reconciliation in evidence/APP-011/RECONCILIATION.md. A person's delete/supersede is a Rust data-lifecycle control (crates/server/src/control/data_lifecycle/intelligence.rs, OPS-002's \u00a721.3 workflow): the \u00a711.4 tombstone edge, the derived.embeddings purge and the knowledge.*/memory.* event in one transaction, the row retained with its provenance; the Python models stay the lifecycle authority and a Python test pins the Rust edge tables to them. Server: GET /v1/knowledge, /v1/memory (memory_entries only, asserted), /v1/skills (ladder position and legal edges), DeleteKnowledge/SupersedeKnowledge/DeleteMemory, InstallSkill/PromoteSkillVersion/DisableSkill over SkillStore; GET /v1/runs/{id} carries the run's capability projection and seeded projections now record their inputs (policies, active skill versions \u2014 which grant nothing). Desktop knowledge/: entries, skills, capabilities decoders and ladder-guarded controls, Knowledge page, ten bridge channels. Acceptance 1 (delete propagation) and 2 (unapproved skill cannot activate; UI has no widening command) proven by knowledge.e2e.test.ts against the real server and by knowledge_surface.rs. CreateMemory stays unimplemented by design (memory.propose tool). Skill events are tenant-level and not on the workspace stream; the page re-reads after each command."
     },
     "APP-012": {
       "coverage": "PARTIAL",
