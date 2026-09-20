@@ -1904,10 +1904,10 @@
     },
     "APP-012": {
       "coverage": "PARTIAL",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:claude-opus-5",
+      "started_at": "2026-09-20T20:26:54Z",
+      "updated_at": "2026-09-20T20:26:54Z",
       "git_commit": null,
       "tests": [
         "pnpm --filter @quansio/web test (admin pages require server admin/owner role; all surfaces serverOnly; /v1 public contracts)"
