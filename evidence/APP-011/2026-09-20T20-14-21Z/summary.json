@@ -1,0 +1,80 @@
+{
+  "task_id": "APP-011",
+  "git_commit": "5cb78d0c0ed75c0805fa0db3259e520d33ccdf29",
+  "recorded_at": "2026-09-20T20:25:54Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test knowledge_surface",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-011/2026-09-20T20-14-21Z/cargo-knowledge-surface.log"
+    },
+    {
+      "command": "(cd python && .venv/bin/python -m pytest tests/intelligence/test_data_lifecycle_edges.py tests/intelligence/test_memory_models.py tests/intelligence/test_knowledge_models.py -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-011/2026-09-20T20-14-21Z/pytest-lifecycle-edges.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/knowledge.test.ts tests/knowledge.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed --intelligence)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-011/2026-09-20T20-14-21Z/vitest-knowledge.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-011/2026-09-20T20-14-21Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test knowledge_surface",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && .venv/bin/python -m pytest tests/intelligence/test_data_lifecycle_edges.py tests/intelligence/test_memory_models.py tests/intelligence/test_knowledge_models.py -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/knowledge.test.ts tests/knowledge.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed --intelligence)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-011/2026-09-20T20-14-21Z/NOTES.md",
+      "sha256": "f0fa84c0e32d9439d6487a7fbf97fe656f26096b3c3111f365cb78ea059aad09",
+      "bytes": 8802
+    },
+    {
+      "path": "evidence/APP-011/2026-09-20T20-14-21Z/cargo-knowledge-surface.log",
+      "sha256": "582e93035111ca356d3a34f50f003279900cc864002e11ef944d7563176b42b9",
+      "bytes": 299
+    },
+    {
+      "path": "evidence/APP-011/2026-09-20T20-14-21Z/pytest-lifecycle-edges.log",
+      "sha256": "148552179753d50c0d8b4a8277d0150bc6f6b9d88099a529afc5d53cea6dbb8d",
+      "bytes": 106
+    },
+    {
+      "path": "evidence/APP-011/2026-09-20T20-14-21Z/vitest-knowledge.log",
+      "sha256": "503bedd81d0d8955c9a866b9937a19854858177db32acb290e4d58315764d685",
+      "bytes": 757
+    },
+    {
+      "path": "evidence/APP-011/2026-09-20T20-14-21Z/ci-summary.json",
+      "sha256": "d79e3a252ea06aa1628211c8f6164c9c2b149942504146b9e866aa72bf832ccc",
+      "bytes": 6795
+    }
+  ]
+}

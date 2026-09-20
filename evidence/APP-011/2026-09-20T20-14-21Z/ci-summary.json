@@ -1,0 +1,112 @@
+{
+  "commit": "5cb78d0c0ed75c0805fa0db3259e520d33ccdf29",
+  "recorded_at": "2026-09-20T20:25:27Z",
+  "results": [
+    {
+      "gate": "authority",
+      "command": "python3.12 scripts/validate_v81.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.038,
+      "tail": "V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 56 PASS, 10 ready)",
+      "log": "artifacts/ci/logs/5cb78d0c0ed7/authority.log"
+    },
+    {
+      "gate": "dossier-consistency",
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 4.799,
+      "tail": "dossier consistency: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/5cb78d0c0ed7/dossier-consistency.log"
+    },
+    {
+      "gate": "architecture",
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.568,
+      "tail": "architecture check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/5cb78d0c0ed7/architecture.log"
+    },
+    {
+      "gate": "authority-pointers",
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.029,
+      "tail": "authority check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/5cb78d0c0ed7/authority-pointers.log"
+    },
+    {
+      "gate": "workspace",
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.041,
+      "tail": "workspace check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/5cb78d0c0ed7/workspace.log"
+    },
+    {
+      "gate": "supply-chain",
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 21.39,
+      "tail": "      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-tools v0.1.0\n      \u2502   \u2502   \u2502       \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 quansio-events v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-capability v0.1.0 (*)\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 (dev) quansio-graph v0.1.0 (*)\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 quansio-graph v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 (dev) quansio-indexer v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 quansio-machine v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-native-windows v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-qworkerd v0.1.0\n      \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros-core v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx-macros v0.8.6 (*)\n      \u2502   \u2514\u2500\u2500 sqlx-postgres v0.8.6\n      \u2502       \u251c\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502       \u2514\u2500\u2500 sqlx-macros-core v0.8.6 (*)\n      \u2514\u2500\u2500 tokio-rustls v0.26.5\n          \u251c\u2500\u2500 hyper-rustls v0.27.9 (*)\n          \u2514\u2500\u2500 reqwest v0.12.28 (*)\n\nsupply-chain: CLEAN (1 informational)",
+      "log": "artifacts/ci/logs/5cb78d0c0ed7/supply-chain.log"
+    },
+    {
+      "gate": "legacy-map",
+      "command": "python3.12 scripts/ci/legacy_map_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.25,
+      "tail": "legacy map check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/5cb78d0c0ed7/legacy-map.log"
+    },
+    {
+      "gate": "contract-drift",
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 1.44,
+      "tail": "contract regeneration check: CLEAN (catalog,openapi,rust,python,ts)",
+      "log": "artifacts/ci/logs/5cb78d0c0ed7/contract-drift.log"
+    },
+    {
+      "gate": "contract-lint-compat",
+      "command": "uv run --project python python scripts/ci/contract_compat.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.128,
+      "tail": "contract check: CLEAN (lint + compatibility)",
+      "log": "artifacts/ci/logs/5cb78d0c0ed7/contract-lint-compat.log"
+    },
+    {
+      "gate": "toolchains",
+      "command": "bash scripts/dev/bootstrap.sh",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 229.037,
+      "tail": "     Running tests/walking_skeleton.rs (target/debug/deps/walking_skeleton-81b4eec31bf027e4)\n     Running tests/webhooks.rs (target/debug/deps/webhooks-bc80a8da7ac7b035)\n     Running tests/workgraph_surface.rs (target/debug/deps/workgraph_surface-1b3d26650c596ed0)\n     Running unittests src/lib.rs (target/debug/deps/quansio_tools-4ae0ae6189e0ab2f)\n     Running tests/source_trust_parity.rs (target/debug/deps/source_trust_parity-a2612f677531f88f)\n     Running tests/tool_contract.rs (target/debug/deps/tool_contract-e9ae348035ddd5ea)\n   Doc-tests quansio_capability\n   Doc-tests quansio_cli\n   Doc-tests quansio_contracts\n   Doc-tests quansio_core\n   Doc-tests quansio_events\n   Doc-tests quansio_graph\n   Doc-tests quansio_indexer\n   Doc-tests quansio_machine\n   Doc-tests quansio_native_windows\n   Doc-tests quansio_qworkerd\n   Doc-tests quansio_server\n   Doc-tests quansio_tools\n$ pnpm -r --if-present build\n$ pnpm -r --if-present typecheck\n$ pnpm -r --if-present test\n$ eslint .\nBuilding for debugging...\n[0/2] Write swift-version--58304C5D6DBC2206.txt\nBuild complete! (0.11s)",
+      "log": "artifacts/ci/logs/5cb78d0c0ed7/toolchains.log"
+    },
+    {
+      "gate": "tests",
+      "command": "uv run --project python pytest tests -q",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 155.248,
+      "tail": "........................................................................ [ 25%]\n........................................................................ [ 51%]\n........................................................................ [ 76%]\n..................................................................       [100%]\n282 passed in 155.04s (0:02:35)",
+      "log": "artifacts/ci/logs/5cb78d0c0ed7/tests.log"
+    }
+  ],
+  "artifacts": {
+    "registries/progress.json": "c7689d04c83de6336113e3f94c1933930d7dc295412ec6f537bac01363fa51cc",
+    "TASKS.md": "e5f0d293dc9af2a836638a447db509121a50db6da1852faa65d5d5d005ef3915",
+    "MANIFEST.json": "6be8d7d7cb20cbd361f58b62d5a514fed034829d0dbb56f152a67a57f9506e99"
+  },
+  "status": "PASS",
+  "database_backed_tests": true
+}
