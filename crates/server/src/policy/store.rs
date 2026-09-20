@@ -38,6 +38,23 @@ pub const POLICY_OWNER_EVENTS: &[&str] = &["policy.*", "approval.*"];
 /// Repository path used to attribute a rejected mutation.
 const POLICY_OWNER: &str = "crates/server/src/policy";
 
+/// What `SetPolicy` carries (DOMAIN.md §7.3 `policies` row, minus identity and version).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PolicyChange {
+    /// Tenant or workspace scope.
+    pub scope: PolicyScope,
+    /// The workspace, for a workspace policy.
+    pub workspace_id: Option<String>,
+    /// The typed rules, as JSON (parsed with the store's vocabulary before writing).
+    pub rules: Value,
+    /// Default TTL for human questions.
+    pub question_default_ttl_seconds: i64,
+    /// Default TTL for approval requests.
+    pub approval_default_ttl_seconds: i64,
+    /// Maximum plan nodes.
+    pub max_plan_nodes: i32,
+}
+
 /// Boxed future returned by a policy mutation closure.
 type BoxPolicyFuture<'a, T> = Pin<Box<dyn Future<Output = Result<T, PolicyError>> + Send + 'a>>;
 
@@ -174,6 +191,183 @@ impl PolicyStore {
         }
         tx.commit().await?;
         Ok(set)
+    }
+
+    /// Every policy row of the tenant (the tenant policy and each workspace policy), or
+    /// the tenant policy plus one workspace's (APP-012's admin projection).
+    ///
+    /// # Errors
+    /// Returns [`PolicyError::MalformedRule`] when a stored rule set cannot be parsed.
+    pub async fn list_policies(
+        &self,
+        workspace_id: Option<&str>,
+    ) -> Result<Vec<Policy>, PolicyError> {
+        let tenant_id = self.identity.tenant_id.clone();
+        let mut tx = self.events.begin_tenant_transaction(&tenant_id).await?;
+        let rows = sqlx::query(
+            "SELECT id, scope, workspace_id, rules, question_default_ttl_seconds, \
+             approval_default_ttl_seconds, max_plan_nodes, version \
+             FROM policies WHERE tenant_id = $1 \
+               AND ($2::text IS NULL OR workspace_id IS NULL OR workspace_id = $2) \
+             ORDER BY scope ASC, workspace_id NULLS FIRST, id ASC",
+        )
+        .bind(&tenant_id)
+        .bind(workspace_id)
+        .fetch_all(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        rows.iter().map(policy_from_row).collect()
+    }
+
+    /// `SetPolicy` (DOMAIN.md §14): replace the tenant policy or one workspace's policy
+    /// with a new version — rules and TTLs — staging `policy.updated` and its AuditEntry in
+    /// the same transaction. Rules are parsed with the typed vocabulary before anything is
+    /// written: a malformed rule set is refused whole, never stored partially.
+    ///
+    /// # Errors
+    /// [`PolicyError::MalformedRule`] for a rule outside the vocabulary,
+    /// [`PolicyError::InvalidArgument`] for a scope/workspace mismatch or a bound out of range.
+    pub async fn set_policy(&self, change: PolicyChange) -> Result<Policy, PolicyError> {
+        let tenant_id = self.identity.tenant_id.clone();
+        let identity = self.identity.clone();
+        match (change.scope, change.workspace_id.as_deref()) {
+            (PolicyScope::Tenant, Some(_)) => {
+                return Err(PolicyError::InvalidArgument(
+                    "a tenant policy names no workspace".to_string(),
+                ))
+            }
+            (PolicyScope::Workspace, None) => {
+                return Err(PolicyError::InvalidArgument(
+                    "a workspace policy needs workspace_id".to_string(),
+                ))
+            }
+            _ => {}
+        }
+        let probe = Policy::new(
+            "pol_probe",
+            change.scope,
+            change.workspace_id.clone(),
+            Vec::new(),
+        );
+        let rules = probe.parse_rules(&change.rules)?;
+        for (bound, value, low, high) in [
+            (
+                "question_default_ttl_seconds",
+                change.question_default_ttl_seconds,
+                60,
+                30 * 86_400,
+            ),
+            (
+                "approval_default_ttl_seconds",
+                change.approval_default_ttl_seconds,
+                60,
+                30 * 86_400,
+            ),
+            ("max_plan_nodes", i64::from(change.max_plan_nodes), 1, 500),
+        ] {
+            if value < low || value > high {
+                return Err(PolicyError::InvalidArgument(format!(
+                    "{bound} must be within {low}..={high}, not {value}"
+                )));
+            }
+        }
+        let rules_json = serde_json::to_value(&rules)?;
+        self.commit(move |tx, batch| {
+            Box::pin(async move {
+                let existing: Option<(String, i32)> = sqlx::query_as(
+                    "SELECT id, version FROM policies WHERE tenant_id = $1 AND scope = $2 \
+                     AND workspace_id IS NOT DISTINCT FROM $3 ORDER BY id LIMIT 1 FOR UPDATE",
+                )
+                .bind(&tenant_id)
+                .bind(change.scope.as_str())
+                .bind(change.workspace_id.as_deref())
+                .fetch_optional(&mut **tx)
+                .await?;
+                let (policy_id, version) = match existing {
+                    Some((id, version)) => {
+                        sqlx::query(
+                            "UPDATE policies SET rules = $3, question_default_ttl_seconds = $4, \
+                             approval_default_ttl_seconds = $5, max_plan_nodes = $6, version = $7, \
+                             updated_at = now() WHERE tenant_id = $1 AND id = $2",
+                        )
+                        .bind(&tenant_id)
+                        .bind(&id)
+                        .bind(&rules_json)
+                        .bind(change.question_default_ttl_seconds)
+                        .bind(change.approval_default_ttl_seconds)
+                        .bind(change.max_plan_nodes)
+                        .bind(version + 1)
+                        .execute(&mut **tx)
+                        .await?;
+                        (id, version + 1)
+                    }
+                    None => {
+                        let id = CanonicalId::generate(Prefix::Policy, &mut UlidGenerator::new())
+                            .to_string();
+                        sqlx::query(
+                            "INSERT INTO policies (id, tenant_id, workspace_id, scope, rules, \
+                             question_default_ttl_seconds, approval_default_ttl_seconds, max_plan_nodes, version) \
+                             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1)",
+                        )
+                        .bind(&id)
+                        .bind(&tenant_id)
+                        .bind(change.workspace_id.as_deref())
+                        .bind(change.scope.as_str())
+                        .bind(&rules_json)
+                        .bind(change.question_default_ttl_seconds)
+                        .bind(change.approval_default_ttl_seconds)
+                        .bind(change.max_plan_nodes)
+                        .execute(&mut **tx)
+                        .await?;
+                        (id, 1)
+                    }
+                };
+                let existing_events: i64 = sqlx::query_scalar(
+                    "SELECT count(*) FROM runtime_events WHERE tenant_id = $1 \
+                     AND aggregate_type = 'policy' AND aggregate_id = $2",
+                )
+                .bind(&tenant_id)
+                .bind(&policy_id)
+                .fetch_one(&mut **tx)
+                .await?;
+                let mut draft = EventDraft::new(
+                    "policy",
+                    &policy_id,
+                    u64::try_from(existing_events).unwrap_or(0).saturating_add(1),
+                    EventType::parse("policy.updated")?,
+                    identity.correlation_id,
+                    identity.actor.clone(),
+                )
+                .with_payload(json!({
+                    "policy_id": policy_id,
+                    "scope": change.scope.as_str(),
+                    "workspace_id": change.workspace_id,
+                    "version": version,
+                    "rules": rules.len(),
+                }));
+                if let Some(workspace_id) = &change.workspace_id {
+                    draft = draft.with_workspace(workspace_id.clone());
+                }
+                batch.emit(draft);
+                crate::audit::append_in(tx, &tenant_id, crate::audit::AuditDraft {
+                    workspace_id: change.workspace_id.clone(),
+                    actor: serde_json::to_value(&identity.actor).unwrap_or(Value::Null),
+                    action: "SetPolicy".to_string(),
+                    target_ref: Some(format!("policy:{policy_id}")),
+                    decision: Some("applied".to_string()),
+                    reason: Some(format!("version {version}, {} rules", rules.len())),
+                    correlation_id: Some(identity.correlation_id.to_string()),
+                })
+                .await?;
+                let mut policy = Policy::new(policy_id, change.scope, change.workspace_id, rules);
+                policy.question_default_ttl_seconds = change.question_default_ttl_seconds;
+                policy.approval_default_ttl_seconds = change.approval_default_ttl_seconds;
+                policy.max_plan_nodes = change.max_plan_nodes;
+                policy.version = version;
+                Ok(policy)
+            })
+        })
+        .await
     }
 
     /// Load the active user rules for one user and workspace.
@@ -615,6 +809,24 @@ impl PolicyStore {
                         "expires_at": receipt.expires_at.to_rfc3339(),
                     }),
                 )?;
+                crate::audit::append_in(
+                    tx,
+                    &tenant_id,
+                    crate::audit::AuditDraft {
+                        workspace_id: Some(workspace_id.clone()),
+                        actor: json!({ "kind": "user", "id": receipt.approver_user_id }),
+                        action: "ApproveEffect".to_string(),
+                        target_ref: Some(format!("approval:{request_id}")),
+                        decision: Some("granted".to_string()),
+                        reason: Some(format!(
+                            "effect {} digest {}",
+                            receipt.effect_id,
+                            receipt.params_digest.as_str()
+                        )),
+                        correlation_id: Some(identity.correlation_id.to_string()),
+                    },
+                )
+                .await?;
                 Ok(receipt)
             })
         })
@@ -724,6 +936,24 @@ impl PolicyStore {
                         "status": to.as_str(),
                     }),
                 )?;
+                // A human's refusal is an audited decision (DOMAIN.md §16); expiry and
+                // supersession are the runtime's bookkeeping and stay events only.
+                if to == ApprovalRequestStatus::Denied {
+                    crate::audit::append_in(
+                        tx,
+                        &tenant_id,
+                        crate::audit::AuditDraft {
+                            workspace_id: Some(workspace_id.clone()),
+                            actor: serde_json::to_value(&identity.actor).unwrap_or(Value::Null),
+                            action: "DenyEffect".to_string(),
+                            target_ref: Some(format!("approval:{request_id}")),
+                            decision: Some("denied".to_string()),
+                            reason: Some(format!("effect {effect_id}")),
+                            correlation_id: Some(identity.correlation_id.to_string()),
+                        },
+                    )
+                    .await?;
+                }
                 Ok(())
             })
         })

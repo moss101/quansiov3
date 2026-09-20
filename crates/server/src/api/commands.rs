@@ -225,6 +225,35 @@ pub async fn invoke(
             )
             .await?
         }
+        "InviteMember" => {
+            super::admin::invite_member(&state, &scope, &identity, &request.params, &correlation)
+                .await?
+        }
+        "UpdateMembership" => {
+            super::admin::update_membership(
+                &state,
+                &scope,
+                &identity,
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "RemoveMember" => {
+            super::admin::remove_member(&state, &scope, &identity, &request.params, &correlation)
+                .await?
+        }
+        "SetPolicy" => {
+            super::admin::set_policy(
+                &state,
+                &scope,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
         other => {
             return Err(ApiError::new(
                 ApiErrorCode::Internal,

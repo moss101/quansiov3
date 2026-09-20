@@ -407,6 +407,9 @@ pub async fn approve_effect(
     let runtime = ApprovalRuntime::new(state.pool().clone(), identity.clone())
         .map_err(|error| policy_error(error, correlation))?;
     let request = bound_request(&runtime, request_id, presented, correlation).await?;
+    // The decision is the approver's to make: DOMAIN.md §2's approve_effect family,
+    // decided by the server from the user's membership in the request's workspace.
+    decider(state, identity, user_id, &request.workspace_id, correlation).await?;
     let run_id = CanonicalId::parse_typed(&request.run_id, Prefix::Run)
         .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
     let run = runtime
@@ -454,6 +457,30 @@ pub async fn approve_effect(
     Ok(result)
 }
 
+/// Refuse a decision by a user who is not an approver (or admin) of the workspace.
+async fn decider(
+    state: &ApiState,
+    identity: &RuntimeIdentity,
+    user_id: &str,
+    workspace_id: &str,
+    correlation: &str,
+) -> Result<(), ApiError> {
+    let scope = TenantScope {
+        tenant_id: identity.tenant_id.clone(),
+        user_id: Some(user_id.to_string()),
+        session_id: None,
+    };
+    super::rbac::Authorization::check(
+        state.pool(),
+        &scope,
+        Some(workspace_id),
+        crate::policy::rbac::ActionFamily::ApproveEffect,
+        correlation,
+    )
+    .await
+    .map(|_| ())
+}
+
 /// The resumed turn's assistant text becomes the agent's durable message in the run's thread.
 async fn reply_for(
     state: &ApiState,
@@ -493,21 +520,24 @@ pub async fn deny_effect(
         crate::runtime::state_machine::RuntimeError,
     >,
 ) -> Result<Value, ApiError> {
-    if user_id.is_none() {
+    let Some(user_id) = user_id else {
         return Err(ApiError::new(
             ApiErrorCode::AuthRequired,
             "DenyEffect needs an acting user",
             correlation,
         ));
-    }
+    };
     let request_id = required_str(params, "approval_request_id", correlation)?;
-    let runtime = ApprovalRuntime::new(state.pool().clone(), identity.clone())
+    let mut acting = identity.clone();
+    acting.actor = quansio_events::Actor::user(user_id);
+    let runtime = ApprovalRuntime::new(state.pool().clone(), acting)
         .map_err(|error| policy_error(error, correlation))?;
     let request = runtime
         .store()
         .load_approval_request(request_id)
         .await
         .map_err(|error| policy_error(error, correlation))?;
+    decider(state, identity, user_id, &request.workspace_id, correlation).await?;
     if request.status != ApprovalRequestStatus::Requested {
         return Err(ApiError::new(
             ApiErrorCode::ConflictState,
