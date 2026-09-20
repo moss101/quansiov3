@@ -19,8 +19,8 @@ use sqlx::PgPool;
 use crate::control::schema;
 use crate::policy::{ActorRoles, TenantRole, WorkspaceRole};
 use crate::runtime::state_machine::{
-    ModelCallRequest, ModelProposal, ModelProposalSource, ProposedQuestion, ProposedToolCall,
-    RuntimeError,
+    DelegationRequest, ModelCallRequest, ModelProposal, ModelProposalSource, ProposedQuestion,
+    ProposedToolCall, RuntimeError,
 };
 use crate::runtime::turn_loop::{
     ActingActor, HostDispatch, HostFailure, HostOutcome, ModelCallLedger, RecordedCall,
@@ -29,6 +29,9 @@ use crate::runtime::turn_loop::{
 
 /// Marker in a trigger message that selects the question scenario.
 pub const QUESTION_SCENARIO: &str = "[[scenario:question]]";
+/// Marker in a trigger message that selects the delegation scenario: the stub hands the
+/// run's work node to a worker (RUN-002's port) and the run parks in `WAITING_CHILD`.
+pub const DELEGATE_SCENARIO: &str = "[[scenario:delegate]]";
 /// The provider the seam records itself as on the ModelRoute rows it writes.
 pub const SEAM_PROVIDER: &str = "in-process";
 /// The model the seam records itself as; not a `config/models.yaml` model, and not a
@@ -160,6 +163,17 @@ impl ConformanceStubModel {
             .trigger_text(&request.tenant_id, &request.run_id)
             .await
             .unwrap_or_default();
+        if scenario.contains(DELEGATE_SCENARIO) && count == 1 {
+            return Ok(ModelProposal {
+                assistant_text: Some("handing this to a worker.".to_string()),
+                delegate_requests: vec![DelegationRequest {
+                    request_id: "dlg_conformance".to_string(),
+                    work_node_id: None,
+                    instruction: "do the delegated part".to_string(),
+                }],
+                ..ModelProposal::default()
+            });
+        }
         if scenario.contains(QUESTION_SCENARIO) {
             return match self.answered(&request.tenant_id, &request.run_id).await {
                 None => Ok(ModelProposal {

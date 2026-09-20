@@ -112,6 +112,26 @@ pub async fn invoke(
             .await?
         }
         "CancelTurn" => cancel_turn(&state, &identity, &request.params, &correlation).await?,
+        "ProposeGraphEdit" => {
+            super::workgraph::propose_graph_edit(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "CreateObjective" => {
+            super::workgraph::create_objective(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
         "CreateArtifact" => {
             super::artifacts::create_artifact(
                 &state,
@@ -560,7 +580,13 @@ async fn ensure_teammate(
         )
         .await
         .map_err(|error| runtime_error(error, correlation))?;
-    Ok(created.id)
+    // The teammate acts from its first turn; an ACTIVE thread is also what a delegation
+    // (RUN-002) requires of the parent.
+    let activated = agents
+        .activate(&created.id, created.generation)
+        .await
+        .map_err(|error| runtime_error(error, correlation))?;
+    Ok(activated.id)
 }
 
 async fn load_work_node(
