@@ -29,6 +29,10 @@ use crate::runtime::turn_loop::{
 
 /// Marker in a trigger message that selects the question scenario.
 pub const QUESTION_SCENARIO: &str = "[[scenario:question]]";
+/// Marker in a trigger message that selects the approval scenario: the stub proposes an
+/// `fs.write`, whose class a test policy sets to `ask`, so the run parks `WAITING_APPROVAL`;
+/// once the approval resumes it, the stub finishes.
+pub const APPROVAL_SCENARIO: &str = "[[scenario:approval]]";
 /// Marker in a trigger message that selects the delegation scenario: the stub hands the
 /// run's work node to a worker (RUN-002's port) and the run parks in `WAITING_CHILD`.
 pub const DELEGATE_SCENARIO: &str = "[[scenario:delegate]]";
@@ -163,6 +167,28 @@ impl ConformanceStubModel {
             .trigger_text(&request.tenant_id, &request.run_id)
             .await
             .unwrap_or_default();
+        if scenario.contains(APPROVAL_SCENARIO) {
+            if count == 1 {
+                let content = "approved content";
+                return Ok(ModelProposal {
+                    assistant_text: Some("writing the file once you approve.".to_string()),
+                    tool_calls: vec![ProposedToolCall::new(
+                        "call_approval",
+                        "fs.write",
+                        json!({
+                            "path": "/work/root/out.txt",
+                            "content": content,
+                            "content_digest": quansio_core::Digest::of(content.as_bytes()).to_string(),
+                        }),
+                    )],
+                    ..ModelProposal::default()
+                });
+            }
+            return Ok(ModelProposal {
+                assistant_text: Some("the file is written.".to_string()),
+                ..ModelProposal::default()
+            });
+        }
         if scenario.contains(DELEGATE_SCENARIO) && count == 1 {
             return Ok(ModelProposal {
                 assistant_text: Some("handing this to a worker.".to_string()),

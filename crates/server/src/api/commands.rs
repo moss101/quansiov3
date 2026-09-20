@@ -122,6 +122,28 @@ pub async fn invoke(
             )
             .await?
         }
+        "ApproveEffect" => {
+            super::trust::approve_effect(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+                chat_engine,
+            )
+            .await?
+        }
+        "DenyEffect" => {
+            super::trust::deny_effect(
+                &state,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+                chat_engine,
+            )
+            .await?
+        }
         "CreateObjective" => {
             super::workgraph::create_objective(
                 &state,
@@ -380,7 +402,7 @@ async fn post_message(
 }
 
 /// The assistant text of a completed turn becomes the agent's durable message in the thread.
-async fn post_agent_reply(
+pub(super) async fn post_agent_reply(
     store: &ConversationStore,
     thread_id: &str,
     agent_id: &str,
@@ -511,7 +533,7 @@ async fn cancel_turn(
 }
 
 /// The conversation thread a run was triggered from, when its trigger was a message.
-async fn thread_of_run(
+pub(super) async fn thread_of_run(
     state: &ApiState,
     tenant_id: &str,
     run_id: &str,
@@ -527,7 +549,10 @@ async fn thread_of_run(
     .map_err(database_error)
 }
 
-fn chat_engine(state: &ApiState, identity: RuntimeIdentity) -> Result<RuntimeEngine, RuntimeError> {
+pub(super) fn chat_engine(
+    state: &ApiState,
+    identity: RuntimeIdentity,
+) -> Result<RuntimeEngine, RuntimeError> {
     let delegation: Arc<dyn crate::runtime::state_machine::DelegationPort> = Arc::new(
         AgentDelegationPort::with_structural_check(state.pool().clone(), identity.clone())?,
     );
@@ -636,17 +661,35 @@ async fn seed_projection(
     workspace_id: &str,
     run: &Run,
 ) -> Result<(), String> {
-    let grants: Vec<Grant> = [("read.internal", "fs", "**")]
-        .into_iter()
-        .map(|(class, kind, selector)| {
-            Grant::from_json(&json!({
-                "effect_class": class,
-                "resource": { "kind": kind, "selector": selector },
-                "constraints": {},
-            }))
-            .expect("grant")
-        })
-        .collect();
+    // The run's projection covers what the workspace's policies allow or ask for: policy
+    // still decides per call (allow → dispatch, ask → approval), but a class no policy
+    // mentions is not even in the projection. The skeleton's read grant stays as the floor.
+    let mut grants: Vec<Grant> = vec![Grant::from_json(&json!({
+        "effect_class": "read.internal",
+        "resource": { "kind": "fs", "selector": "**" },
+        "constraints": {},
+    }))
+    .expect("grant")];
+    if let Ok(policies) = crate::policy::PolicyStore::new(state.pool().clone(), identity.clone()) {
+        if let Ok(set) = policies.load_policy_set(workspace_id).await {
+            for rule in set.in_order().iter().flat_map(|policy| policy.rules.iter()) {
+                if matches!(
+                    rule.decision,
+                    quansio_capability::PolicyDecision::Allow
+                        | quansio_capability::PolicyDecision::Ask
+                ) {
+                    let grant = Grant::new(
+                        rule.effect_class.clone(),
+                        rule.resource_selector.clone(),
+                        quansio_capability::Constraints::default(),
+                    );
+                    if !grants.contains(&grant) {
+                        grants.push(grant);
+                    }
+                }
+            }
+        }
+    }
     let mut generator = UlidGenerator::new();
     let projection = CapabilityProjection::from_parts(
         CanonicalId::generate(Prefix::CapabilityProjection, &mut generator),
@@ -728,7 +771,7 @@ fn run_json(run: &Run) -> Value {
     json!({ "run_id": run.id.to_string(), "status": run.status.as_db_str() })
 }
 
-fn turn_json(outcome: &TurnOutcome) -> Value {
+pub(super) fn turn_json(outcome: &TurnOutcome) -> Value {
     match outcome {
         TurnOutcome::Completed {
             turn_id,

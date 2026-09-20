@@ -11,7 +11,7 @@
 //!
 //! Usage:
 //!   quansio-dev-seed create --database <name> --tenant <tn_…> --user <usr_…> \
-//!       --workspace <ws_…> --node <wn_…>
+//!       --workspace <ws_…> --node <wn_…> [--ask-writes]
 //!   quansio-dev-seed drop --database <name>
 
 use std::env;
@@ -29,6 +29,8 @@ struct Args {
     user: String,
     workspace: String,
     node: String,
+    /// Also seed `ask` rules for writes, so an `fs.write` parks the run for approval.
+    ask_writes: bool,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -41,8 +43,13 @@ fn parse_args() -> Result<Args, String> {
         user: String::new(),
         workspace: String::new(),
         node: String::new(),
+        ask_writes: false,
     };
     while let Some(flag) = args.next() {
+        if flag == "--ask-writes" {
+            parsed.ask_writes = true;
+            continue;
+        }
         let value = args.next().ok_or_else(|| format!("{flag} needs a value"))?;
         match flag.as_str() {
             "--database" => parsed.database = value,
@@ -152,9 +159,16 @@ async fn run(args: Args) -> Result<(), String> {
     .execute(&mut *tx)
     .await
     .map_err(|error| format!("work node: {error}"))?;
-    let rules = json!([
-        { "effect_class": "read.internal", "resource": { "kind": "fs", "selector": "**" }, "decision": "allow" }
-    ]);
+    let mut rules = vec![
+        json!({ "effect_class": "read.internal", "resource": { "kind": "fs", "selector": "**" }, "decision": "allow" }),
+    ];
+    if args.ask_writes {
+        // Writes ask a human first (APP-006's approval loop); without an execution target
+        // the runtime classifies fs.write as the host class, so both are governed.
+        rules.push(json!({ "effect_class": "fs.write.workspace", "resource": { "kind": "fs", "selector": "**" }, "decision": "ask" }));
+        rules.push(json!({ "effect_class": "fs.write.host", "resource": { "kind": "fs", "selector": "**" }, "decision": "ask" }));
+    }
+    let rules = json!(rules);
     sqlx::query(
         "INSERT INTO policies (id, tenant_id, workspace_id, scope, rules) \
          VALUES ('pol_01J8Z3K6F1N8VQ2X5W9Y0E2E01', $1, NULL, 'tenant', $2)",
