@@ -548,11 +548,12 @@ impl AuthStore {
             .bind(&user_id)
             .execute(&mut *tx)
             .await?;
-        // The personal tenant first, else the earliest active membership.
+        // The personal tenant first, else the earliest active membership; an invitation
+        // (`invited`, APP-012's InviteMember) counts, and signing in is what accepts it.
         let tenant: Option<(String,)> = sqlx::query_as(
             "SELECT t.id FROM tenant_memberships m JOIN tenants t ON t.id = m.tenant_id \
-             WHERE m.user_id = $1 AND m.status = 'active' \
-             ORDER BY t.personal DESC, m.created_at ASC LIMIT 1",
+             WHERE m.user_id = $1 AND m.status IN ('active', 'invited') \
+             ORDER BY t.personal DESC, m.status ASC, m.created_at ASC LIMIT 1",
         )
         .bind(&user_id)
         .fetch_optional(&mut *tx)
@@ -564,6 +565,22 @@ impl AuthStore {
             .bind(&tenant_id)
             .execute(&mut *tx)
             .await?;
+        sqlx::query(
+            "UPDATE tenant_memberships SET status = 'active', updated_at = now() \
+             WHERE tenant_id = $1 AND user_id = $2 AND status = 'invited'",
+        )
+        .bind(&tenant_id)
+        .bind(&user_id)
+        .execute(&mut *tx)
+        .await?;
+        sqlx::query(
+            "UPDATE workspace_memberships SET status = 'active', updated_at = now() \
+             WHERE tenant_id = $1 AND user_id = $2 AND status = 'invited'",
+        )
+        .bind(&tenant_id)
+        .bind(&user_id)
+        .execute(&mut *tx)
+        .await?;
         let workspace: Option<(String,)> = sqlx::query_as(
             "SELECT w.id FROM workspaces w \
              JOIN workspace_memberships wm ON wm.workspace_id = w.id AND wm.user_id = $2 AND wm.status = 'active' \

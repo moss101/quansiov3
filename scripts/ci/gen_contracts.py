@@ -41,6 +41,9 @@ SCHEMA_DIR = ROOT / "schemas"
 PROTO_DIR = SCHEMA_DIR / "proto"
 OPENAPI_PATH = SCHEMA_DIR / "openapi" / "public-api-v1.yaml"
 TS_TYPES_PATH = ROOT / "sdk" / "typescript" / "src" / "generated" / "public-api.d.ts"
+# The SDK operation tables (APP-013): the same catalog, as data the thin clients address.
+SDK_TS_OPERATIONS = ROOT / "sdk" / "typescript" / "src" / "generated" / "operations.ts"
+SDK_PY_OPERATIONS = ROOT / "sdk" / "python" / "quansio_sdk" / "generated" / "operations.py"
 RUST_GENERATED = ROOT / "crates" / "contracts" / "src" / "generated"
 PY_GENERATED = ROOT / "python" / "intelligence" / "contracts" / "generated"
 
@@ -350,6 +353,87 @@ def generate_ts(out: Path) -> Path:
     return out
 
 
+def _sdk_operations(catalog: Optional[Dict[str, object]] = None) -> Dict[str, object]:
+    """The operation table both SDKs are generated from: one row per command, plus the
+    read projections and the error codes, all from the DOMAIN.md catalog."""
+    catalog = catalog or domain_catalog.build_catalog()
+    commands: Dict[str, List[str]] = catalog["commands"]  # type: ignore[assignment]
+    errors: List[Dict[str, str]] = catalog["errors"]  # type: ignore[assignment]
+    projections: List[str] = catalog["read_projections"]  # type: ignore[assignment]
+    operations = [
+        {"operation_id": name, "method": "POST", "path": f"/v1/commands/{name}", "family": family}
+        for family, names in commands.items()
+        for name in names
+    ]
+    return {
+        "operations": operations,
+        "read_projections": list(projections),
+        "error_codes": [e["code"] for e in errors],
+    }
+
+
+def generate_sdk_ts(out: Path, catalog: Optional[Dict[str, object]] = None) -> Path:
+    """Write `operations.ts`: the command table, projections and error codes as `as const` data."""
+    table = _sdk_operations(catalog)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        "// GENERATED from DOMAIN.md by scripts/ci/gen_contracts.py --sdk. Do not hand edit.",
+        "// The public API v1 operation table (APP-013): every command the catalog names, with",
+        "// its method and path, the read projections, and the §15 error codes.",
+        "",
+        "export const OPERATIONS = {",
+    ]
+    for op in table["operations"]:  # type: ignore[union-attr]
+        lines.append(
+            f'  {op["operation_id"]}: {{ method: "{op["method"]}", path: "{op["path"]}", family: {json.dumps(op["family"])} }},'
+        )
+    lines += ["} as const;", "", "export type OperationId = keyof typeof OPERATIONS;", "", "export const READ_PROJECTIONS = ["]
+    for path in table["read_projections"]:  # type: ignore[union-attr]
+        lines.append(f"  {json.dumps(path)},")
+    lines += ["] as const;", "", "export const ERROR_CODES = ["]
+    for code in table["error_codes"]:  # type: ignore[union-attr]
+        lines.append(f"  {json.dumps(code)},")
+    lines += ["] as const;", "", "export type ErrorCode = (typeof ERROR_CODES)[number];", ""]
+    out.write_text("\n".join(lines), encoding="utf-8")
+    return out
+
+
+def generate_sdk_py(out: Path, catalog: Optional[Dict[str, object]] = None) -> Path:
+    """Write `operations.py`: the same table for the Python client."""
+    table = _sdk_operations(catalog)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        '"""GENERATED from DOMAIN.md by scripts/ci/gen_contracts.py --sdk. Do not hand edit.',
+        "",
+        "The public API v1 operation table (APP-013): every command the catalog names, with its",
+        "method and path, the read projections, and the §15 error codes.",
+        '"""',
+        "",
+        "from __future__ import annotations",
+        "",
+        "OPERATIONS: dict[str, dict[str, str]] = {",
+    ]
+    for op in table["operations"]:  # type: ignore[union-attr]
+        # One key per line, the shape ruff formats to, so the file is stable under both
+        # the drift gate and the formatter.
+        lines += [
+            f'    {json.dumps(op["operation_id"])}: {{',
+            f'        "method": "{op["method"]}",',
+            f'        "path": "{op["path"]}",',
+            f'        "family": {json.dumps(op["family"])},',
+            "    },",
+        ]
+    lines += ["}", "", "READ_PROJECTIONS: tuple[str, ...] = ("]
+    for path in table["read_projections"]:  # type: ignore[union-attr]
+        lines.append(f"    {json.dumps(path)},")
+    lines += [")", "", "ERROR_CODES: tuple[str, ...] = ("]
+    for code in table["error_codes"]:  # type: ignore[union-attr]
+        lines.append(f"    {json.dumps(code)},")
+    lines += [")", ""]
+    out.write_text("\n".join(lines), encoding="utf-8")
+    return out
+
+
 def _diff_tree(a: Path, b: Path) -> List[str]:
     """Relative names that differ between two generated trees."""
     if not a.exists() or not b.exists():
@@ -373,7 +457,7 @@ def _diff_tree(a: Path, b: Path) -> List[str]:
     return differing
 
 
-GENERATORS = ("catalog", "openapi", "rust", "python", "ts")
+GENERATORS = ("catalog", "openapi", "rust", "python", "ts", "sdk")
 
 
 def check(only: Sequence[str] = GENERATORS) -> List[str]:
@@ -399,6 +483,13 @@ def check(only: Sequence[str] = GENERATORS) -> List[str]:
             out = generate_ts(tmp_path / "public-api.d.ts")
             if not TS_TYPES_PATH.exists() or out.read_text() != TS_TYPES_PATH.read_text():
                 problems.append("ts/public-api.d.ts")
+        if "sdk" in only:
+            out = generate_sdk_ts(tmp_path / "operations.ts")
+            if not SDK_TS_OPERATIONS.exists() or out.read_text() != SDK_TS_OPERATIONS.read_text():
+                problems.append("sdk/typescript/operations.ts")
+            out = generate_sdk_py(tmp_path / "operations.py")
+            if not SDK_PY_OPERATIONS.exists() or out.read_text() != SDK_PY_OPERATIONS.read_text():
+                problems.append("sdk/python/operations.py")
     return problems
 
 
@@ -410,6 +501,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--rust", action="store_true")
     ap.add_argument("--python", action="store_true")
     ap.add_argument("--ts", action="store_true")
+    ap.add_argument("--sdk", action="store_true", help="regenerate the SDK operation tables (APP-013)")
     ap.add_argument("--check", action="store_true", help="verify checked-in artifacts are current")
     ap.add_argument("--only", default=None, help="comma-separated subset for --check")
     args = ap.parse_args(argv)
@@ -426,7 +518,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"contract regeneration check: CLEAN ({','.join(only)})")
         return 0
 
-    run_all = args.all or not any([args.catalog, args.openapi, args.rust, args.python, args.ts])
+    run_all = args.all or not any([args.catalog, args.openapi, args.rust, args.python, args.ts, args.sdk])
     if run_all or args.catalog:
         for path in domain_catalog.write_catalog():
             print("wrote", path.relative_to(ROOT))
@@ -442,6 +534,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if run_all or args.ts:
         generate_ts(TS_TYPES_PATH)
         print("wrote", TS_TYPES_PATH.relative_to(ROOT))
+    if run_all or args.sdk:
+        generate_sdk_ts(SDK_TS_OPERATIONS)
+        print("wrote", SDK_TS_OPERATIONS.relative_to(ROOT))
+        generate_sdk_py(SDK_PY_OPERATIONS)
+        print("wrote", SDK_PY_OPERATIONS.relative_to(ROOT))
     return 0
 
 

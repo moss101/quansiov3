@@ -169,14 +169,19 @@ impl PolicyStore {
         let tenant_id = self.identity.tenant_id.clone();
         let mut tx = self.events.begin_tenant_transaction(&tenant_id).await?;
         let rows = sqlx::query(
+            // The tenant guard is structural as well as row-level: under a superuser
+            // connection (development harnesses) RLS does not apply, and a tenant with no
+            // policy of its own must not inherit another tenant's.
             "SELECT id, scope, workspace_id, rules, question_default_ttl_seconds, \
              approval_default_ttl_seconds, max_plan_nodes, version \
              FROM policies \
-             WHERE (scope = 'tenant' AND workspace_id IS NULL) \
-                OR (scope = 'workspace' AND workspace_id = $1) \
+             WHERE tenant_id = $2 \
+               AND ((scope = 'tenant' AND workspace_id IS NULL) \
+                OR (scope = 'workspace' AND workspace_id = $1)) \
              ORDER BY id ASC",
         )
         .bind(workspace_id)
+        .bind(&tenant_id)
         .fetch_all(&mut *tx)
         .await?;
 
@@ -383,10 +388,12 @@ impl PolicyStore {
         let mut tx = self.events.begin_tenant_transaction(&tenant_id).await?;
         let rows = sqlx::query(
             "SELECT id, user_id, workspace_id, effect_class, resource, decision, expires_at \
-             FROM user_rules WHERE workspace_id = $1 AND user_id = $2 ORDER BY id ASC",
+             FROM user_rules WHERE tenant_id = $3 AND workspace_id = $1 AND user_id = $2 \
+             ORDER BY id ASC",
         )
         .bind(workspace_id)
         .bind(user_id)
+        .bind(&tenant_id)
         .fetch_all(&mut *tx)
         .await?;
         let rules = rows
@@ -851,9 +858,11 @@ impl PolicyStore {
         let ids: Vec<String> = {
             let mut tx = self.events.begin_tenant_transaction(&tenant_id).await?;
             let rows = sqlx::query(
-                "SELECT id FROM approval_requests WHERE status = 'requested' AND expires_at <= $1",
+                "SELECT id FROM approval_requests WHERE tenant_id = $2 AND status = 'requested' \
+                 AND expires_at <= $1",
             )
             .bind(now)
+            .bind(&tenant_id)
             .fetch_all(&mut *tx)
             .await?;
             tx.commit().await?;
