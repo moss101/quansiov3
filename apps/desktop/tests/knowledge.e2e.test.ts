@@ -349,7 +349,8 @@ describe.skipIf(blocked !== null)("desktop knowledge E2E against quansio-server"
     }
     expect(skillInputs(resolution)).toEqual([versionId]);
     const rows = layersInOrder(resolution);
-    expect(rows.filter((row) => row.input).map((row) => row.layer)).toEqual(["tenant_policy", "active_skills"]);
+    // The workspace's default teammate (APP-014) is an input too, between the policy and the skills.
+    expect(rows.filter((row) => row.input).map((row) => row.layer)).toEqual(["tenant_policy", "agent_definition", "active_skills"]);
     expect(resolution.grants.map((grant) => grant.effectClass)).toEqual(["read.internal"]);
 
     // 5. Disable: the version is deprecated, nothing resolves, and it cannot be revived.

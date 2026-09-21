@@ -29,6 +29,7 @@ pub mod rbac;
 pub mod seams;
 pub mod search;
 pub mod stream;
+pub mod teammates;
 pub mod threads;
 pub mod trust;
 pub mod web;
@@ -567,6 +568,7 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/connectors", get(admin::connectors))
         .route("/v1/usage", get(admin::usage))
         .route("/v1/audit", get(admin::audit_log))
+        .route("/v1/teammates", get(teammates::roster))
         .route("/app", get(web::index))
         .route("/app/", get(web::index))
         .route("/app/*path", get(web::asset))

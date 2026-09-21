@@ -56,6 +56,10 @@ export const PRELOAD_ALLOWLIST = [
   "skills.promote",
   "skills.disable",
   "runs.capabilities",
+  "teammates.list",
+  "teammates.create",
+  "teammates.update",
+  "teammates.archive",
 ] as const;
 
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
@@ -136,7 +140,7 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     threadMessages: (threadId: string) => send("threads.messages", { threadId }),
     listQuestions: (scope: { threadId: string } | { runId: string }) => send("questions.list", scope),
     runTimeline: (runId: string) => send("runs.timeline", { runId }),
-    postMessage: (message: { threadId?: string | null; content: string; attachments?: readonly string[] }) =>
+    postMessage: (message: { threadId?: string | null; content: string; attachments?: readonly string[]; teammateId?: string | null }) =>
       send("messages.post", message),
     answerQuestion: (questionId: string, value: unknown) => send("questions.answer", { questionId, value }),
     cancelTurn: (runId: string, generation?: number) => send("turns.cancel", { runId, generation }),
@@ -174,6 +178,11 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     promoteSkillVersion: (skillVersionId: string, to: string) => send("skills.promote", { skillVersionId, to }),
     disableSkill: (skillId: string) => send("skills.disable", { skillId }),
     runCapabilities: (runId: string) => send("runs.capabilities", { runId }),
+    // The teammate roster (APP-014): the projection and the three definition commands.
+    listTeammates: () => send("teammates.list", {}),
+    createTeammate: (params: Record<string, unknown>) => send("teammates.create", params),
+    updateTeammate: (params: Record<string, unknown>) => send("teammates.update", params),
+    archiveTeammate: (teammateId: string) => send("teammates.archive", { teammateId }),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),

@@ -627,8 +627,20 @@ async fn a_skill_version_climbs_the_ladder_one_rung_at_a_time_and_grants_nothing
         .iter()
         .filter_map(|input| input["layer"].as_str())
         .collect();
-    assert_eq!(layers, vec!["tenant_policy", "active_skills"], "{run}");
-    assert_eq!(inputs[1]["ref"], version_id, "{run}");
+    // The workspace's default teammate (APP-014) is an input between the policy and the
+    // skills, in the fixed layer order; it declares no needs, so it narrows nothing.
+    assert_eq!(
+        layers,
+        vec!["tenant_policy", "agent_definition", "active_skills"],
+        "{run}"
+    );
+    assert_eq!(inputs[2]["ref"], version_id, "{run}");
+    assert!(
+        inputs[1]["ref"]
+            .as_str()
+            .is_some_and(|reference| reference.starts_with("agt_")),
+        "{run}"
+    );
     assert_eq!(
         inputs[0]["ref"], "pol_01J8Z3K6F1N8VQ2X5W9Y0KKKKK@1",
         "{run}"
@@ -704,7 +716,7 @@ async fn a_skill_version_climbs_the_ladder_one_rung_at_a_time_and_grants_nothing
         .iter()
         .filter_map(|input| input["layer"].as_str())
         .collect();
-    assert_eq!(layers, vec!["tenant_policy"], "{run}");
+    assert_eq!(layers, vec!["tenant_policy", "agent_definition"], "{run}");
 
     common::drop_pool(&h.pool, &h.name).await;
 }

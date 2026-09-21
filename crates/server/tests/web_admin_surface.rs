@@ -569,6 +569,9 @@ async fn admin_pages_and_commands_are_decided_by_the_servers_rbac_for_every_role
             "SetPolicy:applied",
             "SetPolicy:applied",
             "SetPolicy:applied",
+            // The first message provisioned the workspace's default teammate (APP-014);
+            // that is an audited definition change too.
+            "CreateTeammate:applied",
             "ApproveEffect:granted",
             "DenyEffect:denied",
         ],
@@ -585,13 +588,13 @@ async fn admin_pages_and_commands_are_decided_by_the_servers_rbac_for_every_role
         "{audit}"
     );
     assert_eq!(
-        entries[8]["actor"],
+        entries[9]["actor"],
         json!({ "kind": "user", "id": OWNER }),
         "{audit}"
     );
-    assert_eq!(entries[8]["prev_hash"], "", "genesis");
-    assert_eq!(entries[7]["prev_hash"], entries[8]["hash"]);
-    assert_eq!(audit["chain"]["entries"], 9);
+    assert_eq!(entries[9]["prev_hash"], "", "genesis");
+    assert_eq!(entries[8]["prev_hash"], entries[9]["hash"]);
+    assert_eq!(audit["chain"]["entries"], 10);
     let (_, by_workspace) = get(
         &h.router,
         OWNER,
@@ -600,8 +603,8 @@ async fn admin_pages_and_commands_are_decided_by_the_servers_rbac_for_every_role
     .await;
     assert_eq!(
         by_workspace["entries"].as_array().map_or(0, Vec::len),
-        4,
-        "invite-with-workspace, workspace policy, grant, deny: {by_workspace}"
+        5,
+        "invite-with-workspace, workspace policy, default teammate, grant, deny: {by_workspace}"
     );
     let tampered = entries[4]["id"].as_str().expect("id").to_string();
     let mut tx = h.pool.begin().await.expect("begin");

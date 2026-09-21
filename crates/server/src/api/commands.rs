@@ -7,7 +7,7 @@ use std::sync::Arc;
 use super::{ApiError, ApiErrorCode, ApiState, CommandRequest, CommandResponse, TenantScope};
 use crate::control::conversation::ConversationStore;
 use crate::runtime::agents::AgentDelegationPort;
-use crate::runtime::agents::{AgentKind, AgentStore, NewAgentThread};
+use crate::runtime::agents::AgentStore;
 use crate::runtime::state_machine::{
     NewRun, Run, RunTriggerKind, RuntimeEngine, RuntimeError, RuntimeIdentity, TurnInput,
     TurnOutcome,
@@ -243,6 +243,39 @@ pub async fn invoke(
             super::admin::remove_member(&state, &scope, &identity, &request.params, &correlation)
                 .await?
         }
+        "CreateTeammate" => {
+            super::teammates::create_teammate(
+                &state,
+                &scope,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "UpdateTeammate" => {
+            super::teammates::update_teammate(
+                &state,
+                &scope,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "ArchiveTeammate" => {
+            super::teammates::archive_teammate(
+                &state,
+                &scope,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
         "SetPolicy" => {
             super::admin::set_policy(
                 &state,
@@ -435,8 +468,16 @@ async fn post_message(
         .map_err(|error| conversation_error(error, correlation))?;
 
     let work_node = load_work_node(state, &identity.tenant_id, workspace_id, correlation).await?;
-    let agent_thread =
-        ensure_teammate(state, identity, workspace_id, &work_node, correlation).await?;
+    let addressed = params.get("teammate_id").and_then(Value::as_str);
+    let (agent_thread, teammate) = route_to_teammate(
+        state,
+        identity,
+        workspace_id,
+        &work_node,
+        addressed,
+        correlation,
+    )
+    .await?;
     let mut new_run = NewRun::new(
         workspace_id.to_string(),
         work_node,
@@ -444,7 +485,14 @@ async fn post_message(
         RunTriggerKind::Message,
     );
     new_run.trigger_ref = Some(posted.message.id.clone());
-    if let Some(target) = load_target(state, &identity.tenant_id, workspace_id).await? {
+    // The teammate's default execution target binds its runs; the workspace's first target
+    // is the fallback the walking skeleton always had.
+    let preferred = teammate
+        .as_ref()
+        .and_then(|teammate| teammate.default_execution_target_id.clone());
+    if let Some(target) = preferred {
+        new_run.execution_target_id = Some(target);
+    } else if let Some(target) = load_target(state, &identity.tenant_id, workspace_id).await? {
         new_run.execution_target_id = Some(target);
     }
     let engine =
@@ -456,6 +504,9 @@ async fn post_message(
     seed_projection(state, identity, workspace_id, &run)
         .await
         .map_err(|error| internal(error, correlation))?;
+    let teammate_json = teammate.as_ref().map(|teammate| {
+        json!({ "id": teammate.id.to_string(), "name": teammate.name, "version": teammate.version })
+    });
     let run = engine
         .enqueue(&run.id, run.generation)
         .await
@@ -488,6 +539,7 @@ async fn post_message(
         "run_status": run.status.as_db_str(),
         "turn": turn_json(&outcome),
         "reply_message_id": reply,
+        "teammate": teammate_json,
     }))
 }
 
@@ -665,43 +717,149 @@ pub(super) fn chat_engine(
         .with_live_frames(live))
 }
 
-async fn ensure_teammate(
+/// The AgentThread a message runs under: the named teammate's (`teammate_id`), or the
+/// workspace's default teammate's — the oldest active, available definition, provisioned
+/// from the `general-assistant` template when the workspace has none (configuration, not
+/// code). A teammate that is archived or away refuses new runs; a pre-definition
+/// teammate thread (the walking skeleton's) is kept for a workspace that still has one and
+/// no definition.
+async fn route_to_teammate(
     state: &ApiState,
     identity: &RuntimeIdentity,
     workspace_id: &str,
     work_node: &CanonicalId,
+    addressed: Option<&str>,
     correlation: &str,
-) -> Result<CanonicalId, ApiError> {
-    let existing: Option<String> = sqlx::query_scalar(
-        "SELECT id FROM agent_threads WHERE tenant_id = $1 AND workspace_id = $2 \
-         AND agent_kind = 'teammate' ORDER BY created_at LIMIT 1",
-    )
-    .bind(&identity.tenant_id)
-    .bind(workspace_id)
-    .fetch_optional(state.pool())
-    .await
-    .map_err(database_error)?;
-    if let Some(id) = existing {
-        return CanonicalId::parse_typed(&id, Prefix::AgentThread).map_err(|error| {
-            ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation)
-        });
+) -> Result<(CanonicalId, Option<crate::control::teammates::Teammate>), ApiError> {
+    let store = crate::control::teammates::TeammateStore::new(state.pool().clone());
+    let teammate_error = |error: crate::control::teammates::TeammateError| {
+        let code = match error.code() {
+            "NOT_FOUND" => ApiErrorCode::NotFound,
+            "CONFLICT_STATE" => ApiErrorCode::ConflictState,
+            "VALIDATION_SCHEMA" => ApiErrorCode::ValidationSchema,
+            _ => ApiErrorCode::Internal,
+        };
+        ApiError::new(code, error.to_string(), correlation)
+    };
+    let teammate = match addressed {
+        Some(id) => {
+            let id = CanonicalId::parse_typed(id, Prefix::Teammate).map_err(|error| {
+                ApiError::new(
+                    ApiErrorCode::ValidationSchema,
+                    format!("teammate_id: {error}"),
+                    correlation,
+                )
+            })?;
+            let teammate = store
+                .get(&identity.tenant_id, &id)
+                .await
+                .map_err(teammate_error)?;
+            if teammate.workspace_id != workspace_id {
+                return Err(ApiError::new(
+                    ApiErrorCode::NotFound,
+                    format!("teammate {id} is not in workspace {workspace_id}"),
+                    correlation,
+                ));
+            }
+            Some(teammate)
+        }
+        None => {
+            let default = store
+                .default_for(&identity.tenant_id, workspace_id)
+                .await
+                .map_err(teammate_error)?;
+            match default {
+                Some(teammate) => Some(teammate),
+                None => {
+                    let legacy: Option<String> = sqlx::query_scalar(
+                        "SELECT id FROM agent_threads WHERE tenant_id = $1 AND workspace_id = $2 \
+                         AND agent_kind = 'teammate' AND definition_id IS NULL \
+                         AND status = 'ACTIVE' ORDER BY created_at LIMIT 1",
+                    )
+                    .bind(&identity.tenant_id)
+                    .bind(workspace_id)
+                    .fetch_optional(state.pool())
+                    .await
+                    .map_err(database_error)?;
+                    if let Some(id) = legacy {
+                        let id = CanonicalId::parse_typed(&id, Prefix::AgentThread).map_err(
+                            |error| {
+                                ApiError::new(
+                                    ApiErrorCode::Internal,
+                                    error.to_string(),
+                                    correlation,
+                                )
+                            },
+                        )?;
+                        return Ok((id, None));
+                    }
+                    let admin = crate::control::teammates::TeammateAdmin {
+                        tenant_id: identity.tenant_id.clone(),
+                        actor: identity.actor.clone(),
+                        correlation_id: identity.correlation_id,
+                    };
+                    let (teammate, thread) = store
+                        .create(
+                            &admin,
+                            identity,
+                            workspace_id,
+                            crate::control::teammates::NewTeammate {
+                                template_id: Some("general-assistant".to_string()),
+                                ..Default::default()
+                            },
+                        )
+                        .await
+                        .map_err(teammate_error)?;
+                    let _ = work_node;
+                    return Ok((thread.id, Some(teammate)));
+                }
+            }
+        }
+    };
+    let Some(teammate) = teammate else {
+        unreachable!("every arm above returns or names a teammate");
+    };
+    if teammate.status != "active" {
+        return Err(ApiError::new(
+            ApiErrorCode::ConflictState,
+            format!(
+                "teammate {} ({}) is archived and takes no new message",
+                teammate.name, teammate.id
+            ),
+            correlation,
+        ));
     }
+    if teammate.availability != "available" {
+        return Err(ApiError::new(
+            ApiErrorCode::ConflictState,
+            format!(
+                "teammate {} ({}) is {}",
+                teammate.name, teammate.id, teammate.availability
+            ),
+            correlation,
+        ));
+    }
+    let thread = store
+        .provision_thread(identity, &teammate)
+        .await
+        .map_err(teammate_error)?;
     let agents = AgentStore::new(state.pool().clone(), identity.clone())
         .map_err(|error| internal(error, correlation))?;
-    let created = agents
-        .create_thread(
-            NewAgentThread::new(workspace_id.to_string(), AgentKind::Teammate)
-                .with_work_node(*work_node),
-        )
-        .await
-        .map_err(|error| runtime_error(error, correlation))?;
-    // The teammate acts from its first turn; an ACTIVE thread is also what a delegation
-    // (RUN-002) requires of the parent.
-    let activated = agents
-        .activate(&created.id, created.generation)
-        .await
-        .map_err(|error| runtime_error(error, correlation))?;
-    Ok(activated.id)
+    let thread = if matches!(
+        thread.status,
+        crate::runtime::agents::AgentThreadStatus::Suspended
+            | crate::runtime::agents::AgentThreadStatus::Provisioned
+    ) {
+        // A suspended thread of an active teammate (the definition was archived and
+        // recreated, or the runtime suspended it) resumes; the definition decides.
+        agents
+            .activate(&thread.id, thread.generation)
+            .await
+            .map_err(|error| runtime_error(error, correlation))?
+    } else {
+        thread
+    };
+    Ok((thread.id, Some(teammate)))
 }
 
 async fn load_work_node(
@@ -793,6 +951,30 @@ async fn seed_projection(
                         grants.push(grant);
                     }
                 }
+            }
+        }
+    }
+    // The teammate definition behind the run's thread (APP-014): recorded as the
+    // `agent_definition` input, and its needs narrow the grants — never widen them. The
+    // definition's text (persona, standing instructions) is not read here at all.
+    let definition = crate::control::teammates::TeammateStore::new(state.pool().clone())
+        .turn_definition(&identity.tenant_id, &run.agent_thread_id.to_string())
+        .await
+        .ok()
+        .flatten();
+    if let Some(definition) = definition {
+        let store = crate::control::teammates::TeammateStore::new(state.pool().clone());
+        if let Ok(id) = CanonicalId::parse_typed(&definition.teammate_id, Prefix::Teammate) {
+            if let Ok(teammate) = store.get(&identity.tenant_id, &id).await {
+                inputs.push(ProjectionInput::new(
+                    Layer::AgentDefinition,
+                    format!("{}@v{}", teammate.id, teammate.version),
+                    teammate.digest(),
+                ));
+                grants = crate::control::teammates::narrow_by_needs(
+                    grants,
+                    &teammate.default_capability_needs,
+                );
             }
         }
     }

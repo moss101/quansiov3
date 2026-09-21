@@ -94,6 +94,10 @@ describe("preload bridge", () => {
         "promoteSkillVersion",
         "disableSkill",
         "runCapabilities",
+        "listTeammates",
+        "createTeammate",
+        "updateTeammate",
+        "archiveTeammate",
         "onStreamFrame",
         "onStreamState",
         "onStreamError",
@@ -165,6 +169,10 @@ describe("preload bridge", () => {
     await api.promoteSkillVersion("sklv_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", "candidate");
     await api.disableSkill("skl_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.runCapabilities("run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.listTeammates();
+    await api.createTeammate({ workspace_id: "ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", template_id: "engineer" });
+    await api.updateTeammate({ teammate_id: "agt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", name: "Atlas" });
+    await api.archiveTeammate("agt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {
