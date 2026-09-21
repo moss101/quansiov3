@@ -1,0 +1,64 @@
+{
+  "task_id": "APP-014",
+  "git_commit": "b951d365d9ab45b0125b2482e27fbc3e969f411d",
+  "recorded_at": "2026-09-21T05:02:43Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test teammates --test knowledge_surface",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-014/2026-09-21T04-39-27Z/cargo-teammates.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/teammates.test.ts tests/teammates.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed --ask-writes)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-014/2026-09-21T04-39-27Z/vitest-teammates.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop and web E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-014/2026-09-21T04-39-27Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test teammates --test knowledge_surface",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/teammates.test.ts tests/teammates.e2e.test.ts tests/preload.test.ts) (real quansio-server + quansio-dev-seed --ask-writes)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop and web E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-014/2026-09-21T04-39-27Z/NOTES.md",
+      "sha256": "b6829bccd3dd62b5bd26daa0ca915f79aa5861e00e0fc058a835bede71566de8",
+      "bytes": 7075
+    },
+    {
+      "path": "evidence/APP-014/2026-09-21T04-39-27Z/cargo-teammates.log",
+      "sha256": "fd9d93562dd5003a23cb4d10e84ae2b8436b33ef5c04ccddf0433710c446772b",
+      "bytes": 641
+    },
+    {
+      "path": "evidence/APP-014/2026-09-21T04-39-27Z/vitest-teammates.log",
+      "sha256": "b14069db8bb97c7eff2bdd3fe8a295c788c70e3d3e554e95907d6f2c4da26988",
+      "bytes": 523
+    },
+    {
+      "path": "evidence/APP-014/2026-09-21T04-39-27Z/ci-summary.json",
+      "sha256": "fe52c6b258b8e2046ac3358cc07c2dc1b1527b489dcb8318a404cb6b7046311f",
+      "bytes": 6797
+    }
+  ]
+}
