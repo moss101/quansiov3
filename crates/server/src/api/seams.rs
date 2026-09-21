@@ -99,6 +99,26 @@ impl ConformanceStubModel {
         let Some(pool) = self.pool.as_ref() else {
             return;
         };
+        // The definition behind the run's teammate is read at turn time (APP-014): the
+        // route record names it — its version and its route preference — so a change to
+        // the definition is visible on the very next turn, without restart. A real model
+        // source would build its system segment from the same read.
+        let chosen_by = match self
+            .turn_definition(&request.tenant_id, &request.run_id)
+            .await
+        {
+            Some(definition) => format!(
+                "seam:conformance;teammate:{}@v{}{}",
+                definition.teammate_id,
+                definition.version,
+                definition
+                    .model_route_preference
+                    .as_deref()
+                    .map(|route| format!(";prefers:{route}"))
+                    .unwrap_or_default()
+            ),
+            None => "seam:conformance".to_string(),
+        };
         // A ledger failure must not fail the turn: the proposal is already made, and the
         // step's own status stays the runtime's truth.
         let _ = ModelCallLedger::new(pool.clone())
@@ -108,13 +128,38 @@ impl ConformanceStubModel {
                     provider: SEAM_PROVIDER.to_string(),
                     model_id: SEAM_MODEL_ID.to_string(),
                     request_class: "chat".to_string(),
-                    chosen_by: "seam:conformance".to_string(),
+                    chosen_by,
                     stop_reason: stop_reason.to_string(),
                     latency_ms,
                     usage: json!({ "input": 0, "output": 0 }),
                 },
             )
             .await;
+    }
+
+    /// The teammate definition behind the run's AgentThread, as of now.
+    async fn turn_definition(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+    ) -> Option<crate::control::teammates::TurnDefinition> {
+        let pool = self.pool.as_ref()?;
+        let mut tx = pool.begin().await.ok()?;
+        schema::set_tenant_context(&mut tx, tenant_id).await.ok()?;
+        let thread: Option<String> =
+            sqlx::query_scalar("SELECT agent_thread_id FROM runs WHERE tenant_id = $1 AND id = $2")
+                .bind(tenant_id)
+                .bind(run_id)
+                .fetch_optional(&mut *tx)
+                .await
+                .ok()
+                .flatten();
+        drop(tx);
+        crate::control::teammates::TeammateStore::new(pool.clone())
+            .turn_definition(tenant_id, &thread?)
+            .await
+            .ok()
+            .flatten()
     }
 
     /// The latest answered question of `run_id`, as `(prompt, answer value)`.

@@ -4207,6 +4207,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/teammates:
+    get:
+      operationId: ReadV1Teammates
+      summary: Read projection /v1/teammates (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/notifications:
     get:
       operationId: ReadV1Notifications
