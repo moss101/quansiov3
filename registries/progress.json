@@ -1964,23 +1964,40 @@
     },
     "APP-014": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-20T21:38:46Z",
-      "updated_at": "2026-09-20T21:38:46Z",
-      "git_commit": null,
+      "updated_at": "2026-09-21T05:03:15Z",
+      "git_commit": "3507caa553ec7685e0894772385d76bd5f0437c2",
       "tests": [
-        "cargo test -p quansio-server --test teammates (standing instructions cannot widen grants; archive retains lineage; templates from config/teammates.yaml)"
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test teammates (a definition's needs narrow a run's capability projection and its instructions never widen it \u2014 a need the policy does not grant adds nothing, clearing needs restores the policy's grants, a non-effect-class need is refused; archive suspends the AgentThread via RUN-002 with the reason and keeps messages, runs, timelines and the work graph under the same ids; a configuration change is versioned, evented, audited under the acting user and read by the next turn's projection input and route record; away/archived refuse messages; the default teammate is provisioned from the shipped template)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run) (teammates.test.ts: roster decoders, narrowing explanation independent of instructions text, validated commands; teammates.e2e.test.ts against the real quansio-server: roster E2E \u2014 create from template, thread, route, edit \u2192 next-turn effect, archive \u2192 lineage, default teammate)",
+        "pnpm build",
+        "pnpm typecheck",
+        "pnpm test",
+        "pnpm lint",
+        "python3.12 scripts/validate_v81.py",
+        "bash scripts/ci/ci.sh"
       ],
       "artifacts": [
-        "evidence/APP-014/2026-09-15T05-55-00Z/summary.json",
+        "evidence/APP-014/2026-09-21T04-39-27Z/summary.json",
+        "evidence/APP-014/2026-09-21T04-39-27Z/NOTES.md",
+        "evidence/APP-014/RECONCILIATION.md",
         "crates/server/src/control/teammates/mod.rs",
-        "config/teammates.yaml"
+        "crates/server/src/control/teammates/store.rs",
+        "crates/server/src/control/teammates/templates.rs",
+        "crates/server/src/api/teammates.rs",
+        "crates/server/tests/teammates.rs",
+        "migrations/0014_teammate_definition.sql",
+        "config/teammates.yaml",
+        "apps/desktop/src/teammates/roster.ts",
+        "apps/desktop/src/renderer/Teammates.tsx",
+        "apps/desktop/tests/teammates.e2e.test.ts"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Standing instructions cannot add grants. Archive keeps agt_/ath_ identities. Default templates live in config/teammates.yaml. 2026-09-19 correction: was BLOCKED_EXTERNAL at 86cbc64f7fd4e2dd7a486bec2cf859ddd5c29dd4 claimed by agent:principal-1 (started 2026-09-15T05:50:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/server/src/control/teammates is 55 lines; apps/desktop/src/teammates is 18. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "Standing instructions cannot add grants. Archive keeps agt_/ath_ identities. Default templates live in config/teammates.yaml. 2026-09-19 correction: was BLOCKED_EXTERNAL at 86cbc64f7fd4e2dd7a486bec2cf859ddd5c29dd4 claimed by agent:principal-1 (started 2026-09-15T05:50:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/server/src/control/teammates is 55 lines; apps/desktop/src/teammates is 18. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-21 (3507caa) PASS: reconciliation in evidence/APP-014/RECONCILIATION.md. control/teammates owns the definition (TeammateStore: create from config/teammates.yaml templates or explicit fields with one ACTIVE AgentThread per teammate per workspace, versioned update, archive = definition archived + thread SUSPENDED through RUN-002 with lineage kept; agent.definition_* events and AuditEntries in the owner's transaction; migration 0014 adds template_id, model_route_preference, default_execution_target_id, availability, version). GET /v1/teammates roster (thread, active run, attention, effective capability = policy \u2229 needs); CreateTeammate/UpdateTeammate/ArchiveTeammate (manage_workspace). PostMessage routes to the named or default teammate (provisioned from general-assistant), refuses archived/away, binds the teammate's default target; seed_projection records the agent_definition input and narrows grants by the needs \u2014 persona and instructions are never read by the projection. The conformance seam records the definition it read per turn (route chosen_by names version and preference), so a change is visible on the next turn without restart. Desktop teammates/: roster decoders, narrowing explanation, validated commands, Teammates page, bridge channels. All three acceptance statements proven by teammates.rs and teammates.e2e.test.ts. build.rs in events/server watches migrations/ so an added migration rebuilds (sqlx::migrate! embeds)."
     },
     "APP-015": {
       "coverage": "PARTIAL",
