@@ -1712,6 +1712,15 @@ dependencies = [
 [[package]]
 name = "quansio-cli"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "tokio",
+]
 
 [[package]]
 name = "quansio-contracts"
