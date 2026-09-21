@@ -1943,24 +1943,43 @@
     },
     "APP-013": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-21T05:03:36Z",
-      "updated_at": "2026-09-21T05:03:36Z",
-      "git_commit": null,
+      "updated_at": "2026-09-21T05:55:36Z",
+      "git_commit": "a8f56ca3f959490480f356bc7e97cc765717ec11",
       "tests": [
-        "cargo test -p quansio-cli (verbs are /v1 paths; bypass-policy refused; tokens must be tenant-scoped)",
-        "sdk/typescript vitest (OpenAPI operationIds present; unversioned paths refused)"
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-cli (grammar: every verb a /v1 call, bypass flags refused by name, api get|command constrained to /v1 and catalogued names; credential store scoped to server+tenant, 0600, tokens redacted; structural client-only scan; cli_e2e.rs against the real quansio-server with bearer sessions only: console magic link -> session -> workspaces -> SetPolicy -> message -> run -> approval bound to the previewed digest (stale refused) -> timeline -> artifact download verified -> diagnostics bundle without secrets -> invited viewer refused SCOPE_FORBIDDEN -> logout)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd sdk/typescript && pnpm exec vitest run) (client.test.ts: operation table = OpenAPI /v1/commands/*, projections and error codes = catalog, envelope and typed errors; compat.e2e.test.ts: generated operations = GET /v1/commands, projections = GET /v1/read-projections, session through the SDK, command, projection, catalogued refusal, idempotent replay)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> pytest tests/sdk (Python SDK contract fixture and the same compatibility checks against the real quansio-server)",
+        "uv run --project python python scripts/ci/gen_contracts.py --check (sdk generator drift-gated)",
+        "pnpm build",
+        "pnpm typecheck",
+        "pnpm test",
+        "pnpm lint",
+        "python3.12 scripts/validate_v81.py",
+        "bash scripts/ci/ci.sh"
       ],
       "artifacts": [
-        "evidence/APP-013/2026-09-15T06-05-00Z/summary.json",
+        "evidence/APP-013/2026-09-21T05-25-07Z/summary.json",
+        "evidence/APP-013/2026-09-21T05-25-07Z/NOTES.md",
+        "evidence/APP-013/RECONCILIATION.md",
         "crates/cli/src/lib.rs",
-        "sdk/typescript/src/index.ts"
+        "crates/cli/src/main.rs",
+        "crates/cli/tests/cli_e2e.rs",
+        "crates/cli/tests/client_only.rs",
+        "scripts/ci/gen_contracts.py",
+        "sdk/typescript/src/index.ts",
+        "sdk/typescript/src/generated/operations.ts",
+        "sdk/typescript/tests/compat.e2e.test.ts",
+        "sdk/python/quansio_sdk/__init__.py",
+        "sdk/python/quansio_sdk/generated/operations.py",
+        "tests/sdk/test_python_sdk_compat.py"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "CLI verbs map only to /v1 public paths and cannot bypass policy. SDK contract fixture asserts generated OpenAPI operationIds. 2026-09-19 correction: was BLOCKED_EXTERNAL at c0ab34288c6d120e03fd498d88a7692df0ecbbba claimed by agent:principal-1 (started 2026-09-15T06:00:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/cli has no dependencies and no binary (a verb-to-path map); sdk/python is a .gitkeep; the SDK 'compatibility' test reads the OpenAPI file, never a server. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "CLI verbs map only to /v1 public paths and cannot bypass policy. SDK contract fixture asserts generated OpenAPI operationIds. 2026-09-19 correction: was BLOCKED_EXTERNAL at c0ab34288c6d120e03fd498d88a7692df0ecbbba claimed by agent:principal-1 (started 2026-09-15T06:00:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/cli has no dependencies and no binary (a verb-to-path map); sdk/python is a .gitkeep; the SDK 'compatibility' test reads the OpenAPI file, never a server. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-21 (a8f56ca) PASS: reconciliation in evidence/APP-013/RECONCILIATION.md. crates/cli is the quansio binary: every verb a /v1 projection or POST /v1/commands/<Name> over a bearer session (magic link from the console), a credential store scoped to (server, tenant) written 0600, approvals bound to the previewed digest, downloads verified against the recorded digest, a diagnostics bundle with no secret, --json with tokens redacted, api get|command constrained to /v1 and catalogued names, and no flag that widens (a structural scan proves the crate spells only /v1 paths and compiles in no store/env/worker access). sdk/: gen_contracts.py --sdk generates the operation table, projections and error codes for both languages (drift-gated); QuansioClient (TypeScript) and quansio_sdk (Python, standard library) address operations by id; compatibility tests check the running server's GET /v1/commands and /v1/read-projections and exercise a session, a command, a projection, a catalogued refusal and an idempotent replay. Acceptance 1 (never bypasses policy) proven structurally and by the viewer refusal in cli_e2e.rs; acceptance 2 by compat.e2e.test.ts and tests/sdk against the current server. Two server fixes the CLI E2E found: tenant guards on the policy store's scope reads (a tenant with no policy inherited another's under the superuser connection) and an invited user's sign-in now accepts the invitation."
     },
     "APP-014": {
       "coverage": "PARTIAL",
