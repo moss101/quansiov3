@@ -730,8 +730,8 @@ async fn run(invocation: Invocation) -> Result<(), Failure> {
             print_summary(
                 &invocation,
                 &targets,
-                Some("targets"),
-                &["id", "class", "status"],
+                Some("items"),
+                &["id", "target_class", "substrate", "status"],
             );
             Ok(())
         }
