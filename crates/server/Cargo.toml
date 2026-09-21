@@ -22,6 +22,7 @@ quansio-core = { path = "../core" }
 quansio-events = { path = "../events" }
 quansio-graph = { path = "../graph" }
 quansio-indexer = { path = "../indexer" }
+quansio-machine = { path = "../machine" }
 quansio-tools = { path = "../tools" }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "http2", "json"] }
 ring = "0.17"

@@ -24,6 +24,7 @@ pub mod flags;
 pub mod knowledge;
 pub mod limits;
 pub mod live;
+pub mod live_sessions;
 pub mod projections;
 pub mod rbac;
 pub mod seams;
@@ -569,6 +570,11 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/usage", get(admin::usage))
         .route("/v1/audit", get(admin::audit_log))
         .route("/v1/teammates", get(teammates::roster))
+        .route("/v1/targets", get(live_sessions::targets))
+        .route(
+            "/v1/browser-sessions/:id",
+            get(live_sessions::browser_session),
+        )
         .route("/app", get(web::index))
         .route("/app/", get(web::index))
         .route("/app/*path", get(web::asset))

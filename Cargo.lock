@@ -1844,6 +1844,7 @@ dependencies = [
  "quansio-events",
  "quansio-graph",
  "quansio-indexer",
+ "quansio-machine",
  "quansio-tools",
  "reqwest",
  "ring",

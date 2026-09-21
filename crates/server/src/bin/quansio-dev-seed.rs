@@ -11,7 +11,7 @@
 //!
 //! Usage:
 //!   quansio-dev-seed create --database <name> --tenant <tn_…> --user <usr_…> \
-//!       --workspace <ws_…> --node <wn_…> [--ask-writes] [--intelligence] \
+//!       --workspace <ws_…> --node <wn_…> [--ask-writes] [--intelligence] [--live] \
 //!       [--member <usr_…>:<tenant role>:<workspace role>]…
 //!   quansio-dev-seed drop --database <name>
 //!
@@ -21,6 +21,12 @@
 //! `--intelligence` also seeds what a knowledge/memory harness deletes (APP-011): three
 //! knowledge entries (active, verified, candidate), one active memory entry, and a derived
 //! semantic index row for each entry in force, under the fixed ids in [`INTELLIGENCE_IDS`].
+//!
+//! `--live` also seeds what the live browser/computer/terminal surface observes and takes
+//! over (APP-007): one READY execution target, a worker AgentThread and a RUNNING run on it,
+//! the run's browser session (agent-held, active, on a page), one open terminal session
+//! with a durable cursor, and the target's native-computer control row, under the fixed
+//! ids in [`LIVE_IDS`].
 
 use std::env;
 use std::process::exit;
@@ -41,6 +47,9 @@ struct Args {
     ask_writes: bool,
     /// Also seed knowledge, memory and their derived index rows.
     intelligence: bool,
+    /// Also seed a target with a run, a browser session, a terminal session and a
+    /// computer-control row.
+    live: bool,
     /// Extra users with roles: `--member <usr_…>:<tenant role>:<workspace role>`.
     members: Vec<(String, String, String)>,
 }
@@ -63,6 +72,20 @@ pub const INTELLIGENCE_IDS: [(&str, &str); 7] = [
     ("embedding_memory_active", "emb_01J8Z3K6F1N8VQ2X5W9Y0E2EM3"),
 ];
 
+/// Fixed ids of the `--live` rows: the execution target, the worker thread and run on it,
+/// the run's browser session, its terminal session and the terminal's last command.
+pub const LIVE_IDS: [(&str, &str); 6] = [
+    ("target", "tgt_01J8Z3K6F1N8VQ2X5W9Y0E2TG1"),
+    ("agent_thread", "ath_01J8Z3K6F1N8VQ2X5W9Y0E2AT1"),
+    ("run", "run_01J8Z3K6F1N8VQ2X5W9Y0E2RN1"),
+    ("browser_session", "bsn_01J8Z3K6F1N8VQ2X5W9Y0E2BS1"),
+    ("terminal_session", "tsn_01J8Z3K6F1N8VQ2X5W9Y0E2TS1"),
+    ("terminal_last_command", "cmd_01J8Z3K6F1N8VQ2X5W9Y0E2CM1"),
+];
+
+/// The durable byte offset the `--live` terminal session has been consumed up to.
+pub const LIVE_TERMINAL_CURSOR: u64 = 128;
+
 fn intelligence_id(key: &str) -> &'static str {
     INTELLIGENCE_IDS
         .iter()
@@ -83,6 +106,7 @@ fn parse_args() -> Result<Args, String> {
         node: String::new(),
         ask_writes: false,
         intelligence: false,
+        live: false,
         members: Vec::new(),
     };
     while let Some(flag) = args.next() {
@@ -92,6 +116,10 @@ fn parse_args() -> Result<Args, String> {
         }
         if flag == "--intelligence" {
             parsed.intelligence = true;
+            continue;
+        }
+        if flag == "--live" {
+            parsed.live = true;
             continue;
         }
         let value = args.next().ok_or_else(|| format!("{flag} needs a value"))?;
@@ -267,11 +295,107 @@ async fn run(args: Args) -> Result<(), String> {
     if args.intelligence {
         seed_intelligence(&mut tx, &args).await?;
     }
+    if args.live {
+        seed_live(&mut tx, &args).await?;
+    }
     tx.commit()
         .await
         .map_err(|error| format!("commit: {error}"))?;
     pool.close().await;
     println!("database_url={database_url}");
+    Ok(())
+}
+
+/// The `--live` rows (APP-007), one RUNNING run's worth: the ids are fixed so a harness can
+/// name the session it observes and prove it is the same one after a takeover.
+async fn seed_live(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    args: &Args,
+) -> Result<(), String> {
+    let id = |name: &str| {
+        LIVE_IDS
+            .iter()
+            .find(|(key, _)| *key == name)
+            .map(|(_, value)| *value)
+            .expect("live id")
+    };
+    sqlx::query(
+        "INSERT INTO execution_targets (id, tenant_id, workspace_id, target_class, substrate, status, \
+                                        observed_state, resources, owner_kind, last_heartbeat_at) \
+         VALUES ($1, $2, $3, 'persistent_workspace_computer', 'local_capsule_macos', 'READY', 'READY', \
+                 '{\"cpu\": 2, \"mem\": 2048, \"disk\": 8192}'::jsonb, 'workspace', now())",
+    )
+    .bind(id("target"))
+    .bind(&args.tenant)
+    .bind(&args.workspace)
+    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("live target: {error}"))?;
+    sqlx::query(
+        "INSERT INTO agent_threads (id, tenant_id, workspace_id, agent_kind, work_node_id, status, \
+                                    execution_target_id) \
+         VALUES ($1, $2, $3, 'worker', $4, 'ACTIVE', $5)",
+    )
+    .bind(id("agent_thread"))
+    .bind(&args.tenant)
+    .bind(&args.workspace)
+    .bind(&args.node)
+    .bind(id("target"))
+    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("live agent thread: {error}"))?;
+    sqlx::query(
+        "INSERT INTO runs (id, tenant_id, workspace_id, work_node_id, agent_thread_id, generation, \
+                           status, trigger_kind, trigger_ref, execution_target_id, started_at) \
+         VALUES ($1, $2, $3, $4, $5, 1, 'RUNNING', 'manual', 'e2e seed', $6, now())",
+    )
+    .bind(id("run"))
+    .bind(&args.tenant)
+    .bind(&args.workspace)
+    .bind(&args.node)
+    .bind(id("agent_thread"))
+    .bind(id("target"))
+    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("live run: {error}"))?;
+    sqlx::query(
+        "INSERT INTO browser_sessions (id, tenant_id, target_id, run_id, profile_ref, control_holder, \
+                                       control_since, current_url, tabs, screencast, status) \
+         VALUES ($1, $2, $3, $4, 'profile:e2e', 'agent', now(), 'https://example.com/', \
+                 $5::jsonb, '{\"enabled\": false}'::jsonb, 'active')",
+    )
+    .bind(id("browser_session"))
+    .bind(&args.tenant)
+    .bind(id("target"))
+    .bind(id("run"))
+    .bind(json!([{ "target_id": "cdp-tab-1", "url": "https://example.com/", "title": "Example Domain" }]))
+    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("live browser session: {error}"))?;
+    sqlx::query(
+        "INSERT INTO terminal_sessions (id, tenant_id, target_id, run_id, pty_ref, cursor, status, \
+                                        last_command_id) \
+         VALUES ($1, $2, $3, $4, 'pty:e2e', $5, 'open', $6)",
+    )
+    .bind(id("terminal_session"))
+    .bind(&args.tenant)
+    .bind(id("target"))
+    .bind(id("run"))
+    .bind(LIVE_TERMINAL_CURSOR.to_string())
+    .bind(id("terminal_last_command"))
+    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("live terminal session: {error}"))?;
+    sqlx::query(
+        "INSERT INTO computer_controls (target_id, tenant_id, run_id, holder, generation, control_since) \
+         VALUES ($1, $2, $3, 'agent', 1, now())",
+    )
+    .bind(id("target"))
+    .bind(&args.tenant)
+    .bind(id("run"))
+    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("live computer control: {error}"))?;
     Ok(())
 }
 
