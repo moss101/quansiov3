@@ -1,0 +1,33 @@
+
+running 4 tests
+test tests::digests_are_checked_the_way_the_server_labels_them ... ok
+test tests::the_generic_verbs_are_constrained_to_the_public_api ... ok
+test tests::every_verb_parses_to_a_public_call_and_nothing_bypasses_policy ... ok
+test tests::credentials_are_scoped_to_server_and_tenant_and_stored_for_the_owner_only ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test the_cli_is_a_scoped_client_of_the_public_api_and_nothing_else ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.92s
+
+
+running 2 tests
+test every_path_the_crate_spells_is_public_api_v1 ... ok
+test nothing_but_the_public_api_is_compiled_in ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+exit=0

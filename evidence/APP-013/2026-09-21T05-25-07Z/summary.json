@@ -1,0 +1,80 @@
+{
+  "task_id": "APP-013",
+  "git_commit": "ec4d559379218050fdcebebdb1ee2ac815332743",
+  "recorded_at": "2026-09-21T05:55:02Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> QUANSIO_TEST_MINIO_ENDPOINT=http://127.0.0.1:59010 cargo test -p quansio-cli",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-013/2026-09-21T05-25-07Z/cargo-cli.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd sdk/typescript && pnpm exec vitest run) (client.test.ts + compat.e2e.test.ts against the real quansio-server)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-013/2026-09-21T05-25-07Z/vitest-sdk.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd python && .venv/bin/python -m pytest ../tests/sdk -q) (Python SDK contract fixture + compatibility against the real quansio-server)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-013/2026-09-21T05-25-07Z/pytest-sdk.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop, web and SDK E2E, eslint ., pytest incl. tests/sdk, contract-drift incl. the sdk generator, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-013/2026-09-21T05-25-07Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> QUANSIO_TEST_MINIO_ENDPOINT=http://127.0.0.1:59010 cargo test -p quansio-cli",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd sdk/typescript && pnpm exec vitest run) (client.test.ts + compat.e2e.test.ts against the real quansio-server)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd python && .venv/bin/python -m pytest ../tests/sdk -q) (Python SDK contract fixture + compatibility against the real quansio-server)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop, web and SDK E2E, eslint ., pytest incl. tests/sdk, contract-drift incl. the sdk generator, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-013/2026-09-21T05-25-07Z/NOTES.md",
+      "sha256": "c21978bb817f3c3ad763cbf763cd7deffc331e6fdeeb0493479f73aa24109b0b",
+      "bytes": 6306
+    },
+    {
+      "path": "evidence/APP-013/2026-09-21T05-25-07Z/cargo-cli.log",
+      "sha256": "d317a90ee44ec0f9cba8b55dfdc801a9c3da072f04b30b5deaa91edb8e417712",
+      "bytes": 1072
+    },
+    {
+      "path": "evidence/APP-013/2026-09-21T05-25-07Z/vitest-sdk.log",
+      "sha256": "d794f21562409546ea59e428d2944d74c099f9beb5076128f870870b99e25290",
+      "bytes": 333
+    },
+    {
+      "path": "evidence/APP-013/2026-09-21T05-25-07Z/pytest-sdk.log",
+      "sha256": "1e3c2fd58b01c5a7441a4cb19304e4f99a6d4fd00a095457e5201b8378562acd",
+      "bytes": 105
+    },
+    {
+      "path": "evidence/APP-013/2026-09-21T05-25-07Z/ci-summary.json",
+      "sha256": "ff62acace0f3a509c9d161b84be43beacb3e0352448c6bafcc5a3c10fc4fc24f",
+      "bytes": 6803
+    }
+  ]
+}
