@@ -1,0 +1,14 @@
+[project]
+name = "quansio-sdk"
+version = "0.1.0"
+description = "Quansio public API v1 client (generated operation table + standard-library transport)."
+requires-python = ">=3.12"
+dependencies = []
+license = { text = "LicenseRef-Quansio-Proprietary" }
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["quansio_sdk*"]
