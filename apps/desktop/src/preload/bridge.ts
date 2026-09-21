@@ -60,6 +60,12 @@ export const PRELOAD_ALLOWLIST = [
   "teammates.create",
   "teammates.update",
   "teammates.archive",
+  "live.targets",
+  "live.session",
+  "live.takeover",
+  "live.handback",
+  "live.attach",
+  "live.detach",
 ] as const;
 
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
@@ -72,6 +78,7 @@ export const PRELOAD_PUSH_CHANNELS = [
   "session.state",
   "deepLink.intent",
   "update.status",
+  "live.frame",
 ] as const;
 
 export type PushChannel = (typeof PRELOAD_PUSH_CHANNELS)[number];
@@ -183,12 +190,22 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     createTeammate: (params: Record<string, unknown>) => send("teammates.create", params),
     updateTeammate: (params: Record<string, unknown>) => send("teammates.update", params),
     archiveTeammate: (teammateId: string) => send("teammates.archive", { teammateId }),
+    // The live browser/computer/terminal surface (APP-007): the target list, one session's
+    // live view, the two control commands (a refusal is data), and the target-scoped live
+    // subscription whose frames arrive on `live.frame`.
+    listTargets: () => send("live.targets", {}),
+    liveSession: (sessionId: string) => send("live.session", { sessionId }),
+    requestTakeover: (subject: { sessionId: string } | { targetId: string }) => send("live.takeover", subject),
+    handback: (subject: { sessionId: string } | { targetId: string }) => send("live.handback", subject),
+    attachLive: (targetId: string) => send("live.attach", { targetId }),
+    detachLive: () => send("live.detach", {}),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),
     onSessionState: (listener: (payload: unknown) => void) => subscribe("session.state", listener),
     onDeepLink: (listener: (payload: unknown) => void) => subscribe("deepLink.intent", listener),
     onUpdateStatus: (listener: (payload: unknown) => void) => subscribe("update.status", listener),
+    onLiveFrame: (listener: (payload: unknown) => void) => subscribe("live.frame", listener),
   };
 }
 
