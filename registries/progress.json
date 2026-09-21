@@ -1775,10 +1775,10 @@
     },
     "APP-007": {
       "coverage": "PARTIAL",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:claude-opus-5",
+      "started_at": "2026-09-21T06:05:54Z",
+      "updated_at": "2026-09-21T06:05:54Z",
       "git_commit": null,
       "tests": [
         "pnpm --filter @quansio/desktop test (takeover keeps session id; agent input fenced while user owns control; reconnect restores the same session)"
