@@ -217,7 +217,43 @@ export class DesktopBridge {
       "skills.promote": (payload) => settled(Promise.resolve(payload).then((raw) => this.promoteSkillVersion(raw))),
       "skills.disable": (payload) => settled(Promise.resolve(payload).then((raw) => this.disableSkill(raw))),
       "runs.capabilities": (payload) => Promise.resolve(payload).then((raw) => this.server.run(asRunId(raw, "runs.capabilities"))),
+      // The teammate roster (APP-014): definition commands return refusals as data (an
+      // archived teammate, a need that is not an effect class, a role that may not).
+      "teammates.list": () => this.server.teammates(this.#requireWorkspace()),
+      "teammates.create": (payload) => settled(Promise.resolve(payload).then((raw) => this.createTeammate(raw))),
+      "teammates.update": (payload) => settled(Promise.resolve(payload).then((raw) => this.updateTeammate(raw))),
+      "teammates.archive": (payload) => settled(Promise.resolve(payload).then((raw) => this.archiveTeammate(raw))),
     };
+  }
+
+  // ---- the teammate roster (APP-014) ----
+
+  /** `CreateTeammate` with the params the page validated (`createTeammate()`); the workspace is main's. */
+  async createTeammate(raw: unknown): Promise<unknown> {
+    const params = { ...asRecord(raw, "teammates.create") };
+    if (typeof params["workspace_id"] !== "string") {
+      params["workspace_id"] = this.#requireWorkspace();
+    }
+    if (typeof params["template_id"] !== "string" && typeof params["name"] !== "string") {
+      throw new Error("teammates.create needs a template_id or a name");
+    }
+    return (await this.server.invoke("CreateTeammate", newCommandId(), params)).result;
+  }
+
+  async updateTeammate(raw: unknown): Promise<unknown> {
+    const params = asRecord(raw, "teammates.update");
+    if (typeof params["teammate_id"] !== "string" || !params["teammate_id"].startsWith("agt_")) {
+      throw new Error("teammates.update needs an agt_ id");
+    }
+    return (await this.server.invoke("UpdateTeammate", newCommandId(), params)).result;
+  }
+
+  async archiveTeammate(raw: unknown): Promise<unknown> {
+    const teammateId = asRecord(raw, "teammates.archive")["teammateId"];
+    if (typeof teammateId !== "string" || !teammateId.startsWith("agt_")) {
+      throw new Error("teammates.archive needs an agt_ id");
+    }
+    return (await this.server.invoke("ArchiveTeammate", newCommandId(), { teammate_id: teammateId })).result;
   }
 
   // ---- knowledge, memory and skills (APP-011) ----
@@ -467,10 +503,13 @@ export class DesktopBridge {
 
   /** `PostMessage` with optional thread and attachments; the run it starts becomes the active run. */
   async postMessage(raw: unknown): Promise<unknown> {
-    const { threadId, content, attachments } = asPost(raw);
+    const { threadId, content, attachments, teammateId } = asPost(raw);
     const params: Record<string, unknown> = { workspace_id: this.#requireWorkspace(), content };
     if (threadId) {
       params["thread_id"] = threadId;
+    }
+    if (teammateId) {
+      params["teammate_id"] = teammateId;
     }
     if (attachments.length > 0) {
       params["attachments"] = attachments;
@@ -896,7 +935,7 @@ function asQuestionScope(payload: unknown): { readonly threadId: string } | { re
   throw new Error("questions.list needs a thr_ or run_ id");
 }
 
-function asPost(payload: unknown): { threadId: string | null; content: string; attachments: string[] } {
+function asPost(payload: unknown): { threadId: string | null; content: string; attachments: string[]; teammateId: string | null } {
   const record = asRecord(payload, "messages.post");
   const content = record["content"];
   if (typeof content !== "string" || !content.trim()) {
@@ -905,6 +944,12 @@ function asPost(payload: unknown): { threadId: string | null; content: string; a
   const threadId = record["threadId"];
   if (threadId !== undefined && threadId !== null && (typeof threadId !== "string" || !threadId.startsWith("thr_"))) {
     throw new Error("messages.post threadId must be a thr_ id");
+  }
+  // The teammate the message is for (APP-014); without one the server routes to the
+  // workspace's default teammate.
+  const teammateId = record["teammateId"];
+  if (teammateId !== undefined && teammateId !== null && (typeof teammateId !== "string" || !teammateId.startsWith("agt_"))) {
+    throw new Error("messages.post teammateId must be an agt_ id");
   }
   const rawAttachments = record["attachments"];
   const attachments: string[] = [];
@@ -919,7 +964,7 @@ function asPost(payload: unknown): { threadId: string | null; content: string; a
       attachments.push(item);
     }
   }
-  return { threadId: typeof threadId === "string" ? threadId : null, content, attachments };
+  return { threadId: typeof threadId === "string" ? threadId : null, content, attachments, teammateId: typeof teammateId === "string" ? teammateId : null };
 }
 
 function asEntryFilter(raw: unknown): { status?: string; scope?: string; subjectRef?: string; includeDeleted?: boolean } {

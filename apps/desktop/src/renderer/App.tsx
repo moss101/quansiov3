@@ -13,6 +13,7 @@ import { t } from "../i18n/strings.js";
 import { Artifacts } from "./Artifacts.js";
 import { Conversation } from "./Conversation.js";
 import { Knowledge } from "./Knowledge.js";
+import { Teammates } from "./Teammates.js";
 import { Trust } from "./Trust.js";
 import { Work } from "./Work.js";
 import { Onboarding } from "./Onboarding.js";
@@ -76,7 +77,7 @@ function Shell(): ReactElement {
   const [projection, setProjection] = useState<RunProjection | null>(null);
   const [log, setLog] = useState<readonly LogLine[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
-  const [surface, setSurface] = useState<"conversation" | "artifacts" | "objectives" | "approvals" | "knowledge-controls">("conversation");
+  const [surface, setSurface] = useState<"conversation" | "artifacts" | "objectives" | "approvals" | "knowledge-controls" | "teammates">("conversation");
 
   const refresh = useCallback(async () => {
     const next = (await window.quansio.activeRun()) as RunProjection;
@@ -117,8 +118,8 @@ function Shell(): ReactElement {
         <ul>
           {DESKTOP_SURFACES.map((entry) => (
             <li key={entry.id} className={entry.id === surface ? "selected" : undefined}>
-              {entry.id === "conversation" || entry.id === "artifacts" || entry.id === "objectives" || entry.id === "approvals" || entry.id === "knowledge-controls" ? (
-                <button type="button" onClick={() => { setSurface(entry.id === "artifacts" ? "artifacts" : entry.id === "objectives" ? "objectives" : entry.id === "approvals" ? "approvals" : entry.id === "knowledge-controls" ? "knowledge-controls" : "conversation"); }}>{entry.id}</button>
+              {entry.id === "conversation" || entry.id === "artifacts" || entry.id === "objectives" || entry.id === "approvals" || entry.id === "knowledge-controls" || entry.id === "teammates" ? (
+                <button type="button" onClick={() => { setSurface(entry.id === "artifacts" ? "artifacts" : entry.id === "objectives" ? "objectives" : entry.id === "approvals" ? "approvals" : entry.id === "knowledge-controls" ? "knowledge-controls" : entry.id === "teammates" ? "teammates" : "conversation"); }}>{entry.id}</button>
               ) : (
                 entry.id
               )}
@@ -151,6 +152,8 @@ function Shell(): ReactElement {
           <Trust key={`trust-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
         ) : surface === "knowledge-controls" ? (
           <Knowledge key={`knowledge-${projection.workspaceId}`} workspaceId={projection.workspaceId} runId={projection.activeRun?.runId ?? null} />
+        ) : surface === "teammates" ? (
+          <Teammates key={`teammates-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
         ) : (
           <Conversation
             key={projection.workspaceId}

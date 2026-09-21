@@ -204,3 +204,22 @@ export { DISABLE_COMMAND, INSTALL_COMMAND, PROMOTE_COMMAND, SKILL_LADDER, activa
 export type { CapabilityNeed, Disable, Install, InstallInput, Promotion, SkillManifest, SkillStatus, SkillVersionView, SkillView } from "./knowledge/skills.js";
 export { LAYERS, decodeCapabilityResolution, isCurrent, layersInOrder, skillInputs } from "./knowledge/capabilities.js";
 export type { CapabilityResolution, GrantView, Layer, LayerInput, LayerRow } from "./knowledge/capabilities.js";
+export {
+  ARCHIVE_COMMAND,
+  AVAILABILITIES,
+  CREATE_COMMAND,
+  MAX_INSTRUCTIONS_CHARS,
+  MAX_PERSONA_CHARS,
+  MEMORY_SCOPES,
+  UPDATE_COMMAND,
+  archiveInRoster,
+  archiveTeammate,
+  createTeammate,
+  decodeRoster,
+  decodeTeammate,
+  narrowing,
+  needsAttention as teammatesNeedingAttention,
+  updateTeammate,
+  visibleRoster,
+} from "./teammates/roster.js";
+export type { Availability, CreateInput, EffectiveCapability, MemoryScope, Narrowing, Roster, TeammateStatus, TeammateView, TemplateView, UpdateInput } from "./teammates/roster.js";

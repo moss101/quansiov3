@@ -356,6 +356,12 @@ export class ServerClient {
     return this.#request("GET", `${this.origin}/v1/skills`);
   }
 
+  // ---- the teammate roster (APP-014) ----
+
+  teammates(workspaceId: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/teammates?workspace_id=${encodeURIComponent(workspaceId)}`);
+  }
+
   // ---- the plan / WorkGraph surface (APP-005) ----
 
   workgraph(workspaceId: string): Promise<unknown> {
