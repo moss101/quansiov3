@@ -21,6 +21,7 @@ export const OPERATIONS = {
   ReactToMessage: { method: "POST", path: "/v1/commands/ReactToMessage", family: "Conversation" },
   AddParticipant: { method: "POST", path: "/v1/commands/AddParticipant", family: "Conversation" },
   RemoveParticipant: { method: "POST", path: "/v1/commands/RemoveParticipant", family: "Conversation" },
+  HandOffThread: { method: "POST", path: "/v1/commands/HandOffThread", family: "Conversation" },
   AnswerQuestion: { method: "POST", path: "/v1/commands/AnswerQuestion", family: "Conversation" },
   CancelTurn: { method: "POST", path: "/v1/commands/CancelTurn", family: "Conversation" },
   CreateObjective: { method: "POST", path: "/v1/commands/CreateObjective", family: "Work" },

@@ -45,7 +45,7 @@ desktop module 12 lines, and nothing wrote `thread_participants`
     thread's participants and the workspace.
 - **Persistent state.** `thread_participants` (existing table, first writer), `messages`
   (`mentions`, `reactions`, `seq` via the conversation owner), `agent_mailbox_items` (via
-  RUN-002). No migration.
+  RUN-002). Migration `0015_thread_participant_stamp.sql`: 0001 attached the shared `set_updated_at` trigger to `thread_participants` without an `updated_at` column, so any membership update failed; the column is added (additive).
 - **Events.** `thread.participant_added/removed`, `thread.reaction_added/removed`,
   `thread.attention_changed`, `thread.handed_off`, `thread.message_posted` (now with a
   per-thread `aggregate_version`), `agent.mailbox_delivered` (RUN-002).

@@ -461,6 +461,11 @@ async fn live_frames_reach_a_workspace_subscriber_while_the_turn_runs() {
     request
         .headers_mut()
         .insert("x-quansio-tenant", TENANT.parse().expect("header"));
+    // The subscriber is the person who posts: the thread their message opens is protected
+    // (APP-009), so its live frames reach its participants and nobody else.
+    request
+        .headers_mut()
+        .insert("x-quansio-user", USER.parse().expect("header"));
     request
         .headers_mut()
         .insert("x-quansio-consumer", "live".parse().expect("header"));

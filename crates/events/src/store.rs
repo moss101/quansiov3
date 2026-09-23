@@ -50,6 +50,22 @@ impl EventBatch {
     pub fn is_empty(&self) -> bool {
         self.staged.is_empty()
     }
+
+    /// The highest `aggregate_version` already staged in this batch for one aggregate.
+    ///
+    /// An owner that stages several events for the same aggregate in one transaction reads
+    /// the committed version once and continues from what it has staged, so the versions it
+    /// writes stay consecutive.
+    #[must_use]
+    pub fn staged_version(&self, aggregate_type: &str, aggregate_id: &str) -> Option<u64> {
+        self.staged
+            .iter()
+            .filter(|draft| {
+                draft.aggregate_type == aggregate_type && draft.aggregate_id == aggregate_id
+            })
+            .map(|draft| draft.aggregate_version)
+            .max()
+    }
 }
 
 /// The canonical RuntimeEvent store.

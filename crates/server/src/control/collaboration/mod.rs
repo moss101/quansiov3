@@ -1,31 +1,27 @@
-//! Collaboration: membership, ordering and revoke (APP-009).
+//! Collaboration: thread membership, protection, attention and handoff (APP-009,
+//! DOMAIN.md §3.1).
 //!
-//! Concurrent messages keep stable seq/ids. A removed participant cannot receive
-//! protected events.
+//! Canonical owner of `thread_participants`. The conversation owner
+//! (`control::conversation`) keeps `threads` and `messages`; this module composes its
+//! in-transaction functions so a thread is created with its owner, a message lands with the
+//! teammate it addresses, and a handoff notice commits with the membership change — each
+//! owner writing only its own table, in one transaction.
+//!
+//! * [`CollaborationStore`] — participants (add, leave, remove, the last-owner guard), the
+//!   thread's responsible teammate and [`CollaborationStore::hand_off`].
+//! * [`access`] — who may read a thread and receive its events: [`thread_access`] for a
+//!   projection or a command, [`ThreadGate`] for the stream, which filters `thread.*`,
+//!   `question.*` and a thread's live frames per subscriber.
+//! * [`attention`] — derived attention: mentions after a person's own last message, open
+//!   questions, a teammate's run in the thread.
 
-use std::cmp::Ordering;
+pub mod access;
+pub mod attention;
+mod store;
 
-/// A message as ordered on a thread.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct OrderedMessage {
-    /// `msg_` id.
-    pub id: String,
-    /// Thread-monotonic sequence.
-    pub seq: i64,
-}
-
-/// Total order: seq, then id. Concurrent inserts with distinct seq stay stable.
-#[must_use]
-pub fn order_messages(mut messages: Vec<OrderedMessage>) -> Vec<OrderedMessage> {
-    messages.sort_by(|left, right| match left.seq.cmp(&right.seq) {
-        Ordering::Equal => left.id.cmp(&right.id),
-        other => other,
-    });
-    messages
-}
-
-/// Whether a participant may receive protected events.
-#[must_use]
-pub fn can_receive(status: &str) -> bool {
-    status == "active"
-}
+pub use access::{thread_access, Access, ThreadGate};
+pub use attention::{participant_attention, thread_attention_for, ParticipantAttention};
+pub use store::{
+    CollaborationError, CollaborationStore, HandOff, Participant, ParticipantKind, ParticipantRole,
+    COLLABORATION_OWNER,
+};

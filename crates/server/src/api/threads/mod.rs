@@ -17,61 +17,12 @@ use serde_json::{json, Value};
 use sqlx::Row;
 
 use super::{ApiError, ApiErrorCode, ApiState, TenantScope};
-use crate::control::conversation::ConversationStore;
 use crate::control::schema;
-use crate::runtime::state_machine::RuntimeIdentity;
 
 pub use crate::control::conversation::{Message, PostedMessage, Thread, ThreadSummary};
 
 fn projection_error(error: impl std::fmt::Display) -> ApiError {
     ApiError::new(ApiErrorCode::Internal, error.to_string(), "projection")
-}
-
-fn identity_for(scope: &TenantScope) -> Result<RuntimeIdentity, ApiError> {
-    let correlation =
-        quansio_core::CorrelationId::generate(&mut quansio_core::UlidGenerator::new());
-    Ok(RuntimeIdentity::system(
-        &scope.tenant_id,
-        "api",
-        correlation,
-    ))
-}
-
-/// `?workspace_id=` on the list projections.
-#[derive(Debug, Deserialize)]
-pub struct WorkspaceQuery {
-    workspace_id: String,
-}
-
-/// `GET /v1/threads?workspace_id=`: the workspace's threads, most recently active first.
-pub async fn list_threads(
-    State(state): State<ApiState>,
-    headers: HeaderMap,
-    Query(query): Query<WorkspaceQuery>,
-) -> Result<Json<Value>, ApiError> {
-    let scope = TenantScope::resolve(&state, &headers).await?;
-    let store = ConversationStore::new(state.pool().clone(), identity_for(&scope)?)
-        .map_err(projection_error)?;
-    let threads = store
-        .list_threads(&query.workspace_id)
-        .await
-        .map_err(|error| {
-            ApiError::new(
-                ApiErrorCode::ValidationBounds,
-                error.to_string(),
-                "projection",
-            )
-        })?;
-    Ok(Json(json!({
-        "threads": threads.iter().map(|thread| json!({
-            "id": thread.id,
-            "workspace_id": thread.workspace_id,
-            "kind": thread.kind,
-            "title": thread.title,
-            "last_activity_at": thread.last_activity_at,
-            "message_count": thread.message_count,
-        })).collect::<Vec<_>>(),
-    })))
 }
 
 /// `?run_id=` or `?thread_id=` on `GET /v1/questions`.
@@ -96,6 +47,28 @@ pub async fn questions(
             "questions need run_id or thread_id",
             "projection",
         ));
+    }
+    // A question belongs to its thread (APP-009): a protected thread's questions are its
+    // participants' to read, whichever key the caller asks by.
+    let mut tx = state.pool().begin().await.map_err(projection_error)?;
+    schema::set_tenant_context(&mut tx, &scope.tenant_id)
+        .await
+        .map_err(projection_error)?;
+    let run_thread: Option<String> = match &query.run_id {
+        Some(run_id) => sqlx::query_scalar(
+            "SELECT m.thread_id FROM runs r JOIN messages m ON m.tenant_id = r.tenant_id AND m.id = r.trigger_ref \
+             WHERE r.tenant_id = $1 AND r.id = $2",
+        )
+        .bind(&scope.tenant_id)
+        .bind(run_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(projection_error)?,
+        None => None,
+    };
+    tx.commit().await.map_err(projection_error)?;
+    for thread_id in query.thread_id.iter().chain(run_thread.iter()) {
+        super::collaboration::readable_thread(&state, &scope, thread_id, "projection").await?;
     }
     let mut tx = state.pool().begin().await.map_err(projection_error)?;
     schema::set_tenant_context(&mut tx, &scope.tenant_id)

@@ -11,71 +11,8 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 
 use super::{ApiError, ApiErrorCode, ApiState, TenantScope};
-use crate::control::conversation::ConversationStore;
 use crate::effects::EffectLedger;
 use crate::runtime::state_machine::{RuntimeIdentity, RuntimeStore};
-
-/// GET /v1/threads/{id}
-pub async fn thread(
-    State(state): State<ApiState>,
-    Path(id): Path<String>,
-    headers: HeaderMap,
-) -> Result<Json<Value>, ApiError> {
-    let scope = TenantScope::resolve(&state, &headers).await?;
-    let identity = identity(&scope);
-    let store = ConversationStore::new(state.pool().clone(), identity)
-        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), "projection"))?;
-    let thread = store.get_thread(&id).await.map_err(conversation_error)?;
-    Ok(Json(json!({
-        "id": thread.id,
-        "workspace_id": thread.workspace_id,
-        "kind": thread.kind,
-        "title": thread.title,
-    })))
-}
-
-/// Query string for `GET /v1/messages`.
-#[derive(Debug, Deserialize)]
-pub struct MessageQuery {
-    /// Thread to list.
-    pub thread_id: Option<String>,
-}
-
-/// GET /v1/messages
-pub async fn messages(
-    State(state): State<ApiState>,
-    Query(query): Query<MessageQuery>,
-    headers: HeaderMap,
-) -> Result<Json<Value>, ApiError> {
-    let scope = TenantScope::resolve(&state, &headers).await?;
-    let thread_id = query.thread_id.ok_or_else(|| {
-        ApiError::new(
-            ApiErrorCode::ValidationSchema,
-            "messages requires thread_id",
-            "projection",
-        )
-    })?;
-    let identity = identity(&scope);
-    let store = ConversationStore::new(state.pool().clone(), identity)
-        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), "projection"))?;
-    let messages = store
-        .list_messages(&thread_id)
-        .await
-        .map_err(conversation_error)?;
-    Ok(Json(
-        json!({ "messages": messages.iter().map(|message| json!({
-        "id": message.id,
-        "thread_id": message.thread_id,
-        "seq": message.seq,
-        "author_kind": message.author_kind,
-        "author_id": message.author_id,
-        "run_id": message.run_id,
-        "turn_id": message.turn_id,
-        "content_blocks": message.content_blocks,
-        "attachments": message.attachments,
-    })).collect::<Vec<_>>() }),
-    ))
-}
 
 /// GET /v1/runs/{id}
 pub async fn run(
@@ -184,20 +121,4 @@ fn identity(scope: &TenantScope) -> RuntimeIdentity {
         "api",
         CorrelationId::generate(&mut UlidGenerator::new()),
     )
-}
-
-fn conversation_error(error: crate::control::conversation::ConversationError) -> ApiError {
-    let code = match error.code() {
-        "VALIDATION_BOUNDS" => ApiErrorCode::ValidationBounds,
-        _ => ApiErrorCode::Internal,
-    };
-    let mapped = if matches!(
-        error,
-        crate::control::conversation::ConversationError::NotFound(_)
-    ) {
-        ApiErrorCode::NotFound
-    } else {
-        code
-    };
-    ApiError::new(mapped, error.to_string(), "projection")
 }

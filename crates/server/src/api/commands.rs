@@ -91,10 +91,60 @@ pub async fn invoke(
         "CancelRun" => cancel_run(&state, &identity, &request.params, &correlation).await?,
         "PauseRun" => pause_run(&state, &identity, &request.params, &correlation).await?,
         "ResumeRun" => resume_run(&state, &identity, &request.params, &correlation).await?,
-        "CreateThread" => create_thread(&state, &identity, &request.params, &correlation).await?,
+        "CreateThread" => {
+            super::collaboration::create_thread(
+                &state,
+                &scope,
+                &identity,
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "AddParticipant" => {
+            super::collaboration::add_participant(
+                &state,
+                &scope,
+                &identity,
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "RemoveParticipant" => {
+            super::collaboration::remove_participant(
+                &state,
+                &scope,
+                &identity,
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "ReactToMessage" => {
+            super::collaboration::react_to_message(
+                &state,
+                &scope,
+                &identity,
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "HandOffThread" => {
+            super::collaboration::hand_off_thread(
+                &state,
+                &scope,
+                &identity,
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
         "PostMessage" => {
             post_message(
                 &state,
+                &scope,
                 &identity,
                 &request.params,
                 user_id.as_deref(),
@@ -419,36 +469,9 @@ async fn resume_run(
     Ok(run_json(&run))
 }
 
-async fn create_thread(
-    state: &ApiState,
-    identity: &RuntimeIdentity,
-    params: &Value,
-    correlation: &str,
-) -> Result<Value, ApiError> {
-    let workspace_id = required_str(params, "workspace_id", correlation)?;
-    let kind = params
-        .get("kind")
-        .and_then(Value::as_str)
-        .unwrap_or("direct");
-    let title = params
-        .get("title")
-        .and_then(Value::as_str)
-        .map(str::to_string);
-    let store = ConversationStore::new(state.pool().clone(), identity.clone())
-        .map_err(|error| internal(error, correlation))?;
-    let thread = store
-        .create_thread(workspace_id, kind, title)
-        .await
-        .map_err(|error| conversation_error(error, correlation))?;
-    Ok(json!({
-        "thread_id": thread.id,
-        "workspace_id": thread.workspace_id,
-        "kind": thread.kind,
-    }))
-}
-
 async fn post_message(
     state: &ApiState,
+    scope: &TenantScope,
     identity: &RuntimeIdentity,
     params: &Value,
     user_id: Option<&str>,
@@ -482,24 +505,103 @@ async fn post_message(
             ))
         }
     };
+    let mentions = super::collaboration::mentions_of(params, correlation)?;
+    // Posting is authoring (APP-009): a viewer reads, an editor or admin writes, and in a
+    // protected thread only its active participants post.
+    super::rbac::Authorization::check(
+        state.pool(),
+        scope,
+        Some(workspace_id),
+        crate::policy::rbac::ActionFamily::AuthorWork,
+        correlation,
+    )
+    .await?;
     let store = ConversationStore::new(state.pool().clone(), identity.clone())
         .map_err(|error| internal(error, correlation))?;
-    let posted = store
-        .post_message_with_attachments(workspace_id, thread_id, author, content, &attachments)
+    store
+        .check_attachments(workspace_id, &attachments)
         .await
         .map_err(|error| conversation_error(error, correlation))?;
-
+    let collaboration = crate::control::collaboration::CollaborationStore::new(
+        state.pool().clone(),
+        identity.clone(),
+    );
+    let existing = match thread_id {
+        Some(id) => {
+            let (thread, _) =
+                super::collaboration::readable_thread(state, scope, id, correlation).await?;
+            if thread.workspace_id != workspace_id {
+                return Err(ApiError::new(
+                    ApiErrorCode::ValidationBounds,
+                    format!("thread {id} is not in workspace {workspace_id}"),
+                    correlation,
+                ));
+            }
+            Some(thread)
+        }
+        None => None,
+    };
+    super::collaboration::check_mentions(
+        &collaboration,
+        existing.as_ref(),
+        workspace_id,
+        &mentions,
+        correlation,
+    )
+    .await?;
+    // Who the message is for: the teammate named, else the first teammate mentioned, else
+    // the thread's responsible teammate, else the workspace default (APP-014).
+    let responsible = match &existing {
+        Some(thread) => collaboration
+            .responsible_teammate(&thread.id)
+            .await
+            .map_err(|error| super::collaboration::collaboration_error(error, correlation))?,
+        None => None,
+    };
+    let addressed = params
+        .get("teammate_id")
+        .and_then(Value::as_str)
+        .map(str::to_string)
+        .or_else(|| {
+            mentions
+                .iter()
+                .find(|mention| mention.kind == "teammate")
+                .map(|mention| mention.id.clone())
+        })
+        .or(responsible);
     let work_node = load_work_node(state, &identity.tenant_id, workspace_id, correlation).await?;
-    let addressed = params.get("teammate_id").and_then(Value::as_str);
     let (agent_thread, teammate) = route_to_teammate(
         state,
         identity,
         workspace_id,
         &work_node,
-        addressed,
+        addressed.as_deref(),
         correlation,
     )
     .await?;
+    let thread = match existing {
+        Some(thread) => thread,
+        None => {
+            collaboration
+                .create_thread(workspace_id, "direct", None, user_id, Vec::new())
+                .await
+                .map_err(|error| super::collaboration::collaboration_error(error, correlation))?
+                .0
+        }
+    };
+    let mut new = crate::control::conversation::NewMessage::user_text(author, content);
+    new.attachments = attachments;
+    new.mentions = mentions;
+    let (thread, message, _) = collaboration
+        .post(
+            &thread.id,
+            new,
+            teammate.as_ref().map(|teammate| teammate.id.to_string()),
+        )
+        .await
+        .map_err(|error| super::collaboration::collaboration_error(error, correlation))?;
+    let posted = crate::control::conversation::PostedMessage { thread, message };
+
     let mut new_run = NewRun::new(
         workspace_id.to_string(),
         work_node,
