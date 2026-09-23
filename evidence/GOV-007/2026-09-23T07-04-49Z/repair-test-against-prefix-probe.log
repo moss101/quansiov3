@@ -1,0 +1,16 @@
+E         
+E         dev stack: NOT READY after 90s
+E         NAME                               IMAGE                        COMMAND                  SERVICE         CREATED         STATUS                   PORTS
+E         quansio-dev-test-minio-1           quay.io/minio/minio:latest   "/usr/bin/docker-ent…"   minio           3 minutes ago   Up 3 minutes (healthy)   127.0.0.1:59110->9000/tcp, 127.0.0.1:59111->9001/tcp
+E         quansio-dev-test-nats-1            nats:2.11-alpine             "docker-entrypoint.s…"   nats            3 minutes ago   Up 3 minutes             127.0.0.1:55230->4222/tcp, 127.0.0.1:55231->8222/tcp
+E         quansio-dev-test-postgres-1        pgvector/pgvector:pg17       "docker-entrypoint.s…"   postgres        3 minutes ago   Up 3 minutes (healthy)   127.0.0.1:56440->5432/tcp
+E         quansio-dev-test-stub-provider-1   python:3.12-slim             "python /app/server.…"   stub-provider   3 minutes ago   Up 3 minutes (healthy)   127.0.0.1:59120->59020/tcp
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['bash', '/Users/mohsin/projects/quansiov3/scripts/dev/healthcheck'], returncode=1, stdout='', s...       "python /app/server.…"   stub-provider   3 minutes ago   Up 3 minutes (healthy)   127.0.0.1:59120->59020/tcp\n').returncode
+
+tests/integration/test_dev_stack.py:309: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_dev_stack.py::test_a_database_whose_init_scripts_were_skipped_is_repaired
+1 failed in 93.67s (0:01:33)
+exit=1
