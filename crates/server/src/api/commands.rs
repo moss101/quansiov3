@@ -1008,20 +1008,13 @@ pub(super) async fn route_to_teammate(
         .map_err(teammate_error)?;
     let agents = AgentStore::new(state.pool().clone(), identity.clone())
         .map_err(|error| internal(error, correlation))?;
-    let thread = if matches!(
-        thread.status,
-        crate::runtime::agents::AgentThreadStatus::Suspended
-            | crate::runtime::agents::AgentThreadStatus::Provisioned
-    ) {
-        // A suspended thread of an active teammate (the definition was archived and
-        // recreated, or the runtime suspended it) resumes; the definition decides.
-        agents
-            .activate(&thread.id, thread.generation)
-            .await
-            .map_err(|error| runtime_error(error, correlation))?
-    } else {
-        thread
-    };
+    // A suspended thread of an active teammate (the definition was archived and recreated,
+    // or the runtime suspended it) resumes; the definition decides. Two messages routed to the
+    // teammate at once both find it inactive, and the second finds it already activated.
+    let thread = agents
+        .ensure_active(thread)
+        .await
+        .map_err(|error| runtime_error(error, correlation))?;
     Ok((thread.id, Some(teammate)))
 }
 

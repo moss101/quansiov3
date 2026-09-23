@@ -771,6 +771,37 @@ impl AgentStore {
             .await
     }
 
+    /// Make a thread `ACTIVE`, idempotently: a `PROVISIONED` or `SUSPENDED` thread is
+    /// activated, an `ACTIVE` one is returned as it is, and a thread another caller activated
+    /// after `thread` was read (two messages routed to one teammate at once) is re-read and
+    /// accepted rather than refused as `ACTIVE → ACTIVE`.
+    ///
+    /// # Errors
+    /// The activation's error when the thread is not `ACTIVE` after it either.
+    pub async fn ensure_active(&self, thread: AgentThread) -> Result<AgentThread, RuntimeError> {
+        if !matches!(
+            thread.status,
+            AgentThreadStatus::Provisioned | AgentThreadStatus::Suspended
+        ) {
+            return Ok(thread);
+        }
+        match self.activate(&thread.id, thread.generation).await {
+            Ok(active) => Ok(active),
+            Err(
+                error @ (RuntimeError::IllegalTransition { .. }
+                | RuntimeError::FencedStaleGeneration { .. }),
+            ) => {
+                let current = self.load_thread(&thread.id).await?;
+                if current.status == AgentThreadStatus::Active {
+                    Ok(current)
+                } else {
+                    Err(error)
+                }
+            }
+            Err(error) => Err(error),
+        }
+    }
+
     /// Terminate a thread subject to the kind's policy (`agent.terminated`).
     ///
     /// A worker must be `JOINED`; a teammate may terminate from any non-terminal state.
