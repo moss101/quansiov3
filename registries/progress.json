@@ -1889,22 +1889,34 @@
     },
     "APP-010": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-23T06:15:14Z",
-      "updated_at": "2026-09-23T06:15:14Z",
-      "git_commit": null,
+      "updated_at": "2026-09-23T07:21:31Z",
+      "git_commit": "5df2292a4867b116d32aedd65e9909e456e92ddc",
       "tests": [
-        "cargo test -p quansio-server --test routines (fire key (routine, scheduled_at) is not re-run on restart; TriggerRoutineNow is the interactive command)"
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test routines --test scheduler (schedule restart across instances/crashes/leases, interactive path, event dedupe, notification preferences, email retry/backoff)",
+        "cargo test -p quansio-server --lib -- control::routines notify",
+        "(cd apps/desktop && pnpm exec vitest run tests/automation.test.ts tests/automation.e2e.test.ts tests/preload.test.ts) (notification preference E2E, schedule restart E2E killing the real server)",
+        "bash scripts/ci/ci.sh (11/11 gates PASS)"
       ],
       "artifacts": [
-        "evidence/APP-010/2026-09-15T06-35-00Z/summary.json",
-        "crates/server/src/control/routines/mod.rs"
+        "evidence/APP-010/2026-09-23T06-43-20Z/summary.json",
+        "evidence/APP-010/2026-09-23T06-43-20Z/NOTES.md",
+        "evidence/APP-010/RECONCILIATION.md",
+        "migrations/0016_routine_fires_notification_delivery.sql",
+        "crates/server/src/control/routines/",
+        "crates/server/src/scheduler/routine.rs",
+        "crates/server/src/notify/",
+        "crates/server/src/api/routines.rs",
+        "crates/server/tests/routines.rs",
+        "apps/desktop/src/automation/",
+        "apps/desktop/src/renderer/Automations.tsx"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Scheduled fires are keyed by routine_id@scheduled_at so a restart cannot duplicate a run. Routines use TriggerRoutineNow, the same command catalog as interactive work. 2026-09-19 correction: was BLOCKED_EXTERNAL at d4f96dc36db2b924400766a85ccdf679b7491864 claimed by agent:principal-1 (started 2026-09-15T06:30:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/server/src/control/routines is fire_key/should_fire; crates/server/src/notify is 87 lines; apps/desktop/src/automation is 13 lines; no routine definitions, subscriptions, preferences, channels or retry. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "Routines fire through a firing ledger (routine_fires, unique fire_key per window/event/manual command) claimed in the transaction that advances next_due_at or the event-trigger cursor, leased while executing and retried with backoff; execution is the interactive PostMessage path (prompt on the objective thread, teammate routing, capability projection from the same policies, same engine/effect path), each step looked up before it is created so a restart never duplicates a run. Event triggers exclude routine/notification families and a routine's own threads/runs. The notifier makes notifications from RuntimeEvents once per (event, user, kind) with per-user x workspace x kind preferences; email is a server-side delivery with retry/backoff (unavailable without a transport); the desktop shows native notifications. The background loop runs every tenant via background_tenants(). Found on the way: a Docker Desktop init-script race in the dev stack, fixed as a GOV-007 regression before the final CI run."
     },
     "APP-011": {
       "coverage": "PARTIAL",
