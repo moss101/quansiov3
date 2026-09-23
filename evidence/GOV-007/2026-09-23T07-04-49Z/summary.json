@@ -1,0 +1,57 @@
+{
+  "task_id": "GOV-007",
+  "git_commit": "7d41a6e99b0756247d93894852029cb987267e77",
+  "recorded_at": "2026-09-23T07:12:00Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py::test_a_database_whose_init_scripts_were_skipped_is_repaired -q  # against the PRE-FIX check_postgres (temporary revert, not committed): expected FAIL, readiness never returns after the extension is dropped",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/GOV-007/2026-09-23T07-04-49Z/repair-test-against-prefix-probe.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -q -rA  # fixed probe: 3 passed (bootstrap smoke, reset/reseed determinism, skipped-init repair)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-23T07-04-49Z/pytest-dev-stack.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> uv run --project python pytest tests -q  # ci.sh tests gate: 286 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/GOV-007/2026-09-23T07-04-49Z/pytest-tests.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py::test_a_database_whose_init_scripts_were_skipped_is_repaired -q  # against the PRE-FIX check_postgres (temporary revert, not committed): expected FAIL, readiness never returns after the extension is dropped",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -q -rA  # fixed probe: 3 passed (bootstrap smoke, reset/reseed determinism, skipped-init repair)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> uv run --project python pytest tests -q  # ci.sh tests gate: 286 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    "evidence/GOV-007/2026-09-23T07-04-49Z/NOTES.md",
+    "scripts/dev/_common.sh",
+    "tests/integration/test_dev_stack.py"
+  ]
+}

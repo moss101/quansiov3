@@ -292,3 +292,20 @@ def test_reset_then_reseed_is_deterministic(dev_env_file: Path) -> None:
         assert seed.returncode == 0, f"scripts/dev/seed failed:\n{seed.stdout}\n{seed.stderr}"
         assert seeded_identifiers() == EXPECTED_IDS
     assert seeded_identifiers() == before_reset
+
+
+def test_a_database_whose_init_scripts_were_skipped_is_repaired(dev_env_file: Path) -> None:
+    """Docker Desktop can start a fresh Postgres before its bind mount is populated: the
+    entrypoint logs ``ignoring /docker-entrypoint-initdb.d/*`` and never runs the init
+    scripts for that volume, so pgvector is missing and the stack never becomes ready. The
+    readiness probe applies the (idempotent) init scripts when the extension is missing."""
+    up = run_dev("up", env_file=dev_env_file)
+    assert up.returncode == 0, f"scripts/dev/up failed:\n{up.stdout}\n{up.stderr}"
+    # The state the race leaves behind: a ready database without the extension.
+    with psycopg.connect(_dsn(), autocommit=True) as conn:
+        conn.execute("DROP EXTENSION IF EXISTS vector CASCADE")
+    assert query("SELECT count(*) FROM pg_extension WHERE extname = 'vector'")[0][0] == 0
+    healthcheck = run_dev("healthcheck", env_file=dev_env_file, timeout=120)
+    assert healthcheck.returncode == 0, f"scripts/dev/healthcheck failed:\n{healthcheck.stdout}\n{healthcheck.stderr}"
+    assert query("SELECT count(*) FROM pg_extension WHERE extname = 'vector'")[0][0] == 1
+    assert query("SELECT to_regnamespace('derived') IS NOT NULL")[0][0] is True

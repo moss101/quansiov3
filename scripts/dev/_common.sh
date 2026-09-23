@@ -150,12 +150,26 @@ PYEOF
 
 # --- readiness probes -------------------------------------------------------
 
+vector_count() {
+  compose exec -T postgres psql -tAq -U "$QUANSIO_DEV_POSTGRES_USER" -d "$QUANSIO_DEV_POSTGRES_DB" \
+    -c "SELECT count(*) FROM pg_extension WHERE extname = 'vector'" 2>/dev/null | tr -d '[:space:]'
+}
+
 check_postgres() {
   compose exec -T postgres pg_isready -U "$QUANSIO_DEV_POSTGRES_USER" -d "$QUANSIO_DEV_POSTGRES_DB" \
     >/dev/null 2>&1 || return 1
   local count
-  count="$(compose exec -T postgres psql -tAq -U "$QUANSIO_DEV_POSTGRES_USER" -d "$QUANSIO_DEV_POSTGRES_DB" \
-    -c "SELECT count(*) FROM pg_extension WHERE extname = 'vector'" 2>/dev/null | tr -d '[:space:]')"
+  count="$(vector_count)"
+  if [[ "$count" == "0" ]]; then
+    # Docker Desktop can start a fresh container before its bind mount is populated, so
+    # the entrypoint finds /docker-entrypoint-initdb.d empty ("ignoring
+    # /docker-entrypoint-initdb.d/*") and never runs it again for that volume. The init
+    # scripts are idempotent (IF NOT EXISTS): apply them now that the mount is visible.
+    compose exec -T postgres sh -c \
+      'for f in /docker-entrypoint-initdb.d/*.sql; do [ -f "$f" ] || continue; psql -v ON_ERROR_STOP=1 -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f "$f" || exit 1; done' \
+      >/dev/null 2>&1 || return 1
+    count="$(vector_count)"
+  fi
   [[ "$count" == "1" ]]
 }
 
