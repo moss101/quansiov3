@@ -1,6 +1,7 @@
 //! Mutating command dispatch (APP-001).
 //!
-//! The handler records the command in `commands` and then calls the canonical owner.
+//! The handler records the command in `commands`, calls the canonical owner, and keeps the owner's answer --
+//! its result or its refusal -- as the command's outcome, which is what a resend of the same `command_id` gets.
 
 use std::sync::Arc;
 
@@ -23,7 +24,9 @@ use quansio_capability::layer::{Layer, ProjectionInput};
 use quansio_capability::persistence::{stage_projected_event, ProjectionArgument, ProjectionRow};
 use quansio_capability::projection::{CapabilityProjection, ProjectionSubject, SubjectKind};
 use quansio_capability::Grant;
-use quansio_core::{CanonicalId, CorrelationId, Digest, Generation, Prefix, UlidGenerator};
+use quansio_core::{
+    CanonicalId, CommandId, CorrelationId, Digest, Generation, Prefix, UlidGenerator,
+};
 use quansio_events::EventStore;
 use serde_json::{json, Value};
 
@@ -84,344 +87,23 @@ pub async fn invoke(
         return replay(&state, &scope, &command_id, &params_digest, &correlation).await;
     }
 
-    let user_id = scope.user_id.clone();
     let identity = RuntimeIdentity::system(&scope.tenant_id, "api", correlation_id)
         .with_command_id(command_id);
-    let result = match command.as_str() {
-        "CreateWorkspace" | "UpdateWorkspace" | "UpdateUserSettings" => {
-            identity_command(&state, &scope, &command, &request.params, &correlation).await?
-        }
-        "CancelRun" => cancel_run(&state, &identity, &request.params, &correlation).await?,
-        "PauseRun" => pause_run(&state, &identity, &request.params, &correlation).await?,
-        "ResumeRun" => resume_run(&state, &identity, &request.params, &correlation).await?,
-        "CreateThread" => {
-            super::collaboration::create_thread(
-                &state,
-                &scope,
-                &identity,
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "AddParticipant" => {
-            super::collaboration::add_participant(
-                &state,
-                &scope,
-                &identity,
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "RemoveParticipant" => {
-            super::collaboration::remove_participant(
-                &state,
-                &scope,
-                &identity,
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "ReactToMessage" => {
-            super::collaboration::react_to_message(
-                &state,
-                &scope,
-                &identity,
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "HandOffThread" => {
-            super::collaboration::hand_off_thread(
-                &state,
-                &scope,
-                &identity,
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "PostMessage" => {
-            post_message(
-                &state,
-                &scope,
-                &identity,
-                &request.params,
-                user_id.as_deref(),
-                &correlation,
-            )
-            .await?
-        }
-        "AnswerQuestion" => {
-            answer_question(
-                &state,
-                &identity,
-                &request.params,
-                user_id.as_deref(),
-                &correlation,
-            )
-            .await?
-        }
-        "CancelTurn" => cancel_turn(&state, &identity, &request.params, &correlation).await?,
-        "ProposeGraphEdit" => {
-            super::workgraph::propose_graph_edit(
-                &state,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "ApproveEffect" => {
-            super::trust::approve_effect(
-                &state,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-                chat_engine,
-            )
-            .await?
-        }
-        "DenyEffect" => {
-            super::trust::deny_effect(
-                &state,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-                chat_engine,
-            )
-            .await?
-        }
-        "CreateObjective" => {
-            super::workgraph::create_objective(
-                &state,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "CreateArtifact" => {
-            super::artifacts::create_artifact(
-                &state,
-                &scope.tenant_id,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "DeleteKnowledge" => {
-            super::knowledge::delete_knowledge(
-                &state,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "SupersedeKnowledge" => {
-            super::knowledge::supersede_knowledge(
-                &state,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "DeleteMemory" => {
-            super::knowledge::delete_memory(
-                &state,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "InstallSkill" => {
-            super::knowledge::install_skill(
-                &state,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "PromoteSkillVersion" => {
-            super::knowledge::promote_skill_version(
-                &state,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "DisableSkill" => {
-            super::knowledge::disable_skill(
-                &state,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "InviteMember" => {
-            super::admin::invite_member(&state, &scope, &identity, &request.params, &correlation)
-                .await?
-        }
-        "UpdateMembership" => {
-            super::admin::update_membership(
-                &state,
-                &scope,
-                &identity,
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "RemoveMember" => {
-            super::admin::remove_member(&state, &scope, &identity, &request.params, &correlation)
-                .await?
-        }
-        "CreateTeammate" => {
-            super::teammates::create_teammate(
-                &state,
-                &scope,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "UpdateTeammate" => {
-            super::teammates::update_teammate(
-                &state,
-                &scope,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "ArchiveTeammate" => {
-            super::teammates::archive_teammate(
-                &state,
-                &scope,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "CreateRoutine" => {
-            super::routines::create_routine(&state, &scope, &request.params, &correlation).await?
-        }
-        "UpdateRoutine" => {
-            super::routines::update_routine(&state, &scope, &request.params, &correlation).await?
-        }
-        "PauseRoutine" | "ResumeRoutine" | "DeleteRoutine" => {
-            super::routines::transition_routine(
-                &state,
-                &scope,
-                &command,
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "TriggerRoutineNow" => {
-            super::routines::trigger_routine_now(
-                &state,
-                &scope,
-                &command_id.as_canonical().to_string(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "UpdateNotificationPreferences" => {
-            super::routines::update_notification_preferences(
-                &state,
-                &scope,
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "MarkNotificationRead" => {
-            super::routines::mark_notification_read(&state, &scope, &request.params, &correlation)
-                .await?
-        }
-        "RequestTakeover" => {
-            super::live_sessions::request_takeover(
-                &state,
-                &scope,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "Handback" => {
-            super::live_sessions::handback(
-                &state,
-                &scope,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        "CreateWebhookSubscription" => {
-            super::webhooks::create_subscription(&state, &scope, &request.params, &correlation)
-                .await?
-        }
-        "UpdateWebhookSubscription" => {
-            super::webhooks::update_subscription(&state, &scope, &request.params, &correlation)
-                .await?
-        }
-        "RedeliverWebhook" => {
-            super::webhooks::redeliver(&state, &scope, &request.params, &correlation).await?
-        }
-        "DeleteWebhookSubscription" => {
-            super::webhooks::delete_subscription(&state, &scope, &request.params, &correlation)
-                .await?
-        }
-        "SetPolicy" => {
-            super::admin::set_policy(
-                &state,
-                &scope,
-                &identity,
-                user_id.as_deref(),
-                &request.params,
-                &correlation,
-            )
-            .await?
-        }
-        other => {
-            return Err(ApiError::new(
-                ApiErrorCode::Internal,
-                format!("{other} is in the catalog and has no handler in this build"),
-                correlation,
-            ));
+    let dispatched = dispatch(
+        &state,
+        &scope,
+        &command,
+        &command_id,
+        &identity,
+        &request,
+        &correlation,
+    )
+    .await;
+    let result = match dispatched {
+        Ok(result) => result,
+        Err(refusal) => {
+            record_refusal(&state, &scope, &command_id, &refusal).await;
+            return Err(refusal);
         }
     };
 
@@ -443,40 +125,431 @@ pub async fn invoke(
     }))
 }
 
-async fn replay(
+/// Call the canonical owner of `command`. What it answers, a result or a refusal, is the command's outcome.
+async fn dispatch(
     state: &ApiState,
     scope: &TenantScope,
-    command_id: &quansio_core::CommandId,
-    params_digest: &str,
+    command: &str,
+    command_id: &CommandId,
+    identity: &RuntimeIdentity,
+    request: &CommandRequest,
     correlation: &str,
-) -> Result<Json<CommandResponse>, ApiError> {
-    let existing = sqlx::query_as::<_, (String, Option<Value>, Option<Value>)>(
-        "SELECT params_digest, result, error FROM commands WHERE tenant_id = $1 AND command_id = $2",
+) -> Result<Value, ApiError> {
+    let user_id = scope.user_id.clone();
+    let result = match command {
+        "CreateWorkspace" | "UpdateWorkspace" | "UpdateUserSettings" => {
+            identity_command(state, scope, command, &request.params, correlation).await?
+        }
+        "CancelRun" => cancel_run(state, identity, &request.params, correlation).await?,
+        "PauseRun" => pause_run(state, identity, &request.params, correlation).await?,
+        "ResumeRun" => resume_run(state, identity, &request.params, correlation).await?,
+        "CreateThread" => {
+            super::collaboration::create_thread(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "AddParticipant" => {
+            super::collaboration::add_participant(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "RemoveParticipant" => {
+            super::collaboration::remove_participant(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "ReactToMessage" => {
+            super::collaboration::react_to_message(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "HandOffThread" => {
+            super::collaboration::hand_off_thread(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "PostMessage" => {
+            post_message(
+                state,
+                scope,
+                identity,
+                &request.params,
+                user_id.as_deref(),
+                correlation,
+            )
+            .await?
+        }
+        "AnswerQuestion" => {
+            answer_question(
+                state,
+                identity,
+                &request.params,
+                user_id.as_deref(),
+                correlation,
+            )
+            .await?
+        }
+        "CancelTurn" => cancel_turn(state, identity, &request.params, correlation).await?,
+        "ProposeGraphEdit" => {
+            super::workgraph::propose_graph_edit(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "ApproveEffect" => {
+            super::trust::approve_effect(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+                chat_engine,
+            )
+            .await?
+        }
+        "DenyEffect" => {
+            super::trust::deny_effect(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+                chat_engine,
+            )
+            .await?
+        }
+        "CreateObjective" => {
+            super::workgraph::create_objective(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "CreateArtifact" => {
+            super::artifacts::create_artifact(
+                state,
+                &scope.tenant_id,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "DeleteKnowledge" => {
+            super::knowledge::delete_knowledge(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "SupersedeKnowledge" => {
+            super::knowledge::supersede_knowledge(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "DeleteMemory" => {
+            super::knowledge::delete_memory(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "InstallSkill" => {
+            super::knowledge::install_skill(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "PromoteSkillVersion" => {
+            super::knowledge::promote_skill_version(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "DisableSkill" => {
+            super::knowledge::disable_skill(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "InviteMember" => {
+            super::admin::invite_member(state, scope, identity, &request.params, correlation)
+                .await?
+        }
+        "UpdateMembership" => {
+            super::admin::update_membership(state, scope, identity, &request.params, correlation)
+                .await?
+        }
+        "RemoveMember" => {
+            super::admin::remove_member(state, scope, identity, &request.params, correlation)
+                .await?
+        }
+        "CreateTeammate" => {
+            super::teammates::create_teammate(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "UpdateTeammate" => {
+            super::teammates::update_teammate(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "ArchiveTeammate" => {
+            super::teammates::archive_teammate(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "CreateRoutine" => {
+            super::routines::create_routine(state, scope, &request.params, correlation).await?
+        }
+        "UpdateRoutine" => {
+            super::routines::update_routine(state, scope, &request.params, correlation).await?
+        }
+        "PauseRoutine" | "ResumeRoutine" | "DeleteRoutine" => {
+            super::routines::transition_routine(state, scope, command, &request.params, correlation)
+                .await?
+        }
+        "TriggerRoutineNow" => {
+            super::routines::trigger_routine_now(
+                state,
+                scope,
+                &command_id.as_canonical().to_string(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "UpdateNotificationPreferences" => {
+            super::routines::update_notification_preferences(
+                state,
+                scope,
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "MarkNotificationRead" => {
+            super::routines::mark_notification_read(state, scope, &request.params, correlation)
+                .await?
+        }
+        "RequestTakeover" => {
+            super::live_sessions::request_takeover(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "Handback" => {
+            super::live_sessions::handback(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "CreateWebhookSubscription" => {
+            super::webhooks::create_subscription(state, scope, &request.params, correlation).await?
+        }
+        "UpdateWebhookSubscription" => {
+            super::webhooks::update_subscription(state, scope, &request.params, correlation).await?
+        }
+        "RedeliverWebhook" => {
+            super::webhooks::redeliver(state, scope, &request.params, correlation).await?
+        }
+        "DeleteWebhookSubscription" => {
+            super::webhooks::delete_subscription(state, scope, &request.params, correlation).await?
+        }
+        "SetPolicy" => {
+            super::admin::set_policy(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        other => {
+            return Err(ApiError::new(
+                ApiErrorCode::Internal,
+                format!("{other} is in the catalog and has no handler in this build"),
+                correlation,
+            ));
+        }
+    };
+    Ok(result)
+}
+
+/// Keep an owner's refusal as the command's outcome, so a resend is answered with it (DOMAIN.md §1.2).
+///
+/// A retryable refusal is kept as well. The owners are not idempotent by `command_id`, and some commit part
+/// of their work before they can still fail (`PostMessage` stores the message before its turn runs), so
+/// running a resend again could apply that part twice. Retrying such a refusal is a new command.
+async fn record_refusal(
+    state: &ApiState,
+    scope: &TenantScope,
+    command_id: &CommandId,
+    refusal: &ApiError,
+) {
+    let recorded = sqlx::query(
+        "UPDATE commands SET status = 'rejected', error = $3 WHERE tenant_id = $1 AND command_id = $2",
     )
     .bind(&scope.tenant_id)
     .bind(command_id.as_canonical().to_string())
-    .fetch_optional(state.pool())
-    .await
-    .map_err(database_error)?
-    .ok_or_else(|| {
-        ApiError::new(
-            ApiErrorCode::Internal,
-            "a command conflicted but cannot be read back",
-            correlation.to_string(),
+    .bind(json!(refusal))
+    .execute(state.pool())
+    .await;
+    // The caller is still told the refusal. The record stays accepted, and a resend is told the outcome is
+    // not known rather than that the command succeeded.
+    if let Err(error) = recorded {
+        eprintln!(
+            "quansio-server: command {} was refused ({}) and the refusal was not recorded: {error}",
+            command_id.as_canonical(),
+            refusal.code
+        );
+    }
+}
+
+async fn replay(
+    state: &ApiState,
+    scope: &TenantScope,
+    command_id: &CommandId,
+    params_digest: &str,
+    correlation: &str,
+) -> Result<Json<CommandResponse>, ApiError> {
+    let (digest, status, result, error) =
+        sqlx::query_as::<_, (String, String, Option<Value>, Option<Value>)>(
+            "SELECT params_digest, status, result, error FROM commands WHERE tenant_id = $1 AND command_id = $2",
         )
-    })?;
-    if existing.0 != params_digest {
+        .bind(&scope.tenant_id)
+        .bind(command_id.as_canonical().to_string())
+        .fetch_optional(state.pool())
+        .await
+        .map_err(database_error)?
+        .ok_or_else(|| {
+            ApiError::new(
+                ApiErrorCode::Internal,
+                "a command conflicted but cannot be read back",
+                correlation.to_string(),
+            )
+        })?;
+    if digest != params_digest {
         return Err(ApiError::new(
             ApiErrorCode::ConflictIdempotencyMismatch,
             "this command_id was already used with different parameters",
             correlation,
         ));
     }
-    Ok(Json(CommandResponse {
-        command_id: command_id.as_canonical().to_string().to_string(),
-        replayed: true,
-        result: existing.1.or(existing.2).unwrap_or(Value::Null),
-    }))
+    match status.as_str() {
+        "applied" => Ok(Json(CommandResponse {
+            command_id: command_id.as_canonical().to_string(),
+            replayed: true,
+            result: result.unwrap_or(Value::Null),
+        })),
+        // The original refusal, with its own status and correlation id.
+        "rejected" => Err(error
+            .and_then(|error| serde_json::from_value::<ApiError>(error).ok())
+            .unwrap_or_else(|| {
+                ApiError::new(
+                    ApiErrorCode::Internal,
+                    "a refused command's refusal cannot be read back",
+                    correlation,
+                )
+            })),
+        // Still accepted: the first submission has not recorded an outcome. Resending later returns it, so
+        // this refusal is retryable though its code is not.
+        _ => {
+            let mut pending = ApiError::new(
+                ApiErrorCode::ConflictState,
+                "this command_id is still being applied; resend it later for its outcome",
+                correlation,
+            )
+            .with_details(json!({ "command_status": status }));
+            pending.retryable = true;
+            Err(pending)
+        }
+    }
 }
 
 async fn cancel_run(

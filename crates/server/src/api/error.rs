@@ -12,7 +12,7 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// Every code in DOMAIN.md §15, with the family and HTTP status the table gives it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -297,7 +297,7 @@ impl ApiErrorCode {
 }
 
 /// The refusal a client sees (DOMAIN.md §15).
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ApiError {
     /// The canonical code.
     pub code: String,

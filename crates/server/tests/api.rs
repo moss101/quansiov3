@@ -476,6 +476,200 @@ async fn a_mutating_call_calls_the_owner_and_a_resend_returns_its_result_once() 
 }
 
 #[tokio::test]
+async fn a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal() {
+    let Some((router, pool, name)) = service("api_refused").await else {
+        common::blocked_marker();
+        return;
+    };
+    let (run, generation) = runtime_run(&pool).await;
+    let run_id = run.to_string();
+    // The run's owner fails it, so a cancellation is no longer a legal edge (§5.2) and the runtime refuses.
+    {
+        use quansio_core::{CorrelationId, Generation, UlidGenerator};
+        use quansio_server::runtime::state_machine::{RunStatus, RuntimeIdentity, RuntimeStore};
+        let identity = RuntimeIdentity::system(
+            TENANT,
+            "api-test",
+            CorrelationId::generate(&mut UlidGenerator::new()),
+        );
+        RuntimeStore::new(pool.clone(), identity)
+            .expect("runtime store")
+            .transition_run(
+                &run,
+                Generation::new(generation).expect("generation"),
+                RunStatus::Failed,
+                Some("fixture".to_string()),
+            )
+            .await
+            .expect("fail the run");
+    }
+    let body = serde_json::json!({
+        "command_id": COMMAND,
+        "params": { "run_id": run_id, "generation": generation },
+    });
+    let response = router
+        .clone()
+        .oneshot(request(
+            "POST",
+            "/v1/commands/CancelRun",
+            Some(TENANT),
+            Some(body.clone()),
+        ))
+        .await
+        .expect("a response");
+    let status = response.status();
+    let first = json_body(response).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{first}");
+    assert_eq!(first["code"], "RUNTIME_ILLEGAL_TRANSITION", "{first}");
+
+    // The refusal is the command's outcome (§1.2), so the record says so rather than staying accepted.
+    let (record_status, error, result): (String, Option<Value>, Option<Value>) = sqlx::query_as(
+        "SELECT status, error, result FROM commands WHERE tenant_id = $1 AND command_id = $2",
+    )
+    .bind(TENANT)
+    .bind(COMMAND)
+    .fetch_one(&pool)
+    .await
+    .expect("the command record");
+    assert_eq!(record_status, "rejected");
+    assert_eq!(error.as_ref(), Some(&first), "the record keeps the refusal");
+    assert_eq!(result, None);
+
+    // A resend is answered with the original refusal and its status, not with a 200 that reads as success.
+    let response = router
+        .clone()
+        .oneshot(request(
+            "POST",
+            "/v1/commands/CancelRun",
+            Some(TENANT),
+            Some(body.clone()),
+        ))
+        .await
+        .expect("a response");
+    let status = response.status();
+    let again = json_body(response).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{again}");
+    assert_eq!(
+        again, first,
+        "a resend gets the original refusal, correlation id included"
+    );
+
+    // The refusal changed nothing: the run is still the one its owner failed.
+    let run_status: String =
+        sqlx::query_scalar("SELECT status FROM runs WHERE id = $1 AND tenant_id = $2")
+            .bind(&run_id)
+            .bind(TENANT)
+            .fetch_one(&pool)
+            .await
+            .expect("status");
+    assert_eq!(run_status, "FAILED");
+
+    // The refused command_id still cannot be reused for different parameters.
+    let mut changed = body.clone();
+    changed["params"]["generation"] = serde_json::json!(generation + 1);
+    let response = router
+        .clone()
+        .oneshot(request(
+            "POST",
+            "/v1/commands/CancelRun",
+            Some(TENANT),
+            Some(changed),
+        ))
+        .await
+        .expect("a response");
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+    assert_eq!(
+        json_body(response).await["code"],
+        "CONFLICT_IDEMPOTENCY_MISMATCH"
+    );
+
+    // A refusal raised while reading the parameters is the outcome too. Generation 0 is below the first
+    // generation there is, so no run can carry it.
+    let invalid = serde_json::json!({
+        "command_id": "cmd_01J8Z3K6F1N8VQ2X5W9Y0GGGGG",
+        "params": { "run_id": run_id, "generation": 0 },
+    });
+    let mut answers = Vec::new();
+    for _ in 0..2 {
+        let response = router
+            .clone()
+            .oneshot(request(
+                "POST",
+                "/v1/commands/CancelRun",
+                Some(TENANT),
+                Some(invalid.clone()),
+            ))
+            .await
+            .expect("a response");
+        answers.push((response.status(), json_body(response).await));
+    }
+    assert_eq!(answers[0].0, StatusCode::BAD_REQUEST, "{}", answers[0].1);
+    assert_eq!(
+        answers[0].1["code"], "VALIDATION_BOUNDS",
+        "{}",
+        answers[0].1
+    );
+    assert_eq!(answers[1], answers[0], "the resend gets the same refusal");
+    let record_status: String =
+        sqlx::query_scalar("SELECT status FROM commands WHERE tenant_id = $1 AND command_id = $2")
+            .bind(TENANT)
+            .bind("cmd_01J8Z3K6F1N8VQ2X5W9Y0GGGGG")
+            .fetch_one(&pool)
+            .await
+            .expect("the command record");
+    assert_eq!(record_status, "rejected");
+    common::drop_pool(&pool, &name).await;
+}
+
+#[tokio::test]
+async fn a_resend_while_the_first_is_still_being_applied_is_told_to_come_back() {
+    let Some((router, pool, name)) = service("api_in_flight").await else {
+        common::blocked_marker();
+        return;
+    };
+    let (run, generation) = runtime_run(&pool).await;
+    let params = serde_json::json!({ "run_id": run.to_string(), "generation": generation });
+    // The first submission's record as it stands while its owner is still working: accepted, with no
+    // outcome yet.
+    sqlx::query(
+        "INSERT INTO commands (id, tenant_id, command_name, command_id, params_digest, status) \
+         VALUES ('cmd_01J8Z3K6F1N8VQ2X5W9Y0FFFFF', $1, 'CancelRun', $2, $3, 'accepted')",
+    )
+    .bind(TENANT)
+    .bind(COMMAND)
+    .bind(quansio_core::Digest::of_canonical_json(&params.to_string()).as_str())
+    .execute(&pool)
+    .await
+    .expect("an accepted record");
+
+    let response = router
+        .oneshot(request(
+            "POST",
+            "/v1/commands/CancelRun",
+            Some(TENANT),
+            Some(serde_json::json!({ "command_id": COMMAND, "params": params })),
+        ))
+        .await
+        .expect("a response");
+    let status = response.status();
+    let body = json_body(response).await;
+    // Not a 200 with no result: the outcome is not known yet, and a resend later will get it.
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(body["code"], "CONFLICT_STATE", "{body}");
+    assert_eq!(body["retryable"], true, "{body}");
+    assert_eq!(body["details"]["command_status"], "accepted", "{body}");
+
+    // The duplicate did not call the owner a second time.
+    let run_status: String = sqlx::query_scalar("SELECT status FROM runs WHERE id = $1")
+        .bind(run.to_string())
+        .fetch_one(&pool)
+        .await
+        .expect("status");
+    assert_eq!(run_status, "RUNNING");
+    common::drop_pool(&pool, &name).await;
+}
+
+#[tokio::test]
 async fn a_command_scoped_to_another_tenant_does_not_touch_this_one() {
     let Some((router, pool, name)) = service("api_isolation").await else {
         common::blocked_marker();
@@ -802,5 +996,13 @@ async fn a_tenant_over_the_rate_limit_is_rate_limited() {
         .expect("second");
     assert_eq!(second.status(), StatusCode::TOO_MANY_REQUESTS);
     assert_eq!(json_body(second).await["code"], "RATE_LIMITED");
+    // The limit is checked before the command is recorded, so the command_id stays free and a resend
+    // once the window has passed is a real retry rather than a replay of the refusal.
+    let recorded: i64 = sqlx::query_scalar("SELECT count(*) FROM commands WHERE command_id = $1")
+        .bind("cmd_01J8Z3K6F1N8VQ2X5W9Y0DDDDD")
+        .fetch_one(&pool)
+        .await
+        .expect("count");
+    assert_eq!(recorded, 0);
     common::drop_pool(&pool, &name).await;
 }
