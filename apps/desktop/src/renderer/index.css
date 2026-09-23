@@ -115,3 +115,12 @@ nav li.selected button { font-weight: 600; } nav button { background: none; bord
 .reactions .add-reaction { opacity: 0.5; }
 .collab-members li.left { opacity: 0.5; }
 .collab-handoff { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.automations { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-height: 0; }
+.auto-routines ul, .auto-notifications ul { list-style: none; padding: 0; margin: 8px 0; }
+.routine { padding: 6px 0; border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent); display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.routine-paused { opacity: 0.7; }
+.routine .controls button, .auto-notifications button { background: none; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 6px; padding: 0 6px; cursor: pointer; font: inherit; font-size: 12px; }
+.auto-new { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.auto-notifications li.unread { font-weight: 600; }
+.auto-preferences th { text-align: left; font-weight: 400; padding-right: 8px; }
+.auto-preferences td { padding: 2px 6px; font-size: 12px; }

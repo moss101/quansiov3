@@ -72,6 +72,11 @@ export const PRELOAD_ALLOWLIST = [
   "participants.remove",
   "messages.react",
   "threads.handoff",
+  "routines.list",
+  "routines.command",
+  "notifications.list",
+  "notifications.read",
+  "notifications.preference",
 ] as const;
 
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
@@ -218,6 +223,13 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     removeParticipant: (params: Record<string, unknown>) => send("participants.remove", params),
     react: (params: { message_id: string; emoji: string; remove: boolean }) => send("messages.react", params),
     handOffThread: (params: Record<string, unknown>) => send("threads.handoff", params),
+    // Routines and notifications (APP-010): the projections, one routine command (create,
+    // update, pause, resume, delete, trigger now), and the person's own notifications.
+    listRoutines: () => send("routines.list", {}),
+    routineCommand: (name: string, params: Record<string, unknown>) => send("routines.command", { name, params }),
+    listNotifications: (unreadOnly = false) => send("notifications.list", { unreadOnly }),
+    markNotificationRead: (notificationId: string) => send("notifications.read", { notificationId }),
+    setNotificationPreference: (params: Record<string, unknown>) => send("notifications.preference", params),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),

@@ -110,6 +110,11 @@ describe("preload bridge", () => {
         "removeParticipant",
         "react",
         "handOffThread",
+        "listRoutines",
+        "routineCommand",
+        "listNotifications",
+        "markNotificationRead",
+        "setNotificationPreference",
         "onStreamFrame",
         "onStreamState",
         "onStreamError",
@@ -198,6 +203,11 @@ describe("preload bridge", () => {
     await api.removeParticipant({ thread_id: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", kind: "user", id: "usr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
     await api.react({ message_id: "msg_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", emoji: "👍", remove: false });
     await api.handOffThread({ thread_id: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", to_teammate_id: "agt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.listRoutines();
+    await api.routineCommand("PauseRoutine", { routine_id: "rtn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.listNotifications(true);
+    await api.markNotificationRead("ntf_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.setNotificationPreference({ kind: "mention", channels: ["in_app"] });
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

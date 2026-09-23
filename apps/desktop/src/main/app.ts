@@ -15,7 +15,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { app, autoUpdater, BrowserWindow, dialog, ipcMain, protocol, safeStorage, session, shell } from "electron";
+import { app, autoUpdater, BrowserWindow, dialog, ipcMain, Notification, protocol, safeStorage, session, shell } from "electron";
 import WebSocket from "ws";
 
 import type { SocketFactory, SocketLike } from "../client/stream.js";
@@ -134,6 +134,17 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
     auth,
     // OAuth: the authorization URL opens in the system browser, never in the renderer.
     openExternal: (url) => shell.openExternal(url),
+    // Native desktop notifications (APP-010): only for events the person's preference sends
+    // to the desktop channel; clicking one brings the window forward.
+    notifyNative: (notice) => {
+      if (Notification.isSupported()) {
+        const native = new Notification({ title: notice.title, body: notice.body, silent: false });
+        native.on("click", () => {
+          window.show();
+        });
+        native.show();
+      }
+    },
     // Artifact files (APP-008): saved where the user chooses, or written under userData and
     // handed to the OS handler; the bridge refuses pages, scripts and programs before this.
     files: {

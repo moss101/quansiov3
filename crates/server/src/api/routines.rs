@@ -446,7 +446,7 @@ pub async fn routines(
     let mut items = Vec::with_capacity(routines.len());
     for routine in &routines {
         let fires = ledger
-            .fires_of(&routine.id, 10)
+            .fires_of(&routine.id, 25)
             .await
             .map_err(|error| internal(error, "projection"))?;
         let mut item = routine.to_json();
