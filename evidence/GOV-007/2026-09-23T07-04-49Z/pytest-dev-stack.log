@@ -1,0 +1,8 @@
+...                                                                      [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/integration/test_dev_stack.py::test_bootstrap_smoke
+PASSED tests/integration/test_dev_stack.py::test_reset_then_reseed_is_deterministic
+PASSED tests/integration/test_dev_stack.py::test_a_database_whose_init_scripts_were_skipped_is_repaired
+3 passed in 22.05s
+exit=0
