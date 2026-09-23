@@ -1,0 +1,9 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.56s
+     Running tests/cli_e2e.rs (target/debug/deps/cli_e2e-23aea7260a7881f4)
+
+running 1 test
+test the_cli_is_a_scoped_client_of_the_public_api_and_nothing_else ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.94s
+
+exit=0

@@ -307,11 +307,21 @@ async fn run(args: Args) -> Result<(), String> {
 }
 
 /// The `--live` rows (APP-007), one RUNNING run's worth: the ids are fixed so a harness can
-/// name the session it observes and prove it is the same one after a takeover.
+/// name the session it observes and prove it is the same one after a takeover. The target,
+/// its browser and terminal sessions and its computer-control row are written through the
+/// machine authority (`crates/machine`), which is the only writer of those tables; the
+/// thread and run are seed rows like the tenant's.
 async fn seed_live(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     args: &Args,
 ) -> Result<(), String> {
+    use quansio_machine::computer_use::store::ComputerControlStore;
+    use quansio_machine::control::browser::BrowserSessionStore;
+    use quansio_machine::control::terminal::TerminalStore;
+    use quansio_machine::control::{
+        MachineControl, NewTarget, Substrate, TargetClass, TargetFence, TargetStatus,
+    };
+
     let id = |name: &str| {
         LIVE_IDS
             .iter()
@@ -319,18 +329,37 @@ async fn seed_live(
             .map(|(_, value)| *value)
             .expect("live id")
     };
-    sqlx::query(
-        "INSERT INTO execution_targets (id, tenant_id, workspace_id, target_class, substrate, status, \
-                                        observed_state, resources, owner_kind, last_heartbeat_at) \
-         VALUES ($1, $2, $3, 'persistent_workspace_computer', 'local_capsule_macos', 'READY', 'READY', \
-                 '{\"cpu\": 2, \"mem\": 2048, \"disk\": 8192}'::jsonb, 'workspace', now())",
+    let target = id("target");
+    MachineControl::register(
+        tx,
+        &args.tenant,
+        &NewTarget {
+            id: target.to_string(),
+            workspace_id: args.workspace.clone(),
+            class: TargetClass::PersistentWorkspaceComputer,
+            substrate: Substrate::LocalCapsuleMacos,
+            image_digest: None,
+            desired_state: Some("READY".to_string()),
+        },
     )
-    .bind(id("target"))
-    .bind(&args.tenant)
-    .bind(&args.workspace)
-    .execute(&mut **tx)
     .await
     .map_err(|error| format!("live target: {error}"))?;
+    for to in [TargetStatus::Provisioning, TargetStatus::Ready] {
+        let current = MachineControl::load(tx, &args.tenant, target)
+            .await
+            .map_err(|error| format!("live target: {error}"))?;
+        MachineControl::transition(
+            tx,
+            &args.tenant,
+            target,
+            &TargetFence {
+                generation: current.generation,
+            },
+            to,
+        )
+        .await
+        .map_err(|error| format!("live target {to:?}: {error}"))?;
+    }
     sqlx::query(
         "INSERT INTO agent_threads (id, tenant_id, workspace_id, agent_kind, work_node_id, status, \
                                     execution_target_id) \
@@ -340,7 +369,7 @@ async fn seed_live(
     .bind(&args.tenant)
     .bind(&args.workspace)
     .bind(&args.node)
-    .bind(id("target"))
+    .bind(target)
     .execute(&mut **tx)
     .await
     .map_err(|error| format!("live agent thread: {error}"))?;
@@ -354,48 +383,51 @@ async fn seed_live(
     .bind(&args.workspace)
     .bind(&args.node)
     .bind(id("agent_thread"))
-    .bind(id("target"))
+    .bind(target)
     .execute(&mut **tx)
     .await
     .map_err(|error| format!("live run: {error}"))?;
-    sqlx::query(
-        "INSERT INTO browser_sessions (id, tenant_id, target_id, run_id, profile_ref, control_holder, \
-                                       control_since, current_url, tabs, screencast, status) \
-         VALUES ($1, $2, $3, $4, 'profile:e2e', 'agent', now(), 'https://example.com/', \
-                 $5::jsonb, '{\"enabled\": false}'::jsonb, 'active')",
+    let session = id("browser_session");
+    BrowserSessionStore::open(
+        tx,
+        &args.tenant,
+        session,
+        target,
+        Some(id("run")),
+        Some("profile:e2e"),
     )
-    .bind(id("browser_session"))
-    .bind(&args.tenant)
-    .bind(id("target"))
-    .bind(id("run"))
-    .bind(json!([{ "target_id": "cdp-tab-1", "url": "https://example.com/", "title": "Example Domain" }]))
-    .execute(&mut **tx)
     .await
     .map_err(|error| format!("live browser session: {error}"))?;
-    sqlx::query(
-        "INSERT INTO terminal_sessions (id, tenant_id, target_id, run_id, pty_ref, cursor, status, \
-                                        last_command_id) \
-         VALUES ($1, $2, $3, $4, 'pty:e2e', $5, 'open', $6)",
+    BrowserSessionStore::record_page(
+        tx,
+        &args.tenant,
+        session,
+        "cdp-tab-1",
+        "https://example.com/",
+        "Example Domain",
     )
-    .bind(id("terminal_session"))
-    .bind(&args.tenant)
-    .bind(id("target"))
-    .bind(id("run"))
-    .bind(LIVE_TERMINAL_CURSOR.to_string())
-    .bind(id("terminal_last_command"))
-    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("live browser page: {error}"))?;
+    let terminal = id("terminal_session");
+    TerminalStore::open(
+        tx,
+        &args.tenant,
+        terminal,
+        target,
+        Some(id("run")),
+        Some("pty:e2e"),
+    )
     .await
     .map_err(|error| format!("live terminal session: {error}"))?;
-    sqlx::query(
-        "INSERT INTO computer_controls (target_id, tenant_id, run_id, holder, generation, control_since) \
-         VALUES ($1, $2, $3, 'agent', 1, now())",
-    )
-    .bind(id("target"))
-    .bind(&args.tenant)
-    .bind(id("run"))
-    .execute(&mut **tx)
-    .await
-    .map_err(|error| format!("live computer control: {error}"))?;
+    TerminalStore::attach(tx, &args.tenant, terminal, id("terminal_last_command"))
+        .await
+        .map_err(|error| format!("live terminal command: {error}"))?;
+    TerminalStore::advance(tx, &args.tenant, terminal, LIVE_TERMINAL_CURSOR)
+        .await
+        .map_err(|error| format!("live terminal cursor: {error}"))?;
+    ComputerControlStore::open(tx, &args.tenant, target, Some(id("run")))
+        .await
+        .map_err(|error| format!("live computer control: {error}"))?;
     Ok(())
 }
 

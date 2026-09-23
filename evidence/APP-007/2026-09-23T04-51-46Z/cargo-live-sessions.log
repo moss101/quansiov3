@@ -1,0 +1,14 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.06s
+     Running tests/live_sessions.rs (target/debug/deps/live_sessions-42a44f26b201ca9e)
+
+running 3 tests
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+test a_policy_pause_is_shown_and_no_handback_undoes_it ... ok
+test a_takeover_fences_the_same_session_and_parks_the_run ... ok
+test a_native_computer_takeover_drives_the_control_row_with_its_fence ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.74s
+
+exit=0
