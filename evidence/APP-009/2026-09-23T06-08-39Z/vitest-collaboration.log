@@ -1,0 +1,15 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/collaboration.test.ts (11 tests) 4ms
+ ✓ tests/preload.test.ts (4 tests) 5ms
+ ✓ tests/collaboration.e2e.test.ts (2 tests) 16063ms
+   ✓ desktop collaboration E2E against quansio-server > keeps one order for two clients posting at once, then revokes the removed one 12259ms
+   ✓ desktop collaboration E2E against quansio-server > hands a conversation from one teammate to another 1204ms
+
+ Test Files  3 passed (3)
+      Tests  17 passed (17)
+   Start at  09:08:42
+   Duration  16.38s (transform 148ms, setup 0ms, collect 439ms, tests 16.07s, environment 0ms, prepare 79ms)
+
+exit=0
