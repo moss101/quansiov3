@@ -52,7 +52,7 @@ async fn duplicate_commands_replay_and_param_changes_conflict() {
          status, result) VALUES ($1, $2, $3, 'CreateObjective', $4, $5, 'applied', \
          '{\"objective_id\":\"wn_x\"}'::jsonb)",
     )
-    .bind(format!("cmd_{}", command.as_id().ulid()))
+    .bind(CanonicalId::generate(Prefix::Command, &mut generator).to_string())
     .bind(TENANT)
     .bind(WORKSPACE)
     .bind(command.to_string())
@@ -64,7 +64,9 @@ async fn duplicate_commands_replay_and_param_changes_conflict() {
     tx.commit().await.expect("commit");
 
     // A duplicate submission with the same parameters is a replay: the database refuses
-    // a second row, and the classification says "return the recorded result".
+    // a second row, and the classification says "return the recorded result". The second
+    // row gets its own id, as the server mints one per record, so the refusal is the
+    // (tenant_id, command_id) constraint and not the primary key.
     let mut tx = pool.begin().await.expect("begin");
     schema::set_tenant_context(&mut tx, TENANT)
         .await
@@ -73,7 +75,7 @@ async fn duplicate_commands_replay_and_param_changes_conflict() {
         "INSERT INTO commands (id, tenant_id, workspace_id, command_name, command_id, params_digest, \
          status, result) VALUES ($1, $2, $3, 'CreateObjective', $4, $5, 'applied', '{}'::jsonb)",
     )
-    .bind(format!("cmd_{}", command.as_id().ulid()))
+    .bind(CanonicalId::generate(Prefix::Command, &mut generator).to_string())
     .bind(TENANT)
     .bind(WORKSPACE)
     .bind(command.to_string())
