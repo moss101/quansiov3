@@ -1885,10 +1885,10 @@
     },
     "APP-010": {
       "coverage": "PARTIAL",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:claude-opus-5",
+      "started_at": "2026-09-23T06:15:14Z",
+      "updated_at": "2026-09-23T06:15:14Z",
       "git_commit": null,
       "tests": [
         "cargo test -p quansio-server --test routines (fire key (routine, scheduled_at) is not re-run on restart; TriggerRoutineNow is the interactive command)"
