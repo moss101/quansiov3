@@ -2080,22 +2080,35 @@
     },
     "APP-015": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5.5",
       "started_at": "2026-09-23T07:21:57Z",
-      "updated_at": "2026-09-23T07:21:57Z",
-      "git_commit": null,
+      "updated_at": "2026-09-23T11:31:25Z",
+      "git_commit": "f6d6dd09996327ba68c79beb9e657032514f1407",
       "tests": [
-        "cargo test -p quansio-server --test webhooks (tenant/workspace scope, egress deny, kill switch, event_id dedupe, secret redaction)"
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test webhooks (delivery/retry/dead-letter/redelivery/lease recovery/rotation; tenant+workspace scope; redaction scan; egress deny + kill switches; no key provider; SSE stream) against real PostgreSQL and a real loopback receiver",
+        "cargo test -p quansio-server --lib -- webhooks sse_tests policy::rules",
+        "mutation checks: redaction, workspace scope, egress broker, pause, stable event id each removed -> named test fails (evidence)",
+        "(cd sdk/typescript && pnpm exec vitest run tests/webhooks.test.ts); uv run --project python pytest tests/sdk/test_python_sdk_webhooks.py",
+        "bash scripts/ci/ci.sh (11/11 gates PASS)"
       ],
       "artifacts": [
-        "evidence/APP-015/2026-09-15T06-45-00Z/summary.json",
-        "crates/server/src/notify/webhooks.rs"
+        "evidence/APP-015/2026-09-23T09-56-15Z/summary.json",
+        "evidence/APP-015/2026-09-23T09-56-15Z/NOTES.md",
+        "evidence/APP-015/RECONCILIATION.md",
+        "migrations/0017_webhook_deliveries.sql",
+        "crates/server/src/notify/webhooks/",
+        "crates/server/src/api/webhooks.rs",
+        "crates/server/src/api/stream.rs",
+        "crates/server/tests/webhooks.rs",
+        "schemas/openapi/public-api-v1.yaml",
+        "sdk/typescript/src/webhooks.ts",
+        "sdk/python/quansio_sdk/webhooks.py"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Webhook delivery is at-least-once with stable event ids, tenant/workspace scoped, redacted, and refused when egress denies or the kill switch is on. 2026-09-19 correction: was BLOCKED_EXTERNAL at 1e9dd04d15dd64adfe26952e8c064a7209c289ce claimed by agent:principal-1 (started 2026-09-15T06:40:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/server/src/notify/webhooks.rs is a may_deliver predicate, already_delivered (contains) and key-name redact; crates/server/src/api/webhooks.rs is 5 lines; no subscriptions, HMAC signing, retry/backoff, dead-letter or delivery projection. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "Webhook subscriptions are the destination's network.egress.new_destination grant (admin command, audited; refused unless the network policy permits new destinations and the egress broker accepts the URL); the signing secret is generated, sealed as a SecretHandle and returned once (never kept in the command log). A fan-out consumer enqueues one delivery per (subscription, event) with the cursor advance (tenant/workspace/start-sequence scope; webhook, notification and protected-thread events withheld). The deliverer reads the network policy at each attempt, decides through EgressBroker (origin webhook) against the current resolution, signs the redacted envelope (quansio-signature t=,v1= HMAC-SHA256) with the secret materialized at that boundary, sends only to vetted addresses without redirects, retries with backoff under the stable event id and dead-letters after 8 (failing; RedeliverWebhook). Kill switches: pause per destination; tenant-wide via the Policy network rule deny. GET /v1/stream/events serves the stream as SSE. OpenAPI documents the stream and the webhook request; SDK signature constants are generated from DOMAIN and TS/Python verifiers share a vector with the server. Found on the way: EXEC-008's allowed_address_classes added to DOMAIN \u00a77.3 and the policy vocabulary; an intermittent APP-009 concurrent-activation race (fixed as an APP-009 regression); the cross-tenant command id collision (fixed on main as APP-001). Not done: an admin UI screen for webhooks; dev scripts do not provision QUANSIO_SECRETS_KEY_FILE."
     },
     "CAP-001": {
       "coverage": "GENUINE_GAP",
