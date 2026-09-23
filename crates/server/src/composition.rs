@@ -32,6 +32,8 @@ pub struct ServerConfig {
     pub search_index_root: Option<String>,
     /// Directory of the built web app served under `/app/` (APP-012), when set.
     pub web_root: Option<String>,
+    /// How often the background loop runs (APP-010); `None` when `QUANSIO_SCHEDULER=off`.
+    pub background_interval: Option<Duration>,
 }
 
 impl ServerConfig {
@@ -68,6 +70,18 @@ impl ServerConfig {
         let web_root = env::var("QUANSIO_WEB_ROOT")
             .ok()
             .filter(|value| !value.is_empty());
+        // The background loop fires routines, consumes events into routine triggers and
+        // notifications, and delivers email. It is on unless a deployment turns it off.
+        let background_interval = if env::var("QUANSIO_SCHEDULER").as_deref() == Ok("off") {
+            None
+        } else {
+            let millis = env::var("QUANSIO_SCHEDULER_INTERVAL_MS")
+                .ok()
+                .and_then(|value| value.parse::<u64>().ok())
+                .filter(|millis| *millis >= 50)
+                .unwrap_or(1000);
+            Some(Duration::from_millis(millis))
+        };
         Ok(Self {
             database_url,
             bind,
@@ -75,6 +89,7 @@ impl ServerConfig {
             object_store,
             web_root,
             search_index_root,
+            background_interval,
         })
     }
 }
@@ -177,8 +192,100 @@ impl Composition {
         let listener = tokio::net::TcpListener::bind(&self.config.bind)
             .await
             .map_err(|error| format!("cannot bind {}: {error}", self.config.bind))?;
+        if let Some(interval) = self.config.background_interval {
+            let background = Background::new(self.pool.clone(), self.api.clone());
+            eprintln!(
+                "quansio-server: background loop every {} ms (routines, event triggers, notifications, email{})",
+                interval.as_millis(),
+                if background.email.is_some() { "" } else { " unavailable: QUANSIO_EMAIL_ENDPOINT is not set" }
+            );
+            tokio::spawn(background.run(interval));
+        }
         axum::serve(listener, self.router())
             .await
             .map_err(|error| format!("the server stopped: {error}"))
+    }
+}
+
+/// The deployable's background loop (APP-010): for every tenant, one CORE-008 scheduler tick
+/// (timers, routine windows and their fires, queued runs), one pass of the routine event
+/// triggers, the notifier, and email delivery. Each pass is bounded; a failing tenant is
+/// logged and the others go on.
+pub struct Background {
+    pool: PgPool,
+    dispatch: Arc<dyn crate::scheduler::RunDispatch>,
+    email: Option<Arc<dyn crate::notify::EmailTransport>>,
+    instance: String,
+}
+
+impl Background {
+    /// A loop over the pool with the API's interactive dispatch and the environment's mail
+    /// transport.
+    #[must_use]
+    pub fn new(pool: PgPool, api: ApiState) -> Self {
+        Self {
+            pool,
+            dispatch: crate::api::routines::interactive_dispatch(&api),
+            email: crate::notify::HttpEmailTransport::from_env(),
+            instance: format!(
+                "scheduler:{}",
+                quansio_core::UlidGenerator::new().generate()
+            ),
+        }
+    }
+
+    /// Run forever, one pass per `interval`.
+    pub async fn run(self, interval: Duration) {
+        loop {
+            tokio::time::sleep(interval).await;
+            if let Err(message) = self.pass().await {
+                eprintln!("quansio-server: background pass: {message}");
+            }
+        }
+    }
+
+    /// One pass over every tenant.
+    ///
+    /// # Errors
+    /// Returns a message when the tenants cannot be listed.
+    pub async fn pass(&self) -> Result<(), String> {
+        let tenants: Vec<String> = sqlx::query_scalar("SELECT background_tenants()")
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|error| format!("cannot list tenants: {error}"))?;
+        for tenant in tenants {
+            if let Err(message) = self.tenant_pass(&tenant).await {
+                eprintln!("quansio-server: background pass for {tenant}: {message}");
+            }
+        }
+        Ok(())
+    }
+
+    async fn tenant_pass(&self, tenant: &str) -> Result<(), String> {
+        let triggers = crate::control::routines::EventTriggers::new(self.pool.clone(), tenant);
+        triggers
+            .scan(512)
+            .await
+            .map_err(|error| format!("routine triggers: {error}"))?;
+        let scheduler = crate::scheduler::Scheduler::new(
+            self.pool.clone(),
+            tenant,
+            crate::scheduler::SchedulerConfig::new(self.instance.clone()),
+            Arc::clone(&self.dispatch),
+        )
+        .map_err(|error| format!("scheduler: {error}"))?;
+        scheduler
+            .tick()
+            .await
+            .map_err(|error| format!("scheduler tick: {error}"))?;
+        crate::notify::Notifier::new(self.pool.clone(), tenant)
+            .scan(512)
+            .await
+            .map_err(|error| format!("notifier: {error}"))?;
+        crate::notify::EmailDeliveries::new(self.pool.clone(), tenant, self.email.clone())
+            .deliver_due(chrono::Utc::now(), 64)
+            .await
+            .map_err(|error| format!("email: {error}"))?;
+        Ok(())
     }
 }

@@ -216,6 +216,20 @@ impl EventTriggers {
         .bind(&self.tenant_id)
         .fetch_all(&mut *tx)
         .await?;
+        // What a fire creates is excluded even before the ledger records it: runs started by
+        // a routine and objectives a routine created are found by their own rows.
+        let routine_runs: Vec<String> = sqlx::query_scalar(
+            "SELECT id FROM runs WHERE tenant_id = $1 AND trigger_kind = 'routine'",
+        )
+        .bind(&self.tenant_id)
+        .fetch_all(&mut *tx)
+        .await?;
+        let routine_nodes: Vec<String> = sqlx::query_scalar(
+            "SELECT id FROM work_nodes WHERE tenant_id = $1 AND created_by ->> 'kind' = 'routine'",
+        )
+        .bind(&self.tenant_id)
+        .fetch_all(&mut *tx)
+        .await?;
         tx.commit().await?;
         let threads = fires
             .iter()
@@ -224,6 +238,8 @@ impl EventTriggers {
         let runs = fires
             .iter()
             .filter_map(|row| row.get::<Option<String>, _>("run_id"))
+            .chain(routine_runs)
+            .chain(routine_nodes)
             .collect();
         Ok((routines, threads, runs))
     }
@@ -255,8 +271,14 @@ fn produced_by_routines(
     } else {
         text("run_id")
     };
+    let node = if event.aggregate_type == "work_node" {
+        Some(event.aggregate_id.as_str())
+    } else {
+        text("work_node_id")
+    };
     thread.is_some_and(|thread| threads.contains(thread))
         || run.is_some_and(|run| runs.contains(run))
+        || node.is_some_and(|node| runs.contains(node))
 }
 
 #[cfg(test)]

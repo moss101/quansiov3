@@ -84,3 +84,13 @@ ALTER TABLE notifications ADD COLUMN IF NOT EXISTS channels JSONB NOT NULL DEFAU
 CREATE UNIQUE INDEX IF NOT EXISTS notifications_source_idx
     ON notifications (tenant_id, source_event_id, user_id, kind)
     WHERE source_event_id IS NOT NULL;
+
+-- The background loop (scheduler, routine triggers, notifier, email) serves every tenant,
+-- but `tenants` is readable only for the active tenant (0001). This function returns the
+-- tenant ids and nothing else, so the loop can set each tenant's context in turn without
+-- the application role being able to read any other tenant's rows.
+CREATE OR REPLACE FUNCTION background_tenants() RETURNS SETOF TEXT
+    LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+    AS $$ SELECT id FROM tenants ORDER BY id $$;
+REVOKE ALL ON FUNCTION background_tenants() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION background_tenants() TO quansio_app;

@@ -326,6 +326,45 @@ pub async fn invoke(
             )
             .await?
         }
+        "CreateRoutine" => {
+            super::routines::create_routine(&state, &scope, &request.params, &correlation).await?
+        }
+        "UpdateRoutine" => {
+            super::routines::update_routine(&state, &scope, &request.params, &correlation).await?
+        }
+        "PauseRoutine" | "ResumeRoutine" | "DeleteRoutine" => {
+            super::routines::transition_routine(
+                &state,
+                &scope,
+                &command,
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "TriggerRoutineNow" => {
+            super::routines::trigger_routine_now(
+                &state,
+                &scope,
+                &command_id.as_canonical().to_string(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "UpdateNotificationPreferences" => {
+            super::routines::update_notification_preferences(
+                &state,
+                &scope,
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "MarkNotificationRead" => {
+            super::routines::mark_notification_read(&state, &scope, &request.params, &correlation)
+                .await?
+        }
         "RequestTakeover" => {
             super::live_sessions::request_takeover(
                 &state,
@@ -847,7 +886,7 @@ pub(super) fn chat_engine(
 /// code). A teammate that is archived or away refuses new runs; a pre-definition
 /// teammate thread (the walking skeleton's) is kept for a workspace that still has one and
 /// no definition.
-async fn route_to_teammate(
+pub(super) async fn route_to_teammate(
     state: &ApiState,
     identity: &RuntimeIdentity,
     workspace_id: &str,
@@ -1011,7 +1050,7 @@ async fn load_work_node(
         .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))
 }
 
-async fn load_target(
+pub(super) async fn load_target(
     state: &ApiState,
     tenant_id: &str,
     workspace_id: &str,
@@ -1027,7 +1066,7 @@ async fn load_target(
     .map_err(database_error)
 }
 
-async fn seed_projection(
+pub(super) async fn seed_projection(
     state: &ApiState,
     identity: &RuntimeIdentity,
     workspace_id: &str,
@@ -1262,11 +1301,11 @@ pub(super) fn turn_json(outcome: &TurnOutcome) -> Value {
     }
 }
 
-fn database_error(error: sqlx::Error) -> ApiError {
+pub(super) fn database_error(error: sqlx::Error) -> ApiError {
     ApiError::new(ApiErrorCode::Internal, error.to_string(), "database")
 }
 
-fn internal(error: impl std::fmt::Display, correlation: &str) -> ApiError {
+pub(super) fn internal(error: impl std::fmt::Display, correlation: &str) -> ApiError {
     ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation)
 }
 
@@ -1285,7 +1324,7 @@ fn conversation_error(
     ApiError::new(code, error.to_string(), correlation)
 }
 
-fn runtime_error(error: RuntimeError, correlation: &str) -> ApiError {
+pub(super) fn runtime_error(error: RuntimeError, correlation: &str) -> ApiError {
     // The runtime's codes are the catalog's spellings (`RuntimeError::code`); a code the
     // catalog does not know is an internal fault, not a client error.
     let code = match error.code() {
