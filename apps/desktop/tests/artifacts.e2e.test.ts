@@ -352,7 +352,7 @@ describe.skipIf(blocked !== null)("desktop artifact workspace E2E against quansi
     // The edit is saved the way the page saves it: the same channel, the artifact named,
     // a new immutable version on top of the old one.
     await page.loadPreview();
-    const edited = `${page.state.preview?.text ?? ""}`.replace("2025,12\n", "2025,12,north\n");
+    const edited = (page.state.preview?.text ?? "").replace("2025,12\n", "2025,12,north\n");
     const saved = await page.upload("census.csv", first?.mediaType ?? "text/csv", new TextEncoder().encode(edited), ragged.artifact_id);
     expect(saved.artifact_id).toBe(ragged.artifact_id);
     expect(saved.seq).toBe(2);
