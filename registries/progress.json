@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 5,
-  "updated_at": "2026-09-19",
+  "updated_at": "2026-09-23",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -1583,15 +1583,19 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T11:20:00Z",
       "updated_at": "2026-09-19T18:53:17Z",
-      "git_commit": "094301104a24cf6b1b21d8873d3417173aff2830",
+      "git_commit": "5c5334e66f271c4470ec4cc840f4b785c43f979e",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test api (12 passed: \u00a715 vocabulary, ownership scan, OpenAPI/catalog contract, feature flags, per-tenant RATE_LIMITED, CancelRun owner path, composition)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test walking_skeleton (2 passed: HTTP PostMessage -> conformance-stub fs.read -> Effect Ledger -> projections; WebSocket reconnect-from-cursor)",
         "cargo fmt --all --check and cargo clippy -p quansio-server --all-targets -- -D warnings",
         "python3.12 scripts/validate_v81.py",
-        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test walking_skeleton (3 passed: skeleton, reconnect-from-cursor, events committed after subscribe)"
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test walking_skeleton (3 passed: skeleton, reconnect-from-cursor, events committed after subscribe)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --test api --test command_idempotency (13 + 2 passed, incl. two_tenants_may_send_the_same_command_id_and_each_replays_its_own; red before the fix)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --no-fail-fast (every binary passed)"
       ],
       "artifacts": [
+        "evidence/APP-001/2026-09-23T10-35-14Z/summary.json",
+        "evidence/APP-001/2026-09-23T10-35-14Z/NOTES.md",
         "evidence/APP-001/2026-09-19T18-41-53Z/summary.json",
         "evidence/APP-001/2026-09-18T13-59-00Z/summary.json",
         "evidence/APP-001/2026-09-14T12-10-00Z/summary.json",
@@ -1606,7 +1610,7 @@
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Units landed: public v1 API with \u00a715 errors, tenant scope, command log idempotency, CancelRun/PauseRun/ResumeRun through the runtime, CreateThread/PostMessage through the conversation owner, walking skeleton (PostMessage -> run_turn with conformance-stub fs.read -> Effect Ledger -> read projections), WebSocket GET /v1/stream with cursor reconnect, per-tenant rate limits, feature flags from config/flags.yaml, OpenAPI/catalog contract. Remaining catalog commands fail closed naming the missing handler rather than writing foreign tables. The API module still writes only `commands`. 2026-09-18 (e631fb5) PASS: re-verified in full on main after INT-002 reached PASS; the only blocker was the dependency rule; every recorded suite green (see evidence/APP-001/2026-09-18T13-59-00Z/NOTES.md). 2026-09-19 regression (fixed same day, fix/APP-001-stream-tail merged as 0943011): the stream handler kept the live-frame sender alive so tail_events never ran and no client received an event committed after it subscribed; exposed by APP-003's reconnect E2E, reproduced by websocket_delivers_events_committed_after_subscribe, fixed by dropping the sender. quansio-dev-seed added for harness seeding (305b3f8). Evidence: evidence/APP-001/2026-09-19T18-41-53Z/."
+      "notes": "Units landed: public v1 API with \u00a715 errors, tenant scope, command log idempotency, CancelRun/PauseRun/ResumeRun through the runtime, CreateThread/PostMessage through the conversation owner, walking skeleton (PostMessage -> run_turn with conformance-stub fs.read -> Effect Ledger -> read projections), WebSocket GET /v1/stream with cursor reconnect, per-tenant rate limits, feature flags from config/flags.yaml, OpenAPI/catalog contract. Remaining catalog commands fail closed naming the missing handler rather than writing foreign tables. The API module still writes only `commands`. 2026-09-18 (e631fb5) PASS: re-verified in full on main after INT-002 reached PASS; the only blocker was the dependency rule; every recorded suite green (see evidence/APP-001/2026-09-18T13-59-00Z/NOTES.md). 2026-09-19 regression (fixed same day, fix/APP-001-stream-tail merged as 0943011): the stream handler kept the live-frame sender alive so tail_events never ran and no client received an event committed after it subscribed; exposed by APP-003's reconnect E2E, reproduced by websocket_delivers_events_committed_after_subscribe, fixed by dropping the sender. quansio-dev-seed added for harness seeding (305b3f8). Evidence: evidence/APP-001/2026-09-19T18-41-53Z/. 2026-09-23 regression (fixed same day, fix/APP-001-tenant-scoped-command-rows merged as 5c5334e): api/commands.rs stored the client's command_id as the commands primary key, so a second tenant sending a command_id another tenant had used hit commands_pkey instead of the (tenant_id, command_id) conflict target and got 500 INTERNAL; found by review against 6f88144, reproduced by two_tenants_may_send_the_same_command_id_and_each_replays_its_own, fixed by minting the record id server-side (DOMAIN.md \u00a71.1) with no migration; the CORE-002 schema test now gives its duplicate row its own id so it tests the per-tenant constraint. Evidence: evidence/APP-001/2026-09-23T10-35-14Z/."
     },
     "APP-002": {
       "coverage": "PARTIAL",

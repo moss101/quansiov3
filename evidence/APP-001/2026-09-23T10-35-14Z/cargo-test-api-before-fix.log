@@ -1,0 +1,25 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/inspiring-austin-ef4686/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 16.84s
+     Running tests/api.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/api-9baa36f0145fbd49)
+
+running 1 test
+test two_tenants_may_send_the_same_command_id_and_each_replays_its_own ... FAILED
+
+failures:
+
+---- two_tenants_may_send_the_same_command_id_and_each_replays_its_own stdout ----
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+
+thread 'two_tenants_may_send_the_same_command_id_and_each_replays_its_own' (2789349) panicked at crates/server/tests/api.rs:583:9:
+assertion `left == right` failed: tn_01J8Z3K6F1N8VQ2X5W9Y0DDDDD: {"code":"INTERNAL","correlation_id":"database","message":"error returned from database: duplicate key value violates unique constraint \"commands_pkey\"","retryable":true}
+  left: 500
+ right: 200
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    two_tenants_may_send_the_same_command_id_and_each_replays_its_own
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.65s
+
+error: test failed, to rerun pass `-p quansio-server --test api`
