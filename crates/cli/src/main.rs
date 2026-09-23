@@ -711,8 +711,8 @@ async fn run(invocation: Invocation) -> Result<(), Failure> {
             print_summary(
                 &invocation,
                 &routines,
-                Some("routines"),
-                &["id", "name", "status"],
+                Some("items"),
+                &["id", "status", "absence_policy", "next_due_at"],
             );
             Ok(())
         }

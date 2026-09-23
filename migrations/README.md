@@ -30,6 +30,7 @@ runner (`quansio_server::control::schema::migrate`).
 | `0003_graph_heads.sql` | WorkGraph aggregate revision head per (tenant, workspace) for the batch-level compare-and-set of a GraphTransaction (DOMAIN.md §1.2, §4.5): RLS, `quansio_app` grant and `updated_at` trigger (CORE-004; renumbered from 0002 to keep migration versions unique). |
 | `0014_teammate_definition.sql` | Teammate definition preferences (APP-014): `template_id`, `model_route_preference`, `default_execution_target_id`, `availability` (`available`/`away`) and a `version` bumped by every configuration change, so a run's capability projection can name the definition it was resolved from. Additive. |
 | `0015_thread_participant_stamp.sql` | Thread membership (APP-009): the `updated_at` column the shared stamping trigger on `thread_participants` expects (0001 attached the trigger without it, so any membership update failed), and a partial index over active participants. Additive. |
+| `0016_routine_fires_notification_delivery.sql` | Routines and notifications (APP-010): `routine_fires`, the firing ledger with one row per fire key (claimed with the routine's next due time, leased while executing, retried with backoff), `notification_deliveries` (email per notification with attempts and backoff), and `notifications.source_event_id`, `title` and the requested `channels`, with a unique index so one event notifies a user once, and `background_tenants()` (security definer, tenant ids only) for the background loop. Additive. |
 
 ## Applying
 

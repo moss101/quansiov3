@@ -1,0 +1,80 @@
+{
+  "task_id": "APP-010",
+  "git_commit": "0a4391f11b31910429e0b94e7f3ee50df34bba96",
+  "recorded_at": "2026-09-23T07:21:02Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test routines --test scheduler (schedule restart: one run per window across a second instance, a crash before and after execution, an expired lease and racing instances; the interactive path; event dedupe; notification preferences, email retry/backoff, dedupe; CORE-008 scheduler tests unchanged \u2014 against real PostgreSQL)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-010/2026-09-23T06-43-20Z/cargo-routines.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib -- control::routines notify (backoff, template and event-spec validation, preferences)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-010/2026-09-23T06-43-20Z/cargo-unit.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/automation.test.ts tests/automation.e2e.test.ts tests/preload.test.ts) (unit tests; notification preference E2E with a local mail-API capture and native notifications; schedule restart E2E killing and restarting the real quansio-server)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-010/2026-09-23T06-43-20Z/vitest-automation.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop, web and SDK E2E against a server running the background loop, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-010/2026-09-23T06-43-20Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test routines --test scheduler (schedule restart: one run per window across a second instance, a crash before and after execution, an expired lease and racing instances; the interactive path; event dedupe; notification preferences, email retry/backoff, dedupe; CORE-008 scheduler tests unchanged \u2014 against real PostgreSQL)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib -- control::routines notify (backoff, template and event-spec validation, preferences)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/automation.test.ts tests/automation.e2e.test.ts tests/preload.test.ts) (unit tests; notification preference E2E with a local mail-API capture and native notifications; schedule restart E2E killing and restarting the real quansio-server)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop, web and SDK E2E against a server running the background loop, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-010/2026-09-23T06-43-20Z/NOTES.md",
+      "sha256": "a08c1d29d8de7c591286de185206f560ed9be90d9ab826b9ee06352863f120c0",
+      "bytes": 5270
+    },
+    {
+      "path": "evidence/APP-010/2026-09-23T06-43-20Z/cargo-routines.log",
+      "sha256": "4f131bd8a1dbadf90863879d72f103f3a7803c9d440cffa3ad9745345767ae82",
+      "bytes": 1873
+    },
+    {
+      "path": "evidence/APP-010/2026-09-23T06-43-20Z/vitest-automation.log",
+      "sha256": "1615a4b8616168adbfe96cf88ced78c442769f7231facef08bb9e0ef655614d1",
+      "bytes": 655
+    },
+    {
+      "path": "evidence/APP-010/2026-09-23T06-43-20Z/cargo-unit.log",
+      "sha256": "ea98a5c928e45f21b004d9bb1c35eaf2c0d843117fe50b773fd2a547f8dfa8ef",
+      "bytes": 689
+    },
+    {
+      "path": "evidence/APP-010/2026-09-23T06-43-20Z/ci-summary.json",
+      "sha256": "2ac55f2d6d4b7e8ab988605dd812946acdfaed97f72a909a25662804c5bd6f3e",
+      "bytes": 6805
+    }
+  ]
+}

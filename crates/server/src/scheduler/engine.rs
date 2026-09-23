@@ -88,6 +88,10 @@ pub struct TickReport {
     pub routines_skipped: usize,
     /// Routine windows fired from a backlog under the `queue` policy.
     pub routines_queued: usize,
+    /// Claimed routine fires executed to a run (APP-010).
+    pub routine_fires_executed: usize,
+    /// Routine fire executions that failed this tick.
+    pub routine_fire_failures: usize,
 }
 
 /// A queued Run discovered for dispatch.
@@ -178,6 +182,8 @@ impl Scheduler {
         report.routines_fired = routine_report.fired;
         report.routines_skipped = routine_report.skipped;
         report.routines_queued = routine_report.queued;
+        report.routine_fires_executed = routine_report.executed;
+        report.routine_fire_failures = routine_report.execution_failures;
 
         let claimed = timers
             .claim_due(

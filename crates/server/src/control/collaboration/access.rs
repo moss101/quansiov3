@@ -130,7 +130,8 @@ impl ThreadGate {
     /// Whether this subscriber may receive a durable event.
     ///
     /// `thread.*` events are gated by their thread, `question.*` events by the thread of
-    /// their question or run; every other family passes (runs, approvals and effects are
+    /// their question or run, `notification.*` events reach only the user they name; every
+    /// other family passes (runs, approvals and effects are
     /// workspace governance, readable by workspace roles). A participant always receives
     /// the event that adds or removes *them*, so a removed person learns they were removed —
     /// and nothing of the thread after it.
@@ -141,6 +142,11 @@ impl ThreadGate {
                 event.event_type.name(),
                 "participant_added" | "participant_removed"
             );
+        if family == "notification" {
+            // A notification is its recipient's alone (APP-010).
+            return self.user_id.is_some()
+                && event.payload.get("user_id").and_then(Value::as_str) == self.user_id.as_deref();
+        }
         if family == "member" || family == "workspace" {
             // A workspace membership change can revoke every protected thread at once.
             self.threads.clear();

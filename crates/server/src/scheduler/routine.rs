@@ -7,6 +7,12 @@
 //! delegated to [`RunDispatch::fire_routine`], so firing goes through the same canonical
 //! graph command path as interactive work and never writes `work_nodes`/`runs` directly.
 //!
+//! A fired window is *claimed* in the firing ledger (`control::routines::ledger`) in the
+//! same transaction that advances `next_due_at` and emits `routine.fired`, and only then
+//! executed: executing leases the fire, so a restart between claim and execution resumes
+//! the fire instead of repeating the window, and a failed execution is retried with
+//! backoff (APP-010).
+//!
 //! Timezones are UTC or a fixed `±HH:MM` offset. An IANA zone name fails closed with
 //! [`SchedulerError::UnsupportedTimezone`] instead of silently scheduling in UTC; full
 //! zone-database support is a later concern (it needs a tz database dependency).
@@ -173,6 +179,10 @@ pub struct RoutineTickReport {
     pub skipped: usize,
     /// Fired windows that came from a backlog under the `queue` policy.
     pub queued: usize,
+    /// Claimed fires executed to a run this tick.
+    pub executed: usize,
+    /// Fire executions that failed this tick (retried later, or failed for good).
+    pub execution_failures: usize,
 }
 
 /// Routine timing store for one tenant.
@@ -285,52 +295,34 @@ impl RoutineScheduler {
                     report.skipped += 1;
                 }
                 AbsencePolicy::Queue => {
-                    // Fire the oldest missed window and leave the next one due, so a
+                    // Claim the oldest missed window and leave the next one due, so a
                     // backlog drains one window per tick instead of silently collapsing.
                     let next = routine.trigger.next_due_after(window)?;
-                    let fired = dispatch
-                        .fire_routine(self.fire_request(&routine, window))
-                        .await?;
-                    self.record(
-                        &routine,
-                        next,
-                        Some(now),
-                        "routine.fired",
-                        json!({
-                            "window": window.to_rfc3339(),
-                            "objective_id": fired.objective_id,
-                            "run_id": fired.run_id,
-                        }),
-                    )
-                    .await?;
-                    report.fired += 1;
-                    report.queued += 1;
+                    if self.claim(&routine, window, next, now).await? {
+                        report.fired += 1;
+                        report.queued += 1;
+                    }
                 }
                 AbsencePolicy::CatchUpOnce => {
                     let next = routine.trigger.next_due_after(now)?;
-                    let fired = dispatch
-                        .fire_routine(self.fire_request(&routine, window))
-                        .await?;
-                    self.record(
-                        &routine,
-                        next,
-                        Some(now),
-                        "routine.fired",
-                        json!({
-                            "window": window.to_rfc3339(),
-                            "objective_id": fired.objective_id,
-                            "run_id": fired.run_id,
-                        }),
-                    )
-                    .await?;
-                    report.fired += 1;
+                    if self.claim(&routine, window, next, now).await? {
+                        report.fired += 1;
+                    }
                 }
             }
         }
+        let (executed, failures) = self.execute_pending(dispatch, now, limit).await?;
+        report.executed = executed;
+        report.execution_failures = failures;
         Ok(report)
     }
 
-    fn fire_request(&self, routine: &Routine, window: DateTime<Utc>) -> RoutineFireRequest {
+    fn fire_request(
+        &self,
+        routine: &Routine,
+        window: DateTime<Utc>,
+        fire_key: &str,
+    ) -> RoutineFireRequest {
         RoutineFireRequest {
             tenant_id: self.tenant_id.clone(),
             workspace_id: routine.workspace_id.clone(),
@@ -339,8 +331,144 @@ impl RoutineScheduler {
             teammate_id: routine.teammate_id.clone(),
             objective_template: routine.objective_template.clone(),
             fire_window: window,
-            fire_key: format!("routine:{}:{}", routine.id, window.to_rfc3339()),
+            fire_key: fire_key.to_string(),
         }
+    }
+
+    /// Claim `window` in the firing ledger and advance the routine, in one transaction.
+    /// Returns `false` when another instance already claimed it.
+    async fn claim(
+        &self,
+        routine: &Routine,
+        window: DateTime<Utc>,
+        next_due_at: Option<DateTime<Utc>>,
+        now: DateTime<Utc>,
+    ) -> Result<bool, SchedulerError> {
+        let tenant_id = self.tenant_id.clone();
+        let routine_id = routine.id.clone();
+        let workspace_id = routine.workspace_id.clone();
+        let key = format!("routine:{}:{}", routine.id, window.to_rfc3339());
+        let result = self
+            .events
+            .commit_mutation(&self.tenant_id, move |conn, batch| {
+                Box::pin(async move {
+                    // Guarded by the window this instance read: a concurrent instance that
+                    // advanced the routine first leaves nothing to update here.
+                    let updated = sqlx::query(
+                        "UPDATE routines SET next_due_at = $1, last_fired_at = $2 \
+                         WHERE id = $3 AND tenant_id = $4 AND status = 'active' AND next_due_at = $5",
+                    )
+                    .bind(next_due_at)
+                    .bind(now)
+                    .bind(&routine_id)
+                    .bind(&tenant_id)
+                    .bind(window)
+                    .execute(&mut *conn)
+                    .await?;
+                    if updated.rows_affected() != 1 {
+                        return Ok(false);
+                    }
+                    Ok(crate::control::routines::ledger::claim_in(
+                        conn,
+                        batch,
+                        &tenant_id,
+                        &workspace_id,
+                        &routine_id,
+                        &key,
+                        crate::control::routines::FireSource::Schedule,
+                        Some(window),
+                        None,
+                    )
+                    .await?
+                    .is_some())
+                })
+            })
+            .await;
+        match result {
+            Ok(claimed) => Ok(claimed),
+            // Nothing staged: the window was claimed (or the routine changed) elsewhere, and
+            // the transaction, including its update, was rolled back.
+            Err(EventError::NoEventStaged) => Ok(false),
+            Err(error) => Err(error.into()),
+        }
+    }
+
+    /// Execute the claimed fires that are due: pending ones, and running ones whose lease
+    /// expired. A failure is retried with backoff; a routine that stopped being active has
+    /// its fire cancelled.
+    ///
+    /// # Errors
+    /// Returns a scheduler error when the ledger cannot be read or written.
+    pub async fn execute_pending(
+        &self,
+        dispatch: &dyn RunDispatch,
+        now: DateTime<Utc>,
+        limit: i64,
+    ) -> Result<(usize, usize), SchedulerError> {
+        let ledger = crate::control::routines::FireLedger::new(
+            self.events.pool().clone(),
+            self.tenant_id.clone(),
+        );
+        let mut executed = 0usize;
+        let mut failures = 0usize;
+        for fire in ledger.lease_due(now, limit).await? {
+            let Some(routine) = self.load(&fire.routine_id).await? else {
+                ledger.cancel(&fire, "the routine no longer exists").await?;
+                continue;
+            };
+            if routine.status != "active" {
+                ledger
+                    .cancel(&fire, &format!("the routine is {}", routine.status))
+                    .await?;
+                continue;
+            }
+            let window = fire.window_at.unwrap_or(now);
+            match dispatch
+                .fire_routine(self.fire_request(&routine, window, &fire.fire_key))
+                .await
+            {
+                Ok(outcome) => {
+                    ledger
+                        .complete(
+                            &fire,
+                            &routine.owner_user_id,
+                            json!({
+                                "objective_id": outcome.objective_id,
+                                "run_id": outcome.run_id,
+                                "window": fire.window_at.map(|at| at.to_rfc3339()),
+                                "source": fire.source,
+                            }),
+                        )
+                        .await?;
+                    executed += 1;
+                }
+                Err(error) => {
+                    ledger
+                        .fail(&fire, &routine.owner_user_id, &error.to_string(), now)
+                        .await?;
+                    failures += 1;
+                }
+            }
+        }
+        Ok((executed, failures))
+    }
+
+    async fn load(&self, routine_id: &str) -> Result<Option<Routine>, SchedulerError> {
+        let mut tx = self
+            .events
+            .begin_tenant_transaction(&self.tenant_id)
+            .await?;
+        let row = sqlx::query(
+            "SELECT id, tenant_id, workspace_id, owner_user_id, teammate_id, trigger, \
+             objective_template, absence_policy, status, last_fired_at, next_due_at \
+             FROM routines WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(&self.tenant_id)
+        .bind(routine_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        row.as_ref().map(routine_from_row).transpose()
     }
 
     /// Persist the next due time and emit the canonical routine event atomically.

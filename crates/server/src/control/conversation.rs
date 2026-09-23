@@ -289,6 +289,34 @@ impl ConversationStore {
             .ok_or_else(|| ConversationError::MessageNotFound(message_id.to_string()))
     }
 
+    /// The first message of a thread whose content blocks contain `fragment` (a JSONB
+    /// containment match). A routine fire finds its own message by the `fire_key` in its
+    /// notice, which is what lets a resumed fire continue instead of posting twice.
+    ///
+    /// # Errors
+    /// Returns a database error.
+    pub async fn find_by_block(
+        &self,
+        thread_id: &str,
+        fragment: &Value,
+    ) -> Result<Option<Message>, ConversationError> {
+        let mut tx = self
+            .events
+            .begin_tenant_transaction(&self.identity.tenant_id)
+            .await?;
+        let row = sqlx::query(&format!(
+            "SELECT {MESSAGE_COLUMNS} FROM messages WHERE tenant_id = $1 AND thread_id = $2 \
+             AND content_blocks @> $3::jsonb ORDER BY seq LIMIT 1"
+        ))
+        .bind(&self.identity.tenant_id)
+        .bind(thread_id)
+        .bind(fragment)
+        .fetch_optional(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(row.as_ref().map(message_from_row))
+    }
+
     /// List messages in a thread, oldest first.
     ///
     /// # Errors

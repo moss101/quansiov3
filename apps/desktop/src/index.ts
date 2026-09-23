@@ -265,3 +265,16 @@ export {
   viewerFrom,
 } from "./collaboration/thread.js";
 export type { AttentionView, Mention, Mentionable, ParticipantView, Reaction, ReactionSummary, ThreadListEntry, ThreadMessage, ThreadState, ThreadView } from "./collaboration/thread.js";
+export { createRoutineParams, decodeRoutines, draftProblem, routineControls, summarizeFires } from "./automation/routines.js";
+export type { AbsencePolicy, FireSummary, FireView, RoutineControl, RoutineDraft, RoutineStatus, RoutineTrigger, RoutineView, TriggerKind } from "./automation/routines.js";
+export {
+  NOTIFICATION_CHANNELS,
+  NOTIFICATION_KINDS,
+  applyNotificationEvent,
+  decodeNotifications,
+  desktopNotice,
+  inAppItems,
+  preferenceParams,
+  toggleChannel,
+} from "./automation/notifications.js";
+export type { Channel, DesktopNotice, NotificationCenter, NotificationKind, NotificationView, Preference } from "./automation/notifications.js";

@@ -18,6 +18,7 @@ import { MAX_IMAGE_PREVIEW_BYTES, MAX_TEXT_PREVIEW_BYTES, isActiveContent, isExe
 import { searchQueryString, searchRequest } from "../artifacts/search.js";
 import { OBJECTIVE_COMMAND, PROPOSE_COMMAND } from "../work/monitor.js";
 import { computerCommand, handback as handbackCommand, requestTakeover as takeoverCommand } from "../live/session.js";
+import { desktopNotice, type DesktopNotice } from "../automation/notifications.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { SessionFile, type ActiveRunSession, type DesktopSession } from "./session-file.js";
 import { SessionManager, type SessionState } from "./session-manager.js";
@@ -59,6 +60,11 @@ export interface DesktopBridgeOptions {
   readonly push: PushSender;
   /** Opens an OAuth authorization URL in the system browser (main supplies `shell.openExternal`). */
   readonly openExternal?: (url: string) => Promise<void>;
+  /**
+   * Shows a native desktop notification (APP-010; main supplies Electron's `Notification`).
+   * Called for a `notification.created` event that asks for the desktop channel.
+   */
+  readonly notifyNative?: (notice: DesktopNotice) => void;
   /** Injectable for tests; defaults to the global `fetch`. */
   readonly fetch?: FetchLike;
   /**
@@ -244,7 +250,51 @@ export class DesktopBridge {
       "participants.remove": (payload) => settled(Promise.resolve(payload).then((raw) => this.collaborationCommand("RemoveParticipant", raw, "participants.remove"))),
       "messages.react": (payload) => settled(Promise.resolve(payload).then((raw) => this.collaborationCommand("ReactToMessage", raw, "messages.react"))),
       "threads.handoff": (payload) => settled(Promise.resolve(payload).then((raw) => this.collaborationCommand("HandOffThread", raw, "threads.handoff"))),
+      // Routines and notifications (APP-010): refusals (a bad trigger, a paused routine, a
+      // channel that is not one) are data the page shows.
+      "routines.list": () => this.server.routines(this.#requireWorkspace()),
+      "routines.command": (payload) => settled(Promise.resolve(payload).then((raw) => this.routineCommand(raw))),
+      "notifications.list": (payload) =>
+        Promise.resolve(payload).then((raw) => this.server.notifications(this.#requireWorkspace(), asRecord(raw ?? {}, "notifications.list")["unreadOnly"] === true)),
+      "notifications.read": (payload) => settled(Promise.resolve(payload).then((raw) => this.markNotificationRead(raw))),
+      "notifications.preference": (payload) => settled(Promise.resolve(payload).then((raw) => this.setNotificationPreference(raw))),
     };
+  }
+
+  // ---- routines and notifications (APP-010) ----
+
+  /** One routine command by name, with the params the page built; the workspace is main's. */
+  async routineCommand(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "routines.command");
+    const name = record["name"];
+    const allowed = ["CreateRoutine", "UpdateRoutine", "PauseRoutine", "ResumeRoutine", "DeleteRoutine", "TriggerRoutineNow"];
+    if (typeof name !== "string" || !allowed.includes(name)) {
+      throw new Error("routines.command names a routine command");
+    }
+    const params = { ...asRecord(record["params"], "routines.command params") };
+    if (name === "CreateRoutine") {
+      params["workspace_id"] = this.#requireWorkspace();
+    } else if (typeof params["routine_id"] !== "string" || !params["routine_id"].startsWith("rtn_")) {
+      throw new Error(`${name} needs an rtn_ routine_id`);
+    }
+    return (await this.server.invoke(name, newCommandId(), params)).result;
+  }
+
+  async markNotificationRead(raw: unknown): Promise<unknown> {
+    const id = asRecord(raw, "notifications.read")["notificationId"];
+    if (typeof id !== "string" || !id.startsWith("ntf_")) {
+      throw new Error("notifications.read needs an ntf_ id");
+    }
+    return (await this.server.invoke("MarkNotificationRead", newCommandId(), { notification_id: id })).result;
+  }
+
+  async setNotificationPreference(raw: unknown): Promise<unknown> {
+    const params = { ...asRecord(raw, "notifications.preference") };
+    params["workspace_id"] = this.#requireWorkspace();
+    if (typeof params["kind"] !== "string" || !Array.isArray(params["channels"])) {
+      throw new Error("notifications.preference needs a kind and a list of channels");
+    }
+    return (await this.server.invoke("UpdateNotificationPreferences", newCommandId(), params)).result;
   }
 
   // ---- collaboration (APP-009) ----
@@ -906,6 +956,12 @@ export class DesktopBridge {
   #onEvent(frame: EventFrame): void {
     this.#options.session.advance(frame.cursor);
     this.#options.push("stream.frame", frame);
+    // The server delivers a person's notification events to that person only; one that
+    // asks for the desktop channel becomes a native notification here (APP-010).
+    const notice = desktopNotice(frame.event);
+    if (notice) {
+      this.#options.notifyNative?.(notice);
+    }
   }
 
   #onLive(frame: LiveFrame): void {

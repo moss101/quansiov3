@@ -362,6 +362,17 @@ export class ServerClient {
     return this.#request("GET", `${this.origin}/v1/teammates?workspace_id=${encodeURIComponent(workspaceId)}`);
   }
 
+  // ---- routines and notifications (APP-010) ----
+
+  routines(workspaceId: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/routines?workspace_id=${encodeURIComponent(workspaceId)}`);
+  }
+
+  notifications(workspaceId: string, unreadOnly = false): Promise<unknown> {
+    const unread = unreadOnly ? "&unread=true" : "";
+    return this.#request("GET", `${this.origin}/v1/notifications?workspace_id=${encodeURIComponent(workspaceId)}${unread}`);
+  }
+
   // ---- the live browser/computer/terminal surface (APP-007) ----
 
   targets(workspaceId: string): Promise<unknown> {

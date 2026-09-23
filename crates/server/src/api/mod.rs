@@ -28,6 +28,7 @@ pub mod live;
 pub mod live_sessions;
 pub mod projections;
 pub mod rbac;
+pub mod routines;
 pub mod seams;
 pub mod search;
 pub mod stream;
@@ -571,6 +572,8 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/usage", get(admin::usage))
         .route("/v1/audit", get(admin::audit_log))
         .route("/v1/teammates", get(teammates::roster))
+        .route("/v1/routines", get(routines::routines))
+        .route("/v1/notifications", get(routines::notifications))
         .route("/v1/targets", get(live_sessions::targets))
         .route(
             "/v1/browser-sessions/:id",

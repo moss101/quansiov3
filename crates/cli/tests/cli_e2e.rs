@@ -546,10 +546,13 @@ fn the_cli_is_a_scoped_client_of_the_public_api_and_nothing_else() {
     assert_eq!(bundle["session"]["tenant_id"], tenant);
     assert_eq!(bundle["session"]["access_token"], "<redacted>");
     assert!(!bundle.to_string().contains("eyJ"), "no JWT in the bundle");
+    // The routines projection (APP-010), in its served shape.
+    let routines = owner.ok(&["--json", "routines", "list"]).json();
+    assert_eq!(routines["items"], serde_json::json!([]), "{routines}");
     // Unserved projections are the server's typed refusal, never an invention.
-    let routines = owner.run(&["--json", "routines", "list"]);
-    assert_eq!(routines.status, 1);
-    assert_eq!(routines.error()["status"], 404, "{}", routines.stderr);
+    let packs = owner.run(&["--json", "api", "get", "/v1/packs"]);
+    assert_eq!(packs.status, 1);
+    assert_eq!(packs.error()["status"], 404, "{}", packs.stderr);
 
     // 6. An invited viewer signs in with their own link (the invitation is accepted by the
     //    sign-in), holds a viewer's role, and the server refuses what a viewer may not do —
