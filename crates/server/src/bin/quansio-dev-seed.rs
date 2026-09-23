@@ -11,7 +11,7 @@
 //!
 //! Usage:
 //!   quansio-dev-seed create --database <name> --tenant <tn_…> --user <usr_…> \
-//!       --workspace <ws_…> --node <wn_…> [--ask-writes] [--intelligence] \
+//!       --workspace <ws_…> --node <wn_…> [--ask-writes] [--intelligence] [--live] \
 //!       [--member <usr_…>:<tenant role>:<workspace role>]…
 //!   quansio-dev-seed drop --database <name>
 //!
@@ -21,6 +21,12 @@
 //! `--intelligence` also seeds what a knowledge/memory harness deletes (APP-011): three
 //! knowledge entries (active, verified, candidate), one active memory entry, and a derived
 //! semantic index row for each entry in force, under the fixed ids in [`INTELLIGENCE_IDS`].
+//!
+//! `--live` also seeds what the live browser/computer/terminal surface observes and takes
+//! over (APP-007): one READY execution target, a worker AgentThread and a RUNNING run on it,
+//! the run's browser session (agent-held, active, on a page), one open terminal session
+//! with a durable cursor, and the target's native-computer control row, under the fixed
+//! ids in [`LIVE_IDS`].
 
 use std::env;
 use std::process::exit;
@@ -41,6 +47,9 @@ struct Args {
     ask_writes: bool,
     /// Also seed knowledge, memory and their derived index rows.
     intelligence: bool,
+    /// Also seed a target with a run, a browser session, a terminal session and a
+    /// computer-control row.
+    live: bool,
     /// Extra users with roles: `--member <usr_…>:<tenant role>:<workspace role>`.
     members: Vec<(String, String, String)>,
 }
@@ -63,6 +72,20 @@ pub const INTELLIGENCE_IDS: [(&str, &str); 7] = [
     ("embedding_memory_active", "emb_01J8Z3K6F1N8VQ2X5W9Y0E2EM3"),
 ];
 
+/// Fixed ids of the `--live` rows: the execution target, the worker thread and run on it,
+/// the run's browser session, its terminal session and the terminal's last command.
+pub const LIVE_IDS: [(&str, &str); 6] = [
+    ("target", "tgt_01J8Z3K6F1N8VQ2X5W9Y0E2TG1"),
+    ("agent_thread", "ath_01J8Z3K6F1N8VQ2X5W9Y0E2AT1"),
+    ("run", "run_01J8Z3K6F1N8VQ2X5W9Y0E2RN1"),
+    ("browser_session", "bsn_01J8Z3K6F1N8VQ2X5W9Y0E2BS1"),
+    ("terminal_session", "tsn_01J8Z3K6F1N8VQ2X5W9Y0E2TS1"),
+    ("terminal_last_command", "cmd_01J8Z3K6F1N8VQ2X5W9Y0E2CM1"),
+];
+
+/// The durable byte offset the `--live` terminal session has been consumed up to.
+pub const LIVE_TERMINAL_CURSOR: u64 = 128;
+
 fn intelligence_id(key: &str) -> &'static str {
     INTELLIGENCE_IDS
         .iter()
@@ -83,6 +106,7 @@ fn parse_args() -> Result<Args, String> {
         node: String::new(),
         ask_writes: false,
         intelligence: false,
+        live: false,
         members: Vec::new(),
     };
     while let Some(flag) = args.next() {
@@ -92,6 +116,10 @@ fn parse_args() -> Result<Args, String> {
         }
         if flag == "--intelligence" {
             parsed.intelligence = true;
+            continue;
+        }
+        if flag == "--live" {
+            parsed.live = true;
             continue;
         }
         let value = args.next().ok_or_else(|| format!("{flag} needs a value"))?;
@@ -267,11 +295,139 @@ async fn run(args: Args) -> Result<(), String> {
     if args.intelligence {
         seed_intelligence(&mut tx, &args).await?;
     }
+    if args.live {
+        seed_live(&mut tx, &args).await?;
+    }
     tx.commit()
         .await
         .map_err(|error| format!("commit: {error}"))?;
     pool.close().await;
     println!("database_url={database_url}");
+    Ok(())
+}
+
+/// The `--live` rows (APP-007), one RUNNING run's worth: the ids are fixed so a harness can
+/// name the session it observes and prove it is the same one after a takeover. The target,
+/// its browser and terminal sessions and its computer-control row are written through the
+/// machine authority (`crates/machine`), which is the only writer of those tables; the
+/// thread and run are seed rows like the tenant's.
+async fn seed_live(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    args: &Args,
+) -> Result<(), String> {
+    use quansio_machine::computer_use::store::ComputerControlStore;
+    use quansio_machine::control::browser::BrowserSessionStore;
+    use quansio_machine::control::terminal::TerminalStore;
+    use quansio_machine::control::{
+        MachineControl, NewTarget, Substrate, TargetClass, TargetFence, TargetStatus,
+    };
+
+    let id = |name: &str| {
+        LIVE_IDS
+            .iter()
+            .find(|(key, _)| *key == name)
+            .map(|(_, value)| *value)
+            .expect("live id")
+    };
+    let target = id("target");
+    MachineControl::register(
+        tx,
+        &args.tenant,
+        &NewTarget {
+            id: target.to_string(),
+            workspace_id: args.workspace.clone(),
+            class: TargetClass::PersistentWorkspaceComputer,
+            substrate: Substrate::LocalCapsuleMacos,
+            image_digest: None,
+            desired_state: Some("READY".to_string()),
+        },
+    )
+    .await
+    .map_err(|error| format!("live target: {error}"))?;
+    for to in [TargetStatus::Provisioning, TargetStatus::Ready] {
+        let current = MachineControl::load(tx, &args.tenant, target)
+            .await
+            .map_err(|error| format!("live target: {error}"))?;
+        MachineControl::transition(
+            tx,
+            &args.tenant,
+            target,
+            &TargetFence {
+                generation: current.generation,
+            },
+            to,
+        )
+        .await
+        .map_err(|error| format!("live target {to:?}: {error}"))?;
+    }
+    sqlx::query(
+        "INSERT INTO agent_threads (id, tenant_id, workspace_id, agent_kind, work_node_id, status, \
+                                    execution_target_id) \
+         VALUES ($1, $2, $3, 'worker', $4, 'ACTIVE', $5)",
+    )
+    .bind(id("agent_thread"))
+    .bind(&args.tenant)
+    .bind(&args.workspace)
+    .bind(&args.node)
+    .bind(target)
+    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("live agent thread: {error}"))?;
+    sqlx::query(
+        "INSERT INTO runs (id, tenant_id, workspace_id, work_node_id, agent_thread_id, generation, \
+                           status, trigger_kind, trigger_ref, execution_target_id, started_at) \
+         VALUES ($1, $2, $3, $4, $5, 1, 'RUNNING', 'manual', 'e2e seed', $6, now())",
+    )
+    .bind(id("run"))
+    .bind(&args.tenant)
+    .bind(&args.workspace)
+    .bind(&args.node)
+    .bind(id("agent_thread"))
+    .bind(target)
+    .execute(&mut **tx)
+    .await
+    .map_err(|error| format!("live run: {error}"))?;
+    let session = id("browser_session");
+    BrowserSessionStore::open(
+        tx,
+        &args.tenant,
+        session,
+        target,
+        Some(id("run")),
+        Some("profile:e2e"),
+    )
+    .await
+    .map_err(|error| format!("live browser session: {error}"))?;
+    BrowserSessionStore::record_page(
+        tx,
+        &args.tenant,
+        session,
+        "cdp-tab-1",
+        "https://example.com/",
+        "Example Domain",
+    )
+    .await
+    .map_err(|error| format!("live browser page: {error}"))?;
+    let terminal = id("terminal_session");
+    TerminalStore::open(
+        tx,
+        &args.tenant,
+        terminal,
+        target,
+        Some(id("run")),
+        Some("pty:e2e"),
+    )
+    .await
+    .map_err(|error| format!("live terminal session: {error}"))?;
+    TerminalStore::attach(tx, &args.tenant, terminal, id("terminal_last_command"))
+        .await
+        .map_err(|error| format!("live terminal command: {error}"))?;
+    TerminalStore::advance(tx, &args.tenant, terminal, LIVE_TERMINAL_CURSOR)
+        .await
+        .map_err(|error| format!("live terminal cursor: {error}"))?;
+    ComputerControlStore::open(tx, &args.tenant, target, Some(id("run")))
+        .await
+        .map_err(|error| format!("live computer control: {error}"))?;
     Ok(())
 }
 

@@ -27,7 +27,8 @@ use sqlx::{PgPool, Postgres, Row, Transaction};
 
 use crate::control::schema;
 use crate::runtime::protocol_state::{
-    ProtocolState, ProtocolStateError, ProtocolStateStore, WaitKind,
+    BrowserControl, BrowserControlHolder, ProtocolState, ProtocolStateError, ProtocolStateStore,
+    WaitKind,
 };
 
 use super::{
@@ -1479,6 +1480,121 @@ impl RuntimeStore {
             .map_err(RuntimeError::from)?;
         tx.commit().await?;
         Ok(())
+    }
+
+    // ------------------------------------------------------ browser takeover (APP-007)
+
+    /// Park a Run for a human takeover of one of its browser sessions, in the caller's
+    /// transaction (DOMAIN.md §8.4, §5.7).
+    ///
+    /// The durable fence is written first: `browser_control {holder: user}` goes into the
+    /// Run's ProtocolState, so `next_safe_action` answers `AwaitHandback` for this session at
+    /// every later boundary whatever the Run is doing now. A `RUNNING` Run is then moved to
+    /// `WAITING_TAKEOVER` (`run.waiting`); a Run parked on something else keeps that wait
+    /// and is fenced by the state alone; a terminal Run is left as it is and `None` is
+    /// returned, because there is nothing left to fence.
+    ///
+    /// # Errors
+    /// Returns [`RuntimeError::NotFound`] for an unknown Run and the database error when the
+    /// state cannot be written.
+    pub async fn park_for_takeover_in(
+        &self,
+        tx: &mut Transaction<'static, Postgres>,
+        batch: &mut EventBatch,
+        run_id: &CanonicalId,
+        session_id: &str,
+        since: &str,
+    ) -> Result<Option<Run>, RuntimeError> {
+        let tenant_id = self.identity.tenant_id.clone();
+        let current = lock_run(tx, &tenant_id, run_id).await?;
+        if current.status.is_terminal() {
+            return Ok(None);
+        }
+        let generation = current.generation.get() as i64;
+        let mut state = ProtocolStateStore::lock(tx, &tenant_id, &run_id.to_string(), generation)
+            .await
+            .map_err(RuntimeError::from)?;
+        state.generation = generation;
+        state.browser_control = Some(BrowserControl {
+            session_id: session_id.to_string(),
+            holder: BrowserControlHolder::User,
+            since: Some(since.to_string()),
+        });
+        ProtocolStateStore::store(tx, &tenant_id, &state)
+            .await
+            .map_err(RuntimeError::from)?;
+        if current.status != RunStatus::Running {
+            return Ok(Some(current));
+        }
+        let mut publisher = Publisher::new(&tenant_id, &self.identity);
+        apply_run_transition(
+            tx,
+            batch,
+            &mut publisher,
+            &tenant_id,
+            run_id,
+            current.generation,
+            RunStatus::WaitingTakeover,
+            None,
+        )
+        .await
+        .map(Some)
+    }
+
+    /// Release a Run from a takeover of `session_id`, in the caller's transaction.
+    ///
+    /// The ProtocolState's `browser_control` is cleared only when it names this session —
+    /// a handback of one session never releases a fence held for another — and a Run in
+    /// `WAITING_TAKEOVER` resumes (`run.resumed`). Any other status is left alone: the Run
+    /// will read the cleared state at its next boundary.
+    ///
+    /// # Errors
+    /// Returns [`RuntimeError::NotFound`] for an unknown Run and the database error when the
+    /// state cannot be written.
+    pub async fn release_takeover_in(
+        &self,
+        tx: &mut Transaction<'static, Postgres>,
+        batch: &mut EventBatch,
+        run_id: &CanonicalId,
+        session_id: &str,
+    ) -> Result<Option<Run>, RuntimeError> {
+        let tenant_id = self.identity.tenant_id.clone();
+        let current = lock_run(tx, &tenant_id, run_id).await?;
+        if current.status.is_terminal() {
+            return Ok(None);
+        }
+        let generation = current.generation.get() as i64;
+        let mut state = ProtocolStateStore::lock(tx, &tenant_id, &run_id.to_string(), generation)
+            .await
+            .map_err(RuntimeError::from)?;
+        let held_here = state
+            .browser_control
+            .as_ref()
+            .is_some_and(|control| control.session_id == session_id);
+        if !held_here {
+            return Ok(Some(current));
+        }
+        state.generation = generation;
+        state.browser_control = None;
+        ProtocolStateStore::store(tx, &tenant_id, &state)
+            .await
+            .map_err(RuntimeError::from)?;
+        if current.status != RunStatus::WaitingTakeover {
+            return Ok(Some(current));
+        }
+        let mut publisher = Publisher::new(&tenant_id, &self.identity);
+        apply_run_transition(
+            tx,
+            batch,
+            &mut publisher,
+            &tenant_id,
+            run_id,
+            current.generation,
+            RunStatus::Running,
+            None,
+        )
+        .await
+        .map(Some)
     }
 
     /// Modify a Run's durable protocol state in one transaction (turn-loop parking).

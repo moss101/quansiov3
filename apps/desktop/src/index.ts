@@ -223,3 +223,23 @@ export {
   visibleRoster,
 } from "./teammates/roster.js";
 export type { Availability, CreateInput, EffectiveCapability, MemoryScope, Narrowing, Roster, TeammateStatus, TeammateView, TemplateView, UpdateInput } from "./teammates/roster.js";
+export {
+  agentInputAllowed,
+  applyEvent as applyLiveEvent,
+  computerCommand,
+  decodeComputerControl,
+  decodeLiveSession,
+  decodeTargets,
+  decodeTerminal,
+  handback,
+  handbackAllowed,
+  isSameSession,
+  pauseReasonOf,
+  requestTakeover,
+  takeoverAllowed,
+} from "./live/session.js";
+export type { ComputerControlView, Controller, LiveSession, PauseReason, RunView, SessionStatus, Tab, TargetView, TerminalSessionView } from "./live/session.js";
+export { TerminalReplay, decodeTerminalBytes, replayPosition } from "./live/terminal.js";
+export type { Accepted, ReplayPosition, TerminalBytesFrame } from "./live/terminal.js";
+export { decodeBrowserFrame, latestFrame } from "./live/frames.js";
+export type { AgentCursor, BrowserFrame, CursorAction } from "./live/frames.js";

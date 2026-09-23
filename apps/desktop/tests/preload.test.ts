@@ -98,12 +98,19 @@ describe("preload bridge", () => {
         "createTeammate",
         "updateTeammate",
         "archiveTeammate",
+        "listTargets",
+        "liveSession",
+        "requestTakeover",
+        "handback",
+        "attachLive",
+        "detachLive",
         "onStreamFrame",
         "onStreamState",
         "onStreamError",
         "onSessionState",
         "onDeepLink",
         "onUpdateStatus",
+        "onLiveFrame",
       ].sort(),
     );
     for (const key of Object.keys(api)) {
@@ -173,6 +180,12 @@ describe("preload bridge", () => {
     await api.createTeammate({ workspace_id: "ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", template_id: "engineer" });
     await api.updateTeammate({ teammate_id: "agt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", name: "Atlas" });
     await api.archiveTeammate("agt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.listTargets();
+    await api.liveSession("bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.requestTakeover({ sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.handback({ sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.attachLive("tgt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.detachLive();
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

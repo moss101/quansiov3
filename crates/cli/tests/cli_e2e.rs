@@ -401,6 +401,11 @@ fn the_cli_is_a_scoped_client_of_the_public_api_and_nothing_else() {
             .is_some_and(|rows| rows.iter().any(|row| row["id"] == thread_id)),
         "{threads}"
     );
+    // The execution targets the live surface observes (APP-007): the session's own
+    // workspace has none yet, and the projection says so in its catalogued shape.
+    let targets = owner.ok(&["--json", "targets", "list"]).json();
+    assert_eq!(targets["items"], serde_json::json!([]), "{targets}");
+    assert_eq!(targets["workspace_id"], workspace, "{targets}");
     let messages = owner
         .ok(&["--json", "messages", "list", "--thread", &thread_id])
         .json();

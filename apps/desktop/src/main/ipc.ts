@@ -17,6 +17,7 @@ import { ANSWER_COMMAND, CANCEL_COMMAND, MAX_UPLOAD_BYTES, POST_COMMAND, UPLOAD_
 import { MAX_IMAGE_PREVIEW_BYTES, MAX_TEXT_PREVIEW_BYTES, isActiveContent, isExecutable, mediaKind, openAllowed, previewPlan } from "../artifacts/preview.js";
 import { searchQueryString, searchRequest } from "../artifacts/search.js";
 import { OBJECTIVE_COMMAND, PROPOSE_COMMAND } from "../work/monitor.js";
+import { computerCommand, handback as handbackCommand, requestTakeover as takeoverCommand } from "../live/session.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { SessionFile, type ActiveRunSession, type DesktopSession } from "./session-file.js";
 import { SessionManager, type SessionState } from "./session-manager.js";
@@ -88,6 +89,8 @@ export class DesktopBridge {
   readonly #options: DesktopBridgeOptions;
   #stream: StreamClient | null = null;
   #streamState: StreamState = "closed";
+  /** The target-scoped live subscription (APP-007): cursor-less, frames only, one at a time. */
+  #live: { readonly targetId: string; readonly client: StreamClient } | null = null;
 
   constructor(options: DesktopBridgeOptions) {
     this.#options = options;
@@ -223,7 +226,90 @@ export class DesktopBridge {
       "teammates.create": (payload) => settled(Promise.resolve(payload).then((raw) => this.createTeammate(raw))),
       "teammates.update": (payload) => settled(Promise.resolve(payload).then((raw) => this.updateTeammate(raw))),
       "teammates.archive": (payload) => settled(Promise.resolve(payload).then((raw) => this.archiveTeammate(raw))),
+      // The live browser/computer/terminal surface (APP-007): a takeover or handback the
+      // server refuses (not active, not held, a stale generation) is data the page shows.
+      "live.targets": () => this.server.targets(this.#requireWorkspace()),
+      "live.session": (payload) => Promise.resolve(payload).then((raw) => this.server.browserSession(asSessionId(raw, "live.session"))),
+      "live.takeover": (payload) => settled(Promise.resolve(payload).then((raw) => this.liveControl("RequestTakeover", raw))),
+      "live.handback": (payload) => settled(Promise.resolve(payload).then((raw) => this.liveControl("Handback", raw))),
+      "live.attach": (payload) => Promise.resolve(payload).then((raw) => this.attachLive(asTargetId(raw, "live.attach"))),
+      "live.detach": () => Promise.resolve().then(() => this.detachLive()),
     };
+  }
+
+  // ---- the live browser/computer/terminal surface (APP-007) ----
+
+  /** `RequestTakeover` / `Handback` for a `bsn_` session or a `tgt_` target; the server decides. */
+  async liveControl(kind: "RequestTakeover" | "Handback", raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, `live.${kind === "RequestTakeover" ? "takeover" : "handback"}`);
+    const sessionId = record["sessionId"];
+    const targetId = record["targetId"];
+    const command =
+      typeof sessionId === "string"
+        ? kind === "RequestTakeover"
+          ? takeoverCommand(sessionId)
+          : handbackCommand(sessionId)
+        : typeof targetId === "string"
+          ? computerCommand(kind, targetId)
+          : null;
+    if (!command) {
+      throw new Error("a live control command names a bsn_ session or a tgt_ target");
+    }
+    return (await this.server.invoke(command.name, newCommandId(), command.params)).result;
+  }
+
+  /**
+   * Subscribe to `target:<tgt>` for live frames (`browser.frame`, `terminal.bytes`) and the
+   * target's durable events. It is a second, cursor-less subscription beside the workspace
+   * one: the durable cursor stays bound to the workspace channel set (see `#channels`), and
+   * a live view that lags simply misses frames (DOMAIN.md §9.3). Attaching to the same
+   * target again keeps the subscription; another target replaces it.
+   */
+  attachLive(targetId: string): { readonly targetId: string; readonly attached: boolean } {
+    if (this.#live?.targetId === targetId) {
+      return { targetId, attached: true };
+    }
+    this.detachLive();
+    const headers = (): Record<string, string> => this.#streamHeaders();
+    let client: StreamClient | null = null;
+    const current = (): boolean => client !== null && client === this.#live?.client;
+    client = new StreamClient({
+      url: this.server.origin.replace(/^http/, "ws") + "/v1/stream",
+      headers,
+      channels: [`target:${targetId}`],
+      consumer: `${this.#options.consumer}:live`,
+      openSocket: this.#options.openSocket,
+      cursor: null,
+      onEvent: (frame) => {
+        if (current()) {
+          this.#options.push("live.frame", frame);
+        }
+      },
+      onLive: (frame) => {
+        if (current()) {
+          this.#options.push("live.frame", frame);
+        }
+      },
+      onError: (error) => {
+        if (current()) {
+          this.#options.push("live.frame", { kind: "error", channel: `target:${targetId}`, error });
+        }
+      },
+      onState: (state) => {
+        if (current()) {
+          this.#options.push("live.frame", { kind: "state", channel: `target:${targetId}`, state });
+        }
+      },
+    });
+    this.#live = { targetId, client };
+    client.connect();
+    return { targetId, attached: true };
+  }
+
+  detachLive(): { readonly attached: false } {
+    this.#live?.client.close();
+    this.#live = null;
+    return { attached: false };
   }
 
   // ---- the teammate roster (APP-014) ----
@@ -700,6 +786,7 @@ export class DesktopBridge {
   close(): void {
     this.#stream?.close();
     this.#stream = null;
+    this.detachLive();
   }
 
   /**
@@ -914,6 +1001,22 @@ function asThreadId(payload: unknown, what: string): string {
     throw new Error(`${what} needs a thr_ id`);
   }
   return threadId;
+}
+
+function asSessionId(payload: unknown, what: string): string {
+  const sessionId = asRecord(payload, what)["sessionId"];
+  if (typeof sessionId !== "string" || !sessionId.startsWith("bsn_")) {
+    throw new Error(`${what} needs a bsn_ id`);
+  }
+  return sessionId;
+}
+
+function asTargetId(payload: unknown, what: string): string {
+  const targetId = asRecord(payload, what)["targetId"];
+  if (typeof targetId !== "string" || !targetId.startsWith("tgt_")) {
+    throw new Error(`${what} needs a tgt_ id`);
+  }
+  return targetId;
 }
 
 function asRunId(payload: unknown, what: string): string {

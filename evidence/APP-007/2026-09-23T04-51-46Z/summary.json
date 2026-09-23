@@ -1,0 +1,80 @@
+{
+  "task_id": "APP-007",
+  "git_commit": "8d72f9eddcd2a72e25f932d5487345da2e5fde63",
+  "recorded_at": "2026-09-23T05:16:08Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test live_sessions (takeover fences the same session and parks the run; a policy pause is shown and no handback undoes it; the native-computer takeover drives the control row with its fence \u2014 against real PostgreSQL)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-09-23T04-51-46Z/cargo-live-sessions.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/live.test.ts tests/live.e2e.test.ts tests/preload.test.ts) (single-session and terminal-replay unit tests; takeover + reconnect + handback E2E through the desktop bridge against the real quansio-server seeded by quansio-dev-seed --live)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-09-23T04-51-46Z/vitest-live.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-cli --test cli_e2e (targets list reads the served projection shape)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-09-23T04-51-46Z/cargo-cli-e2e.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop, web and SDK E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-09-23T04-51-46Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test live_sessions (takeover fences the same session and parks the run; a policy pause is shown and no handback undoes it; the native-computer takeover drives the control row with its fence \u2014 against real PostgreSQL)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/live.test.ts tests/live.e2e.test.ts tests/preload.test.ts) (single-session and terminal-replay unit tests; takeover + reconnect + handback E2E through the desktop bridge against the real quansio-server seeded by quansio-dev-seed --live)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-cli --test cli_e2e (targets list reads the served projection shape)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop, web and SDK E2E, eslint ., pytest, contract-drift, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-007/2026-09-23T04-51-46Z/NOTES.md",
+      "sha256": "9847e19d8a38a20cce087a6623165acd4d0f5e3820c8c40b3770f2cb3c501293",
+      "bytes": 5767
+    },
+    {
+      "path": "evidence/APP-007/2026-09-23T04-51-46Z/cargo-live-sessions.log",
+      "sha256": "a78355b5cfe608944a0c52f45da5d70d782f62a5ba3e057489aa3bf58d02d145",
+      "bytes": 877
+    },
+    {
+      "path": "evidence/APP-007/2026-09-23T04-51-46Z/vitest-live.log",
+      "sha256": "1d9d43534a8bd49886886612ec868319e31b0b21cb6a34a2e22532f4e222ec0b",
+      "bytes": 526
+    },
+    {
+      "path": "evidence/APP-007/2026-09-23T04-51-46Z/cargo-cli-e2e.log",
+      "sha256": "94d9bf241516c7f54a8aa9863c311a5c5a1c9ed2a9d84f3c784d30285f9e31da",
+      "bytes": 341
+    },
+    {
+      "path": "evidence/APP-007/2026-09-23T04-51-46Z/ci-summary.json",
+      "sha256": "df6194ae51f63293b7e6d0bd9a634e5dc099a0a864ef42a70567e7cc628092b1",
+      "bytes": 6721
+    }
+  ]
+}

@@ -276,6 +276,28 @@ pub async fn invoke(
             )
             .await?
         }
+        "RequestTakeover" => {
+            super::live_sessions::request_takeover(
+                &state,
+                &scope,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
+        "Handback" => {
+            super::live_sessions::handback(
+                &state,
+                &scope,
+                &identity,
+                user_id.as_deref(),
+                &request.params,
+                &correlation,
+            )
+            .await?
+        }
         "SetPolicy" => {
             super::admin::set_policy(
                 &state,

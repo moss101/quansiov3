@@ -362,6 +362,16 @@ export class ServerClient {
     return this.#request("GET", `${this.origin}/v1/teammates?workspace_id=${encodeURIComponent(workspaceId)}`);
   }
 
+  // ---- the live browser/computer/terminal surface (APP-007) ----
+
+  targets(workspaceId: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/targets?workspace_id=${encodeURIComponent(workspaceId)}`);
+  }
+
+  browserSession(sessionId: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/browser-sessions/${encodeURIComponent(sessionId)}`);
+  }
+
   // ---- the plan / WorkGraph surface (APP-005) ----
 
   workgraph(workspaceId: string): Promise<unknown> {

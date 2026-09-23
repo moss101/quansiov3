@@ -21,7 +21,7 @@ import { createHash } from "node:crypto";
 import { bindApproval, decodeApprovals } from "../../apps/desktop/src/trust/approvals.js";
 import { decodeHistory, diffLines } from "../../apps/desktop/src/artifacts/workspace.js";
 import { openAllowed, previewIsSafe, previewPlan } from "../../apps/desktop/src/artifacts/preview.js";
-import { agentInputAllowed, handback, takeover } from "../../apps/desktop/src/live/session.js";
+import { agentInputAllowed, applyEvent, decodeLiveSession, handbackAllowed, takeoverAllowed } from "../../apps/desktop/src/live/session.js";
 import { archiveInRoster, visibleRoster } from "../../apps/desktop/src/teammates/roster.js";
 import { receivesProtected } from "../../apps/desktop/src/collaboration/participants.js";
 import { STRINGS } from "../../apps/desktop/src/i18n/strings.js";
@@ -103,21 +103,26 @@ describe("critical journeys", () => {
     expect(previewPlan("text/html", 2).mode).toBe("text");
     expect(openAllowed("text/html")).toBe(false);
 
-    // 6. Live takeover then handback: takeover gives the user control and pauses
-    //    the agent; handback returns control and unpauses.
-    const live = takeover({
-      sessionId: "tgt_1",
-      kind: "browser",
-      controller: "agent",
-      paused: false,
-      terminalCursor: null,
+    // 6. Live takeover then handback: the same session moves to the user and the agent
+    //    is fenced; the handback returns it; another session's event changes nothing.
+    const live = decodeLiveSession({
+      session: { id: "bsn_1", target_id: "tgt_1", run_id: "run_journey", control_holder: "agent", status: "active", agent_may_drive: true, tabs: [] },
+      automation: { paused: false, reason: null, agent_input_fenced: false },
+      terminal_sessions: [],
+      computer_control: null,
+      run: null,
     });
-    expect(live.controller).toBe("user");
-    expect(live.paused).toBe(true);
-    expect(agentInputAllowed(live)).toBe(false);
-    const returned = handback(live);
+    expect(takeoverAllowed(live)).toBe(true);
+    const taken = applyEvent(live, { type: "browser.control_changed", payload: { session_id: "bsn_1", holder: "user", status: "paused_takeover" } });
+    expect(taken.sessionId).toBe("bsn_1");
+    expect(taken.controller).toBe("user");
+    expect(taken.automation.paused).toBe(true);
+    expect(agentInputAllowed(taken)).toBe(false);
+    expect(handbackAllowed(taken)).toBe(true);
+    expect(applyEvent(taken, { type: "browser.control_changed", payload: { session_id: "bsn_2", holder: "agent", status: "active" } })).toBe(taken);
+    const returned = applyEvent(taken, { type: "browser.control_changed", payload: { session_id: "bsn_1", holder: "agent", status: "active" } });
     expect(returned.controller).toBe("agent");
-    expect(returned.paused).toBe(false);
+    expect(returned.automation.paused).toBe(false);
     expect(agentInputAllowed(returned)).toBe(true);
   });
 
