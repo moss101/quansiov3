@@ -1846,10 +1846,10 @@
     },
     "APP-009": {
       "coverage": "PARTIAL",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:claude-opus-5",
+      "started_at": "2026-09-23T05:16:46Z",
+      "updated_at": "2026-09-23T05:16:46Z",
       "git_commit": null,
       "tests": [
         "cargo test -p quansio-server --test collaboration (stable seq/id order; removed cannot receive)"
