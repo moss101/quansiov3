@@ -165,6 +165,12 @@ pub enum MaterializationScope {
         /// Registered tool name.
         tool: String,
     },
+    /// Signing the deliveries of one outbound webhook subscription (APP-015). The server signs
+    /// in-process; the material never leaves it.
+    Webhook {
+        /// `whk_…` identity.
+        subscription_id: String,
+    },
 }
 
 impl MaterializationScope {
@@ -175,6 +181,7 @@ impl MaterializationScope {
             Self::Connector { connector_id } => format!("connector:{connector_id}"),
             Self::Target { target_id } => format!("target:{target_id}"),
             Self::Tool { tool } => format!("tool:{tool}"),
+            Self::Webhook { subscription_id } => format!("webhook:{subscription_id}"),
         }
     }
 }
@@ -253,7 +260,8 @@ pub struct SecretAccess {
     pub tenant_id: String,
     /// Who asked.
     pub actor: String,
-    /// The `credential.access` effect this was resolved for.
+    /// The `credential.access` effect this was resolved for (for a webhook signature, the `whd_`
+    /// delivery it signs).
     pub effect_id: String,
     /// What it was scoped to.
     pub scope: String,
@@ -640,7 +648,8 @@ pub struct MaterializeRequest<'a> {
     pub handle_id: &'a str,
     /// Who is asking.
     pub actor: &'a str,
-    /// The `credential.access` effect this resolves for.
+    /// The `credential.access` effect this resolves for (for a webhook signature, the `whd_`
+    /// delivery it signs).
     pub effect_id: &'a str,
     /// What the material may be used for.
     pub scope: MaterializationScope,

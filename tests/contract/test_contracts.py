@@ -43,7 +43,7 @@ def test_domain_derivation_covers_commands_errors_effects_events_trust(catalog):
     assert sum(len(v) for v in catalog["commands"].values()) >= 70
     assert len(catalog["errors"]) == 38
     assert len(catalog["effect_classes"]) == 23
-    assert len(catalog["event_families"]) == 34
+    assert len(catalog["event_families"]) == 35  # + webhook.* (APP-015)
     assert catalog["trust_levels"] == [
         "TRUSTED_SYSTEM",
         "TRUSTED_USER",

@@ -1,0 +1,14 @@
+# GENERATED from DOMAIN.md by scripts/ci/gen_contracts.py --catalog.
+# Do not hand edit: regenerate instead. DOMAIN.md is the naming/shape authority.
+webhooks:
+  headers:
+  - quansio-event-id
+  - quansio-event-type
+  - quansio-delivery-id
+  - quansio-signature
+  signature_header: quansio-signature
+  signature_scheme: v1
+  signed_payload: <t>.<body>
+  algorithm: HMAC-SHA256
+  tolerance_seconds: 300
+  secret_prefix: whsec_

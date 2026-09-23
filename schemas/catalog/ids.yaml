@@ -50,3 +50,4 @@ ids:
   TerminalSession: tsn_
   BrowserSession: bsn_
   Session: ses_
+  Webhook delivery: whd_

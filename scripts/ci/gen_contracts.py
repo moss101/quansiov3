@@ -69,6 +69,134 @@ def require(tool: str) -> None:
         raise SystemExit(f"{tool} is required to generate contracts but was not found on PATH")
 
 
+# Parameter schemas the implementing task has defined (additive over the open default).
+DEFINED_PARAMS: Dict[str, Dict[str, object]] = {
+    "CreateWebhookSubscription": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+            "url": {"type": "string", "maxLength": 2048, "description": "Absolute http(s) URL; its host and port are the grant (DOMAIN.md §13.5)."},
+            "workspace_id": {"type": "string", "description": "Scope; tenant-wide without one (ManageTenant)."},
+            "event_types": {"type": "array", "maxItems": 64, "items": {"type": "string"}, "description": "`family.name` or `family.*`; empty selects every type."},
+        },
+    },
+    "UpdateWebhookSubscription": {
+        "type": "object",
+        "required": ["subscription_id"],
+        "properties": {
+            "subscription_id": {"type": "string"},
+            "status": {"type": "string", "enum": ["active", "paused"]},
+            "event_types": {"type": "array", "maxItems": 64, "items": {"type": "string"}},
+            "secret": {"type": "string", "enum": ["rotate"], "description": "Replace the signing secret; the result carries the new one once."},
+        },
+    },
+    "RedeliverWebhook": {
+        "type": "object",
+        "required": ["delivery_id"],
+        "properties": {"delivery_id": {"type": "string"}},
+    },
+    "DeleteWebhookSubscription": {
+        "type": "object",
+        "required": ["subscription_id"],
+        "properties": {"subscription_id": {"type": "string"}},
+    },
+}
+
+
+def _runtime_event_schema() -> Dict[str, object]:
+    """The RuntimeEvent envelope JSON Schema (schemas/json), as an OpenAPI component."""
+    schema = json.loads((SCHEMA_DIR / "json" / "runtime-event.schema.json").read_text())
+    for key in ("$schema", "$id"):
+        schema.pop(key, None)
+    return schema
+
+
+def _stream_paths(catalog: Dict[str, object]) -> Dict[str, object]:
+    """`GET /v1/stream` (WebSocket) and `GET /v1/stream/events` (SSE), DOMAIN.md §9.3."""
+    error = {"description": "Typed error (DOMAIN.md §15).", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}
+    return {
+        "/v1/stream": {
+            "get": {
+                "operationId": "Stream",
+                "summary": "The event stream over WebSocket (DOMAIN.md §9.3).",
+                "description": (
+                    "Upgrade to a WebSocket, then send one StreamSubscribe message. The server sends "
+                    "StreamEventFrame (durable, replayable, with a cursor) and StreamLiveFrame (transient) "
+                    "messages; reconnect with the last cursor to replay what was missed. A slow consumer is "
+                    "disconnected with STREAM_BACKPRESSURE. A protected thread's events reach only its participants."
+                ),
+                "tags": ["Stream"],
+                "parameters": [{"name": "x-quansio-consumer", "in": "header", "schema": {"type": "string"}}],
+                "responses": {"101": {"description": "Switching Protocols to WebSocket."}, "default": error},
+                "x-quansio-transport": "websocket",
+                "x-quansio-client-message": {"$ref": "#/components/schemas/StreamSubscribe"},
+                "x-quansio-server-messages": [
+                    {"$ref": "#/components/schemas/StreamEventFrame"},
+                    {"$ref": "#/components/schemas/StreamLiveFrame"},
+                ],
+            }
+        },
+        "/v1/stream/events": {
+            "get": {
+                "operationId": "StreamEvents",
+                "summary": "The event stream as Server-Sent Events, for read-only consumers (DOMAIN.md §9.3).",
+                "description": (
+                    "Each durable event is one SSE message: `event: event`, `id:` the stream cursor, `data:` a "
+                    "StreamEventFrame. Reconnecting with `Last-Event-ID` (or `cursor`) resumes after it. The same "
+                    "channels and the same protected-thread gate as the WebSocket."
+                ),
+                "tags": ["Stream"],
+                "parameters": [
+                    {"name": "channel", "in": "query", "required": True, "style": "form", "explode": True,
+                     "schema": {"type": "array", "items": {"type": "string", "pattern": "^(workspace|thread|run|target):[a-z]+_[0-9A-HJKMNP-TV-Z]{26}$"}}},
+                    {"name": "cursor", "in": "query", "schema": {"type": "string"}},
+                    {"name": "consumer", "in": "query", "schema": {"type": "string"}},
+                    {"name": "Last-Event-ID", "in": "header", "schema": {"type": "string"}},
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An event stream; each `data:` is a StreamEventFrame.",
+                        "content": {"text/event-stream": {"schema": {"type": "string"}, "x-quansio-sse-data": {"$ref": "#/components/schemas/StreamEventFrame"}}},
+                    },
+                    "default": error,
+                },
+            }
+        },
+    }
+
+
+def _webhooks(catalog: Dict[str, object]) -> Dict[str, object]:
+    """The outbound webhook request (OpenAPI 3.1 `webhooks`), DOMAIN.md §13.5."""
+    contract: Dict[str, object] = catalog.get("webhooks") or {}  # type: ignore[assignment]
+    headers: List[str] = list(contract.get("headers", []))  # type: ignore[arg-type]
+    described = {
+        "quansio-event-id": "The stable event id; deliveries are at-least-once, so dedupe on it.",
+        "quansio-event-type": "The event type.",
+        "quansio-delivery-id": "The delivery (`whd_…`); the same across retries of one event.",
+        "quansio-signature": (
+            f"`t=<unix seconds>,{contract.get('signature_scheme', 'v1')}=<hex {contract.get('algorithm', 'HMAC-SHA256')}"
+            f"(secret, \"{contract.get('signed_payload', '<t>.<body>')}\")>`; reject a timestamp more than "
+            f"{contract.get('tolerance_seconds', 300)} s from your clock."
+        ),
+    }
+    return {
+        "runtimeEvent": {
+            "post": {
+                "operationId": "WebhookRuntimeEvent",
+                "summary": "One RuntimeEvent, redacted, signed, delivered at least once (DOMAIN.md §13.5).",
+                "parameters": [
+                    {"name": name, "in": "header", "required": True, "schema": {"type": "string"}, "description": described.get(name, "")}
+                    for name in headers
+                ],
+                "requestBody": {"required": True, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RuntimeEvent"}}}},
+                "responses": {
+                    "2XX": {"description": "Acknowledged. Anything else, or no answer within 10 s, is retried with backoff."},
+                },
+            }
+        }
+    }
+
+
 def generate_openapi(out: Path, catalog: Optional[Dict[str, object]] = None) -> Path:
     """Write the public API v1 OpenAPI 3.1 document derived from the DOMAIN.md catalog."""
     import yaml
@@ -122,16 +250,23 @@ def generate_openapi(out: Path, catalog: Optional[Dict[str, object]] = None) -> 
     for family, names in commands.items():
         for name in names:
             params_schema = f"{name}Params"
-            schemas[params_schema] = {
-                "type": "object",
-                "additionalProperties": True,
-                "description": (
-                    f"{family} command {name}. The concrete parameter schema is owned by the "
-                    "implementing task and must be added additively; until then this schema is "
-                    "deliberately open and marked x-quansio-params-defined: false."
-                ),
-                "x-quansio-params-defined": False,
-            }
+            if name in DEFINED_PARAMS:
+                schemas[params_schema] = {
+                    **DEFINED_PARAMS[name],
+                    "description": f"{family} command {name}.",
+                    "x-quansio-params-defined": True,
+                }
+            else:
+                schemas[params_schema] = {
+                    "type": "object",
+                    "additionalProperties": True,
+                    "description": (
+                        f"{family} command {name}. The concrete parameter schema is owned by the "
+                        "implementing task and must be added additively; until then this schema is "
+                        "deliberately open and marked x-quansio-params-defined: false."
+                    ),
+                    "x-quansio-params-defined": False,
+                }
             paths[f"/v1/commands/{name}"] = {
                 "post": {
                     "operationId": name,
@@ -176,8 +311,37 @@ def generate_openapi(out: Path, catalog: Optional[Dict[str, object]] = None) -> 
                 }
             }
 
+    schemas["RuntimeEvent"] = _runtime_event_schema()
+    schemas["StreamSubscribe"] = {
+        "type": "object",
+        "required": ["subscribe"],
+        "properties": {
+            "subscribe": {"type": "array", "items": {"type": "object", "required": ["channel"], "properties": {"channel": {"type": "string"}}}},
+            "cursor": {"type": "string"},
+            "consumer": {"type": "string"},
+        },
+    }
+    schemas["StreamEventFrame"] = {
+        "type": "object",
+        "required": ["kind", "cursor", "event"],
+        "properties": {
+            "kind": {"const": "event"},
+            "cursor": {"type": "string", "description": "Opaque; resume after this event."},
+            "event": {"$ref": "#/components/schemas/RuntimeEvent"},
+        },
+    }
+    schemas["StreamLiveFrame"] = {
+        "type": "object",
+        "required": ["kind", "channel", "frame"],
+        "properties": {
+            "kind": {"const": "live"},
+            "channel": {"type": "string"},
+            "frame": {"type": "object", "description": "Transient (model.delta, terminal.bytes, browser.frame, progress); never persisted."},
+        },
+    }
+    paths.update(_stream_paths(catalog))
     for path in projections:
-        if path.endswith("/stream"):
+        if path in paths:
             continue
         paths[path] = {
             "get": {
@@ -261,13 +425,15 @@ def generate_openapi(out: Path, catalog: Optional[Dict[str, object]] = None) -> 
                 "Generated from DOMAIN.md by scripts/ci/gen_contracts.py. Commands are "
                 "POST /v1/commands/<Name> with idempotent command_id; reads are GET projections. "
                 "Additive changes only within v1 (DOMAIN.md §17). The WebSocket stream "
-                "(GET /v1/stream) is described in DOMAIN.md §9.3 and is not an OpenAPI path."
+                "(GET /v1/stream) and its Server-Sent Events form (GET /v1/stream/events) are "
+                "described below (DOMAIN.md §9.3); outbound webhooks are under `webhooks` (§13.5)."
             ),
         },
         "servers": [{"url": "https://{host}/v1", "variables": {"host": {"default": "localhost:8443"}}}],
         "security": [{"bearerAuth": []}],
-        "tags": [{"name": family} for family in commands] + [{"name": "Read projections"}],
+        "tags": [{"name": family} for family in commands] + [{"name": "Read projections"}, {"name": "Stream"}],
         "paths": paths,
+        "webhooks": _webhooks(catalog),
         "components": {
             "securitySchemes": {
                 "bearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "ES256 JWT"},
@@ -278,6 +444,7 @@ def generate_openapi(out: Path, catalog: Optional[Dict[str, object]] = None) -> 
         "x-quansio-error-http-map": {e["code"]: e["http_status"] for e in errors},
         "x-quansio-event-families": catalog["event_families"],
         "x-quansio-effect-classes": [c["effect_class"] for c in catalog["effect_classes"]],  # type: ignore[index]
+        "x-quansio-webhook-signature": catalog.get("webhooks") or {},
     }
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(yaml.safe_dump(document, sort_keys=False, allow_unicode=True, width=120))
@@ -369,6 +536,7 @@ def _sdk_operations(catalog: Optional[Dict[str, object]] = None) -> Dict[str, ob
         "operations": operations,
         "read_projections": list(projections),
         "error_codes": [e["code"] for e in errors],
+        "webhook_signature": catalog.get("webhooks") or {},
     }
 
 
@@ -394,6 +562,20 @@ def generate_sdk_ts(out: Path, catalog: Optional[Dict[str, object]] = None) -> P
     for code in table["error_codes"]:  # type: ignore[union-attr]
         lines.append(f"  {json.dumps(code)},")
     lines += ["] as const;", "", "export type ErrorCode = (typeof ERROR_CODES)[number];", ""]
+    signature: Dict[str, object] = table["webhook_signature"]  # type: ignore[assignment]
+    lines += [
+        "/** The outbound webhook request contract (DOMAIN.md §13.5). */",
+        "export const WEBHOOK_SIGNATURE = {",
+        f'  header: {json.dumps(signature.get("signature_header", ""))},',
+        f'  headers: {json.dumps(signature.get("headers", []))},',
+        f'  scheme: {json.dumps(signature.get("signature_scheme", ""))},',
+        f'  signedPayload: {json.dumps(signature.get("signed_payload", ""))},',
+        f'  algorithm: {json.dumps(signature.get("algorithm", ""))},',
+        f'  toleranceSeconds: {int(signature.get("tolerance_seconds", 0))},',  # type: ignore[arg-type]
+        f'  secretPrefix: {json.dumps(signature.get("secret_prefix", ""))},',
+        "} as const;",
+        "",
+    ]
     out.write_text("\n".join(lines), encoding="utf-8")
     return out
 
@@ -429,7 +611,19 @@ def generate_sdk_py(out: Path, catalog: Optional[Dict[str, object]] = None) -> P
     lines += [")", "", "ERROR_CODES: tuple[str, ...] = ("]
     for code in table["error_codes"]:  # type: ignore[union-attr]
         lines.append(f"    {json.dumps(code)},")
-    lines += [")", ""]
+    signature: Dict[str, object] = table["webhook_signature"]  # type: ignore[assignment]
+    lines += [")", "", "# The outbound webhook request contract (DOMAIN.md §13.5)."]
+    lines.append(f'WEBHOOK_SIGNATURE_HEADER = {json.dumps(signature.get("signature_header", ""))}')
+    lines.append("WEBHOOK_HEADERS: tuple[str, ...] = (")
+    for header in signature.get("headers", []):  # type: ignore[union-attr]
+        lines.append(f"    {json.dumps(header)},")
+    lines.append(")")
+    lines.append(f'WEBHOOK_SIGNATURE_SCHEME = {json.dumps(signature.get("signature_scheme", ""))}')
+    lines.append(f'WEBHOOK_SIGNED_PAYLOAD = {json.dumps(signature.get("signed_payload", ""))}')
+    lines.append(f'WEBHOOK_SIGNATURE_ALGORITHM = {json.dumps(signature.get("algorithm", ""))}')
+    lines.append(f'WEBHOOK_TOLERANCE_SECONDS = {int(signature.get("tolerance_seconds", 0))}')  # type: ignore[arg-type]
+    lines.append(f'WEBHOOK_SECRET_PREFIX = {json.dumps(signature.get("secret_prefix", ""))}')
+    lines.append("")
     out.write_text("\n".join(lines), encoding="utf-8")
     return out
 

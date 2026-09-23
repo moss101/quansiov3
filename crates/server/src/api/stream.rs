@@ -3,6 +3,11 @@
 //! Transport only: subscribe, replay from a cursor, and disconnect a slow consumer with
 //! `STREAM_BACKPRESSURE`. Durable frames come from [`quansio_events::EventStore`].
 //!
+//! `GET /v1/stream/events?channel=…&cursor=…` (APP-015) is the same stream as Server-Sent
+//! Events for read-only consumers — the web fallback and integrators: the same channels, the
+//! same frames (`data:`), the same gate, and the cursor as the SSE `id:`, so a reconnect with
+//! `Last-Event-ID` resumes where it left off.
+//!
 //! Every frame passes the subscriber's [`ThreadGate`] (APP-009): a protected thread's
 //! `thread.*` and `question.*` events and its live frames reach only its active
 //! participants, and a `thread:` channel of a protected thread cannot be subscribed to by
@@ -11,9 +16,12 @@
 
 use std::time::Duration;
 
+use std::convert::Infallible;
+
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
-use axum::extract::State;
+use axum::extract::{RawQuery, State};
 use axum::http::HeaderMap;
+use axum::response::sse::{Event as SseEvent, KeepAlive, Sse};
 use axum::response::IntoResponse;
 use futures_util::StreamExt;
 use quansio_core::{CanonicalId, Cursor, Prefix, UlidGenerator};
@@ -318,4 +326,245 @@ fn stream_error_json(error: &StreamError) -> serde_json::Value {
         "correlation_id": "stream",
         "retryable": error.is_retryable(),
     })
+}
+
+/// Decode one `application/x-www-form-urlencoded` component. A `%` not followed by two hex
+/// digits is kept as it is.
+fn form_decode(value: &str) -> String {
+    fn hex(byte: u8) -> Option<u8> {
+        match byte {
+            b'0'..=b'9' => Some(byte - b'0'),
+            b'a'..=b'f' => Some(byte - b'a' + 10),
+            b'A'..=b'F' => Some(byte - b'A' + 10),
+            _ => None,
+        }
+    }
+    let bytes = value.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        let byte = bytes[index];
+        let escaped = (byte == b'%')
+            .then(|| Some((hex(*bytes.get(index + 1)?)?, hex(*bytes.get(index + 2)?)?)))
+            .flatten();
+        match (byte, escaped) {
+            (_, Some((high, low))) => {
+                out.push(high * 16 + low);
+                index += 3;
+            }
+            (b'+', None) => {
+                out.push(b' ');
+                index += 1;
+            }
+            (other, None) => {
+                out.push(other);
+                index += 1;
+            }
+        }
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
+/// The SSE subscription as the query and headers give it.
+#[derive(Debug, Default, PartialEq, Eq)]
+struct SseRequest {
+    channels: Vec<String>,
+    cursor: Option<String>,
+    consumer: Option<String>,
+}
+
+fn sse_request(query: Option<&str>, headers: &HeaderMap) -> SseRequest {
+    let mut request = SseRequest::default();
+    for pair in query
+        .unwrap_or_default()
+        .split('&')
+        .filter(|pair| !pair.is_empty())
+    {
+        let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+        let value = form_decode(value);
+        match key {
+            "channel" => request.channels.extend(
+                value
+                    .split(',')
+                    .filter(|channel| !channel.is_empty())
+                    .map(str::to_string),
+            ),
+            "cursor" if !value.is_empty() => request.cursor = Some(value),
+            "consumer" if !value.is_empty() => request.consumer = Some(value),
+            _ => {}
+        }
+    }
+    // A reconnecting EventSource sends the last `id:` it saw; it wins over the original URL.
+    if let Some(last) = headers
+        .get("last-event-id")
+        .and_then(|value| value.to_str().ok())
+        .filter(|value| !value.is_empty())
+    {
+        request.cursor = Some(last.to_string());
+    }
+    request
+}
+
+struct SseTail {
+    store: EventStore,
+    subscription: StreamSubscription,
+    stream_id: String,
+    consumer: String,
+    cursor: Option<String>,
+    gate: ThreadGate,
+    pending: std::collections::VecDeque<SseEvent>,
+    failed: bool,
+}
+
+/// `GET /v1/stream/events?channel=…&cursor=…&consumer=…`: the stream as Server-Sent Events.
+///
+/// # Errors
+/// `VALIDATION_SCHEMA` for no channel or a malformed one, `SCOPE_FORBIDDEN` for a protected
+/// thread the caller does not participate in.
+pub async fn stream_events(
+    State(state): State<ApiState>,
+    headers: HeaderMap,
+    RawQuery(query): RawQuery,
+) -> Result<Sse<impl futures_util::Stream<Item = Result<SseEvent, Infallible>>>, ApiError> {
+    let scope = TenantScope::resolve(&state, &headers).await?;
+    let request = sse_request(query.as_deref(), &headers);
+    if request.channels.is_empty() {
+        return Err(ApiError::new(
+            ApiErrorCode::ValidationSchema,
+            "channel is required (workspace:ws_…, thread:thr_…, run:run_… or target:tgt_…)",
+            "stream",
+        ));
+    }
+    let mut channels = Vec::with_capacity(request.channels.len());
+    for channel in &request.channels {
+        channels.push(Channel::parse(&scope.tenant_id, channel).map_err(|error| {
+            ApiError::new(ApiErrorCode::ValidationSchema, error.to_string(), "stream")
+        })?);
+        if let Some(thread_id) = channel.strip_prefix("thread:") {
+            let admitted = thread_access(
+                state.pool(),
+                &scope.tenant_id,
+                thread_id,
+                scope.user_id.as_deref(),
+            )
+            .await
+            .is_ok_and(|access| access.admits());
+            if !admitted {
+                return Err(ApiError::new(
+                    ApiErrorCode::ScopeForbidden,
+                    format!("thread {thread_id} is protected and this user is not one of its participants"),
+                    "stream",
+                ));
+            }
+        }
+    }
+    let consumer = request.consumer.unwrap_or_else(|| {
+        format!(
+            "csm_{}",
+            CanonicalId::generate(Prefix::Command, &mut UlidGenerator::new())
+                .to_string()
+                .trim_start_matches("cmd_")
+        )
+    });
+    let subscription =
+        StreamSubscription::new(&scope.tenant_id, &consumer, channels).map_err(|error| {
+            ApiError::new(ApiErrorCode::ValidationSchema, error.to_string(), "stream")
+        })?;
+    let tail = SseTail {
+        store: EventStore::new(state.pool().clone()),
+        stream_id: subscription.stream_id(),
+        subscription,
+        consumer,
+        cursor: request.cursor,
+        gate: ThreadGate::new(
+            state.pool().clone(),
+            &scope.tenant_id,
+            scope.user_id.as_deref(),
+        ),
+        pending: std::collections::VecDeque::new(),
+        failed: false,
+    };
+    let stream = futures_util::stream::unfold(tail, |mut tail| async move {
+        loop {
+            if let Some(event) = tail.pending.pop_front() {
+                return Some((Ok(event), tail));
+            }
+            if tail.failed {
+                return None;
+            }
+            match tail
+                .store
+                .resume(
+                    tail.subscription.tenant_id(),
+                    &tail.stream_id,
+                    &tail.consumer,
+                    tail.cursor.as_deref(),
+                    256,
+                )
+                .await
+            {
+                Ok(batch) if batch.events.is_empty() => {
+                    tokio::time::sleep(Duration::from_millis(250)).await;
+                }
+                Ok(batch) => {
+                    for event in batch.events {
+                        let cursor = Cursor::new(tail.stream_id.clone(), event.sequence).encode();
+                        tail.cursor = Some(cursor.clone());
+                        if !tail.subscription.matches(&event)
+                            || !tail.gate.admits_event(&event).await
+                        {
+                            continue;
+                        }
+                        let frame = StreamFrame::Event(Box::new(EventFrame {
+                            cursor: cursor.clone(),
+                            event,
+                        }));
+                        tail.pending.push_back(
+                            SseEvent::default()
+                                .id(cursor)
+                                .event("event")
+                                .data(frame.to_json_value().to_string()),
+                        );
+                    }
+                }
+                Err(error) => {
+                    tail.failed = true;
+                    tail.pending.push_back(
+                        SseEvent::default()
+                            .event("error")
+                            .data(stream_error_json(&StreamError::Store(error)).to_string()),
+                    );
+                }
+            }
+        }
+    });
+    Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
+}
+
+#[cfg(test)]
+mod sse_tests {
+    use super::*;
+
+    #[test]
+    fn the_query_names_channels_a_cursor_and_last_event_id_wins() {
+        let mut headers = HeaderMap::new();
+        let request = sse_request(
+            Some("channel=workspace%3Aws_A&channel=run:run_B,thread:thr_C&cursor=abc&consumer=me"),
+            &headers,
+        );
+        assert_eq!(
+            request.channels,
+            vec!["workspace:ws_A", "run:run_B", "thread:thr_C"]
+        );
+        assert_eq!(request.cursor.as_deref(), Some("abc"));
+        assert_eq!(request.consumer.as_deref(), Some("me"));
+        headers.insert("last-event-id", "def".parse().expect("header"));
+        assert_eq!(
+            sse_request(Some("channel=workspace:ws_A&cursor=abc"), &headers)
+                .cursor
+                .as_deref(),
+            Some("def")
+        );
+        assert_eq!(form_decode("a%2Bb+c%zz"), "a+b c%zz");
+    }
 }

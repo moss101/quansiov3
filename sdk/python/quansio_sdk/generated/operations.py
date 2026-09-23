@@ -342,6 +342,16 @@ OPERATIONS: dict[str, dict[str, str]] = {
         "path": "/v1/commands/CreateWebhookSubscription",
         "family": "Connectors",
     },
+    "UpdateWebhookSubscription": {
+        "method": "POST",
+        "path": "/v1/commands/UpdateWebhookSubscription",
+        "family": "Connectors",
+    },
+    "RedeliverWebhook": {
+        "method": "POST",
+        "path": "/v1/commands/RedeliverWebhook",
+        "family": "Connectors",
+    },
     "DeleteWebhookSubscription": {
         "method": "POST",
         "path": "/v1/commands/DeleteWebhookSubscription",
@@ -432,7 +442,10 @@ READ_PROJECTIONS: tuple[str, ...] = (
     "/v1/usage",
     "/v1/audit",
     "/v1/search?q=",
+    "/v1/webhooks",
+    "/v1/webhooks/{id}/deliveries",
     "/v1/stream",
+    "/v1/stream/events",
 )
 
 ERROR_CODES: tuple[str, ...] = (
@@ -475,3 +488,17 @@ ERROR_CODES: tuple[str, ...] = (
     "STREAM_BACKPRESSURE",
     "INTERNAL",
 )
+
+# The outbound webhook request contract (DOMAIN.md §13.5).
+WEBHOOK_SIGNATURE_HEADER = "quansio-signature"
+WEBHOOK_HEADERS: tuple[str, ...] = (
+    "quansio-event-id",
+    "quansio-event-type",
+    "quansio-delivery-id",
+    "quansio-signature",
+)
+WEBHOOK_SIGNATURE_SCHEME = "v1"
+WEBHOOK_SIGNED_PAYLOAD = "<t>.<body>"
+WEBHOOK_SIGNATURE_ALGORITHM = "HMAC-SHA256"
+WEBHOOK_TOLERANCE_SECONDS = 300
+WEBHOOK_SECRET_PREFIX = "whsec_"

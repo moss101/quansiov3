@@ -4,7 +4,8 @@ info:
   version: v1
   description: Generated from DOMAIN.md by scripts/ci/gen_contracts.py. Commands are POST /v1/commands/<Name> with idempotent
     command_id; reads are GET projections. Additive changes only within v1 (DOMAIN.md §17). The WebSocket stream (GET /v1/stream)
-    is described in DOMAIN.md §9.3 and is not an OpenAPI path.
+    and its Server-Sent Events form (GET /v1/stream/events) are described below (DOMAIN.md §9.3); outbound webhooks are under
+    `webhooks` (§13.5).
 servers:
 - url: https://{host}/v1
   variables:
@@ -28,6 +29,7 @@ tags:
 - name: Notifications
 - name: Admin/ops
 - name: Read projections
+- name: Stream
 paths:
   /v1/commands/CreateWorkspace:
     post:
@@ -2843,6 +2845,90 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/commands/UpdateWebhookSubscription:
+    post:
+      operationId: UpdateWebhookSubscription
+      summary: 'Connectors: UpdateWebhookSubscription'
+      tags:
+      - Connectors
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RedeliverWebhook:
+    post:
+      operationId: RedeliverWebhook
+      summary: 'Connectors: RedeliverWebhook'
+      tags:
+      - Connectors
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/commands/DeleteWebhookSubscription:
     post:
       operationId: DeleteWebhookSubscription
@@ -3347,6 +3433,77 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/stream:
+    get:
+      operationId: Stream
+      summary: The event stream over WebSocket (DOMAIN.md §9.3).
+      description: Upgrade to a WebSocket, then send one StreamSubscribe message. The server sends StreamEventFrame (durable,
+        replayable, with a cursor) and StreamLiveFrame (transient) messages; reconnect with the last cursor to replay what
+        was missed. A slow consumer is disconnected with STREAM_BACKPRESSURE. A protected thread's events reach only its participants.
+      tags:
+      - Stream
+      parameters:
+      - name: x-quansio-consumer
+        in: header
+        schema:
+          type: string
+      responses:
+        '101':
+          description: Switching Protocols to WebSocket.
+        default: &id001
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-quansio-transport: websocket
+      x-quansio-client-message:
+        $ref: '#/components/schemas/StreamSubscribe'
+      x-quansio-server-messages:
+      - $ref: '#/components/schemas/StreamEventFrame'
+      - $ref: '#/components/schemas/StreamLiveFrame'
+  /v1/stream/events:
+    get:
+      operationId: StreamEvents
+      summary: The event stream as Server-Sent Events, for read-only consumers (DOMAIN.md §9.3).
+      description: 'Each durable event is one SSE message: `event: event`, `id:` the stream cursor, `data:` a StreamEventFrame.
+        Reconnecting with `Last-Event-ID` (or `cursor`) resumes after it. The same channels and the same protected-thread
+        gate as the WebSocket.'
+      tags:
+      - Stream
+      parameters:
+      - name: channel
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            pattern: ^(workspace|thread|run|target):[a-z]+_[0-9A-HJKMNP-TV-Z]{26}$
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: consumer
+        in: query
+        schema:
+          type: string
+      - name: Last-Event-ID
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: An event stream; each `data:` is a StreamEventFrame.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              x-quansio-sse-data:
+                $ref: '#/components/schemas/StreamEventFrame'
+        default: *id001
   /v1/threads/{id}:
     get:
       operationId: ReadV1Threads{Id}
@@ -4454,6 +4611,88 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/webhooks:
+    get:
+      operationId: ReadV1Webhooks
+      summary: Read projection /v1/webhooks (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/webhooks/{id}/deliveries:
+    get:
+      operationId: ReadV1Webhooks{Id}Deliveries
+      summary: Read projection /v1/webhooks/{id}/deliveries (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/auth/magic-link/start:
     post:
       operationId: AuthMagicLinkStart
@@ -4651,6 +4890,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+webhooks:
+  runtimeEvent:
+    post:
+      operationId: WebhookRuntimeEvent
+      summary: One RuntimeEvent, redacted, signed, delivered at least once (DOMAIN.md §13.5).
+      parameters:
+      - name: quansio-event-id
+        in: header
+        required: true
+        schema:
+          type: string
+        description: The stable event id; deliveries are at-least-once, so dedupe on it.
+      - name: quansio-event-type
+        in: header
+        required: true
+        schema:
+          type: string
+        description: The event type.
+      - name: quansio-delivery-id
+        in: header
+        required: true
+        schema:
+          type: string
+        description: The delivery (`whd_…`); the same across retries of one event.
+      - name: quansio-signature
+        in: header
+        required: true
+        schema:
+          type: string
+        description: '`t=<unix seconds>,v1=<hex HMAC-SHA256(secret, "<t>.<body>")>`; reject a timestamp more than 300 s from
+          your clock.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuntimeEvent'
+      responses:
+        2XX:
+          description: Acknowledged. Anything else, or no answer within 10 s, is retried with backoff.
 components:
   securitySchemes:
     bearerAuth:
@@ -5143,18 +5422,66 @@ components:
       x-quansio-params-defined: false
     CreateWebhookSubscriptionParams:
       type: object
-      additionalProperties: true
-      description: 'Connectors command CreateWebhookSubscription. The concrete parameter schema is owned by the implementing
-        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
-        false.'
-      x-quansio-params-defined: false
+      required:
+      - url
+      properties:
+        url:
+          type: string
+          maxLength: 2048
+          description: Absolute http(s) URL; its host and port are the grant (DOMAIN.md §13.5).
+        workspace_id:
+          type: string
+          description: Scope; tenant-wide without one (ManageTenant).
+        event_types:
+          type: array
+          maxItems: 64
+          items:
+            type: string
+          description: '`family.name` or `family.*`; empty selects every type.'
+      description: Connectors command CreateWebhookSubscription.
+      x-quansio-params-defined: true
+    UpdateWebhookSubscriptionParams:
+      type: object
+      required:
+      - subscription_id
+      properties:
+        subscription_id:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - paused
+        event_types:
+          type: array
+          maxItems: 64
+          items:
+            type: string
+        secret:
+          type: string
+          enum:
+          - rotate
+          description: Replace the signing secret; the result carries the new one once.
+      description: Connectors command UpdateWebhookSubscription.
+      x-quansio-params-defined: true
+    RedeliverWebhookParams:
+      type: object
+      required:
+      - delivery_id
+      properties:
+        delivery_id:
+          type: string
+      description: Connectors command RedeliverWebhook.
+      x-quansio-params-defined: true
     DeleteWebhookSubscriptionParams:
       type: object
-      additionalProperties: true
-      description: 'Connectors command DeleteWebhookSubscription. The concrete parameter schema is owned by the implementing
-        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
-        false.'
-      x-quansio-params-defined: false
+      required:
+      - subscription_id
+      properties:
+        subscription_id:
+          type: string
+      description: Connectors command DeleteWebhookSubscription.
+      x-quansio-params-defined: true
     UpdateNotificationPreferencesParams:
       type: object
       additionalProperties: true
@@ -5223,6 +5550,130 @@ components:
       description: 'Admin/ops command DeleteUserData. The concrete parameter schema is owned by the implementing task and
         must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
       x-quansio-params-defined: false
+    RuntimeEvent:
+      title: Quansio RuntimeEvent envelope
+      description: Durable, ordered record of a committed state transition (DOMAIN.md 9.1). Written in the same PostgreSQL
+        transaction as the mutation, plus a transactional outbox row.
+      x-quansio-version: v1
+      type: object
+      additionalProperties: false
+      required:
+      - event_id
+      - tenant_id
+      - sequence
+      - aggregate_type
+      - aggregate_id
+      - aggregate_version
+      - type
+      - schema_version
+      - occurred_at
+      - actor
+      properties:
+        event_id:
+          type: string
+          pattern: ^evt_[0-9A-HJKMNP-TV-Z]{26}$
+        tenant_id:
+          type: string
+          pattern: ^tn_[0-9A-HJKMNP-TV-Z]{26}$
+        workspace_id:
+          type: string
+          pattern: ^ws_[0-9A-HJKMNP-TV-Z]{26}$
+        sequence:
+          type: integer
+          minimum: 1
+        aggregate_type:
+          type: string
+          minLength: 1
+        aggregate_id:
+          type: string
+          minLength: 1
+        aggregate_version:
+          type: integer
+          minimum: 1
+        type:
+          type: string
+          pattern: ^(tenant|workspace|member|thread|work|agent|run|turn|step|model|tool|effect|approval|question|target|lease|browser|terminal|checkpoint|artifact|evidence|knowledge|memory|skill|pack|routine|notification|connector|webhook|policy|audit|usage|capability|compaction|ops)\.[a-z_]+$
+        schema_version:
+          type: string
+          minLength: 1
+        occurred_at:
+          type: string
+          format: date-time
+        command_id:
+          type: string
+          pattern: ^cmd_[0-9A-HJKMNP-TV-Z]{26}$
+        correlation_id:
+          type: string
+          minLength: 1
+        causation_id:
+          type: string
+        actor:
+          type: object
+          additionalProperties: false
+          required:
+          - kind
+          - id
+          properties:
+            kind:
+              enum:
+              - user
+              - agent
+              - system
+              - service
+            id:
+              type: string
+              minLength: 1
+        generation:
+          type: integer
+          minimum: 0
+        payload:
+          type: object
+    StreamSubscribe:
+      type: object
+      required:
+      - subscribe
+      properties:
+        subscribe:
+          type: array
+          items:
+            type: object
+            required:
+            - channel
+            properties:
+              channel:
+                type: string
+        cursor:
+          type: string
+        consumer:
+          type: string
+    StreamEventFrame:
+      type: object
+      required:
+      - kind
+      - cursor
+      - event
+      properties:
+        kind:
+          const: event
+        cursor:
+          type: string
+          description: Opaque; resume after this event.
+        event:
+          $ref: '#/components/schemas/RuntimeEvent'
+    StreamLiveFrame:
+      type: object
+      required:
+      - kind
+      - channel
+      - frame
+      properties:
+        kind:
+          const: live
+        channel:
+          type: string
+        frame:
+          type: object
+          description: Transient (model.delta, terminal.bytes, browser.frame, progress); never persisted.
     Session:
       type: object
       additionalProperties: false
@@ -5325,6 +5776,7 @@ x-quansio-event-families:
 - routine
 - notification
 - connector
+- webhook
 - policy
 - audit
 - usage
@@ -5355,3 +5807,15 @@ x-quansio-effect-classes:
 - memory.write
 - knowledge.write
 - runtime.control
+x-quansio-webhook-signature:
+  headers:
+  - quansio-event-id
+  - quansio-event-type
+  - quansio-delivery-id
+  - quansio-signature
+  signature_header: quansio-signature
+  signature_scheme: v1
+  signed_payload: <t>.<body>
+  algorithm: HMAC-SHA256
+  tolerance_seconds: 300
+  secret_prefix: whsec_

@@ -110,6 +110,32 @@ pub struct RuleConditions {
     pub time_window: Option<TimeWindow>,
     /// Sequence guards the rule requires.
     pub sequence_guards: Vec<SequenceGuard>,
+    /// Network rules only (`network.egress.new_destination`, EXEC-008): the address classes a
+    /// destination may resolve to — `public` when absent. The egress broker reads it; it does
+    /// not change when the rule applies.
+    #[serde(
+        skip_serializing_if = "Vec::is_empty",
+        deserialize_with = "address_classes"
+    )]
+    pub allowed_address_classes: Vec<String>,
+}
+
+/// Refuse an address class the egress broker does not define, rather than store a network rule
+/// the broker would then refuse to read.
+fn address_classes<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let classes = Vec::<String>::deserialize(deserializer)?;
+    for class in &classes {
+        if quansio_machine::egress::AddressClass::parse(class).is_none() {
+            return Err(serde::de::Error::custom(format!(
+                "{class:?} is not an address class (public, private, loopback, link_local, \
+                 multicast, unspecified, broadcast, reserved)"
+            )));
+        }
+    }
+    Ok(classes)
 }
 
 /// The facts a rule's conditions are evaluated against.
@@ -570,5 +596,33 @@ mod tests {
             Tier::new(3).expect("tier")
         )
         .is_ok());
+    }
+
+    #[test]
+    fn a_network_rule_names_its_address_classes_and_an_unknown_class_is_refused() {
+        let rule = |classes: serde_json::Value| {
+            serde_json::from_value::<Vec<PolicyRule>>(serde_json::json!([{
+                "effect_class": "network.egress.new_destination",
+                "resource_selector": { "kind": "domain", "selector": "*" },
+                "decision": "allow",
+                "conditions": { "allowed_address_classes": classes },
+            }]))
+        };
+        let parsed = rule(serde_json::json!(["public", "loopback"])).expect("canonical");
+        assert_eq!(
+            parsed[0].conditions.allowed_address_classes,
+            vec!["public".to_string(), "loopback".to_string()]
+        );
+        assert!(rule(serde_json::json!(["intranet"])).is_err());
+        // A rule without the condition serializes exactly as before it existed.
+        let plain: Vec<PolicyRule> = serde_json::from_value(serde_json::json!([{
+            "effect_class": "read.internal",
+            "resource_selector": { "kind": "fs", "selector": "**" },
+            "decision": "allow",
+        }]))
+        .expect("canonical");
+        assert!(!serde_json::to_string(&plain)
+            .expect("serialize")
+            .contains("allowed_address_classes"));
     }
 }

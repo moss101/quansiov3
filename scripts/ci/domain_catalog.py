@@ -227,6 +227,30 @@ def parse_auth_endpoints(text: str) -> List[Dict[str, object]]:
     return endpoints
 
 
+def parse_webhook_contract(text: str) -> Dict[str, object]:
+    """§13.5 outbound webhook request contract: header names, signature scheme, tolerance,
+    secret prefix. The SDKs' verifiers and the OpenAPI `webhooks` entry are generated from it."""
+    body = _section(text, "### 13.5 Webhook subscription")
+    if not body:
+        return {}
+    headers = []
+    for name in re.findall(r"`(quansio-[a-z-]+)(?::[^`]*)?`", body):
+        if name not in headers:
+            headers.append(name)
+    scheme = re.search(r"`quansio-signature: t=<unix seconds>,(v[0-9]+)=", body)
+    tolerance = re.search(r"default tolerance ([0-9]+) s", body)
+    prefix = re.search(r"`([a-z]+_)…`", body)
+    return {
+        "headers": headers,
+        "signature_header": "quansio-signature",
+        "signature_scheme": scheme.group(1) if scheme else "",
+        "signed_payload": "<t>.<body>",
+        "algorithm": "HMAC-SHA256",
+        "tolerance_seconds": int(tolerance.group(1)) if tolerance else 0,
+        "secret_prefix": prefix.group(1) if prefix else "",
+    }
+
+
 def build_catalog(domain_path: Optional[Path] = None) -> Dict[str, object]:
     text = (domain_path or DOMAIN).read_text()
     return {
@@ -241,6 +265,7 @@ def build_catalog(domain_path: Optional[Path] = None) -> Dict[str, object]:
         "event_families": parse_event_families(text),
         "trust_levels": parse_trust_levels(text),
         "tools": parse_tool_names(text),
+        "webhooks": parse_webhook_contract(text),
     }
 
 
@@ -255,6 +280,7 @@ CATALOG_FILES = {
     "event_families": "event-families.yaml",
     "trust_levels": "trust-levels.yaml",
     "tools": "tools.yaml",
+    "webhooks": "webhooks.yaml",
 }
 
 CATALOG_HEADER = (

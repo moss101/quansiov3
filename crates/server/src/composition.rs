@@ -34,6 +34,11 @@ pub struct ServerConfig {
     pub web_root: Option<String>,
     /// How often the background loop runs (APP-010); `None` when `QUANSIO_SCHEDULER=off`.
     pub background_interval: Option<Duration>,
+    /// `QUANSIO_SECRETS_KEY_FILE`: the local master key (base64, 32 bytes) that seals secret
+    /// handles in dev and self-host (DOSSIER.md §15); `QUANSIO_SECRETS_KEY_REF` names it.
+    pub secrets_key_file: Option<String>,
+    /// The key reference recorded on sealed secrets.
+    pub secrets_key_ref: String,
 }
 
 impl ServerConfig {
@@ -82,7 +87,16 @@ impl ServerConfig {
                 .unwrap_or(1000);
             Some(Duration::from_millis(millis))
         };
+        let secrets_key_file = env::var("QUANSIO_SECRETS_KEY_FILE")
+            .ok()
+            .filter(|value| !value.is_empty());
+        let secrets_key_ref = env::var("QUANSIO_SECRETS_KEY_REF")
+            .ok()
+            .filter(|value| !value.is_empty())
+            .unwrap_or_else(|| "local:master-v1".to_string());
         Ok(Self {
+            secrets_key_file,
+            secrets_key_ref,
             database_url,
             bind,
             max_connections,
@@ -150,6 +164,18 @@ impl Composition {
             eprintln!("quansio-server: QUANSIO_SEARCH_INDEX_ROOT={root}: /v1/search indexes artifact content");
             api = api.with_search_index(Arc::new(index));
         }
+        if let Some(path) = config.secrets_key_file.as_deref() {
+            let keys = quansio_machine::secrets::LocalMasterKeyProvider::from_file(
+                std::path::Path::new(path),
+                config.secrets_key_ref.clone(),
+            )
+            .map_err(|error| format!("secret key provider: {error}"))?;
+            eprintln!(
+                "quansio-server: QUANSIO_SECRETS_KEY_FILE: secret handles are sealed under {}",
+                config.secrets_key_ref
+            );
+            api = api.with_key_provider(Arc::new(keys));
+        }
         if let Some(root) = config.web_root.as_deref() {
             let root = crate::api::web::WebRoot::new(root)?;
             eprintln!(
@@ -195,10 +221,12 @@ impl Composition {
         if let Some(interval) = self.config.background_interval {
             let background = Background::new(self.pool.clone(), self.api.clone());
             eprintln!(
-                "quansio-server: background loop every {} ms (routines, event triggers, notifications, email{})",
+                "quansio-server: background loop every {} ms (routines, event triggers, notifications, email{}, webhooks{})",
                 interval.as_millis(),
-                if background.email.is_some() { "" } else { " unavailable: QUANSIO_EMAIL_ENDPOINT is not set" }
+                if background.email.is_some() { "" } else { " unavailable: QUANSIO_EMAIL_ENDPOINT is not set" },
+                if background.keys.is_some() { "" } else { " unsigned and so not sent: QUANSIO_SECRETS_KEY_FILE is not set" }
             );
+            tokio::spawn(background.clone().run_webhooks(interval));
             tokio::spawn(background.run(interval));
         }
         axum::serve(listener, self.router())
@@ -211,8 +239,10 @@ impl Composition {
 /// (timers, routine windows and their fires, queued runs), one pass of the routine event
 /// triggers, the notifier, and email delivery. Each pass is bounded; a failing tenant is
 /// logged and the others go on.
+#[derive(Clone)]
 pub struct Background {
     pool: PgPool,
+    keys: Option<Arc<dyn quansio_machine::secrets::KeyProvider>>,
     dispatch: Arc<dyn crate::scheduler::RunDispatch>,
     email: Option<Arc<dyn crate::notify::EmailTransport>>,
     instance: String,
@@ -225,6 +255,7 @@ impl Background {
     pub fn new(pool: PgPool, api: ApiState) -> Self {
         Self {
             pool,
+            keys: api.key_provider(),
             dispatch: crate::api::routines::interactive_dispatch(&api),
             email: crate::notify::HttpEmailTransport::from_env(),
             instance: format!(
@@ -242,6 +273,44 @@ impl Background {
                 eprintln!("quansio-server: background pass: {message}");
             }
         }
+    }
+
+    /// Run the webhook fan-out and deliveries forever, one pass per `interval`. They run beside
+    /// the main loop rather than in it, so a slow destination never delays a routine.
+    pub async fn run_webhooks(self, interval: Duration) {
+        loop {
+            tokio::time::sleep(interval).await;
+            if let Err(message) = self.webhook_pass().await {
+                eprintln!("quansio-server: webhook pass: {message}");
+            }
+        }
+    }
+
+    /// One webhook pass over every tenant: enqueue new events, then attempt due deliveries.
+    ///
+    /// # Errors
+    /// Returns a message when the tenants cannot be listed.
+    pub async fn webhook_pass(&self) -> Result<(), String> {
+        let tenants: Vec<String> = sqlx::query_scalar("SELECT background_tenants()")
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|error| format!("cannot list tenants: {error}"))?;
+        for tenant in tenants {
+            let fanout = crate::notify::WebhookFanout::new(self.pool.clone(), tenant.as_str());
+            if let Err(error) = fanout.scan(512).await {
+                eprintln!("quansio-server: webhook fan-out for {tenant}: {error}");
+                continue;
+            }
+            let deliverer = crate::notify::WebhookDeliverer::new(
+                self.pool.clone(),
+                tenant.as_str(),
+                self.keys.clone(),
+            );
+            if let Err(error) = deliverer.deliver_due(chrono::Utc::now(), 32).await {
+                eprintln!("quansio-server: webhook delivery for {tenant}: {error}");
+            }
+        }
+        Ok(())
     }
 
     /// One pass over every tenant.

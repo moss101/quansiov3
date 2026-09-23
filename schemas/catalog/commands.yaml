@@ -80,6 +80,8 @@ commands:
   - CompleteConnectorAuth
   - RevokeConnector
   - CreateWebhookSubscription
+  - UpdateWebhookSubscription
+  - RedeliverWebhook
   - DeleteWebhookSubscription
   Notifications:
   - UpdateNotificationPreferences

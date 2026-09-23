@@ -41,6 +41,7 @@ pub const EVENT_FAMILIES: &[&str] = &[
     "routine",
     "notification",
     "connector",
+    "webhook",
     "policy",
     "audit",
     "usage",
@@ -108,6 +109,8 @@ pub enum EventFamily {
     Notification,
     /// `connector.*`
     Connector,
+    /// `webhook.*`
+    Webhook,
     /// `policy.*`
     Policy,
     /// `audit.*`
@@ -155,6 +158,7 @@ impl EventFamily {
             Self::Routine,
             Self::Notification,
             Self::Connector,
+            Self::Webhook,
             Self::Policy,
             Self::Audit,
             Self::Usage,
@@ -196,6 +200,7 @@ impl EventFamily {
             Self::Routine => "routine",
             Self::Notification => "notification",
             Self::Connector => "connector",
+            Self::Webhook => "webhook",
             Self::Policy => "policy",
             Self::Audit => "audit",
             Self::Usage => "usage",
