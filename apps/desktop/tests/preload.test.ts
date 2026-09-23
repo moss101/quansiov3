@@ -104,6 +104,12 @@ describe("preload bridge", () => {
         "handback",
         "attachLive",
         "detachLive",
+        "viewThread",
+        "createThread",
+        "addParticipant",
+        "removeParticipant",
+        "react",
+        "handOffThread",
         "onStreamFrame",
         "onStreamState",
         "onStreamError",
@@ -186,6 +192,12 @@ describe("preload bridge", () => {
     await api.handback({ sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
     await api.attachLive("tgt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.detachLive();
+    await api.viewThread("thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.createThread({ kind: "group", title: "launch", participants: [] });
+    await api.addParticipant({ thread_id: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", kind: "user", id: "usr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.removeParticipant({ thread_id: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", kind: "user", id: "usr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.react({ message_id: "msg_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", emoji: "👍", remove: false });
+    await api.handOffThread({ thread_id: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", to_teammate_id: "agt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

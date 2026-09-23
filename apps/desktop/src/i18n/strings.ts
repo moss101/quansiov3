@@ -232,6 +232,28 @@ export const STRINGS = {
   liveGaps: "gaps",
   liveTerminalEmpty: "Replay resumes from the durable cursor; bytes appear as the conduit sends them.",
   liveSessionMismatch: "The server answered for a different session; keeping the one you chose.",
+  // Collaboration (APP-009).
+  collabSurface: "Collaboration",
+  collabThreads: "Threads",
+  collabProtected: "members only",
+  collabNeedsYou: "needs you",
+  collabNewGroup: "New group thread",
+  collabTitle: "Title",
+  collabPeople: "People (usr_… ids, comma separated)",
+  collabCreate: "Create",
+  collabNotice: "Notice",
+  collabComposer: "Message the thread… @ to mention",
+  collabPick: "Pick a thread.",
+  collabMembers: "Members",
+  collabLeft: "left",
+  collabResponsible: "responsible",
+  collabRemove: "Remove",
+  collabAdd: "Add",
+  collabAddPlaceholder: "usr_… or agt_…",
+  collabLeave: "Leave thread",
+  collabHandoff: "Hand off",
+  collabHandTo: "Hand to",
+  collabRemoved: "You were removed from this thread; it is no longer shown.",
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

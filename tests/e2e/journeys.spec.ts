@@ -23,7 +23,7 @@ import { decodeHistory, diffLines } from "../../apps/desktop/src/artifacts/works
 import { openAllowed, previewIsSafe, previewPlan } from "../../apps/desktop/src/artifacts/preview.js";
 import { agentInputAllowed, applyEvent, decodeLiveSession, handbackAllowed, takeoverAllowed } from "../../apps/desktop/src/live/session.js";
 import { archiveInRoster, visibleRoster } from "../../apps/desktop/src/teammates/roster.js";
-import { receivesProtected } from "../../apps/desktop/src/collaboration/participants.js";
+import { applyThreadEvent, decodeThreadView } from "../../apps/desktop/src/collaboration/thread.js";
 import { STRINGS } from "../../apps/desktop/src/i18n/strings.js";
 import { SessionFile } from "../../apps/desktop/src/main/session-file.js";
 
@@ -139,8 +139,16 @@ describe("critical journeys", () => {
     );
     expect(afterArchive[0]?.status).toBe("archived");
     expect(afterArchive[0]?.activeRunId).toBeNull();
-    expect(receivesProtected({ id: "agt_1", status: "removed" })).toBe(false);
-    expect(receivesProtected({ id: "agt_1", status: "active" })).toBe(true);
+    // APP-009: a person removed from a protected thread stops seeing it at once.
+    const threadState = {
+      view: decodeThreadView({ id: "thr_1", kind: "group", protected: true, participants: [{ kind: "user", id: "usr_1", role: "member", active: true }], attention: [] }),
+      messages: [],
+      revoked: false,
+      stale: false,
+    };
+    const removal = { type: "thread.participant_removed", aggregate_type: "thread", aggregate_id: "thr_1", payload: { principal: { kind: "user", id: "usr_1" } } };
+    expect(applyThreadEvent(threadState, removal, "usr_1").revoked).toBe(true);
+    expect(applyThreadEvent(threadState, removal, "usr_2").revoked).toBe(false);
   });
 
   it("surfaces every state through externalized strings, never hard-coded copy", () => {

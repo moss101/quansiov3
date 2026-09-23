@@ -66,6 +66,12 @@ export const PRELOAD_ALLOWLIST = [
   "live.handback",
   "live.attach",
   "live.detach",
+  "threads.view",
+  "threads.create",
+  "participants.add",
+  "participants.remove",
+  "messages.react",
+  "threads.handoff",
 ] as const;
 
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
@@ -147,8 +153,13 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     threadMessages: (threadId: string) => send("threads.messages", { threadId }),
     listQuestions: (scope: { threadId: string } | { runId: string }) => send("questions.list", scope),
     runTimeline: (runId: string) => send("runs.timeline", { runId }),
-    postMessage: (message: { threadId?: string | null; content: string; attachments?: readonly string[]; teammateId?: string | null }) =>
-      send("messages.post", message),
+    postMessage: (message: {
+      threadId?: string | null;
+      content: string;
+      attachments?: readonly string[];
+      teammateId?: string | null;
+      mentions?: readonly { kind: "user" | "teammate"; id: string }[];
+    }) => send("messages.post", message),
     answerQuestion: (questionId: string, value: unknown) => send("questions.answer", { questionId, value }),
     cancelTurn: (runId: string, generation?: number) => send("turns.cancel", { runId, generation }),
     uploadAttachment: (file: { name: string; mediaType: string; bytesBase64: string; threadId?: string | null; artifactId?: string | null }) =>
@@ -199,6 +210,14 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     handback: (subject: { sessionId: string } | { targetId: string }) => send("live.handback", subject),
     attachLive: (targetId: string) => send("live.attach", { targetId }),
     detachLive: () => send("live.detach", {}),
+    // Collaboration (APP-009): the thread's membership and attention, and the commands that
+    // change membership, react and hand a thread to another teammate (refusals are data).
+    viewThread: (threadId: string) => send("threads.view", { threadId }),
+    createThread: (params: Record<string, unknown>) => send("threads.create", params),
+    addParticipant: (params: Record<string, unknown>) => send("participants.add", params),
+    removeParticipant: (params: Record<string, unknown>) => send("participants.remove", params),
+    react: (params: { message_id: string; emoji: string; remove: boolean }) => send("messages.react", params),
+    handOffThread: (params: Record<string, unknown>) => send("threads.handoff", params),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),
