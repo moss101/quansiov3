@@ -1,0 +1,10 @@
+tests/sdk/test_python_sdk_webhooks.py::test_the_contract_is_generated_from_domain PASSED [ 12%]
+tests/sdk/test_python_sdk_webhooks.py::test_the_servers_signature_verifies_over_the_raw_body PASSED [ 25%]
+tests/sdk/test_python_sdk_webhooks.py::test_anything_else_is_refused_with_a_reason[kwargs0-mismatch] PASSED [ 37%]
+tests/sdk/test_python_sdk_webhooks.py::test_anything_else_is_refused_with_a_reason[kwargs1-mismatch] PASSED [ 50%]
+tests/sdk/test_python_sdk_webhooks.py::test_anything_else_is_refused_with_a_reason[kwargs2-stale] PASSED [ 62%]
+tests/sdk/test_python_sdk_webhooks.py::test_anything_else_is_refused_with_a_reason[kwargs3-malformed] PASSED [ 75%]
+tests/sdk/test_python_sdk_webhooks.py::test_anything_else_is_refused_with_a_reason[kwargs4-malformed] PASSED [ 87%]
+tests/sdk/test_python_sdk_webhooks.py::test_a_rotation_window_verifies_with_either_signature PASSED [100%]
+============================== 8 passed in 0.03s ===============================
+exit=0

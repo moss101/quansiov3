@@ -1,0 +1,112 @@
+{
+  "task_id": "APP-015",
+  "git_commit": "0a69a4e2e7a71ecddaa2c7801abca7d52d7f90c4",
+  "recorded_at": "2026-09-23T10:39:04Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test webhooks (delivery/retry/dead-letter/redelivery/lease recovery/rotation; tenant and workspace scope; redaction scan; egress deny and kill switches; no key provider; SSE stream \u2014 real PostgreSQL and a real loopback HTTP receiver)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-015/2026-09-23T09-56-15Z/cargo-webhooks.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib -- webhooks sse_tests policy::rules (signature incl. cross-language vector, redaction, filters, backoff, SSE query, one-time secret, allowed_address_classes)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-015/2026-09-23T09-56-15Z/cargo-unit.log"
+    },
+    {
+      "command": "python3.12 app015_mutations.py (redaction, workspace scope, egress broker, pause, stable event id each removed in a scratch edit; the named test fails every time; sources restored with git checkout)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-015/2026-09-23T09-56-15Z/mutation-checks.log"
+    },
+    {
+      "command": "(cd sdk/typescript && pnpm exec vitest run tests/webhooks.test.ts)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-015/2026-09-23T09-56-15Z/vitest-sdk-webhooks.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/sdk/test_python_sdk_webhooks.py -v",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-015/2026-09-23T09-56-15Z/pytest-sdk-webhooks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, clippy, pnpm build/typecheck/test incl. SDK and E2E, eslint, ruff/pytest, contract drift incl. OpenAPI/SDK regeneration, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-015/2026-09-23T09-56-15Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test webhooks (delivery/retry/dead-letter/redelivery/lease recovery/rotation; tenant and workspace scope; redaction scan; egress deny and kill switches; no key provider; SSE stream \u2014 real PostgreSQL and a real loopback HTTP receiver)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib -- webhooks sse_tests policy::rules (signature incl. cross-language vector, redaction, filters, backoff, SSE query, one-time secret, allowed_address_classes)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 app015_mutations.py (redaction, workspace scope, egress broker, pause, stable event id each removed in a scratch edit; the named test fails every time; sources restored with git checkout)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd sdk/typescript && pnpm exec vitest run tests/webhooks.test.ts)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/sdk/test_python_sdk_webhooks.py -v",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, clippy, pnpm build/typecheck/test incl. SDK and E2E, eslint, ruff/pytest, contract drift incl. OpenAPI/SDK regeneration, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-015/2026-09-23T09-56-15Z/NOTES.md",
+      "sha256": "7701553a86e59b8ccb11dfb0522d4ecf23fb4c37721c90ae0b0f62b6974348da",
+      "bytes": 6987
+    },
+    {
+      "path": "evidence/APP-015/2026-09-23T09-56-15Z/cargo-webhooks.log",
+      "sha256": "0ae410b026e2143c432392fe695ced5dfb2e1f3de9a1ac13b1eceebcbc09cc5b",
+      "bytes": 503
+    },
+    {
+      "path": "evidence/APP-015/2026-09-23T09-56-15Z/cargo-unit.log",
+      "sha256": "98941335ede58d75927afa4e00c81069538c6d9ed520f0edd8f86e7abbb1b6b4",
+      "bytes": 1546
+    },
+    {
+      "path": "evidence/APP-015/2026-09-23T09-56-15Z/mutation-checks.log",
+      "sha256": "d404db225a392bfd3502fd88ed7c506d10cb2710809553575be6bda9783b5672",
+      "bytes": 1941
+    },
+    {
+      "path": "evidence/APP-015/2026-09-23T09-56-15Z/vitest-sdk-webhooks.log",
+      "sha256": "8891a7d9493e8b2a26e403c0188fd85eef5f8fdfc3cb9a56e7c183281b6130ff",
+      "bytes": 186
+    },
+    {
+      "path": "evidence/APP-015/2026-09-23T09-56-15Z/pytest-sdk-webhooks.log",
+      "sha256": "b029c468a2dd28d20dd01e1bf30c4c6c0a7d929d447e2a30064ba6208f8ecb70",
+      "bytes": 972
+    },
+    {
+      "path": "evidence/APP-015/2026-09-23T09-56-15Z/ci-summary.json",
+      "sha256": "cb05232805f2eaeb3149b81d2ff733608ef8df02c0cb5a81b723c9b9db031e26",
+      "bytes": 6884
+    }
+  ]
+}
