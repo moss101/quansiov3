@@ -2,13 +2,13 @@
  RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
 
  ✓ tests/live.test.ts (10 tests) 4ms
- ✓ tests/preload.test.ts (4 tests) 6ms
- ✓ tests/live.e2e.test.ts (1 test) 6779ms
-   ✓ desktop live surface E2E against quansio-server > takes over the same session, fences the agent, survives a reconnect, and hands back 4113ms
+ ✓ tests/preload.test.ts (4 tests) 7ms
+ ✓ tests/live.e2e.test.ts (1 test) 4878ms
+   ✓ desktop live surface E2E against quansio-server > takes over the same session, fences the agent, survives a reconnect, and hands back 2363ms
 
  Test Files  3 passed (3)
       Tests  15 passed (15)
-   Start at  07:53:22
-   Duration  7.09s (transform 171ms, setup 0ms, collect 433ms, tests 6.79s, environment 0ms, prepare 135ms)
+   Start at  08:00:36
+   Duration  5.20s (transform 174ms, setup 0ms, collect 476ms, tests 4.89s, environment 0ms, prepare 138ms)
 
 exit=0

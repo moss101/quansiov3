@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.06s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.37s
      Running tests/live_sessions.rs (target/debug/deps/live_sessions-42a44f26b201ca9e)
 
 running 3 tests
@@ -9,6 +9,6 @@ test a_policy_pause_is_shown_and_no_handback_undoes_it ... ok
 test a_takeover_fences_the_same_session_and_parks_the_run ... ok
 test a_native_computer_takeover_drives_the_control_row_with_its_fence ... ok
 
-test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.74s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.68s
 
 exit=0
