@@ -1,0 +1,15 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/automation.test.ts (7 tests) 3ms
+ ✓ tests/preload.test.ts (4 tests) 5ms
+ ✓ tests/automation.e2e.test.ts (2 tests) 16097ms
+   ✓ desktop automation E2E against quansio-server > delivers a mention on exactly the channels the person chose 1478ms
+   ✓ desktop automation E2E against quansio-server > keeps firing a routine across a server restart without firing a window twice 11817ms
+
+ Test Files  3 passed (3)
+      Tests  13 passed (13)
+   Start at  09:43:27
+   Duration  16.38s (transform 151ms, setup 0ms, collect 413ms, tests 16.10s, environment 0ms, prepare 119ms)
+
+exit=0
