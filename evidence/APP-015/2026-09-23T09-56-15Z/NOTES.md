@@ -78,16 +78,17 @@ named test failed; the fix restored it.
   RUN-006's `RuleConditions` (`deny_unknown_fields`) had: a policy with it failed to parse and
   `SetPolicy` refused it. Added additively (validated against the broker's classes, omitted when
   empty so existing digests are unchanged).
-- `commands.id` is globally unique although idempotency is per tenant — two tenants using one
-  command id collide with a 500. Out of scope; raised as a separate task.
+- `commands.id` was globally unique although idempotency is per tenant — two tenants using one
+  command id collided with a 500. Raised as a separate task; fixed on main as an APP-001
+  regression (5c5334e) and merged into this branch before the final CI.
 - Not in scope and not done: a desktop/web admin screen for webhooks; the dev scripts do not
   provision `QUANSIO_SECRETS_KEY_FILE` (the server says so at startup and refuses to create a
   webhook without it). OPS-008's durable effect freeze will plug into the attempt gate.
 
 ## Full CI
 
-`bash scripts/ci/ci.sh` on this branch after merging main: 11/11 gates PASS
-(`ci-summary.json`). Earlier runs on the way: the first failed only on
+`bash scripts/ci/ci.sh` on this branch after merging main (including APP-001's command
+record id fix): 11/11 gates PASS (`ci-summary.json`). Earlier runs on the way: the first failed only on
 `apps/desktop/tests/collaboration.e2e.test.ts` (an intermittent `ACTIVE -> ACTIVE` race in
 APP-009's message routing, fixed and recorded as an APP-009 regression in
 `evidence/APP-009/2026-09-23T10-16-25Z/`, merged to main first); the second failed only the

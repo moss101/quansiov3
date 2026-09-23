@@ -85,4 +85,4 @@ lease lapses (at-least-once). The migration is additive.
   pattern; `webhook` added with the family.
 - `commands.id` is the client command id and is globally unique (the idempotency conflict
   target is `(tenant_id, command_id)`): two tenants reusing one command id collide with a
-  500. Client-minted ULIDs never do; noted, not changed.
+  500. Raised as a separate task; fixed on main as an APP-001 regression (5c5334e).

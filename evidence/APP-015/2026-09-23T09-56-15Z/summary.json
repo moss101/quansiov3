@@ -1,7 +1,7 @@
 {
   "task_id": "APP-015",
-  "git_commit": "0a69a4e2e7a71ecddaa2c7801abca7d52d7f90c4",
-  "recorded_at": "2026-09-23T10:39:04Z",
+  "git_commit": "d5e2cbad90059225a6a80db921aaa720339af7cf",
+  "recorded_at": "2026-09-23T11:30:58Z",
   "commands": [
     {
       "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test webhooks (delivery/retry/dead-letter/redelivery/lease recovery/rotation; tenant and workspace scope; redaction scan; egress deny and kill switches; no key provider; SSE stream \u2014 real PostgreSQL and a real loopback HTTP receiver)",
@@ -75,8 +75,8 @@
   "artifacts": [
     {
       "path": "evidence/APP-015/2026-09-23T09-56-15Z/NOTES.md",
-      "sha256": "7701553a86e59b8ccb11dfb0522d4ecf23fb4c37721c90ae0b0f62b6974348da",
-      "bytes": 6987
+      "sha256": "a2c295eeb6baaf3e569a9a84ae485ba3b2082986518d3a9761b3183d9993c85b",
+      "bytes": 7119
     },
     {
       "path": "evidence/APP-015/2026-09-23T09-56-15Z/cargo-webhooks.log",
@@ -105,8 +105,8 @@
     },
     {
       "path": "evidence/APP-015/2026-09-23T09-56-15Z/ci-summary.json",
-      "sha256": "cb05232805f2eaeb3149b81d2ff733608ef8df02c0cb5a81b723c9b9db031e26",
-      "bytes": 6884
+      "sha256": "3cd850587fa8ab847790631ffa59465de7d640bc2dcb53d15f86a09ef2985526",
+      "bytes": 6892
     }
   ]
 }
