@@ -1,0 +1,64 @@
+{
+  "task_id": "APP-009",
+  "git_commit": "f32d3e566a412b8f4b81d6c9a941ce72e722ce9b",
+  "recorded_at": "2026-09-23T10:16:40Z",
+  "commands": [
+    {
+      "command": "(cd apps/desktop && pnpm exec vitest run tests/collaboration.e2e.test.ts)  # before the fix, in APP-015's CI and 2 of 6 isolated reruns: RUNTIME_ILLEGAL_TRANSITION ACTIVE -> ACTIVE",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/APP-009/2026-09-23T10-16-25Z/e2e-before-ci-excerpt.log"
+    },
+    {
+      "command": "(cd apps/desktop && pnpm exec vitest run tests/collaboration.e2e.test.ts) x8  # after the fix: 8 of 8 pass",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-09-23T10-16-25Z/e2e-after-8-runs.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test agents --test collaboration --test conversation_surface  # incl. ensure_active_accepts_a_thread_another_caller_already_activated",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-09-23T10-16-25Z/cargo-agents-collaboration.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "(cd apps/desktop && pnpm exec vitest run tests/collaboration.e2e.test.ts)  # before the fix, in APP-015's CI and 2 of 6 isolated reruns: RUNTIME_ILLEGAL_TRANSITION ACTIVE -> ACTIVE",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "(cd apps/desktop && pnpm exec vitest run tests/collaboration.e2e.test.ts) x8  # after the fix: 8 of 8 pass",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test agents --test collaboration --test conversation_surface  # incl. ensure_active_accepts_a_thread_another_caller_already_activated",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-009/2026-09-23T10-16-25Z/NOTES.md",
+      "sha256": "e800e510ba9b44195071132ac58aaa56e4fb2658b8e592df567f4d73ff3943ac",
+      "bytes": 1660
+    },
+    {
+      "path": "evidence/APP-009/2026-09-23T10-16-25Z/e2e-before-ci-excerpt.log",
+      "sha256": "4b92d868ed421847412405780f25cc5782112f433027b38ea93079ff70a17f61",
+      "bytes": 5027
+    },
+    {
+      "path": "evidence/APP-009/2026-09-23T10-16-25Z/e2e-after-8-runs.log",
+      "sha256": "3e34ddfe66111ba9f085f6a46dfb17a9aa942febbfa428412825f3a04ea65145",
+      "bytes": 215
+    },
+    {
+      "path": "evidence/APP-009/2026-09-23T10-16-25Z/cargo-agents-collaboration.log",
+      "sha256": "533e480bc0aaf27de8aad42930f81be3800e68859512ce069fef587a4100dbf9",
+      "bytes": 1571
+    }
+  ]
+}

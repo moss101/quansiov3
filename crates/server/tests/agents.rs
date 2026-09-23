@@ -1054,3 +1054,87 @@ async fn delegating_proposal_creates_a_real_child_and_parks_the_run() {
 
     drop_pool(&f.pool, &f.name).await;
 }
+
+/// APP-009 regression (found by `apps/desktop/tests/collaboration.e2e.test.ts`): two messages
+/// routed to one teammate at once both read its thread as `PROVISIONED`; the second activation
+/// was refused as `ACTIVE → ACTIVE` and the message failed. `ensure_active` accepts a thread
+/// another caller activated, and still refuses one that is not active.
+#[tokio::test]
+async fn ensure_active_accepts_a_thread_another_caller_already_activated() {
+    let Some(f) = prepare("run002_ensure_active").await else {
+        blocked_marker();
+        return;
+    };
+
+    let stale = create_thread(&f.agents, AgentKind::Teammate, WORKSPACE, None, None).await;
+    assert_eq!(stale.status, AgentThreadStatus::Provisioned);
+    f.agents
+        .activate(&stale.id, stale.generation)
+        .await
+        .expect("the other caller's activation");
+    assert!(
+        f.agents
+            .activate(&stale.id, stale.generation)
+            .await
+            .is_err(),
+        "a plain activation from the stale read is refused — the race the E2E hit"
+    );
+    let active = f
+        .agents
+        .ensure_active(stale.clone())
+        .await
+        .expect("accepted");
+    assert_eq!(active.status, AgentThreadStatus::Active);
+    let again = f
+        .agents
+        .ensure_active(active.clone())
+        .await
+        .expect("idempotent");
+    assert_eq!(
+        again.generation, active.generation,
+        "an active thread is left alone"
+    );
+
+    // Six callers racing from one read: all succeed, one activation happens.
+    let fresh = create_thread(&f.agents, AgentKind::Teammate, WORKSPACE, None, None).await;
+    let raced =
+        futures_util::future::join_all((0..6).map(|_| f.agents.ensure_active(fresh.clone()))).await;
+    for result in &raced {
+        assert_eq!(
+            result.as_ref().expect("every caller succeeds").status,
+            AgentThreadStatus::Active
+        );
+    }
+    let activations = count_of(
+        &f.pool,
+        TENANT,
+        "SELECT count(*) FROM runtime_events WHERE type = 'agent.activated' AND aggregate_id = $1",
+        &[fresh.id.to_string()],
+    )
+    .await;
+    assert_eq!(activations, 1);
+
+    // A thread that cannot become active any more is still refused.
+    let moved = create_thread(&f.agents, AgentKind::Teammate, WORKSPACE, None, None).await;
+    let mut current = f
+        .agents
+        .activate(&moved.id, moved.generation)
+        .await
+        .expect("activate");
+    for to in [AgentThreadStatus::HandingOff, AgentThreadStatus::HandedOff] {
+        current = f
+            .agents
+            .transition(&current.id, current.generation, to)
+            .await
+            .expect("hand off");
+    }
+    f.agents
+        .terminate(&current.id, current.generation)
+        .await
+        .expect("terminate");
+    assert!(matches!(
+        f.agents.ensure_active(moved).await,
+        Err(RuntimeError::IllegalTransition { .. })
+    ));
+    drop_pool(&f.pool, &f.name).await;
+}

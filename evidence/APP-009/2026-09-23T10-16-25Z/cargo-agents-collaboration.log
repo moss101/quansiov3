@@ -1,0 +1,22 @@
+test capability_narrowing_accepts_only_narrowing_and_writes_nothing_on_widening ... ok
+test ensure_active_accepts_a_thread_another_caller_already_activated ... ok
+test handoff_is_recoverable_across_a_pool_drop_and_idempotent ... ok
+test mailbox_cursor_resumes_exactly_once_and_isolates_tenants_and_threads ... ok
+test generation_fencing_and_tenant_isolation_for_agent_mutations ... ok
+test delegating_proposal_creates_a_real_child_and_parks_the_run ... ok
+test fanout_join_out_of_order_parks_parent_until_the_last_child_and_is_idempotent ... ok
+test lifecycle_transitions_for_teammate_and_worker_with_policy_negatives ... ok
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.18s
+test membership_rules_protect_a_thread_for_its_participants ... ok
+test reactions_mentions_and_attention ... ok
+test a_handoff_moves_the_thread_to_the_next_teammate ... ok
+test a_removed_participant_receives_no_new_protected_event ... ok
+test concurrent_posts_from_two_people_keep_one_stable_order ... ok
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.40s
+test without_an_object_store_uploads_fail_closed ... ok
+test a_question_parks_the_run_and_the_answer_in_thread_resumes_it ... ok
+test an_upload_becomes_an_attachment_the_message_and_the_inspector_carry ... ok
+test cancel_turn_stops_a_parked_run_and_withdraws_its_question ... ok
+test live_frames_reach_a_workspace_subscriber_while_the_turn_runs ... ok
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.03s
+exit=0
