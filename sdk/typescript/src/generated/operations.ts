@@ -70,6 +70,8 @@ export const OPERATIONS = {
   CompleteConnectorAuth: { method: "POST", path: "/v1/commands/CompleteConnectorAuth", family: "Connectors" },
   RevokeConnector: { method: "POST", path: "/v1/commands/RevokeConnector", family: "Connectors" },
   CreateWebhookSubscription: { method: "POST", path: "/v1/commands/CreateWebhookSubscription", family: "Connectors" },
+  UpdateWebhookSubscription: { method: "POST", path: "/v1/commands/UpdateWebhookSubscription", family: "Connectors" },
+  RedeliverWebhook: { method: "POST", path: "/v1/commands/RedeliverWebhook", family: "Connectors" },
   DeleteWebhookSubscription: { method: "POST", path: "/v1/commands/DeleteWebhookSubscription", family: "Connectors" },
   UpdateNotificationPreferences: { method: "POST", path: "/v1/commands/UpdateNotificationPreferences", family: "Notifications" },
   MarkNotificationRead: { method: "POST", path: "/v1/commands/MarkNotificationRead", family: "Notifications" },
@@ -114,7 +116,10 @@ export const READ_PROJECTIONS = [
   "/v1/usage",
   "/v1/audit",
   "/v1/search?q=",
+  "/v1/webhooks",
+  "/v1/webhooks/{id}/deliveries",
   "/v1/stream",
+  "/v1/stream/events",
 ] as const;
 
 export const ERROR_CODES = [
@@ -159,3 +164,14 @@ export const ERROR_CODES = [
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
+
+/** The outbound webhook request contract (DOMAIN.md §13.5). */
+export const WEBHOOK_SIGNATURE = {
+  header: "quansio-signature",
+  headers: ["quansio-event-id", "quansio-event-type", "quansio-delivery-id", "quansio-signature"],
+  scheme: "v1",
+  signedPayload: "<t>.<body>",
+  algorithm: "HMAC-SHA256",
+  toleranceSeconds: 300,
+  secretPrefix: "whsec_",
+} as const;

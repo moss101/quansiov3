@@ -20,6 +20,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .generated.operations import ERROR_CODES, OPERATIONS, READ_PROJECTIONS
+from .webhooks import (
+    WebhookSignatureError,
+    parse_webhook_signature,
+    verify_webhook_signature,
+)
 
 __all__ = [
     "ERROR_CODES",
@@ -29,8 +34,11 @@ __all__ = [
     "ApiError",
     "Client",
     "Credential",
+    "WebhookSignatureError",
     "new_command_id",
+    "parse_webhook_signature",
     "public_api_path",
+    "verify_webhook_signature",
 ]
 
 PUBLIC_API_VERSION = "v1"

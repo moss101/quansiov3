@@ -319,6 +319,7 @@ pub struct ApiState {
     objects: Option<Arc<dyn ObjectStore>>,
     search: Option<Arc<search::SearchService>>,
     web_root: Option<web::WebRoot>,
+    keys: Option<Arc<dyn quansio_machine::secrets::KeyProvider>>,
 }
 
 impl ApiState {
@@ -359,7 +360,25 @@ impl ApiState {
             objects: None,
             search: None,
             web_root: None,
+            keys: None,
         })
+    }
+
+    /// Install the key provider that seals and opens secret handles (EXEC-007): webhook
+    /// signing secrets (APP-015). Without one, creating a webhook fails closed.
+    #[must_use]
+    pub fn with_key_provider(
+        mut self,
+        keys: Arc<dyn quansio_machine::secrets::KeyProvider>,
+    ) -> Self {
+        self.keys = Some(keys);
+        self
+    }
+
+    /// The key provider, when the deployment has one.
+    #[must_use]
+    pub fn key_provider(&self) -> Option<Arc<dyn quansio_machine::secrets::KeyProvider>> {
+        self.keys.clone()
     }
 
     /// Serve the built web app from `root` under `/app/` (APP-012).
@@ -542,6 +561,7 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/auth/sign-out", post(auth::sign_out))
         .route("/v1/me", get(auth::me))
         .route("/v1/stream", get(stream::stream))
+        .route("/v1/stream/events", get(stream::stream_events))
         .route("/v1/threads", get(collaboration::list_threads))
         .route("/v1/threads/:id", get(collaboration::thread))
         .route("/v1/messages", get(collaboration::messages))
@@ -574,6 +594,8 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/teammates", get(teammates::roster))
         .route("/v1/routines", get(routines::routines))
         .route("/v1/notifications", get(routines::notifications))
+        .route("/v1/webhooks", get(webhooks::webhooks))
+        .route("/v1/webhooks/:id/deliveries", get(webhooks::deliveries))
         .route("/v1/targets", get(live_sessions::targets))
         .route(
             "/v1/browser-sessions/:id",

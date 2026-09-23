@@ -390,6 +390,21 @@ pub async fn invoke(
             )
             .await?
         }
+        "CreateWebhookSubscription" => {
+            super::webhooks::create_subscription(&state, &scope, &request.params, &correlation)
+                .await?
+        }
+        "UpdateWebhookSubscription" => {
+            super::webhooks::update_subscription(&state, &scope, &request.params, &correlation)
+                .await?
+        }
+        "RedeliverWebhook" => {
+            super::webhooks::redeliver(&state, &scope, &request.params, &correlation).await?
+        }
+        "DeleteWebhookSubscription" => {
+            super::webhooks::delete_subscription(&state, &scope, &request.params, &correlation)
+                .await?
+        }
         "SetPolicy" => {
             super::admin::set_policy(
                 &state,
@@ -410,12 +425,13 @@ pub async fn invoke(
         }
     };
 
+    // A one-time value (a webhook signing secret) is returned once and never kept.
     sqlx::query(
         "UPDATE commands SET status = 'applied', result = $3 WHERE tenant_id = $1 AND command_id = $2",
     )
     .bind(&scope.tenant_id)
     .bind(command_id.as_canonical().to_string())
-    .bind(&result)
+    .bind(super::webhooks::stored_result(&result))
     .execute(state.pool())
     .await
     .map_err(database_error)?;

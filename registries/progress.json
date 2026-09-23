@@ -2080,10 +2080,10 @@
     },
     "APP-015": {
       "coverage": "PARTIAL",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:claude-opus-5.5",
+      "started_at": "2026-09-23T07:21:57Z",
+      "updated_at": "2026-09-23T07:21:57Z",
       "git_commit": null,
       "tests": [
         "cargo test -p quansio-server --test webhooks (tenant/workspace scope, egress deny, kill switch, event_id dedupe, secret redaction)"

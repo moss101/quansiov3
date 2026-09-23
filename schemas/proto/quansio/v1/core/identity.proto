@@ -65,6 +65,7 @@ enum EntityPrefix {
   ENTITY_PREFIX_TERMINAL_SESSION = 47;  // tsn_
   ENTITY_PREFIX_BROWSER_SESSION = 48;  // bsn_
   ENTITY_PREFIX_SESSION = 49;  // ses_ (APP-002: authenticated session)
+  ENTITY_PREFIX_WEBHOOK_DELIVERY = 50;  // whd_ (APP-015: webhook delivery ledger)
 }
 
 // Tenant/workspace scope carried by every tenant-scoped contract.

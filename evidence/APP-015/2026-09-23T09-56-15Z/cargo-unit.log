@@ -1,0 +1,19 @@
+test policy::rules::tests::scope_round_trips ... ok
+test notify::webhooks::signature::tests::a_secret_is_prefixed_and_random ... ok
+test notify::webhooks::tests::backoff_doubles_from_thirty_seconds_to_an_hour ... ok
+test notify::webhooks::redact::tests::secret_keys_match_by_segment ... ok
+test api::webhooks::tests::the_command_log_never_keeps_a_one_time_secret ... ok
+test policy::rules::tests::always_on_tier_four_is_rejected ... ok
+test policy::rules::tests::time_window_handles_wrap_and_rejects_garbage ... ok
+test notify::webhooks::tests::filters_are_family_wildcards_or_exact_types ... ok
+test policy::rules::tests::rule_conditions_deny_above_tier_and_trust_ceilings ... ok
+test notify::webhooks::signature::tests::the_cross_language_vector_is_what_the_server_signs ... ok
+test policy::rules::tests::workspace_policy_can_only_narrow_tenant_policy ... ok
+test policy::rules::tests::conditions_fail_closed_on_unlisted_data_class ... ok
+test api::stream::sse_tests::the_query_names_channels_a_cursor_and_last_event_id_wins ... ok
+test policy::rules::tests::canonical_rule_json_parses_and_unknown_fields_fail_closed ... ok
+test notify::webhooks::redact::tests::a_payload_loses_secrets_protected_fields_and_credential_shaped_text ... ok
+test policy::rules::tests::a_network_rule_names_its_address_classes_and_an_unknown_class_is_refused ... ok
+test notify::webhooks::signature::tests::a_signature_verifies_and_anything_else_does_not ... ok
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 124 filtered out; finished in 0.00s
+exit=0

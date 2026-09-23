@@ -28,4 +28,7 @@ read_projections:
 - /v1/usage
 - /v1/audit
 - /v1/search?q=
+- /v1/webhooks
+- /v1/webhooks/{id}/deliveries
 - /v1/stream
+- /v1/stream/events

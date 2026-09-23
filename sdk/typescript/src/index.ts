@@ -14,6 +14,14 @@ import { ERROR_CODES, OPERATIONS, READ_PROJECTIONS, type ErrorCode, type Operati
 
 export { ERROR_CODES, OPERATIONS, READ_PROJECTIONS };
 export type { ErrorCode, OperationId };
+export {
+  parseWebhookSignature,
+  verifyWebhookSignature,
+  WEBHOOK_SIGNATURE,
+  WebhookSignatureError,
+  type VerifyWebhookOptions,
+  type WebhookSignatureFailure,
+} from "./webhooks.js";
 
 export const PUBLIC_API_VERSION = "v1" as const;
 

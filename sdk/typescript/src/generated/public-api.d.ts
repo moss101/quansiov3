@@ -1143,6 +1143,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/commands/UpdateWebhookSubscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connectors: UpdateWebhookSubscription */
+        post: operations["UpdateWebhookSubscription"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commands/RedeliverWebhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connectors: RedeliverWebhook */
+        post: operations["RedeliverWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/commands/DeleteWebhookSubscription": {
         parameters: {
             query?: never;
@@ -1341,6 +1375,46 @@ export interface paths {
         put?: never;
         /** Admin/ops: DeleteUserData */
         post: operations["DeleteUserData"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The event stream over WebSocket (DOMAIN.md §9.3).
+         * @description Upgrade to a WebSocket, then send one StreamSubscribe message. The server sends StreamEventFrame (durable, replayable, with a cursor) and StreamLiveFrame (transient) messages; reconnect with the last cursor to replay what was missed. A slow consumer is disconnected with STREAM_BACKPRESSURE. A protected thread's events reach only its participants.
+         */
+        get: operations["Stream"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/stream/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The event stream as Server-Sent Events, for read-only consumers (DOMAIN.md §9.3).
+         * @description Each durable event is one SSE message: `event: event`, `id:` the stream cursor, `data:` a StreamEventFrame. Reconnecting with `Last-Event-ID` (or `cursor`) resumes after it. The same channels and the same protected-thread gate as the WebSocket.
+         */
+        get: operations["StreamEvents"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1806,6 +1880,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read projection /v1/webhooks (DOMAIN.md §14). */
+        get: operations["ReadV1Webhooks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/webhooks/{id}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read projection /v1/webhooks/{id}/deliveries (DOMAIN.md §14). */
+        get: operations["ReadV1Webhooks{Id}Deliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/magic-link/start": {
         parameters: {
             query?: never;
@@ -1926,7 +2034,25 @@ export interface paths {
         trace?: never;
     };
 }
-export type webhooks = Record<string, never>;
+export interface webhooks {
+    runtimeEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** One RuntimeEvent, redacted, signed, delivered at least once (DOMAIN.md §13.5). */
+        post: operations["WebhookRuntimeEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
 export interface components {
     schemas: {
         Error: {
@@ -2212,13 +2338,34 @@ export interface components {
         RevokeConnectorParams: {
             [key: string]: unknown;
         };
-        /** @description Connectors command CreateWebhookSubscription. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        /** @description Connectors command CreateWebhookSubscription. */
         CreateWebhookSubscriptionParams: {
-            [key: string]: unknown;
+            /** @description Absolute http(s) URL; its host and port are the grant (DOMAIN.md §13.5). */
+            url: string;
+            /** @description Scope; tenant-wide without one (ManageTenant). */
+            workspace_id?: string;
+            /** @description `family.name` or `family.*`; empty selects every type. */
+            event_types?: string[];
         };
-        /** @description Connectors command DeleteWebhookSubscription. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        /** @description Connectors command UpdateWebhookSubscription. */
+        UpdateWebhookSubscriptionParams: {
+            subscription_id: string;
+            /** @enum {string} */
+            status?: "active" | "paused";
+            event_types?: string[];
+            /**
+             * @description Replace the signing secret; the result carries the new one once.
+             * @enum {string}
+             */
+            secret?: "rotate";
+        };
+        /** @description Connectors command RedeliverWebhook. */
+        RedeliverWebhookParams: {
+            delivery_id: string;
+        };
+        /** @description Connectors command DeleteWebhookSubscription. */
         DeleteWebhookSubscriptionParams: {
-            [key: string]: unknown;
+            subscription_id: string;
         };
         /** @description Notifications command UpdateNotificationPreferences. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
         UpdateNotificationPreferencesParams: {
@@ -2263,6 +2410,54 @@ export interface components {
         /** @description Admin/ops command DeleteUserData. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
         DeleteUserDataParams: {
             [key: string]: unknown;
+        };
+        /**
+         * Quansio RuntimeEvent envelope
+         * @description Durable, ordered record of a committed state transition (DOMAIN.md 9.1). Written in the same PostgreSQL transaction as the mutation, plus a transactional outbox row.
+         */
+        RuntimeEvent: {
+            event_id: string;
+            tenant_id: string;
+            workspace_id?: string;
+            sequence: number;
+            aggregate_type: string;
+            aggregate_id: string;
+            aggregate_version: number;
+            type: string;
+            schema_version: string;
+            /** Format: date-time */
+            occurred_at: string;
+            command_id?: string;
+            correlation_id?: string;
+            causation_id?: string;
+            actor: {
+                /** @enum {unknown} */
+                kind: "user" | "agent" | "system" | "service";
+                id: string;
+            };
+            generation?: number;
+            payload?: Record<string, never>;
+        };
+        StreamSubscribe: {
+            subscribe: {
+                channel: string;
+            }[];
+            cursor?: string;
+            consumer?: string;
+        };
+        StreamEventFrame: {
+            /** @constant */
+            kind: "event";
+            /** @description Opaque; resume after this event. */
+            cursor: string;
+            event: components["schemas"]["RuntimeEvent"];
+        };
+        StreamLiveFrame: {
+            /** @constant */
+            kind: "live";
+            channel: string;
+            /** @description Transient (model.delta, terminal.bytes, browser.frame, progress); never persisted. */
+            frame: Record<string, never>;
         };
         Session: {
             session_id: string;
@@ -4901,6 +5096,84 @@ export interface operations {
             };
         };
     };
+    UpdateWebhookSubscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    RedeliverWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     DeleteWebhookSubscription: {
         parameters: {
             query?: never;
@@ -5356,6 +5629,70 @@ export interface operations {
                         result?: Record<string, never> | null;
                         error?: components["schemas"]["Error"] | null;
                     };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    Stream: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-quansio-consumer"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Switching Protocols to WebSocket. */
+            101: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    StreamEvents: {
+        parameters: {
+            query: {
+                channel: string[];
+                cursor?: string;
+                consumer?: string;
+            };
+            header?: {
+                "Last-Event-ID"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description An event stream; each `data:` is a StreamEventFrame. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
                 };
             };
             /** @description Typed error (DOMAIN.md §15). */
@@ -6314,6 +6651,76 @@ export interface operations {
             };
         };
     };
+    ReadV1Webhooks: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Projection page with cursor. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: Record<string, never>[];
+                        next_cursor?: string | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "ReadV1Webhooks{Id}Deliveries": {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Projection page with cursor. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: Record<string, never>[];
+                        next_cursor?: string | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     AuthMagicLinkStart: {
         parameters: {
             query?: never;
@@ -6548,6 +6955,37 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Error"];
                 };
+            };
+        };
+    };
+    WebhookRuntimeEvent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The stable event id; deliveries are at-least-once, so dedupe on it. */
+                "quansio-event-id": string;
+                /** @description The event type. */
+                "quansio-event-type": string;
+                /** @description The delivery (`whd_…`); the same across retries of one event. */
+                "quansio-delivery-id": string;
+                /** @description `t=<unix seconds>,v1=<hex HMAC-SHA256(secret, "<t>.<body>")>`; reject a timestamp more than 300 s from your clock. */
+                "quansio-signature": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuntimeEvent"];
+            };
+        };
+        responses: {
+            /** @description Acknowledged. Anything else, or no answer within 10 s, is retried with backoff. */
+            "2XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

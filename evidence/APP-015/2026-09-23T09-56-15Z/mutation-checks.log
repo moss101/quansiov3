@@ -1,0 +1,26 @@
+== redaction removed: redact_payload returns the payload unchanged
+   test: payloads_never_carry_secrets_or_protected_data
+   outcome: FAILED (as required)
+   thread 'payloads_never_carry_secrets_or_protected_data' (2486267) panicked at crates/server/tests/webhooks.rs:1084:9:
+   test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.46s
+== workspace scope removed: every subscription matches every workspace
+   test: deliveries_stay_in_their_tenant_and_workspace
+   outcome: FAILED (as required)
+   thread 'deliveries_stay_in_their_tenant_and_workspace' (2487752) panicked at crates/server/tests/webhooks.rs:924:5:
+   test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.74s
+== egress broker bypassed: a denied decision is sent anyway
+   test: destinations_obey_egress_policy_and_the_kill_switches
+   outcome: FAILED (as required)
+   thread 'destinations_obey_egress_policy_and_the_kill_switches' (2489477) panicked at crates/server/tests/webhooks.rs:1282:5:
+   test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 1.03s
+== pause ignored: paused subscriptions are leased
+   test: destinations_obey_egress_policy_and_the_kill_switches
+   outcome: FAILED (as required)
+   thread 'destinations_obey_egress_policy_and_the_kill_switches' (2491102) panicked at crates/server/tests/webhooks.rs:1343:5:
+   test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.62s
+== retry reuses nothing: each attempt is enqueued under a new event id
+   test: delivery_is_signed_at_least_once_and_retried_until_dead_lettered
+   outcome: FAILED (as required)
+   thread 'delivery_is_signed_at_least_once_and_retried_until_dead_lettered' (2493423) panicked at crates/server/tests/webhooks.rs:541:9:
+   test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.70s
+exit=0

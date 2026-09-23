@@ -29,6 +29,7 @@ event_families:
 - routine
 - notification
 - connector
+- webhook
 - policy
 - audit
 - usage

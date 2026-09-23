@@ -1,0 +1,8 @@
+test the_event_stream_is_also_served_as_server_sent_events ... ok
+test a_deployment_without_a_key_provider_refuses_to_create_a_webhook ... ok
+test delivery_is_signed_at_least_once_and_retried_until_dead_lettered ... ok
+test destinations_obey_egress_policy_and_the_kill_switches ... ok
+test payloads_never_carry_secrets_or_protected_data ... ok
+test deliveries_stay_in_their_tenant_and_workspace ... ok
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.05s
+exit=0
