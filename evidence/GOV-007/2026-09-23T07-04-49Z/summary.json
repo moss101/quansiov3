@@ -50,8 +50,35 @@
     }
   ],
   "artifacts": [
-    "evidence/GOV-007/2026-09-23T07-04-49Z/NOTES.md",
-    "scripts/dev/_common.sh",
-    "tests/integration/test_dev_stack.py"
+    {
+      "path": "evidence/GOV-007/2026-09-23T07-04-49Z/NOTES.md",
+      "sha256": "01cfd2ac1c9f9b87af12a9a247f9a813edb806493df49fad2ffe7426cae17fc4",
+      "bytes": 1566
+    },
+    {
+      "path": "scripts/dev/_common.sh",
+      "sha256": "783826afbb62ce7c1aba455390c52a654dad7725276faefe46dad3466d7796cb",
+      "bytes": 9694
+    },
+    {
+      "path": "tests/integration/test_dev_stack.py",
+      "sha256": "8d5023e2da0e9c3b07b7644d1725312bc1906f3afd4ba41808bbe0410ff2d2cb",
+      "bytes": 14359
+    },
+    {
+      "path": "evidence/GOV-007/2026-09-23T07-04-49Z/repair-test-against-prefix-probe.log",
+      "sha256": "8e023ee75fa7a24ce5bc54866e703fa873e8d6f387033a32431537cee1c196dc",
+      "bytes": 1592
+    },
+    {
+      "path": "evidence/GOV-007/2026-09-23T07-04-49Z/pytest-dev-stack.log",
+      "sha256": "5100ceb09999ba6a3e8b6a59ebf3928e93a3dec72a3da685d27df6d62664f73e",
+      "bytes": 521
+    },
+    {
+      "path": "evidence/GOV-007/2026-09-23T07-04-49Z/pytest-tests.log",
+      "sha256": "b0c35b65ada61205405776cf6a56706cdf48e6577603563c26cf5aa975bdfd5f",
+      "bytes": 359
+    }
   ]
 }
