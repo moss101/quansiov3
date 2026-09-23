@@ -15,6 +15,7 @@ import { Conversation } from "./Conversation.js";
 import { Knowledge } from "./Knowledge.js";
 import { Teammates } from "./Teammates.js";
 import { Live } from "./Live.js";
+import { Collaboration } from "./Collaboration.js";
 import { Trust } from "./Trust.js";
 import { Work } from "./Work.js";
 import { Onboarding } from "./Onboarding.js";
@@ -78,7 +79,7 @@ function Shell(): ReactElement {
   const [projection, setProjection] = useState<RunProjection | null>(null);
   const [log, setLog] = useState<readonly LogLine[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
-  const [surface, setSurface] = useState<"conversation" | "artifacts" | "objectives" | "approvals" | "knowledge-controls" | "teammates" | "live-browser-terminal">("conversation");
+  const [surface, setSurface] = useState<"conversation" | "artifacts" | "objectives" | "approvals" | "knowledge-controls" | "teammates" | "live-browser-terminal" | "collaboration">("conversation");
 
   const refresh = useCallback(async () => {
     const next = (await window.quansio.activeRun()) as RunProjection;
@@ -119,8 +120,8 @@ function Shell(): ReactElement {
         <ul>
           {DESKTOP_SURFACES.map((entry) => (
             <li key={entry.id} className={entry.id === surface ? "selected" : undefined}>
-              {entry.id === "conversation" || entry.id === "artifacts" || entry.id === "objectives" || entry.id === "approvals" || entry.id === "knowledge-controls" || entry.id === "teammates" || entry.id === "live-browser-terminal" ? (
-                <button type="button" onClick={() => { setSurface(entry.id === "artifacts" ? "artifacts" : entry.id === "objectives" ? "objectives" : entry.id === "approvals" ? "approvals" : entry.id === "knowledge-controls" ? "knowledge-controls" : entry.id === "teammates" ? "teammates" : entry.id === "live-browser-terminal" ? "live-browser-terminal" : "conversation"); }}>{entry.id}</button>
+              {entry.id === "conversation" || entry.id === "artifacts" || entry.id === "objectives" || entry.id === "approvals" || entry.id === "knowledge-controls" || entry.id === "teammates" || entry.id === "live-browser-terminal" || entry.id === "collaboration" ? (
+                <button type="button" onClick={() => { setSurface(entry.id === "artifacts" ? "artifacts" : entry.id === "objectives" ? "objectives" : entry.id === "approvals" ? "approvals" : entry.id === "knowledge-controls" ? "knowledge-controls" : entry.id === "teammates" ? "teammates" : entry.id === "live-browser-terminal" ? "live-browser-terminal" : entry.id === "collaboration" ? "collaboration" : "conversation"); }}>{entry.id}</button>
               ) : (
                 entry.id
               )}
@@ -157,6 +158,8 @@ function Shell(): ReactElement {
           <Teammates key={`teammates-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
         ) : surface === "live-browser-terminal" ? (
           <Live key={`live-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+        ) : surface === "collaboration" ? (
+          <Collaboration key={`collaboration-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
         ) : (
           <Conversation
             key={projection.workspaceId}

@@ -162,7 +162,9 @@ export class DesktopBridge {
       "stream.reconnect": () => Promise.resolve().then(() => this.reconnect()),
       "session.activeRun": () => Promise.resolve().then(() => this.activeRun()),
       "session.state": () => Promise.resolve().then(() => this.sessionState()),
-      "session.me": () => this.#requireSessions().me(),
+      // Signed in, the session manager answers; a trusted-header harness asks the server
+      // directly — `/v1/me` resolves the same scope either way.
+      "session.me": () => (this.sessions ? this.#requireSessions().me() : this.server.me()),
       "auth.magicLink.start": (payload) =>
         Promise.resolve(payload).then((raw) => {
           const { email, displayName } = asMagicLinkStart(raw);
@@ -234,7 +236,36 @@ export class DesktopBridge {
       "live.handback": (payload) => settled(Promise.resolve(payload).then((raw) => this.liveControl("Handback", raw))),
       "live.attach": (payload) => Promise.resolve(payload).then((raw) => this.attachLive(asTargetId(raw, "live.attach"))),
       "live.detach": () => Promise.resolve().then(() => this.detachLive()),
+      // Collaboration (APP-009): a protected thread refuses a non-participant, and the
+      // page branches on that refusal, so these are settled.
+      "threads.view": (payload) => settled(Promise.resolve(payload).then((raw) => this.server.thread(asThreadId(raw, "threads.view")))),
+      "threads.create": (payload) => settled(Promise.resolve(payload).then((raw) => this.collaborationCommand("CreateThread", raw, "threads.create"))),
+      "participants.add": (payload) => settled(Promise.resolve(payload).then((raw) => this.collaborationCommand("AddParticipant", raw, "participants.add"))),
+      "participants.remove": (payload) => settled(Promise.resolve(payload).then((raw) => this.collaborationCommand("RemoveParticipant", raw, "participants.remove"))),
+      "messages.react": (payload) => settled(Promise.resolve(payload).then((raw) => this.collaborationCommand("ReactToMessage", raw, "messages.react"))),
+      "threads.handoff": (payload) => settled(Promise.resolve(payload).then((raw) => this.collaborationCommand("HandOffThread", raw, "threads.handoff"))),
     };
+  }
+
+  // ---- collaboration (APP-009) ----
+
+  /**
+   * One collaboration command with the params the page built (`collaboration/thread.ts`);
+   * main adds the workspace to `CreateThread` and nothing else — the server validates the
+   * rest again and decides who may.
+   */
+  async collaborationCommand(name: "CreateThread" | "AddParticipant" | "RemoveParticipant" | "ReactToMessage" | "HandOffThread", raw: unknown, what: string): Promise<unknown> {
+    const params = { ...asRecord(raw, what) };
+    if (name === "CreateThread" && typeof params["workspace_id"] !== "string") {
+      params["workspace_id"] = this.#requireWorkspace();
+    }
+    if (name !== "CreateThread" && name !== "ReactToMessage" && (typeof params["thread_id"] !== "string" || !params["thread_id"].startsWith("thr_"))) {
+      throw new Error(`${what} needs a thr_ thread_id`);
+    }
+    if (name === "ReactToMessage" && (typeof params["message_id"] !== "string" || !params["message_id"].startsWith("msg_"))) {
+      throw new Error(`${what} needs a msg_ message_id`);
+    }
+    return (await this.server.invoke(name, newCommandId(), params)).result;
   }
 
   // ---- the live browser/computer/terminal surface (APP-007) ----
@@ -589,7 +620,7 @@ export class DesktopBridge {
 
   /** `PostMessage` with optional thread and attachments; the run it starts becomes the active run. */
   async postMessage(raw: unknown): Promise<unknown> {
-    const { threadId, content, attachments, teammateId } = asPost(raw);
+    const { threadId, content, attachments, teammateId, mentions } = asPost(raw);
     const params: Record<string, unknown> = { workspace_id: this.#requireWorkspace(), content };
     if (threadId) {
       params["thread_id"] = threadId;
@@ -599,6 +630,9 @@ export class DesktopBridge {
     }
     if (attachments.length > 0) {
       params["attachments"] = attachments;
+    }
+    if (mentions.length > 0) {
+      params["mentions"] = mentions;
     }
     return (await this.invoke({ name: POST_COMMAND, commandId: newCommandId(), params })).result;
   }
@@ -1038,7 +1072,13 @@ function asQuestionScope(payload: unknown): { readonly threadId: string } | { re
   throw new Error("questions.list needs a thr_ or run_ id");
 }
 
-function asPost(payload: unknown): { threadId: string | null; content: string; attachments: string[]; teammateId: string | null } {
+function asPost(payload: unknown): {
+  threadId: string | null;
+  content: string;
+  attachments: string[];
+  teammateId: string | null;
+  mentions: { kind: "user" | "teammate"; id: string }[];
+} {
   const record = asRecord(payload, "messages.post");
   const content = record["content"];
   if (typeof content !== "string" || !content.trim()) {
@@ -1067,7 +1107,25 @@ function asPost(payload: unknown): { threadId: string | null; content: string; a
       attachments.push(item);
     }
   }
-  return { threadId: typeof threadId === "string" ? threadId : null, content, attachments, teammateId: typeof teammateId === "string" ? teammateId : null };
+  // Who the message mentions (APP-009): `usr_` people and `agt_` teammates only.
+  const rawMentions = record["mentions"];
+  const mentions: { kind: "user" | "teammate"; id: string }[] = [];
+  if (rawMentions !== undefined && rawMentions !== null) {
+    if (!Array.isArray(rawMentions)) {
+      throw new Error("messages.post mentions must be a list of {kind, id}");
+    }
+    for (const item of rawMentions) {
+      const mention = item && typeof item === "object" ? (item as Record<string, unknown>) : {};
+      const kind = mention["kind"];
+      const id = mention["id"];
+      const ok = (kind === "user" && typeof id === "string" && id.startsWith("usr_")) || (kind === "teammate" && typeof id === "string" && id.startsWith("agt_"));
+      if (!ok) {
+        throw new Error("messages.post mentions must be a list of {kind: user|teammate, id}");
+      }
+      mentions.push({ kind, id });
+    }
+  }
+  return { threadId: typeof threadId === "string" ? threadId : null, content, attachments, teammateId: typeof teammateId === "string" ? teammateId : null, mentions };
 }
 
 function asEntryFilter(raw: unknown): { status?: string; scope?: string; subjectRef?: string; includeDeleted?: boolean } {

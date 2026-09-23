@@ -1,0 +1,80 @@
+{
+  "task_id": "APP-009",
+  "git_commit": "9e19030e12963f360e38831353056a26ddc18113",
+  "recorded_at": "2026-09-23T06:14:31Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test collaboration --test conversation_surface (concurrent posts keep one stable order; a removed participant receives no new protected event; membership rules; reactions, mentions and attention; handoff \u2014 against real PostgreSQL)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-09-23T06-08-39Z/cargo-collaboration.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib control::conversation (idempotent reactions; reaction validation)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-09-23T06-08-39Z/cargo-conversation-unit.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/collaboration.test.ts tests/collaboration.e2e.test.ts tests/preload.test.ts) (unit tests; two-client multi-client ordering, membership revoke and handoff E2E through the desktop bridge against the real quansio-server)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-09-23T06-08-39Z/vitest-collaboration.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop, web and SDK E2E, eslint ., pytest, contract-drift incl. HandOffThread, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-09-23T06-08-39Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> cargo test -p quansio-server --test collaboration --test conversation_surface (concurrent posts keep one stable order; a removed participant receives no new protected event; membership rules; reactions, mentions and attention; handoff \u2014 against real PostgreSQL)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib control::conversation (idempotent reactions; reaction validation)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> (cd apps/desktop && pnpm exec vitest run tests/collaboration.test.ts tests/collaboration.e2e.test.ts tests/preload.test.ts) (unit tests; two-client multi-client ordering, membership revoke and handoff E2E through the desktop bridge against the real quansio-server)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (cargo test --workspace, pnpm build/typecheck/test incl. every desktop, web and SDK E2E, eslint ., pytest, contract-drift incl. HandOffThread, workspace, dossier, architecture, authority)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-009/2026-09-23T06-08-39Z/NOTES.md",
+      "sha256": "dfa5cdd646254150ea6a7542fb25510e308758a3b144c5f8b798456661ddd658",
+      "bytes": 5838
+    },
+    {
+      "path": "evidence/APP-009/2026-09-23T06-08-39Z/cargo-collaboration.log",
+      "sha256": "a90e8f11bc55be1456d90fb5e09f0de528514af05a42568f559c4390353fab4a",
+      "bytes": 2461
+    },
+    {
+      "path": "evidence/APP-009/2026-09-23T06-08-39Z/vitest-collaboration.log",
+      "sha256": "d90455283479fe42c8427ac9e79f1e983f66096f7509650051f8a37a1cc2ed0c",
+      "bytes": 658
+    },
+    {
+      "path": "evidence/APP-009/2026-09-23T06-08-39Z/cargo-conversation-unit.log",
+      "sha256": "da775c8627e7767da33b2b8d2858c87adc709d98a4c9a2d02bae99e161982b19",
+      "bytes": 449
+    },
+    {
+      "path": "evidence/APP-009/2026-09-23T06-08-39Z/ci-summary.json",
+      "sha256": "f3ebe9ed4c4db9cbd152baf870054bf851c2175027e90a3a37c76f5db83b5c8a",
+      "bytes": 6803
+    }
+  ]
+}

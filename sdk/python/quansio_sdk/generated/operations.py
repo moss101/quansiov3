@@ -97,6 +97,11 @@ OPERATIONS: dict[str, dict[str, str]] = {
         "path": "/v1/commands/RemoveParticipant",
         "family": "Conversation",
     },
+    "HandOffThread": {
+        "method": "POST",
+        "path": "/v1/commands/HandOffThread",
+        "family": "Conversation",
+    },
     "AnswerQuestion": {
         "method": "POST",
         "path": "/v1/commands/AnswerQuestion",

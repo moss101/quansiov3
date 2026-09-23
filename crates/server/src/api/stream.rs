@@ -2,6 +2,12 @@
 //!
 //! Transport only: subscribe, replay from a cursor, and disconnect a slow consumer with
 //! `STREAM_BACKPRESSURE`. Durable frames come from [`quansio_events::EventStore`].
+//!
+//! Every frame passes the subscriber's [`ThreadGate`] (APP-009): a protected thread's
+//! `thread.*` and `question.*` events and its live frames reach only its active
+//! participants, and a `thread:` channel of a protected thread cannot be subscribed to by
+//! anyone else. The cursor still advances over a withheld event, so a resume does not
+//! replay what the subscriber was not allowed to see.
 
 use std::time::Duration;
 
@@ -18,6 +24,7 @@ use serde::Deserialize;
 use serde_json::json;
 
 use super::{ApiError, ApiErrorCode, ApiState, TenantScope};
+use crate::control::collaboration::{thread_access, ThreadGate};
 
 #[derive(Debug, Deserialize)]
 struct SubscribeRequest {
@@ -83,6 +90,39 @@ async fn handle_socket(
             }
         }
     }
+    // A protected thread's channel is its participants' (APP-009).
+    for item in &request.subscribe {
+        if let Some(thread_id) = item.channel.strip_prefix("thread:") {
+            let admitted = thread_access(
+                state.pool(),
+                &scope.tenant_id,
+                thread_id,
+                scope.user_id.as_deref(),
+            )
+            .await
+            .is_ok_and(|access| access.admits());
+            if !admitted {
+                let _ = socket
+                    .send(Message::Text(
+                        json!({
+                            "code": ApiErrorCode::ScopeForbidden.as_str(),
+                            "message": format!("thread {thread_id} is protected and this user is not one of its participants"),
+                            "correlation_id": "stream",
+                            "retryable": false,
+                            "details": { "kind": "thread", "thread_id": thread_id, "reason": "not_a_participant" },
+                        })
+                        .to_string(),
+                    ))
+                    .await;
+                return;
+            }
+        }
+    }
+    let mut gate = ThreadGate::new(
+        state.pool().clone(),
+        &scope.tenant_id,
+        scope.user_id.as_deref(),
+    );
     let consumer = request.consumer.or(consumer).unwrap_or_else(|| {
         format!(
             "csm_{}",
@@ -131,6 +171,13 @@ async fn handle_socket(
                 if let Some(cursor) = frame.cursor() {
                     last_cursor = Some(cursor.to_string());
                 }
+                let admitted = match &frame {
+                    StreamFrame::Event(event) => gate.admits_event(&event.event).await,
+                    StreamFrame::Live(live) => gate.admits_live(live).await,
+                };
+                if !admitted {
+                    continue;
+                }
                 if socket
                     .send(Message::Text(frame.to_json_value().to_string()))
                     .await
@@ -157,10 +204,12 @@ async fn handle_socket(
         &consumer,
         last_cursor,
         live,
+        &mut gate,
     )
     .await;
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn tail_events(
     socket: &mut WebSocket,
     store: &EventStore,
@@ -169,6 +218,7 @@ async fn tail_events(
     consumer: &str,
     mut last_cursor: Option<String>,
     mut live: tokio::sync::broadcast::Receiver<quansio_events::LiveFrame>,
+    gate: &mut ThreadGate,
 ) {
     let subscribed: Vec<String> = subscription
         .channels()
@@ -189,6 +239,7 @@ async fn tail_events(
                     // Live frames are transient (DOMAIN.md §9.3): forwarded when on a subscribed
                     // channel, never buffered beyond the hub's capacity, never persisted.
                     if subscribed.iter().any(|channel| channel == &frame.channel)
+                        && gate.admits_live(&frame).await
                         && socket
                             .send(Message::Text(StreamFrame::Live(frame).to_json_value().to_string()))
                             .await
@@ -224,7 +275,7 @@ async fn tail_events(
                 for event in batch.events {
                     let cursor = Cursor::new(stream_id.to_string(), event.sequence).encode();
                     last_cursor = Some(cursor.clone());
-                    if !subscription.matches(&event) {
+                    if !subscription.matches(&event) || !gate.admits_event(&event).await {
                         continue;
                     }
                     let frame = StreamFrame::Event(Box::new(EventFrame { cursor, event }));

@@ -243,3 +243,25 @@ export { TerminalReplay, decodeTerminalBytes, replayPosition } from "./live/term
 export type { Accepted, ReplayPosition, TerminalBytesFrame } from "./live/terminal.js";
 export { decodeBrowserFrame, latestFrame } from "./live/frames.js";
 export type { AgentCursor, BrowserFrame, CursorAction } from "./live/frames.js";
+export {
+  activeParticipants,
+  applyThreadEvent,
+  attentionFor,
+  createThreadParams,
+  decodeThreadList,
+  decodeThreadMessages,
+  decodeThreadView,
+  handOffParams,
+  handoffTargets,
+  hasGap,
+  mayLeave,
+  mayManage,
+  mentionCandidates,
+  mentionsIn,
+  mergeMessages,
+  participantParams,
+  reactionToggle,
+  summarizeReactions,
+  viewerFrom,
+} from "./collaboration/thread.js";
+export type { AttentionView, Mention, Mentionable, ParticipantView, Reaction, ReactionSummary, ThreadListEntry, ThreadMessage, ThreadState, ThreadView } from "./collaboration/thread.js";

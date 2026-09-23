@@ -18,6 +18,7 @@
 pub mod admin;
 pub mod artifacts;
 pub mod auth;
+pub mod collaboration;
 pub mod commands;
 pub mod error;
 pub mod flags;
@@ -540,9 +541,9 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/auth/sign-out", post(auth::sign_out))
         .route("/v1/me", get(auth::me))
         .route("/v1/stream", get(stream::stream))
-        .route("/v1/threads", get(threads::list_threads))
-        .route("/v1/threads/:id", get(projections::thread))
-        .route("/v1/messages", get(projections::messages))
+        .route("/v1/threads", get(collaboration::list_threads))
+        .route("/v1/threads/:id", get(collaboration::thread))
+        .route("/v1/messages", get(collaboration::messages))
         .route("/v1/runs/:id", get(projections::run))
         .route("/v1/runs/:id/timeline", get(threads::timeline))
         .route("/v1/questions", get(threads::questions))

@@ -102,3 +102,16 @@ nav li.selected button { font-weight: 600; } nav button { background: none; bord
 .live-computer, .live-terminal { border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent); padding-top: 8px; }
 .live-computer h3, .live-terminal h3 { font-size: 13px; margin: 0 0 4px; }
 .live-pty { max-height: 30vh; overflow: auto; margin: 0; padding: 8px; background: color-mix(in srgb, currentColor 8%, transparent); font-family: ui-monospace, monospace; font-size: 12px; white-space: pre-wrap; }
+.collaboration { display: grid; grid-template-columns: 240px 1fr 240px; gap: 12px; min-height: 0; }
+.collab-threads ul, .collab-members ul { list-style: none; padding: 0; margin: 8px 0; }
+.collab-threads li.selected button { font-weight: 600; }
+.collab-threads button, .collab-members button { background: none; border: 0; padding: 2px 4px; cursor: pointer; font: inherit; }
+.collab-new { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.collab-thread { display: flex; flex-direction: column; min-height: 0; }
+.collab-thread .message-system { font-style: italic; opacity: 0.8; }
+.reactions { display: flex; gap: 4px; flex-wrap: wrap; }
+.reactions button { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 12px; padding: 0 6px; background: none; cursor: pointer; }
+.reactions button.mine { border-color: royalblue; }
+.reactions .add-reaction { opacity: 0.5; }
+.collab-members li.left { opacity: 0.5; }
+.collab-handoff { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }

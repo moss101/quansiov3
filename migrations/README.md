@@ -29,6 +29,7 @@ runner (`quansio_server::control::schema::migrate`).
 | `0002_runtime_event_sequences.sql` | Per-tenant `tenant_event_sequences` counter row used to assign the tenant-monotonic RuntimeEvent `sequence` inside the commit transaction (CORE-003). |
 | `0003_graph_heads.sql` | WorkGraph aggregate revision head per (tenant, workspace) for the batch-level compare-and-set of a GraphTransaction (DOMAIN.md §1.2, §4.5): RLS, `quansio_app` grant and `updated_at` trigger (CORE-004; renumbered from 0002 to keep migration versions unique). |
 | `0014_teammate_definition.sql` | Teammate definition preferences (APP-014): `template_id`, `model_route_preference`, `default_execution_target_id`, `availability` (`available`/`away`) and a `version` bumped by every configuration change, so a run's capability projection can name the definition it was resolved from. Additive. |
+| `0015_thread_participant_stamp.sql` | Thread membership (APP-009): the `updated_at` column the shared stamping trigger on `thread_participants` expects (0001 attached the trigger without it, so any membership update failed), and a partial index over active participants. Additive. |
 
 ## Applying
 

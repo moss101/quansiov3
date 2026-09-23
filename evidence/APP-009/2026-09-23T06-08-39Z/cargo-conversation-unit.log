@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-7b40b6db43a96c47)
+
+running 2 tests
+test control::conversation::tests::a_reaction_is_one_short_printable_token ... ok
+test control::conversation::tests::reactions_are_idempotent_per_user_and_emoji ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 124 filtered out; finished in 0.00s
+
+exit=0

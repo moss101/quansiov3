@@ -785,6 +785,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/commands/HandOffThread:
+    post:
+      operationId: HandOffThread
+      summary: 'Conversation: HandOffThread'
+      tags:
+      - Conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/commands/AnswerQuestion:
     post:
       operationId: AnswerQuestion
@@ -4805,6 +4847,12 @@ components:
       additionalProperties: true
       description: 'Conversation command RemoveParticipant. The concrete parameter schema is owned by the implementing task
         and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    HandOffThreadParams:
+      type: object
+      additionalProperties: true
+      description: 'Conversation command HandOffThread. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
       x-quansio-params-defined: false
     AnswerQuestionParams:
       type: object
