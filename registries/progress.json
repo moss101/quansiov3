@@ -1846,22 +1846,42 @@
     },
     "APP-009": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-23T05:16:46Z",
-      "updated_at": "2026-09-23T05:16:46Z",
-      "git_commit": null,
+      "updated_at": "2026-09-23T06:14:50Z",
+      "git_commit": "165614aef4d263fb6f86f63c57702bed3d8e9e6a",
       "tests": [
-        "cargo test -p quansio-server --test collaboration (stable seq/id order; removed cannot receive)"
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test collaboration (5 passed against real PostgreSQL: concurrent posts from two people keep one gap-free seq order with events committed in that order; a removed participant receives their removal and no later thread event or live frame, and reads, posts and reactions are refused; membership rules (protection, owner/admin management, last-owner guard, workspace membership, objective threads); reactions, mentions and derived attention; handoff with notice, RUN-002 mailbox item and routing, refused while the source has live work)",
+        "cargo test -p quansio-server --lib control::conversation (idempotent reactions and their validation)",
+        "QUANSIO_TEST_POSTGRES_URL=... pnpm --filter @quansio/desktop exec vitest run tests/collaboration.test.ts tests/collaboration.e2e.test.ts (unit tests; two desktop clients against the real quansio-server: multi-client ordering, membership revoke on the live stream, handoff E2E)",
+        "bash scripts/ci/ci.sh (pipeline PASS, 11 of 11 gates)"
       ],
       "artifacts": [
-        "evidence/APP-009/2026-09-15T06-25-00Z/summary.json",
-        "crates/server/src/control/collaboration/mod.rs"
+        "evidence/APP-009/RECONCILIATION.md",
+        "evidence/APP-009/2026-09-23T06-08-39Z/summary.json",
+        "evidence/APP-009/2026-09-23T06-08-39Z/NOTES.md",
+        "evidence/APP-009/2026-09-23T06-08-39Z/cargo-collaboration.log",
+        "evidence/APP-009/2026-09-23T06-08-39Z/cargo-conversation-unit.log",
+        "evidence/APP-009/2026-09-23T06-08-39Z/vitest-collaboration.log",
+        "evidence/APP-009/2026-09-23T06-08-39Z/ci-summary.json",
+        "crates/server/src/control/collaboration/mod.rs",
+        "crates/server/src/control/collaboration/store.rs",
+        "crates/server/src/control/collaboration/access.rs",
+        "crates/server/src/control/collaboration/attention.rs",
+        "crates/server/src/control/conversation.rs",
+        "crates/server/src/api/collaboration.rs",
+        "crates/server/tests/collaboration.rs",
+        "migrations/0015_thread_participant_stamp.sql",
+        "apps/desktop/src/collaboration/thread.ts",
+        "apps/desktop/src/renderer/Collaboration.tsx",
+        "apps/desktop/tests/collaboration.test.ts",
+        "apps/desktop/tests/collaboration.e2e.test.ts"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Messages sort by seq then id. Removed/suspended participants cannot receive protected events. 2026-09-19 correction: was BLOCKED_EXTERNAL at c7c6008fc1e05b88af919673da69a89e1de6b064 claimed by agent:principal-1 (started 2026-09-15T06:20:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/server/src/control/collaboration is order_messages (a sort) and can_receive(status == 'active'); apps/desktop/src/collaboration is 12 lines. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "Messages sort by seq then id. Removed/suspended participants cannot receive protected events. 2026-09-19 correction: was BLOCKED_EXTERNAL at c7c6008fc1e05b88af919673da69a89e1de6b064 claimed by agent:principal-1 (started 2026-09-15T06:20:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/server/src/control/collaboration is order_messages (a sort) and can_receive(status == 'active'); apps/desktop/src/collaboration is 12 lines. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-23 (agent:claude-opus-5): implemented at 165614a \u2014 control/collaboration owns thread_participants (membership, protection gate for projections, commands and the stream, derived attention, HandOffThread); the conversation owner assigns seq under the thread lock and versions thread events per thread; reactions and mentions; migration 0015; desktop Collaboration surface."
     },
     "APP-010": {
       "coverage": "PARTIAL",
