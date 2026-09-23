@@ -1,0 +1,97 @@
+{
+  "task_id": "APP-001",
+  "git_commit": "a9da8f62b7e0fb316ba64f2d050bdba42f56ed36",
+  "recorded_at": "2026-09-23T10:35:35Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --test api two_tenants  # before the fix (6f88144 handler): tenant B's CancelRun -> 500 INTERNAL commands_pkey",
+      "exit_code": 101,
+      "result": "FAIL",
+      "log": "evidence/APP-001/2026-09-23T10-35-14Z/cargo-test-api-before-fix.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --test api --test command_idempotency  # after the fix: 13 + 2 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-23T10-35-14Z/cargo-test-api-idempotency.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --no-fail-fast",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-23T10-35-14Z/cargo-test-server.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-23T10-35-14Z/fmt-check.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-23T10-35-14Z/clippy.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-23T10-35-14Z/validate.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --test api two_tenants  # before the fix (6f88144 handler): tenant B's CancelRun -> 500 INTERNAL commands_pkey",
+      "exit_code": 101,
+      "result": "FAIL"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --test api --test command_idempotency  # after the fix: 13 + 2 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --no-fail-fast",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/api/commands.rs",
+      "sha256": "2a48feaa7b30e87e920420a0e3dcf9a0a03ec7d26709999c840dc0959119b467",
+      "bytes": 49964
+    },
+    {
+      "path": "crates/server/tests/api.rs",
+      "sha256": "a481fd04757ae9f7c3c374ad88399bf543072d9acbedecc4096b3d44cf7895ed",
+      "bytes": 29385
+    },
+    {
+      "path": "crates/server/tests/command_idempotency.rs",
+      "sha256": "9d336cbaefe6e404f717276d78113d613f266cc6d334655dc8ade8f2a32b8fc0",
+      "bytes": 8820
+    },
+    {
+      "path": "evidence/APP-001/2026-09-23T10-35-14Z/NOTES.md",
+      "sha256": "6c19670b82f37035870ad727267fbb651e6f06fdbf5fe3a5dba21e0c6be4c3ff",
+      "bytes": 2915
+    }
+  ]
+}
