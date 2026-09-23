@@ -187,11 +187,13 @@ pub const PROJECTION_CONSUMER: &str = "projection";
 ///
 /// Projections record their checkpoint in the same transaction that writes the
 /// projection rows, so a crash can never leave the checkpoint ahead of the state it
-/// describes.
+/// describes. Other event consumers (routine event triggers, the notifier) do the same
+/// with the rows they derive from an event, which is what makes consuming an event twice
+/// have one effect.
 ///
 /// # Errors
 /// Returns a database error.
-pub(crate) async fn advance_cursor_in_tx(
+pub async fn advance_cursor_in_tx(
     tx: &mut Transaction<'_, Postgres>,
     tenant_id: &str,
     stream_id: &str,

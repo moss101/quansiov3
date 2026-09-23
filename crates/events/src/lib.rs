@@ -21,7 +21,7 @@ pub mod schema;
 pub mod store;
 pub mod stream;
 
-pub use cursor::{CursorState, ResumeBatch, PROJECTION_CONSUMER};
+pub use cursor::{advance_cursor_in_tx, CursorState, ResumeBatch, PROJECTION_CONSUMER};
 pub use envelope::{Actor, ActorKind, EventDraft, RuntimeEvent, SCHEMA_VERSION_V1};
 pub use error::{EventError, TransportError};
 pub use event_type::{parse_family, EventFamily, EventType, EVENT_FAMILIES};

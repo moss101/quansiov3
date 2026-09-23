@@ -1,20 +1,29 @@
-//! Routine fire identity (APP-010).
+//! Routines: definitions, the firing ledger and event triggers (APP-010, DOMAIN.md §13.1).
 //!
-//! A restart must not duplicate a scheduled run: the fire key is
-//! `(routine_id, scheduled_at)` and is the same path interactive work uses
-//! (`cmd_` / Effect Ledger), not a second scheduler.
+//! Canonical owner of `routines` definitions and `routine_fires`. Timing — `next_due_at`
+//! from a cron or interval trigger, and what a missed window means under the absence
+//! policy — is CORE-008's `scheduler::RoutineScheduler`, which claims windows through
+//! [`ledger::claim_in`]. Executing a fire is the runtime's interactive path, reached through
+//! the scheduler's `RunDispatch` port, so a routine's run is governed exactly like a run a
+//! person started.
+//!
+//! * [`RoutineStore`] — create, update, pause, resume, delete and trigger-now, each with its
+//!   `routine.*` event; the trigger, template and teammate are validated before anything is
+//!   written.
+//! * [`ledger`] — one row per fire key; a window, an event or a trigger-now command claims
+//!   exactly one fire, executing it is leased, and a failed execution is retried with
+//!   exponential backoff before it is marked failed.
+//! * [`triggers`] — event triggers: a consumer of the tenant's RuntimeEvents that claims a
+//!   fire per matching event in the transaction that advances its cursor.
 
-/// Idempotency key for one scheduled fire.
-#[must_use]
-pub fn fire_key(routine_id: &str, scheduled_at: &str) -> String {
-    format!("{routine_id}@{scheduled_at}")
-}
+pub mod ledger;
+mod store;
+pub mod triggers;
 
-/// Whether a second delivery of the same fire should run.
-#[must_use]
-pub fn should_fire(seen: &[String], key: &str) -> bool {
-    !seen.contains(&key.to_string())
-}
-
-/// Routines use the same command catalog as interactive work.
-pub const ROUTINE_COMMAND: &str = "TriggerRoutineNow";
+pub use ledger::{
+    backoff, Fire, FireLedger, FireSource, FireStatus, FIRE_LEASE_SECONDS, MAX_FIRE_ATTEMPTS,
+};
+pub use store::{
+    NewRoutine, RoutineChange, RoutineError, RoutineStore, RoutineView, ROUTINES_OWNER,
+};
+pub use triggers::{event_matches, EventTriggers};
