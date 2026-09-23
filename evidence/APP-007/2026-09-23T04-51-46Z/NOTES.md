@@ -75,3 +75,14 @@ a dependency is not PASS, so APP-007 is recorded BLOCKED_EXTERNAL with
 `implementation_complete: true`. Real CDP screencast frames and PTY bytes need the worker
 control channel from an execution substrate (EXEC-003/004/005, BLOCKED_EXTERNAL on this
 host); the frame shapes are DOMAIN.md §9.3's and are unit-tested.
+
+## Also touched
+
+- `quansio-dev-seed --live` writes the target through `MachineControl::register` +
+  `transition` and the sessions through their stores: only `crates/machine/src/control/`
+  may write `execution_targets` (`crates/machine/tests/control.rs`), which the first CI run
+  of this branch caught.
+- `tests/e2e/journeys.spec.ts` (QA-008's file) step 6 now drives `decodeLiveSession` /
+  `applyEvent` instead of the removed stub. Observed, not changed: that spec's teammate
+  step still builds pre-APP-014 roster objects and fails when run by hand
+  (`npx vitest run tests/e2e/journeys.spec.ts`); no CI suite runs the file. QA-008 owns it.
