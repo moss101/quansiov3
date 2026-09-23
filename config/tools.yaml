@@ -557,7 +557,7 @@ tools:
 
   - name: artifact.create
     version: 1
-    description: Create an artifact version in the workspace from content the run produced.
+    description: Create an artifact from a source file the run produced; the source must pass its kind's format and quality checks (DOMAIN.md §10.1).
     host: server
     source_trust: untrusted_external
     effect_class: content.upload
@@ -576,19 +576,27 @@ tools:
       additionalProperties: false
       properties:
         role: { type: string, minLength: 1 }
-        content_digest: { type: string, minLength: 1 }
+        kind: { type: string, enum: [document, spreadsheet, presentation, code, data, image, audio, video, archive, other] }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        content: { type: string, description: "The source as UTF-8 text (editable kinds); exactly one of content or content_base64." }
+        content_base64: { type: string, description: "The source as base64 (binary kinds)." }
+        content_digest: { type: string, minLength: 64, maxLength: 64, description: "Lowercase hex SHA-256 of the source bytes; the call is refused when it does not match." }
         media_type: { type: string, minLength: 1 }
-      required: [role, content_digest]
+      required: [role, kind, title, content_digest]
     output_schema:
       type: object
       additionalProperties: false
       properties:
         artifact_id: { type: string }
-      required: [artifact_id]
+        version_id: { type: string }
+        version: { type: integer }
+        content_digest: { type: string }
+        replayed: { type: boolean }
+      required: [artifact_id, version_id, version]
 
   - name: artifact.update
     version: 1
-    description: Add a version to an existing artifact.
+    description: Add an edited version to an existing artifact; the edited source must pass its kind's format and quality checks.
     host: server
     source_trust: untrusted_external
     effect_class: content.upload
@@ -607,15 +615,21 @@ tools:
       additionalProperties: false
       properties:
         artifact_id: { type: string, minLength: 1 }
-        content_digest: { type: string, minLength: 1 }
+        content: { type: string, description: "The edited source as UTF-8 text; exactly one of content or content_base64." }
+        content_base64: { type: string }
+        content_digest: { type: string, minLength: 64, maxLength: 64 }
         media_type: { type: string, minLength: 1 }
       required: [artifact_id, content_digest]
     output_schema:
       type: object
       additionalProperties: false
       properties:
+        artifact_id: { type: string }
+        version_id: { type: string }
         version: { type: integer }
-      required: [version]
+        content_digest: { type: string }
+        replayed: { type: boolean }
+      required: [artifact_id, version_id, version]
 
   - name: work.propose_plan
     version: 1

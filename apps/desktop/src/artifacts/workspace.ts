@@ -65,7 +65,16 @@ export interface ArtifactVersion {
   readonly producedBy: ProducedBy;
   readonly evidenceIds: readonly string[];
   readonly parentVersionId: string | null;
+  /** The authority's source-format check for this version (CAP-003); null when never checked. */
+  readonly formatCheck: FormatCheck | null;
   readonly createdAt: string;
+}
+
+/** `artifact_versions.format_check` (DOMAIN.md §10.1). */
+export interface FormatCheck {
+  readonly ok: boolean;
+  readonly rule: string;
+  readonly detail: string;
 }
 
 export interface ArtifactHistory {
@@ -126,6 +135,8 @@ export type ArtifactWorkspaceAction =
   | { readonly type: "preview.loaded"; readonly preview: LoadedPreview }
   | { readonly type: "evidence.loaded"; readonly evidence: EvidenceLink }
   | { readonly type: "artifact.changed"; readonly artifactId: string }
+  /** A version this page just saved (an edit, CAP-003): reload the history and show it. */
+  | { readonly type: "version.created"; readonly artifactId: string; readonly versionId: string }
   | { readonly type: "notice"; readonly notice: string | null };
 
 export function initialArtifactWorkspace(workspaceId: string): ArtifactWorkspaceState {
@@ -198,6 +209,17 @@ export function artifactWorkspaceReducer(state: ArtifactWorkspaceState, action: 
       return {
         ...state,
         stale: { list: true, history: state.stale.history || state.selectedId === action.artifactId },
+      };
+    case "version.created":
+      if (action.artifactId !== state.selectedId) {
+        return state;
+      }
+      return {
+        ...state,
+        selectedVersionId: action.versionId,
+        compareVersionId: null,
+        preview: null,
+        stale: { list: true, history: true },
       };
     case "notice":
       return { ...state, notice: action.notice };
@@ -284,6 +306,43 @@ export function decodeArtifacts(payload: unknown): ArtifactRow[] {
 }
 
 /** Decode `GET /v1/artifacts/{id}/versions`. */
+function formatCheck(raw: unknown): FormatCheck | null {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+  const check = raw as Record<string, unknown>;
+  if (typeof check["ok"] !== "boolean") {
+    return null;
+  }
+  return { ok: check["ok"], rule: text(check["rule"]) ?? "", detail: text(check["detail"]) ?? "" };
+}
+
+/** The kinds a person edits as text, and the media types that text is (DOMAIN.md §10.1). */
+const TEXT_EDITABLE: Readonly<Record<string, readonly string[]>> = {
+  document: ["text/markdown", "text/plain"],
+  spreadsheet: ["text/csv", "text/tab-separated-values"],
+  presentation: ["application/vnd.quansio.slides+json"],
+  code: ["application/vnd.quansio.code+json"],
+  data: ["application/json"],
+};
+
+/** Whether a version of this kind can be edited in place and saved as the next version. */
+export function editableAsText(artifactKind: string, mediaType: string): boolean {
+  return (TEXT_EDITABLE[artifactKind] ?? []).includes(mediaType);
+}
+
+/** A one-line account of a version's format check. */
+export function formatCheckLabel(check: FormatCheck | null): string {
+  if (!check) {
+    return "not checked";
+  }
+  if (check.ok) {
+    return "valid source";
+  }
+  // A PDF or a Word file is stored as a file; it is not an editable source.
+  return check.rule === "artifact.media_type" ? `stored as a file, not an editable source (${check.detail})` : `fails ${check.rule}: ${check.detail}`;
+}
+
 export function decodeHistory(payload: unknown): ArtifactHistory {
   const root = record(payload);
   const artifact = record(root["artifact"]);
@@ -307,6 +366,7 @@ export function decodeHistory(payload: unknown): ArtifactHistory {
       producedBy: producedBy(row["produced_by"]),
       evidenceIds: list(row["evidence_ids"]).filter((item): item is string => typeof item === "string"),
       parentVersionId: text(row["parent_version_id"]),
+      formatCheck: formatCheck(row["format_check"]),
       createdAt: text(row["created_at"]) ?? "",
     });
   }

@@ -163,6 +163,11 @@ pub struct HostDispatch {
     pub step_id: String,
     /// Owning workspace.
     pub workspace_id: String,
+    /// Owning tenant, which a server-hosted tool scopes its writes to.
+    pub tenant_id: String,
+    /// The person the run acts for, when there is one (a server-hosted tool grants them what
+    /// it creates).
+    pub acting_user_id: Option<String>,
     /// Upper bound on output returned to the model.
     pub max_output_bytes: usize,
     /// Dispatch deadline.
@@ -897,6 +902,12 @@ impl ToolDispatchService {
             run_id: request.run_id.clone(),
             step_id: request.step_id.clone(),
             workspace_id: run.workspace_id.clone(),
+            tenant_id: self.identity.tenant_id.clone(),
+            acting_user_id: self
+                .roles
+                .actor_for_run(&request.run_id)
+                .await?
+                .and_then(|actor| actor.user_id),
             max_output_bytes: plan.max_output_bytes,
             timeout_ms: plan.timeout_ms,
         };

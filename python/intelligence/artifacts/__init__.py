@@ -15,6 +15,7 @@ from intelligence.artifacts.formats import (
     PresentationSource,
     Slide,
     SpreadsheetSource,
+    check_source,
     parse_code,
     parse_data,
     parse_document,
@@ -39,6 +40,13 @@ from intelligence.artifacts.models import (
     Preview,
     digest_of,
 )
+from intelligence.artifacts.proposals import (
+    CREATE_TOOL,
+    UPDATE_TOOL,
+    ArtifactToolCall,
+    create_call,
+    update_call,
+)
 from intelligence.artifacts.workflow import (
     canonical_body,
     complete,
@@ -52,13 +60,16 @@ from intelligence.artifacts.workflow import (
 )
 
 __all__ = [
+    "CREATE_TOOL",
     "EDITABLE_KINDS",
     "KINDS",
     "MEDIA_KINDS",
     "SCHEMA_VERSION",
+    "UPDATE_TOOL",
     "ArtifactError",
     "ArtifactKind",
     "ArtifactRecord",
+    "ArtifactToolCall",
     "ArtifactVersion",
     "CheckReport",
     "CodeFile",
@@ -71,8 +82,10 @@ __all__ = [
     "Slide",
     "SpreadsheetSource",
     "canonical_body",
+    "check_source",
     "complete",
     "create",
+    "create_call",
     "create_from_fixture",
     "digest_of",
     "edit",
@@ -88,5 +101,6 @@ __all__ = [
     "quality_check",
     "serialize_source",
     "skill_pack_root",
+    "update_call",
     "validate_format",
 ]

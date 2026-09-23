@@ -97,6 +97,8 @@ export {
   decodeHistory,
   diffApplicable,
   diffLines,
+  editableAsText,
+  formatCheckLabel,
   initialArtifactWorkspace,
   selectedVersion,
 } from "./artifacts/workspace.js";
@@ -109,6 +111,7 @@ export type {
   ArtifactWorkspaceState,
   DiffLine,
   EvidenceLink,
+  FormatCheck,
   LoadedPreview,
   ProducedBy,
   WorkspaceFilter,

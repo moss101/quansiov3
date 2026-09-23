@@ -69,12 +69,14 @@ class CompletionCheck(_message.Message):
         KIND_ASSERTION: _ClassVar[CompletionCheck.Kind]
         KIND_EFFECTS_SETTLED: _ClassVar[CompletionCheck.Kind]
         KIND_CITATIONS_VALID: _ClassVar[CompletionCheck.Kind]
+        KIND_ARTIFACT_VALID: _ClassVar[CompletionCheck.Kind]
     KIND_UNSPECIFIED: CompletionCheck.Kind
     KIND_ARTIFACT_EXISTS: CompletionCheck.Kind
     KIND_TEST_COMMAND: CompletionCheck.Kind
     KIND_ASSERTION: CompletionCheck.Kind
     KIND_EFFECTS_SETTLED: CompletionCheck.Kind
     KIND_CITATIONS_VALID: CompletionCheck.Kind
+    KIND_ARTIFACT_VALID: CompletionCheck.Kind
     SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
     KIND_FIELD_NUMBER: _ClassVar[int]
     ARTIFACT_ROLE_FIELD_NUMBER: _ClassVar[int]

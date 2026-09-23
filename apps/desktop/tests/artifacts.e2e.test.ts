@@ -30,6 +30,8 @@ import {
   decodeHistory,
   decodeSearch,
   diffLines,
+  editableAsText,
+  formatCheckLabel,
   initialArtifactWorkspace,
   selectedVersion,
   textPreview,
@@ -331,6 +333,42 @@ describe.skipIf(blocked !== null)("desktop artifact workspace E2E against quansi
     expect(() => decodeEvidence({})).toThrow(/evidence/);
     reloaded.close();
   }, 90_000);
+
+  it("shows each version's source check and saves an edit as the next version (CAP-003)", async () => {
+    if (!minio) {
+      console.error(`BLOCKED_EXTERNAL: dev MinIO at ${MINIO} is not reachable; the artifact workspace needs the object store`);
+      return;
+    }
+    const page = new Page(origin, userData, null);
+    // A malformed spreadsheet is stored, and its version says why it is not a valid source.
+    const ragged = await page.upload("census.csv", "text/csv", new TextEncoder().encode("year,count,site\n2025,12\n"));
+    await page.select(ragged.artifact_id);
+    expect(page.state.history?.kind).toBe("spreadsheet");
+    const first = selectedVersion(page.state);
+    expect(first?.formatCheck?.ok).toBe(false);
+    expect(formatCheckLabel(first?.formatCheck ?? null)).toMatch(/^fails artifact\.format: spreadsheet row 2 has 2 columns/);
+    expect(editableAsText(page.state.history?.kind ?? "", first?.mediaType ?? "")).toBe(true);
+
+    // The edit is saved the way the page saves it: the same channel, the artifact named,
+    // a new immutable version on top of the old one.
+    await page.loadPreview();
+    const edited = `${page.state.preview?.text ?? ""}`.replace("2025,12\n", "2025,12,north\n");
+    const saved = await page.upload("census.csv", first?.mediaType ?? "text/csv", new TextEncoder().encode(edited), ragged.artifact_id);
+    expect(saved.artifact_id).toBe(ragged.artifact_id);
+    expect(saved.seq).toBe(2);
+    // The page selects what it saved and reloads the history.
+    page.state = artifactWorkspaceReducer(page.state, { type: "version.created", artifactId: ragged.artifact_id, versionId: saved.version_id });
+    page.state = artifactWorkspaceReducer(page.state, { type: "history.loaded", history: decodeHistory(await page.handlers["artifacts.versions"]({ artifactId: ragged.artifact_id })) });
+    expect(selectedVersion(page.state)?.id).toBe(saved.version_id);
+    const versions = page.state.history?.versions ?? [];
+    expect(versions.map((version) => version.seq)).toEqual([1, 2]);
+    expect(versions[1]?.parentVersionId).toBe(versions[0]?.id);
+    expect(versions[1]?.formatCheck?.ok).toBe(true);
+    expect(formatCheckLabel(versions[1]?.formatCheck ?? null)).toBe("valid source");
+    await page.loadPreview();
+    expect(page.state.preview?.text).toBe("year,count,site\n2025,12,north\n");
+    page.close();
+  }, 60_000);
 });
 
 if (blocked) {

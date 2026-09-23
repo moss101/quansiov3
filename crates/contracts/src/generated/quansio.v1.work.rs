@@ -41,6 +41,8 @@ pub mod completion_check {
         Assertion = 3,
         EffectsSettled = 4,
         CitationsValid = 5,
+        /// CAP-003: the role's current version passes its format check
+        ArtifactValid = 6,
     }
     impl Kind {
         /// String value of the enum field names used in the ProtoBuf definition.
@@ -55,6 +57,7 @@ pub mod completion_check {
                 Self::Assertion => "KIND_ASSERTION",
                 Self::EffectsSettled => "KIND_EFFECTS_SETTLED",
                 Self::CitationsValid => "KIND_CITATIONS_VALID",
+                Self::ArtifactValid => "KIND_ARTIFACT_VALID",
             }
         }
         /// Creates an enum from field names used in the ProtoBuf definition.
@@ -66,6 +69,7 @@ pub mod completion_check {
                 "KIND_ASSERTION" => Some(Self::Assertion),
                 "KIND_EFFECTS_SETTLED" => Some(Self::EffectsSettled),
                 "KIND_CITATIONS_VALID" => Some(Self::CitationsValid),
+                "KIND_ARTIFACT_VALID" => Some(Self::ArtifactValid),
                 _ => None,
             }
         }

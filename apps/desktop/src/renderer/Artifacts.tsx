@@ -21,6 +21,8 @@ import {
   decodeHistory,
   diffApplicable,
   diffLines,
+  editableAsText,
+  formatCheckLabel,
   initialArtifactWorkspace,
   selectedVersion,
   type ArtifactKind,
@@ -51,6 +53,16 @@ function fromBase64(value: string): Uint8Array {
   return bytes;
 }
 
+/** UTF-8 text as base64, for the upload channel. */
+function textToBase64(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+  }
+  return btoa(binary);
+}
+
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : t("commandFailed");
 }
@@ -74,6 +86,8 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
   const [channels, setChannels] = useState<readonly SearchChannel[]>(["artifacts", "threads", "knowledge", "evidence"]);
   const [results, setResults] = useState<SearchResults | null>(null);
   const [compareText, setCompareText] = useState<{ versionId: string; text: string } | null>(null);
+  // An edit of a text source (CAP-003): saved as the artifact's next version, never in place.
+  const [editing, setEditing] = useState<{ versionId: string; text: string } | null>(null);
 
   useEffect(() => {
     if (!state.stale.list) {
@@ -228,6 +242,29 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
     }
   }, [state.selectedId, version]);
 
+  const saveEdit = useCallback(async () => {
+    if (!state.selectedId || !version || !editing || !state.history) {
+      return;
+    }
+    try {
+      const saved = (await window.quansio.uploadAttachment({
+        name: state.history.title,
+        mediaType: version.mediaType,
+        bytesBase64: textToBase64(editing.text),
+        artifactId: state.selectedId,
+      })) as { version_id?: unknown };
+      setEditing(null);
+      if (typeof saved.version_id === "string") {
+        dispatch({ type: "version.created", artifactId: state.selectedId, versionId: saved.version_id });
+      } else {
+        dispatch({ type: "artifact.changed", artifactId: state.selectedId });
+      }
+      dispatch({ type: "notice", notice: t("savedNewVersion") });
+    } catch (error) {
+      dispatch({ type: "notice", notice: errorText(error) });
+    }
+  }, [state.selectedId, state.history, version, editing]);
+
   const diff = version && other && state.preview?.text !== null && state.preview?.text !== undefined && compareText?.versionId === other.id
     ? diffLines(compareText.text, state.preview.text)
     : null;
@@ -332,6 +369,9 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
                     ) : candidate.producedBy.userId ? (
                       <small>{t("uploadedBy")} {candidate.producedBy.userId}</small>
                     ) : null}
+                    <small className="format-check" data-ok={candidate.formatCheck ? String(candidate.formatCheck.ok) : "unknown"} title={t("formatCheck")}>
+                      {formatCheckLabel(candidate.formatCheck)}
+                    </small>
                     {candidate.id !== version.id ? (
                       <button type="button" className="link" onClick={() => { dispatch({ type: "version.compare", versionId: candidate.id }); }}>
                         {t("compare")}
@@ -344,6 +384,9 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
             <div className="actions">
               <button type="button" onClick={() => void save()}>{t("save")}</button>
               {openAllowed(version.mediaType) ? <button type="button" onClick={() => void open()}>{t("openWithOs")}</button> : null}
+              {editableAsText(state.history.kind, version.mediaType) && state.preview?.versionId === version.id && state.preview.text !== null && !editing ? (
+                <button type="button" onClick={() => { setEditing({ versionId: version.id, text: state.preview?.text ?? "" }); }}>{t("editSource")}</button>
+              ) : null}
               <code className="digest">{version.contentDigest}</code>
             </div>
             {version.evidenceIds.length > 0 ? (
@@ -362,6 +405,19 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
                     );
                   })}
                 </ul>
+              </div>
+            ) : null}
+            {editing ? (
+              <div className="edit-source" data-version={editing.versionId}>
+                <textarea
+                  aria-label={t("editSource")}
+                  value={editing.text}
+                  onChange={(event) => { setEditing({ versionId: editing.versionId, text: event.target.value }); }}
+                  rows={16}
+                  spellCheck={false}
+                />
+                <button type="button" onClick={() => void saveEdit()}>{t("saveNewVersion")}</button>
+                <button type="button" onClick={() => { setEditing(null); }}>{t("cancel")}</button>
               </div>
             ) : null}
             <div className="preview" data-mode={state.preview?.plan.mode ?? "loading"}>

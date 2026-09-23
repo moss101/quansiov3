@@ -37,10 +37,12 @@
 //! The test suite additionally gates on `QUANSIO_TEST_POSTGRES_URL` for its scratch
 //! databases (see `crates/server/tests/artifacts.rs`).
 
+pub mod formats;
 mod metadata;
 mod model;
 mod object_store;
 mod sigv4;
+pub mod tool_host;
 
 pub use metadata::{
     Artifact, ArtifactError, ArtifactStore, ArtifactVersion, DeletionOutcome, Evidence,

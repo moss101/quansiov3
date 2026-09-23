@@ -13,6 +13,8 @@ import {
   decodeArtifacts,
   decodeEvidence,
   decodeHistory,
+  editableAsText,
+  formatCheckLabel,
   decodeSearch,
   diffApplicable,
   diffLines,
@@ -198,5 +200,26 @@ describe("global search", () => {
     expect(results.hits[1]?.ref).toEqual({ thread_id: "thr_1", run_id: null });
     expect(results.truncated).toBe(true);
     expect(results.engines[0]?.engine).toBe("quansio-indexer");
+  });
+
+  it("reads each version's source check and edits only text sources (CAP-003)", () => {
+    const history = decodeHistory({
+      artifact: { id: "art_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", kind: "spreadsheet", title: "metrics", origin: { kind: "upload", ref: "usr_x" } },
+      versions: [
+        { id: "artv_01J8Z3K6F1N8VQ2X5W9Y0AAAA1", seq: 1, media_type: "text/csv", format_check: { ok: false, rule: "artifact.format", detail: "spreadsheet row 2 has 2 columns, expected 3" } },
+        { id: "artv_01J8Z3K6F1N8VQ2X5W9Y0AAAA2", seq: 2, media_type: "text/csv", format_check: { ok: true, rule: "artifact.quality", detail: "spreadsheet format and quality hold" } },
+        { id: "artv_01J8Z3K6F1N8VQ2X5W9Y0AAAA3", seq: 3, media_type: "text/csv" },
+      ],
+    });
+    expect(history.versions.map((version) => version.formatCheck?.ok ?? null)).toEqual([false, true, null]);
+    expect(formatCheckLabel(history.versions[0]?.formatCheck ?? null)).toBe("fails artifact.format: spreadsheet row 2 has 2 columns, expected 3");
+    expect(formatCheckLabel(history.versions[1]?.formatCheck ?? null)).toBe("valid source");
+    expect(formatCheckLabel(null)).toBe("not checked");
+    expect(formatCheckLabel({ ok: false, rule: "artifact.media_type", detail: "application/pdf is not a source" })).toMatch(/^stored as a file/);
+    expect(editableAsText("spreadsheet", "text/csv")).toBe(true);
+    expect(editableAsText("document", "text/markdown")).toBe(true);
+    expect(editableAsText("document", "application/pdf")).toBe(false);
+    expect(editableAsText("image", "image/png")).toBe(false);
+    expect(editableAsText("presentation", "application/vnd.quansio.slides+json")).toBe(true);
   });
 });

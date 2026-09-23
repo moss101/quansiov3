@@ -102,7 +102,9 @@ fn kind_for(media_type: &str) -> ArtifactKind {
         m if m.starts_with("image/") => ArtifactKind::Image,
         m if m.starts_with("audio/") => ArtifactKind::Audio,
         m if m.starts_with("video/") => ArtifactKind::Video,
-        "text/csv" | "application/json" | "application/x-ndjson" => ArtifactKind::Data,
+        // A CSV/TSV file is a spreadsheet source (DOMAIN.md §10.1, CAP-003).
+        "text/csv" | "text/tab-separated-values" => ArtifactKind::Spreadsheet,
+        "application/json" | "application/x-ndjson" => ArtifactKind::Data,
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         | "application/vnd.ms-excel"
         | "application/vnd.oasis.opendocument.spreadsheet" => ArtifactKind::Spreadsheet,
@@ -412,7 +414,7 @@ pub async fn artifact_versions(
     .ok_or_else(|| ApiError::new(ApiErrorCode::NotFound, format!("{artifact_id} is not an artifact of this tenant"), "projection"))?;
     let rows = sqlx::query(
         "SELECT v.id, v.seq, v.content_digest, v.size_bytes, v.media_type, v.produced_by_run_id, v.produced_by_step_id, \
-                v.produced_by_user_id, v.parent_version_id, v.created_at, \
+                v.produced_by_user_id, v.parent_version_id, v.format_check, v.created_at, \
                 COALESCE((SELECT jsonb_agg(e.id ORDER BY e.captured_at) FROM evidence e \
                           WHERE e.tenant_id = v.tenant_id AND v.produced_by_step_id IS NOT NULL AND e.step_id = v.produced_by_step_id), '[]'::jsonb) AS evidence_ids \
          FROM artifact_versions v WHERE v.tenant_id = $1 AND v.artifact_id = $2 ORDER BY v.seq",
@@ -448,6 +450,7 @@ pub async fn artifact_versions(
             },
             "evidence_ids": row.get::<Value, _>("evidence_ids"),
             "parent_version_id": row.get::<Option<String>, _>("parent_version_id"),
+            "format_check": row.get::<Option<Value>, _>("format_check"),
             "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
         })).collect::<Vec<_>>(),
     })))

@@ -37,6 +37,12 @@ pub enum DeterministicCheck {
         /// Effect classes that must be settled; empty means every effect of the run.
         effect_classes: Vec<String>,
     },
+    /// The current version of the artifact with this role passed its source-format and quality
+    /// check (CAP-003, DOMAIN.md §10.1): a malformed deliverable cannot complete the work.
+    ArtifactValid {
+        /// Artifact role the deliverable carries.
+        artifact_role: String,
+    },
     /// The run's citations cover at least `min_coverage` of its claims.
     CitationsValid {
         /// Required citation coverage in `0.0..=1.0`.
@@ -50,6 +56,7 @@ impl DeterministicCheck {
     pub const fn kind(&self) -> &'static str {
         match self {
             Self::ArtifactExists { .. } => "artifact_exists",
+            Self::ArtifactValid { .. } => "artifact_valid",
             Self::TestCommand { .. } => "test_command",
             Self::Assertion { .. } => "assertion",
             Self::EffectsSettled { .. } => "effects_settled",
@@ -63,7 +70,9 @@ impl DeterministicCheck {
     #[must_use]
     pub const fn owner(&self) -> Option<&'static str> {
         match self {
-            Self::ArtifactExists { .. } | Self::EffectsSettled { .. } => None,
+            Self::ArtifactExists { .. }
+            | Self::ArtifactValid { .. }
+            | Self::EffectsSettled { .. } => None,
             // Running a contract command is the tool host's job (DOMAIN.md §7.5 `terminal.exec`).
             Self::TestCommand { .. } => Some(super::COMMAND_CHECK_OWNER),
             // Cite coverage is computed by the research/citation pipeline.
@@ -190,6 +199,15 @@ fn parse_check(value: &Value) -> Result<DeterministicCheck, VerificationError> {
                 )
                 .unwrap_or(1)
                 .max(1),
+            })
+        }
+        "artifact_valid" => {
+            let role = object
+                .get("artifact_role")
+                .and_then(Value::as_str)
+                .ok_or_else(|| malformed("artifact_valid needs artifact_role".to_string()))?;
+            Ok(DeterministicCheck::ArtifactValid {
+                artifact_role: role.to_string(),
             })
         }
         "test_command" => {

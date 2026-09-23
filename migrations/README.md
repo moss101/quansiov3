@@ -32,6 +32,7 @@ runner (`quansio_server::control::schema::migrate`).
 | `0015_thread_participant_stamp.sql` | Thread membership (APP-009): the `updated_at` column the shared stamping trigger on `thread_participants` expects (0001 attached the trigger without it, so any membership update failed), and a partial index over active participants. Additive. |
 | `0016_routine_fires_notification_delivery.sql` | Routines and notifications (APP-010): `routine_fires`, the firing ledger with one row per fire key (claimed with the routine's next due time, leased while executing, retried with backoff), `notification_deliveries` (email per notification with attempts and backoff), and `notifications.source_event_id`, `title` and the requested `channels`, with a unique index so one event notifies a user once, and `background_tenants()` (security definer, tenant ids only) for the background loop. Additive. |
 | `0017_webhook_deliveries.sql` | Outbound webhooks (APP-015): `webhook_subscriptions.created_by` and `start_sequence` (a subscription receives events committed after it), and `webhook_deliveries`, the delivery ledger with one row per (subscription, event), leased per attempt and retried with backoff until delivered or dead-lettered. Additive. |
+| `0018_artifact_format_check.sql` | Artifact source formats (CAP-003): `artifact_versions.format_check` (`{ok, rule, detail}`), written by the store for every version it adds and read by the `artifact_valid` completion check. Additive. |
 
 ## Applying
 
