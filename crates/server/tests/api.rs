@@ -211,15 +211,34 @@ async fn service(prefix: &str) -> Option<(axum::Router, sqlx::PgPool, String)> {
 
 /// A run created by the runtime, which owns runs.
 async fn runtime_run(pool: &sqlx::PgPool) -> (quansio_core::CanonicalId, u64) {
+    runtime_run_in(
+        pool,
+        TENANT,
+        WORKSPACE,
+        "wn_01J8Z3K6F1N8VQ2X5W9Y0CCCCC",
+        "ath_01J8Z3K6F1N8VQ2X5W9Y0CCCCC",
+    )
+    .await
+}
+
+/// A running run in `tenant`'s `workspace` on the seeded `node`, bound to a new agent `thread`.
+async fn runtime_run_in(
+    pool: &sqlx::PgPool,
+    tenant: &str,
+    workspace: &str,
+    node: &str,
+    thread: &str,
+) -> (quansio_core::CanonicalId, u64) {
     use quansio_core::{CanonicalId, CorrelationId, Prefix, UlidGenerator};
     // A run binds an agent thread, so the fixture creates the thread it binds rather than naming one that
     // does not exist.
     sqlx::query(
         "INSERT INTO agent_threads (id, tenant_id, workspace_id, agent_kind) \
-         VALUES ('ath_01J8Z3K6F1N8VQ2X5W9Y0CCCCC', $1, $2, 'worker')",
+         VALUES ($1, $2, $3, 'worker')",
     )
-    .bind(TENANT)
-    .bind(WORKSPACE)
+    .bind(thread)
+    .bind(tenant)
+    .bind(workspace)
     .execute(pool)
     .await
     .expect("seed an agent thread");
@@ -227,18 +246,16 @@ async fn runtime_run(pool: &sqlx::PgPool) -> (quansio_core::CanonicalId, u64) {
         NewRun, RunStatus, RunTriggerKind, RuntimeIdentity, RuntimeStore,
     };
     let identity = RuntimeIdentity::system(
-        TENANT,
+        tenant,
         "api-test",
         CorrelationId::generate(&mut UlidGenerator::new()),
     );
     let store = RuntimeStore::new(pool.clone(), identity).expect("runtime store");
     let run = store
         .create_run(NewRun::new(
-            WORKSPACE.to_string(),
-            CanonicalId::parse_typed("wn_01J8Z3K6F1N8VQ2X5W9Y0CCCCC", Prefix::WorkNode)
-                .expect("work node"),
-            CanonicalId::parse_typed("ath_01J8Z3K6F1N8VQ2X5W9Y0CCCCC", Prefix::AgentThread)
-                .expect("agent thread"),
+            workspace.to_string(),
+            CanonicalId::parse_typed(node, Prefix::WorkNode).expect("work node"),
+            CanonicalId::parse_typed(thread, Prefix::AgentThread).expect("agent thread"),
             RunTriggerKind::Manual,
         ))
         .await
@@ -502,6 +519,181 @@ async fn a_command_scoped_to_another_tenant_does_not_touch_this_one() {
         status, "CANCELLED",
         "another tenant's call changed this tenant's run"
     );
+    common::drop_pool(&pool, &name).await;
+}
+
+#[tokio::test]
+async fn two_tenants_may_send_the_same_command_id_and_each_replays_its_own() {
+    let Some((router, pool, name)) = service("api_tenant_command_id").await else {
+        common::blocked_marker();
+        return;
+    };
+    // §1.2: a command_id is unique per tenant. Clients mint it, so two tenants can mint the same one, and
+    // neither may break the other's retry or learn from the answer that the other already used it.
+    const OTHER: &str = "tn_01J8Z3K6F1N8VQ2X5W9Y0DDDDD";
+    const OTHER_WORKSPACE: &str = "ws_01J8Z3K6F1N8VQ2X5W9Y0DDDDD";
+    const OTHER_NODE: &str = "wn_01J8Z3K6F1N8VQ2X5W9Y0DDDDD";
+    common::seed_tenant(
+        &pool,
+        OTHER,
+        "usr_01J8Z3K6F1N8VQ2X5W9Y0DDDDD",
+        OTHER_WORKSPACE,
+        OTHER_NODE,
+    )
+    .await;
+    let mut calls = Vec::new();
+    for (tenant, workspace, node, thread) in [
+        (
+            TENANT,
+            WORKSPACE,
+            "wn_01J8Z3K6F1N8VQ2X5W9Y0CCCCC",
+            "ath_01J8Z3K6F1N8VQ2X5W9Y0CCCCC",
+        ),
+        (
+            OTHER,
+            OTHER_WORKSPACE,
+            OTHER_NODE,
+            "ath_01J8Z3K6F1N8VQ2X5W9Y0DDDDD",
+        ),
+    ] {
+        let (run, generation) = runtime_run_in(&pool, tenant, workspace, node, thread).await;
+        let body = serde_json::json!({
+            "command_id": COMMAND,
+            "params": { "run_id": run.to_string(), "generation": generation },
+        });
+        calls.push((tenant, run.to_string(), body));
+    }
+
+    // Each tenant's first submission is applied as a new command in that tenant, not refused and not
+    // answered with the other tenant's record.
+    let mut firsts = Vec::new();
+    for (tenant, run_id, body) in &calls {
+        let response = router
+            .clone()
+            .oneshot(request(
+                "POST",
+                "/v1/commands/CancelRun",
+                Some(tenant),
+                Some(body.clone()),
+            ))
+            .await
+            .expect("a response");
+        let status = response.status();
+        let first = json_body(response).await;
+        assert_eq!(status, StatusCode::OK, "{tenant}: {first}");
+        assert_eq!(first["replayed"], false, "{tenant}: {first}");
+        assert_eq!(first["result"]["run_id"].as_str(), Some(run_id.as_str()));
+        assert_eq!(first["result"]["status"], "CANCELLED", "{tenant}: {first}");
+        firsts.push(first);
+    }
+
+    // A resend in either tenant is answered from that tenant's own record.
+    for ((tenant, _, body), first) in calls.iter().zip(&firsts) {
+        let response = router
+            .clone()
+            .oneshot(request(
+                "POST",
+                "/v1/commands/CancelRun",
+                Some(tenant),
+                Some(body.clone()),
+            ))
+            .await
+            .expect("a response");
+        assert_eq!(response.status(), StatusCode::OK, "{tenant}'s resend");
+        let again = json_body(response).await;
+        assert_eq!(again["replayed"], true, "{tenant}: {again}");
+        assert_eq!(again["result"], first["result"], "{tenant}: {again}");
+    }
+
+    // A parameter mismatch is judged against the sender's own record: it is refused in that tenant and the
+    // other tenant still replays unchanged.
+    let mut changed = calls[1].2.clone();
+    let generation = changed["params"]["generation"]
+        .as_u64()
+        .expect("a generation");
+    changed["params"]["generation"] = serde_json::json!(generation + 1);
+    let response = router
+        .clone()
+        .oneshot(request(
+            "POST",
+            "/v1/commands/CancelRun",
+            Some(OTHER),
+            Some(changed),
+        ))
+        .await
+        .expect("a response");
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+    assert_eq!(
+        json_body(response).await["code"],
+        "CONFLICT_IDEMPOTENCY_MISMATCH"
+    );
+    let response = router
+        .clone()
+        .oneshot(request(
+            "POST",
+            "/v1/commands/CancelRun",
+            Some(TENANT),
+            Some(calls[0].2.clone()),
+        ))
+        .await
+        .expect("a response");
+    let again = json_body(response).await;
+    assert_eq!(again["replayed"], true, "{again}");
+    assert_eq!(again["result"], firsts[0]["result"], "{again}");
+
+    // One record per tenant, each with an id the server minted (§1.1) rather than the client's command_id.
+    let rows: Vec<(String, String)> = sqlx::query_as(
+        "SELECT tenant_id, id FROM commands WHERE command_id = $1 ORDER BY tenant_id",
+    )
+    .bind(COMMAND)
+    .fetch_all(&pool)
+    .await
+    .expect("command records");
+    let tenants: Vec<&str> = rows.iter().map(|(tenant, _)| tenant.as_str()).collect();
+    assert_eq!(tenants, vec![TENANT, OTHER]);
+    for (tenant, id) in &rows {
+        assert!(
+            id.starts_with("cmd_") && id != COMMAND,
+            "{tenant}'s record id: {id}"
+        );
+    }
+
+    // A record written before row ids were minted carries the client's command_id as its id. Another
+    // tenant sending that command_id is still served: the old rows need no rewrite.
+    let legacy = "cmd_01J8Z3K6F1N8VQ2X5W9Y0EEEEE";
+    sqlx::query(
+        "INSERT INTO commands (id, tenant_id, command_name, command_id, params_digest, status, result) \
+         VALUES ($1, $2, 'CancelRun', $1, 'legacy', 'applied', '{}'::jsonb)",
+    )
+    .bind(legacy)
+    .bind(TENANT)
+    .execute(&pool)
+    .await
+    .expect("a record in the pre-fix shape");
+    let (run, generation) = runtime_run_in(
+        &pool,
+        OTHER,
+        OTHER_WORKSPACE,
+        OTHER_NODE,
+        "ath_01J8Z3K6F1N8VQ2X5W9Y0EEEEE",
+    )
+    .await;
+    let response = router
+        .oneshot(request(
+            "POST",
+            "/v1/commands/CancelRun",
+            Some(OTHER),
+            Some(serde_json::json!({
+                "command_id": legacy,
+                "params": { "run_id": run.to_string(), "generation": generation },
+            })),
+        ))
+        .await
+        .expect("a response");
+    let status = response.status();
+    let body = json_body(response).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["replayed"], false, "{body}");
     common::drop_pool(&pool, &name).await;
 }
 

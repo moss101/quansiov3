@@ -62,12 +62,15 @@ pub async fn invoke(
         ));
     }
 
+    // The record's id is minted here (DOMAIN.md §1.1). The client's command_id is unique only within its
+    // tenant (§1.2), so as the key it would let one tenant's id collide with another's instead of replaying.
+    let record_id = CanonicalId::generate(Prefix::Command, &mut UlidGenerator::new());
     let inserted = sqlx::query(
         "INSERT INTO commands (id, tenant_id, command_name, command_id, params_digest, status, correlation_id) \
          VALUES ($1, $2, $3, $4, $5, 'accepted', $6) \
          ON CONFLICT (tenant_id, command_id) DO NOTHING",
     )
-    .bind(command_id.as_canonical().to_string())
+    .bind(record_id.to_string())
     .bind(&scope.tenant_id)
     .bind(&command)
     .bind(command_id.as_canonical().to_string())
