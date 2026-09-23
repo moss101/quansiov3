@@ -1,0 +1,97 @@
+{
+  "task_id": "APP-001",
+  "git_commit": "19f49e3e4c74234e281699e01a74f069c23f5aa6",
+  "recorded_at": "2026-09-23T12:32:42Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --test api -- a_refused a_resend_while a_tenant_over  # before the fix (7d54410 handler): the refused CancelRun's record stays accepted; a resend against an accepted record gets 200 {replayed: true, result: null}",
+      "exit_code": 101,
+      "result": "FAIL",
+      "log": "evidence/APP-001/2026-09-23T12-32-42Z/cargo-test-api-before-fix.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --test api --test command_idempotency  # after the fix: 15 + 2 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-23T12-32-42Z/cargo-test-api-idempotency.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --no-fail-fast  # 48 binaries, 392 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-23T12-32-42Z/cargo-test-server.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-23T12-32-42Z/fmt-check.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-23T12-32-42Z/clippy.log"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-23T12-32-42Z/validate.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --test api -- a_refused a_resend_while a_tenant_over  # before the fix (7d54410 handler): the refused CancelRun's record stays accepted; a resend against an accepted record gets 200 {replayed: true, result: null}",
+      "exit_code": 101,
+      "result": "FAIL"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --test api --test command_idempotency  # after the fix: 15 + 2 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, scratch db> cargo test -p quansio-server --no-fail-fast  # 48 binaries, 392 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/api/commands.rs",
+      "sha256": "8680d6e3c8f3a93fa50856d779e7e89f4ad8fd535c284f00276c434cc6728ad5",
+      "bytes": 53583
+    },
+    {
+      "path": "crates/server/src/api/error.rs",
+      "sha256": "740243e67c78e50980d9d39c7cec1d594345de93f18091467217b77dae34a69b",
+      "bytes": 14300
+    },
+    {
+      "path": "crates/server/tests/api.rs",
+      "sha256": "4e1d8c84d10fb265278d0367a2d2eae3a7ee314e00ed4ad27da00aa01ca9893f",
+      "bytes": 36938
+    },
+    {
+      "path": "evidence/APP-001/2026-09-23T12-32-42Z/NOTES.md",
+      "sha256": "d9b1887824ee402769a34c2c5cdfed5507dcf53221c166cb6f096847b60f297f",
+      "bytes": 4440
+    }
+  ]
+}

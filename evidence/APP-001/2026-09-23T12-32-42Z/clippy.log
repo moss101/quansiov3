@@ -1,0 +1,9 @@
+    Checking quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/vibrant-mclean-9b7678/crates/core)
+   Compiling quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/vibrant-mclean-9b7678/crates/events)
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/vibrant-mclean-9b7678/crates/server)
+    Checking quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/vibrant-mclean-9b7678/crates/machine)
+    Checking quansio-indexer v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/vibrant-mclean-9b7678/crates/indexer)
+    Checking quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/vibrant-mclean-9b7678/crates/capability)
+    Checking quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/vibrant-mclean-9b7678/crates/graph)
+    Checking quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/vibrant-mclean-9b7678/crates/tools)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 37.21s

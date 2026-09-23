@@ -1,0 +1,36 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/vibrant-mclean-9b7678/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.48s
+     Running tests/api.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/api-9baa36f0145fbd49)
+
+running 3 tests
+test a_resend_while_the_first_is_still_being_applied_is_told_to_come_back ... FAILED
+test a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal ... FAILED
+test a_tenant_over_the_rate_limit_is_rate_limited ... ok
+
+failures:
+
+---- a_resend_while_the_first_is_still_being_applied_is_told_to_come_back stdout ----
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+
+thread 'a_resend_while_the_first_is_still_being_applied_is_told_to_come_back' (3388542) panicked at crates/server/tests/api.rs:654:5:
+assertion `left == right` failed: {"command_id":"cmd_01J8Z3K6F1N8VQ2X5W9Y0CCCCC","replayed":true,"result":null}
+  left: 200
+ right: 409
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal stdout ----
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+
+thread 'a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal' (3388541) panicked at crates/server/tests/api.rs:534:5:
+assertion `left == right` failed
+  left: "accepted"
+ right: "rejected"
+
+
+failures:
+    a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal
+    a_resend_while_the_first_is_still_being_applied_is_told_to_come_back
+
+test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 12 filtered out; finished in 2.17s
+
+error: test failed, to rerun pass `-p quansio-server --test api`
