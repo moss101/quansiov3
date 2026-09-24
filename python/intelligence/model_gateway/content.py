@@ -8,7 +8,13 @@ is either a JSON string (plain text) or an object:
                {"kind": "image", "url": "https://..."},
                {"kind": "document", "media_type": "application/pdf", "data_base64": "..."}],
      "tool_call_id": "...",   # tool messages only
-     "tool_name": "..."}
+     "tool_name": "...",
+     "tool_calls": [{"id": "...", "name": "fs.read", "args": {...}}]}   # assistant messages only
+
+An assistant message carries the tool calls it made, so the tool messages that answer them follow
+a turn the provider recognizes: both first-party wire formats refuse a tool result whose call is
+not in the preceding assistant turn. Tool names are the Tool Registry's (`fs.read`); adapters
+encode them for the wire (`tooling.wire_tool_name`).
 
 Anything else fails closed with `VALIDATION_SCHEMA`: the gateway never guesses at content it
 cannot normalize, and never silently drops a part (a dropped image or document would change
@@ -20,6 +26,7 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -30,7 +37,8 @@ PART_IMAGE = "image"
 PART_DOCUMENT = "document"
 
 _ALLOWED_PART_KINDS = frozenset({PART_TEXT, PART_IMAGE, PART_DOCUMENT})
-_ALLOWED_CONTENT_KEYS = frozenset({"parts", "tool_call_id", "tool_name"})
+_ALLOWED_CONTENT_KEYS = frozenset({"parts", "tool_call_id", "tool_name", "tool_calls"})
+_ALLOWED_TOOL_CALL_KEYS = frozenset({"id", "name", "args"})
 _DOCUMENT_MEDIA_TYPES = frozenset({"application/pdf"})
 
 
@@ -46,12 +54,25 @@ class ContentPart:
 
 
 @dataclass(frozen=True, slots=True)
+class ToolCallPart:
+    """One tool call an assistant turn made: its id, registry tool name and JSON arguments."""
+
+    id: str
+    name: str
+    args: Mapping[str, Any]
+
+    def args_json(self) -> str:
+        return json.dumps(self.args, sort_keys=True, separators=(",", ":"))
+
+
+@dataclass(frozen=True, slots=True)
 class RenderedContent:
     """Normalized content of one rendered message."""
 
     parts: tuple[ContentPart, ...] = ()
     tool_call_id: str = ""
     tool_name: str = ""
+    tool_calls: tuple[ToolCallPart, ...] = ()
 
     @property
     def has_document(self) -> bool:
@@ -65,7 +86,9 @@ class RenderedContent:
         return "\n".join(part.text for part in self.parts if part.kind == PART_TEXT and part.text)
 
 
-def parse_content(content_json: str, *, is_tool_message: bool) -> RenderedContent:
+def parse_content(
+    content_json: str, *, is_tool_message: bool, is_assistant_message: bool = False
+) -> RenderedContent:
     """Normalize `RenderedMessage.content_json`, failing closed on any unknown shape."""
     raw = content_json.strip()
     if not raw:
@@ -98,7 +121,36 @@ def parse_content(content_json: str, *, is_tool_message: bool) -> RenderedConten
         raise GatewayError(GatewayErrorCode.VALIDATION_SCHEMA, "a tool message must carry `tool_call_id`")
     if not is_tool_message and tool_call_id:
         raise GatewayError(GatewayErrorCode.VALIDATION_SCHEMA, "only a tool message may carry `tool_call_id`")
-    return RenderedContent(parts=parts, tool_call_id=tool_call_id, tool_name=tool_name)
+    raw_calls = decoded.get("tool_calls", [])
+    if raw_calls and not is_assistant_message:
+        raise GatewayError(
+            GatewayErrorCode.VALIDATION_SCHEMA, "only an assistant message may carry `tool_calls`"
+        )
+    if not isinstance(raw_calls, list):
+        raise GatewayError(GatewayErrorCode.VALIDATION_SCHEMA, "rendered content `tool_calls` must be a list")
+    tool_calls = tuple(_parse_tool_call(call) for call in raw_calls)
+    ids = [call.id for call in tool_calls]
+    if len(set(ids)) != len(ids):
+        raise GatewayError(GatewayErrorCode.VALIDATION_SCHEMA, "an assistant turn repeats a tool call id")
+    return RenderedContent(parts=parts, tool_call_id=tool_call_id, tool_name=tool_name, tool_calls=tool_calls)
+
+
+def _parse_tool_call(raw: object) -> ToolCallPart:
+    if not isinstance(raw, dict):
+        raise GatewayError(GatewayErrorCode.VALIDATION_SCHEMA, "a tool call must be an object")
+    unknown = sorted(set(raw) - _ALLOWED_TOOL_CALL_KEYS)
+    if unknown:
+        raise GatewayError(GatewayErrorCode.VALIDATION_SCHEMA, f"a tool call has unknown key(s) {unknown}")
+    call_id = _opt_text(raw.get("id"))
+    name = _opt_text(raw.get("name"))
+    args = raw.get("args", {})
+    if not call_id or not name:
+        raise GatewayError(
+            GatewayErrorCode.VALIDATION_SCHEMA, "a tool call needs a non-empty `id` and `name`"
+        )
+    if not isinstance(args, dict):
+        raise GatewayError(GatewayErrorCode.VALIDATION_SCHEMA, "tool call `args` must be a JSON object")
+    return ToolCallPart(id=call_id, name=name, args=args)
 
 
 def to_anthropic_blocks(content: RenderedContent) -> list[dict[str, object]]:

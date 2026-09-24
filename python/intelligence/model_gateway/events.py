@@ -17,6 +17,8 @@ from typing import Any, cast
 
 from quansio.v1.intelligence import intelligence_pb2
 
+from intelligence.model_gateway.tooling import registry_tool_name
+
 SCHEMA_VERSION = "v1"
 
 # Provisional spend bands per million tokens by catalog cost_class (INT-003/OPS-004 own pricing).
@@ -112,9 +114,10 @@ class EventFactory:
         return event
 
     def tool_call(self, tool_call_id: str, name: str, args_json: str) -> intelligence_pb2.ModelEvent:
+        """A completed tool call; `name` is the provider's spelling and becomes the registry's."""
         event = self._base(intelligence_pb2.ModelEvent.KIND_TOOL_CALL)
         event.tool_call_id = tool_call_id
-        event.tool_name = name
+        event.tool_name = registry_tool_name(name)
         event.tool_args_json = args_json
         return event
 

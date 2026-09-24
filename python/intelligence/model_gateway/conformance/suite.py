@@ -40,6 +40,8 @@ CONFORMANCE_CREDENTIAL_HANDLE = "conformance/stub"
 CONFORMANCE_CREDENTIAL_VALUE = "conformance-not-a-credential"
 CONFORMANCE_TOOL_NAME = "fs.read"
 CONFORMANCE_TOOL_ARGS = '{"value":"42"}'
+CONFORMANCE_TOOL_CALL_ID = "call_conformance_1"
+CONFORMANCE_TOOL_RESULT = '{"value": "42", "label": "the answer"}'
 
 STUB_PROVIDER_KINDS: tuple[ProviderKind, ...] = (
     ProviderKind.ANTHROPIC,
@@ -51,11 +53,12 @@ LIVE_PROVIDER_KINDS: tuple[ProviderKind, ...] = STUB_PROVIDER_KINDS
 LIVE_PROVIDERS_REQUIRED = 2
 
 # Scenarios that are deterministic by construction and therefore also run live.
-LIVE_SCENARIOS: tuple[str, ...] = ("text", "tool_call")
+LIVE_SCENARIOS: tuple[str, ...] = ("text", "tool_call", "tool_result")
 STUB_SCENARIOS: tuple[str, ...] = (
     "text",
     "usage_repeat",
     "tool_call",
+    "tool_result",
     "thinking",
     "refusal",
     "max_tokens",
@@ -124,6 +127,15 @@ SCENARIO_EXPECTATIONS: Mapping[str, ScenarioExpectation] = {
     "tool_call": ScenarioExpectation(
         stop_reason=intelligence_pb2.MODEL_STOP_REASON_TOOL_USE,
         tool_calls=1,
+        input_tokens=11,
+        output_tokens=7,
+        cache_read_tokens=3,
+    ),
+    # The second round of a tool loop: the assistant's tool call and its result are in the
+    # conversation, and the model answers from the result.
+    "tool_result": ScenarioExpectation(
+        stop_reason=intelligence_pb2.MODEL_STOP_REASON_END_TURN,
+        delta_texts=_TEXT_DELTAS,
         input_tokens=11,
         output_tokens=7,
         cache_read_tokens=3,
@@ -305,7 +317,47 @@ def prompt_for(scenario: str) -> str:
             f"{scenario_marker(scenario)} You must call the {CONFORMANCE_TOOL_NAME} tool with "
             '{"value": "42"} and reply with nothing else.'
         )
+    if scenario == "tool_result":
+        return (
+            f"{scenario_marker(scenario)} Call the {CONFORMANCE_TOOL_NAME} tool with "
+            '{"value": "42"}, then tell me the label it returns in one short sentence.'
+        )
     return f"{scenario_marker(scenario)} Reply with a short greeting."
+
+
+def tool_round_messages() -> list[intelligence_pb2.RenderedMessage]:
+    """The assistant's tool call and the tool's result: the second round of a tool loop."""
+    return [
+        intelligence_pb2.RenderedMessage(
+            schema_version="v1",
+            role=intelligence_pb2.RenderedMessage.ROLE_ASSISTANT,
+            trust_level="AGENT_GENERATED",
+            content_json=json.dumps(
+                {
+                    "parts": [],
+                    "tool_calls": [
+                        {
+                            "id": CONFORMANCE_TOOL_CALL_ID,
+                            "name": CONFORMANCE_TOOL_NAME,
+                            "args": json.loads(CONFORMANCE_TOOL_ARGS),
+                        }
+                    ],
+                }
+            ),
+        ),
+        intelligence_pb2.RenderedMessage(
+            schema_version="v1",
+            role=intelligence_pb2.RenderedMessage.ROLE_TOOL,
+            trust_level="UNTRUSTED_EXTERNAL",
+            content_json=json.dumps(
+                {
+                    "parts": [{"kind": "text", "text": CONFORMANCE_TOOL_RESULT}],
+                    "tool_call_id": CONFORMANCE_TOOL_CALL_ID,
+                    "tool_name": CONFORMANCE_TOOL_NAME,
+                }
+            ),
+        ),
+    ]
 
 
 def build_call(
@@ -341,6 +393,8 @@ def build_call(
             cache_hint="stable",
         ),
     ]
+    if scenario == "tool_result":
+        messages.extend(tool_round_messages())
     return intelligence_pb2.ModelCallRequest(
         schema_version="v1",
         call_id=call_id,
@@ -373,7 +427,7 @@ def run_scenario(
         model_catalog_id=model_catalog_id,
         scenario=scenario,
         timeout_ms=timeout_ms,
-        tools=tools or scenario == "tool_call",
+        tools=tools or scenario in ("tool_call", "tool_result"),
         cancellation_token=cancellation_token,
     )
     provider_kind = gateway.prepare(call).route.provider.kind
@@ -433,7 +487,7 @@ def _verify_content(
     if expectation.delta_texts is not None:
         if mode.exact_deltas:
             assert deltas == "".join(expectation.delta_texts), f"{context}: deltas {deltas!r}"
-        elif report.scenario == "text":
+        elif report.scenario in ("text", "tool_result"):
             assert deltas.strip(), f"{context}: live run produced no text"
     tool_calls = report.of_kind(intelligence_pb2.ModelEvent.KIND_TOOL_CALL)
     assert len(tool_calls) == expectation.tool_calls, (

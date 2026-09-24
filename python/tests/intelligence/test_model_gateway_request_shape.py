@@ -34,7 +34,7 @@ from intelligence.model_gateway.conformance import (
     stub_catalog,
 )
 from intelligence.model_gateway.errors import GatewayError, GatewayErrorCode
-from intelligence.model_gateway.tooling import MappingToolSchemaSource, ToolDefinition
+from intelligence.model_gateway.tooling import MappingToolSchemaSource, ToolDefinition, wire_tool_name
 
 GATEWAY_PACKAGE = Path(__file__).resolve().parents[2] / "intelligence" / "model_gateway"
 KIND_IDS = [kind.value for kind in STUB_PROVIDER_KINDS]
@@ -202,11 +202,13 @@ def test_tool_schemas_are_strict(gateway: ModelGateway, kind_value: str) -> None
     body = prepared.body_json()
     tools = body["tools"]
     assert isinstance(tools, list) and len(tools) == 1
+    # The registry name is namespaced (`fs.read`); the wire carries its provider-safe spelling.
     if prepared.provider_kind is ProviderKind.ANTHROPIC:
         schema = tools[0]["input_schema"]
-        assert tools[0]["name"] == CONFORMANCE_TOOL_NAME
+        assert tools[0]["name"] == "fs__read" == wire_tool_name(CONFORMANCE_TOOL_NAME)
     else:
         function = tools[0]["function"]
+        assert function["name"] == "fs__read" == wire_tool_name(CONFORMANCE_TOOL_NAME)
         assert function["strict"] is True
         assert tools[0]["type"] == "function"
         schema = function["parameters"]

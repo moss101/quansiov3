@@ -150,7 +150,11 @@ def parse_messages(
                 role=message.role,
                 trust_level=message.trust_level,
                 cache_hint=message.cache_hint,
-                content=parse_content(message.content_json, is_tool_message=message.role == TOOL_ROLE),
+                content=parse_content(
+                    message.content_json,
+                    is_tool_message=message.role == TOOL_ROLE,
+                    is_assistant_message=message.role == ASSISTANT_ROLE,
+                ),
             )
         )
     assert_stable_prefix(views)
