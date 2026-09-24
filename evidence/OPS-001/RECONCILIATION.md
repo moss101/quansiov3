@@ -104,7 +104,7 @@ tables through this module. The API files call the owner and write only `command
   Google, Ping, OneLogin, Keycloak) also speaks OIDC. This is recorded as a limitation in the
   task notes.
 
-**Persistent state (migration `0019_enterprise_identity.sql`, additive):**
+**Persistent state (migration `0020_enterprise_identity.sql`, additive; the id-only account lookup is `0019_sign_in_lookup.sql` (APP-002 fix found here)):**
 
 - `sso_connections`
 - `sso_group_mappings`

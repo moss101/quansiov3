@@ -121,12 +121,3 @@ CREATE POLICY auth_flow ON sso_states
 CREATE POLICY auth_flow ON service_principals
     USING (current_setting('quansio.auth_flow', true) = 'on')
     WITH CHECK (current_setting('quansio.auth_flow', true) = 'on');
-
--- Users are visible only to themselves or through a membership in the active tenant (0001).
--- Sign-in must still tell a new address from an existing account before any tenant is known;
--- this returns the id for an address and nothing else.
-CREATE OR REPLACE FUNCTION identity_user_by_email(p_email TEXT) RETURNS TEXT
-    LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
-    AS $$ SELECT id FROM users WHERE primary_email = p_email $$;
-REVOKE ALL ON FUNCTION identity_user_by_email(TEXT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION identity_user_by_email(TEXT) TO quansio_app;

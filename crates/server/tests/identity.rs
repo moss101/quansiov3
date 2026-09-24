@@ -803,6 +803,13 @@ async fn the_whole_sign_in_flow_works_as_the_application_role_under_rls() {
         .expect("sign out");
     assert_eq!(signed_out.status(), StatusCode::OK);
 
+    // A returning user signs in again as the application role: the account is found, not
+    // onboarded a second time (the users policy hides it until the flow names it).
+    let again = sign_in(&router, &delivery, "rls@example.com").await;
+    assert_eq!(again["onboarded"], false, "{again}");
+    assert_eq!(again["user_id"], session["user_id"], "{again}");
+    assert_eq!(again["tenant_id"], session["tenant_id"], "{again}");
+
     // The pre-authentication tables are invisible to the application role without the gate.
     let mut tx = pool.begin().await.expect("begin");
     let visible: i64 = sqlx::query_scalar("SELECT count(*) FROM sessions")
