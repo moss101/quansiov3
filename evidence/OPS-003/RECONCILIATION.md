@@ -43,8 +43,9 @@ boundary. The only correlation that does is the gRPC `ScopeContext.correlation_i
   tenant's recent redacted log lines from an in-memory ring (no store), with the build version,
   bounded to `DEFAULT_BUNDLE_LIMIT`. The desktop exports it together with its own redacted
   frames.
-- **OTLP.** When `QUANSIO_OTLP_ENDPOINT` is set, the server exports its spans over OTLP/gRPC. It
-  is off by default; it is an operator-configured effect to the operator's own collector.
+- **OTLP.** When `QUANSIO_OTLP_ENDPOINT` is set, the server exports its spans over OTLP/HTTP (JSON
+  encoding, through the existing HTTP client; no new dependency). It is off by default; it is an
+  operator-configured effect to the operator's own collector.
 
 **Persistent state.** None: the ring buffer is in memory and metrics are process counters.
 
@@ -61,7 +62,8 @@ boundary. The only correlation that does is the gRPC `ScopeContext.correlation_i
 
 - [x] Rust:
   - `observability::context` (W3C trace context, task-local);
-  - `observability::logging` (JSON tracing layer through the redacting writer, plus the ring);
+  - `observability::log` (a JSON line per event through the redactor, plus the ring; no
+    tracing-subscriber dependency);
   - `observability::metrics` (a global registry with Prometheus text);
   - HTTP middleware (continue or start the trace, a request span, a completion log, metrics);
   - runtime events for turns, model calls and tool calls;
@@ -69,7 +71,7 @@ boundary. The only correlation that does is the gRPC `ScopeContext.correlation_i
   - `/metrics`; `/v1/diagnostics/bundle`;
   - composition installs logging;
   - OTLP exporter behind `QUANSIO_OTLP_ENDPOINT`.
-- [x] Python: the servicer continues the trace per RPC and logs start/end JSON lines through
+- [x] Python: the servicer continues the trace per RPC and logs one span line per RPC through
   the redacting formatter; the app installs the JSON log handler.
 - [x] Desktop: the server client sends a `traceparent` per command; the diagnostics export
   merges the server bundle with desktop frames, redacted and bounded.
