@@ -1097,8 +1097,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T11:49:49Z",
-      "updated_at": "2026-09-12T22:03:35Z",
-      "git_commit": "3914fc53ffa71a847e7f30ca2ac3a965f2468c08",
+      "updated_at": "2026-09-24T07:41:50Z",
+      "git_commit": "fe6c3ecdb398d0856f08c5e42105753b78c61793",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test skills (6 tests: draft start, unapproved versions refused with no event written, the full ladder with only ACTIVE resolving, one active version per skill with the pointer moving after a deprecation, the tenant-scoped ordered active view, unknown skill/version refused)",
         "cargo test -p quansio-server --lib control::skills (4 unit tests: the \u00a711.5 ladder and its terminal states, only ACTIVE resolving, an illegal promotion named at both ends, an unknown state refused)",
@@ -1106,7 +1106,10 @@
         "(cd python && uv run --frozen pytest -q) (241 passed, 6 skipped live-provider cases)",
         "uv run --project python pytest tests -q (188 passed)",
         "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && (cd python && ruff check . && ruff format --check . && mypy intelligence)",
-        "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh (11 gates PASS)"
+        "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh (11 gates PASS)",
+        "uv run --project python pytest python/tests/intelligence/test_turn_context.py (skill resolution into the turn context: placement, trust, every exclusion rule, bound, determinism, budget, unreadable manifests)",
+        "cargo test -p quansio-server --test walking_skeleton_gateway (registry ACTIVE skills through the real plane: the relevant one enters the context, the one needing fs.write is excluded and recorded)",
+        "bash scripts/ci/ci.sh on the fix branch (11/11 gates PASS)"
       ],
       "artifacts": [
         "evidence/INT-009/2026-09-12T21-51-59Z/summary.json",
@@ -1116,12 +1119,14 @@
         "crates/server/tests/skills.rs",
         "python/intelligence/skills/models.py",
         "python/intelligence/skills/resolver.py",
-        "python/tests/intelligence/test_skill_resolver.py"
+        "python/tests/intelligence/test_skill_resolver.py",
+        "evidence/INT-009/2026-09-24T07-41-25Z/summary.json",
+        "evidence/INT-009/2026-09-24T07-41-25Z/NOTES.md"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Skill registry, promotion ladder and task-scoped resolver, both halves, unblocked by the container runtime coming back. The control plane (crates/server/src/control/skills) owns the rows: `state.rs` is the \u00a711.5 ladder as a fail-closed state machine (DRAFT \u2192 CANDIDATE \u2192 EVALUATING \u2192 APPROVED \u2192 ACTIVE \u2192 DEPRECATED \u2192 RETIRED, with EVALUATING \u2192 REJECTED; only ACTIVE resolves), and `store.rs` is the durable registry \u2014 create a skill, add a DRAFT version, promote along the ladder. Every mutation is one transaction that stages its `skill.*` RuntimeEvent (`skill.created`, `skill.version_created`, `skill.version_promoted`) at the aggregate's next version, so a refused promotion writes neither the state nor the event; the refusal travels out of band as `MutationRejected` and comes back typed (VALIDATION_SCHEMA / RUNTIME_ILLEGAL_TRANSITION / NOT_FOUND / CONFLICT_STATE / INTERNAL). One invariant is the store's rather than the ladder's: a skill has at most one ACTIVE version and `skills.current_active_version_id` names exactly that version \u2014 promoting to ACTIVE is refused while a different version is active (deprecate it first, which is the ladder's own ACTIVE \u2192 DEPRECATED edge), leaving ACTIVE clears the pointer, and `active_versions` (the view the resolver consumes) requires the state and the pointer to agree, ordered by name so the resolver's input order is deterministic. The Python resolver (python/intelligence/skills) resolves at most `max_skills` ACTIVE versions relevant to the task, excluding any candidate whose tool_needs or capability_needs exceed the caller's snapshot rather than granting them, and accounting for every candidate it excludes with the rule that excluded it. Verified on main: the full verification sweep and `bash scripts/ci/ci.sh` (11 gates) are green at 3914fc53ffa7."
+      "notes": "Skill registry, promotion ladder and task-scoped resolver, both halves, unblocked by the container runtime coming back. The control plane (crates/server/src/control/skills) owns the rows: `state.rs` is the \u00a711.5 ladder as a fail-closed state machine (DRAFT \u2192 CANDIDATE \u2192 EVALUATING \u2192 APPROVED \u2192 ACTIVE \u2192 DEPRECATED \u2192 RETIRED, with EVALUATING \u2192 REJECTED; only ACTIVE resolves), and `store.rs` is the durable registry \u2014 create a skill, add a DRAFT version, promote along the ladder. Every mutation is one transaction that stages its `skill.*` RuntimeEvent (`skill.created`, `skill.version_created`, `skill.version_promoted`) at the aggregate's next version, so a refused promotion writes neither the state nor the event; the refusal travels out of band as `MutationRejected` and comes back typed (VALIDATION_SCHEMA / RUNTIME_ILLEGAL_TRANSITION / NOT_FOUND / CONFLICT_STATE / INTERNAL). One invariant is the store's rather than the ladder's: a skill has at most one ACTIVE version and `skills.current_active_version_id` names exactly that version \u2014 promoting to ACTIVE is refused while a different version is active (deprecate it first, which is the ladder's own ACTIVE \u2192 DEPRECATED edge), leaving ACTIVE clears the pointer, and `active_versions` (the view the resolver consumes) requires the state and the pointer to agree, ordered by name so the resolver's input order is deterministic. The Python resolver (python/intelligence/skills) resolves at most `max_skills` ACTIVE versions relevant to the task, excluding any candidate whose tool_needs or capability_needs exceed the caller's snapshot rather than granting them, and accounting for every candidate it excludes with the rule that excluded it. Verified on main: the full verification sweep and `bash scripts/ci/ci.sh` (11 gates) are green at 3914fc53ffa7. 2026-09-24 regression (fixed same day, fix/INT-009-skills-in-context merged as fe6c3ec; evidence/INT-009/2026-09-24T07-41-25Z/): 'Resolve only relevant approved skills for a task and capability snapshot' was library-only -- no skill ever reached a model and nothing recorded which skills a run was given (the acceptance held vacuously). DOMAIN 11.2 gains the skill source kind and BuildContext skill inputs; the Context plane resolves the registry's ACTIVE versions with the INT-009 resolver (ACTIVE only, never widening authority, bounded, deterministic) into optional operator segments at verified_knowledge and records every exclusion with its rule; an unreadable registry manifest is excluded, never fatal. The gateway model source offers the registry's ACTIVE versions with the run's exposed tools and granted effect classes; recorded projections name the skill versions each call was given. 5 compiling mutants each fail the named suites."
     },
     "INT-010": {
       "coverage": "GENUINE_GAP",
