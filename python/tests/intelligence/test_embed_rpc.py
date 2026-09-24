@@ -11,6 +11,7 @@ from __future__ import annotations
 import contextlib
 import time
 from collections.abc import Iterator
+from pathlib import Path
 
 import grpc
 import pytest
@@ -194,3 +195,32 @@ def test_a_route_of_the_wrong_width_fails_closed(embedder: EmbeddingProvider) ->
     envelope = decode_error(failure.value)
     assert envelope.code is ErrorCode.PROVIDER_UNAVAILABLE
     assert "1536" in envelope.message and "8-wide" in envelope.message
+
+
+def test_a_chat_only_catalog_composes_a_service_without_embed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """INT-001/INT-011 regression: a catalog with no embedding route is a valid chat-only
+    deployment. The production composition root starts (`Embed` then fails closed) instead of
+    raising the gateway's `ROUTE_UNAVAILABLE` out of process startup."""
+    from intelligence.embeddings.provider import EmbeddingError
+    from intelligence.server import app
+
+    catalog = tmp_path / "models.yaml"
+    catalog.write_text(
+        "version: 1\n"
+        "providers:\n  openai-compatible:\n    kind: openai_compatible\n"
+        "    base_url: http://127.0.0.1:9/v1\n    credential_handle: provider/chat-only\n"
+        "routing:\n  strategy: deterministic\n  primary: local\n  fallback_order: []\n"
+        "models:\n  - id: local\n    provider: openai-compatible\n    model_id: chat-only-stub\n"
+        "    capabilities: [tools, streaming]\n    context_window: 32768\n    cost_class: low\n"
+        "    dlp_eligible: false\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(EmbeddingError) as refused:
+        gateway_embedder(ModelGateway.from_environment(catalog_path=catalog), dimensions=INDEX_DIMENSIONS)
+    assert refused.value.code == "ROUTE_UNAVAILABLE"
+
+    monkeypatch.setenv(app.ENV_MODEL_CATALOG, str(catalog))
+    servicer = app._default_servicer()
+    assert servicer._embedder is None

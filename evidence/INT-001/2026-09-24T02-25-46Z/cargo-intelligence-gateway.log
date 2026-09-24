@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.50s
+     Running tests/intelligence_gateway.rs (target/debug/deps/intelligence_gateway-bae169a54c1fbf3a)
+
+running 2 tests
+test the_rust_runtime_calls_the_python_gateway_across_the_process_boundary ... ok
+test the_gateway_refuses_with_its_typed_errors ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.81s
+
+exit=0

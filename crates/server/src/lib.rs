@@ -20,6 +20,7 @@ pub mod audit;
 pub mod composition;
 pub mod control;
 pub mod effects;
+pub mod intelligence;
 pub mod notify;
 pub mod observability;
 pub mod policy;

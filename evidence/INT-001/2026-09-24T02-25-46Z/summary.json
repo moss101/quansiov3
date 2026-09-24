@@ -1,0 +1,96 @@
+{
+  "task_id": "INT-001",
+  "git_commit": "9ec28642d0f2dccf36183b7ab2e97764c4ea1de9",
+  "recorded_at": "2026-09-24T02:26:03Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test intelligence_gateway (Rust IntelligenceClient -> real `python -m intelligence.server` process over TCP: ClassifyTrust, FulfillModel through the dev stub provider, typed refusals)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-001/2026-09-24T02-25-46Z/cargo-intelligence-gateway.log"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_embed_rpc.py -v (chat-only catalog composes a service; Embed fails closed)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-001/2026-09-24T02-25-46Z/pytest-embed-rpc.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -k bootstrap_smoke (stub provider serves the streaming wire deterministically)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-001/2026-09-24T02-25-46Z/pytest-dev-stack.log"
+    },
+    {
+      "command": "int001_mutations.sh (scope metadata dropped, error trailer ignored, embedding fix reverted, stub streaming disabled: each fails the named test; sources restored with git checkout)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-001/2026-09-24T02-25-46Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-001/2026-09-24T02-25-46Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test intelligence_gateway (Rust IntelligenceClient -> real `python -m intelligence.server` process over TCP: ClassifyTrust, FulfillModel through the dev stub provider, typed refusals)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_embed_rpc.py -v (chat-only catalog composes a service; Embed fails closed)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/integration/test_dev_stack.py -k bootstrap_smoke (stub provider serves the streaming wire deterministically)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "int001_mutations.sh (scope metadata dropped, error trailer ignored, embedding fix reverted, stub streaming disabled: each fails the named test; sources restored with git checkout)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-001/2026-09-24T02-25-46Z/NOTES.md",
+      "sha256": "5a95787212b8fd91437d095dc0462f5e791e7770bb35fe319be5aacf1d3e133b",
+      "bytes": 4636
+    },
+    {
+      "path": "evidence/INT-001/2026-09-24T02-25-46Z/cargo-intelligence-gateway.log",
+      "sha256": "fe4d83cbf73c737cc5b2de6c88223ddf22d099e478b02120ba3f997abb3925d8",
+      "bytes": 430
+    },
+    {
+      "path": "evidence/INT-001/2026-09-24T02-25-46Z/pytest-embed-rpc.log",
+      "sha256": "a996095f5c8a6833091e64303754a1fb999a62553ad8fd7b37cb9c29b080b567",
+      "bytes": 1632
+    },
+    {
+      "path": "evidence/INT-001/2026-09-24T02-25-46Z/pytest-dev-stack.log",
+      "sha256": "eb34386755d413e46ed310a975f93f3e072ca2235eed22462bfeeae896eb7dac",
+      "bytes": 500
+    },
+    {
+      "path": "evidence/INT-001/2026-09-24T02-25-46Z/mutation-checks.log",
+      "sha256": "76bc0eee61ba641929d67c5b05d275b5ef5c930a9553f8f7e8369d2412174cdd",
+      "bytes": 149
+    },
+    {
+      "path": "evidence/INT-001/2026-09-24T02-25-46Z/ci-summary.json",
+      "sha256": "940c77c305ff10a8259104e7b35e03a20fc43fed0d8d859aa69138abca6df5dd",
+      "bytes": 7889
+    }
+  ]
+}

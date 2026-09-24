@@ -726,7 +726,7 @@
 - **Owner:** AI Platform
 - **Language:** Python
 - **Component:** `intelligence`
-- **Paths:** `python/intelligence/`, `python/intelligence/contracts/`
+- **Paths:** `python/intelligence/`, `python/intelligence/contracts/`, `crates/server/src/intelligence/`
 - **Depends on:** GOV-004, CORE-002
 - **Real boundary:** not required
 - **GA:** required

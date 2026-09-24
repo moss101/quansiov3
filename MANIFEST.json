@@ -24,13 +24,13 @@
     },
     {
       "path": "TASKS.md",
-      "bytes": 100938,
-      "sha256": "e5f0d293dc9af2a836638a447db509121a50db6da1852faa65d5d5d005ef3915"
+      "bytes": 100973,
+      "sha256": "84e42eac1a62f7239211c4378dfb2c6c56e601aab8cbb40b8509f5ebe3324544"
     },
     {
       "path": "registries/tasks.json",
-      "bytes": 125985,
-      "sha256": "af40ce3e24e697e0ea3c3abb2d3a594910973d002e8869c2cb38bbc3496f0d5b"
+      "bytes": 126028,
+      "sha256": "5ab458e1116b0c0434d2992e94c09d34bcde03205fef47aa6b6c051585cbbb5a"
     },
     {
       "path": "registries/task-graph.json",
@@ -39,8 +39,8 @@
     },
     {
       "path": "registries/progress.json",
-      "bytes": 281391,
-      "sha256": "07c3405d1636101da05f00e73f9c4246bffa32e5ad45994b7409f80eb6f7c881"
+      "bytes": 284708,
+      "sha256": "47c5ca5122149cf13e112749b018363409c7726b66bc7139532e407f0d89795e"
     },
     {
       "path": "scripts/validate_v81.py",
