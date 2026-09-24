@@ -33,6 +33,7 @@ runner (`quansio_server::control::schema::migrate`).
 | `0016_routine_fires_notification_delivery.sql` | Routines and notifications (APP-010): `routine_fires`, the firing ledger with one row per fire key (claimed with the routine's next due time, leased while executing, retried with backoff), `notification_deliveries` (email per notification with attempts and backoff), and `notifications.source_event_id`, `title` and the requested `channels`, with a unique index so one event notifies a user once, and `background_tenants()` (security definer, tenant ids only) for the background loop. Additive. |
 | `0017_webhook_deliveries.sql` | Outbound webhooks (APP-015): `webhook_subscriptions.created_by` and `start_sequence` (a subscription receives events committed after it), and `webhook_deliveries`, the delivery ledger with one row per (subscription, event), leased per attempt and retried with backoff until delivered or dead-lettered. Additive. |
 | `0018_artifact_format_check.sql` | Artifact source formats (CAP-003): `artifact_versions.format_check` (`{ok, rule, detail}`), written by the store for every version it adds and read by the `artifact_valid` completion check. Additive. |
+| `0019_sign_in_lookup.sql` | Sign-in under row-level security (APP-002 fix): `identity_user_by_email()` and `identity_sign_in_tenant()`, security definer, ids only, so a returning user's sign-in finds the account and its tenant before the user and tenant context exist, instead of onboarding the address a second time. Additive. |
 
 ## Applying
 
