@@ -1,0 +1,112 @@
+{
+  "task_id": "INT-002",
+  "git_commit": "1f0ea7cb3e022e1a0e024c64550a57e0ec91227a",
+  "recorded_at": "2026-09-24T02:38:12Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_model_gateway_tool_turns.py -v (assistant tool calls, wire-safe names, second-round wire shape per adapter, provider refusal of a result without its call, production schemas = config/tools.yaml)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-24T02-37-47Z/pytest-tool-turns.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && ruff format --check . && mypy intelligence && pytest -q)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-24T02-37-47Z/python-toolchain.log"
+    },
+    {
+      "command": "QUANSIO_TEST_OPENAI_COMPATIBLE_*=<Z.ai coding/paas/v4, GLM-5.3-Flash> QUANSIO_TEST_ANTHROPIC_*=<Z.ai anthropic, GLM-5.3-Flash> pytest tests/intelligence/test_model_gateway_live.py -v -rs (run 1: text-anthropic stopped MAX_TOKENS within its 256-token budget; unchanged scenario, passes on rerun)",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/INT-002/2026-09-24T02-37-47Z/live-run-1.log"
+    },
+    {
+      "command": "same live suite, run 2 (16 passed, 4 BLOCKED_EXTERNAL for first-party OpenAI; tool_call and tool_result pass on both wires)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-24T02-37-47Z/live-run-2.log"
+    },
+    {
+      "command": "int002_mutations.sh (OpenAI assistant tool_calls dropped, Anthropic tool_use dropped, names not encoded, names not decoded, production schemas empty, stub accepts invalid wire: each fails the tool-turn/conformance tests)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-24T02-37-47Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-09-24T02-37-47Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_model_gateway_tool_turns.py -v (assistant tool calls, wire-safe names, second-round wire shape per adapter, provider refusal of a result without its call, production schemas = config/tools.yaml)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen ruff check . && ruff format --check . && mypy intelligence && pytest -q)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_OPENAI_COMPATIBLE_*=<Z.ai coding/paas/v4, GLM-5.3-Flash> QUANSIO_TEST_ANTHROPIC_*=<Z.ai anthropic, GLM-5.3-Flash> pytest tests/intelligence/test_model_gateway_live.py -v -rs (run 1: text-anthropic stopped MAX_TOKENS within its 256-token budget; unchanged scenario, passes on rerun)",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "same live suite, run 2 (16 passed, 4 BLOCKED_EXTERNAL for first-party OpenAI; tool_call and tool_result pass on both wires)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "int002_mutations.sh (OpenAI assistant tool_calls dropped, Anthropic tool_use dropped, names not encoded, names not decoded, production schemas empty, stub accepts invalid wire: each fails the tool-turn/conformance tests)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-002/2026-09-24T02-37-47Z/NOTES.md",
+      "sha256": "0d16c3d783dfecfdc5056ba26911db4a7ea930c8915b37dea876b20f17fc2f00",
+      "bytes": 5311
+    },
+    {
+      "path": "evidence/INT-002/2026-09-24T02-37-47Z/pytest-tool-turns.log",
+      "sha256": "6682d57aa84da412e586cc6d18eae48defea042309c143614a1a2ddf8d228629",
+      "bytes": 4169
+    },
+    {
+      "path": "evidence/INT-002/2026-09-24T02-37-47Z/python-toolchain.log",
+      "sha256": "f212d0a932c40f316822cb83d827c00df795b1b38bfb26c8480516f8fdab5ee3",
+      "bytes": 852
+    },
+    {
+      "path": "evidence/INT-002/2026-09-24T02-37-47Z/live-run-1.log",
+      "sha256": "59a603b5d74527c7328745d8a3e4df8c02fa0e8e4188c36700d85d627cbc1711",
+      "bytes": 5848
+    },
+    {
+      "path": "evidence/INT-002/2026-09-24T02-37-47Z/live-run-2.log",
+      "sha256": "ff6991dea2e4f59d4e556d9fe784cfad2a547216ce3fefe873fe8b79cdfe127a",
+      "bytes": 3517
+    },
+    {
+      "path": "evidence/INT-002/2026-09-24T02-37-47Z/mutation-checks.log",
+      "sha256": "a8ef872fb948d06bbe4bcebe19802c60282bba97d0450ab5a68e50bcda7422f9",
+      "bytes": 204
+    },
+    {
+      "path": "evidence/INT-002/2026-09-24T02-37-47Z/ci-summary.json",
+      "sha256": "a90f596fe6ed49b2eb85f3f7ab0d5d6980494ac3f50c6a73b4f23b611ef99e16",
+      "bytes": 7890
+    }
+  ]
+}

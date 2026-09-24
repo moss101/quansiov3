@@ -1,0 +1,32 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-int002/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-int002/python
+configfile: pyproject.toml
+collecting ... collected 20 items
+
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[text-anthropic] PASSED [  5%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[text-openai] SKIPPED [ 10%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[text-openai_compatible] PASSED [ 15%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[tool_call-anthropic] PASSED [ 20%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[tool_call-openai] SKIPPED [ 25%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[tool_call-openai_compatible] PASSED [ 30%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[tool_result-anthropic] PASSED [ 35%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[tool_result-openai] SKIPPED [ 40%]
+tests/intelligence/test_model_gateway_live.py::test_live_provider_passes_the_shared_conformance_suite[tool_result-openai_compatible] PASSED [ 45%]
+tests/intelligence/test_model_gateway_live.py::test_at_least_two_live_providers_pass_the_same_suite PASSED [ 50%]
+tests/intelligence/test_model_gateway_live.py::test_live_request_shape_is_compaction_free_and_operator_channelled[anthropic] PASSED [ 55%]
+tests/intelligence/test_model_gateway_live.py::test_live_request_shape_is_compaction_free_and_operator_channelled[openai] SKIPPED [ 60%]
+tests/intelligence/test_model_gateway_live.py::test_live_request_shape_is_compaction_free_and_operator_channelled[openai_compatible] PASSED [ 65%]
+tests/intelligence/test_model_gateway_live.py::test_live_gateway_fails_closed_without_a_credential[anthropic] PASSED [ 70%]
+tests/intelligence/test_model_gateway_live.py::test_live_gateway_fails_closed_without_a_credential[openai] PASSED [ 75%]
+tests/intelligence/test_model_gateway_live.py::test_live_gateway_fails_closed_without_a_credential[openai_compatible] PASSED [ 80%]
+tests/intelligence/test_model_gateway_live.py::test_openai_compatible_boundary_is_built_only_from_its_test_variables PASSED [ 85%]
+tests/intelligence/test_model_gateway_live.py::test_first_party_boundary_runs_as_committed_unless_overridden[anthropic] PASSED [ 90%]
+tests/intelligence/test_model_gateway_live.py::test_first_party_boundary_runs_as_committed_unless_overridden[openai] PASSED [ 95%]
+tests/intelligence/test_model_gateway_live.py::test_openai_compatible_live_wiring_reaches_the_endpoint_the_variables_name PASSED [100%]
+
+=========================== short test summary info ============================
+SKIPPED [4] tests/intelligence/test_model_gateway_live.py:160: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY is not set; live openai conformance requires it
+=================== 16 passed, 4 skipped in 90.72s (0:01:30) ===================
+exit=0

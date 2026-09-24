@@ -1,0 +1,36 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3/python
+configfile: pyproject.toml
+collecting ... collected 26 items
+
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_an_assistant_turn_carries_its_tool_calls PASSED [  3%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_malformed_tool_calls_fail_closed[payload0-False-only an assistant] PASSED [  7%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_malformed_tool_calls_fail_closed[payload1-True-must be a list] PASSED [ 11%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_malformed_tool_calls_fail_closed[payload2-True-non-empty] PASSED [ 15%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_malformed_tool_calls_fail_closed[payload3-True-JSON object] PASSED [ 19%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_malformed_tool_calls_fail_closed[payload4-True-unknown key] PASSED [ 23%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_malformed_tool_calls_fail_closed[payload5-True-repeats a tool call id] PASSED [ 26%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_every_registry_tool_name_round_trips_through_its_wire_spelling PASSED [ 30%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_name_the_wire_cannot_carry_reversibly_is_refused[fs__read] PASSED [ 34%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_name_the_wire_cannot_carry_reversibly_is_refused[Fs.Read] PASSED [ 38%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_name_the_wire_cannot_carry_reversibly_is_refused[fs..read] PASSED [ 42%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_name_the_wire_cannot_carry_reversibly_is_refused[connector.<id>.<op>] PASSED [ 46%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_name_the_wire_cannot_carry_reversibly_is_refused[] PASSED [ 50%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_name_the_wire_cannot_carry_reversibly_is_refused[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa] PASSED [ 53%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_an_invented_wire_name_decodes_to_a_name_the_registry_does_not_have PASSED [ 57%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_provider_tool_call_arrives_under_its_registry_name[anthropic] PASSED [ 61%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_provider_tool_call_arrives_under_its_registry_name[openai] PASSED [ 65%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_provider_tool_call_arrives_under_its_registry_name[openai_compatible] PASSED [ 69%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_the_second_round_carries_the_call_its_result_answers[anthropic] PASSED [ 73%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_the_second_round_carries_the_call_its_result_answers[openai] PASSED [ 76%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_the_second_round_carries_the_call_its_result_answers[openai_compatible] PASSED [ 80%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_tool_result_without_its_call_is_refused_as_a_provider_would[anthropic] PASSED [ 84%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_tool_result_without_its_call_is_refused_as_a_provider_would[openai] PASSED [ 88%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_tool_result_without_its_call_is_refused_as_a_provider_would[openai_compatible] PASSED [ 92%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_the_production_gateway_offers_the_registry_schemas PASSED [ 96%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_a_registry_that_cannot_be_read_fails_closed PASSED [100%]
+
+============================== 26 passed in 4.77s ==============================
+exit=0
