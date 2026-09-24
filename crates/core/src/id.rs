@@ -114,6 +114,8 @@ pub enum Prefix {
     Session,
     /// `whd_` webhook delivery (one per subscription and event, APP-015).
     WebhookDelivery,
+    /// `ctx_` context projection (minted by the Context plane, INT-005).
+    ContextProjection,
 }
 
 impl Prefix {
@@ -171,6 +173,7 @@ impl Prefix {
             Self::BrowserSession => "bsn_",
             Self::Session => "ses_",
             Self::WebhookDelivery => "whd_",
+            Self::ContextProjection => "ctx_",
         }
     }
 
@@ -230,6 +233,7 @@ impl Prefix {
             Self::BrowserSession => "BROWSER_SESSION",
             Self::Session => "SESSION",
             Self::WebhookDelivery => "WEBHOOK_DELIVERY",
+            Self::ContextProjection => "CONTEXT_PROJECTION",
         }
     }
 
@@ -287,6 +291,7 @@ impl Prefix {
             Self::BrowserSession,
             Self::Session,
             Self::WebhookDelivery,
+            Self::ContextProjection,
         ]
     }
 }

@@ -1,7 +1,9 @@
 //! The bridge seam and the boundary check (INT-005).
 
 use async_trait::async_trait;
+use quansio_contracts::generated::intelligence::{ContextProjection, RenderedMessage};
 use quansio_tools::SourceTrust;
+use serde_json::{json, Value};
 
 use super::ContextBridgeError;
 
@@ -9,19 +11,141 @@ use super::ContextBridgeError;
 pub const RPC_BOUNDARY_OWNER: &str = "INT-001";
 
 /// What a run asks the intelligence plane for.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct ProjectionRequest {
+    /// Tenant the run belongs to (the RPC's scope).
+    pub tenant_id: String,
     /// Run the projection is for.
     pub run_id: String,
+    /// Turn the projection is for.
+    pub turn_id: String,
     /// Workspace the run belongs to.
     pub workspace_id: String,
+    /// Capability projection the run holds (the RPC's scope).
+    pub capability_projection_id: String,
     /// The canonical SearchProgram JSON the plane must execute, produced by the plane's own
     /// authority (`python/intelligence/context/search.py`); the runtime carries it opaquely.
+    /// Empty when the projection is built from the supplied segments only.
     pub program_json: String,
-    /// Snapshot of the canonical sources the program must be run against.
+    /// Snapshot of the canonical sources the segments were read at.
     pub snapshot_id: String,
     /// Token budget the projection must respect.
     pub token_budget: u32,
+    /// Digest of the policy snapshot the run is under.
+    pub policy_snapshot_digest: String,
+    /// Canonical content the runtime owns and offers for the turn (DOMAIN.md §11.2).
+    pub segments: Vec<SegmentRequest>,
+}
+
+/// Where a segment's content came from (DOMAIN.md §11.2 source kinds).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SegmentSource {
+    /// The teammate's system instructions.
+    System,
+    /// Policy the runtime applies.
+    Policy,
+    /// A thread message.
+    Thread,
+    /// A WorkGraph item.
+    Work,
+    /// The result of a tool call.
+    ToolResult,
+    /// Verified knowledge.
+    Knowledge,
+    /// Semantic memory.
+    Memory,
+    /// An artifact's content.
+    Artifact,
+    /// A search result.
+    Search,
+}
+
+impl SegmentSource {
+    /// The contract spelling.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::System => "system",
+            Self::Policy => "policy",
+            Self::Thread => "thread",
+            Self::Work => "work",
+            Self::ToolResult => "tool_result",
+            Self::Knowledge => "knowledge",
+            Self::Memory => "memory",
+            Self::Artifact => "artifact",
+            Self::Search => "search",
+        }
+    }
+}
+
+/// The message role a segment is rendered in.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SegmentRole {
+    /// System instructions.
+    System,
+    /// The operator channel.
+    Operator,
+    /// A user turn.
+    User,
+    /// An assistant turn.
+    Assistant,
+    /// A tool result.
+    Tool,
+}
+
+impl SegmentRole {
+    /// The contract spelling.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::System => "system",
+            Self::Operator => "operator",
+            Self::User => "user",
+            Self::Assistant => "assistant",
+            Self::Tool => "tool",
+        }
+    }
+}
+
+/// One piece of canonical content the runtime offers the plane (DOMAIN.md §11.2).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SegmentRequest {
+    /// Order in the turn.
+    pub seq: u32,
+    /// Where the content came from.
+    pub source: SegmentSource,
+    /// The canonical record it came from (`msg_…`, `tc_…`, …).
+    pub source_ref: String,
+    /// The role it is rendered in.
+    pub role: SegmentRole,
+    /// The content, in the RenderedMessage content shape (a JSON string, or an object with
+    /// `parts` and, for tool traffic, `tool_calls` / `tool_call_id` / `tool_name`).
+    pub content: Value,
+    /// A trust level the plane may only lower the source's label to, never raise it above.
+    pub trust_hint: Option<SourceTrust>,
+    /// The snapshot the content was read at.
+    pub snapshot_ref: String,
+    /// Whether the turn cannot proceed without it.
+    pub required: bool,
+}
+
+impl SegmentRequest {
+    /// The `segment_requests_json` entry for this segment.
+    #[must_use]
+    pub fn to_json(&self) -> String {
+        let mut request = json!({
+            "seq": self.seq,
+            "source": {"kind": self.source.as_str(), "ref": self.source_ref},
+            "role": self.role.as_str(),
+            "content": self.content,
+            "snapshot_ref": self.snapshot_ref,
+            "required": self.required,
+        });
+        if let Some(hint) = self.trust_hint {
+            request["trust_hint"] = Value::String(hint.as_str().to_string());
+        }
+        request.to_string()
+    }
 }
 
 /// One segment the plane returned.
@@ -38,7 +162,7 @@ pub struct ProjectionSegment {
 }
 
 /// A projection as received, before the boundary check accepts it.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct ReceivedProjection {
     /// `ctx_…` projection identity the turn will record.
     pub projection_id: String,
@@ -50,10 +174,41 @@ pub struct ReceivedProjection {
     pub tokens_used: u32,
     /// Whether the plane reports it had to drop context.
     pub degraded: bool,
+    /// What the plane dropped and why (DOMAIN.md §11.2 `degradation`).
+    pub degradation: Vec<String>,
+    /// The messages the plane rendered, one per segment, in render order.
+    pub messages: Vec<RenderedMessage>,
+}
+
+impl From<ContextProjection> for ReceivedProjection {
+    fn from(projection: ContextProjection) -> Self {
+        let tokens_used = projection
+            .token_ledger
+            .as_ref()
+            .map_or(0, |ledger| u32::try_from(ledger.used).unwrap_or(u32::MAX));
+        Self {
+            projection_id: projection.id,
+            snapshot_id: projection.snapshot_id,
+            segments: projection
+                .segments
+                .into_iter()
+                .map(|segment| ProjectionSegment {
+                    segment_id: format!("seg_{}", segment.seq),
+                    source: format!("{}:{}", segment.source_kind, segment.source_ref),
+                    trust_level: segment.trust_level,
+                    tokens: u32::try_from(segment.token_estimate).unwrap_or(u32::MAX),
+                })
+                .collect(),
+            tokens_used,
+            degraded: !projection.degradation_json.is_empty(),
+            degradation: projection.degradation_json,
+            messages: projection.messages,
+        }
+    }
 }
 
 /// A projection the boundary check accepted, with labels resolved.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ValidatedProjection {
     /// `ctx_…` identity, ready for `TurnInput::context_projection_id`.
     pub projection_id: String,
@@ -65,6 +220,10 @@ pub struct ValidatedProjection {
     pub tokens_used: u32,
     /// Whether the plane reported degradation.
     pub degraded: bool,
+    /// What the plane dropped and why.
+    pub degradation: Vec<String>,
+    /// The rendered messages, each at its segment's trust level.
+    pub messages: Vec<RenderedMessage>,
 }
 
 impl ValidatedProjection {
@@ -112,8 +271,10 @@ impl ContextBridgePort for UnavailableContextBridge {
 /// Check what the plane returned before a run may use it.
 ///
 /// This is the runtime's guarantee, not a second implementation of the plane's job: every segment
-/// must carry a trust level the §12 ladder recognises, and the projection must name itself and its
-/// snapshot. `current_snapshot` refuses a projection the sources have moved past.
+/// must carry a trust level the §12 ladder recognises, the projection must name itself and its
+/// snapshot, and every rendered message must be its segment's, at its segment's trust level — so a
+/// message cannot reach the model more trusted than its source. `current_snapshot` refuses a
+/// projection the sources have moved past.
 ///
 /// # Errors
 /// Returns [`ContextBridgeError::UnlabelledSegment`], [`ContextBridgeError::UnknownTrustLevel`],
@@ -155,12 +316,35 @@ pub fn validate_projection(
         })?;
         segments.push((segment.clone(), trust));
     }
+    if received.messages.len() != segments.len() {
+        return Err(ContextBridgeError::MalformedProjection {
+            detail: format!(
+                "{} rendered messages for {} segments",
+                received.messages.len(),
+                segments.len()
+            ),
+        });
+    }
+    for (message, (segment, trust)) in received.messages.iter().zip(&segments) {
+        if SourceTrust::parse(&message.trust_level).ok() != Some(*trust) {
+            return Err(ContextBridgeError::MalformedProjection {
+                detail: format!(
+                    "the message for {} is rendered at {:?}, its segment is {}",
+                    segment.segment_id,
+                    message.trust_level,
+                    trust.as_str()
+                ),
+            });
+        }
+    }
     Ok(ValidatedProjection {
         projection_id: received.projection_id,
         snapshot_id: received.snapshot_id,
         segments,
         tokens_used: received.tokens_used,
         degraded: received.degraded,
+        degradation: received.degradation,
+        messages: received.messages,
     })
 }
 
@@ -169,12 +353,21 @@ mod tests {
     use super::*;
 
     fn projection(segments: Vec<ProjectionSegment>) -> ReceivedProjection {
+        let messages = segments
+            .iter()
+            .map(|segment| RenderedMessage {
+                trust_level: segment.trust_level.clone(),
+                ..RenderedMessage::default()
+            })
+            .collect();
         ReceivedProjection {
             projection_id: "ctx_01J8Z3K6F1N8VQ2X5W9Y0TEST".to_string(),
             snapshot_id: "snap_1".to_string(),
             segments,
             tokens_used: 10,
             degraded: false,
+            degradation: Vec::new(),
+            messages,
         }
     }
 
@@ -248,6 +441,48 @@ mod tests {
     }
 
     #[test]
+    fn every_message_is_its_segments_at_its_segments_trust() {
+        let mut missing = projection(vec![segment("seg_1", "trusted_user")]);
+        missing.messages.clear();
+        assert!(matches!(
+            validate_projection(missing, None),
+            Err(ContextBridgeError::MalformedProjection { .. })
+        ));
+        // A tool result rendered as if the user had written it would be promoted trust.
+        let mut promoted = projection(vec![segment("seg_1", "untrusted_external")]);
+        promoted.messages[0].trust_level = "trusted_user".to_string();
+        let error = validate_projection(promoted, None).expect_err("promoted message");
+        assert_eq!(error.code(), "VALIDATION_SCHEMA");
+    }
+
+    #[test]
+    fn a_segment_request_serializes_to_the_contract_shape() {
+        let request = SegmentRequest {
+            seq: 3,
+            source: SegmentSource::ToolResult,
+            source_ref: "tc_1".to_string(),
+            role: SegmentRole::Tool,
+            content: json!({"parts": [], "tool_call_id": "call_1"}),
+            trust_hint: Some(SourceTrust::UntrustedExternal),
+            snapshot_ref: "run_1@4".to_string(),
+            required: false,
+        };
+        let value: Value = serde_json::from_str(&request.to_json()).expect("json");
+        assert_eq!(
+            value,
+            json!({
+                "seq": 3,
+                "source": {"kind": "tool_result", "ref": "tc_1"},
+                "role": "tool",
+                "content": {"parts": [], "tool_call_id": "call_1"},
+                "trust_hint": "untrusted_external",
+                "snapshot_ref": "run_1@4",
+                "required": false,
+            })
+        );
+    }
+
+    #[test]
     fn a_stale_snapshot_is_refused() {
         let error = validate_projection(
             projection(vec![segment("seg_1", "trusted_user")]),
@@ -271,6 +506,7 @@ mod tests {
             program_json: "{}".to_string(),
             snapshot_id: "snap_1".to_string(),
             token_budget: 100,
+            ..ProjectionRequest::default()
         }))
         .expect_err("unwired");
         assert_eq!(error.code(), "INTERNAL");

@@ -540,6 +540,8 @@ pub enum EntityPrefix {
     Session = 49,
     /// whd_ (APP-015: webhook delivery ledger)
     WebhookDelivery = 50,
+    /// ctx_ (INT-005: minted by the Context plane)
+    ContextProjection = 51,
 }
 impl EntityPrefix {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -599,6 +601,7 @@ impl EntityPrefix {
             Self::BrowserSession => "ENTITY_PREFIX_BROWSER_SESSION",
             Self::Session => "ENTITY_PREFIX_SESSION",
             Self::WebhookDelivery => "ENTITY_PREFIX_WEBHOOK_DELIVERY",
+            Self::ContextProjection => "ENTITY_PREFIX_CONTEXT_PROJECTION",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -655,6 +658,7 @@ impl EntityPrefix {
             "ENTITY_PREFIX_BROWSER_SESSION" => Some(Self::BrowserSession),
             "ENTITY_PREFIX_SESSION" => Some(Self::Session),
             "ENTITY_PREFIX_WEBHOOK_DELIVERY" => Some(Self::WebhookDelivery),
+            "ENTITY_PREFIX_CONTEXT_PROJECTION" => Some(Self::ContextProjection),
             _ => None,
         }
     }

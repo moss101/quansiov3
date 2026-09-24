@@ -9,6 +9,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
+use quansio_contracts::generated::intelligence::RenderedMessage;
 use quansio_core::{CanonicalId, CorrelationId, Prefix, UlidGenerator};
 use quansio_server::control::schema;
 use quansio_server::runtime::context_bridge::{
@@ -74,12 +75,22 @@ fn segment(id: &str, trust: &str) -> ProjectionSegment {
 }
 
 fn projection(segments: Vec<ProjectionSegment>) -> ReceivedProjection {
+    // The plane renders one message per segment, at the segment's trust level.
+    let messages = segments
+        .iter()
+        .map(|segment| RenderedMessage {
+            trust_level: segment.trust_level.clone(),
+            ..RenderedMessage::default()
+        })
+        .collect();
     ReceivedProjection {
         projection_id: PROJECTION.to_string(),
         snapshot_id: SNAPSHOT.to_string(),
         segments,
         tokens_used: 10,
         degraded: false,
+        degradation: Vec::new(),
+        messages,
     }
 }
 
@@ -204,6 +215,7 @@ async fn a_labelled_projection_is_accepted_and_its_id_is_recorded_on_the_turn() 
             program_json: "{\"channels\":[{\"channel\":\"exact\",\"value\":\"plan\"}]}".to_string(),
             snapshot_id: SNAPSHOT.to_string(),
             token_budget: 1_000,
+            ..ProjectionRequest::default()
         })
         .await
         .expect("the plane answers");
@@ -252,6 +264,7 @@ async fn a_projection_the_plane_could_not_label_is_refused_before_the_run_sees_i
             program_json: "{}".to_string(),
             snapshot_id: SNAPSHOT.to_string(),
             token_budget: 100,
+            ..ProjectionRequest::default()
         })
         .await
         .expect("the plane answers");
@@ -292,6 +305,7 @@ async fn an_unwired_bridge_fails_closed_rather_than_fabricating_context() {
             program_json: "{}".to_string(),
             snapshot_id: SNAPSHOT.to_string(),
             token_budget: 10,
+            ..ProjectionRequest::default()
         })
         .await
         .expect_err("unwired");

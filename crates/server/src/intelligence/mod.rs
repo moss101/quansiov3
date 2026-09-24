@@ -19,7 +19,8 @@ use std::time::Duration;
 use prost::Message as _;
 use quansio_contracts::generated::intelligence::intelligence_gateway_client::IntelligenceGatewayClient;
 use quansio_contracts::generated::intelligence::{
-    ModelCallRequest, ModelEvent, ScopeContext, TrustClassifyRequest, TrustClassifyResponse,
+    ContextBuildRequest, ContextProjection, ModelCallRequest, ModelEvent, ScopeContext,
+    TrustClassifyRequest, TrustClassifyResponse,
 };
 use tonic::metadata::MetadataValue;
 use tonic::transport::{Channel, Endpoint, Uri};
@@ -180,6 +181,28 @@ impl IntelligenceClient {
             },
         );
         let call = self.inner.classify_trust(request);
+        match tokio::time::timeout(scope.deadline, call).await {
+            Err(_) => Err(IntelligenceError::DeadlineExceeded),
+            Ok(Err(status)) => Err(refused(&status)),
+            Ok(Ok(response)) => Ok(response.into_inner()),
+        }
+    }
+
+    /// `BuildContext`: the Context plane's projection for one turn and the messages it rendered.
+    ///
+    /// The request's scope is set from `scope`. What comes back is a proposal: the caller runs
+    /// the runtime's boundary check (`runtime::context_bridge::validate_projection`) before use.
+    ///
+    /// # Errors
+    /// The typed refusal, or an unreachable or late gateway.
+    pub async fn build_context(
+        &mut self,
+        scope: &CallScope,
+        mut request: ContextBuildRequest,
+    ) -> Result<ContextProjection, IntelligenceError> {
+        request.schema_version = SCHEMA_VERSION.to_string();
+        request.scope = Some(scope.context());
+        let call = self.inner.build_context(Self::request(scope, request));
         match tokio::time::timeout(scope.deadline, call).await {
             Err(_) => Err(IntelligenceError::DeadlineExceeded),
             Ok(Err(status)) => Err(refused(&status)),
