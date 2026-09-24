@@ -1,0 +1,96 @@
+{
+  "task_id": "INT-005",
+  "git_commit": "26fa7e2076b421371ed3704aaa36ad40bc65ae81",
+  "recorded_at": "2026-09-24T02:57:54Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_turn_context.py -v (labelling, packing, rendering, refusals, gateway validity, BuildContext over gRPC)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-24T02-57-41Z/pytest-turn-context.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test intelligence_gateway (Rust -> real Python plane: BuildContext, boundary check, FulfillModel with the rendered messages; typed refusals)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-24T02-57-41Z/cargo-intelligence-gateway.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test context_bridge && cargo test -p quansio-server --lib context_bridge (turn records the projection; unlabelled/stale/mismatched projections refused)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-24T02-57-41Z/cargo-context-bridge.log"
+    },
+    {
+      "command": "int005_mutations.sh (8 mutations: hint raises trust, untrusted not bounded, rounds not atomic, window opens on an answer, orphan results accepted, BuildContext unserved, message trust unchecked, refusals lose code)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-24T02-57-41Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-24T02-57-41Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_turn_context.py -v (labelling, packing, rendering, refusals, gateway validity, BuildContext over gRPC)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test intelligence_gateway (Rust -> real Python plane: BuildContext, boundary check, FulfillModel with the rendered messages; typed refusals)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test context_bridge && cargo test -p quansio-server --lib context_bridge (turn records the projection; unlabelled/stale/mismatched projections refused)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "int005_mutations.sh (8 mutations: hint raises trust, untrusted not bounded, rounds not atomic, window opens on an answer, orphan results accepted, BuildContext unserved, message trust unchecked, refusals lose code)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-005/2026-09-24T02-57-41Z/NOTES.md",
+      "sha256": "0f5e3ab5572d058e80aab9ffd9b03566da4b2b9b646154cd0dfa4c2507514a2c",
+      "bytes": 5039
+    },
+    {
+      "path": "evidence/INT-005/2026-09-24T02-57-41Z/pytest-turn-context.log",
+      "sha256": "812a8c9a13f675ea35bf6bb0c8dd1a1e5da168b2b60697682c81c52943c85b2e",
+      "bytes": 5410
+    },
+    {
+      "path": "evidence/INT-005/2026-09-24T02-57-41Z/cargo-intelligence-gateway.log",
+      "sha256": "60aa3fb1f64bd1d44682bed27684c56232bbbf80debb47f0879ef51ee5ccb633",
+      "bytes": 578
+    },
+    {
+      "path": "evidence/INT-005/2026-09-24T02-57-41Z/cargo-context-bridge.log",
+      "sha256": "c17979c84b84fdb6942d16c1d73e83926a7a1880d16c7ebeb02420a104df60db",
+      "bytes": 1534
+    },
+    {
+      "path": "evidence/INT-005/2026-09-24T02-57-41Z/mutation-checks.log",
+      "sha256": "d10ed3d974f5562dcd8e5b3c1783d079d4804ae1e5c68f43fe52618154a58765",
+      "bytes": 256
+    },
+    {
+      "path": "evidence/INT-005/2026-09-24T02-57-41Z/ci-summary.json",
+      "sha256": "69ac9b85dfc663cf5404c87050ae706a72b6669ee3530e77640f6ca4c0d78883",
+      "bytes": 7880
+    }
+  ]
+}

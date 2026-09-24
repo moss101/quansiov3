@@ -1,0 +1,10 @@
+KILLED hint-raises-trust
+KILLED untrusted-not-bounded
+KILLED tool-rounds-not-atomic
+KILLED window-may-open-on-an-answer
+KILLED orphan-results-accepted
+KILLED build-context-unserved
+KILLED message-trust-unchecked
+KILLED refusals-lose-their-code
+DONE
+exit=0

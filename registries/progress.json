@@ -934,15 +934,19 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T10:01:29Z",
-      "updated_at": "2026-09-12T11:47:09Z",
-      "git_commit": "a2d621784fd403544359b80e61cd4811f2efe280",
+      "updated_at": "2026-09-24T02:58:18Z",
+      "git_commit": "689566e3216bed46848774c5c6556a991edf6c87",
       "tests": [
         "(cd python && uv run --frozen pytest tests/intelligence/test_search_program.py tests/intelligence/test_context_projection.py -q) (22 tests: AST validation, closed vocabulary, literal-only values, canonical form, trust-required, ledger/provenance, budget packing, dedupe, stable prefix, stale snapshot, contract parity)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test context_bridge (3 tests: labelled projection recorded on the turn, unlabelled projection refused before the run sees it, unwired bridge fails closed)",
         "cargo test -p quansio-server --lib context_bridge (6 unit tests: boundary validation and stale snapshot)",
         "(cd python && uv run --frozen pytest -q) (216 passed, 6 skipped live-provider cases)",
         "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings",
-        "bash scripts/ci/ci.sh"
+        "bash scripts/ci/ci.sh",
+        "uv run --project python pytest python/tests/intelligence/test_turn_context.py (31 passed: labelling, packing, rendering, refusals, gateway validity, BuildContext over gRPC)",
+        "cargo test -p quansio-server --test intelligence_gateway (Rust builds a tool round's context through the real Python plane, validates it, and calls the model with exactly those messages)",
+        "cargo test -p quansio-server --test context_bridge && --lib context_bridge (message/segment trust parity, segment request shape)",
+        "bash scripts/ci/ci.sh on the fix branch (11/11 gates PASS)"
       ],
       "artifacts": [
         "evidence/INT-005/2026-09-12T11-46-48Z/summary.json",
@@ -953,12 +957,16 @@
         "python/intelligence/context/search.py",
         "python/intelligence/context/projection.py",
         "python/tests/intelligence/test_search_program.py",
-        "python/tests/intelligence/test_context_projection.py"
+        "python/tests/intelligence/test_context_projection.py",
+        "evidence/INT-005/2026-09-24T02-57-41Z/summary.json",
+        "evidence/INT-005/2026-09-24T02-57-41Z/NOTES.md",
+        "python/intelligence/context/turn.py",
+        "crates/server/src/runtime/context_bridge/gateway.rs"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "ContextProjection and typed SearchProgram, both halves. python/intelligence/context/search.py implements \u00a711.3's SearchProgram as data (six channels, typed predicates over a closed field/operator vocabulary, canonical order-independent serialization, fail-closed validation, and a structural gate proving the module cannot evaluate anything) and projection.py implements \u00a711.2's ContextProjection (a segment without a trust_level is refused at construction and against the policy floor; the bundle records program key, snapshot, policy and token ledger with dropped tokens and segments by channel; deterministic bounded packing; dedupe keeping the more trusted copy; reported degradation; a stable prefix that is a pure function of stable-trust segments only; and a projection whose sources moved is refused). crates/server/src/runtime/context_bridge implements the runtime's side: ContextBridgePort is the only way a run asks for a projection, validate_projection is a fail-closed boundary check (an unlabelled or unknown-labelled segment, a projection without identity or snapshot, and a stale snapshot are all refused before the run sees anything), and a validated projection's id is what the turn records (turns.context_projection_id), so a turn is always traceable to its context - proven end to end by running a real turn and reading the row back. The bridge deliberately does not re-implement search, ranking or packing: that is the plane's authority, and its production RPC implementation belongs to INT-001's typed boundary (the port's default fails closed until then). All three acceptance statements are covered by tests that fail if they were false. Evidence: evidence/INT-005/<ts>/; 36 Rust suites, the Python plane 216/216 (6 skipped live-provider), fmt/clippy clean, ci.sh green."
+      "notes": "ContextProjection and typed SearchProgram, both halves. python/intelligence/context/search.py implements \u00a711.3's SearchProgram as data (six channels, typed predicates over a closed field/operator vocabulary, canonical order-independent serialization, fail-closed validation, and a structural gate proving the module cannot evaluate anything) and projection.py implements \u00a711.2's ContextProjection (a segment without a trust_level is refused at construction and against the policy floor; the bundle records program key, snapshot, policy and token ledger with dropped tokens and segments by channel; deterministic bounded packing; dedupe keeping the more trusted copy; reported degradation; a stable prefix that is a pure function of stable-trust segments only; and a projection whose sources moved is refused). crates/server/src/runtime/context_bridge implements the runtime's side: ContextBridgePort is the only way a run asks for a projection, validate_projection is a fail-closed boundary check (an unlabelled or unknown-labelled segment, a projection without identity or snapshot, and a stale snapshot are all refused before the run sees anything), and a validated projection's id is what the turn records (turns.context_projection_id), so a turn is always traceable to its context - proven end to end by running a real turn and reading the row back. The bridge deliberately does not re-implement search, ranking or packing: that is the plane's authority, and its production RPC implementation belongs to INT-001's typed boundary (the port's default fails closed until then). All three acceptance statements are covered by tests that fail if they were false. Evidence: evidence/INT-005/<ts>/; 36 Rust suites, the Python plane 216/216 (6 skipped live-provider), fmt/clippy clean, ci.sh green. REGRESSION FOUND AND FIXED 2026-09-24 (evidence/INT-005/2026-09-24T02-57-41Z/): the BuildContext RPC was UNIMPLEMENTED (naming INT-005) and ContextProjection carried no content, so nothing could render the messages a model call carries although DOSSIER 7 says the Context plane owns rendering; the Rust bridge had no production port. Fix (DOMAIN 11.2 additive: BuildContext segment requests, projection snapshot_id and messages[], ctx_ prefix): python/intelligence/context/turn.py labels each runtime-supplied segment from its source (a hint only lowers), keeps required units, packs the optional rest newest-first in whole units (assistant turn + its tool results), never opens on an answer without its question, records every drop, renders instructions first and untrusted content inside the 12 typed boundary, validated by the gateway's content contract; the servicer serves it. Runtime: ProjectionRequest carries typed segments and scope, validate_projection requires one message per segment at its segment's trust level, GatewayContextBridge is the production port. Proven Rust -> real Python plane -> FulfillModel. 8 mutations each fail the named tests. Search (SearchProgram execution) remains UNIMPLEMENTED. Merged to main as 689566e."
     },
     "INT-006": {
       "coverage": "GENUINE_GAP",

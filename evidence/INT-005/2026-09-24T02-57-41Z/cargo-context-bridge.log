@@ -1,0 +1,26 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.15s
+     Running tests/context_bridge.rs (target/debug/deps/context_bridge-72b31de1fe3c5faa)
+
+running 3 tests
+test an_unwired_bridge_fails_closed_rather_than_fabricating_context ... ok
+test a_projection_the_plane_could_not_label_is_refused_before_the_run_sees_it ... ok
+test a_labelled_projection_is_accepted_and_its_id_is_recorded_on_the_turn ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.16s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-6cfe0bc3494cb01b)
+
+running 8 tests
+test runtime::context_bridge::port::tests::a_stale_snapshot_is_refused ... ok
+test runtime::context_bridge::port::tests::an_unlabelled_segment_is_refused ... ok
+test runtime::context_bridge::port::tests::a_projection_without_identity_or_snapshot_is_refused ... ok
+test runtime::context_bridge::port::tests::an_unknown_trust_level_is_refused ... ok
+test runtime::context_bridge::port::tests::a_well_formed_projection_is_accepted_with_parsed_labels ... ok
+test runtime::context_bridge::port::tests::every_message_is_its_segments_at_its_segments_trust ... ok
+test runtime::context_bridge::port::tests::a_segment_request_serializes_to_the_contract_shape ... ok
+test runtime::context_bridge::port::tests::the_default_port_fails_closed ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 140 filtered out; finished in 0.00s
+
+exit=0
