@@ -1726,8 +1726,8 @@
       "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-19T19:47:00Z",
-      "updated_at": "2026-09-19T20:41:38Z",
-      "git_commit": "c7da56fa3aa5e97d0f15fd9a4de4975fde3612f6",
+      "updated_at": "2026-09-24T07:27:26Z",
+      "git_commit": "16d95a9d9c0d698825564c818bf06c1ca78fc934",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test conversation_surface (question/answer, cancel, upload+attachment against MinIO, fail-closed upload, live frames on /v1/stream)",
         "QUANSIO_TEST_POSTGRES_URL=<dev stack> (cd apps/desktop && pnpm exec vitest run) (reducer streaming UI / reload / cancel / composer / inspector; conversation.e2e against the real quansio-server + quansio-dev-seed + dev MinIO: streaming + reload/resume, question, cancel, real-binary attachment)",
@@ -1737,7 +1737,9 @@
         "pnpm lint",
         "pnpm exec vitest run --config tests/e2e/vitest.config.ts",
         "python3.12 scripts/validate_v81.py",
-        "bash scripts/ci/ci.sh"
+        "bash scripts/ci/ci.sh",
+        "cargo test -p quansio-server --test walking_skeleton_gateway (the timeline shows each model call's recorded projection and the turn's latest context with trust labels; context_projections holds one row per call)",
+        "bash scripts/ci/ci.sh on the fix branch (11/11 gates PASS)"
       ],
       "artifacts": [
         "evidence/APP-004/2026-09-19T20-34-35Z/summary.json",
@@ -1748,12 +1750,15 @@
         "crates/server/src/runtime/turn_loop/model_calls.rs",
         "apps/desktop/src/conversation/state.ts",
         "apps/desktop/src/renderer/Conversation.tsx",
-        "apps/desktop/tests/conversation.e2e.test.ts"
+        "apps/desktop/tests/conversation.e2e.test.ts",
+        "evidence/APP-004/2026-09-24T07-26-37Z/summary.json",
+        "evidence/APP-004/2026-09-24T07-26-37Z/NOTES.md",
+        "crates/server/src/runtime/context_bridge/store.rs"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Composer maps objectives to wn_/run_ identities, persists attachments and answered questions across reload, exposes a turn inspector (route/context/trust/tools), and cancel is CancelRun. Server path crates/server/src/api/threads.rs projects the conversation owner. 2026-09-19 correction: was BLOCKED_EXTERNAL at 8adaf4cd43244889886795db3b4f62c5a75c3340 claimed by agent:principal-1 (started 2026-09-15T04:45:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/desktop/src/conversation is a 103-line stub and crates/server/src/api/threads.rs is 7 lines. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-19 (c7da56f) PASS: the real surface \u2014 runtime LiveFramePort + in-process hub forwarding model.delta/progress on /v1/stream; api/threads (thread list, run timeline inspector: model route, context sources with trust labels, tool calls with effect status, questions, trigger attachments; questions; artifacts); commands AnswerQuestion (answer \u2192 resume \u2192 next turn \u2192 durable agent reply), CancelTurn (cancel + withdraw questions), PostMessage attachments, CreateArtifact (bounded upload via CORE-007); agent replies are durable messages; a ModelCallLedger records ModelRoute/ModelCall at the gateway boundary (nothing did before, so the inspector could not name what answered); runtime error codes now mapped by their real spellings (every runtime refusal was a 500). Desktop: reducer over events + live frames, bridge channels, Conversation renderer, CJS main import.meta.url startup fix. Acceptance proven by Rust integration tests and a desktop E2E against the real binary with a real binary attachment through MinIO. See evidence/APP-004/2026-09-19T20-34-35Z/NOTES.md."
+      "notes": "Composer maps objectives to wn_/run_ identities, persists attachments and answered questions across reload, exposes a turn inspector (route/context/trust/tools), and cancel is CancelRun. Server path crates/server/src/api/threads.rs projects the conversation owner. 2026-09-19 correction: was BLOCKED_EXTERNAL at 8adaf4cd43244889886795db3b4f62c5a75c3340 claimed by agent:principal-1 (started 2026-09-15T04:45:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/desktop/src/conversation is a 103-line stub and crates/server/src/api/threads.rs is 7 lines. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-19 (c7da56f) PASS: the real surface \u2014 runtime LiveFramePort + in-process hub forwarding model.delta/progress on /v1/stream; api/threads (thread list, run timeline inspector: model route, context sources with trust labels, tool calls with effect status, questions, trigger attachments; questions; artifacts); commands AnswerQuestion (answer \u2192 resume \u2192 next turn \u2192 durable agent reply), CancelTurn (cancel + withdraw questions), PostMessage attachments, CreateArtifact (bounded upload via CORE-007); agent replies are durable messages; a ModelCallLedger records ModelRoute/ModelCall at the gateway boundary (nothing did before, so the inspector could not name what answered); runtime error codes now mapped by their real spellings (every runtime refusal was a 500). Desktop: reducer over events + live frames, bridge channels, Conversation renderer, CJS main import.meta.url startup fix. Acceptance proven by Rust integration tests and a desktop E2E against the real binary with a real binary attachment through MinIO. See evidence/APP-004/2026-09-19T20-34-35Z/NOTES.md. 2026-09-24 regression (fixed same day, fix/APP-004-inspector-context merged as 16d95a9; evidence/APP-004/2026-09-24T07-26-37Z/): the per-turn inspector read context_projections, which nothing wrote, through turns.context_projection_id, which is fixed before any model call, so once turns ran through the real gateway (APP-001) the inspector could not say what the model saw. runtime::context_bridge::record_projection now persists each validated projection (segments with kind/source/trust/tokens, ledger, degradation, policy digest; DOSSIER 8 layer 3) before the call, failing the call if it cannot; /v1/runs/{id}/timeline names each model_call step's projection and shows a turn's latest one. 3 compiling mutants each fail walking_skeleton_gateway."
     },
     "APP-005": {
       "coverage": "PARTIAL",
