@@ -2,9 +2,10 @@
 //! rows a model-gateway boundary writes at the end of a call, so the per-turn inspector can
 //! say which provider and model answered a `model_call` step.
 //!
-//! Only a gateway boundary writes here: the in-process conformance seam and, when wired,
-//! the HTTP seam to INT-002's gateway. The runtime engine never does; it records the step
-//! and leaves the call to the boundary that made it.
+//! Only a model boundary writes here: the in-process conformance seam, and the gateway model
+//! source (`intelligence::model_source`), which records the gateway's own `mr_` route and the
+//! `ctx_` projection the call was rendered from. The runtime engine never does; it records the
+//! step and leaves the call to the boundary that made it.
 
 use quansio_core::{CanonicalId, Prefix, UlidGenerator};
 use serde_json::Value;

@@ -8,6 +8,8 @@
 //! scratch database; when it is unset the tests report `BLOCKED_EXTERNAL` and return,
 //! because the local development stack (`scripts/dev/up`) is not running.
 
+pub mod intelligence;
+
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Executor, PgPool};
 

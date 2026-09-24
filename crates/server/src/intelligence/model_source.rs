@@ -194,12 +194,15 @@ impl ModelProposalSource for GatewayModelSource {
         let instructions = definition.as_ref().map_or_else(
             || self.settings.default_system_instructions.clone(),
             |definition| {
-                [definition.persona.trim(), definition.standing_instructions.trim()]
-                    .iter()
-                    .filter(|part| !part.is_empty())
-                    .copied()
-                    .collect::<Vec<_>>()
-                    .join("\n\n")
+                [
+                    definition.persona.trim(),
+                    definition.standing_instructions.trim(),
+                ]
+                .iter()
+                .filter(|part| !part.is_empty())
+                .copied()
+                .collect::<Vec<_>>()
+                .join("\n\n")
             },
         );
         let instructions = if instructions.trim().is_empty() {
@@ -370,13 +373,13 @@ impl GatewayModelSource {
         let mut tx = self.pool.begin().await?;
         schema::set_tenant_context(&mut tx, &request.tenant_id).await?;
         let trigger = match &run.trigger_ref {
-            Some(reference) => sqlx::query(
-                "SELECT thread_id, seq FROM messages WHERE tenant_id = $1 AND id = $2",
-            )
-            .bind(&request.tenant_id)
-            .bind(reference)
-            .fetch_optional(&mut *tx)
-            .await?,
+            Some(reference) => {
+                sqlx::query("SELECT thread_id, seq FROM messages WHERE tenant_id = $1 AND id = $2")
+                    .bind(&request.tenant_id)
+                    .bind(reference)
+                    .fetch_optional(&mut *tx)
+                    .await?
+            }
             None => None,
         };
         let Some(trigger) = trigger else {
@@ -618,7 +621,9 @@ fn read_stream(events: &[ModelEvent]) -> StreamOutcome {
     }
     if outcome.stop_reason.is_empty() {
         outcome.stop_reason = "error".to_string();
-        outcome.error.get_or_insert(("PROVIDER_UNAVAILABLE".to_string(), true));
+        outcome
+            .error
+            .get_or_insert(("PROVIDER_UNAVAILABLE".to_string(), true));
     }
     outcome
 }
@@ -657,7 +662,9 @@ mod tests {
     fn a_zero_bound_or_missing_instructions_is_refused() {
         let base = "model_call:\n  context_token_budget: 10\n  max_output_tokens: 5\n  deadline_ms: 1000\n  max_thread_messages: 3\ndefault_system_instructions: be useful\n";
         assert!(ModelCallSettings::parse(base).is_ok());
-        assert!(ModelCallSettings::parse(&base.replace("deadline_ms: 1000", "deadline_ms: 0")).is_err());
+        assert!(
+            ModelCallSettings::parse(&base.replace("deadline_ms: 1000", "deadline_ms: 0")).is_err()
+        );
         assert!(ModelCallSettings::parse(&base.replace("be useful", "\"\"")).is_err());
         assert!(ModelCallSettings::parse("model_call: {}").is_err());
     }
@@ -679,10 +686,24 @@ mod tests {
         call.tool_name = "fs.read".to_string();
         call.tool_args_json = "{\"path\":\"/a\"}".to_string();
         let mut stop = event(Kind::Stop);
-        stop.stop_reason = quansio_contracts::generated::intelligence::ModelStopReason::ToolUse as i32;
-        let outcome = read_stream(&[event(Kind::CallStarted), delta, call, stop, event(Kind::CallCompleted)]);
+        stop.stop_reason =
+            quansio_contracts::generated::intelligence::ModelStopReason::ToolUse as i32;
+        let outcome = read_stream(&[
+            event(Kind::CallStarted),
+            delta,
+            call,
+            stop,
+            event(Kind::CallCompleted),
+        ]);
         assert_eq!(outcome.text, "reading");
-        assert_eq!(outcome.tool_calls, vec![ProposedToolCall::new("call_1", "fs.read", json!({"path": "/a"}))]);
+        assert_eq!(
+            outcome.tool_calls,
+            vec![ProposedToolCall::new(
+                "call_1",
+                "fs.read",
+                json!({"path": "/a"})
+            )]
+        );
         assert_eq!(outcome.stop_reason, "tool_use");
         assert_eq!(outcome.route_id, "mr_1");
         assert!(outcome.error.is_none());
@@ -697,12 +718,18 @@ mod tests {
             ..Default::default()
         });
         let outcome = read_stream(&[event(Kind::CallStarted), failed, event(Kind::CallCompleted)]);
-        assert_eq!(outcome.error, Some(("PROVIDER_RATE_LIMITED".to_string(), true)));
+        assert_eq!(
+            outcome.error,
+            Some(("PROVIDER_RATE_LIMITED".to_string(), true))
+        );
         let cut = read_stream(&[event(Kind::CallStarted)]);
         assert_eq!(cut.error, Some(("PROVIDER_UNAVAILABLE".to_string(), true)));
         let error = RuntimeError::intelligence("PROVIDER_RATE_LIMITED", true, "x");
         assert_eq!(error.code(), "PROVIDER_RATE_LIMITED");
-        assert_eq!(RuntimeError::intelligence("SOMETHING_ELSE", false, "x").code(), "INTERNAL");
+        assert_eq!(
+            RuntimeError::intelligence("SOMETHING_ELSE", false, "x").code(),
+            "INTERNAL"
+        );
     }
 
     #[test]
