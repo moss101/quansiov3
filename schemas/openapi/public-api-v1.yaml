@@ -2257,6 +2257,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/commands/ProposeSkillCandidates:
+    post:
+      operationId: ProposeSkillCandidates
+      summary: 'Skills & packs: ProposeSkillCandidates'
+      tags:
+      - Skills & packs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/commands/SubmitPack:
     post:
       operationId: SubmitPack
@@ -5342,6 +5384,16 @@ components:
       description: 'Skills & packs command DisableSkill. The concrete parameter schema is owned by the implementing task and
         must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
       x-quansio-params-defined: false
+    ProposeSkillCandidatesParams:
+      type: object
+      required:
+      - workspace_id
+      properties:
+        workspace_id:
+          type: string
+          description: The workspace the evolution pass is attributed to (DOMAIN.md §11.5).
+      description: Skills & packs command ProposeSkillCandidates.
+      x-quansio-params-defined: true
     SubmitPackParams:
       type: object
       additionalProperties: true

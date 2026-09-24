@@ -470,7 +470,9 @@ Deleting a source quarantines derived knowledge; deleting memory removes it from
 
 ### 11.5 Skill / SkillVersion
 `Skill: id, scope, name, owner, current_active_version_id`. `SkillVersion: id, skill_id, semver, manifest {instructions, examples, tool_needs[] (tool names), capability_needs[] (grant templates), eval_suite_id, compatibility, recovery_guidance}, provenance, status`.
-States: `DRAFT → CANDIDATE → EVALUATING → APPROVED → ACTIVE → DEPRECATED → RETIRED; EVALUATING → REJECTED`. Only `ACTIVE` versions resolve into production context.
+States: `DRAFT → CANDIDATE → EVALUATING → APPROVED → ACTIVE → DEPRECATED → RETIRED; EVALUATING → REJECTED`. Only `ACTIVE` versions resolve into production context. `PromoteSkillVersion` is a tenant administrator's command (`ManageTenant`).
+
+Controlled evolution (CAP-008): `ProposeSkillCandidates {workspace_id}` (tenant administrators) gathers runs that reached a verified terminal state (`SUCCEEDED` → success, or recovery when a tool call failed on the way; `FAILED` → failure), each with its latest evidence and the skill versions its recorded ContextProjections named, and the plane returns evaluated patches. Each is stored as a `CANDIDATE` version (never `ACTIVE`) whose `provenance` is `{origin: evolution, from_version_id, pattern_kind: success|failure|recovery, evidence[] ({evidence_id, digest, run_id}), evaluation {eval_run_id, digest, passed, reason, regressions, widened_needs[]}}`; a semver already registered is not proposed again. An evolution candidate cannot be promoted to `APPROVED` or `ACTIVE` unless its provenance names its evidence and a passing evaluation (refusal: `POLICY_DENIED`). The evaluation is deterministic resolution behaviour against the skill's suite; protected regressions and widened needs block promotion (`config/evolution.yaml`).
 
 ### 11.6 Business Capability Pack
 `Pack: id, tenant_id, name, current_published_version_id`. `PackVersion: id, semver, contents {knowledge_ids[], skill_version_ids[], tool_names[], connector_requirements[], policy_requirements[], rbac_requirements[], approval_requirements[], workflow_templates[] (WorkGraph templates), examples[], eval_suite_id, compatibility}, provenance, evidence_requirements, status (draft|candidate|qualifying|qualified|published|deprecated|withdrawn)`. Execution resolves to WorkGraph + Skills + Tools + Knowledge + Policy; a pack cannot widen caller authority.
@@ -542,7 +544,7 @@ Commands are `POST /v1/commands/<Name>` (one endpoint per command; OpenAPI-gener
 | Browser/computer | `RequestTakeover`, `Handback`, `ImportBrowserSession`, `GrantComputerTier` |
 | Artifacts | `CreateArtifact` (upload init/complete), `AddArtifactVersion`, `GrantArtifactAccess`, `DeleteArtifact` |
 | Knowledge & memory | `IngestSource`, `DeleteKnowledge`, `SupersedeKnowledge`, `CreateMemory`, `DeleteMemory` |
-| Skills & packs | `InstallSkill`, `PromoteSkillVersion`, `DisableSkill`, `SubmitPack`, `QualifyPack`, `PublishPack`, `RollbackPack` |
+| Skills & packs | `InstallSkill`, `PromoteSkillVersion`, `DisableSkill`, `ProposeSkillCandidates`, `SubmitPack`, `QualifyPack`, `PublishPack`, `RollbackPack` |
 | Routines | `CreateRoutine`, `UpdateRoutine`, `PauseRoutine`, `ResumeRoutine`, `TriggerRoutineNow`, `DeleteRoutine` |
 | Connectors | `BeginConnectorAuth`, `CompleteConnectorAuth`, `RevokeConnector`, `CreateWebhookSubscription`, `UpdateWebhookSubscription`, `RedeliverWebhook`, `DeleteWebhookSubscription` |
 | Notifications | `UpdateNotificationPreferences`, `MarkNotificationRead` |

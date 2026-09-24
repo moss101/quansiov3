@@ -1,0 +1,22 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3/python
+configfile: pyproject.toml
+collecting ... collected 12 items
+
+python/tests/intelligence/test_skill_evolution_proposals.py::test_a_recovery_pattern_becomes_an_evaluated_candidate_linked_to_its_evidence PASSED [  8%]
+python/tests/intelligence/test_skill_evolution_proposals.py::test_a_success_pattern_teaches_its_verified_tasks_as_examples PASSED [ 16%]
+python/tests/intelligence/test_skill_evolution_proposals.py::test_fewer_than_min_repeats_or_nothing_new_proposes_nothing PASSED [ 25%]
+python/tests/intelligence/test_skill_evolution_proposals.py::test_records_for_a_skill_without_an_active_version_are_refused PASSED [ 33%]
+python/tests/intelligence/test_skill_evolution_proposals.py::test_a_candidate_that_widens_its_needs_is_gated PASSED [ 41%]
+python/tests/intelligence/test_skill_evolution_proposals.py::test_a_candidate_that_loses_a_case_its_version_passes_is_gated PASSED [ 50%]
+python/tests/intelligence/test_skill_evolution_proposals.py::test_the_synthesized_suite_holds_a_version_to_its_declared_behaviour PASSED [ 58%]
+python/tests/intelligence/test_skill_evolution_proposals.py::test_a_pack_skill_is_evaluated_against_its_packs_own_suite PASSED [ 66%]
+python/tests/intelligence/test_skill_evolution_proposals.py::test_propose_skill_candidates_over_grpc PASSED [ 75%]
+python/tests/intelligence/test_skill_evolution.py::test_silent_mutation_from_a_task_run_is_refused PASSED [ 83%]
+python/tests/intelligence/test_skill_evolution.py::test_candidate_to_promotion_keeps_evidence_and_eval_provenance PASSED [ 91%]
+python/tests/intelligence/test_skill_evolution.py::test_regression_rejects_promotion PASSED [100%]
+
+============================== 12 passed in 0.33s ==============================
+exit=0

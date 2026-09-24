@@ -56,6 +56,7 @@ export const OPERATIONS = {
   InstallSkill: { method: "POST", path: "/v1/commands/InstallSkill", family: "Skills & packs" },
   PromoteSkillVersion: { method: "POST", path: "/v1/commands/PromoteSkillVersion", family: "Skills & packs" },
   DisableSkill: { method: "POST", path: "/v1/commands/DisableSkill", family: "Skills & packs" },
+  ProposeSkillCandidates: { method: "POST", path: "/v1/commands/ProposeSkillCandidates", family: "Skills & packs" },
   SubmitPack: { method: "POST", path: "/v1/commands/SubmitPack", family: "Skills & packs" },
   QualifyPack: { method: "POST", path: "/v1/commands/QualifyPack", family: "Skills & packs" },
   PublishPack: { method: "POST", path: "/v1/commands/PublishPack", family: "Skills & packs" },

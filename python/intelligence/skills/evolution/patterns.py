@@ -50,6 +50,7 @@ class EvidenceRecord:
     kind: EvidenceKind
     digest: str
     detail: str = ""
+    task: str = ""
 
     def __post_init__(self) -> None:
         if not self.evidence_id.startswith("evd_"):

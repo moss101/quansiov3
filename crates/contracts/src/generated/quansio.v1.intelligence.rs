@@ -1198,6 +1198,29 @@ pub struct EvaluationReport {
     #[prost(string, tag = "4")]
     pub details_json: ::prost::alloc::string::String,
 }
+/// Served by python/intelligence. Rust is the only caller.
+/// Controlled skill evolution (CAP-008): the runtime hands over verified run outcomes (each with its
+/// evidence identity and digest and the skill version the run was given) and the registry's ACTIVE
+/// versions; the plane returns evaluated candidates for the registry to store as CANDIDATE.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SkillCandidatesRequest {
+    #[prost(string, tag = "100")]
+    pub schema_version: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "1")]
+    pub scope: ::core::option::Option<ScopeContext>,
+    #[prost(string, repeated, tag = "2")]
+    pub evidence_records_json: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag = "3")]
+    pub active_versions_json: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SkillCandidatesResponse {
+    #[prost(string, tag = "100")]
+    pub schema_version: ::prost::alloc::string::String,
+    /// {skill_id, from_version_id, semver, manifest, provenance}
+    #[prost(string, repeated, tag = "1")]
+    pub candidates_json: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
 /// Generated client implementations.
 pub mod intelligence_gateway_client {
     #![allow(
@@ -1209,7 +1232,6 @@ pub mod intelligence_gateway_client {
     )]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
-    /// Served by python/intelligence. Rust is the only caller.
     #[derive(Debug, Clone)]
     pub struct IntelligenceGatewayClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -1487,6 +1509,35 @@ pub mod intelligence_gateway_client {
                 );
             self.inner.unary(req, path, codec).await
         }
+        pub async fn propose_skill_candidates(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SkillCandidatesRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::SkillCandidatesResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/quansio.v1.intelligence.IntelligenceGateway/ProposeSkillCandidates",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "quansio.v1.intelligence.IntelligenceGateway",
+                        "ProposeSkillCandidates",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -1548,8 +1599,14 @@ pub mod intelligence_gateway_server {
             tonic::Response<super::EvaluationReport>,
             tonic::Status,
         >;
+        async fn propose_skill_candidates(
+            &self,
+            request: tonic::Request<super::SkillCandidatesRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::SkillCandidatesResponse>,
+            tonic::Status,
+        >;
     }
-    /// Served by python/intelligence. Rust is the only caller.
     #[derive(Debug)]
     pub struct IntelligenceGatewayServer<T> {
         inner: Arc<T>,
@@ -1930,6 +1987,55 @@ pub mod intelligence_gateway_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = EvaluateSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/quansio.v1.intelligence.IntelligenceGateway/ProposeSkillCandidates" => {
+                    #[allow(non_camel_case_types)]
+                    struct ProposeSkillCandidatesSvc<T: IntelligenceGateway>(pub Arc<T>);
+                    impl<
+                        T: IntelligenceGateway,
+                    > tonic::server::UnaryService<super::SkillCandidatesRequest>
+                    for ProposeSkillCandidatesSvc<T> {
+                        type Response = super::SkillCandidatesResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SkillCandidatesRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as IntelligenceGateway>::propose_skill_candidates(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = ProposeSkillCandidatesSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

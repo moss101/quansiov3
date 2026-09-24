@@ -176,3 +176,23 @@ class EvaluationReport(_message.Message):
     failed: int
     details_json: str
     def __init__(self, schema_version: _Optional[str] = ..., suite_id: _Optional[str] = ..., passed: _Optional[int] = ..., failed: _Optional[int] = ..., details_json: _Optional[str] = ...) -> None: ...
+
+class SkillCandidatesRequest(_message.Message):
+    __slots__ = ("schema_version", "scope", "evidence_records_json", "active_versions_json")
+    SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
+    SCOPE_FIELD_NUMBER: _ClassVar[int]
+    EVIDENCE_RECORDS_JSON_FIELD_NUMBER: _ClassVar[int]
+    ACTIVE_VERSIONS_JSON_FIELD_NUMBER: _ClassVar[int]
+    schema_version: str
+    scope: ScopeContext
+    evidence_records_json: _containers.RepeatedScalarFieldContainer[str]
+    active_versions_json: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, schema_version: _Optional[str] = ..., scope: _Optional[_Union[ScopeContext, _Mapping]] = ..., evidence_records_json: _Optional[_Iterable[str]] = ..., active_versions_json: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class SkillCandidatesResponse(_message.Message):
+    __slots__ = ("schema_version", "candidates_json")
+    SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
+    CANDIDATES_JSON_FIELD_NUMBER: _ClassVar[int]
+    schema_version: str
+    candidates_json: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, schema_version: _Optional[str] = ..., candidates_json: _Optional[_Iterable[str]] = ...) -> None: ...

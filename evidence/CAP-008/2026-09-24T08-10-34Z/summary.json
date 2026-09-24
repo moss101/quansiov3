@@ -1,0 +1,80 @@
+{
+  "task_id": "CAP-008",
+  "git_commit": "2ab6f63ca1919c7755dc53961e3aa7833892b69d",
+  "recorded_at": "2026-09-24T08:10:38Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test skill_evolution (verified runs -> ProposeSkillCandidates -> real Python plane -> CANDIDATE with evidence+eval provenance; governed promotion; evaluation gate; idempotence; RBAC; fail-closed; no run-callable skill tool)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-008/2026-09-24T08-10-34Z/cargo-skill-evolution.log"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_skill_evolution_proposals.py python/tests/intelligence/test_skill_evolution.py -v",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-008/2026-09-24T08-10-34Z/pytest-skill-evolution.log"
+    },
+    {
+      "command": "cap008 mutation checks (8 compiling mutants: regressions ignored, widened needs ignored, evidence dropped, gate open, left as draft, not idempotent, projections not read, promotion ungoverned)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-008/2026-09-24T08-10-34Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-008/2026-09-24T08-10-34Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test skill_evolution (verified runs -> ProposeSkillCandidates -> real Python plane -> CANDIDATE with evidence+eval provenance; governed promotion; evaluation gate; idempotence; RBAC; fail-closed; no run-callable skill tool)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_skill_evolution_proposals.py python/tests/intelligence/test_skill_evolution.py -v",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cap008 mutation checks (8 compiling mutants: regressions ignored, widened needs ignored, evidence dropped, gate open, left as draft, not idempotent, projections not read, promotion ungoverned)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-008/2026-09-24T08-10-34Z/NOTES.md",
+      "sha256": "10ba376baa191ffeb8f421ac36c9182031258866d128eceb6598783d9de22c41",
+      "bytes": 4901
+    },
+    {
+      "path": "evidence/CAP-008/2026-09-24T08-10-34Z/cargo-skill-evolution.log",
+      "sha256": "d58c68c37f96fb3b8b6f902646a6d2e2164e7d3ec50409963feaef962fee2cec",
+      "bytes": 763
+    },
+    {
+      "path": "evidence/CAP-008/2026-09-24T08-10-34Z/pytest-skill-evolution.log",
+      "sha256": "e9b9f3172a19aa21ce3eb5144699757175d9b6cce38bea74c249f31901f4d635",
+      "bytes": 1984
+    },
+    {
+      "path": "evidence/CAP-008/2026-09-24T08-10-34Z/mutation-checks.log",
+      "sha256": "4109c3cdd3265c1906effd1d2d1cf27d74223feaaec8d658910dbe07c4163aba",
+      "bytes": 474
+    },
+    {
+      "path": "evidence/CAP-008/2026-09-24T08-10-34Z/ci-summary.json",
+      "sha256": "abbab04b6cd0dad2a20cdbf0ddb1c8934356d5f1a584af94e1c17d3c5b7b1d99",
+      "bytes": 7889
+    }
+  ]
+}

@@ -2330,10 +2330,10 @@
     },
     "CAP-008": {
       "coverage": "GENUINE_GAP",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-24T07:42:17Z",
+      "updated_at": "2026-09-24T07:42:17Z",
       "git_commit": null,
       "tests": [
         "uv run --project python pytest tests/intelligence/test_skill_evolution.py -q (3 passed: silent mutation refused; candidate-to-promotion keeps evidence+eval provenance; protected regression refuses promotion)"

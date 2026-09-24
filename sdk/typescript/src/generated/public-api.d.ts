@@ -905,6 +905,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/commands/ProposeSkillCandidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Skills & packs: ProposeSkillCandidates */
+        post: operations["ProposeSkillCandidates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/commands/SubmitPack": {
         parameters: {
             query?: never;
@@ -2285,6 +2302,11 @@ export interface components {
         /** @description Skills & packs command DisableSkill. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
         DisableSkillParams: {
             [key: string]: unknown;
+        };
+        /** @description Skills & packs command ProposeSkillCandidates. */
+        ProposeSkillCandidatesParams: {
+            /** @description The workspace the evolution pass is attributed to (DOMAIN.md §11.5). */
+            workspace_id: string;
         };
         /** @description Skills & packs command SubmitPack. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
         SubmitPackParams: {
@@ -4512,6 +4534,45 @@ export interface operations {
         };
     };
     DisableSkill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    ProposeSkillCandidates: {
         parameters: {
             query?: never;
             header?: never;

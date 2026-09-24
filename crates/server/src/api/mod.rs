@@ -320,6 +320,7 @@ pub struct ApiState {
     search: Option<Arc<search::SearchService>>,
     web_root: Option<web::WebRoot>,
     keys: Option<Arc<dyn quansio_machine::secrets::KeyProvider>>,
+    intelligence: Option<crate::intelligence::IntelligenceClient>,
 }
 
 impl ApiState {
@@ -361,7 +362,22 @@ impl ApiState {
             search: None,
             web_root: None,
             keys: None,
+            intelligence: None,
         })
+    }
+
+    /// The intelligence plane's client, for control-plane calls that are not a turn's model
+    /// call (skill evolution, CAP-008). Without one those commands fail closed.
+    #[must_use]
+    pub fn with_intelligence(mut self, client: crate::intelligence::IntelligenceClient) -> Self {
+        self.intelligence = Some(client);
+        self
+    }
+
+    /// The intelligence plane's client, when the deployment has one.
+    #[must_use]
+    pub fn intelligence(&self) -> Option<&crate::intelligence::IntelligenceClient> {
+        self.intelligence.as_ref()
     }
 
     /// Replace the walking-skeleton model with a real proposal source — the intelligence

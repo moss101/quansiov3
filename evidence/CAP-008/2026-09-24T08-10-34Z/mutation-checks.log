@@ -1,0 +1,18 @@
+COMPILES regressions-ignored
+KILLED regressions-ignored
+COMPILES widened-needs-ignored
+KILLED widened-needs-ignored
+COMPILES evidence-dropped-from-provenance
+KILLED evidence-dropped-from-provenance
+COMPILES evaluation-gate-open
+KILLED evaluation-gate-open
+COMPILES projections-not-read
+KILLED projections-not-read
+COMPILES promotion-ungoverned
+KILLED promotion-ungoverned
+COMPILES left-as-draft
+KILLED left-as-draft
+COMPILES not-idempotent
+KILLED not-idempotent
+DONE
+exit=0

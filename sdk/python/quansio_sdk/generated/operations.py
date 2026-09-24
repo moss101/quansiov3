@@ -272,6 +272,11 @@ OPERATIONS: dict[str, dict[str, str]] = {
         "path": "/v1/commands/DisableSkill",
         "family": "Skills & packs",
     },
+    "ProposeSkillCandidates": {
+        "method": "POST",
+        "path": "/v1/commands/ProposeSkillCandidates",
+        "family": "Skills & packs",
+    },
     "SubmitPack": {
         "method": "POST",
         "path": "/v1/commands/SubmitPack",

@@ -7,11 +7,13 @@
 //! for itself. The resolver (`python/intelligence/skills`) consumes the view this store exposes and
 //! sees only `ACTIVE` versions.
 
+pub mod evolution;
 pub mod state;
 pub mod store;
 
 use thiserror::Error;
 
+pub use evolution::{EvolutionOutcome, SkillEvolution, SkillEvolutionError};
 pub use state::{promote, SkillStateError, SkillStatus};
 pub use store::{
     NewSkill, NewSkillVersion, Promotion, Skill, SkillAdmin, SkillScope, SkillStore, SkillVersion,
@@ -60,6 +62,17 @@ pub enum SkillControlError {
     /// A canonical identity could not be read from a row.
     #[error("malformed skill row: {0}")]
     Malformed(String),
+    /// An evolution candidate may not pass EVALUATING without the passing evaluation its
+    /// provenance must record (CAP-008).
+    #[error("skill version {version_id} cannot be promoted to {to}: {detail}")]
+    EvaluationRequired {
+        /// The version that was refused.
+        version_id: String,
+        /// The state it asked for.
+        to: String,
+        /// What its provenance lacks.
+        detail: String,
+    },
 }
 
 impl SkillControlError {
@@ -71,6 +84,7 @@ impl SkillControlError {
             Self::Database(_) | Self::Event(_) | Self::Malformed(_) => "INTERNAL",
             Self::SkillNotFound { .. } | Self::VersionNotFound { .. } => "NOT_FOUND",
             Self::AnotherVersionIsActive { .. } => "CONFLICT_STATE",
+            Self::EvaluationRequired { .. } => "POLICY_DENIED",
         }
     }
 }

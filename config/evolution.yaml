@@ -1,0 +1,32 @@
+# Controlled skill evolution (CAP-008): when repeated verified outcomes become a candidate patch,
+# and what the candidate must pass before it may be promoted past EVALUATING. Control-plane
+# data, not source constants (AGENTS.md invariant 18). The gate shape is INT-010's
+# (intelligence.evaluation.gate.ThresholdSet): protected metrics block promotion regardless of
+# any other gain (DOSSIER.md §21.3).
+version: 1
+ratified: false
+source: "CAP-008 skill evolution gate: resolution behaviour of a candidate against its suite"
+
+# How many verified runs of one outcome make a pattern rather than an anecdote.
+min_repeats: 3
+
+metrics:
+  skill.case_pass_rate:
+    comparison: at_least
+    threshold: 1.0
+    unit: ratio
+    description: the candidate resolves or is excluded exactly where its suite says
+  skill.regressions:
+    comparison: at_most
+    threshold: 0
+    unit: count
+    protected: true
+    blocks_promotion: true
+    description: cases the current version passes and the candidate does not
+  skill.widened_needs:
+    comparison: at_most
+    threshold: 0
+    unit: count
+    protected: true
+    blocks_promotion: true
+    description: tools or capabilities the candidate needs that the current version did not

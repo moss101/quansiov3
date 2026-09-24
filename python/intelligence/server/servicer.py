@@ -67,6 +67,15 @@ from intelligence.model_gateway import Fulfillment, GatewayError, ModelGateway
 from intelligence.model_gateway.embeddings import MAX_EMBED_INPUTS
 from intelligence.server.errors import ErrorCode, ErrorDetail, ErrorEnvelope, abort_with
 from intelligence.server.scope import CallScope, ScopeViolationError, validate_call_scope
+from intelligence.skills.evolution.patterns import EvolutionError
+from intelligence.skills.evolution.propose import (
+    candidate_json,
+    evolution_settings,
+    propose_candidates,
+    records_from_json,
+    versions_from_json,
+)
+from intelligence.skills.models import SkillError
 from intelligence.trust.classifier import TrustClassification, classify
 
 INTELLIGENCE_TASK_ID = "INT-001"
@@ -81,7 +90,7 @@ _UNIMPLEMENTED_OWNERS: Mapping[str, str] = {
 }
 
 IMPLEMENTED_METHODS: frozenset[str] = frozenset(
-    {"ClassifyTrust", "FulfillModel", "Embed", "ProposeMemory", "BuildContext"}
+    {"ClassifyTrust", "FulfillModel", "Embed", "ProposeMemory", "BuildContext", "ProposeSkillCandidates"}
 )
 
 TrustClassifier = Callable[[str, str], TrustClassification]
@@ -355,6 +364,47 @@ class IntelligenceGatewayServicer:
         self._begin_call(context)
         try:
             self._reject_unimplemented("Search", request, context)
+        finally:
+            self._end_call()
+
+    def ProposeSkillCandidates(
+        self, request: service_pb2.SkillCandidatesRequest, context: grpc.ServicerContext
+    ) -> service_pb2.SkillCandidatesResponse:
+        """Evaluated skill candidates from verified experience (CAP-008); proposals only.
+
+        The runtime registers what comes back as CANDIDATE versions; nothing here writes, and no
+        candidate is ever ACTIVE.
+        """
+        self._begin_call(context)
+        try:
+            scope = self._validated_scope("ProposeSkillCandidates", request, context)
+            self._ensure_live("ProposeSkillCandidates", context)
+            try:
+                thresholds, min_repeats = evolution_settings()
+                proposals = propose_candidates(
+                    records_from_json(list(request.evidence_records_json)),
+                    versions_from_json(list(request.active_versions_json)),
+                    thresholds=thresholds,
+                    min_repeats=min_repeats,
+                )
+            except (EvolutionError, SkillError) as refusal:
+                abort_with(
+                    context,
+                    ErrorEnvelope(
+                        code=_error_code(refusal.code),
+                        message=refusal.detail,
+                        correlation_id=scope.correlation_id,
+                        details=(
+                            ErrorDetail("rule_id", refusal.rule_id),
+                            ErrorDetail("owner_task", "CAP-008"),
+                        ),
+                    ),
+                )
+            self._ensure_live("ProposeSkillCandidates", context)
+            return service_pb2.SkillCandidatesResponse(
+                schema_version=SCHEMA_VERSION,
+                candidates_json=[candidate_json(proposal) for proposal in proposals],
+            )
         finally:
             self._end_call()
 
