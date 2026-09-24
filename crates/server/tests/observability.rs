@@ -400,6 +400,62 @@ async fn a_run_is_traced_end_to_end_and_no_canary_leaves_any_signal() {
         .iter()
         .any(|line| line["trace_id"] == TRACE && line["name"] == "runtime.turn"));
 
+    // -- something does try to log the canary ---------------------------------------------
+    // A call whose correlation id carries it and whose scope the plane refuses: the runtime's RPC
+    // span (in this tenant's bundle) and the plane's scope-rejection warning both log that id.
+    let mut probe = IntelligenceClient::connect(&service.endpoint)
+        .await
+        .expect("connect");
+    let refused = probe
+        .classify_trust(
+            &quansio_server::intelligence::CallScope {
+                tenant_id: TENANT.to_string(),
+                workspace_id: String::new(),
+                correlation_id: format!("corr-{CANARY}"),
+                deadline: Duration::from_secs(10),
+                capability_projection_id: "cap_probe".to_string(),
+            },
+            "web_page",
+            "probe",
+        )
+        .await;
+    assert!(refused.is_err(), "an unscoped call is refused");
+    let bundle_text = http
+        .get(format!("http://{addr}/v1/diagnostics/bundle"))
+        .header("x-quansio-tenant", TENANT)
+        .header("x-quansio-user", OWNER)
+        .send()
+        .await
+        .expect("bundle")
+        .text()
+        .await
+        .expect("text");
+    let runtime_probe = lines
+        .lock()
+        .expect("lines")
+        .iter()
+        .any(|line| line.contains("corr-[REDACTED:canary]"));
+    assert!(runtime_probe, "the runtime logged the probe, redacted");
+    assert!(
+        bundle_text.contains("corr-[REDACTED:canary]"),
+        "the bundle carries the probe, redacted"
+    );
+    for _ in 0..20 {
+        if std::fs::read_to_string(&plane_log)
+            .unwrap_or_default()
+            .contains("corr-[REDACTED:canary]")
+        {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert!(
+        std::fs::read_to_string(&plane_log)
+            .expect("plane log")
+            .contains("corr-[REDACTED:canary]"),
+        "the plane logged the probe, redacted"
+    );
+
     // -- no canary anywhere --------------------------------------------------------------
     let runtime_text = lines.lock().expect("lines").join("\n");
     let plane_text = std::fs::read_to_string(&plane_log).expect("plane log");
