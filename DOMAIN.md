@@ -549,7 +549,7 @@ Commands are `POST /v1/commands/<Name>` (one endpoint per command; OpenAPI-gener
 | Connectors | `BeginConnectorAuth`, `CompleteConnectorAuth`, `RevokeConnector`, `CreateWebhookSubscription`, `UpdateWebhookSubscription`, `RedeliverWebhook`, `DeleteWebhookSubscription` |
 | Notifications | `UpdateNotificationPreferences`, `MarkNotificationRead` |
 | Admin/ops | `SetPolicy`, `FreezeEffects`, `UnfreezeEffects`, `DisableProvider`, `EnableProvider`, `QuarantineWorker`, `DrainTarget`, `ExportTenantData`, `DeleteUserData` |
-| Read projections | `GET /v1/threads/{id}`, `/messages`, `/workgraph`, `/runs/{id}`, `/runs/{id}/timeline`, `/effects`, `/approvals`, `/questions`, `/artifacts`, `/artifacts/{id}/versions`, `/artifacts/{id}/versions/{vid}/content`, `/evidence/{id}`, `/targets`, `/browser-sessions/{id}`, `/knowledge`, `/memory`, `/skills`, `/packs`, `/routines`, `/connectors`, `/members`, `/policies`, `/teammates`, `/notifications`, `/usage`, `/audit`, `/search?q=` (typed SearchProgram), `/webhooks`, `/webhooks/{id}/deliveries`, `GET /v1/stream` (WS), `GET /v1/stream/events` (SSE) |
+| Read projections | `GET /v1/threads/{id}`, `/messages`, `/workgraph`, `/runs/{id}`, `/runs/{id}/timeline`, `/effects`, `/approvals`, `/questions`, `/artifacts`, `/artifacts/{id}/versions`, `/artifacts/{id}/versions/{vid}/content`, `/evidence/{id}`, `/targets`, `/browser-sessions/{id}`, `/knowledge`, `/memory`, `/skills`, `/packs`, `/routines`, `/connectors`, `/members`, `/policies`, `/teammates`, `/notifications`, `/usage`, `/audit`, `/search?q=` (typed SearchProgram), `/webhooks`, `/webhooks/{id}/deliveries`, `/diagnostics/bundle` (tenant administrators; the tenant's recent redacted log lines, bounded), `GET /v1/stream` (WS), `GET /v1/stream/events` (SSE) |
 
 Agent-originated intents (`work.delegate`, `work.propose_plan`, `user.ask`, `memory.propose`) are Tools (§7.5), not public commands.
 
@@ -558,6 +558,8 @@ Agent-originated intents (`work.delegate`, `work.propose_plan`, `user.ask`, `mem
 ## 15. Error taxonomy
 
 Errors are `{code, message, correlation_id, retryable, details?}`; HTTP mapping in parentheses.
+
+Tracing (OPS-003): a client may send a W3C `traceparent` header with any request; the server continues it (or starts a trace), answers with its own span's `traceparent`, and passes a child `traceparent` in the gRPC metadata of every call to the intelligence plane. A trace id is correlation, never authority. Operators read Prometheus metrics at `GET /metrics` (bearer `QUANSIO_METRICS_TOKEN`; not part of API v1) and may export spans over OTLP/HTTP (`QUANSIO_OTLP_ENDPOINT`).
 
 | Family | Codes |
 |---|---|

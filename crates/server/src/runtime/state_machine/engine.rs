@@ -384,11 +384,89 @@ impl RuntimeEngine {
     /// Run one turn: input → model proposal → typed routing → bounded iteration
     /// (DOMAIN.md §5.6).
     ///
+    /// The turn is one span of the trace it runs in (OPS-003): its model calls, tool calls and
+    /// intelligence RPCs are children of it.
+    ///
     /// # Errors
     /// Returns [`RuntimeError::SeamNotAvailable`] when a proposal needs a seam whose
     /// owning task is not merged yet, [`RuntimeError::IllegalTransition`] when the Run is
     /// not `RUNNING`, and [`RuntimeError::FencedStaleGeneration`] for a stale generation.
     pub async fn run_turn(
+        &self,
+        run_id: &CanonicalId,
+        generation: Generation,
+        input: TurnInput,
+    ) -> Result<TurnOutcome, RuntimeError> {
+        let span = crate::observability::Span::start(
+            "runtime.turn",
+            serde_json::json!({
+                "tenant_id": self.store.identity().tenant_id,
+                "run_id": run_id.to_string(),
+                "input": input.kind.as_db_str(),
+            }),
+        );
+        let result = span
+            .context()
+            .clone()
+            .scope(self.run_turn_in_span(run_id, generation, input))
+            .await;
+        match &result {
+            Ok(_) => span.end("ok", serde_json::json!({})),
+            Err(error) => span.end("error", serde_json::json!({ "code": error.code() })),
+        }
+        result
+    }
+
+    /// Dispatch one proposed tool call inside its own span, counted by tool and outcome.
+    async fn traced_dispatch(
+        &self,
+        call: ProposedToolCall,
+        request: ToolDispatchRequest,
+    ) -> Result<ToolDispatchOutcome, RuntimeError> {
+        // A name the model invented is not a label: it would make the metric unbounded.
+        let tool = if quansio_tools::ToolRegistry::builtin()
+            .get(&call.tool)
+            .is_some()
+        {
+            call.tool.clone()
+        } else {
+            "unregistered".to_string()
+        };
+        let span = crate::observability::Span::start(
+            "runtime.tool_call",
+            serde_json::json!({
+                "tenant_id": self.store.identity().tenant_id,
+                "run_id": request.run_id,
+                "step_id": request.step_id,
+                "tool": tool,
+            }),
+        );
+        let result = span
+            .context()
+            .clone()
+            .scope(self.tools.dispatch(call, request))
+            .await;
+        let outcome = match &result {
+            Ok(ToolDispatchOutcome::Completed { .. }) => "completed",
+            Ok(ToolDispatchOutcome::Failed { .. }) => "failed",
+            Ok(ToolDispatchOutcome::Rejected { .. }) => "rejected",
+            Ok(ToolDispatchOutcome::Parked { .. }) => "parked",
+            Ok(ToolDispatchOutcome::OutcomeUnknown { .. }) => "outcome_unknown",
+            Err(_) => "error",
+        };
+        crate::observability::metrics::increment(
+            "quansio_tool_calls_total",
+            "Tool calls by tool and outcome.",
+            &[("tool", &tool), ("outcome", outcome)],
+        );
+        span.end(
+            if outcome == "error" { "error" } else { "ok" },
+            serde_json::json!({ "result": outcome }),
+        );
+        result
+    }
+
+    async fn run_turn_in_span(
         &self,
         run_id: &CanonicalId,
         generation: Generation,
@@ -694,7 +772,7 @@ impl RuntimeEngine {
             let futures = pending
                 .iter()
                 .map(|(_, _, call, request)| {
-                    Box::pin(self.tools.dispatch(call.clone(), request.clone()))
+                    Box::pin(self.traced_dispatch(call.clone(), request.clone()))
                         as std::pin::Pin<
                             Box<
                                 dyn std::future::Future<

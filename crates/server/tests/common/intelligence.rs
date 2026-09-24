@@ -52,6 +52,29 @@ pub async fn start() -> Option<Service> {
 
 /// Start the service with its provider at `provider` (the dev stub when `None`).
 pub async fn start_with_provider(provider: Option<&str>) -> Option<Service> {
+    start_with(Options {
+        provider: provider.map(str::to_string),
+        ..Options::default()
+    })
+    .await
+}
+
+/// How to start the service.
+#[derive(Debug, Default, Clone)]
+pub struct Options {
+    /// The provider's base URL (the dev stub when `None`).
+    pub provider: Option<String>,
+    /// Extra environment for the process.
+    pub env: Vec<(String, String)>,
+    /// Where the process's stderr (its JSON log lines) goes; discarded when `None`.
+    pub stderr: Option<PathBuf>,
+    /// The provider credential the catalog's handle materializes.
+    pub credential: Option<String>,
+}
+
+/// Start the service with `options`, or report why it cannot run here.
+pub async fn start_with(options: Options) -> Option<Service> {
+    let provider = options.provider.as_deref();
     let host_port = stub_provider()
         .trim_start_matches("http://")
         .trim_end_matches('/')
@@ -106,10 +129,22 @@ pub async fn start_with_provider(provider: Option<&str>) -> Option<Service> {
         .env("QUANSIO_INTELLIGENCE_MODEL_CATALOG", &catalog)
         .env(
             "QUANSIO_SECRET_PROVIDER_INT001_STUB",
-            "stub-credential-for-tests",
+            options
+                .credential
+                .as_deref()
+                .unwrap_or("stub-credential-for-tests"),
+        )
+        .envs(
+            options
+                .env
+                .iter()
+                .map(|(key, value)| (key.as_str(), value.as_str())),
         )
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        .stderr(match &options.stderr {
+            Some(path) => Stdio::from(std::fs::File::create(path).expect("stderr file")),
+            None => Stdio::null(),
+        })
         .spawn()
         .expect("spawn the intelligence service");
     let service = Service {

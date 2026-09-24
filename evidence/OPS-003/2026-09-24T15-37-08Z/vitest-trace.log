@@ -1,0 +1,13 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/diagnostics.test.ts (2 tests) 2ms
+ ✓ tests/trace.test.ts (4 tests) 184ms
+ ✓ tests/preload.test.ts (4 tests) 10ms
+
+ Test Files  3 passed (3)
+      Tests  10 passed (10)
+   Start at  18:38:05
+   Duration  1.09s (transform 413ms, setup 0ms, collect 806ms, tests 197ms, environment 0ms, prepare 569ms)
+
+exit=0

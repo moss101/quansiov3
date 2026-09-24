@@ -119,6 +119,7 @@ export const READ_PROJECTIONS = [
   "/v1/search?q=",
   "/v1/webhooks",
   "/v1/webhooks/{id}/deliveries",
+  "/v1/diagnostics/bundle",
   "/v1/stream",
   "/v1/stream/events",
 ] as const;

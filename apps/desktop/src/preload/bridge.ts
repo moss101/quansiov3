@@ -77,6 +77,7 @@ export const PRELOAD_ALLOWLIST = [
   "notifications.list",
   "notifications.read",
   "notifications.preference",
+  "diagnostics.export",
 ] as const;
 
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
@@ -230,6 +231,9 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     listNotifications: (unreadOnly = false) => send("notifications.list", { unreadOnly }),
     markNotificationRead: (notificationId: string) => send("notifications.read", { notificationId }),
     setNotificationPreference: (params: Record<string, unknown>) => send("notifications.preference", params),
+    // Diagnostics (OPS-003): the server's tenant bundle merged with the desktop's own frames,
+    // redacted and bounded; the page offers it for saving.
+    exportDiagnostics: () => send("diagnostics.export", {}),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),

@@ -19,6 +19,9 @@ pub mod model_source;
 use std::time::Duration;
 
 use prost::Message as _;
+use serde_json::json;
+
+use crate::observability::{metrics, Span, TRACEPARENT};
 use quansio_contracts::generated::intelligence::intelligence_gateway_client::IntelligenceGatewayClient;
 use quansio_contracts::generated::intelligence::{
     ContextBuildRequest, ContextProjection, ModelCallRequest, ModelEvent, ScopeContext,
@@ -185,13 +188,17 @@ impl IntelligenceClient {
         })
     }
 
-    fn request<T>(scope: &CallScope, message: T) -> tonic::Request<T> {
+    fn request<T>(scope: &CallScope, message: T, span: &Span) -> tonic::Request<T> {
         let mut request = tonic::Request::new(message);
         request.set_timeout(scope.deadline);
         request.metadata_mut().insert_bin(
             SCOPE_METADATA_KEY,
             MetadataValue::from_bytes(&scope.context().encode_to_vec()),
         );
+        // The plane continues this span (OPS-003): its RPC log lines share the trace.
+        if let Ok(value) = span.context().traceparent().parse() {
+            request.metadata_mut().insert(TRACEPARENT, value);
+        }
         request
     }
 
@@ -205,6 +212,7 @@ impl IntelligenceClient {
         source_kind: &str,
         content: &str,
     ) -> Result<TrustClassifyResponse, IntelligenceError> {
+        let span = rpc_span("ClassifyTrust", scope);
         let request = Self::request(
             scope,
             TrustClassifyRequest {
@@ -213,13 +221,16 @@ impl IntelligenceClient {
                 source_kind: source_kind.to_string(),
                 content: content.to_string(),
             },
+            &span,
         );
         let call = self.inner.classify_trust(request);
-        match tokio::time::timeout(scope.deadline, call).await {
+        let result = match tokio::time::timeout(scope.deadline, call).await {
             Err(_) => Err(IntelligenceError::DeadlineExceeded),
             Ok(Err(status)) => Err(refused(&status)),
             Ok(Ok(response)) => Ok(response.into_inner()),
-        }
+        };
+        finish(span, "ClassifyTrust", &result);
+        result
     }
 
     /// `BuildContext`: the Context plane's projection for one turn and the messages it rendered.
@@ -236,12 +247,17 @@ impl IntelligenceClient {
     ) -> Result<ContextProjection, IntelligenceError> {
         request.schema_version = SCHEMA_VERSION.to_string();
         request.scope = Some(scope.context());
-        let call = self.inner.build_context(Self::request(scope, request));
-        match tokio::time::timeout(scope.deadline, call).await {
+        let span = rpc_span("BuildContext", scope);
+        let call = self
+            .inner
+            .build_context(Self::request(scope, request, &span));
+        let result = match tokio::time::timeout(scope.deadline, call).await {
             Err(_) => Err(IntelligenceError::DeadlineExceeded),
             Ok(Err(status)) => Err(refused(&status)),
             Ok(Ok(response)) => Ok(response.into_inner()),
-        }
+        };
+        finish(span, "BuildContext", &result);
+        result
     }
 
     /// `ProposeSkillCandidates` (CAP-008): evaluated candidate versions from verified run
@@ -261,14 +277,17 @@ impl IntelligenceClient {
             evidence_records_json,
             active_versions_json,
         };
+        let span = rpc_span("ProposeSkillCandidates", scope);
         let call = self
             .inner
-            .propose_skill_candidates(Self::request(scope, request));
-        match tokio::time::timeout(scope.deadline, call).await {
+            .propose_skill_candidates(Self::request(scope, request, &span));
+        let result = match tokio::time::timeout(scope.deadline, call).await {
             Err(_) => Err(IntelligenceError::DeadlineExceeded),
             Ok(Err(status)) => Err(refused(&status)),
             Ok(Ok(response)) => Ok(response.into_inner().candidates_json),
-        }
+        };
+        finish(span, "ProposeSkillCandidates", &result);
+        result
     }
 
     /// `FulfillModel`: the normalized event stream of one model call, collected to its end.
@@ -281,7 +300,8 @@ impl IntelligenceClient {
         scope: &CallScope,
         call: ModelCallRequest,
     ) -> Result<Vec<ModelEvent>, IntelligenceError> {
-        let request = Self::request(scope, call);
+        let span = rpc_span("FulfillModel", scope);
+        let request = Self::request(scope, call, &span);
         let collect = async {
             let mut stream = self
                 .inner
@@ -295,9 +315,42 @@ impl IntelligenceClient {
             }
             Ok(events)
         };
-        match tokio::time::timeout(scope.deadline, collect).await {
+        let result = match tokio::time::timeout(scope.deadline, collect).await {
             Err(_) => Err(IntelligenceError::DeadlineExceeded),
             Ok(result) => result,
-        }
+        };
+        finish(span, "FulfillModel", &result);
+        result
     }
+}
+
+/// A span for one RPC, under the current span, naming the method and the call's scope.
+fn rpc_span(method: &'static str, scope: &CallScope) -> Span {
+    Span::start(
+        "intelligence.rpc",
+        json!({
+            "method": method,
+            "tenant_id": scope.tenant_id,
+            "correlation_id": scope.correlation_id,
+        }),
+    )
+}
+
+/// End an RPC span with its outcome, and count it.
+fn finish<T>(span: Span, method: &'static str, result: &Result<T, IntelligenceError>) {
+    let (outcome, code) = match result {
+        Ok(_) => ("ok", String::new()),
+        Err(IntelligenceError::Refused { code, .. }) => ("refused", code.clone()),
+        Err(IntelligenceError::DeadlineExceeded) => ("error", "DEADLINE_EXCEEDED".to_string()),
+        Err(_) => ("error", "UNREACHABLE".to_string()),
+    };
+    metrics::increment(
+        "quansio_intelligence_rpc_total",
+        "Calls to the intelligence plane by method and outcome.",
+        &[("method", method), ("outcome", outcome)],
+    );
+    span.end(
+        if outcome == "ok" { "ok" } else { "error" },
+        json!({ "code": code }),
+    );
 }

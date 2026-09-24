@@ -11,7 +11,12 @@
  *   GET  /v1/runs/{id} | /v1/threads/{id} | /v1/messages?thread_id= | /v1/effects?run_id=
  *   GET  /v1/health
  *   errors: {code, message, correlation_id, retryable}
+ *
+ * Every call carries a fresh W3C `traceparent` (OPS-003); the server continues the trace.
  */
+
+import { FrameRing, mergeExport, newTraceparent, TRACEPARENT, traceIdOf } from "../diagnostics/trace.js";
+import type { DesktopFrame, DiagnosticExport } from "../diagnostics/trace.js";
 
 export interface CommandResponse<TResult = unknown> {
   readonly command_id: string;
@@ -185,12 +190,34 @@ export class ServerClient {
   readonly #credential: Credential;
   readonly #fetch: FetchLike;
   readonly #timeoutMs: number;
+  /** One redacted frame per call, for diagnostic exports (OPS-003). */
+  readonly #frames = new FrameRing();
 
   constructor(options: ServerClientOptions) {
     this.origin = trimOrigin(options.origin);
     this.#credential = options.credential;
     this.#fetch = options.fetch ?? ((input, init) => fetch(input, init));
     this.#timeoutMs = options.timeoutMs ?? 30_000;
+  }
+
+  /** The recent calls this client made, redacted (method, path, status, trace id). */
+  diagnosticFrames(): readonly DesktopFrame[] {
+    return this.#frames.frames();
+  }
+
+  /**
+   * A diagnostic export: the server's bundle for this tenant (tenant administrators only; for
+   * anyone else the refusal is recorded in its place) merged with the desktop's own frames,
+   * redacted and bounded.
+   */
+  async exportDiagnostics(): Promise<DiagnosticExport> {
+    let server: unknown;
+    try {
+      server = await this.#request<unknown>("GET", `${this.origin}/v1/diagnostics/bundle`);
+    } catch (error) {
+      server = { unavailable: error instanceof ApiError ? error.code : "unreachable" };
+    }
+    return mergeExport(server, this.#frames.frames());
   }
 
   /** The credential in force (main uses it for the stream's upgrade headers). */
@@ -395,7 +422,13 @@ export class ServerClient {
       controller.abort();
     }, this.#timeoutMs);
     try {
-      const response = await this.#fetch(url, { method: "GET", headers: credentialHeaders(this.#credential), signal: controller.signal });
+      const traceparent = newTraceparent();
+      const response = await this.#fetch(url, {
+        method: "GET",
+        headers: { ...credentialHeaders(this.#credential), [TRACEPARENT]: traceparent },
+        signal: controller.signal,
+      });
+      this.#frames.record(traceIdOf(traceparent) ?? "", "GET", url, response.status);
       if (!response.ok) {
         const text = await response.text();
         const decoded: unknown = text ? JSON.parse(text) : null;
@@ -411,7 +444,12 @@ export class ServerClient {
   }
 
   async #request<T>(method: "GET" | "POST", url: string, body?: string, authenticated = true): Promise<T> {
-    const attempt = async (headers: Record<string, string>): Promise<{ status: number; ok: boolean; decoded: unknown }> => {
+    // The desktop starts the trace (OPS-003): the server continues it into the runtime and the
+    // intelligence plane. A retry after a refresh is the same call, so it keeps the same trace.
+    const traceparent = newTraceparent();
+    const traceId = traceIdOf(traceparent) ?? "";
+    const attempt = async (baseHeaders: Record<string, string>): Promise<{ status: number; ok: boolean; decoded: unknown }> => {
+      const headers = { ...baseHeaders, [TRACEPARENT]: traceparent };
       const controller = new AbortController();
       const timer = setTimeout(() => {
         controller.abort();
@@ -422,6 +460,7 @@ export class ServerClient {
           init.body = body;
         }
         const response = await this.#fetch(url, init);
+        this.#frames.record(traceId, method, url, response.status);
         const text = await response.text();
         return { status: response.status, ok: response.ok, decoded: text ? (JSON.parse(text) as unknown) : null };
       } finally {

@@ -1,0 +1,112 @@
+{
+  "task_id": "OPS-003",
+  "git_commit": "0025bc49657d2855ac268e8a3a92b7accbc7b6ea",
+  "recorded_at": "2026-09-24T15:38:12Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test observability (desktop-style traceparent -> HTTP -> turn -> model calls -> intelligence RPCs -> the real Python process, parent links across the boundary; OTLP/HTTP collector; canary absent from 5 signals with a real logging attempt; bundle bounded/tenant-scoped/admin-only; metrics token)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-003/2026-09-24T15-37-08Z/cargo-observability.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib observability (trace context, metrics text)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-003/2026-09-24T15-37-08Z/cargo-observability-unit.log"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_tracing.py -v",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-003/2026-09-24T15-37-08Z/pytest-tracing.log"
+    },
+    {
+      "command": "(cd apps/desktop && pnpm exec vitest run tests/trace.test.ts tests/diagnostics.test.ts tests/preload.test.ts)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-003/2026-09-24T15-37-08Z/vitest-trace.log"
+    },
+    {
+      "command": "ops003_mutations.sh (10 compiling mutants across runtime, plane and desktop)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-003/2026-09-24T15-37-08Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-003/2026-09-24T15-37-08Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test observability (desktop-style traceparent -> HTTP -> turn -> model calls -> intelligence RPCs -> the real Python process, parent links across the boundary; OTLP/HTTP collector; canary absent from 5 signals with a real logging attempt; bundle bounded/tenant-scoped/admin-only; metrics token)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib observability (trace context, metrics text)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_tracing.py -v",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd apps/desktop && pnpm exec vitest run tests/trace.test.ts tests/diagnostics.test.ts tests/preload.test.ts)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "ops003_mutations.sh (10 compiling mutants across runtime, plane and desktop)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-003/2026-09-24T15-37-08Z/NOTES.md",
+      "sha256": "29c81dcc175dd20f2592864564219b008de553ddcf4a759871a48e0987e632b1",
+      "bytes": 4617
+    },
+    {
+      "path": "evidence/OPS-003/2026-09-24T15-37-08Z/cargo-observability.log",
+      "sha256": "26fdb740eddf6f3d031742355eb179b41f275351c6ac56f07a82ca86cdf067df",
+      "bytes": 350
+    },
+    {
+      "path": "evidence/OPS-003/2026-09-24T15-37-08Z/cargo-observability-unit.log",
+      "sha256": "21016bbf0b73622e10366780ab9afd0b784bea7205911b0c9cb6ffe66ffd8ab3",
+      "bytes": 880
+    },
+    {
+      "path": "evidence/OPS-003/2026-09-24T15-37-08Z/pytest-tracing.log",
+      "sha256": "77240b1bac4d7062e6f8a93a48f1e83e51144eac0e0e4c941cf0bd1d56323461",
+      "bytes": 764
+    },
+    {
+      "path": "evidence/OPS-003/2026-09-24T15-37-08Z/vitest-trace.log",
+      "sha256": "82191f89618a5263288315addb41399ab391d399cf4a81fe9f039b73135d1682",
+      "bytes": 382
+    },
+    {
+      "path": "evidence/OPS-003/2026-09-24T15-37-08Z/mutation-checks.log",
+      "sha256": "380a0b48a60cfe4f948feacf5d932e82c00baaa6ed63ac17d8bf932fa8fc79f7",
+      "bytes": 614
+    },
+    {
+      "path": "evidence/OPS-003/2026-09-24T15-37-08Z/ci-summary.json",
+      "sha256": "01cbbd63453082636809d66112e70e70732f0bd7d4cd4ed164a0c72b8aae55e0",
+      "bytes": 7890
+    }
+  ]
+}

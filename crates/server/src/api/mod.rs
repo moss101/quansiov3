@@ -20,6 +20,7 @@ pub mod artifacts;
 pub mod auth;
 pub mod collaboration;
 pub mod commands;
+pub mod diagnostics;
 pub mod error;
 pub mod flags;
 pub mod knowledge;
@@ -321,6 +322,7 @@ pub struct ApiState {
     web_root: Option<web::WebRoot>,
     keys: Option<Arc<dyn quansio_machine::secrets::KeyProvider>>,
     intelligence: Option<crate::intelligence::IntelligenceClient>,
+    metrics_token: Option<Arc<str>>,
 }
 
 impl ApiState {
@@ -363,7 +365,21 @@ impl ApiState {
             web_root: None,
             keys: None,
             intelligence: None,
+            metrics_token: None,
         })
+    }
+
+    /// Serve `GET /metrics` to the operator presenting `token` as a bearer (OPS-003).
+    #[must_use]
+    pub fn with_metrics_token(mut self, token: &str) -> Self {
+        self.metrics_token = Some(Arc::from(token));
+        self
+    }
+
+    /// The metrics token, when metrics are served.
+    #[must_use]
+    pub fn metrics_token(&self) -> Option<&str> {
+        self.metrics_token.as_deref()
     }
 
     /// The intelligence plane's client, for control-plane calls that are not a turn's model
@@ -634,6 +650,9 @@ pub fn router(state: ApiState) -> Router {
         .route("/app", get(web::index))
         .route("/app/", get(web::index))
         .route("/app/*path", get(web::asset))
+        .route("/v1/diagnostics/bundle", get(diagnostics::bundle))
+        .route("/metrics", get(diagnostics::metrics_endpoint))
+        .route_layer(axum::middleware::from_fn(diagnostics::trace_requests))
         .with_state(state)
 }
 

@@ -258,6 +258,7 @@ export class DesktopBridge {
         Promise.resolve(payload).then((raw) => this.server.notifications(this.#requireWorkspace(), asRecord(raw ?? {}, "notifications.list")["unreadOnly"] === true)),
       "notifications.read": (payload) => settled(Promise.resolve(payload).then((raw) => this.markNotificationRead(raw))),
       "notifications.preference": (payload) => settled(Promise.resolve(payload).then((raw) => this.setNotificationPreference(raw))),
+      "diagnostics.export": () => this.server.exportDiagnostics(),
     };
   }
 

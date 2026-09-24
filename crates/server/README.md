@@ -12,3 +12,6 @@ With `QUANSIO_INTELLIGENCE_ENDPOINT` set, turns are answered through it
 (`GatewayModelSource`); unset, by the conformance stub, and startup says so.
 
 Build: `cargo test -p quansio-server`
+
+Observability (`src/observability`, OPS-003): W3C trace context across processes, redacted
+JSON logs on stderr, OTLP/HTTP span export, `/metrics`, and the diagnostic bundle.

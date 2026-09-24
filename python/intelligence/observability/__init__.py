@@ -15,6 +15,13 @@ from intelligence.observability.redact import (
     redact_text,
     secret_canaries,
 )
+from intelligence.observability.tracing import (
+    JsonFormatter,
+    RpcSpan,
+    TraceContext,
+    install_json_logging,
+    log_event,
+)
 
 __all__ = [
     "CANARY_PLACEHOLDER",
@@ -22,10 +29,15 @@ __all__ = [
     "SERVICES",
     "Correlation",
     "DiagnosticBundle",
+    "JsonFormatter",
     "JsonLog",
     "MetricsRegistry",
+    "RpcSpan",
     "Span",
+    "TraceContext",
     "continue_trace",
+    "install_json_logging",
+    "log_event",
     "redact_text",
     "secret_canaries",
 ]
