@@ -213,10 +213,15 @@ def _http_status(url: str) -> int:
         return int(response.status)
 
 
-def _stub_completion() -> str:
-    payload = json.dumps(
-        {"model": "local-instruct", "messages": [{"role": "user", "content": "hello dev"}]}
-    ).encode()
+def _stub_completion(*, stream: bool = False) -> str:
+    body: dict[str, object] = {
+        "model": "local-instruct",
+        "messages": [{"role": "user", "content": "hello dev"}],
+    }
+    if stream:
+        # What the model gateway always sends (DOMAIN §11.1: `stream: true`).
+        body.update(stream=True, stream_options={"include_usage": True})
+    payload = json.dumps(body).encode()
     request = urllib.request.Request(
         f"http://{STUB_PROVIDER_HOST}:{STUB_PROVIDER_PORT}/v1/chat/completions",
         data=payload,
@@ -270,6 +275,21 @@ def test_bootstrap_smoke(dev_env_file: Path) -> None:
     first_completion = _stub_completion()
     assert '"stub completion' in first_completion
     assert _stub_completion() == first_completion, "stub model provider is not deterministic"
+
+    # The gateway streams every call: the stub answers it on the streaming wire, the same
+    # completion as SSE chunks, the usage chunk it asked for, and the terminator.
+    streamed = _stub_completion(stream=True)
+    assert streamed == _stub_completion(stream=True), "the stub's stream is not deterministic"
+    frames = [line.removeprefix("data: ") for line in streamed.split("\n\n") if line]
+    assert frames[-1] == "[DONE]", streamed
+    chunks = [json.loads(frame) for frame in frames[:-1]]
+    assert all(chunk["object"] == "chat.completion.chunk" for chunk in chunks)
+    text = "".join(
+        choice["delta"].get("content", "") for chunk in chunks for choice in chunk["choices"]
+    )
+    assert text == json.loads(first_completion)["choices"][0]["message"]["content"]
+    assert any(c["finish_reason"] == "stop" for chunk in chunks for c in chunk["choices"])
+    assert chunks[-1]["usage"]["completion_tokens"] > 0
 
 
 def test_reset_then_reseed_is_deterministic(dev_env_file: Path) -> None:
