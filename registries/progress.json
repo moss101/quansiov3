@@ -2405,26 +2405,32 @@
     },
     "OPS-003": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-24T08:11:32Z",
-      "updated_at": "2026-09-24T08:11:32Z",
-      "git_commit": null,
+      "updated_at": "2026-09-24T15:38:56Z",
+      "git_commit": "9652a5b55d8b903dd6095f9717288f370f9dbe49",
       "tests": [
-        "cargo test -p quansio-server --test observability (3 passed: e2e correlation, canary scan, bounded bundle)",
-        "uv run --project python pytest tests/intelligence/test_observability.py -q (3 passed)",
-        "pnpm exec vitest run tests/diagnostics.test.ts (2 passed)"
+        "cargo test -p quansio-server --test observability (a desktop-style traceparent reaches the HTTP span, runtime turn, model calls, every intelligence RPC and the real Python process with parent links; spans exported to an in-test OTLP/HTTP collector; the secret canary, given as a provider credential, in message content and in a real logging attempt in both processes, is absent from server logs, Python logs, the bundle, metrics and OTLP; bundle bounded, tenant-scoped, admin-only; /metrics needs its token)",
+        "cargo test -p quansio-server --lib observability (6 passed: trace context parsing/children, metrics text)",
+        "uv run --project python pytest python/tests/intelligence/test_tracing.py (3 passed: traceparent continuation, redacted JSON lines, each RPC a span of the caller's trace over real gRPC)",
+        "pnpm exec vitest run tests/trace.test.ts tests/diagnostics.test.ts tests/preload.test.ts (10 passed: a traceparent per request, frame ring, merged redacted export, the diagnostics.export bridge)",
+        "mutation checks: 10 compiling mutants across runtime, plane and desktop, all killed",
+        "bash scripts/ci/ci.sh (PASS)"
       ],
       "artifacts": [
-        "evidence/OPS-003/2026-09-15T08-05-00Z/summary.json",
-        "crates/server/src/observability/mod.rs",
-        "python/intelligence/observability/redact.py",
-        "apps/desktop/src/diagnostics/bundle.ts"
+        "evidence/OPS-003/2026-09-24T15-37-08Z/summary.json",
+        "evidence/OPS-003/RECONCILIATION.md",
+        "crates/server/src/observability/",
+        "crates/server/src/api/diagnostics.rs",
+        "python/intelligence/observability/tracing.py",
+        "apps/desktop/src/diagnostics/trace.ts",
+        "crates/server/tests/observability.rs"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Correlated traces across runtime/intelligence/desktop, secret-canary redaction, Prometheus text metrics, bounded diagnostic bundles. 2026-09-19 correction: was BLOCKED_EXTERNAL at 1e055ce30a28970a2e74c1be1c19c905ff231def claimed by agent:principal-1 (started 2026-09-15T08:00:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: real correlation/redaction/Prometheus-text/bundle code with tests in all three planes, referenced by nothing outside its own module in any plane; no OTLP export. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "W3C trace context crosses desktop -> HTTP -> runtime turn -> model calls/tool calls -> gRPC metadata -> the intelligence plane; one redacted JSON line per event in both processes (the redactor runs on every line), a tenant-tagged in-memory ring behind GET /v1/diagnostics/bundle (ManageTenant, 64 KiB), Prometheus text at /metrics behind QUANSIO_METRICS_TOKEN, OTLP/HTTP JSON span export behind QUANSIO_OTLP_ENDPOINT through the existing HTTP client (no new dependency). The desktop sends a traceparent per request and exports its frames merged with the server bundle. Correlated traces across runtime/intelligence/desktop, secret-canary redaction, Prometheus text metrics, bounded diagnostic bundles. 2026-09-19 correction: was BLOCKED_EXTERNAL at 1e055ce30a28970a2e74c1be1c19c905ff231def claimed by agent:principal-1 (started 2026-09-15T08:00:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: real correlation/redaction/Prometheus-text/bundle code with tests in all three planes, referenced by nothing outside its own module in any plane; no OTLP export. See docs/review/2026-09-18-m5-placeholder-audit.md."
     },
     "OPS-004": {
       "coverage": "GENUINE_GAP",
