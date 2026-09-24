@@ -1,0 +1,80 @@
+{
+  "task_id": "APP-004",
+  "git_commit": "d19293fb1dee093d652daead1e4fc8638a13321d",
+  "recorded_at": "2026-09-24T07:27:08Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test walking_skeleton_gateway (the timeline shows each model call's recorded projection and the turn's latest context with trust labels)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-004/2026-09-24T07-26-37Z/cargo-walking-skeleton-gateway.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test conversation_surface/context_bridge/walking_skeleton/api/turn_loop && --lib context_bridge",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-004/2026-09-24T07-26-37Z/cargo-server-suites.log"
+    },
+    {
+      "command": "app004_mutations.sh (3 compiling mutants: projection not recorded, turn context not found, step projection hidden)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-004/2026-09-24T07-26-37Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-004/2026-09-24T07-26-37Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test walking_skeleton_gateway (the timeline shows each model call's recorded projection and the turn's latest context with trust labels)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test conversation_surface/context_bridge/walking_skeleton/api/turn_loop && --lib context_bridge",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "app004_mutations.sh (3 compiling mutants: projection not recorded, turn context not found, step projection hidden)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-004/2026-09-24T07-26-37Z/NOTES.md",
+      "sha256": "a311bdce8ce105b46e1649adeff2996c64aefeb4d6f7185f78731aba09b97c19",
+      "bytes": 2418
+    },
+    {
+      "path": "evidence/APP-004/2026-09-24T07-26-37Z/cargo-walking-skeleton-gateway.log",
+      "sha256": "f60c7825eecb1eda1c7d16fe38ca86ee06a2669c1073042b28ce1f595ba7a121",
+      "bytes": 706
+    },
+    {
+      "path": "evidence/APP-004/2026-09-24T07-26-37Z/cargo-server-suites.log",
+      "sha256": "8051f3009e9e2fa85ab3fc6370f91bbccb878ff206749aac55f8f9e94f6e80e5",
+      "bytes": 4375
+    },
+    {
+      "path": "evidence/APP-004/2026-09-24T07-26-37Z/mutation-checks.log",
+      "sha256": "4e9974b9355764a3371b33daa0321101bbf3d506d522e14241dcd2e087fc2116",
+      "bytes": 200
+    },
+    {
+      "path": "evidence/APP-004/2026-09-24T07-26-37Z/ci-summary.json",
+      "sha256": "40dc163546d4b5ee4394581f6b2445814d08ce390221940e96acb453f63b8c28",
+      "bytes": 7887
+    }
+  ]
+}
