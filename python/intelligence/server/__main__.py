@@ -14,6 +14,7 @@ import sys
 import threading
 from collections.abc import Sequence
 
+from intelligence.observability.tracing import install_json_logging
 from intelligence.server.app import (
     CONTRACT_SERVICE_NAME,
     IntelligenceServer,
@@ -45,7 +46,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.version:
         print(f"quansio-intelligence {gateway_version()} (contract {CONTRACT_SERVICE_NAME})")
         return 0
-    logging.basicConfig(level=args.log_level.upper(), format=LOG_FORMAT, stream=sys.stderr)
+    # One redacted JSON object per line, carrying the runtime's trace ids (OPS-003).
+    install_json_logging(args.log_level, sys.stderr)
     base = ServerConfig.from_env()
     config = ServerConfig(
         transport=Transport(args.transport) if args.transport else base.transport,

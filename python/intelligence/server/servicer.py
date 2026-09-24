@@ -43,6 +43,7 @@ tests read it instead of restating it.
 from __future__ import annotations
 
 import logging
+import sys
 import threading
 import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
@@ -65,6 +66,7 @@ from intelligence.memory.candidates import (
 from intelligence.memory.models import MemoryEntryError, MemoryProvenance
 from intelligence.model_gateway import Fulfillment, GatewayError, ModelGateway
 from intelligence.model_gateway.embeddings import MAX_EMBED_INPUTS
+from intelligence.observability.tracing import RpcSpan, current_span
 from intelligence.server.errors import ErrorCode, ErrorDetail, ErrorEnvelope, abort_with
 from intelligence.server.scope import CallScope, ScopeViolationError, validate_call_scope
 from intelligence.skills.evolution.patterns import EvolutionError
@@ -147,7 +149,9 @@ class IntelligenceGatewayServicer:
 
     # -- call bookkeeping ----------------------------------------------------------
 
-    def _begin_call(self, context: grpc.ServicerContext) -> None:
+    def _begin_call(self, context: grpc.ServicerContext, method: str) -> RpcSpan:
+        """Admit one call, and open its span continuing the caller's `traceparent` (OPS-003)."""
+        span = RpcSpan.begin(method, tuple(context.invocation_metadata() or ()))
         with self._idle:
             if self._draining:
                 abort_with(
@@ -160,8 +164,11 @@ class IntelligenceGatewayServicer:
                     grpc.StatusCode.UNAVAILABLE,
                 )
             self._in_flight += 1
+        return span
 
-    def _end_call(self) -> None:
+    def _end_call(self, span: RpcSpan) -> None:
+        # An exception on its way out (a typed abort included) is the call's outcome.
+        span.end("error" if sys.exc_info()[0] is not None else "ok")
         with self._idle:
             self._in_flight -= 1
             if self._in_flight <= 0:
@@ -173,7 +180,11 @@ class IntelligenceGatewayServicer:
     def _validated_scope(self, method: str, request: object, context: grpc.ServicerContext) -> CallScope:
         invocation_metadata: Sequence[tuple[str, str | bytes]] = context.invocation_metadata() or ()
         try:
-            return validate_call_scope(request, invocation_metadata, context, now_ms=self._now_ms())
+            scope = validate_call_scope(request, invocation_metadata, context, now_ms=self._now_ms())
+            span = current_span()
+            if span is not None:
+                span.annotate(tenant_id=scope.tenant_id, correlation_id=scope.correlation_id)
+            return scope
         except ScopeViolationError as violation:
             # Log identifiers only: request content is never logged.
             self._logger.warning(
@@ -222,7 +233,7 @@ class IntelligenceGatewayServicer:
         self, request: service_pb2.TrustClassifyRequest, context: grpc.ServicerContext
     ) -> service_pb2.TrustClassifyResponse:
         """Deterministic trust label and injection verdict for one content segment."""
-        self._begin_call(context)
+        span = self._begin_call(context, "ClassifyTrust")
         try:
             self._validated_scope("ClassifyTrust", request, context)
             self._ensure_live("ClassifyTrust", context)
@@ -235,7 +246,7 @@ class IntelligenceGatewayServicer:
                 matched_patterns=classification.matched_patterns,
             )
         finally:
-            self._end_call()
+            self._end_call(span)
 
     # -- RPCs owned by a later task ------------------------------------------------
 
@@ -249,15 +260,15 @@ class IntelligenceGatewayServicer:
         the RPC with a typed DOMAIN.md §15 error. Failures after the stream started arrive as
         typed `KIND_ERROR` events, and the terminal outcome is recorded by the gateway.
         """
-        self._begin_call(context)
+        span = self._begin_call(context, "FulfillModel")
         try:
             scope = self._validated_scope("FulfillModel", request, context)
             self._ensure_live("FulfillModel", context)
             fulfillment = self._start_fulfilment(request, scope, context)
         except BaseException:
-            self._end_call()
+            self._end_call(span)
             raise
-        return self._stream_fulfilment(fulfillment, context)
+        return self._stream_fulfilment(fulfillment, context, span)
 
     def _start_fulfilment(
         self,
@@ -300,7 +311,7 @@ class IntelligenceGatewayServicer:
             )
 
     def _stream_fulfilment(
-        self, fulfillment: Fulfillment, context: grpc.ServicerContext
+        self, fulfillment: Fulfillment, context: grpc.ServicerContext, span: RpcSpan
     ) -> Iterator[intelligence_pb2.ModelEvent]:
         try:
             for event in fulfillment:
@@ -316,13 +327,13 @@ class IntelligenceGatewayServicer:
             try:
                 fulfillment.close()
             finally:
-                self._end_call()
+                self._end_call(span)
 
     def BuildContext(
         self, request: service_pb2.ContextBuildRequest, context: grpc.ServicerContext
     ) -> intelligence_pb2.ContextProjection:
         """The turn's ContextProjection and the messages rendered from it (INT-005)."""
-        self._begin_call(context)
+        span = self._begin_call(context, "BuildContext")
         try:
             scope = self._validated_scope("BuildContext", request, context)
             self._ensure_live("BuildContext", context)
@@ -356,16 +367,16 @@ class IntelligenceGatewayServicer:
             self._ensure_live("BuildContext", context)
             return built.projection
         finally:
-            self._end_call()
+            self._end_call(span)
 
     def Search(
         self, request: intelligence_pb2.SearchProgram, context: grpc.ServicerContext
     ) -> service_pb2.SearchResultSet:
-        self._begin_call(context)
+        span = self._begin_call(context, "Search")
         try:
             self._reject_unimplemented("Search", request, context)
         finally:
-            self._end_call()
+            self._end_call(span)
 
     def ProposeSkillCandidates(
         self, request: service_pb2.SkillCandidatesRequest, context: grpc.ServicerContext
@@ -375,7 +386,7 @@ class IntelligenceGatewayServicer:
         The runtime registers what comes back as CANDIDATE versions; nothing here writes, and no
         candidate is ever ACTIVE.
         """
-        self._begin_call(context)
+        span = self._begin_call(context, "ProposeSkillCandidates")
         try:
             scope = self._validated_scope("ProposeSkillCandidates", request, context)
             self._ensure_live("ProposeSkillCandidates", context)
@@ -406,7 +417,7 @@ class IntelligenceGatewayServicer:
                 candidates_json=[candidate_json(proposal) for proposal in proposals],
             )
         finally:
-            self._end_call()
+            self._end_call(span)
 
     def ProposeMemory(
         self, request: service_pb2.MemoryCandidate, context: grpc.ServicerContext
@@ -419,7 +430,7 @@ class IntelligenceGatewayServicer:
         error naming the rule that refused it; a process with no sink configured fails closed, so a
         candidate is never acknowledged while nothing stores it.
         """
-        self._begin_call(context)
+        span = self._begin_call(context, "ProposeMemory")
         try:
             scope = self._validated_scope("ProposeMemory", request, context)
             candidate = self._memory_candidate(request, scope, context)
@@ -465,7 +476,7 @@ class IntelligenceGatewayServicer:
                 reason="" if outcome.recorded else "already remembered",
             )
         finally:
-            self._end_call()
+            self._end_call(span)
 
     def _memory_candidate(
         self,
@@ -521,7 +532,7 @@ class IntelligenceGatewayServicer:
         derived index, so this handler validates the request, asks the configured embedder and
         reports the width it actually served. It writes nothing.
         """
-        self._begin_call(context)
+        span = self._begin_call(context, "Embed")
         try:
             scope = self._validated_scope("Embed", request, context)
             texts = self._embedding_inputs(request, scope, context)
@@ -556,7 +567,7 @@ class IntelligenceGatewayServicer:
             self._ensure_live("Embed", context)
             return self._embedding_response(vectors, embedder, scope, context)
         finally:
-            self._end_call()
+            self._end_call(span)
 
     def _embedding_inputs(
         self,
@@ -661,11 +672,11 @@ class IntelligenceGatewayServicer:
     def Evaluate(
         self, request: service_pb2.EvaluationRequest, context: grpc.ServicerContext
     ) -> service_pb2.EvaluationReport:
-        self._begin_call(context)
+        span = self._begin_call(context, "Evaluate")
         try:
             self._reject_unimplemented("Evaluate", request, context)
         finally:
-            self._end_call()
+            self._end_call(span)
 
 
 def _error_code(code: str) -> ErrorCode:

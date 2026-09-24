@@ -115,6 +115,7 @@ describe("preload bridge", () => {
         "listNotifications",
         "markNotificationRead",
         "setNotificationPreference",
+        "exportDiagnostics",
         "onStreamFrame",
         "onStreamState",
         "onStreamError",
@@ -208,6 +209,7 @@ describe("preload bridge", () => {
     await api.listNotifications(true);
     await api.markNotificationRead("ntf_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.setNotificationPreference({ kind: "mention", channels: ["in_app"] });
+    await api.exportDiagnostics();
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

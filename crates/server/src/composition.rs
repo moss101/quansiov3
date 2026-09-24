@@ -146,7 +146,7 @@ impl Composition {
         // The deployable believes bearer sessions only; a development harness may opt into the
         // trusted tenant/user headers explicitly, and the choice is logged so it is never silent.
         let trust = if env::var("QUANSIO_TRUST_SCOPE_HEADERS").as_deref() == Ok("1") {
-            eprintln!("quansio-server: QUANSIO_TRUST_SCOPE_HEADERS=1: x-quansio-tenant/x-quansio-user headers are trusted (development only)");
+            crate::observability::notice(crate::observability::Level::Info, &format!("QUANSIO_TRUST_SCOPE_HEADERS=1: x-quansio-tenant/x-quansio-user headers are trusted (development only)"));
             crate::api::ScopeTrust::TrustedHeaders
         } else {
             crate::api::ScopeTrust::SessionOnly
@@ -155,9 +155,12 @@ impl Composition {
             .map_err(|error| error.message)?
             .with_scope_trust(trust);
         if let Some(store) = config.object_store.clone() {
-            eprintln!(
-                "quansio-server: QUANSIO_OBJECT_STORE=1: attachments go to bucket {:?} at {}",
-                store.bucket, store.endpoint
+            crate::observability::notice(
+                crate::observability::Level::Info,
+                &format!(
+                    "QUANSIO_OBJECT_STORE=1: attachments go to bucket {:?} at {}",
+                    store.bucket, store.endpoint
+                ),
             );
             let objects: Arc<dyn ObjectStore> = Arc::new(
                 S3ObjectStore::new(store).map_err(|error| format!("object store: {error}"))?,
@@ -169,7 +172,10 @@ impl Composition {
             // object store whenever the corpus changed, so losing this directory loses nothing.
             let index = quansio_indexer::SearchIndex::open(root)
                 .map_err(|error| format!("search index at {root}: {error}"))?;
-            eprintln!("quansio-server: QUANSIO_SEARCH_INDEX_ROOT={root}: /v1/search indexes artifact content");
+            crate::observability::notice(
+                crate::observability::Level::Info,
+                &format!("QUANSIO_SEARCH_INDEX_ROOT={root}: /v1/search indexes artifact content"),
+            );
             api = api.with_search_index(Arc::new(index));
         }
         if let Some(path) = config.secrets_key_file.as_deref() {
@@ -178,11 +184,23 @@ impl Composition {
                 config.secrets_key_ref.clone(),
             )
             .map_err(|error| format!("secret key provider: {error}"))?;
-            eprintln!(
-                "quansio-server: QUANSIO_SECRETS_KEY_FILE: secret handles are sealed under {}",
-                config.secrets_key_ref
+            crate::observability::notice(
+                crate::observability::Level::Info,
+                &format!(
+                    "QUANSIO_SECRETS_KEY_FILE: secret handles are sealed under {}",
+                    config.secrets_key_ref
+                ),
             );
             api = api.with_key_provider(Arc::new(keys));
+        }
+        if let Ok(token) = env::var("QUANSIO_METRICS_TOKEN") {
+            if !token.is_empty() {
+                crate::observability::notice(
+                    crate::observability::Level::Info,
+                    "QUANSIO_METRICS_TOKEN is set: /metrics serves Prometheus text to its bearer",
+                );
+                api = api.with_metrics_token(&token);
+            }
         }
         if let Some(endpoint) = config.intelligence_endpoint.as_deref() {
             let settings = crate::intelligence::model_source::ModelCallSettings::load()?;
@@ -192,9 +210,7 @@ impl Composition {
                 client.clone(),
                 settings.deadline,
             ));
-            eprintln!(
-                "quansio-server: QUANSIO_INTELLIGENCE_ENDPOINT={endpoint}: turns are answered through the intelligence gateway"
-            );
+            crate::observability::notice(crate::observability::Level::Info, &format!("QUANSIO_INTELLIGENCE_ENDPOINT={endpoint}: turns are answered through the intelligence gateway"));
             api = api
                 .with_intelligence(client.clone())
                 .with_model_source(Arc::new(
@@ -206,15 +222,16 @@ impl Composition {
                     ),
                 ));
         } else {
-            eprintln!(
-                "quansio-server: QUANSIO_INTELLIGENCE_ENDPOINT is not set: turns are answered by the conformance stub, not a model"
-            );
+            crate::observability::notice(crate::observability::Level::Info, &format!("QUANSIO_INTELLIGENCE_ENDPOINT is not set: turns are answered by the conformance stub, not a model"));
         }
         if let Some(root) = config.web_root.as_deref() {
             let root = crate::api::web::WebRoot::new(root)?;
-            eprintln!(
-                "quansio-server: QUANSIO_WEB_ROOT={}: the web app is served under /app/",
-                root.path().display()
+            crate::observability::notice(
+                crate::observability::Level::Info,
+                &format!(
+                    "QUANSIO_WEB_ROOT={}: the web app is served under /app/",
+                    root.path().display()
+                ),
             );
             api = api.with_web_root(root);
         }
@@ -254,11 +271,14 @@ impl Composition {
             .map_err(|error| format!("cannot bind {}: {error}", self.config.bind))?;
         if let Some(interval) = self.config.background_interval {
             let background = Background::new(self.pool.clone(), self.api.clone());
-            eprintln!(
-                "quansio-server: background loop every {} ms (routines, event triggers, notifications, email{}, webhooks{})",
-                interval.as_millis(),
-                if background.email.is_some() { "" } else { " unavailable: QUANSIO_EMAIL_ENDPOINT is not set" },
-                if background.keys.is_some() { "" } else { " unsigned and so not sent: QUANSIO_SECRETS_KEY_FILE is not set" }
+            crate::observability::notice(
+                crate::observability::Level::Info,
+                &format!(
+                    "background loop every {} ms (routines, event triggers, notifications, email{}, webhooks{})",
+                    interval.as_millis(),
+                    if background.email.is_some() { "" } else { " unavailable: QUANSIO_EMAIL_ENDPOINT is not set" },
+                    if background.keys.is_some() { "" } else { " unsigned and so not sent: QUANSIO_SECRETS_KEY_FILE is not set" }
+                ),
             );
             tokio::spawn(background.clone().run_webhooks(interval));
             tokio::spawn(background.run(interval));
@@ -304,7 +324,10 @@ impl Background {
         loop {
             tokio::time::sleep(interval).await;
             if let Err(message) = self.pass().await {
-                eprintln!("quansio-server: background pass: {message}");
+                crate::observability::notice(
+                    crate::observability::Level::Warn,
+                    &format!("background pass: {message}"),
+                );
             }
         }
     }
@@ -315,7 +338,10 @@ impl Background {
         loop {
             tokio::time::sleep(interval).await;
             if let Err(message) = self.webhook_pass().await {
-                eprintln!("quansio-server: webhook pass: {message}");
+                crate::observability::notice(
+                    crate::observability::Level::Warn,
+                    &format!("webhook pass: {message}"),
+                );
             }
         }
     }
@@ -332,7 +358,10 @@ impl Background {
         for tenant in tenants {
             let fanout = crate::notify::WebhookFanout::new(self.pool.clone(), tenant.as_str());
             if let Err(error) = fanout.scan(512).await {
-                eprintln!("quansio-server: webhook fan-out for {tenant}: {error}");
+                crate::observability::notice(
+                    crate::observability::Level::Warn,
+                    &format!("webhook fan-out for {tenant}: {error}"),
+                );
                 continue;
             }
             let deliverer = crate::notify::WebhookDeliverer::new(
@@ -341,7 +370,10 @@ impl Background {
                 self.keys.clone(),
             );
             if let Err(error) = deliverer.deliver_due(chrono::Utc::now(), 32).await {
-                eprintln!("quansio-server: webhook delivery for {tenant}: {error}");
+                crate::observability::notice(
+                    crate::observability::Level::Warn,
+                    &format!("webhook delivery for {tenant}: {error}"),
+                );
             }
         }
         Ok(())
@@ -358,7 +390,10 @@ impl Background {
             .map_err(|error| format!("cannot list tenants: {error}"))?;
         for tenant in tenants {
             if let Err(message) = self.tenant_pass(&tenant).await {
-                eprintln!("quansio-server: background pass for {tenant}: {message}");
+                crate::observability::notice(
+                    crate::observability::Level::Warn,
+                    &format!("background pass for {tenant}: {message}"),
+                );
             }
         }
         Ok(())

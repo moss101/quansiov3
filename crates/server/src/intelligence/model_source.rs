@@ -207,6 +207,31 @@ struct StreamOutcome {
 #[async_trait]
 impl ModelProposalSource for GatewayModelSource {
     async fn propose(&self, request: ModelCallRequest) -> Result<ModelProposal, RuntimeError> {
+        // One span per model call (OPS-003); its context build and model call are children.
+        let span = crate::observability::Span::start(
+            "runtime.model_call",
+            json!({
+                "tenant_id": request.tenant_id,
+                "run_id": request.run_id,
+                "turn_id": request.turn_id,
+                "step_id": request.step_id,
+            }),
+        );
+        let result = span
+            .context()
+            .clone()
+            .scope(self.propose_in_span(request))
+            .await;
+        match &result {
+            Ok(_) => span.end("ok", json!({})),
+            Err(error) => span.end("error", json!({ "code": error.code() })),
+        }
+        result
+    }
+}
+
+impl GatewayModelSource {
+    async fn propose_in_span(&self, request: ModelCallRequest) -> Result<ModelProposal, RuntimeError> {
         let started = Instant::now();
         let run = self.run_facts(&request).await?;
         let definition = TeammateStore::new(self.pool.clone())
@@ -360,6 +385,18 @@ impl ModelProposalSource for GatewayModelSource {
         // 4. Record, then propose.
         let latency = i64::try_from(started.elapsed().as_millis()).unwrap_or(i64::MAX);
         let route = outcome.route.clone().unwrap_or_default();
+        let provider = if route.provider.is_empty() { "unknown" } else { route.provider.as_str() };
+        crate::observability::metrics::increment(
+            "quansio_model_calls_total",
+            "Model calls through the intelligence gateway by provider and stop reason.",
+            &[("provider", provider), ("stop_reason", &outcome.stop_reason)],
+        );
+        crate::observability::metrics::observe(
+            "quansio_model_call_duration_seconds",
+            "Model call latency (context build plus model call) by provider.",
+            &[("provider", provider)],
+            started.elapsed().as_secs_f64(),
+        );
         let _ = ModelCallLedger::new(self.pool.clone())
             .record(
                 &request,
