@@ -49,12 +49,12 @@ ladder.
 
 ## Plan
 
-- [ ] **Records from canonical state (Rust).**
+- [x] **Records from canonical state (Rust).**
   - Runs in terminal verified states: SUCCEEDED → success; SUCCEEDED after a failed or
     rejected tool call → recovery; FAILED → failure.
   - Each record carries its evidence (`evd_` id and digest), and the skill versions its
     projections named.
-- [ ] **Plane (Python).**
+- [x] **Plane (Python).**
   - Detect patterns.
   - Propose one CANDIDATE patch per pattern:
     - success adds the verified task texts as examples;
@@ -64,13 +64,13 @@ ladder.
     manifest (its examples resolve; a missing tool or capability excludes it).
   - Measure regressions, and treat widened needs as protected.
   - Gate with INT-010's `evaluate_gate`; bind the eval run.
-- [ ] **RPC `ProposeSkillCandidates`** served by the plane.
-- [ ] **Registry (Rust).** `SkillEvolution::propose` gathers records, calls the RPC, and
+- [x] **RPC `ProposeSkillCandidates`** served by the plane.
+- [x] **Registry (Rust).** `SkillEvolution::propose` gathers records, calls the RPC, and
   registers each candidate as DRAFT → CANDIDATE with provenance (never ACTIVE, idempotent by
   semver). `SkillStore::promote` refuses APPROVED/ACTIVE for an evolution candidate whose
   provenance has no passing evaluation.
-- [ ] **Command** `ProposeSkillCandidates` (admin), with the intelligence client on `ApiState`.
-- [ ] **Tests.**
+- [x] **Command** `ProposeSkillCandidates` (admin), with the intelligence client on `ApiState`.
+- [x] **Tests.**
   - Silent mutation: no registry tool can write skills; the command never yields ACTIVE; a
     failing candidate cannot be promoted.
   - Candidate-to-promotion: evidence → candidate with evidence+eval provenance → promoted
