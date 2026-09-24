@@ -2405,10 +2405,10 @@
     },
     "OPS-003": {
       "coverage": "PARTIAL",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-24T08:11:32Z",
+      "updated_at": "2026-09-24T08:11:32Z",
       "git_commit": null,
       "tests": [
         "cargo test -p quansio-server --test observability (3 passed: e2e correlation, canary scan, bounded bundle)",
