@@ -83,7 +83,7 @@ async fn start() -> Option<Service> {
             "version: 1\n\
              providers:\n  openai-compatible:\n    kind: openai_compatible\n    base_url: {}/v1\n    credential_handle: provider/int001-stub\n\
              routing:\n  strategy: deterministic\n  primary: openai-compatible-local\n  fallback_order: []\n\
-             models:\n  - id: openai-compatible-local\n    provider: openai-compatible\n    model_id: local-instruct\n    capabilities: [tools, streaming]\n    context_window: 32768\n    cost_class: low\n    dlp_eligible: false\n",
+             models:\n  - id: openai-compatible-local\n    provider: openai-compatible\n    model_id: int001-stub-model\n    capabilities: [tools, streaming]\n    context_window: 32768\n    cost_class: low\n    dlp_eligible: false\n",
             stub_provider().trim_end_matches('/')
         ),
     )

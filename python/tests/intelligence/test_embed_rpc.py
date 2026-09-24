@@ -212,7 +212,7 @@ def test_a_chat_only_catalog_composes_a_service_without_embed(
         "providers:\n  openai-compatible:\n    kind: openai_compatible\n"
         "    base_url: http://127.0.0.1:9/v1\n    credential_handle: provider/chat-only\n"
         "routing:\n  strategy: deterministic\n  primary: local\n  fallback_order: []\n"
-        "models:\n  - id: local\n    provider: openai-compatible\n    model_id: local-instruct\n"
+        "models:\n  - id: local\n    provider: openai-compatible\n    model_id: chat-only-stub\n"
         "    capabilities: [tools, streaming]\n    context_window: 32768\n    cost_class: low\n"
         "    dlp_eligible: false\n",
         encoding="utf-8",

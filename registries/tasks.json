@@ -1030,7 +1030,8 @@
       "ga_required": true,
       "paths": [
         "python/intelligence/",
-        "python/intelligence/contracts/"
+        "python/intelligence/contracts/",
+        "crates/server/src/intelligence/"
       ]
     },
     {
