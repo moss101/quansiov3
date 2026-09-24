@@ -1,14 +1,20 @@
 suite_id: eval_coding
 cases:
   - case_id: permitted_resolves
-    task: implement the change and open a pull request
+    task: implement the change and commit it on a branch
     snapshot:
-      tools: [fs.read, fs.patch, scm.git.diff, scm.pr.create, terminal.exec]
-      capabilities: [process.exec.sandboxed, scm.write]
+      tools: [fs.read, fs.patch, terminal.exec]
+      capabilities: [read.internal, fs.write.workspace, process.exec.sandboxed]
     expect: resolve
   - case_id: missing_tool_excluded
     task: open a pull request
     snapshot:
       tools: [fs.read]
       capabilities: [read.internal]
+    expect: exclude
+  - case_id: missing_capability_excluded
+    task: implement the change and commit it on a branch
+    snapshot:
+      tools: [fs.read, fs.patch, terminal.exec]
+      capabilities: [read.internal, fs.write.workspace]
     expect: exclude

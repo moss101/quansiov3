@@ -11,7 +11,7 @@ tool_needs:
   - user.ask
   - knowledge.cite
 capability_needs:
-  - work.plan
+  - record.create
   - read.internal
 eval_suite_id: eval_business_ops
 compatibility:

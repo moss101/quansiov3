@@ -81,35 +81,53 @@ CONTENTS_KEYS = frozenset(
         "compatibility",
     }
 )
-STATIC_TOOLS = frozenset(
-    {
-        "fs.read",
-        "fs.write",
-        "fs.patch",
-        "terminal.exec",
-        "process.spawn",
-        "browser.navigate",
-        "browser.click",
-        "browser.type",
-        "browser.extract",
-        "browser.screenshot",
-        "web.search",
-        "web.fetch",
-        "computer.read",
-        "computer.click",
-        "computer.type",
-        "computer.clipboard",
-        "computer.system_key",
-        "artifact.create",
-        "artifact.update",
-        "work.propose_plan",
-        "work.delegate",
-        "user.ask",
-        "memory.propose",
-        "knowledge.cite",
+TOOLS_YAML = ROOT / "config" / "tools.yaml"
+EFFECT_CLASSES_YAML = ROOT / "schemas" / "catalog" / "effect-classes.yaml"
+
+
+def _registry() -> dict[str, frozenset[str]]:
+    """The runtime's Tool Registry (``config/tools.yaml``): tool name → the effect classes of
+    its grant templates. Exact names only; a reserved family is not a callable tool."""
+    raw = yaml.safe_load(TOOLS_YAML.read_text(encoding="utf-8"))
+    return {
+        str(tool["name"]): frozenset(str(grant["effect_class"]) for grant in tool.get("grant_templates", []))
+        for tool in raw["tools"]
     }
-)
-TOOL_PREFIXES = ("connector.", "scm.git.", "scm.pr.")
+
+
+def _effect_classes() -> frozenset[str]:
+    raw = yaml.safe_load(EFFECT_CLASSES_YAML.read_text(encoding="utf-8"))
+    return frozenset(str(row["effect_class"]) for row in raw["effect_classes"])
+
+
+def capability_findings(
+    tool_needs: list[str],
+    capability_needs: list[str],
+    registry: Mapping[str, frozenset[str]],
+    effect_classes: frozenset[str],
+) -> list[str]:
+    """Why a skill's needs are wrong, if they are: a tool the registry cannot dispatch, a
+    capability that is not an effect class (DOMAIN.md §7.1 — needs are grant templates, §11.5),
+    a tool none of whose templates is declared, or a capability no tool requires."""
+    findings: list[str] = []
+    needs = set(capability_needs)
+    justified: set[str] = set()
+    for need in sorted(needs - effect_classes):
+        findings.append(f"capability {need} is not an effect class")
+    for tool in tool_needs:
+        templates = registry.get(tool)
+        if templates is None:
+            findings.append(f"tool {tool} is not in the registry")
+            continue
+        covering = templates & needs
+        if not covering:
+            findings.append(f"tool {tool} needs one of {sorted(templates)}")
+        justified |= covering
+    for need in sorted((needs & effect_classes) - justified):
+        findings.append(f"capability {need} is not required by any tool")
+    return findings
+
+
 FORBIDDEN_SNIPPETS = (
     "systemctl enable",
     "systemctl start",
@@ -134,10 +152,6 @@ def _skill_dirs() -> list[Path]:
 
 def _pack_dirs() -> list[Path]:
     return sorted(path for path in CAPABILITIES.iterdir() if path.is_dir() and (path / "pack.yaml").is_file())
-
-
-def _known_tool(name: str) -> bool:
-    return name in STATIC_TOOLS or name.startswith(TOOL_PREFIXES)
 
 
 def assert_pack_safe(data: Mapping[str, object], *, source: str) -> None:
@@ -242,11 +256,16 @@ def test_pack_schema_and_eval_checks() -> None:
 
 
 def test_capability_scan_refuses_unknown_tools_and_daemons() -> None:
-    """Named test: capability scan. Unknown tools, daemon install, and policy bypass fail."""
+    """Named test: capability scan. Unknown tools, needs that are not the tools' grant
+    templates, daemon install, and policy bypass fail."""
+    registry = _registry()
+    effect_classes = _effect_classes()
     for skill_dir in _skill_dirs():
         manifest = SkillManifest.parse(_yaml(skill_dir / "skill.yaml"))
-        for tool in manifest.tool_needs:
-            assert _known_tool(tool), f"{skill_dir.name} declares unknown tool {tool}"
+        findings = capability_findings(
+            list(manifest.tool_needs), list(manifest.capability_needs), registry, effect_classes
+        )
+        assert findings == [], f"{skill_dir.name}: {findings}"
         text = (skill_dir / "skill.yaml").read_text(encoding="utf-8").lower()
         for snippet in FORBIDDEN_SNIPPETS:
             assert snippet not in text, f"{skill_dir.name} contains {snippet!r}"
@@ -257,13 +276,19 @@ def test_capability_scan_refuses_unknown_tools_and_daemons() -> None:
         tools = contents["tool_names"]
         assert isinstance(tools, list)
         for tool in tools:
-            assert _known_tool(str(tool)), f"{pack_dir.name} pack unknown tool {tool}"
+            assert str(tool) in registry, f"{pack_dir.name} pack unknown tool {tool}"
         assert_pack_safe(pack, source=str(pack_dir / "pack.yaml"))
         # Pack tools must cover the matching skill's needs (cannot silently drop a need).
         skill_dir = SKILLS / pack_dir.name
         if skill_dir.is_dir():
             needed = set(SkillManifest.parse(_yaml(skill_dir / "skill.yaml")).tool_needs)
-            assert needed <= {str(item) for item in tools}, f"{pack_dir.name} pack drops skill tools"
+            assert needed == {str(item) for item in tools}, (
+                f"{pack_dir.name} pack tools differ from its skill's"
+            )
+            assert (
+                contents.get("eval_suite_id")
+                == SkillManifest.parse(_yaml(skill_dir / "skill.yaml")).eval_suite_id
+            )
 
     with pytest.raises(AssertionError, match="installs_daemon"):
         assert_pack_safe(
@@ -303,3 +328,63 @@ def test_tool_availability_uses_the_resolver() -> None:
         )
         assert denied.resolved == ()
         assert any(item.rule_id == "skill.tool_not_available" for item in denied.excluded)
+
+
+def test_the_capability_scan_names_what_is_wrong() -> None:
+    """Negative cases for the scan: each rule refuses on its own."""
+    registry = {
+        "artifact.create": frozenset({"content.upload"}),
+        "fs.patch": frozenset({"fs.write.workspace", "fs.write.host"}),
+    }
+    classes = frozenset({"content.upload", "fs.write.workspace", "fs.write.host", "read.internal"})
+    assert capability_findings(["artifact.create"], ["content.upload"], registry, classes) == []
+    assert capability_findings(["fs.patch"], ["fs.write.workspace"], registry, classes) == []
+    assert capability_findings(["scm.pr.create"], [], registry, classes) == [
+        "tool scm.pr.create is not in the registry"
+    ]
+    assert capability_findings(["artifact.create"], ["artifact.write"], registry, classes) == [
+        "capability artifact.write is not an effect class",
+        "tool artifact.create needs one of ['content.upload']",
+    ]
+    assert capability_findings(
+        ["artifact.create"], ["content.upload", "read.internal"], registry, classes
+    ) == ["capability read.internal is not required by any tool"]
+
+
+def _pack_records():  # type: ignore[no-untyped-def]
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "pack_records", ROOT / "scripts" / "dev" / "pack_records.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_every_governance_record_names_the_content_it_approved(tmp_path: Path) -> None:
+    """Provenance: a pack's record digest is the digest of what it approved, so an edit that
+    was not re-reviewed shows as stale."""
+    records = _pack_records()
+    stale = [
+        (name, recorded, actual) for name, _, recorded, actual in records.records() if recorded != actual
+    ]
+    assert stale == [], f"re-review and refresh with scripts/dev/pack_records.py --write: {stale}"
+    # An edit changes the digest; the record then no longer names the content.
+    pack = CAPABILITIES / "research" / "pack.yaml"
+    copy = tmp_path / "pack.yaml"
+    copy.write_text(
+        pack.read_text(encoding="utf-8").replace("research this topic", "research that topic"),
+        encoding="utf-8",
+    )
+    assert records.pack_digest(copy) != records.recorded_pack_digest(copy)
+    # The record itself is outside the digest: re-reviewing changes nothing it covers.
+    edited = records.pack_digest(copy)
+    copy.write_text(
+        copy.read_text(encoding="utf-8").replace(
+            "reviewed_by: quansio-cap007-governance", "reviewed_by: someone-else"
+        ),
+        encoding="utf-8",
+    )
+    assert records.pack_digest(copy) == edited

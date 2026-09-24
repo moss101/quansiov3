@@ -199,7 +199,8 @@ def test_quality_failure_also_blocks_and_skill_pack_declares_tools() -> None:
         task_text="write a document then edit the spreadsheet",
         snapshot=CapabilitySnapshot(
             tool_names=frozenset({"artifact.create", "artifact.update"}),
-            capability_needs=frozenset({"artifact.write"}),
+            # The grant template the artifact tools require (config/tools.yaml, CAP-007).
+            capability_needs=frozenset({"content.upload"}),
         ),
         candidates=[version],
     )

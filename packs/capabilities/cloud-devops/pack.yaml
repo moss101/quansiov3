@@ -11,24 +11,24 @@ provenance:
   # external registry; source/digest still make it provenance-addressable
   # (DOSSIER.md section 16 / DOMAIN.md section 11.5).
   source: builtin-repository
-  digest: sha256:a5dc551a69e95927bdff618ee1c42ee3bc6b66a10bed7f738e4acf9d3d083fd5
+  digest: sha256:5abac1072f7f82b01abb58c7915fec266c9b51e809f55a9e45874b801d1ed9ca
 quarantine:
   status: cleared
   imported_at: "2026-09-15T04:50:55Z"
 review:
   reviewed_by: quansio-cap007-governance
-  reviewed_at: "2026-09-15T04:50:55Z"
+  reviewed_at: "2026-09-24T01:42:50Z"
   outcome: approved
 normalization:
-  normalized_at: "2026-09-15T04:50:55Z"
+  normalized_at: "2026-09-24T01:42:50Z"
   normalizer: CAP-007 built-in pack pipeline (packs/capabilities schema_version v1)
 evaluation:
   eval_suite_id: eval_cloud_devops
   result: pass
-  evaluated_at: "2026-09-15T04:50:55Z"
+  evaluated_at: "2026-09-24T01:42:50Z"
 approved:
   approved_by: quansio-cap007-governance
-  approved_at: "2026-09-15T04:50:55Z"
+  approved_at: "2026-09-24T01:42:50Z"
 contents:
   knowledge_ids: []
   skill_version_ids: [sklv_cloud_devops_1]

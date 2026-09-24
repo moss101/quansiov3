@@ -16,21 +16,21 @@ quarantine_record:
   provenance:
     source: builtin-repository
     ref: skill://quansio.builtin.coding
-    digest: sha256:7b98d253116ae528855c682b8f0fa10f1fb6ea8cbc69ebdbc86d0cbdb3287bbb
+    digest: sha256:9ffb3348f56b1dcd7bed7a16ece22dcf09e78d567b150ec398e0527fe48029ec
   quarantine:
     status: cleared
     imported_at: "2026-09-15T04:50:55Z"
   review:
     reviewed_by: quansio-cap007-governance
-    reviewed_at: "2026-09-15T04:50:55Z"
+    reviewed_at: "2026-09-24T01:42:50Z"
     outcome: approved
   normalization:
-    normalized_at: "2026-09-15T04:50:55Z"
+    normalized_at: "2026-09-24T01:42:50Z"
     normalizer: CAP-007 built-in skill pipeline (packs/skills schema_version v1)
   evaluation:
     eval_suite_id: eval_coding
     result: pass
-    evaluated_at: "2026-09-15T04:50:55Z"
+    evaluated_at: "2026-09-24T01:42:50Z"
   approved:
     approved_by: quansio-cap007-governance
-    approved_at: "2026-09-15T04:50:55Z"
+    approved_at: "2026-09-24T01:42:50Z"

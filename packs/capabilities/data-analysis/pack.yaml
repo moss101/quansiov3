@@ -11,24 +11,24 @@ provenance:
   # external registry; source/digest still make it provenance-addressable
   # (DOSSIER.md section 16 / DOMAIN.md section 11.5).
   source: builtin-repository
-  digest: sha256:f8d62e2cb51ec842676d05fb046d1091257061760f4f6a8269657bb52d1ca34c
+  digest: sha256:8948f001708d76602f19a7dee0f0e5cb5711500bcf8422917b8a6afa6c9fb6f5
 quarantine:
   status: cleared
   imported_at: "2026-09-15T04:50:55Z"
 review:
   reviewed_by: quansio-cap007-governance
-  reviewed_at: "2026-09-15T04:50:55Z"
+  reviewed_at: "2026-09-24T01:42:50Z"
   outcome: approved
 normalization:
-  normalized_at: "2026-09-15T04:50:55Z"
+  normalized_at: "2026-09-24T01:42:50Z"
   normalizer: CAP-007 built-in pack pipeline (packs/capabilities schema_version v1)
 evaluation:
   eval_suite_id: eval_data_analysis
   result: pass
-  evaluated_at: "2026-09-15T04:50:55Z"
+  evaluated_at: "2026-09-24T01:42:50Z"
 approved:
   approved_by: quansio-cap007-governance
-  approved_at: "2026-09-15T04:50:55Z"
+  approved_at: "2026-09-24T01:42:50Z"
 contents:
   knowledge_ids: []
   skill_version_ids: [sklv_data_analysis_1]

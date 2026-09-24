@@ -17,7 +17,7 @@ tool_needs:
   - artifact.create
   - artifact.update
 capability_needs:
-  - artifact.write
+  - content.upload
 eval_suite_id: eval_artifact_workflows
 compatibility:
   - v8.1

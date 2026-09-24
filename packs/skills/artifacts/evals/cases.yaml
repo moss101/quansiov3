@@ -4,11 +4,17 @@ cases:
     task: write a document then edit the spreadsheet
     snapshot:
       tools: [artifact.create, artifact.update]
-      capabilities: [artifact.write]
+      capabilities: [content.upload]
     expect: resolve
   - case_id: missing_tool_excluded
     task: write a document
     snapshot:
       tools: [fs.read]
       capabilities: [read.internal]
+    expect: exclude
+  - case_id: missing_capability_excluded
+    task: write a document then edit the spreadsheet
+    snapshot:
+      tools: [artifact.create, artifact.update]
+      capabilities: []
     expect: exclude
