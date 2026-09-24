@@ -11,6 +11,10 @@ Context plane as segment requests; the plane decides what the model sees and how
   The rest is packed newest-first as one contiguous window: an assistant turn and the tool results
   that answer it are one unit, kept or dropped together, and a conversation never starts with an
   assistant or tool turn. Everything dropped is recorded as degradation, never hidden.
+* **Skills are resolved here.** The registry's candidate versions are resolved for the task within
+  the caller's own authority (INT-009's resolver: only ACTIVE, never widening, bounded); resolved
+  skills become optional operator segments at `verified_knowledge`, and every exclusion is recorded
+  as degradation with the rule that excluded it.
 * **Rendering is the plane's.** Messages come out as the gateway's `RenderedMessage`: system and
   operator instructions first (the stable, cacheable prefix), then the conversation in `seq`
   order. Untrusted content is rendered inside the §12 typed boundary with the data-only
@@ -37,6 +41,8 @@ from intelligence.context.projection import ContextError
 from intelligence.model_gateway.content import PART_TEXT, parse_content
 from intelligence.model_gateway.errors import GatewayError
 from intelligence.model_gateway.ids import new_ulid
+from intelligence.skills.models import CapabilitySnapshot, SkillError, SkillVersionRef
+from intelligence.skills.resolver import resolve
 from intelligence.trust.labelling import BOUNDARY_CLOSE, BOUNDARY_OPEN, DATA_ONLY_INSTRUCTION, TrustLevel
 
 SCHEMA_VERSION = "v1"
@@ -46,11 +52,13 @@ RULE_REQUEST_SHAPE = "turn.request_shape"
 RULE_ROLE_FOR_SOURCE = "turn.role_for_source"
 RULE_REQUIRED_BUDGET = "turn.required_budget"
 RULE_SNAPSHOT_REQUIRED = "turn.snapshot_required"
+RULE_SKILL_CANDIDATE = "turn.skill_candidate"
 
 #: DOMAIN.md §11.2 source kinds.
 SOURCE_KINDS: tuple[str, ...] = (
     "system",
     "policy",
+    "skill",
     "thread",
     "work",
     "tool_result",
@@ -73,6 +81,7 @@ _ROLES: Mapping[str, intelligence_pb2.RenderedMessage.Role] = {
 _ROLES_FOR_SOURCE: Mapping[str, frozenset[str]] = {
     "system": frozenset({"system", "operator"}),
     "policy": frozenset({"system", "operator"}),
+    "skill": frozenset({"operator"}),
     "thread": frozenset({"user", "assistant"}),
     "tool_result": frozenset({"tool"}),
     "work": frozenset({"user"}),
@@ -95,7 +104,7 @@ def trust_for(kind: str, role: str) -> TrustLevel:
         return TrustLevel.TRUSTED_USER if role == "user" else TrustLevel.AGENT_GENERATED
     if kind == "work":
         return TrustLevel.TRUSTED_USER
-    if kind == "knowledge":
+    if kind in ("knowledge", "skill"):
         return TrustLevel.VERIFIED_KNOWLEDGE
     if kind == "memory":
         return TrustLevel.AGENT_GENERATED
@@ -218,9 +227,14 @@ def build_turn_context(
     token_budget: int,
     policy_snapshot_digest: str,
     segment_requests: Sequence[str],
+    skill_candidates: Sequence[str] = (),
+    task_text: str = "",
+    exposed_tools: Sequence[str] = (),
+    granted_effect_classes: Sequence[str] = (),
+    max_skills: int = 0,
     now: datetime | None = None,
 ) -> TurnContext:
-    """Label, pack and render one turn's context. Raises [`ContextError`]."""
+    """Label, resolve skills for, pack and render one turn's context. Raises [`ContextError`]."""
     if not snapshot_id.strip():
         raise ContextError(
             "VALIDATION_SCHEMA", RULE_SNAPSHOT_REQUIRED, "a turn context must name the snapshot it reads"
@@ -234,6 +248,18 @@ def build_turn_context(
     if len(set(seqs)) != len(seqs):
         raise _shape("segment requests repeat a `seq`")
     _check_tool_rounds([segment for segment in segments if not segment.is_instruction])
+    skills, excluded = _resolve_skills(
+        skill_candidates,
+        task_text=task_text,
+        snapshot=CapabilitySnapshot(
+            tool_names=frozenset(exposed_tools), capability_needs=frozenset(granted_effect_classes)
+        ),
+        max_skills=max_skills,
+        first_seq=max(seqs, default=-1) + 1,
+        snapshot_ref=snapshot_id,
+    )
+    # Skills follow the teammate's instructions and precede the conversation.
+    segments = sorted([*segments, *skills], key=_render_order)
 
     kept, dropped = _pack(segments, token_budget)
     instructions = [segment for segment in kept if segment.is_instruction]
@@ -275,6 +301,10 @@ def build_turn_context(
             by_source_json=json.dumps(by_source, sort_keys=True),
         )
     )
+    for rule_id, count in excluded:
+        projection.degradation_json.append(
+            json.dumps({"source_kind": "skill", "dropped": count, "reason": rule_id}, sort_keys=True)
+        )
     for reason, group in dropped:
         by_kind: dict[str, int] = {}
         for segment in group:
@@ -286,6 +316,80 @@ def build_turn_context(
     digest = hashlib.sha256(projection.SerializeToString(deterministic=True)).hexdigest()
     projection.id = f"{PROJECTION_PREFIX}{new_ulid(seed=digest)}"
     return TurnContext(projection=projection)
+
+
+def _render_order(segment: SegmentRequest) -> tuple[int, int]:
+    """System first, then operator instructions, then skills, then the conversation by `seq`."""
+    if segment.role == "system":
+        return (0, segment.seq)
+    if segment.kind == "skill":
+        return (2, segment.seq)
+    if segment.is_instruction:
+        return (1, segment.seq)
+    return (3, segment.seq)
+
+
+def _resolve_skills(
+    candidates: Sequence[str],
+    *,
+    task_text: str,
+    snapshot: CapabilitySnapshot,
+    max_skills: int,
+    first_seq: int,
+    snapshot_ref: str,
+) -> tuple[list[SegmentRequest], list[tuple[str, int]]]:
+    """Resolve the candidates (INT-009) into skill segments; count exclusions by rule."""
+    if not candidates:
+        return [], []
+    if max_skills < 0:
+        raise ContextError("VALIDATION_BOUNDS", RULE_SKILL_CANDIDATE, "max_skills must not be negative")
+    versions: list[SkillVersionRef] = []
+    counts: dict[str, int] = {}
+    for raw in candidates:
+        try:
+            decoded = json.loads(raw)
+        except json.JSONDecodeError as error:
+            raise _shape("a skill candidate is not valid JSON") from error
+        if not isinstance(decoded, dict) or not decoded.get("version_id"):
+            raise _shape("a skill candidate must be an object naming its version")
+        try:
+            versions.append(
+                SkillVersionRef.build(
+                    skill_id=decoded.get("skill_id", ""),
+                    version_id=decoded["version_id"],
+                    skill_name=decoded.get("name", ""),
+                    semver=decoded.get("semver", ""),
+                    status=decoded.get("status", ""),
+                    manifest=decoded.get("manifest"),
+                )
+            )
+        except SkillError as refused:
+            # A registry version whose manifest the resolver cannot read never enters context,
+            # and never takes the turn down with it: it is excluded and recorded.
+            counts[refused.rule_id] = counts.get(refused.rule_id, 0) + 1
+    resolution = resolve(task_text=task_text, snapshot=snapshot, candidates=versions, max_skills=max_skills)
+    segments = []
+    for offset, version in enumerate(resolution.resolved):
+        parts = [f"Skill {version.skill_name} {version.semver}:", version.manifest.instructions.strip()]
+        if version.manifest.recovery_guidance:
+            parts.append(f"If it goes wrong: {version.manifest.recovery_guidance.strip()}")
+        content_json = json.dumps("\n".join(part for part in parts if part))
+        segments.append(
+            SegmentRequest(
+                seq=first_seq + offset,
+                kind="skill",
+                ref=version.version_id,
+                role="operator",
+                content_json=content_json,
+                trust=TrustLevel.VERIFIED_KNOWLEDGE,
+                snapshot_ref=snapshot_ref,
+                required=False,
+                tokens=estimate_tokens(content_json),
+            )
+        )
+    for excluded in resolution.excluded:
+        counts[excluded.rule_id] = counts.get(excluded.rule_id, 0) + 1
+    return segments, sorted(counts.items())
 
 
 def _pack(

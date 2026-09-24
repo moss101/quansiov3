@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from quansio.v1.intelligence import intelligence_pb2 as quansio_dot_v1_dot_intelligence_dot_intelligence__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%quansio/v1/intelligence/service.proto\x12\x17quansio.v1.intelligence\x1a*quansio/v1/intelligence/intelligence.proto\"\x9e\x01\n\x0cScopeContext\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x11\n\ttenant_id\x18\x01 \x01(\t\x12\x14\n\x0cworkspace_id\x18\x02 \x01(\t\x12\x16\n\x0e\x63orrelation_id\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65\x61\x64line_ms\x18\x04 \x01(\x04\x12 \n\x18\x63\x61pability_projection_id\x18\x05 \x01(\t\"\xee\x01\n\x13\x43ontextBuildRequest\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x34\n\x05scope\x18\x01 \x01(\x0b\x32%.quansio.v1.intelligence.ScopeContext\x12\x0e\n\x06run_id\x18\x02 \x01(\t\x12\x0f\n\x07turn_id\x18\x03 \x01(\t\x12\x1d\n\x15segment_requests_json\x18\x04 \x03(\t\x12\x14\n\x0ctoken_budget\x18\x05 \x01(\x04\x12\x1e\n\x16policy_snapshot_digest\x18\x06 \x01(\t\x12\x13\n\x0bsnapshot_id\x18\x07 \x01(\t\"s\n\x0fSearchResultSet\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x36\n\x07results\x18\x01 \x03(\x0b\x32%.quansio.v1.intelligence.SearchResult\x12\x10\n\x08snapshot\x18\x02 \x01(\t\"\xca\x01\n\x0fMemoryCandidate\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x34\n\x05scope\x18\x01 \x01(\x0b\x32%.quansio.v1.intelligence.ScopeContext\x12\x13\n\x0bsubject_ref\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\x12\x17\n\x0fprovenance_kind\x18\x04 \x01(\t\x12\x16\n\x0eprovenance_ref\x18\x05 \x01(\t\x12\x12\n\nconfidence\x18\x06 \x01(\x01\"\\\n\x0bProposalAck\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x10\n\x08\x61\x63\x63\x65pted\x18\x01 \x01(\x08\x12\x13\n\x0bproposal_id\x18\x02 \x01(\t\x12\x0e\n\x06reason\x18\x03 \x01(\t\"\x84\x01\n\x0c\x45mbedRequest\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x34\n\x05scope\x18\x01 \x01(\x0b\x32%.quansio.v1.intelligence.ScopeContext\x12\r\n\x05texts\x18\x02 \x03(\t\x12\x17\n\x0f\x65mbedding_model\x18\x03 \x01(\t\"B\n\tEmbedding\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\r\n\x05index\x18\x01 \x01(\r\x12\x0e\n\x06vector\x18\x02 \x03(\x02\"\x85\x01\n\rEmbedResponse\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x36\n\nembeddings\x18\x01 \x03(\x0b\x32\".quansio.v1.intelligence.Embedding\x12\x10\n\x08model_id\x18\x02 \x01(\t\x12\x12\n\ndimensions\x18\x03 \x01(\r\"\x8a\x01\n\x14TrustClassifyRequest\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x34\n\x05scope\x18\x01 \x01(\x0b\x32%.quansio.v1.intelligence.ScopeContext\x12\x13\n\x0bsource_kind\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\"{\n\x15TrustClassifyResponse\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x13\n\x0btrust_level\x18\x01 \x01(\x05\x12\x1b\n\x13injection_suspected\x18\x02 \x01(\x08\x12\x18\n\x10matched_patterns\x18\x03 \x03(\t\"\x87\x01\n\x11\x45valuationRequest\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x34\n\x05scope\x18\x01 \x01(\x0b\x32%.quansio.v1.intelligence.ScopeContext\x12\x10\n\x08suite_id\x18\x02 \x01(\t\x12\x12\n\ncases_json\x18\x03 \x01(\t\"r\n\x10\x45valuationReport\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x10\n\x08suite_id\x18\x01 \x01(\t\x12\x0e\n\x06passed\x18\x02 \x01(\r\x12\x0e\n\x06\x66\x61iled\x18\x03 \x01(\r\x12\x14\n\x0c\x64\x65tails_json\x18\x04 \x01(\t2\xc9\x05\n\x13IntelligenceGateway\x12`\n\x0c\x46ulfillModel\x12).quansio.v1.intelligence.ModelCallRequest\x1a#.quansio.v1.intelligence.ModelEvent0\x01\x12h\n\x0c\x42uildContext\x12,.quansio.v1.intelligence.ContextBuildRequest\x1a*.quansio.v1.intelligence.ContextProjection\x12Z\n\x06Search\x12&.quansio.v1.intelligence.SearchProgram\x1a(.quansio.v1.intelligence.SearchResultSet\x12_\n\rProposeMemory\x12(.quansio.v1.intelligence.MemoryCandidate\x1a$.quansio.v1.intelligence.ProposalAck\x12V\n\x05\x45mbed\x12%.quansio.v1.intelligence.EmbedRequest\x1a&.quansio.v1.intelligence.EmbedResponse\x12n\n\rClassifyTrust\x12-.quansio.v1.intelligence.TrustClassifyRequest\x1a..quansio.v1.intelligence.TrustClassifyResponse\x12\x61\n\x08\x45valuate\x12*.quansio.v1.intelligence.EvaluationRequest\x1a).quansio.v1.intelligence.EvaluationReportb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%quansio/v1/intelligence/service.proto\x12\x17quansio.v1.intelligence\x1a*quansio/v1/intelligence/intelligence.proto\"\x9e\x01\n\x0cScopeContext\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x11\n\ttenant_id\x18\x01 \x01(\t\x12\x14\n\x0cworkspace_id\x18\x02 \x01(\t\x12\x16\n\x0e\x63orrelation_id\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65\x61\x64line_ms\x18\x04 \x01(\x04\x12 \n\x18\x63\x61pability_projection_id\x18\x05 \x01(\t\"\xeb\x02\n\x13\x43ontextBuildRequest\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x34\n\x05scope\x18\x01 \x01(\x0b\x32%.quansio.v1.intelligence.ScopeContext\x12\x0e\n\x06run_id\x18\x02 \x01(\t\x12\x0f\n\x07turn_id\x18\x03 \x01(\t\x12\x1d\n\x15segment_requests_json\x18\x04 \x03(\t\x12\x14\n\x0ctoken_budget\x18\x05 \x01(\x04\x12\x1e\n\x16policy_snapshot_digest\x18\x06 \x01(\t\x12\x13\n\x0bsnapshot_id\x18\x07 \x01(\t\x12\x1d\n\x15skill_candidates_json\x18\x08 \x03(\t\x12\x11\n\ttask_text\x18\t \x01(\t\x12\x15\n\rexposed_tools\x18\n \x03(\t\x12\x1e\n\x16granted_effect_classes\x18\x0b \x03(\t\x12\x12\n\nmax_skills\x18\x0c \x01(\r\"s\n\x0fSearchResultSet\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x36\n\x07results\x18\x01 \x03(\x0b\x32%.quansio.v1.intelligence.SearchResult\x12\x10\n\x08snapshot\x18\x02 \x01(\t\"\xca\x01\n\x0fMemoryCandidate\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x34\n\x05scope\x18\x01 \x01(\x0b\x32%.quansio.v1.intelligence.ScopeContext\x12\x13\n\x0bsubject_ref\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\x12\x17\n\x0fprovenance_kind\x18\x04 \x01(\t\x12\x16\n\x0eprovenance_ref\x18\x05 \x01(\t\x12\x12\n\nconfidence\x18\x06 \x01(\x01\"\\\n\x0bProposalAck\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x10\n\x08\x61\x63\x63\x65pted\x18\x01 \x01(\x08\x12\x13\n\x0bproposal_id\x18\x02 \x01(\t\x12\x0e\n\x06reason\x18\x03 \x01(\t\"\x84\x01\n\x0c\x45mbedRequest\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x34\n\x05scope\x18\x01 \x01(\x0b\x32%.quansio.v1.intelligence.ScopeContext\x12\r\n\x05texts\x18\x02 \x03(\t\x12\x17\n\x0f\x65mbedding_model\x18\x03 \x01(\t\"B\n\tEmbedding\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\r\n\x05index\x18\x01 \x01(\r\x12\x0e\n\x06vector\x18\x02 \x03(\x02\"\x85\x01\n\rEmbedResponse\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x36\n\nembeddings\x18\x01 \x03(\x0b\x32\".quansio.v1.intelligence.Embedding\x12\x10\n\x08model_id\x18\x02 \x01(\t\x12\x12\n\ndimensions\x18\x03 \x01(\r\"\x8a\x01\n\x14TrustClassifyRequest\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x34\n\x05scope\x18\x01 \x01(\x0b\x32%.quansio.v1.intelligence.ScopeContext\x12\x13\n\x0bsource_kind\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\"{\n\x15TrustClassifyResponse\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x13\n\x0btrust_level\x18\x01 \x01(\x05\x12\x1b\n\x13injection_suspected\x18\x02 \x01(\x08\x12\x18\n\x10matched_patterns\x18\x03 \x03(\t\"\x87\x01\n\x11\x45valuationRequest\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x34\n\x05scope\x18\x01 \x01(\x0b\x32%.quansio.v1.intelligence.ScopeContext\x12\x10\n\x08suite_id\x18\x02 \x01(\t\x12\x12\n\ncases_json\x18\x03 \x01(\t\"r\n\x10\x45valuationReport\x12\x16\n\x0eschema_version\x18\x64 \x01(\t\x12\x10\n\x08suite_id\x18\x01 \x01(\t\x12\x0e\n\x06passed\x18\x02 \x01(\r\x12\x0e\n\x06\x66\x61iled\x18\x03 \x01(\r\x12\x14\n\x0c\x64\x65tails_json\x18\x04 \x01(\t2\xc9\x05\n\x13IntelligenceGateway\x12`\n\x0c\x46ulfillModel\x12).quansio.v1.intelligence.ModelCallRequest\x1a#.quansio.v1.intelligence.ModelEvent0\x01\x12h\n\x0c\x42uildContext\x12,.quansio.v1.intelligence.ContextBuildRequest\x1a*.quansio.v1.intelligence.ContextProjection\x12Z\n\x06Search\x12&.quansio.v1.intelligence.SearchProgram\x1a(.quansio.v1.intelligence.SearchResultSet\x12_\n\rProposeMemory\x12(.quansio.v1.intelligence.MemoryCandidate\x1a$.quansio.v1.intelligence.ProposalAck\x12V\n\x05\x45mbed\x12%.quansio.v1.intelligence.EmbedRequest\x1a&.quansio.v1.intelligence.EmbedResponse\x12n\n\rClassifyTrust\x12-.quansio.v1.intelligence.TrustClassifyRequest\x1a..quansio.v1.intelligence.TrustClassifyResponse\x12\x61\n\x08\x45valuate\x12*.quansio.v1.intelligence.EvaluationRequest\x1a).quansio.v1.intelligence.EvaluationReportb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -35,27 +35,27 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_SCOPECONTEXT']._serialized_start=111
   _globals['_SCOPECONTEXT']._serialized_end=269
   _globals['_CONTEXTBUILDREQUEST']._serialized_start=272
-  _globals['_CONTEXTBUILDREQUEST']._serialized_end=510
-  _globals['_SEARCHRESULTSET']._serialized_start=512
-  _globals['_SEARCHRESULTSET']._serialized_end=627
-  _globals['_MEMORYCANDIDATE']._serialized_start=630
-  _globals['_MEMORYCANDIDATE']._serialized_end=832
-  _globals['_PROPOSALACK']._serialized_start=834
-  _globals['_PROPOSALACK']._serialized_end=926
-  _globals['_EMBEDREQUEST']._serialized_start=929
-  _globals['_EMBEDREQUEST']._serialized_end=1061
-  _globals['_EMBEDDING']._serialized_start=1063
-  _globals['_EMBEDDING']._serialized_end=1129
-  _globals['_EMBEDRESPONSE']._serialized_start=1132
-  _globals['_EMBEDRESPONSE']._serialized_end=1265
-  _globals['_TRUSTCLASSIFYREQUEST']._serialized_start=1268
-  _globals['_TRUSTCLASSIFYREQUEST']._serialized_end=1406
-  _globals['_TRUSTCLASSIFYRESPONSE']._serialized_start=1408
-  _globals['_TRUSTCLASSIFYRESPONSE']._serialized_end=1531
-  _globals['_EVALUATIONREQUEST']._serialized_start=1534
-  _globals['_EVALUATIONREQUEST']._serialized_end=1669
-  _globals['_EVALUATIONREPORT']._serialized_start=1671
-  _globals['_EVALUATIONREPORT']._serialized_end=1785
-  _globals['_INTELLIGENCEGATEWAY']._serialized_start=1788
-  _globals['_INTELLIGENCEGATEWAY']._serialized_end=2501
+  _globals['_CONTEXTBUILDREQUEST']._serialized_end=635
+  _globals['_SEARCHRESULTSET']._serialized_start=637
+  _globals['_SEARCHRESULTSET']._serialized_end=752
+  _globals['_MEMORYCANDIDATE']._serialized_start=755
+  _globals['_MEMORYCANDIDATE']._serialized_end=957
+  _globals['_PROPOSALACK']._serialized_start=959
+  _globals['_PROPOSALACK']._serialized_end=1051
+  _globals['_EMBEDREQUEST']._serialized_start=1054
+  _globals['_EMBEDREQUEST']._serialized_end=1186
+  _globals['_EMBEDDING']._serialized_start=1188
+  _globals['_EMBEDDING']._serialized_end=1254
+  _globals['_EMBEDRESPONSE']._serialized_start=1257
+  _globals['_EMBEDRESPONSE']._serialized_end=1390
+  _globals['_TRUSTCLASSIFYREQUEST']._serialized_start=1393
+  _globals['_TRUSTCLASSIFYREQUEST']._serialized_end=1531
+  _globals['_TRUSTCLASSIFYRESPONSE']._serialized_start=1533
+  _globals['_TRUSTCLASSIFYRESPONSE']._serialized_end=1656
+  _globals['_EVALUATIONREQUEST']._serialized_start=1659
+  _globals['_EVALUATIONREQUEST']._serialized_end=1794
+  _globals['_EVALUATIONREPORT']._serialized_start=1796
+  _globals['_EVALUATIONREPORT']._serialized_end=1910
+  _globals['_INTELLIGENCEGATEWAY']._serialized_start=1913
+  _globals['_INTELLIGENCEGATEWAY']._serialized_end=2626
 # @@protoc_insertion_point(module_scope)

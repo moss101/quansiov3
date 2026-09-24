@@ -325,6 +325,11 @@ class IntelligenceGatewayServicer:
                     token_budget=request.token_budget,
                     policy_snapshot_digest=request.policy_snapshot_digest,
                     segment_requests=list(request.segment_requests_json),
+                    skill_candidates=list(request.skill_candidates_json),
+                    task_text=request.task_text,
+                    exposed_tools=list(request.exposed_tools),
+                    granted_effect_classes=list(request.granted_effect_classes),
+                    max_skills=request.max_skills,
                 )
             except ContextError as refusal:
                 abort_with(

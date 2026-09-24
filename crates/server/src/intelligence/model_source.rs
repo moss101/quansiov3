@@ -58,6 +58,8 @@ pub struct ModelCallSettings {
     pub deadline: Duration,
     /// Thread messages offered to the plane.
     pub max_thread_messages: u32,
+    /// Skills the plane may resolve into one call's context.
+    pub max_skills: u32,
     /// The system instructions of a run without a teammate definition.
     pub default_system_instructions: String,
 }
@@ -74,6 +76,7 @@ struct RawModelCall {
     max_output_tokens: u32,
     deadline_ms: u64,
     max_thread_messages: u32,
+    max_skills: u32,
 }
 
 impl ModelCallSettings {
@@ -108,6 +111,7 @@ impl ModelCallSettings {
             max_output_tokens: call.max_output_tokens,
             deadline: Duration::from_millis(call.deadline_ms),
             max_thread_messages: call.max_thread_messages,
+            max_skills: call.max_skills,
             default_system_instructions: raw.default_system_instructions,
         })
     }
@@ -147,6 +151,28 @@ impl GatewayModelSource {
             settings,
         }
     }
+}
+
+/// The registry's ACTIVE versions as skill candidates (`{skill_id, version_id, name, semver,
+/// status, manifest}`); the plane resolves the relevant ones (INT-009).
+async fn skill_candidates(pool: &PgPool, tenant_id: &str) -> Result<Vec<Value>, RuntimeError> {
+    let versions = crate::control::skills::SkillStore::new(pool.clone())
+        .active_versions(tenant_id)
+        .await
+        .map_err(|error| RuntimeError::intelligence("INTERNAL", true, error.to_string()))?;
+    Ok(versions
+        .into_iter()
+        .map(|(skill, version)| {
+            json!({
+                "skill_id": skill.id.to_string(),
+                "version_id": version.id.to_string(),
+                "name": skill.name,
+                "semver": version.semver,
+                "status": version.status.as_str(),
+                "manifest": version.manifest,
+            })
+        })
+        .collect())
 }
 
 /// The run facts one call needs.
@@ -190,7 +216,7 @@ impl ModelProposalSource for GatewayModelSource {
             .flatten();
 
         // 1. Canonical content.
-        let (mut segments, snapshot) = self.conversation(&request, &run).await?;
+        let (mut segments, snapshot, task_text) = self.conversation(&request, &run).await?;
         let instructions = definition.as_ref().map_or_else(
             || self.settings.default_system_instructions.clone(),
             |definition| {
@@ -240,6 +266,28 @@ impl ModelProposalSource for GatewayModelSource {
             .as_ref()
             .map(|projection| projection.id.to_string())
             .unwrap_or_default();
+        let tools: Vec<String> = projection
+            .as_ref()
+            .map(|projection| {
+                ToolRegistry::builtin()
+                    .exposed_names(projection, Utc::now())
+                    .into_iter()
+                    .map(str::to_string)
+                    .collect()
+            })
+            .unwrap_or_default();
+        let mut granted_effect_classes: Vec<String> = projection
+            .as_ref()
+            .map(|projection| {
+                projection
+                    .grants
+                    .iter()
+                    .map(|grant| grant.effect_class.as_str().to_string())
+                    .collect()
+            })
+            .unwrap_or_default();
+        granted_effect_classes.sort();
+        granted_effect_classes.dedup();
         let received = self
             .context
             .project(ProjectionRequest {
@@ -251,6 +299,11 @@ impl ModelProposalSource for GatewayModelSource {
                 snapshot_id: snapshot.clone(),
                 token_budget: self.settings.context_token_budget,
                 segments,
+                skill_candidates: skill_candidates(&self.pool, &request.tenant_id).await?,
+                task_text,
+                exposed_tools: tools.clone(),
+                granted_effect_classes,
+                max_skills: self.settings.max_skills,
                 ..ProjectionRequest::default()
             })
             .await
@@ -267,16 +320,6 @@ impl ModelProposalSource for GatewayModelSource {
         .await?;
 
         // 3. The model call.
-        let tools = projection
-            .as_ref()
-            .map(|projection| {
-                ToolRegistry::builtin()
-                    .exposed_names(projection, Utc::now())
-                    .into_iter()
-                    .map(str::to_string)
-                    .collect()
-            })
-            .unwrap_or_default();
         let call_id = format!("call_{}", request.step_id);
         let deadline_ms = u64::try_from(self.settings.deadline.as_millis()).unwrap_or(u64::MAX);
         let wire = WireCall {
@@ -373,12 +416,13 @@ impl GatewayModelSource {
         })
     }
 
-    /// The thread up to the trigger, then this run's tool rounds; and the snapshot they are at.
+    /// The thread up to the trigger, then this run's tool rounds; the snapshot they are at; and the
+    /// trigger's text, which is what the task is.
     async fn conversation(
         &self,
         request: &ModelCallRequest,
         run: &RunFacts,
-    ) -> Result<(Vec<SegmentRequest>, String), RuntimeError> {
+    ) -> Result<(Vec<SegmentRequest>, String, String), RuntimeError> {
         let mut tx = self.pool.begin().await?;
         schema::set_tenant_context(&mut tx, &request.tenant_id).await?;
         let trigger = match &run.trigger_ref {
@@ -437,6 +481,7 @@ impl GatewayModelSource {
             calls.len()
         );
         let mut segments = Vec::new();
+        let mut task_text = String::new();
         let mut seq: u32 = 1;
         for message in &messages {
             let text = message_text(&message.try_get::<Value, _>("content_blocks")?);
@@ -451,10 +496,14 @@ impl GatewayModelSource {
                 // Runtime-authored thread content (routine notices) is not the user's voice.
                 _ => (SegmentRole::User, Some(SourceTrust::AgentGenerated)),
             };
+            let trigger = run.trigger_ref.as_deref() == Some(id.as_str());
+            if trigger {
+                task_text.clone_from(&text);
+            }
             segments.push(SegmentRequest {
                 seq,
                 source: SegmentSource::Thread,
-                required: run.trigger_ref.as_deref() == Some(id.as_str()),
+                required: trigger,
                 source_ref: id,
                 role,
                 content: Value::String(text),
@@ -528,7 +577,7 @@ impl GatewayModelSource {
                 seq += 1;
             }
         }
-        Ok((segments, snapshot))
+        Ok((segments, snapshot, task_text))
     }
 }
 
@@ -669,7 +718,7 @@ mod tests {
 
     #[test]
     fn a_zero_bound_or_missing_instructions_is_refused() {
-        let base = "model_call:\n  context_token_budget: 10\n  max_output_tokens: 5\n  deadline_ms: 1000\n  max_thread_messages: 3\ndefault_system_instructions: be useful\n";
+        let base = "model_call:\n  context_token_budget: 10\n  max_output_tokens: 5\n  deadline_ms: 1000\n  max_thread_messages: 3\n  max_skills: 2\ndefault_system_instructions: be useful\n";
         assert!(ModelCallSettings::parse(base).is_ok());
         assert!(
             ModelCallSettings::parse(&base.replace("deadline_ms: 1000", "deadline_ms: 0")).is_err()

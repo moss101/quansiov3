@@ -35,6 +35,17 @@ pub struct ProjectionRequest {
     pub policy_snapshot_digest: String,
     /// Canonical content the runtime owns and offers for the turn (DOMAIN.md §11.2).
     pub segments: Vec<SegmentRequest>,
+    /// The registry's candidate skill versions (`{skill_id, version_id, name, semver, status,
+    /// manifest}`), which the plane resolves for the task (INT-009).
+    pub skill_candidates: Vec<Value>,
+    /// What the task is, for skill relevance.
+    pub task_text: String,
+    /// The tools the run's capability projection exposes (a skill needing more is excluded).
+    pub exposed_tools: Vec<String>,
+    /// The effect classes the run's capability projection grants.
+    pub granted_effect_classes: Vec<String>,
+    /// At most this many skills resolve.
+    pub max_skills: u32,
 }
 
 /// Where a segment's content came from (DOMAIN.md §11.2 source kinds).

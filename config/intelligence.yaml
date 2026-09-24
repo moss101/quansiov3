@@ -12,6 +12,8 @@ model_call:
   deadline_ms: 120000
   # Thread messages offered to the Context plane, newest last; it packs what fits the budget.
   max_thread_messages: 200
+  # Skills the Context plane may resolve into one call's context (INT-009's resolver bound).
+  max_skills: 3
 
 # The system instructions a turn carries when the run has no teammate definition.
 default_system_instructions: >-

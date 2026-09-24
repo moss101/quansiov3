@@ -1071,6 +1071,18 @@ pub struct ContextBuildRequest {
     /// the canonical snapshot the runtime read its segments at
     #[prost(string, tag = "7")]
     pub snapshot_id: ::prost::alloc::string::String,
+    /// Skill resolution (INT-009): the registry's candidate versions, the task they are resolved
+    /// for, and the caller's own authority; the plane resolves and renders the relevant ones.
+    #[prost(string, repeated, tag = "8")]
+    pub skill_candidates_json: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag = "9")]
+    pub task_text: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "10")]
+    pub exposed_tools: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag = "11")]
+    pub granted_effect_classes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(uint32, tag = "12")]
+    pub max_skills: u32,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchResultSet {
