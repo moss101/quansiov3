@@ -1,0 +1,15 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 36.50s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-6cfe0bc3494cb01b)
+
+running 6 tests
+test observability::context::tests::a_traceparent_round_trips_and_continues_as_a_child ... ok
+test observability::context::tests::a_malformed_traceparent_is_not_continued ... ok
+test observability::redact::tests::canary_and_secrets_are_stripped ... ok
+test observability::context::tests::the_current_span_is_the_scope_the_task_runs_in ... ok
+test observability::metrics::tests::a_label_value_cannot_carry_a_secret ... ok
+test observability::metrics::tests::counters_and_histograms_render_as_prometheus_text ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 152 filtered out; finished in 0.00s
+
+exit=0

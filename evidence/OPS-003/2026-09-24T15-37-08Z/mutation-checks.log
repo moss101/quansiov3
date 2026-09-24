@@ -1,0 +1,22 @@
+COMPILES rpc-traceparent-not-sent
+KILLED rpc-traceparent-not-sent
+COMPILES incoming-traceparent-ignored
+KILLED incoming-traceparent-ignored
+COMPILES metrics-open
+KILLED metrics-open
+COMPILES runtime-log-unredacted
+KILLED runtime-log-unredacted
+COMPILES bundle-not-tenant-scoped
+KILLED bundle-not-tenant-scoped
+COMPILES spans-not-exported
+KILLED spans-not-exported
+COMPILES turn-not-a-scope
+KILLED turn-not-a-scope
+COMPILES plane-ignores-traceparent
+KILLED plane-ignores-traceparent
+COMPILES plane-log-unredacted
+KILLED plane-log-unredacted
+COMPILES desktop-no-traceparent
+KILLED desktop-no-traceparent
+DONE
+exit=0

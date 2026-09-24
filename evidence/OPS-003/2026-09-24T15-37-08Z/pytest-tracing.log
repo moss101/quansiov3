@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3/python
+configfile: pyproject.toml
+collecting ... collected 3 items
+
+python/tests/intelligence/test_tracing.py::test_a_traceparent_is_continued_and_a_malformed_one_is_not PASSED [ 33%]
+python/tests/intelligence/test_tracing.py::test_every_line_is_redacted_json_and_structured_messages_merge PASSED [ 66%]
+python/tests/intelligence/test_tracing.py::test_each_rpc_is_a_span_of_the_callers_trace PASSED [100%]
+
+============================== 3 passed in 0.41s ===============================
+exit=0
