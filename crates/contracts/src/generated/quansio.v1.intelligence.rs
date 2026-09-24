@@ -317,6 +317,11 @@ pub struct ContextProjection {
     pub policy_snapshot_digest: ::prost::alloc::string::String,
     #[prost(string, tag = "9")]
     pub created_at: ::prost::alloc::string::String,
+    #[prost(string, tag = "10")]
+    pub snapshot_id: ::prost::alloc::string::String,
+    /// Rendered by the Context plane: stable prefix first, untrusted content inside typed boundaries.
+    #[prost(message, repeated, tag = "11")]
+    pub messages: ::prost::alloc::vec::Vec<RenderedMessage>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ContextSegment {
@@ -1059,6 +1064,9 @@ pub struct ContextBuildRequest {
     pub token_budget: u64,
     #[prost(string, tag = "6")]
     pub policy_snapshot_digest: ::prost::alloc::string::String,
+    /// the canonical snapshot the runtime read its segments at
+    #[prost(string, tag = "7")]
+    pub snapshot_id: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchResultSet {

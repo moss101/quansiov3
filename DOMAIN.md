@@ -108,6 +108,7 @@ Use these names in code, contracts, events, UI copy and tests. Do not introduce 
 | AuditEntry | `aud_` | | Webhook subscription | `whk_` |
 | TerminalSession | `tsn_` | | BrowserSession | `bsn_` |
 | Session (auth) | `ses_` | | Webhook delivery | `whd_` |
+| ContextProjection | `ctx_` | | | |
 
 ### 1.2 Replay-safety primitives (CORE-002)
 - `command_id`: client-generated ULID; unique per tenant; duplicate submission returns the original result (idempotent).
@@ -455,7 +456,9 @@ Provider adapters MUST normalize: streaming, tool/function calling with strict J
 `ModelRoute: id, request_class (chat|planning|tool_heavy|synthesis|verification|embedding|cheap_worker), provider, model_id (from `config/models.yaml`, never hard-coded), config {effort, max_tokens, thinking}, dlp_profile, fallbacks[] (bounded), cost_class, chosen_by (rule id), selected_at`. Selection is deterministic for fixed inputs and performs no LLM call.
 
 ### 11.2 ContextProjection (INT-005)
-`id, run_id, turn_id, segments[] ({seq, source {kind: system|policy|thread|work|tool_result|knowledge|memory|artifact|search, ref}, trust_level, token_estimate, snapshot_ref, redactions[]}), token_ledger {budget, used, by_source}, degradation[] (what was dropped and why), search_program_id?, policy_snapshot_digest, created_at`.
+`id, run_id, turn_id, segments[] ({seq, source {kind: system|policy|thread|work|tool_result|knowledge|memory|artifact|search, ref}, trust_level, token_estimate, snapshot_ref, redactions[]}), token_ledger {budget, used, by_source}, degradation[] (what was dropped and why), search_program_id?, policy_snapshot_digest, snapshot_id, messages[] (RenderedMessage, §11.1), created_at`.
+
+`BuildContext` request: `run_id, turn_id, snapshot_id, token_budget, policy_snapshot_digest, segment_requests[] ({seq, source {kind, ref}, role: system|operator|user|assistant|tool, content (RenderedMessage content), trust_hint?, snapshot_ref, required})`. The runtime supplies canonical content it owns (instructions, thread turns, tool results) and the snapshot it read them at; the Context plane labels each segment from its source (a `trust_hint` may only lower it), packs the budget (required segments must fit; an assistant turn and the tool results answering it are kept or dropped together; dropping is newest-kept and recorded in `degradation`), and renders `messages[]`: system and operator instructions first as the stable prefix, then the conversation in `seq` order, with untrusted content inside the §12 typed boundary. The projection id (`ctx_`) is minted by the plane.
 
 ### 11.3 SearchProgram
 Typed AST, no free-form predicates: `{channels: [exact|lexical|semantic|graph|history|memory], filters: typed, budget {max_results, max_tokens}, snapshot: index epoch, scope: tenant/workspace/target}`. Results carry provenance `(source_id, locator, snapshot)`.

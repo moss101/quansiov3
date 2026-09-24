@@ -16,13 +16,16 @@
 //! The bridge deliberately does not re-implement search, ranking or packing: that would be a second
 //! authority for the plane's job.
 
+pub mod gateway;
 pub mod port;
 
 use thiserror::Error;
 
+pub use gateway::GatewayContextBridge;
 pub use port::{
     validate_projection, ContextBridgePort, ProjectionRequest, ProjectionSegment,
-    ReceivedProjection, UnavailableContextBridge,
+    ReceivedProjection, SegmentRequest, SegmentRole, SegmentSource, UnavailableContextBridge,
+    ValidatedProjection,
 };
 
 /// Repository path of this module's canonical owner.
@@ -59,6 +62,14 @@ pub enum ContextBridgeError {
         /// Snapshot the runtime observes now.
         current: String,
     },
+    /// The plane refused to build the projection, with its typed code.
+    #[error("the context plane refused the projection ({code}): {detail}")]
+    Refused {
+        /// The DOMAIN.md §15 code the plane gave.
+        code: &'static str,
+        /// What the plane said.
+        detail: String,
+    },
     /// The bridge is not wired yet; the named task owns it.
     #[error("the context bridge is not available: {detail}; owned by {owner}")]
     Unavailable {
@@ -78,6 +89,7 @@ impl ContextBridgeError {
             | Self::UnknownTrustLevel { .. }
             | Self::MalformedProjection { .. } => "VALIDATION_SCHEMA",
             Self::StaleSnapshot { .. } => "CONFLICT_STATE",
+            Self::Refused { code, .. } => code,
             Self::Unavailable { .. } => "INTERNAL",
         }
     }

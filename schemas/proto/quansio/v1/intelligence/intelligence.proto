@@ -128,6 +128,9 @@ message ContextProjection {
   string search_program_id = 7;
   string policy_snapshot_digest = 8;
   string created_at = 9;
+  string snapshot_id = 10;
+  // Rendered by the Context plane: stable prefix first, untrusted content inside typed boundaries.
+  repeated RenderedMessage messages = 11;
 }
 
 message ContextSegment {

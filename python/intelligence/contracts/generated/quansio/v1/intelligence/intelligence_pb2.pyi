@@ -207,7 +207,7 @@ class ModelRoute(_message.Message):
     def __init__(self, schema_version: _Optional[str] = ..., id: _Optional[str] = ..., request_class: _Optional[_Union[ModelRoute.RequestClass, str]] = ..., provider: _Optional[str] = ..., model_id: _Optional[str] = ..., config_json: _Optional[str] = ..., dlp_profile: _Optional[str] = ..., fallbacks: _Optional[_Iterable[str]] = ..., cost_class: _Optional[str] = ..., chosen_by: _Optional[str] = ..., selected_at: _Optional[str] = ...) -> None: ...
 
 class ContextProjection(_message.Message):
-    __slots__ = ("schema_version", "id", "run_id", "turn_id", "segments", "token_ledger", "degradation_json", "search_program_id", "policy_snapshot_digest", "created_at")
+    __slots__ = ("schema_version", "id", "run_id", "turn_id", "segments", "token_ledger", "degradation_json", "search_program_id", "policy_snapshot_digest", "created_at", "snapshot_id", "messages")
     SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
     ID_FIELD_NUMBER: _ClassVar[int]
     RUN_ID_FIELD_NUMBER: _ClassVar[int]
@@ -218,6 +218,8 @@ class ContextProjection(_message.Message):
     SEARCH_PROGRAM_ID_FIELD_NUMBER: _ClassVar[int]
     POLICY_SNAPSHOT_DIGEST_FIELD_NUMBER: _ClassVar[int]
     CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    SNAPSHOT_ID_FIELD_NUMBER: _ClassVar[int]
+    MESSAGES_FIELD_NUMBER: _ClassVar[int]
     schema_version: str
     id: str
     run_id: str
@@ -228,7 +230,9 @@ class ContextProjection(_message.Message):
     search_program_id: str
     policy_snapshot_digest: str
     created_at: str
-    def __init__(self, schema_version: _Optional[str] = ..., id: _Optional[str] = ..., run_id: _Optional[str] = ..., turn_id: _Optional[str] = ..., segments: _Optional[_Iterable[_Union[ContextSegment, _Mapping]]] = ..., token_ledger: _Optional[_Union[TokenLedger, _Mapping]] = ..., degradation_json: _Optional[_Iterable[str]] = ..., search_program_id: _Optional[str] = ..., policy_snapshot_digest: _Optional[str] = ..., created_at: _Optional[str] = ...) -> None: ...
+    snapshot_id: str
+    messages: _containers.RepeatedCompositeFieldContainer[RenderedMessage]
+    def __init__(self, schema_version: _Optional[str] = ..., id: _Optional[str] = ..., run_id: _Optional[str] = ..., turn_id: _Optional[str] = ..., segments: _Optional[_Iterable[_Union[ContextSegment, _Mapping]]] = ..., token_ledger: _Optional[_Union[TokenLedger, _Mapping]] = ..., degradation_json: _Optional[_Iterable[str]] = ..., search_program_id: _Optional[str] = ..., policy_snapshot_digest: _Optional[str] = ..., created_at: _Optional[str] = ..., snapshot_id: _Optional[str] = ..., messages: _Optional[_Iterable[_Union[RenderedMessage, _Mapping]]] = ...) -> None: ...
 
 class ContextSegment(_message.Message):
     __slots__ = ("schema_version", "seq", "source_kind", "source_ref", "trust_level", "token_estimate", "snapshot_ref", "redactions")
