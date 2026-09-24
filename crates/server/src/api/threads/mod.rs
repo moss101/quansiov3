@@ -228,6 +228,7 @@ pub async fn timeline(
                             "stop_reason": row.get::<Option<String>, _>("stop_reason"),
                             "usage": row.get::<Value, _>("usage"),
                             "latency_ms": row.get::<Option<i64>, _>("latency_ms"),
+                            "context_projection_id": row.get::<Option<String>, _>("context_projection_id"),
                             "route": row.get::<Option<String>, _>("route_id").map(|route_id| json!({
                                 "id": route_id,
                                 "request_class": row.get::<String, _>("request_class"),
@@ -286,8 +287,22 @@ pub async fn timeline(
             step_views.push(view);
         }
 
-        // What the model saw: the context projection's segments, each with its trust label.
-        let context_projection_id: Option<String> = turn.get("context_projection_id");
+        // What the model saw: the context projection's segments, each with its trust label. A
+        // turn given one projection up front names it; otherwise each model call rendered its own,
+        // and the turn shows the latest — the context its last answer was made from.
+        let context_projection_id: Option<String> = match turn.get("context_projection_id") {
+            Some(id) => Some(id),
+            None => sqlx::query_scalar(
+                "SELECT context_projection_id FROM model_calls \
+                 WHERE tenant_id = $1 AND turn_id = $2 AND context_projection_id IS NOT NULL \
+                 ORDER BY created_at DESC, id DESC LIMIT 1",
+            )
+            .bind(&scope.tenant_id)
+            .bind(&turn_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(projection_error)?,
+        };
         let context = match &context_projection_id {
             Some(id) => sqlx::query(
                 "SELECT id, segments, token_ledger, degradation, search_program_id FROM context_projections \

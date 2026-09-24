@@ -178,6 +178,10 @@ pub struct ReceivedProjection {
     pub degradation: Vec<String>,
     /// The messages the plane rendered, one per segment, in render order.
     pub messages: Vec<RenderedMessage>,
+    /// `{budget, used, by_source}` as the plane reported it.
+    pub token_ledger: Value,
+    /// The policy snapshot the projection was built under.
+    pub policy_snapshot_digest: String,
 }
 
 impl From<ContextProjection> for ReceivedProjection {
@@ -186,6 +190,17 @@ impl From<ContextProjection> for ReceivedProjection {
             .token_ledger
             .as_ref()
             .map_or(0, |ledger| u32::try_from(ledger.used).unwrap_or(u32::MAX));
+        let token_ledger = projection.token_ledger.as_ref().map_or_else(
+            || json!({}),
+            |ledger| {
+                json!({
+                    "budget": ledger.budget,
+                    "used": ledger.used,
+                    "by_source": serde_json::from_str::<Value>(&ledger.by_source_json)
+                        .unwrap_or_else(|_| json!({})),
+                })
+            },
+        );
         Self {
             projection_id: projection.id,
             snapshot_id: projection.snapshot_id,
@@ -203,6 +218,8 @@ impl From<ContextProjection> for ReceivedProjection {
             degraded: !projection.degradation_json.is_empty(),
             degradation: projection.degradation_json,
             messages: projection.messages,
+            token_ledger,
+            policy_snapshot_digest: projection.policy_snapshot_digest,
         }
     }
 }
@@ -224,6 +241,10 @@ pub struct ValidatedProjection {
     pub degradation: Vec<String>,
     /// The rendered messages, each at its segment's trust level.
     pub messages: Vec<RenderedMessage>,
+    /// `{budget, used, by_source}`.
+    pub token_ledger: Value,
+    /// The policy snapshot the projection was built under.
+    pub policy_snapshot_digest: String,
 }
 
 impl ValidatedProjection {
@@ -345,6 +366,8 @@ pub fn validate_projection(
         degraded: received.degraded,
         degradation: received.degradation,
         messages: received.messages,
+        token_ledger: received.token_ledger,
+        policy_snapshot_digest: received.policy_snapshot_digest,
     })
 }
 
@@ -365,9 +388,8 @@ mod tests {
             snapshot_id: "snap_1".to_string(),
             segments,
             tokens_used: 10,
-            degraded: false,
-            degradation: Vec::new(),
             messages,
+            ..ReceivedProjection::default()
         }
     }
 

@@ -88,9 +88,8 @@ fn projection(segments: Vec<ProjectionSegment>) -> ReceivedProjection {
         snapshot_id: SNAPSHOT.to_string(),
         segments,
         tokens_used: 10,
-        degraded: false,
-        degradation: Vec::new(),
         messages,
+        ..ReceivedProjection::default()
     }
 }
 

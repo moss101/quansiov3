@@ -34,8 +34,8 @@ use crate::control::schema;
 use crate::control::teammates::TeammateStore;
 use crate::intelligence::{CallScope, IntelligenceClient, IntelligenceError};
 use crate::runtime::context_bridge::{
-    validate_projection, ContextBridgeError, ContextBridgePort, ProjectionRequest, SegmentRequest,
-    SegmentRole, SegmentSource,
+    record_projection, validate_projection, ContextBridgeError, ContextBridgePort,
+    ProjectionRequest, SegmentRequest, SegmentRole, SegmentSource,
 };
 use crate::runtime::state_machine::{
     ModelCallRequest, ModelProposal, ModelProposalSource, ProposedToolCall, RuntimeError,
@@ -256,6 +256,15 @@ impl ModelProposalSource for GatewayModelSource {
             .await
             .map_err(context_error)?;
         let validated = validate_projection(received, Some(&snapshot)).map_err(context_error)?;
+        // What the model is about to see is recorded first (DOSSIER.md §8 layer 3).
+        record_projection(
+            &self.pool,
+            &request.tenant_id,
+            &request.run_id,
+            &request.turn_id,
+            &validated,
+        )
+        .await?;
 
         // 3. The model call.
         let tools = projection
