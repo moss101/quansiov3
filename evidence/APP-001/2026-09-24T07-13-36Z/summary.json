@@ -1,0 +1,128 @@
+{
+  "task_id": "APP-001",
+  "git_commit": "024d1b16b2aebe870bba73a2100d75d0a37bac58",
+  "recorded_at": "2026-09-24T07:14:12Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test walking_skeleton_gateway (PostMessage -> BuildContext -> FulfillModel -> dev stub -> fs.read -> Effect Ledger -> second call -> reply -> WebSocket; provider failure keeps PROVIDER_UNAVAILABLE)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-24T07-13-36Z/cargo-walking-skeleton-gateway.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib model_source && --test walking_skeleton && --test api && --test intelligence_gateway",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-24T07-13-36Z/cargo-server-suites.log"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_model_gateway_tool_turns.py -k route && tests/integration/test_dev_stack.py -k bootstrap_smoke",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-24T07-13-36Z/pytest-route-and-stub.log"
+    },
+    {
+      "command": "app001_smoke.py stub (the quansio-server binary with QUANSIO_INTELLIGENCE_ENDPOINT, dev stub provider)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-24T07-13-36Z/smoke-stub.log"
+    },
+    {
+      "command": "app001_smoke.py live (the quansio-server binary with QUANSIO_INTELLIGENCE_ENDPOINT, Z.ai GLM-5.3-Flash; key from the environment, never recorded)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-24T07-13-36Z/smoke-live.log"
+    },
+    {
+      "command": "app001_mutations.sh (6 mutations: rounds not rendered, no tools, route not recorded, projection not recorded, error ignored, code lost at API)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-24T07-13-36Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-24T07-13-36Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test walking_skeleton_gateway (PostMessage -> BuildContext -> FulfillModel -> dev stub -> fs.read -> Effect Ledger -> second call -> reply -> WebSocket; provider failure keeps PROVIDER_UNAVAILABLE)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib model_source && --test walking_skeleton && --test api && --test intelligence_gateway",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_model_gateway_tool_turns.py -k route && tests/integration/test_dev_stack.py -k bootstrap_smoke",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "app001_smoke.py stub (the quansio-server binary with QUANSIO_INTELLIGENCE_ENDPOINT, dev stub provider)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "app001_smoke.py live (the quansio-server binary with QUANSIO_INTELLIGENCE_ENDPOINT, Z.ai GLM-5.3-Flash; key from the environment, never recorded)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "app001_mutations.sh (6 mutations: rounds not rendered, no tools, route not recorded, projection not recorded, error ignored, code lost at API)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-001/2026-09-24T07-13-36Z/NOTES.md",
+      "sha256": "6ccf6b6b596bd126baea060f5638c3c230034a9efb9df3e4ce611f59e07be73e",
+      "bytes": 5298
+    },
+    {
+      "path": "evidence/APP-001/2026-09-24T07-13-36Z/cargo-walking-skeleton-gateway.log",
+      "sha256": "7ba9ef1aa9c4cf8f507a9aa30695c47a376afe0ae85edfd4bdcdcc69523f8fa0",
+      "bytes": 706
+    },
+    {
+      "path": "evidence/APP-001/2026-09-24T07-13-36Z/cargo-server-suites.log",
+      "sha256": "1454beee8fe0858cbfdda499c7bb047c219369d28aec0a1802e45522b381fe8f",
+      "bytes": 2580
+    },
+    {
+      "path": "evidence/APP-001/2026-09-24T07-13-36Z/pytest-route-and-stub.log",
+      "sha256": "2d7e3b00854fdd0336ce916ab6f8de2a2df70ab9d70bb45ef36952ebd5a03872",
+      "bytes": 1416
+    },
+    {
+      "path": "evidence/APP-001/2026-09-24T07-13-36Z/smoke-stub.log",
+      "sha256": "917c25be0ccb8ab43d2f9df7601d6bde1a26cb02d2c7c2fb13ba44f0b64de4d5",
+      "bytes": 915
+    },
+    {
+      "path": "evidence/APP-001/2026-09-24T07-13-36Z/smoke-live.log",
+      "sha256": "d1149b2dc74a2f353f84ff9baf9ec02c0fdfd1e5fa7797b3d2d879f324d4d24e",
+      "bytes": 1455
+    },
+    {
+      "path": "evidence/APP-001/2026-09-24T07-13-36Z/mutation-checks.log",
+      "sha256": "cb096b606540759007d290bf2b0a436f6225eaa29ee79ae14caa00824a7c59df",
+      "bytes": 182
+    },
+    {
+      "path": "evidence/APP-001/2026-09-24T07-13-36Z/ci-summary.json",
+      "sha256": "24c47e71a7d2b20e26a1c980ba9311f1a9c664cb7e61454871c8e149d647c7a7",
+      "bytes": 7888
+    }
+  ]
+}

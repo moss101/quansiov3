@@ -1,0 +1,20 @@
+mode=live model_route=smoke-route wire_model=GLM-5.3-Flash endpoint=https://api.z.ai/api/coding/paas/v4
+server startup lines:
+  quansio-server: QUANSIO_INTELLIGENCE_ENDPOINT=http://127.0.0.1:56728: turns are answered through the intelligence gateway
+
+[1] user: In one short sentence: what is the capital of France?
+    PostMessage -> 200 in 6.5s
+    agent: The capital of France is Paris.
+    run=run_01M393R113RSAPQCYZM1GZED25 status=RUNNING
+
+[2] user: Use your fs__read tool to read /work/root/notes.md, then tell me in one sentence what the tool returned.
+    PostMessage -> 200 in 16.7s
+    agent: The tool returned a conformance stub rather than file contents — a JSON object `{"ok":true,"stub":"conformance","tool":"fs.read"}` — so no actual text from /work/root/notes.md was available to report.
+    run=run_01M393R78ARQTFV5JMB0V7HFAR status=RUNNING
+
+model_calls (run | provider | model | stop | usage | projection prefix):
+  run_01M393R113RSAPQCYZM1GZED25|openai-compatible|GLM-5.3-Flash|end_turn|{"input": 221, "output": 28, "cache_read": 0, "cache_write": 0}|ctx_
+  run_01M393R78ARQTFV5JMB0V7HFAR|openai-compatible|GLM-5.3-Flash|tool_use|{"input": 235, "output": 50, "cache_read": 192, "cache_write": 0}|ctx_
+  run_01M393R78ARQTFV5JMB0V7HFAR|openai-compatible|GLM-5.3-Flash|end_turn|{"input": 361, "output": 99, "cache_read": 192, "cache_write": 0}|ctx_
+tool_calls (tool | status | args):
+  fs.read|completed|{"path": "/work/root/notes.md"}
