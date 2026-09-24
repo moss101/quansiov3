@@ -1,0 +1,21 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3/python
+configfile: pyproject.toml
+collecting ... collected 11 items
+
+python/tests/intelligence/test_embed_rpc.py::test_embed_returns_one_vector_per_input_at_the_pinned_width PASSED [  9%]
+python/tests/intelligence/test_embed_rpc.py::test_embed_is_deterministic_across_calls PASSED [ 18%]
+python/tests/intelligence/test_embed_rpc.py::test_embed_reports_the_route_that_served_it PASSED [ 27%]
+python/tests/intelligence/test_embed_rpc.py::test_embed_refuses_an_empty_request_with_a_typed_error PASSED [ 36%]
+python/tests/intelligence/test_embed_rpc.py::test_embed_refuses_a_blank_input_and_an_oversized_batch PASSED [ 45%]
+python/tests/intelligence/test_embed_rpc.py::test_embed_refuses_a_model_choice_it_cannot_honour PASSED [ 54%]
+python/tests/intelligence/test_embed_rpc.py::test_embed_honours_the_configured_model_choice PASSED [ 63%]
+python/tests/intelligence/test_embed_rpc.py::test_embed_requires_scope_before_anything_else PASSED [ 72%]
+python/tests/intelligence/test_embed_rpc.py::test_embed_fails_closed_when_no_route_is_configured PASSED [ 81%]
+python/tests/intelligence/test_embed_rpc.py::test_a_route_of_the_wrong_width_fails_closed PASSED [ 90%]
+python/tests/intelligence/test_embed_rpc.py::test_a_chat_only_catalog_composes_a_service_without_embed PASSED [100%]
+
+============================== 11 passed in 2.69s ==============================
+exit=0

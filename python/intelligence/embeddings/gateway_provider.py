@@ -95,7 +95,13 @@ def gateway_embedder(
     """
     catalog = gateway.catalog
     providers: list[EmbeddingProvider] = []
-    for model_id in gateway_embedding_routes(gateway):
+    try:
+        routes = gateway_embedding_routes(gateway)
+    except GatewayError as unresolved:
+        # A catalog without an embedding route is a valid chat-only deployment: say so in the
+        # embedding vocabulary, so the composition root can start without `Embed`.
+        raise EmbeddingError(str(unresolved.code), "embedding.route", unresolved.message) from unresolved
+    for model_id in routes:
         spec = catalog.models[model_id]
         if spec.embedding_dimensions is None:  # pragma: no cover - the catalog refuses this
             continue

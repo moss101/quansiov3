@@ -19,8 +19,8 @@ Contract guarantees enforced here:
   * Python only proposes. No method mutates canonical runtime, graph, effect or machine
     state, imports a provider SDK or writes an authoritative table.
 
-Rust is the caller for authority-affecting flows; a Rust-side client seam is owned by
-INT-002/RUN-*. Run the service with `python -m intelligence.server`.
+Rust is the caller for authority-affecting flows, through `quansio_server::intelligence`
+(`crates/server/src/intelligence`). Run the service with `python -m intelligence.server`.
 """
 
 from __future__ import annotations

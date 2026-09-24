@@ -1,0 +1,7 @@
+KILLED no-scope-metadata
+KILLED error-trailer-ignored
+KILLED chat-only-crash
+KILLED stub-no-stream (rust)
+KILLED stub-no-stream-devstack
+DONE
+exit=0
