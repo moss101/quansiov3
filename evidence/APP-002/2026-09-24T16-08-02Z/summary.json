@@ -1,0 +1,48 @@
+{
+  "task_id": "APP-002",
+  "git_commit": "903383829e9a1437a13c3dee2449dccca48169c7",
+  "recorded_at": "2026-09-24T16:08:22Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test identity # the RLS sign-in flow now signs the same address in twice as quansio_app",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-24T16-08-02Z/cargo-identity.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test schema_bootstrap --test api # migrations apply; API ownership scan",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-24T16-08-02Z/cargo-schema-api.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test identity # the RLS sign-in flow now signs the same address in twice as quansio_app",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test schema_bootstrap --test api # migrations apply; API ownership scan",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-002/2026-09-24T16-08-02Z/NOTES.md",
+      "sha256": "eac1f4b540916d941965fa0eb49142b78d9898e3ad0a59ef2c5e9e3ec96c6ddb",
+      "bytes": 1521
+    },
+    {
+      "path": "evidence/APP-002/2026-09-24T16-08-02Z/cargo-identity.log",
+      "sha256": "45c239cad3717e1cb5bc579741c976f0b14789dfe32472ab287901296eaf0906",
+      "bytes": 964
+    },
+    {
+      "path": "evidence/APP-002/2026-09-24T16-08-02Z/cargo-schema-api.log",
+      "sha256": "cf2f044b144beaa83e26e8d6c074d205c5a65f5323bd7dcbb82dc48c7339c23d",
+      "bytes": 1887
+    }
+  ]
+}
