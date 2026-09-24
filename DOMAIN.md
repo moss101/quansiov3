@@ -188,6 +188,7 @@ Attachments are Artifacts (§10) with `origin: {kind: message, message_id}`. Upl
 {
   "deterministic_checks": [
     {"kind": "artifact_exists", "artifact_role": "report", "min_versions": 1},
+    {"kind": "artifact_valid", "artifact_role": "report"},
     {"kind": "test_command", "command": "cargo test -p x", "expect_exit": 0},
     {"kind": "assertion", "expr": "typed predicate id", "args": {}},
     {"kind": "effects_settled", "effect_classes": ["message.send"]},
@@ -197,7 +198,7 @@ Attachments are Artifacts (§10) with `origin: {kind: message, message_id}`. Upl
   "human_signoff_required": false
 }
 ```
-A WorkNode reaches `done` only via `run.verification_passed`, never via a model completion claim alone (RUN-008).
+A WorkNode reaches `done` only via `run.verification_passed`, never via a model completion claim alone (RUN-008). `artifact_valid` passes only when the current version of the workspace's latest artifact with that role has `format_check.ok` (§10.1), so a malformed deliverable blocks completion (CAP-003).
 
 ### 4.5 PlanProposal (model → runtime)
 `{proposal_id, run_id, base_revision, nodes_add[], nodes_update[], edges_add[], edges_remove[], rationale, capability_needs[]}`. Validation (RUN-003): bounded size (≤ `Policy.max_plan_nodes`), acyclic, every node has a CompletionContract or inherits one, `capability_needs ⊆ proposer capability`, `base_revision` current. Accepted → one GraphTransaction → `work.plan_applied`.
@@ -429,8 +430,10 @@ Written in the same PostgreSQL transaction as the mutation, plus an outbox row; 
 
 ### 10.1 Artifact / ArtifactVersion
 `Artifact: id, workspace_id, kind (document|spreadsheet|presentation|code|data|image|audio|video|archive|other), title, role? (report|source|attachment|…), origin {kind: message|run|routine|upload|connector, ref}, current_version_id, grants[] ({principal, level: read|write}), retention {class, expires_at?}, deleted_at?`.
-`ArtifactVersion: id, artifact_id, seq, content_digest (sha256), size_bytes, media_type, object_key, produced_by {run_id?, step_id?, user_id?}, parent_version_id?, created_at`.
+`ArtifactVersion: id, artifact_id, seq, content_digest (sha256), size_bytes, media_type, object_key, produced_by {run_id?, step_id?, user_id?}, parent_version_id?, format_check? {ok, rule, detail}, created_at`.
 Bytes are immutable per version; a new version is a new identity. Preview never executes active content with host privileges (APP-008).
+
+Source formats (CAP-003). An editable artifact is a versioned source file, not a chat blob: `document` — `text/markdown`/`text/plain`, UTF-8, first non-blank line `# Title`, a body, no active content (`<script`, `javascript:`, `onerror=`, `onload=`); `spreadsheet` — `text/csv`/`text/tab-separated-values`, unique non-empty headers, rectangular rows, at least one row; `presentation` — `application/vnd.quansio.slides+json` `{schema_version: "v1", slides: [{title, body, notes?}]}`, every slide with a body; `code` — `application/vnd.quansio.code+json` `{schema_version: "v1", language, files: [{path (relative, no `..`), content}]}`, every file with content; `data` — `application/json` `{schema_version: "v1", columns[], rows[{column: value}]}`, at least one row. Media kinds need a matching media type and real bytes; any source that is a chat transcript (`{role, content}` objects) is refused. Every version the store adds records `format_check` (rules `artifact.media_type`, `artifact.opaque_blob`, `artifact.format`, `artifact.quality`); uploads are stored either way, but the governed tools `artifact.create {role, kind, title, content | content_base64, content_digest, media_type?}` and `artifact.update {artifact_id, content | content_base64, content_digest, media_type?}` (server-hosted, `content.upload`) refuse a source whose digest does not match or whose check fails, so a run never produces an invalid version. The intelligence plane applies the same rules before proposing (`python/intelligence/artifacts`); `packs/skills/artifacts/fixtures` is the corpus both must agree on.
 
 ### 10.2 Evidence
 `id, workspace_id, run_id, step_id?, effect_id?, kind (tool_output|screenshot|dom_snapshot|log|test_result|http_exchange|diff|digest|external_ref), content_digest, object_key?, inline_summary (bounded), captured_at, captured_by {host kind, id}, redaction_applied: bool`. Immutable; never overwritten.

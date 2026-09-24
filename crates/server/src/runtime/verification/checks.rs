@@ -82,6 +82,9 @@ pub async fn run_check(
             artifact_role,
             min_versions,
         } => artifact_exists(scope, artifact_role, *min_versions).await,
+        DeterministicCheck::ArtifactValid { artifact_role } => {
+            artifact_valid(scope, artifact_role).await
+        }
         DeterministicCheck::EffectsSettled { effect_classes } => {
             effects_settled(scope, effect_classes).await
         }
@@ -147,6 +150,63 @@ async fn artifact_exists(
                 "no artifact with role {artifact_role:?} has {min_versions} version(s); \
                  the best candidate has {highest}"
             ),
+        ))
+    }
+}
+
+/// `artifact_valid`: the current version of the workspace's most recent artifact with the role
+/// passed its source-format and quality check (`artifact_versions.format_check`). A version
+/// stored before the check existed is unvalidated, which does not pass.
+async fn artifact_valid(
+    scope: &CheckScope<'_>,
+    artifact_role: &str,
+) -> Result<CheckResult, VerificationError> {
+    let mut tx = scope.pool.begin().await?;
+    schema::set_tenant_context(&mut tx, scope.tenant_id)
+        .await
+        .map_err(|error| VerificationError::Database(sqlx::Error::Protocol(error.to_string())))?;
+    let row: Option<(String, i32, Option<serde_json::Value>)> = sqlx::query_as(
+        "SELECT a.id, v.seq, v.format_check FROM artifacts a \
+           JOIN artifact_versions v ON v.id = a.current_version_id AND v.tenant_id = a.tenant_id \
+          WHERE a.tenant_id = $1 AND a.workspace_id = $2 AND a.role = $3 AND a.deleted_at IS NULL \
+          ORDER BY a.updated_at DESC, a.id DESC LIMIT 1",
+    )
+    .bind(scope.tenant_id)
+    .bind(scope.workspace_id)
+    .bind(artifact_role)
+    .fetch_optional(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    let Some((artifact_id, seq, check)) = row else {
+        return Ok(CheckResult::failed(
+            "artifact_valid",
+            format!("no artifact with role {artifact_role:?} exists"),
+        ));
+    };
+    let ok = check
+        .as_ref()
+        .and_then(|check| check.get("ok"))
+        .and_then(serde_json::Value::as_bool)
+        .unwrap_or(false);
+    let detail = check
+        .as_ref()
+        .and_then(|check| check.get("detail"))
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("the version was never validated");
+    if ok {
+        Ok(CheckResult::passed(
+            "artifact_valid",
+            format!("{artifact_id} version {seq} is valid: {detail}"),
+        ))
+    } else {
+        let rule = check
+            .as_ref()
+            .and_then(|check| check.get("rule"))
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("artifact.unvalidated");
+        Ok(CheckResult::failed(
+            "artifact_valid",
+            format!("{artifact_id} version {seq} fails {rule}: {detail}"),
         ))
     }
 }

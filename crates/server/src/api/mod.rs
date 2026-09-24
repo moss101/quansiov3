@@ -398,6 +398,12 @@ impl ApiState {
     /// uploads fail closed with `TARGET_UNAVAILABLE`).
     #[must_use]
     pub fn with_object_store(mut self, objects: Arc<dyn ObjectStore>) -> Self {
+        // With a store, the server hosts the artifact tools itself (CAP-003); every other
+        // tool still goes to the host it had.
+        self.host = Arc::new(crate::artifacts::tool_host::ServerToolHost::new(
+            crate::artifacts::tool_host::ArtifactToolHost::new(self.pool.clone(), objects.clone()),
+            Arc::clone(&self.host),
+        ));
         self.objects = Some(objects);
         self
     }

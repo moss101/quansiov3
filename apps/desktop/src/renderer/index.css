@@ -46,6 +46,8 @@ nav li.selected button { font-weight: 600; } nav button { background: none; bord
 .artifacts .kind { font-size: 11px; text-transform: uppercase; opacity: 0.6; margin-right: 6px; }
 .artifacts .detail header { display: flex; gap: 12px; align-items: baseline; }
 .artifacts .versions ol { padding-left: 18px; } .artifacts .versions li.selected > button { font-weight: 600; }
+.artifacts .format-check { margin-left: 6px; color: var(--muted, #666); } .artifacts .format-check[data-ok="false"] { color: var(--danger, #b3261e); } .artifacts .format-check[data-ok="true"] { color: var(--ok, #1b6e3a); }
+.artifacts .edit-source textarea { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; } .artifacts .edit-source button { margin-right: 6px; }
 .artifacts .actions { display: flex; gap: 8px; align-items: center; margin: 8px 0; } .artifacts .digest { font-size: 11px; opacity: 0.6; }
 .artifacts .preview { border: 1px solid color-mix(in srgb, currentColor 20%, transparent); border-radius: 8px; padding: 8px; max-height: 60vh; overflow: auto; }
 .artifacts .preview pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; }

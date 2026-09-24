@@ -1,0 +1,112 @@
+{
+  "task_id": "CAP-003",
+  "git_commit": "fca3c51f7e44af749111171b11ff18b400bfcd58",
+  "recorded_at": "2026-09-24T01:38:23Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> QUANSIO_TEST_MINIO_*=<dev MinIO> cargo test -p quansio-server --test artifact_workflows --test verification --test artifacts --test artifact_workspace (governed create/edit through the real dispatch path; malformed and digest-mismatched sources refused; every editable kind's fixture; a malformed deliverable blocks completion; the Rust corpus verdicts)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-003/2026-09-23T11-57-11Z/cargo-artifact-workflows.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib -- artifacts:: verification policy::rules (formats, tool host source binding)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-003/2026-09-23T11-57-11Z/cargo-unit.log"
+    },
+    {
+      "command": "python3.12 cap003_mutations.py (host format check, digest binding, artifact_valid, recorded format_check, Python pre-check each removed in a scratch edit; the named test fails every time; sources restored with git checkout)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-003/2026-09-23T11-57-11Z/mutation-checks.log"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_artifact_tool_calls.py python/tests/intelligence/test_artifact_workflows.py -v (corpus agreement, tool-call arguments against config/tools.yaml, round-trip edit, malformed never proposed)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-003/2026-09-23T11-57-11Z/pytest-artifacts.log"
+    },
+    {
+      "command": "(cd apps/desktop && pnpm exec vitest run tests/artifacts.test.ts tests/artifacts.e2e.test.ts) (source check per version, edit saved as the next version against the real server + MinIO)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-003/2026-09-23T11-57-11Z/vitest-desktop-artifacts.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-003/2026-09-23T11-57-11Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> QUANSIO_TEST_MINIO_*=<dev MinIO> cargo test -p quansio-server --test artifact_workflows --test verification --test artifacts --test artifact_workspace (governed create/edit through the real dispatch path; malformed and digest-mismatched sources refused; every editable kind's fixture; a malformed deliverable blocks completion; the Rust corpus verdicts)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib -- artifacts:: verification policy::rules (formats, tool host source binding)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 cap003_mutations.py (host format check, digest binding, artifact_valid, recorded format_check, Python pre-check each removed in a scratch edit; the named test fails every time; sources restored with git checkout)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_artifact_tool_calls.py python/tests/intelligence/test_artifact_workflows.py -v (corpus agreement, tool-call arguments against config/tools.yaml, round-trip edit, malformed never proposed)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd apps/desktop && pnpm exec vitest run tests/artifacts.test.ts tests/artifacts.e2e.test.ts) (source check per version, edit saved as the next version against the real server + MinIO)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-003/2026-09-23T11-57-11Z/NOTES.md",
+      "sha256": "ec573f15933cd3d40bbab91f7cc05fec4d3d0b6e8beec4c59fa4efbf113569c9",
+      "bytes": 5015
+    },
+    {
+      "path": "evidence/CAP-003/2026-09-23T11-57-11Z/cargo-artifact-workflows.log",
+      "sha256": "aed1b83767288f30c6602b3df7b433741403d578cfb4b6cff04b12416a57efef",
+      "bytes": 1873
+    },
+    {
+      "path": "evidence/CAP-003/2026-09-23T11-57-11Z/cargo-unit.log",
+      "sha256": "be9936a015cb4942420096a6191814e413fa27ab010fea2308a8ccba6608664c",
+      "bytes": 2376
+    },
+    {
+      "path": "evidence/CAP-003/2026-09-23T11-57-11Z/mutation-checks.log",
+      "sha256": "009139d3c67064b1b136a3e14a1688c566b4fdcff5660983898df00fef04dfd5",
+      "bytes": 2078
+    },
+    {
+      "path": "evidence/CAP-003/2026-09-23T11-57-11Z/pytest-artifacts.log",
+      "sha256": "92c3a3d026a8f2836f641ff0fa82c573b8f9f233bcda824bc1d5ddb4b61cf698",
+      "bytes": 3714
+    },
+    {
+      "path": "evidence/CAP-003/2026-09-23T11-57-11Z/vitest-desktop-artifacts.log",
+      "sha256": "bc938168faea1e6c870f4cbe163f3bb3a8f7bef93b33dc3cd6543617a8993d06",
+      "bytes": 193
+    },
+    {
+      "path": "evidence/CAP-003/2026-09-23T11-57-11Z/ci-summary.json",
+      "sha256": "d5958bae97ce7a07ff69ed0b67deb07bf49665c68d1f852e0fc00975d17268c5",
+      "bytes": 6888
+    }
+  ]
+}

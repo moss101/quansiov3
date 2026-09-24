@@ -44,6 +44,7 @@ message CompletionCheck {
     KIND_ASSERTION = 3;
     KIND_EFFECTS_SETTLED = 4;
     KIND_CITATIONS_VALID = 5;
+    KIND_ARTIFACT_VALID = 6;  // CAP-003: the role's current version passes its format check
   }
   Kind kind = 1;
   string artifact_role = 2;

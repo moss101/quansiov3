@@ -1,0 +1,8 @@
+{
+  "schema_version": "v1",
+  "columns": ["metric", "value", "unit"],
+  "rows": [
+    {"metric": "navigation_recall", "value": 1.0, "unit": "ratio"},
+    {"metric": "budget_tokens", "value": 128, "unit": "count"}
+  ]
+}

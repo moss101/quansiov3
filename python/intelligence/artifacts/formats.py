@@ -303,6 +303,12 @@ def parse_code(payload: bytes) -> CodeSource:
             raise ArtifactError("VALIDATION_SCHEMA", RULE_FORMAT, f"code file {index} needs a path")
         if not isinstance(content, str):
             raise ArtifactError("VALIDATION_SCHEMA", RULE_FORMAT, f"code file {index} content must be text")
+        if not _safe_path(path):
+            raise ArtifactError(
+                "VALIDATION_SCHEMA",
+                RULE_FORMAT,
+                f"code file {index} path {path!r} must be relative and stay inside the artifact",
+            )
         if path in seen:
             raise ArtifactError("VALIDATION_SCHEMA", RULE_FORMAT, f"duplicate code path {path!r}")
         seen.add(path)
@@ -310,6 +316,13 @@ def parse_code(payload: bytes) -> CodeSource:
     if not files:
         raise ArtifactError("VALIDATION_SCHEMA", RULE_FORMAT, "code artifact needs at least one file")
     return CodeSource(language=language.strip(), files=tuple(files))
+
+
+def _safe_path(path: str) -> bool:
+    """A code file path is relative and never climbs out of the artifact (DOMAIN.md §10.1)."""
+    if path.startswith(("/", "\\")) or "\0" in path:
+        return False
+    return ".." not in path.replace("\\", "/").split("/")
 
 
 def parse_data(payload: bytes) -> DataSource:
@@ -418,3 +431,13 @@ def _json_object(payload: bytes, label: str) -> dict[str, Any]:
     if not isinstance(decoded, dict):
         raise ArtifactError("VALIDATION_SCHEMA", RULE_FORMAT, f"{label} must be a JSON object")
     return decoded
+
+
+def check_source(kind: ArtifactKind, payload: bytes, media_type: str | None = None) -> CheckReport:
+    """Format, then quality — the verdict the authority records as a version's
+    ``format_check`` (``crates/server/src/artifacts/formats.rs``); the two must agree on
+    ``packs/skills/artifacts/fixtures/corpus.yaml``."""
+    report = validate_format(kind, payload, media_type)
+    if not report.ok:
+        return report
+    return quality_check(kind, payload)

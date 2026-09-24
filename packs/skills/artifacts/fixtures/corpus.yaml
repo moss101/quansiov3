@@ -1,0 +1,21 @@
+# The source-format corpus (CAP-003, DOMAIN.md §10.1). The authority's validator
+# (crates/server/src/artifacts/formats.rs) and the intelligence plane's
+# (python/intelligence/artifacts/formats.py) must reach the same verdict on every entry.
+schema_version: v1
+sources:
+  - {file: document.md, kind: document, media_type: text/markdown, ok: true}
+  - {file: spreadsheet.csv, kind: spreadsheet, media_type: text/csv, ok: true}
+  - {file: slides.json, kind: presentation, media_type: application/vnd.quansio.slides+json, ok: true}
+  - {file: code.json, kind: code, media_type: application/vnd.quansio.code+json, ok: true}
+  - {file: data.json, kind: data, media_type: application/json, ok: true}
+  - {file: malformed/document-no-heading.md, kind: document, media_type: text/markdown, ok: false, rule: artifact.format}
+  - {file: malformed/document-active-content.md, kind: document, media_type: text/markdown, ok: false, rule: artifact.format}
+  - {file: malformed/document-empty-body.md, kind: document, media_type: text/markdown, ok: false, rule: artifact.quality}
+  - {file: malformed/spreadsheet-ragged.csv, kind: spreadsheet, media_type: text/csv, ok: false, rule: artifact.format}
+  - {file: malformed/spreadsheet-duplicate-header.csv, kind: spreadsheet, media_type: text/csv, ok: false, rule: artifact.format}
+  - {file: malformed/slides-unknown-key.json, kind: presentation, media_type: application/vnd.quansio.slides+json, ok: false, rule: artifact.format}
+  - {file: malformed/slides-no-body.json, kind: presentation, media_type: application/vnd.quansio.slides+json, ok: false, rule: artifact.quality}
+  - {file: malformed/code-path-escape.json, kind: code, media_type: application/vnd.quansio.code+json, ok: false, rule: artifact.format}
+  - {file: malformed/data-unknown-column.json, kind: data, media_type: application/json, ok: false, rule: artifact.format}
+  - {file: malformed/chat-transcript.json, kind: document, media_type: text/markdown, ok: false, rule: artifact.opaque_blob}
+  - {file: document.md, kind: document, media_type: text/html, ok: false, rule: artifact.media_type}

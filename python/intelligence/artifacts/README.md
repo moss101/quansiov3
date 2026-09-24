@@ -4,3 +4,6 @@
 document, spreadsheet, slide, media and code sources through `artifact.create`
 / `artifact.update`. Format validation and quality checks block completion.
 Rust (`crates/server/artifacts`) remains the metadata and object-store authority.
+`proposals.py` builds the governed `artifact.create`/`artifact.update` calls (canonical
+bytes + digest) and never proposes a source that fails `check_source`; the Rust authority
+checks it again.
