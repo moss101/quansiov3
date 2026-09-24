@@ -24,7 +24,7 @@ class ScopeContext(_message.Message):
     def __init__(self, schema_version: _Optional[str] = ..., tenant_id: _Optional[str] = ..., workspace_id: _Optional[str] = ..., correlation_id: _Optional[str] = ..., deadline_ms: _Optional[int] = ..., capability_projection_id: _Optional[str] = ...) -> None: ...
 
 class ContextBuildRequest(_message.Message):
-    __slots__ = ("schema_version", "scope", "run_id", "turn_id", "segment_requests_json", "token_budget", "policy_snapshot_digest")
+    __slots__ = ("schema_version", "scope", "run_id", "turn_id", "segment_requests_json", "token_budget", "policy_snapshot_digest", "snapshot_id")
     SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
     SCOPE_FIELD_NUMBER: _ClassVar[int]
     RUN_ID_FIELD_NUMBER: _ClassVar[int]
@@ -32,6 +32,7 @@ class ContextBuildRequest(_message.Message):
     SEGMENT_REQUESTS_JSON_FIELD_NUMBER: _ClassVar[int]
     TOKEN_BUDGET_FIELD_NUMBER: _ClassVar[int]
     POLICY_SNAPSHOT_DIGEST_FIELD_NUMBER: _ClassVar[int]
+    SNAPSHOT_ID_FIELD_NUMBER: _ClassVar[int]
     schema_version: str
     scope: ScopeContext
     run_id: str
@@ -39,7 +40,8 @@ class ContextBuildRequest(_message.Message):
     segment_requests_json: _containers.RepeatedScalarFieldContainer[str]
     token_budget: int
     policy_snapshot_digest: str
-    def __init__(self, schema_version: _Optional[str] = ..., scope: _Optional[_Union[ScopeContext, _Mapping]] = ..., run_id: _Optional[str] = ..., turn_id: _Optional[str] = ..., segment_requests_json: _Optional[_Iterable[str]] = ..., token_budget: _Optional[int] = ..., policy_snapshot_digest: _Optional[str] = ...) -> None: ...
+    snapshot_id: str
+    def __init__(self, schema_version: _Optional[str] = ..., scope: _Optional[_Union[ScopeContext, _Mapping]] = ..., run_id: _Optional[str] = ..., turn_id: _Optional[str] = ..., segment_requests_json: _Optional[_Iterable[str]] = ..., token_budget: _Optional[int] = ..., policy_snapshot_digest: _Optional[str] = ..., snapshot_id: _Optional[str] = ...) -> None: ...
 
 class SearchResultSet(_message.Message):
     __slots__ = ("schema_version", "results", "snapshot")

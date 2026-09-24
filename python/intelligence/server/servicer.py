@@ -25,9 +25,13 @@ Implemented today:
     configured the call fails closed with a typed error rather than accepting a candidate nothing
     will store.
 
+  * `BuildContext` — the Context plane's turn context (INT-005): the runtime's segment requests
+    are labelled from their sources, packed into the budget and rendered as the messages the
+    model call carries (`intelligence.context.turn`). It reads and writes no canonical store; the
+    runtime validates the projection and records it.
+
 Not implemented here; each returns a typed UNIMPLEMENTED failure naming the owning task that
 will implement the behaviour (never a success-shaped empty response):
-  * `BuildContext`  → INT-005 (ContextProjection assembly)
   * `Search`        → INT-005 (typed SearchProgram execution)
   * `Evaluate`      → INT-010 (evaluation harness)
 INT-006 (Knowledge Fabric) and INT-012 (trust enforcement) have no RPC in the contract today.
@@ -47,6 +51,8 @@ from typing import ClassVar, NoReturn
 import grpc
 from quansio.v1.intelligence import intelligence_pb2, service_pb2
 
+from intelligence.context.projection import ContextError
+from intelligence.context.turn import build_turn_context
 from intelligence.embeddings.provider import (
     RULE_EMPTY_INPUT,
     EmbeddingError,
@@ -70,12 +76,13 @@ SERVICER_LOGGER_NAME = "intelligence.server"
 
 # Behaviour owned by a later task; the value is that task's id.
 _UNIMPLEMENTED_OWNERS: Mapping[str, str] = {
-    "BuildContext": "INT-005",
     "Search": "INT-005",
     "Evaluate": "INT-010",
 }
 
-IMPLEMENTED_METHODS: frozenset[str] = frozenset({"ClassifyTrust", "FulfillModel", "Embed", "ProposeMemory"})
+IMPLEMENTED_METHODS: frozenset[str] = frozenset(
+    {"ClassifyTrust", "FulfillModel", "Embed", "ProposeMemory", "BuildContext"}
+)
 
 TrustClassifier = Callable[[str, str], TrustClassification]
 
@@ -305,9 +312,35 @@ class IntelligenceGatewayServicer:
     def BuildContext(
         self, request: service_pb2.ContextBuildRequest, context: grpc.ServicerContext
     ) -> intelligence_pb2.ContextProjection:
+        """The turn's ContextProjection and the messages rendered from it (INT-005)."""
         self._begin_call(context)
         try:
-            self._reject_unimplemented("BuildContext", request, context)
+            scope = self._validated_scope("BuildContext", request, context)
+            self._ensure_live("BuildContext", context)
+            try:
+                built = build_turn_context(
+                    run_id=request.run_id,
+                    turn_id=request.turn_id,
+                    snapshot_id=request.snapshot_id,
+                    token_budget=request.token_budget,
+                    policy_snapshot_digest=request.policy_snapshot_digest,
+                    segment_requests=list(request.segment_requests_json),
+                )
+            except ContextError as refusal:
+                abort_with(
+                    context,
+                    ErrorEnvelope(
+                        code=_error_code(refusal.code),
+                        message=refusal.detail,
+                        correlation_id=scope.correlation_id,
+                        details=(
+                            ErrorDetail("rule_id", refusal.rule_id),
+                            ErrorDetail("owner_task", "INT-005"),
+                        ),
+                    ),
+                )
+            self._ensure_live("BuildContext", context)
+            return built.projection
         finally:
             self._end_call()
 

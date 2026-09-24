@@ -25,6 +25,7 @@ message ContextBuildRequest {
   repeated string segment_requests_json = 4;
   uint64 token_budget = 5;
   string policy_snapshot_digest = 6;
+  string snapshot_id = 7;  // the canonical snapshot the runtime read its segments at
 }
 
 message SearchResultSet {

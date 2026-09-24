@@ -99,9 +99,9 @@ def test_implemented_and_unimplemented_partition_the_contract() -> None:
     generated = {method.name for method in service.methods}
     owners = IntelligenceGatewayServicer.UNIMPLEMENTED_OWNERS
     assert generated - set(owners) == IMPLEMENTED_METHODS
-    # INT-002 implemented model fulfillment, INT-011 the embedding request class and INT-007 the
-    # memory proposal path; every other RPC still names its owning task.
-    assert {"ClassifyTrust", "FulfillModel", "Embed", "ProposeMemory"} == IMPLEMENTED_METHODS
+    # INT-002 implemented model fulfillment, INT-011 the embedding request class, INT-007 the
+    # memory proposal path and INT-005 the turn context; every other RPC still names its owner.
+    assert {"ClassifyTrust", "FulfillModel", "Embed", "ProposeMemory", "BuildContext"} == IMPLEMENTED_METHODS
     assert set(owners) == generated - IMPLEMENTED_METHODS
 
 
