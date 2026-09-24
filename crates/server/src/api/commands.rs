@@ -1410,17 +1410,15 @@ fn conversation_error(
 }
 
 pub(super) fn runtime_error(error: RuntimeError, correlation: &str) -> ApiError {
-    // The runtime's codes are the catalog's spellings (`RuntimeError::code`); a code the
-    // catalog does not know is an internal fault, not a client error.
+    // The runtime's codes are the catalog's spellings (`RuntimeError::code`), so a model or
+    // context failure keeps its code (`PROVIDER_UNAVAILABLE`, `ROUTE_UNAVAILABLE`, …); a code
+    // the catalog does not know is an internal fault, not a client error.
     let code = match error.code() {
-        "RUNTIME_ILLEGAL_TRANSITION" => ApiErrorCode::RuntimeIllegalTransition,
-        "FENCED_STALE_GENERATION" => ApiErrorCode::FencedStaleGeneration,
-        "NOT_FOUND" => ApiErrorCode::NotFound,
-        "VALIDATION_SCHEMA" => ApiErrorCode::ValidationSchema,
-        "CONFLICT_STATE" => ApiErrorCode::ConflictState,
-        "CAPABILITY_DENIED" => ApiErrorCode::CapabilityDenied,
         "RUNTIME_LEASE_LOST" => ApiErrorCode::LeaseLost,
-        _ => ApiErrorCode::Internal,
+        spelled => ApiErrorCode::ALL
+            .into_iter()
+            .find(|code| code.as_str() == spelled)
+            .unwrap_or(ApiErrorCode::Internal),
     };
     ApiError::new(code, error.to_string(), correlation)
 }

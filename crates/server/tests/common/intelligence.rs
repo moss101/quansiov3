@@ -45,14 +45,20 @@ fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
-/// Start the service, or report why it cannot run here.
+/// Start the service against the dev stub provider, or report why it cannot run here.
 pub async fn start() -> Option<Service> {
+    start_with_provider(None).await
+}
+
+/// Start the service with its provider at `provider` (the dev stub when `None`).
+pub async fn start_with_provider(provider: Option<&str>) -> Option<Service> {
     let host_port = stub_provider()
         .trim_start_matches("http://")
         .trim_end_matches('/')
         .to_string();
-    if std::net::TcpStream::connect_timeout(&host_port.parse().ok()?, Duration::from_secs(2))
-        .is_err()
+    if provider.is_none()
+        && std::net::TcpStream::connect_timeout(&host_port.parse().ok()?, Duration::from_secs(2))
+            .is_err()
     {
         println!(
             "BLOCKED_EXTERNAL: the dev stub provider at {host_port} is not reachable (scripts/dev/up)"
@@ -74,7 +80,7 @@ pub async fn start() -> Option<Service> {
              providers:\n  openai-compatible:\n    kind: openai_compatible\n    base_url: {}/v1\n    credential_handle: provider/int001-stub\n\
              routing:\n  strategy: deterministic\n  primary: {STUB_ROUTE}\n  fallback_order: []\n\
              models:\n  - id: {STUB_ROUTE}\n    provider: openai-compatible\n    model_id: {STUB_MODEL}\n    capabilities: [tools, streaming]\n    context_window: 32768\n    cost_class: low\n    dlp_eligible: false\n",
-            stub_provider().trim_end_matches('/')
+            provider.map_or_else(stub_provider, str::to_string).trim_end_matches('/')
         ),
     )
     .expect("catalog");

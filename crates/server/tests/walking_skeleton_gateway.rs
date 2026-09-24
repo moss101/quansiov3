@@ -278,3 +278,92 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
     common::drop_pool(&pool, &name).await;
     drop(service);
 }
+
+#[tokio::test]
+async fn a_provider_failure_fails_the_turn_with_its_code() {
+    // A provider nobody listens on: the gateway's stream ends in a typed error event.
+    let dead = std::net::TcpListener::bind("127.0.0.1:0").expect("port");
+    let provider = format!("http://{}", dead.local_addr().expect("addr"));
+    drop(dead);
+    let Some(service) = common::intelligence::start_with_provider(Some(&provider)).await else {
+        return;
+    };
+    let name = common::scratch_name("skel_gateway_fail");
+    let Some(pool) = common::fresh_database(&name).await else {
+        common::blocked_marker();
+        return;
+    };
+    schema::migrate(&pool).await.expect("migrate");
+    common::seed_tenant(&pool, TENANT, USER, WORKSPACE, NODE).await;
+    seed_policy(&pool).await;
+    let settings = ModelCallSettings::load().expect("config/intelligence.yaml");
+    let client = IntelligenceClient::connect_lazy(&service.endpoint).expect("endpoint");
+    let context = Arc::new(GatewayContextBridge::new(client.clone(), settings.deadline));
+    let router = quansio_server::api::router(
+        quansio_server::api::ApiState::new(pool.clone())
+            .expect("api")
+            .with_model_source(Arc::new(GatewayModelSource::new(
+                pool.clone(),
+                client,
+                context,
+                settings,
+            ))),
+    );
+    let response = tower::ServiceExt::oneshot(
+        router,
+        axum::http::Request::builder()
+            .method("POST")
+            .uri("/v1/commands/PostMessage")
+            .header("x-quansio-tenant", TENANT)
+            .header("x-quansio-user", USER)
+            .header("content-type", "application/json")
+            .body(axum::body::Body::from(
+                json!({
+                    "command_id": COMMAND,
+                    "params": { "workspace_id": WORKSPACE, "content": "hello" }
+                })
+                .to_string(),
+            ))
+            .expect("request"),
+    )
+    .await
+    .expect("response");
+    let status = response.status();
+    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("body");
+    let body: Value = serde_json::from_slice(&bytes).expect("json");
+    assert!(
+        !status.is_success(),
+        "a failed model call must not succeed: {body}"
+    );
+    assert_eq!(body["code"], "PROVIDER_UNAVAILABLE", "{body}");
+    assert_eq!(body["retryable"], true, "{body}");
+
+    // The model step failed; no reply was invented.
+    let mut tx = pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant");
+    let steps: Vec<(String, String)> =
+        sqlx::query_as("SELECT kind, status FROM steps WHERE tenant_id = $1 ORDER BY created_at")
+            .bind(TENANT)
+            .fetch_all(&mut *tx)
+            .await
+            .expect("steps");
+    let agent_messages: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM messages WHERE tenant_id = $1 AND author_kind = 'agent'",
+    )
+    .bind(TENANT)
+    .fetch_one(&mut *tx)
+    .await
+    .expect("messages");
+    tx.commit().await.expect("commit");
+    assert_eq!(
+        steps,
+        vec![("model_call".to_string(), "failed".to_string())]
+    );
+    assert_eq!(agent_messages, 0);
+    common::drop_pool(&pool, &name).await;
+    drop(service);
+}
