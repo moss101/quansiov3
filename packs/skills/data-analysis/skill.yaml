@@ -12,7 +12,7 @@ tool_needs:
   - artifact.update
 capability_needs:
   - read.internal
-  - artifact.write
+  - content.upload
 eval_suite_id: eval_data_analysis
 compatibility:
   - v8.1

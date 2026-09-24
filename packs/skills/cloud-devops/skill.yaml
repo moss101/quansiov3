@@ -11,6 +11,7 @@ tool_needs:
   - fs.read
   - terminal.exec
 capability_needs:
+  - read.internal
   - process.exec.sandboxed
 eval_suite_id: eval_cloud_devops
 compatibility:

@@ -12,3 +12,9 @@ cases:
       tools: [fs.read]
       capabilities: [read.internal]
     expect: exclude
+  - case_id: missing_capability_excluded
+    task: navigate the wiki for the source page
+    snapshot:
+      tools: [knowledge.cite]
+      capabilities: []
+    expect: exclude

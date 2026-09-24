@@ -2250,10 +2250,10 @@
     },
     "CAP-007": {
       "coverage": "GENUINE_GAP",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:claude-opus-5.5",
+      "started_at": "2026-09-24T01:41:55Z",
+      "updated_at": "2026-09-24T01:41:55Z",
       "git_commit": null,
       "tests": [
         "uv run --project python pytest tests/intelligence/test_builtin_packs.py -q (3 passed: schema/eval for research/coding/artifacts/data-analysis/cloud-devops/business-ops; capability scan refuses unknown tools/daemons/policy bypass; tool availability is INT-009 resolver)"

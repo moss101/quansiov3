@@ -1,0 +1,22 @@
+== the coding pack's previous manifest (needs scm.git.diff / scm.pr.create)
+   builtin_packs: FAILED (as required)
+     thread 'a_skills_capability_needs_are_exactly_what_its_tools_require' (4757335) panicked at crates/tools/tests/builtin_packs.rs:115:13:
+   python/tests/intelligence/test_builtin_packs.py: FAILED (as required)
+     E                   AssertionError: coding/permitted_resolves should resolve
+== a capability need that is not an effect class (artifact.write)
+   builtin_packs: FAILED (as required)
+     thread 'a_skills_capability_needs_are_exactly_what_its_tools_require' (4757811) panicked at crates/tools/tests/builtin_packs.rs:115:13:
+   python/tests/intelligence/test_builtin_packs.py: FAILED (as required)
+     E                   AssertionError: artifacts/permitted_resolves should resolve
+== a surplus capability need (payment.execute on research)
+   builtin_packs: FAILED (as required)
+     thread 'a_skills_capability_needs_are_exactly_what_its_tools_require' (4758029) panicked at crates/tools/tests/builtin_packs.rs:123:9:
+   python/tests/intelligence/test_builtin_packs.py: FAILED (as required)
+     E                   AssertionError: research/permitted_resolves should resolve
+== a pack edited without a re-review (stale provenance digest)
+   python/tests/intelligence/test_builtin_packs.py: FAILED (as required)
+     E       AssertionError: re-review and refresh with scripts/dev/pack_records.py --write: [('pack:research', 'sha256:7c51b4692cb7bef5e8566d889d9188d114c7d4a32d24d1aff82c744971033a10', 'sha256:d385621b4a1b600db6b7121002be8e
+== a pack that installs a daemon
+   python/tests/intelligence/test_builtin_packs.py: FAILED (as required)
+     >           raise AssertionError(f"{source}: packs must set installs_daemon: false")
+exit=0

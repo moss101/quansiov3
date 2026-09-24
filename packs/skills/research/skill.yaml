@@ -13,7 +13,7 @@ tool_needs:
   - web.fetch
   - knowledge.cite
 capability_needs:
-  - network.egress
+  - read.external
   - read.internal
 eval_suite_id: eval_research
 compatibility:

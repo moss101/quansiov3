@@ -4,11 +4,17 @@ cases:
     task: draft the operating plan and cite the policy
     snapshot:
       tools: [work.propose_plan, user.ask, knowledge.cite]
-      capabilities: [work.plan, read.internal]
+      capabilities: [record.create, read.internal]
     expect: resolve
   - case_id: missing_tool_excluded
     task: draft the operating plan
     snapshot:
       tools: [knowledge.cite]
       capabilities: [read.internal]
+    expect: exclude
+  - case_id: missing_capability_excluded
+    task: draft the operating plan and cite the policy
+    snapshot:
+      tools: [work.propose_plan, user.ask, knowledge.cite]
+      capabilities: [record.create]
     expect: exclude

@@ -4,11 +4,17 @@ cases:
     task: analyze the spreadsheet and summarize these metrics
     snapshot:
       tools: [fs.read, artifact.create, artifact.update]
-      capabilities: [read.internal, artifact.write]
+      capabilities: [read.internal, content.upload]
     expect: resolve
   - case_id: missing_tool_excluded
     task: analyze the spreadsheet
     snapshot:
       tools: [fs.read]
+      capabilities: [read.internal]
+    expect: exclude
+  - case_id: missing_capability_excluded
+    task: analyze the spreadsheet and summarize these metrics
+    snapshot:
+      tools: [fs.read, artifact.create, artifact.update]
       capabilities: [read.internal]
     expect: exclude
