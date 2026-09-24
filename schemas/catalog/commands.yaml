@@ -64,6 +64,7 @@ commands:
   - InstallSkill
   - PromoteSkillVersion
   - DisableSkill
+  - ProposeSkillCandidates
   - SubmitPack
   - QualifyPack
   - PublishPack

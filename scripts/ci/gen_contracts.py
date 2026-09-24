@@ -90,6 +90,11 @@ DEFINED_PARAMS: Dict[str, Dict[str, object]] = {
             "secret": {"type": "string", "enum": ["rotate"], "description": "Replace the signing secret; the result carries the new one once."},
         },
     },
+    "ProposeSkillCandidates": {
+        "type": "object",
+        "required": ["workspace_id"],
+        "properties": {"workspace_id": {"type": "string", "description": "The workspace the evolution pass is attributed to (DOMAIN.md §11.5)."}},
+    },
     "RedeliverWebhook": {
         "type": "object",
         "required": ["delivery_id"],

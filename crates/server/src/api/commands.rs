@@ -308,7 +308,34 @@ async fn dispatch(
             .await?
         }
         "PromoteSkillVersion" => {
+            // Promotion changes what enters production context: a tenant administrator's call.
+            super::rbac::Authorization::check(
+                state.pool(),
+                scope,
+                None,
+                crate::policy::rbac::ActionFamily::ManageTenant,
+                correlation,
+            )
+            .await?;
             super::knowledge::promote_skill_version(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "ProposeSkillCandidates" => {
+            super::rbac::Authorization::check(
+                state.pool(),
+                scope,
+                None,
+                crate::policy::rbac::ActionFamily::ManageTenant,
+                correlation,
+            )
+            .await?;
+            super::knowledge::propose_skill_candidates(
                 state,
                 identity,
                 user_id.as_deref(),

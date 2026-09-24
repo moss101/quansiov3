@@ -108,6 +108,22 @@ message EvaluationReport {
 }
 
 // Served by python/intelligence. Rust is the only caller.
+// Controlled skill evolution (CAP-008): the runtime hands over verified run outcomes (each with its
+// evidence identity and digest and the skill version the run was given) and the registry's ACTIVE
+// versions; the plane returns evaluated candidates for the registry to store as CANDIDATE.
+message SkillCandidatesRequest {
+  string schema_version = 100;
+  ScopeContext scope = 1;
+  repeated string evidence_records_json = 2;
+  repeated string active_versions_json = 3;
+}
+
+message SkillCandidatesResponse {
+  string schema_version = 100;
+  // {skill_id, from_version_id, semver, manifest, provenance}
+  repeated string candidates_json = 1;
+}
+
 service IntelligenceGateway {
   rpc FulfillModel(ModelCallRequest) returns (stream ModelEvent);
   rpc BuildContext(ContextBuildRequest) returns (ContextProjection);
@@ -116,4 +132,5 @@ service IntelligenceGateway {
   rpc Embed(EmbedRequest) returns (EmbedResponse);
   rpc ClassifyTrust(TrustClassifyRequest) returns (TrustClassifyResponse);
   rpc Evaluate(EvaluationRequest) returns (EvaluationReport);
+  rpc ProposeSkillCandidates(SkillCandidatesRequest) returns (SkillCandidatesResponse);
 }

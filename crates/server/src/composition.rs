@@ -195,14 +195,16 @@ impl Composition {
             eprintln!(
                 "quansio-server: QUANSIO_INTELLIGENCE_ENDPOINT={endpoint}: turns are answered through the intelligence gateway"
             );
-            api = api.with_model_source(Arc::new(
-                crate::intelligence::model_source::GatewayModelSource::new(
-                    pool.clone(),
-                    client,
-                    context,
-                    settings,
-                ),
-            ));
+            api = api
+                .with_intelligence(client.clone())
+                .with_model_source(Arc::new(
+                    crate::intelligence::model_source::GatewayModelSource::new(
+                        pool.clone(),
+                        client,
+                        context,
+                        settings,
+                    ),
+                ));
         } else {
             eprintln!(
                 "quansio-server: QUANSIO_INTELLIGENCE_ENDPOINT is not set: turns are answered by the conformance stub, not a model"

@@ -32,7 +32,7 @@ RULE_SUITE = "evolution.suite"
 METRIC_PASS_RATE = "skill.case_pass_rate"
 METRIC_REGRESSIONS = "skill.regressions"
 METRIC_WIDENED = "skill.widened_needs"
-THRESHOLDS_RELATIVE_PATH = Path("config") / "skill-evolution.yaml"
+THRESHOLDS_RELATIVE_PATH = Path("config") / "evolution.yaml"
 PACKS_RELATIVE_PATH = Path("packs") / "skills"
 
 
@@ -69,7 +69,7 @@ class CandidateEvaluation:
 
 
 def evolution_config_path() -> Path:
-    """`config/skill-evolution.yaml`, found by walking up from this module to the repository root."""
+    """`config/evolution.yaml`, found by walking up from this module to the repository root."""
     for parent in Path(__file__).resolve().parents:
         candidate = parent / THRESHOLDS_RELATIVE_PATH
         if candidate.is_file():
@@ -78,7 +78,7 @@ def evolution_config_path() -> Path:
 
 
 def default_thresholds() -> ThresholdSet:
-    """The gate configuration in `config/skill-evolution.yaml`."""
+    """The gate configuration in `config/evolution.yaml`."""
     return ThresholdSet.load(evolution_config_path())
 
 

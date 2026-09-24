@@ -253,14 +253,49 @@ fn lifecycle_error(error: DataLifecycleError, correlation: &str) -> ApiError {
 }
 
 fn skill_error(error: SkillControlError, correlation: &str) -> ApiError {
-    let code = match error.code() {
-        "NOT_FOUND" => ApiErrorCode::NotFound,
-        "CONFLICT_STATE" => ApiErrorCode::ConflictState,
-        "VALIDATION_SCHEMA" => ApiErrorCode::ValidationSchema,
-        "RUNTIME_ILLEGAL_TRANSITION" => ApiErrorCode::RuntimeIllegalTransition,
-        _ => ApiErrorCode::Internal,
+    ApiError::new(catalog_code(error.code()), error.to_string(), correlation)
+}
+
+/// A §15 code as the catalog spells it; one the catalog does not know is an internal fault.
+fn catalog_code(code: &str) -> ApiErrorCode {
+    ApiErrorCode::ALL
+        .into_iter()
+        .find(|known| known.as_str() == code)
+        .unwrap_or(ApiErrorCode::Internal)
+}
+
+/// `ProposeSkillCandidates {workspace_id}` (CAP-008): verified experience becomes evaluated
+/// CANDIDATE versions. Nothing becomes ACTIVE; promotion stays `PromoteSkillVersion`'s.
+pub async fn propose_skill_candidates(
+    state: &ApiState,
+    identity: &RuntimeIdentity,
+    user_id: Option<&str>,
+    params: &Value,
+    correlation: &str,
+) -> Result<Value, ApiError> {
+    let workspace_id = required_str(params, "workspace_id", correlation)?;
+    let Some(client) = state.intelligence() else {
+        return Err(ApiError::new(
+            ApiErrorCode::TargetUnavailable,
+            "skill evolution needs the intelligence plane (QUANSIO_INTELLIGENCE_ENDPOINT)",
+            correlation,
+        ));
     };
-    ApiError::new(code, error.to_string(), correlation)
+    let settings = crate::intelligence::model_source::ModelCallSettings::load()
+        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error, correlation))?;
+    let outcome = crate::control::skills::SkillEvolution::new(
+        state.pool().clone(),
+        client.clone(),
+        settings.deadline,
+    )
+    .propose(&skill_admin(identity, user_id), workspace_id)
+    .await
+    .map_err(|error| ApiError::new(catalog_code(error.code()), error.to_string(), correlation))?;
+    Ok(json!({
+        "records": outcome.records,
+        "candidates": outcome.registered.iter().map(version_json).collect::<Vec<_>>(),
+        "already_proposed": outcome.already_proposed,
+    }))
 }
 
 fn tombstone_json(key: &str, tombstone: &Tombstone) -> Value {
@@ -355,6 +390,11 @@ fn version_json(version: &crate::control::skills::SkillVersion) -> Value {
         "status": version.status.as_str(),
         "resolves": version.resolves(),
         "promotable_to": version.status.next_states().iter().map(|next| next.as_str()).collect::<Vec<_>>(),
+        // Structured provenance (an evolution candidate's evidence and evaluation) as an object;
+        // free-text provenance as the text it is.
+        "provenance": version.provenance.as_deref().map(|text| {
+            serde_json::from_str::<Value>(text).unwrap_or_else(|_| Value::String(text.to_string()))
+        }),
     })
 }
 

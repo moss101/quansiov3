@@ -1,7 +1,7 @@
 """CAP-008 in the plane: verified experience becomes evaluated candidates, never production.
 
 These tests drive the whole proposal — patterns, candidate patches, deterministic evaluation
-against the skill's suite, the INT-010 gate from `config/skill-evolution.yaml` — directly and over
+against the skill's suite, the INT-010 gate from `config/evolution.yaml` — directly and over
 the real gRPC `ProposeSkillCandidates` boundary the runtime calls.
 """
 

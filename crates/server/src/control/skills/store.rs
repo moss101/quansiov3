@@ -333,6 +333,15 @@ impl SkillStore {
                 let skill = load_skill(tx, &admin.tenant_id, &version.skill_id, true).await?;
                 let from = version.status;
                 let next = promote(from, to)?;
+                if matches!(next, SkillStatus::Approved | SkillStatus::Active) {
+                    if let Err(detail) = evolution_gate(version.provenance.as_deref()) {
+                        return Err(SkillControlError::EvaluationRequired {
+                            version_id: version.id.to_string(),
+                            to: next.as_str().to_string(),
+                            detail,
+                        });
+                    }
+                }
                 let previous_active = skill.current_active_version_id;
                 if next == SkillStatus::Active {
                     if let Some(active) = &previous_active {
@@ -608,4 +617,44 @@ fn map_active_pair(row: &PgRow) -> Result<(Skill, SkillVersion), SkillControlErr
 fn canonical(row: &PgRow, column: &str, prefix: Prefix) -> Result<CanonicalId, SkillControlError> {
     let value: String = row.try_get(column)?;
     CanonicalId::parse_typed(&value, prefix).map_err(SkillControlError::from)
+}
+
+/// An evolution candidate (CAP-008) passes EVALUATING only with a recorded passing evaluation
+/// and the evidence it was proposed from; any other version is unaffected.
+///
+/// # Errors
+/// What the candidate's provenance lacks.
+pub fn evolution_gate(provenance: Option<&str>) -> Result<(), String> {
+    let Some(document) = provenance.and_then(|text| serde_json::from_str::<Value>(text).ok())
+    else {
+        return Ok(());
+    };
+    if document.get("origin").and_then(Value::as_str) != Some("evolution") {
+        return Ok(());
+    }
+    let evidence = document
+        .get("evidence")
+        .and_then(Value::as_array)
+        .map_or(0, Vec::len);
+    if evidence == 0 {
+        return Err("an evolution candidate must name the evidence it came from".to_string());
+    }
+    let evaluation = document.get("evaluation").unwrap_or(&Value::Null);
+    let run = evaluation
+        .get("eval_run_id")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if run.is_empty() {
+        return Err("an evolution candidate must name the evaluation that scored it".to_string());
+    }
+    if evaluation.get("passed").and_then(Value::as_bool) != Some(true) {
+        let reason = evaluation
+            .get("reason")
+            .and_then(Value::as_str)
+            .unwrap_or("not passed");
+        return Err(format!(
+            "its evaluation {run} did not pass the gate: {reason}"
+        ));
+    }
+    Ok(())
 }

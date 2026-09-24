@@ -244,7 +244,7 @@ def candidate_json(proposal: EvolutionProposal) -> str:
 
 
 def evolution_settings() -> tuple[ThresholdSet, int]:
-    """The gate and the pattern threshold (`min_repeats`) from `config/skill-evolution.yaml`."""
+    """The gate and the pattern threshold (`min_repeats`) from `config/evolution.yaml`."""
     path = evolution_config_path()
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     min_repeats = raw.get("min_repeats") if isinstance(raw, dict) else None

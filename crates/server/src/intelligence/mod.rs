@@ -22,7 +22,7 @@ use prost::Message as _;
 use quansio_contracts::generated::intelligence::intelligence_gateway_client::IntelligenceGatewayClient;
 use quansio_contracts::generated::intelligence::{
     ContextBuildRequest, ContextProjection, ModelCallRequest, ModelEvent, ScopeContext,
-    TrustClassifyRequest, TrustClassifyResponse,
+    SkillCandidatesRequest, TrustClassifyRequest, TrustClassifyResponse,
 };
 use tonic::metadata::MetadataValue;
 use tonic::transport::{Channel, Endpoint, Uri};
@@ -241,6 +241,33 @@ impl IntelligenceClient {
             Err(_) => Err(IntelligenceError::DeadlineExceeded),
             Ok(Err(status)) => Err(refused(&status)),
             Ok(Ok(response)) => Ok(response.into_inner()),
+        }
+    }
+
+    /// `ProposeSkillCandidates` (CAP-008): evaluated candidate versions from verified run
+    /// records; proposals only — the registry decides what, if anything, it stores.
+    ///
+    /// # Errors
+    /// The typed refusal, or an unreachable or late gateway.
+    pub async fn propose_skill_candidates(
+        &mut self,
+        scope: &CallScope,
+        evidence_records_json: Vec<String>,
+        active_versions_json: Vec<String>,
+    ) -> Result<Vec<String>, IntelligenceError> {
+        let request = SkillCandidatesRequest {
+            schema_version: SCHEMA_VERSION.to_string(),
+            scope: Some(scope.context()),
+            evidence_records_json,
+            active_versions_json,
+        };
+        let call = self
+            .inner
+            .propose_skill_candidates(Self::request(scope, request));
+        match tokio::time::timeout(scope.deadline, call).await {
+            Err(_) => Err(IntelligenceError::DeadlineExceeded),
+            Ok(Err(status)) => Err(refused(&status)),
+            Ok(Ok(response)) => Ok(response.into_inner().candidates_json),
         }
     }
 
