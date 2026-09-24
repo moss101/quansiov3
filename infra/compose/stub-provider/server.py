@@ -9,6 +9,12 @@ Implements the minimal OpenAI-compatible surface the model gateway uses in dev:
                              usage chunk when `stream_options.include_usage` asks for it,
                              then `data: [DONE]`
 
+A deterministic tool round for the walking skeleton (APP-001), on the streaming wire only:
+  * a conversation whose last message is a user turn carrying
+    `[[stub:call <tool> <json-args>]]`, where `<tool>` is one of the offered tools, is answered
+    with that tool call (finish_reason `tool_calls`);
+  * a conversation that ends in tool results is answered with text that counts them.
+
 Responses are a pure function of the request body (no clock, no randomness, no
 network), so repeated calls are byte-identical. This is dev infrastructure, not
 a model gateway: the real provider path is python/intelligence/model_gateway.
@@ -17,10 +23,12 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 STUB_MODEL = "local-stub-instruct"
+STUB_CALL = re.compile(r"\[\[stub:call ([A-Za-z0-9_-]+) (\{.*?\})\]\]", re.DOTALL)
 
 
 def completion(body: dict[str, Any]) -> dict[str, Any]:
@@ -51,14 +59,50 @@ def completion(body: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _text(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(str(part.get("text", "")) for part in content if isinstance(part, dict))
+    return ""
+
+
+def scripted_call(body: dict[str, Any]) -> tuple[str, str] | None:
+    """The tool call a `[[stub:call ...]]` user turn scripts, when that tool is offered."""
+    messages = [m for m in body.get("messages") or [] if isinstance(m, dict)]
+    if not messages or messages[-1].get("role") != "user":
+        return None
+    match = STUB_CALL.search(_text(messages[-1].get("content")))
+    offered = {
+        str((tool.get("function") or {}).get("name"))
+        for tool in body.get("tools") or []
+        if isinstance(tool, dict)
+    }
+    if match is None or match.group(1) not in offered:
+        return None
+    return match.group(1), match.group(2)
+
+
+def trailing_tool_results(body: dict[str, Any]) -> int:
+    count = 0
+    for message in reversed([m for m in body.get("messages") or [] if isinstance(m, dict)]):
+        if message.get("role") != "tool":
+            break
+        count += 1
+    return count
+
+
 def completion_stream(body: dict[str, Any]) -> bytes:
     """The completion as the OpenAI streaming wire: role, content deltas, stop, usage, done."""
     whole = completion(body)
+    results = trailing_tool_results(body)
+    if results:
+        whole["choices"][0]["message"]["content"] = f"stub completion: {results} tool result(s) received"
     text = whole["choices"][0]["message"]["content"]
     head, _, tail = text.partition(": ")
     frame = {"id": whole["id"], "object": "chat.completion.chunk", "model": whole["model"]}
 
-    def chunk(delta: dict[str, str], finish_reason: str | None = None) -> dict[str, Any]:
+    def chunk(delta: dict[str, Any], finish_reason: str | None = None) -> dict[str, Any]:
         return {**frame, "choices": [{"index": 0, "delta": delta, "finish_reason": finish_reason}]}
 
     chunks = [
@@ -67,6 +111,20 @@ def completion_stream(body: dict[str, Any]) -> bytes:
         chunk({"content": tail}),
         chunk({}, "stop"),
     ]
+    scripted = scripted_call(body)
+    if scripted is not None:
+        name, arguments = scripted
+        call = {
+            "index": 0,
+            "id": "call_stub_1",
+            "type": "function",
+            "function": {"name": name, "arguments": ""},
+        }
+        chunks = [
+            chunk({"role": "assistant", "content": None, "tool_calls": [call]}),
+            chunk({"tool_calls": [{"index": 0, "function": {"arguments": arguments}}]}),
+            chunk({}, "tool_calls"),
+        ]
     options = body.get("stream_options")
     if isinstance(options, dict) and options.get("include_usage"):
         chunks.append({**frame, "choices": [], "usage": whole["usage"]})

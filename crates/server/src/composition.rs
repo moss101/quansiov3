@@ -39,6 +39,10 @@ pub struct ServerConfig {
     pub secrets_key_file: Option<String>,
     /// The key reference recorded on sealed secrets.
     pub secrets_key_ref: String,
+    /// `QUANSIO_INTELLIGENCE_ENDPOINT`: the intelligence process (`http://host:port` or
+    /// `unix:///path`) that builds each turn's context and fulfils its model calls (APP-001).
+    /// Unset, turns are answered by the conformance stub, and startup says so.
+    pub intelligence_endpoint: Option<String>,
 }
 
 impl ServerConfig {
@@ -94,7 +98,11 @@ impl ServerConfig {
             .ok()
             .filter(|value| !value.is_empty())
             .unwrap_or_else(|| "local:master-v1".to_string());
+        let intelligence_endpoint = env::var("QUANSIO_INTELLIGENCE_ENDPOINT")
+            .ok()
+            .filter(|value| !value.is_empty());
         Ok(Self {
+            intelligence_endpoint,
             secrets_key_file,
             secrets_key_ref,
             database_url,
@@ -175,6 +183,30 @@ impl Composition {
                 config.secrets_key_ref
             );
             api = api.with_key_provider(Arc::new(keys));
+        }
+        if let Some(endpoint) = config.intelligence_endpoint.as_deref() {
+            let settings = crate::intelligence::model_source::ModelCallSettings::load()?;
+            let client = crate::intelligence::IntelligenceClient::connect_lazy(endpoint)
+                .map_err(|error| format!("QUANSIO_INTELLIGENCE_ENDPOINT: {error}"))?;
+            let context = Arc::new(crate::runtime::context_bridge::GatewayContextBridge::new(
+                client.clone(),
+                settings.deadline,
+            ));
+            eprintln!(
+                "quansio-server: QUANSIO_INTELLIGENCE_ENDPOINT={endpoint}: turns are answered through the intelligence gateway"
+            );
+            api = api.with_model_source(Arc::new(
+                crate::intelligence::model_source::GatewayModelSource::new(
+                    pool.clone(),
+                    client,
+                    context,
+                    settings,
+                ),
+            ));
+        } else {
+            eprintln!(
+                "quansio-server: QUANSIO_INTELLIGENCE_ENDPOINT is not set: turns are answered by the conformance stub, not a model"
+            );
         }
         if let Some(root) = config.web_root.as_deref() {
             let root = crate::api::web::WebRoot::new(root)?;

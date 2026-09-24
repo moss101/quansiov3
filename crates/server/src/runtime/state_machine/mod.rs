@@ -210,6 +210,17 @@ pub enum RuntimeError {
         /// Status the record held.
         status: String,
     },
+    /// The intelligence plane could not serve a model call: the context build or the model
+    /// call was refused or failed, with the DOMAIN.md §15 code it gave (APP-001).
+    #[error("intelligence plane: {code}: {detail}")]
+    Intelligence {
+        /// The §15 code (`PROVIDER_UNAVAILABLE`, `ROUTE_UNAVAILABLE`, `VALIDATION_BOUNDS`, …).
+        code: &'static str,
+        /// Whether trying the call again later may succeed.
+        retryable: bool,
+        /// What the plane said.
+        detail: String,
+    },
     /// A caller-supplied argument is invalid.
     #[error("invalid runtime argument: {0}")]
     InvalidArgument(String),
@@ -236,6 +247,7 @@ impl RuntimeError {
             Self::CapabilityWideningRejected { .. } => "CAPABILITY_DENIED",
             Self::NotFound { .. } => "NOT_FOUND",
             Self::InvalidArgument(_) | Self::Json(_) => "VALIDATION_SCHEMA",
+            Self::Intelligence { code, .. } => code,
             Self::Database(_)
             | Self::Event(_)
             | Self::Schema(_)
@@ -243,6 +255,29 @@ impl RuntimeError {
             | Self::UnknownState { .. }
             | Self::ProtocolState(_)
             | Self::SeamNotAvailable { .. } => "INTERNAL",
+        }
+    }
+
+    /// An intelligence-plane failure carrying `code` when it is a §15 code a model call or a
+    /// context build can give, `INTERNAL` otherwise.
+    #[must_use]
+    pub fn intelligence(code: &str, retryable: bool, detail: impl Into<String>) -> Self {
+        let code = match code {
+            "PROVIDER_UNAVAILABLE" => "PROVIDER_UNAVAILABLE",
+            "PROVIDER_RATE_LIMITED" => "PROVIDER_RATE_LIMITED",
+            "PROVIDER_REFUSAL" => "PROVIDER_REFUSAL",
+            "ROUTE_UNAVAILABLE" => "ROUTE_UNAVAILABLE",
+            "DLP_DENIED" => "DLP_DENIED",
+            "VALIDATION_SCHEMA" => "VALIDATION_SCHEMA",
+            "VALIDATION_BOUNDS" => "VALIDATION_BOUNDS",
+            "CONFLICT_STATE" => "CONFLICT_STATE",
+            "TOOL_TIMEOUT" => "TOOL_TIMEOUT",
+            _ => "INTERNAL",
+        };
+        Self::Intelligence {
+            code,
+            retryable,
+            detail: detail.into(),
         }
     }
 

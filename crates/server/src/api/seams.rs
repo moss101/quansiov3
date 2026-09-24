@@ -132,6 +132,8 @@ impl ConformanceStubModel {
                     stop_reason: stop_reason.to_string(),
                     latency_ms,
                     usage: json!({ "input": 0, "output": 0 }),
+                    route_id: None,
+                    context_projection_id: None,
                 },
             )
             .await;

@@ -1,0 +1,22 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3/python
+configfile: pyproject.toml
+collecting ... collected 29 items / 26 deselected / 3 selected
+
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_call_started_and_completed_carry_the_route_that_served_the_call[anthropic] PASSED [ 33%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_call_started_and_completed_carry_the_route_that_served_the_call[openai] PASSED [ 66%]
+python/tests/intelligence/test_model_gateway_tool_turns.py::test_call_started_and_completed_carry_the_route_that_served_the_call[openai_compatible] PASSED [100%]
+
+======================= 3 passed, 26 deselected in 1.57s =======================
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3
+collecting ... collected 3 items / 2 deselected / 1 selected
+
+tests/integration/test_dev_stack.py::test_bootstrap_smoke PASSED         [100%]
+
+======================= 1 passed, 2 deselected in 3.74s ========================
+exit=0

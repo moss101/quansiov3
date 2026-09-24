@@ -14,6 +14,8 @@
 //! Python only proposes: every method here returns a proposal or a classification for the Rust
 //! runtime to act on; none commits state.
 
+pub mod model_source;
+
 use std::time::Duration;
 
 use prost::Message as _;
@@ -143,6 +145,38 @@ impl IntelligenceClient {
                 .connect()
                 .await
                 .map_err(|error| IntelligenceError::Unreachable(error.to_string()))?
+        } else {
+            return Err(IntelligenceError::Endpoint(endpoint.to_string()));
+        };
+        Ok(Self {
+            inner: IntelligenceGatewayClient::new(channel),
+        })
+    }
+
+    /// A client that connects on first use, so a server can start before the intelligence
+    /// process is up; an unreachable process then fails the call, not the startup.
+    ///
+    /// # Errors
+    /// [`IntelligenceError::Endpoint`] for an endpoint of another shape.
+    pub fn connect_lazy(endpoint: &str) -> Result<Self, IntelligenceError> {
+        let channel = if let Some(path) = endpoint.strip_prefix("unix://") {
+            if !path.starts_with('/') {
+                return Err(IntelligenceError::Endpoint(endpoint.to_string()));
+            }
+            let path = path.to_string();
+            Endpoint::try_from("http://[::1]:1")
+                .map_err(|_| IntelligenceError::Endpoint(endpoint.to_string()))?
+                .connect_with_connector_lazy(tower::service_fn(move |_: Uri| {
+                    let path = path.clone();
+                    async move {
+                        let stream = tokio::net::UnixStream::connect(path).await?;
+                        Ok::<_, std::io::Error>(hyper_util::rt::TokioIo::new(stream))
+                    }
+                }))
+        } else if endpoint.starts_with("http://") {
+            Endpoint::from_shared(endpoint.to_string())
+                .map_err(|_| IntelligenceError::Endpoint(endpoint.to_string()))?
+                .connect_lazy()
         } else {
             return Err(IntelligenceError::Endpoint(endpoint.to_string()));
         };

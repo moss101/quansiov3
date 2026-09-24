@@ -250,3 +250,30 @@ def test_a_registry_that_cannot_be_read_fails_closed(tmp_path: Path) -> None:
     assert refused.value.code is GatewayErrorCode.INTERNAL
     with pytest.raises(GatewayError):
         RegistryToolSchemaSource.load(tmp_path / "missing.yaml")
+
+
+# -- the route on the stream ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize("kind", KINDS, ids=lambda kind: kind.value)
+def test_call_started_and_completed_carry_the_route_that_served_the_call(
+    stub: StubProvider, kind: ProviderKind
+) -> None:
+    """DOMAIN.md §11.1 `call_started {route}` / `call_completed {route, ...}`: the runtime records
+    which provider and model answered from these, never from its own guess."""
+    gateway = _gateway(stub)
+    model_id = catalog_model_for_kind(gateway.catalog, kind)
+    report = run_scenario(gateway, model_catalog_id=model_id, scenario="text")
+    spec = gateway.catalog.model(model_id)
+    for event_kind in (
+        intelligence_pb2.ModelEvent.KIND_CALL_STARTED,
+        intelligence_pb2.ModelEvent.KIND_CALL_COMPLETED,
+    ):
+        (event,) = report.of_kind(event_kind)
+        assert event.HasField("route"), event
+        assert event.route.id == event.route_id and event.route.id.startswith("mr_")
+        assert event.route.provider == gateway.catalog.provider_for(spec).name
+        assert event.route.model_id == spec.model_id
+        assert event.route.chosen_by
+    for event in report.of_kind(intelligence_pb2.ModelEvent.KIND_DELTA):
+        assert not event.HasField("route")

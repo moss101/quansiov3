@@ -43,6 +43,7 @@ import subprocess
 import urllib.request
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import psycopg
 import pytest
@@ -213,7 +214,7 @@ def _http_status(url: str) -> int:
         return int(response.status)
 
 
-def _stub_completion(*, stream: bool = False) -> str:
+def _stub_completion(*, stream: bool = False, **extra: object) -> str:
     body: dict[str, object] = {
         "model": "local-instruct",
         "messages": [{"role": "user", "content": "hello dev"}],
@@ -221,6 +222,7 @@ def _stub_completion(*, stream: bool = False) -> str:
     if stream:
         # What the model gateway always sends (DOMAIN §11.1: `stream: true`).
         body.update(stream=True, stream_options={"include_usage": True})
+    body.update(extra)
     payload = json.dumps(body).encode()
     request = urllib.request.Request(
         f"http://{STUB_PROVIDER_HOST}:{STUB_PROVIDER_PORT}/v1/chat/completions",
@@ -231,6 +233,12 @@ def _stub_completion(*, stream: bool = False) -> str:
     with urllib.request.urlopen(request, timeout=5) as response:
         assert response.status == 200
         return response.read().decode()
+
+
+def _stub_chunks(streamed: str) -> list[dict[str, Any]]:
+    frames = [line.removeprefix("data: ") for line in streamed.split("\n\n") if line]
+    assert frames[-1] == "[DONE]", streamed
+    return [json.loads(frame) for frame in frames[:-1]]
 
 
 def test_bootstrap_smoke(dev_env_file: Path) -> None:
@@ -290,6 +298,31 @@ def test_bootstrap_smoke(dev_env_file: Path) -> None:
     assert text == json.loads(first_completion)["choices"][0]["message"]["content"]
     assert any(c["finish_reason"] == "stop" for chunk in chunks for c in chunk["choices"])
     assert chunks[-1]["usage"]["completion_tokens"] > 0
+
+    # The walking skeleton's tool round (APP-001): a scripted call to an offered tool, then text
+    # once the conversation ends in its result; a call to a tool that was not offered is not made.
+    offered = [{"type": "function", "function": {"name": "fs__read"}}]
+    ask = {"role": "user", "content": 'read it [[stub:call fs__read {"path": "/a"}]]'}
+    called = _stub_chunks(_stub_completion(stream=True, tools=offered, messages=[ask]))
+    calls = [c["delta"]["tool_calls"] for chunk in called for c in chunk["choices"] if "tool_calls" in c["delta"]]
+    assert calls[0][0]["function"]["name"] == "fs__read"
+    assert "".join(call[0]["function"].get("arguments", "") for call in calls) == '{"path": "/a"}'
+    assert any(c["finish_reason"] == "tool_calls" for chunk in called for c in chunk["choices"])
+    answered = _stub_chunks(
+        _stub_completion(
+            stream=True,
+            tools=offered,
+            messages=[
+                ask,
+                {"role": "assistant", "content": None, "tool_calls": [{"id": "c1", "type": "function"}]},
+                {"role": "tool", "tool_call_id": "c1", "content": "notes"},
+            ],
+        )
+    )
+    text = "".join(c["delta"].get("content") or "" for chunk in answered for c in chunk["choices"])
+    assert text == "stub completion: 1 tool result(s) received"
+    unoffered = _stub_chunks(_stub_completion(stream=True, messages=[ask]))
+    assert not any("tool_calls" in c["delta"] for chunk in unoffered for c in chunk["choices"])
 
 
 def test_reset_then_reseed_is_deterministic(dev_env_file: Path) -> None:

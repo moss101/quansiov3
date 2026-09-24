@@ -364,6 +364,14 @@ impl ApiState {
         })
     }
 
+    /// Replace the walking-skeleton model with a real proposal source — the intelligence
+    /// gateway (`intelligence::model_source::GatewayModelSource`) in the deployable (APP-001).
+    #[must_use]
+    pub fn with_model_source(mut self, model: Arc<dyn ModelProposalSource>) -> Self {
+        self.model = model;
+        self
+    }
+
     /// Install the key provider that seals and opens secret handles (EXEC-007): webhook
     /// signing secrets (APP-015). Without one, creating a webhook fails closed.
     #[must_use]

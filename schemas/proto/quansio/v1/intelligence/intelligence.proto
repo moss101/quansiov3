@@ -76,6 +76,9 @@ message ModelEvent {
   Usage usage = 10;
   uint64 latency_ms = 11;
   int64 cost_estimate_minor_units = 12;
+  // DOMAIN.md §11.1 `call_started {route}` / `call_completed {route, ...}`: the route that served
+  // the call (provider, model, request class, rule), set on those two kinds.
+  ModelRoute route = 13;
 }
 
 message Usage {

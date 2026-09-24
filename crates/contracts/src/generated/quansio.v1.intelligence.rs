@@ -127,6 +127,10 @@ pub struct ModelEvent {
     pub latency_ms: u64,
     #[prost(int64, tag = "12")]
     pub cost_estimate_minor_units: i64,
+    /// DOMAIN.md §11.1 `call_started {route}` / `call_completed {route, ...}`: the route that served
+    /// the call (provider, model, request class, rule), set on those two kinds.
+    #[prost(message, optional, tag = "13")]
+    pub route: ::core::option::Option<ModelRoute>,
 }
 /// Nested message and enum types in `ModelEvent`.
 pub mod model_event {

@@ -89,7 +89,7 @@ class RenderedMessage(_message.Message):
     def __init__(self, schema_version: _Optional[str] = ..., role: _Optional[_Union[RenderedMessage.Role, str]] = ..., trust_level: _Optional[str] = ..., content_json: _Optional[str] = ..., cache_hint: _Optional[str] = ...) -> None: ...
 
 class ModelEvent(_message.Message):
-    __slots__ = ("schema_version", "call_id", "kind", "route_id", "text_delta", "tool_call_id", "tool_name", "tool_args_json", "stop_reason", "error", "usage", "latency_ms", "cost_estimate_minor_units")
+    __slots__ = ("schema_version", "call_id", "kind", "route_id", "text_delta", "tool_call_id", "tool_name", "tool_args_json", "stop_reason", "error", "usage", "latency_ms", "cost_estimate_minor_units", "route")
     class Kind(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
         __slots__ = ()
         KIND_UNSPECIFIED: _ClassVar[ModelEvent.Kind]
@@ -123,6 +123,7 @@ class ModelEvent(_message.Message):
     USAGE_FIELD_NUMBER: _ClassVar[int]
     LATENCY_MS_FIELD_NUMBER: _ClassVar[int]
     COST_ESTIMATE_MINOR_UNITS_FIELD_NUMBER: _ClassVar[int]
+    ROUTE_FIELD_NUMBER: _ClassVar[int]
     schema_version: str
     call_id: str
     kind: ModelEvent.Kind
@@ -136,7 +137,8 @@ class ModelEvent(_message.Message):
     usage: Usage
     latency_ms: int
     cost_estimate_minor_units: int
-    def __init__(self, schema_version: _Optional[str] = ..., call_id: _Optional[str] = ..., kind: _Optional[_Union[ModelEvent.Kind, str]] = ..., route_id: _Optional[str] = ..., text_delta: _Optional[str] = ..., tool_call_id: _Optional[str] = ..., tool_name: _Optional[str] = ..., tool_args_json: _Optional[str] = ..., stop_reason: _Optional[_Union[ModelStopReason, str]] = ..., error: _Optional[_Union[ModelError, _Mapping]] = ..., usage: _Optional[_Union[Usage, _Mapping]] = ..., latency_ms: _Optional[int] = ..., cost_estimate_minor_units: _Optional[int] = ...) -> None: ...
+    route: ModelRoute
+    def __init__(self, schema_version: _Optional[str] = ..., call_id: _Optional[str] = ..., kind: _Optional[_Union[ModelEvent.Kind, str]] = ..., route_id: _Optional[str] = ..., text_delta: _Optional[str] = ..., tool_call_id: _Optional[str] = ..., tool_name: _Optional[str] = ..., tool_args_json: _Optional[str] = ..., stop_reason: _Optional[_Union[ModelStopReason, str]] = ..., error: _Optional[_Union[ModelError, _Mapping]] = ..., usage: _Optional[_Union[Usage, _Mapping]] = ..., latency_ms: _Optional[int] = ..., cost_estimate_minor_units: _Optional[int] = ..., route: _Optional[_Union[ModelRoute, _Mapping]] = ...) -> None: ...
 
 class Usage(_message.Message):
     __slots__ = ("schema_version", "input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens")

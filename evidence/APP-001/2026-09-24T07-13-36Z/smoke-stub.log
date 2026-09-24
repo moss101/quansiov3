@@ -1,0 +1,14 @@
+mode=stub model_route=smoke-route wire_model=smoke-stub-model endpoint=http://127.0.0.1:59020/v1
+server startup lines:
+  quansio-server: QUANSIO_INTELLIGENCE_ENDPOINT=http://127.0.0.1:56694: turns are answered through the intelligence gateway
+
+[1] user: Read the notes. [[stub:call fs__read {"path": "/work/root/notes.md"}]]
+    PostMessage -> 200 in 0.3s
+    agent: stub completion: 1 tool result(s) received
+    run=run_01M393QRG4TKDBF6TA00WRNBR6 status=RUNNING
+
+model_calls (run | provider | model | stop | usage | projection prefix):
+  run_01M393QRG4TKDBF6TA00WRNBR6|openai-compatible|smoke-stub-model|tool_use|{"input": 26, "output": 11, "cache_read": 0, "cache_write": 0}|ctx_
+  run_01M393QRG4TKDBF6TA00WRNBR6|openai-compatible|smoke-stub-model|end_turn|{"input": 26, "output": 11, "cache_read": 0, "cache_write": 0}|ctx_
+tool_calls (tool | status | args):
+  fs.read|completed|{"path": "/work/root/notes.md"}

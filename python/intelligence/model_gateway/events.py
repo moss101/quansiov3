@@ -76,11 +76,12 @@ class EventFactory:
     (see `UsageTotals.combine`), so repeated or split usage payloads cannot double-count.
     """
 
-    __slots__ = ("_call_id", "_route_id", "_usage")
+    __slots__ = ("_call_id", "_route", "_route_id", "_usage")
 
-    def __init__(self, call_id: str, route_id: str) -> None:
+    def __init__(self, call_id: str, route_id: str, route: intelligence_pb2.ModelRoute | None = None) -> None:
         self._call_id = call_id
         self._route_id = route_id
+        self._route = route
         self._usage = UsageTotals()
 
     @property
@@ -106,7 +107,11 @@ class EventFactory:
         )
 
     def started(self) -> intelligence_pb2.ModelEvent:
-        return self._base(intelligence_pb2.ModelEvent.KIND_CALL_STARTED)
+        """`call_started {route}` (DOMAIN.md §11.1)."""
+        event = self._base(intelligence_pb2.ModelEvent.KIND_CALL_STARTED)
+        if self._route is not None:
+            event.route.CopyFrom(self._route)
+        return event
 
     def delta(self, text: str) -> intelligence_pb2.ModelEvent:
         event = self._base(intelligence_pb2.ModelEvent.KIND_DELTA)
@@ -147,6 +152,8 @@ class EventFactory:
         event = self._base(intelligence_pb2.ModelEvent.KIND_CALL_COMPLETED)
         event.latency_ms = latency_ms
         event.cost_estimate_minor_units = cost_estimate_minor_units
+        if self._route is not None:
+            event.route.CopyFrom(self._route)
         return event
 
 
