@@ -1,0 +1,12 @@
+COMPILES authority-widened
+KILLED authority-widened
+COMPILES exclusions-hidden
+KILLED exclusions-hidden
+COMPILES skill-trust-raised
+KILLED skill-trust-raised
+COMPILES registry-not-offered
+KILLED registry-not-offered
+COMPILES rust-authority-widened
+KILLED rust-authority-widened
+DONE
+exit=0
