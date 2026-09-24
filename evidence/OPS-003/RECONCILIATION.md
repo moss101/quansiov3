@@ -59,7 +59,7 @@ boundary. The only correlation that does is the gRPC `ScopeContext.correlation_i
 
 ## Plan
 
-- [ ] Rust:
+- [x] Rust:
   - `observability::context` (W3C trace context, task-local);
   - `observability::logging` (JSON tracing layer through the redacting writer, plus the ring);
   - `observability::metrics` (a global registry with Prometheus text);
@@ -69,11 +69,11 @@ boundary. The only correlation that does is the gRPC `ScopeContext.correlation_i
   - `/metrics`; `/v1/diagnostics/bundle`;
   - composition installs logging;
   - OTLP exporter behind `QUANSIO_OTLP_ENDPOINT`.
-- [ ] Python: the servicer continues the trace per RPC and logs start/end JSON lines through
+- [x] Python: the servicer continues the trace per RPC and logs start/end JSON lines through
   the redacting formatter; the app installs the JSON log handler.
-- [ ] Desktop: the server client sends a `traceparent` per command; the diagnostics export
+- [x] Desktop: the server client sends a `traceparent` per command; the diagnostics export
   merges the server bundle with desktop frames, redacted and bounded.
-- [ ] Tests:
+- [x] Tests:
   - trace propagation: desktop-style `traceparent` → server spans → the Python RPC logs share
     the trace id, with parent links, through the real process;
   - secret canary scan: the canary as a provider credential and in message content; absent
