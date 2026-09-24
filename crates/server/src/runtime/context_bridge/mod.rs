@@ -18,6 +18,7 @@
 
 pub mod gateway;
 pub mod port;
+pub mod store;
 
 use thiserror::Error;
 
@@ -27,6 +28,7 @@ pub use port::{
     ReceivedProjection, SegmentRequest, SegmentRole, SegmentSource, UnavailableContextBridge,
     ValidatedProjection,
 };
+pub use store::record_projection;
 
 /// Repository path of this module's canonical owner.
 pub const CONTEXT_BRIDGE_OWNER: &str = "crates/server/src/runtime/context_bridge";

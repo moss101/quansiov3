@@ -3,7 +3,8 @@
 //! HTTP `PostMessage` → runtime turn → Context plane (`BuildContext`) → model gateway
 //! (`FulfillModel`) → the dev stack's stub provider → `fs.read` tool proposal → capability, policy
 //! and the Effect Ledger → a second model call that carries the tool result → the agent's reply →
-//! read projections and a WebSocket event. The model source is the deployable's
+//! read projections (including the inspector's view of what the model saw) and a WebSocket
+//! event. The model source is the deployable's
 //! [`GatewayModelSource`]; the Python service runs as its own process.
 //!
 //! The provider is the dev stub (deterministic; the conformance-stub provider the acceptance
@@ -227,6 +228,81 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
     assert_eq!(
         reply["content_blocks"][0]["text"], "stub completion: 1 tool result(s) received",
         "{messages}"
+    );
+
+    // The inspector shows what the model saw: each model call names its projection, the
+    // projections are recorded, and the turn shows the latest one's labelled sources.
+    let timeline: Value = http
+        .get(format!("http://{addr}/v1/runs/{run_id}/timeline"))
+        .header("x-quansio-tenant", TENANT)
+        .header("x-quansio-user", USER)
+        .send()
+        .await
+        .expect("timeline")
+        .json()
+        .await
+        .expect("json");
+    let turn = &timeline["turns"][0];
+    let called: Vec<&str> = turn["steps"]
+        .as_array()
+        .expect("steps")
+        .iter()
+        .filter_map(|step| step["model_call"]["context_projection_id"].as_str())
+        .collect();
+    assert_eq!(
+        called,
+        [recorded[0].3.as_str(), recorded[1].3.as_str()],
+        "{timeline}"
+    );
+    let context = &turn["context"];
+    assert_eq!(
+        context["id"], recorded[1].3,
+        "the turn shows its latest projection: {timeline}"
+    );
+    let sources: Vec<(String, String)> = context["sources"]
+        .as_array()
+        .expect("sources")
+        .iter()
+        .map(|source| {
+            (
+                source["kind"].as_str().unwrap_or_default().to_string(),
+                source["trust_level"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .to_string(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        sources,
+        [
+            ("system".to_string(), "trusted_system".to_string()),
+            ("thread".to_string(), "trusted_user".to_string()),
+            ("thread".to_string(), "agent_generated".to_string()),
+            ("tool_result".to_string(), "untrusted_external".to_string()),
+        ],
+        "{timeline}"
+    );
+    assert!(
+        context["token_ledger"]["used"].as_u64().unwrap_or(0) > 0,
+        "{timeline}"
+    );
+    let mut tx = pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant");
+    let recorded_projections: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM context_projections WHERE tenant_id = $1 AND run_id = $2",
+    )
+    .bind(TENANT)
+    .bind(&run_id)
+    .fetch_one(&mut *tx)
+    .await
+    .expect("projections");
+    tx.commit().await.expect("commit");
+    assert_eq!(
+        recorded_projections, 2,
+        "every model call's projection is recorded"
     );
 
     // The turn's events reach a WebSocket subscriber.
