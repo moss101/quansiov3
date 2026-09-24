@@ -469,6 +469,7 @@ async fn decider(
         tenant_id: identity.tenant_id.clone(),
         user_id: Some(user_id.to_string()),
         session_id: None,
+        principal: None,
     };
     super::rbac::Authorization::check(
         state.pool(),

@@ -116,6 +116,8 @@ pub enum Prefix {
     WebhookDelivery,
     /// `ctx_` context projection (minted by the Context plane, INT-005).
     ContextProjection,
+    /// `dgr_` directory group (a SCIM group of the tenant's IdP, OPS-001).
+    DirectoryGroup,
 }
 
 impl Prefix {
@@ -174,6 +176,7 @@ impl Prefix {
             Self::Session => "ses_",
             Self::WebhookDelivery => "whd_",
             Self::ContextProjection => "ctx_",
+            Self::DirectoryGroup => "dgr_",
         }
     }
 
@@ -234,6 +237,7 @@ impl Prefix {
             Self::Session => "SESSION",
             Self::WebhookDelivery => "WEBHOOK_DELIVERY",
             Self::ContextProjection => "CONTEXT_PROJECTION",
+            Self::DirectoryGroup => "DIRECTORY_GROUP",
         }
     }
 
@@ -292,6 +296,7 @@ impl Prefix {
             Self::Session,
             Self::WebhookDelivery,
             Self::ContextProjection,
+            Self::DirectoryGroup,
         ]
     }
 }

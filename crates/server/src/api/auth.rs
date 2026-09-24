@@ -96,7 +96,7 @@ fn auth_error(error: AuthError, correlation: &str) -> ApiError {
     }
 }
 
-fn session_json(session: &IssuedSession, user: Option<&SignedInUser>) -> Value {
+pub(crate) fn session_json(session: &IssuedSession, user: Option<&SignedInUser>) -> Value {
     let mut value = json!({
         "session_id": session.session_id,
         "user_id": session.user_id,
@@ -113,7 +113,7 @@ fn session_json(session: &IssuedSession, user: Option<&SignedInUser>) -> Value {
     value
 }
 
-fn client_kind(headers: &HeaderMap) -> &'static str {
+pub(crate) fn client_kind(headers: &HeaderMap) -> &'static str {
     match headers
         .get("x-quansio-client")
         .and_then(|value| value.to_str().ok())

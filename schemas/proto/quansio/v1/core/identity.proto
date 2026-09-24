@@ -67,6 +67,7 @@ enum EntityPrefix {
   ENTITY_PREFIX_SESSION = 49;  // ses_ (APP-002: authenticated session)
   ENTITY_PREFIX_WEBHOOK_DELIVERY = 50;  // whd_ (APP-015: webhook delivery ledger)
   ENTITY_PREFIX_CONTEXT_PROJECTION = 51;  // ctx_ (INT-005: minted by the Context plane)
+  ENTITY_PREFIX_DIRECTORY_GROUP = 52;  // dgr_ (OPS-001: a SCIM group of the tenant's IdP)
 }
 
 // Tenant/workspace scope carried by every tenant-scoped contract.

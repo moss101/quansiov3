@@ -1,0 +1,27 @@
+# Quansio V8.1 enterprise identity (OPS-001, DOMAIN.md §2). Per-tenant SSO connections, group
+# mappings and service principals are tenant data set through commands; this file holds the
+# deployment-wide limits and policy they are checked against.
+version: 1
+sso:
+  # How long an SSO authorization request (state, nonce, PKCE verifier) stays valid.
+  state_ttl_seconds: 600
+  # How long an issuer's discovery document and JWKS are reused before they are fetched again.
+  metadata_cache_seconds: 600
+  # Allowed clock difference with the IdP for exp / nbf / iat.
+  clock_skew_seconds: 60
+  # Timeout for each request to the IdP (discovery, JWKS, token).
+  http_timeout_seconds: 10
+  # Issuers must be https. Plain http is admitted only for loopback issuers, and only when this is
+  # true (local development and the deterministic tests), so a tenant-configured issuer can never
+  # make the server call its own loopback services.
+  allow_loopback_http_issuers: false
+service_principals:
+  # argon2id parameters for the stored key hash (OWASP minimum: 19 MiB, 2 passes, 1 lane).
+  argon2_memory_kib: 19456
+  argon2_iterations: 2
+  argon2_parallelism: 1
+  # Command families a principal can never hold: approval decisions stay with people.
+  ungrantable_scopes: [Trust]
+scim:
+  # The largest page a SCIM list returns.
+  max_results: 200

@@ -43,6 +43,9 @@ type SessionRow = (
     Option<DateTime<Utc>>,
 );
 
+/// A session's standing: revocation, account status, membership status in its tenant.
+type SessionStanding = (Option<DateTime<Utc>>, Option<String>, Option<String>);
+
 /// Environment variable carrying the PKCS#8 (base64) P-256 signing key.
 pub const SIGNING_KEY_ENV: &str = "QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64";
 
@@ -613,6 +616,30 @@ impl AuthStore {
         auth_method: &str,
         client: &str,
     ) -> Result<IssuedSession, AuthError> {
+        if auth_method != "sso" {
+            // An organisation that enforces single sign-on (OPS-001) admits its non-owners only
+            // through it; owners keep the other methods as break-glass.
+            let mut tx = self.begin_auth_transaction().await?;
+            sqlx::query("SELECT set_config('quansio.tenant_id', $1, true)")
+                .bind(tenant_id)
+                .execute(&mut *tx)
+                .await?;
+            let refused: bool = sqlx::query_scalar(
+                "SELECT EXISTS (SELECT 1 FROM sso_connections WHERE tenant_id = $1 AND enforced \
+                 AND status = 'active') AND NOT EXISTS (SELECT 1 FROM tenant_memberships \
+                 WHERE tenant_id = $1 AND user_id = $2 AND role = 'owner' AND status = 'active')",
+            )
+            .bind(tenant_id)
+            .bind(user_id)
+            .fetch_one(&mut *tx)
+            .await?;
+            tx.commit().await?;
+            if refused {
+                return Err(AuthError::InvalidToken(
+                    "this organization requires single sign-on".to_string(),
+                ));
+            }
+        }
         let family_id =
             CanonicalId::generate(Prefix::Session, &mut UlidGenerator::new()).to_string();
         self.insert_session(user_id, tenant_id, &family_id, auth_method, client, None)
@@ -795,8 +822,21 @@ impl AuthStore {
     pub async fn authenticate(&self, bearer: &str) -> Result<SessionScope, AuthError> {
         let claims = verify_access_token(&self.key, bearer, Utc::now())?;
         let mut tx = self.begin_auth_transaction().await?;
-        let revoked: Option<(Option<DateTime<Utc>>,)> = sqlx::query_as(
-            "SELECT revoked_at FROM sessions WHERE id = $1 AND tenant_id = $2 AND user_id = $3",
+        sqlx::query("SELECT set_config('quansio.tenant_id', $1, true)")
+            .bind(&claims.tid)
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query("SELECT set_config('quansio.user_id', $1, true)")
+            .bind(&claims.sub)
+            .execute(&mut *tx)
+            .await?;
+        // The session, the account and the membership are all read per request, so revoking a
+        // session, suspending an account or deprovisioning a membership (OPS-001) all take
+        // effect on the next request.
+        let standing: Option<SessionStanding> = sqlx::query_as(
+            "SELECT s.revoked_at, (SELECT status FROM users WHERE id = s.user_id), \
+             (SELECT status FROM tenant_memberships WHERE tenant_id = s.tenant_id AND user_id = s.user_id) \
+             FROM sessions s WHERE s.id = $1 AND s.tenant_id = $2 AND s.user_id = $3",
         )
         .bind(&claims.sid)
         .bind(&claims.tid)
@@ -804,12 +844,20 @@ impl AuthStore {
         .fetch_optional(&mut *tx)
         .await?;
         tx.commit().await?;
-        match revoked {
+        match standing {
             None => Err(AuthError::InvalidToken(
                 "session does not exist".to_string(),
             )),
-            Some((Some(_),)) => Err(AuthError::InvalidToken("session was revoked".to_string())),
-            Some((None,)) => Ok(SessionScope {
+            Some((Some(_), _, _)) => {
+                Err(AuthError::InvalidToken("session was revoked".to_string()))
+            }
+            Some((None, user, _)) if user.as_deref() != Some("active") => Err(
+                AuthError::InvalidToken("the account is not active".to_string()),
+            ),
+            Some((None, _, membership)) if membership.as_deref() != Some("active") => Err(
+                AuthError::InvalidToken("the membership in this tenant is not active".to_string()),
+            ),
+            Some(_) => Ok(SessionScope {
                 user_id: claims.sub,
                 tenant_id: claims.tid,
                 session_id: claims.sid,

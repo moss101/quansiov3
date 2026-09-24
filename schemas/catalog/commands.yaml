@@ -10,6 +10,10 @@ commands:
   - CreateServicePrincipal
   - RevokeServicePrincipal
   - UpdateUserSettings
+  - ConfigureSso
+  - SetGroupRoleMapping
+  - RemoveGroupRoleMapping
+  - RevokeUserSessions
   Teammates:
   - CreateTeammate
   - UpdateTeammate

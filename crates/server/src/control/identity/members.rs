@@ -5,7 +5,9 @@
 //! decides on, so every change here commits with its `member.*` RuntimeEvent and its
 //! AuditEntry (DOMAIN.md §16) in one transaction. An invitation names an existing user
 //! by email or provisions a new one the way onboarding does (`invited` until they sign
-//! in); the last active owner of a tenant cannot be demoted, suspended or removed.
+//! in); the last active owner of a tenant cannot be demoted, suspended or removed. Suspending
+//! or removing a tenant membership revokes the user's sessions in the tenant in the same
+//! transaction (OPS-001).
 
 use quansio_core::{CanonicalId, CorrelationId, Prefix, UlidGenerator};
 use quansio_events::{Actor, EventDraft, EventError, EventType};
@@ -13,6 +15,7 @@ use serde_json::{json, Value};
 use sqlx::{Postgres, Row, Transaction};
 
 use super::auth::normalize_email;
+use super::enterprise::sessions::revoke_in;
 use super::{IdentityError, IdentityStore, IDENTITY_OWNER};
 use crate::audit::{append_in, AuditDraft};
 use crate::control::schema;
@@ -405,7 +408,14 @@ impl IdentityStore {
                     .bind(&next_status)
                     .execute(&mut **tx)
                     .await?;
+                    // A suspended member keeps no live session in the tenant (OPS-001).
+                    let revoked = if tenant_scope && next_status == "suspended" {
+                        revoke_in(tx, &tenant, &user_id, "membership suspended").await?
+                    } else {
+                        0
+                    };
                     stage(tx, batch, &tenant, &by, &membership, "member.updated", json!({
+                        "revoked_sessions": revoked,
                         "membership_id": membership,
                         "user_id": user_id,
                         "scope": if tenant_scope { "tenant" } else { "workspace" },
@@ -492,7 +502,14 @@ impl IdentityStore {
                     .bind(&membership)
                     .execute(&mut **tx)
                     .await?;
+                    // A removed member keeps no live session in the tenant (OPS-001).
+                    let revoked = if tenant_scope {
+                        revoke_in(tx, &tenant, &user_id, "membership removed").await?
+                    } else {
+                        0
+                    };
                     stage(tx, batch, &tenant, &by, &membership, "member.removed", json!({
+                        "revoked_sessions": revoked,
                         "membership_id": membership,
                         "user_id": user_id,
                         "scope": if tenant_scope { "tenant" } else { "workspace" },
