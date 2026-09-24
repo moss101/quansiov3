@@ -7,6 +7,10 @@ and no randomness. Responses are a pure function of (path, request body): the sc
 selected by a `[[scenario:<name>]]` marker the caller places in a rendered message, and the
 tool name and arguments come from the request itself.
 
+It refuses what both first-party providers refuse, with the same `400 invalid_request_error`, so
+the offline suite fails where a live provider would: a tool name outside `[A-Za-z0-9_-]{1,64}`,
+and a tool result that does not answer a tool call made by the assistant turn before it.
+
 This stub is test infrastructure. It is **never** real-boundary evidence for INT-002: the live
 provider suite in `python/tests/intelligence/test_model_gateway_live.py` is the only
 real-boundary proof, and it is gated on `QUANSIO_TEST_ANTHROPIC_API_KEY`,
@@ -19,6 +23,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 import socket
 import threading
 import time
@@ -36,6 +41,7 @@ SCENARIOS: frozenset[str] = frozenset(
         "text",
         "usage_repeat",
         "tool_call",
+        "tool_result",
         "thinking",
         "refusal",
         "max_tokens",
@@ -214,6 +220,10 @@ class _StubHandler(BaseHTTPRequestHandler):
         self._state.record(RecordedCall(self.path, headers, body, scenario))
         if not _authorized(self.path, headers):
             self._send_json(401, {"error": {"type": "authentication_error", "message": "no key"}})
+            return
+        violation = _wire_violation(self.path, _decode(body))
+        if violation is not None:
+            self._send_json(400, {"error": {"type": "invalid_request_error", "message": violation}})
             return
         if scenario == "http_error_retryable":
             self._send_json(429, {"error": {"type": "rate_limit_error", "message": "slow down"}})
@@ -707,6 +717,72 @@ def _find_marker(node: object) -> str:
             if found:
                 return found
     return ""
+
+
+_WIRE_TOOL_NAME = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
+def _wire_violation(path: str, request: dict[str, Any]) -> str | None:
+    """What a first-party provider would refuse in this request, or `None`."""
+    tools = [tool for tool in _list(request.get("tools")) if isinstance(tool, dict)]
+    messages = [message for message in _list(request.get("messages")) if isinstance(message, dict)]
+    if path == _ANTHROPIC_PATH:
+        return _anthropic_violation([str(tool.get("name")) for tool in tools], messages)
+    if path == _OPENAI_PATH:
+        names = [str(_dict(tool.get("function")).get("name")) for tool in tools]
+        return _openai_violation(names, messages)
+    return None
+
+
+def _list(value: object) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
+def _dict(value: object) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _bad_name(names: list[str]) -> str | None:
+    for name in names:
+        if not _WIRE_TOOL_NAME.match(name):
+            return f"tool name {name!r} does not match ^[A-Za-z0-9_-]{{1,64}}$"
+    return None
+
+
+def _anthropic_violation(names: list[str], messages: list[dict[str, Any]]) -> str | None:
+    called: set[str] = set()
+    uses: list[str] = []
+    for message in messages:
+        blocks = [block for block in _list(message.get("content")) if isinstance(block, dict)]
+        if message.get("role") == "assistant":
+            tool_uses = [block for block in blocks if block.get("type") == "tool_use"]
+            called = {str(block.get("id")) for block in tool_uses}
+            uses.extend(str(block.get("name")) for block in tool_uses)
+            continue
+        for block in blocks:
+            if block.get("type") == "tool_result" and str(block.get("tool_use_id")) not in called:
+                return "tool_result block has no corresponding tool_use block in the previous message"
+        called = set()
+    if uses and not names:
+        return "requests which include tool_use blocks must define tools"
+    return _bad_name(names + uses)
+
+
+def _openai_violation(names: list[str], messages: list[dict[str, Any]]) -> str | None:
+    called: set[str] = set()
+    uses: list[str] = []
+    for message in messages:
+        role = message.get("role")
+        if role == "assistant":
+            calls = [call for call in _list(message.get("tool_calls")) if isinstance(call, dict)]
+            called = {str(call.get("id")) for call in calls}
+            uses.extend(str(_dict(call.get("function")).get("name")) for call in calls)
+        elif role == "tool":
+            if str(message.get("tool_call_id")) not in called:
+                return "messages with role 'tool' must be a response to a preceding message with 'tool_calls'"
+        else:
+            called = set()
+    return _bad_name(names + uses)
 
 
 def _authorized(path: str, headers: dict[str, str]) -> bool:

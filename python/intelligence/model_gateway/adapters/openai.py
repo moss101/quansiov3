@@ -7,7 +7,8 @@ Channel mapping (DOMAIN.md §11.1):
 
 * `ROLE_SYSTEM` → `system`, `ROLE_OPERATOR` → `developer` (the operator channel for the
   current model family), never a fake user turn.
-* `ROLE_TOOL` → a `tool` message carrying `tool_call_id`.
+* `ROLE_TOOL` → a `tool` message carrying `tool_call_id`, after the assistant message whose
+  `tool_calls` it answers.
 * Tools are sent as strict functions (`strict: true` plus an `additionalProperties: false`
   object schema), and `parallel_tool_calls` is disabled so one tool call maps to one runtime
   ToolCall.
@@ -48,6 +49,7 @@ from intelligence.model_gateway.content import to_openai_blocks
 from intelligence.model_gateway.credentials import SecretValue
 from intelligence.model_gateway.errors import GatewayError, GatewayErrorCode
 from intelligence.model_gateway.events import EventFactory, UsageTotals
+from intelligence.model_gateway.tooling import wire_tool_name
 
 _FINISH_REASONS: dict[str, int] = {
     "stop": intelligence_pb2.MODEL_STOP_REASON_END_TURN,
@@ -106,7 +108,7 @@ class OpenAIAdapter:
                 {
                     "type": "function",
                     "function": {
-                        "name": tool.name,
+                        "name": wire_tool_name(tool.name),
                         "description": tool.description,
                         "parameters": tool.strict_input_schema(),
                         "strict": True,
@@ -165,9 +167,22 @@ class OpenAIAdapter:
                     }
                 )
             elif message.role == ASSISTANT_ROLE:
-                messages.append(
-                    {"role": "assistant", "content": to_openai_blocks(message.content, allow_documents=False)}
-                )
+                assistant: dict[str, object] = {
+                    "role": "assistant",
+                    "content": to_openai_blocks(message.content, allow_documents=False),
+                }
+                if message.content.tool_calls:
+                    # Content is optional beside tool calls; an empty part list is not.
+                    assistant["content"] = assistant["content"] or None
+                    assistant["tool_calls"] = [
+                        {
+                            "id": call.id,
+                            "type": "function",
+                            "function": {"name": wire_tool_name(call.name), "arguments": call.args_json()},
+                        }
+                        for call in message.content.tool_calls
+                    ]
+                messages.append(assistant)
             elif message.role == USER_ROLE:
                 messages.append(
                     {"role": "user", "content": to_openai_blocks(message.content, allow_documents=False)}

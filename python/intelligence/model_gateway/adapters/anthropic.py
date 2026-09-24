@@ -48,6 +48,7 @@ from intelligence.model_gateway.content import to_anthropic_blocks
 from intelligence.model_gateway.credentials import SecretValue
 from intelligence.model_gateway.errors import GatewayError, GatewayErrorCode
 from intelligence.model_gateway.events import EventFactory, UsageTotals
+from intelligence.model_gateway.tooling import wire_tool_name
 
 ANTHROPIC_VERSION = "2023-06-01"
 MESSAGES_PATH = "/v1/messages"
@@ -109,7 +110,7 @@ class AnthropicAdapter:
         if context.tools:
             tools = [
                 {
-                    "name": tool.name,
+                    "name": wire_tool_name(tool.name),
                     "description": tool.description,
                     "input_schema": tool.strict_input_schema(),
                 }
@@ -240,6 +241,11 @@ def _render_messages(
             continue
         role = "assistant" if message.role == ASSISTANT_ROLE else "user"
         blocks = to_anthropic_blocks(message.content)
+        # The calls an assistant turn made, so the tool_result blocks after it answer them.
+        blocks.extend(
+            {"type": "tool_use", "id": call.id, "name": wire_tool_name(call.name), "input": dict(call.args)}
+            for call in message.content.tool_calls
+        )
         if hinted:
             _mark_cache(blocks)
         _append_turn(conversation, role, blocks)

@@ -1,0 +1,8 @@
+KILLED openai-assistant-tool-calls-dropped
+KILLED anthropic-tool-use-dropped
+KILLED names-not-encoded
+KILLED names-not-decoded
+KILLED production-schemas-empty
+KILLED stub-accepts-invalid-wire
+DONE
+exit=0

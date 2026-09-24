@@ -66,7 +66,12 @@ from intelligence.model_gateway.events import (
 from intelligence.model_gateway.ids import new_ulid
 from intelligence.model_gateway.routing import PolicyRouteSelector, RequestClass
 from intelligence.model_gateway.selection import CatalogPrimarySelector, RouteDecision, RouteSelector
-from intelligence.model_gateway.tooling import MappingToolSchemaSource, ToolSchemaSource, resolve_tools
+from intelligence.model_gateway.tooling import (
+    MappingToolSchemaSource,
+    RegistryToolSchemaSource,
+    ToolSchemaSource,
+    resolve_tools,
+)
 from intelligence.model_gateway.transport import (
     HttpRequest,
     HttpTransport,
@@ -215,11 +220,14 @@ class ModelGateway:
         tool_schemas: ToolSchemaSource | None = None,
         logger: logging.Logger | None = None,
     ) -> ModelGateway:
-        """Compose the production gateway from `config/models.yaml` and process environment."""
+        """Compose the production gateway from `config/models.yaml` and process environment.
+
+        The tools a model may be offered are the Tool Registry's (`config/tools.yaml`), read-only.
+        """
         return cls(
             catalog=ModelCatalog.load(catalog_path),
             environ=environ,
-            tool_schemas=tool_schemas,
+            tool_schemas=tool_schemas if tool_schemas is not None else RegistryToolSchemaSource.load(),
             transport=StdlibHttpTransport(),
             selector=CatalogPrimarySelector(),
             logger=logger,

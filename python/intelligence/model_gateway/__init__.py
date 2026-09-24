@@ -55,6 +55,7 @@ from intelligence.model_gateway.selection import (
 )
 from intelligence.model_gateway.tooling import (
     MappingToolSchemaSource,
+    RegistryToolSchemaSource,
     ToolDefinition,
     ToolSchemaSource,
 )
@@ -80,6 +81,7 @@ __all__ = [
     "PreparedCall",
     "ProviderConfig",
     "ProviderKind",
+    "RegistryToolSchemaSource",
     "RouteDecision",
     "RouteSelector",
     "SecretValue",
