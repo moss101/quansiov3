@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.61s
+     Running tests/skill_evolution.rs (target/debug/deps/skill_evolution-e21646dbc3314fa5)
+
+running 3 tests
+test no_tool_a_run_can_call_writes_a_skill ... ok
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+test an_evolution_candidate_without_a_passing_evaluation_cannot_be_approved ... ok
+test verified_experience_becomes_an_evaluated_candidate_and_never_production ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.79s
+
+exit=0
