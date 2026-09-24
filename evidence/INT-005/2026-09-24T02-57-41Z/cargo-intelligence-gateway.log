@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.13s
+     Running tests/intelligence_gateway.rs (target/debug/deps/intelligence_gateway-bae169a54c1fbf3a)
+
+running 4 tests
+test the_plane_refuses_a_turn_it_cannot_render ... ok
+test the_gateway_refuses_with_its_typed_errors ... ok
+test the_rust_runtime_calls_the_python_gateway_across_the_process_boundary ... ok
+test the_runtime_builds_its_turn_context_through_the_plane_and_calls_the_model_with_it ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+exit=0
