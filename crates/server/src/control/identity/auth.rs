@@ -536,29 +536,37 @@ impl AuthStore {
 
     async fn lookup_by_email(&self, email: &str) -> Result<Option<SignedInUser>, AuthError> {
         let mut tx = self.begin_auth_transaction().await?;
-        let user: Option<(String,)> =
-            sqlx::query_as("SELECT id FROM users WHERE primary_email = $1 AND status = 'active'")
-                .bind(email)
-                .fetch_optional(&mut *tx)
-                .await?;
-        let Some((user_id,)) = user else {
+        // Before the user and tenant context exist the users and memberships policies hide both,
+        // so the account and its sign-in tenant are found through id-only security-definer
+        // lookups (migration 0019); everything after reads under the ordinary policies.
+        let user: Option<String> = sqlx::query_scalar("SELECT identity_user_by_email($1)")
+            .bind(email)
+            .fetch_one(&mut *tx)
+            .await?;
+        let Some(user_id) = user else {
             return Ok(None);
         };
         sqlx::query("SELECT set_config('quansio.user_id', $1, true)")
             .bind(&user_id)
             .execute(&mut *tx)
             .await?;
+        let active: Option<bool> =
+            sqlx::query_scalar("SELECT status = 'active' FROM users WHERE id = $1")
+                .bind(&user_id)
+                .fetch_optional(&mut *tx)
+                .await?;
+        if active != Some(true) {
+            return Err(AuthError::InvalidToken(
+                "this account is not active".to_string(),
+            ));
+        }
         // The personal tenant first, else the earliest active membership; an invitation
         // (`invited`, APP-012's InviteMember) counts, and signing in is what accepts it.
-        let tenant: Option<(String,)> = sqlx::query_as(
-            "SELECT t.id FROM tenant_memberships m JOIN tenants t ON t.id = m.tenant_id \
-             WHERE m.user_id = $1 AND m.status IN ('active', 'invited') \
-             ORDER BY t.personal DESC, m.status ASC, m.created_at ASC LIMIT 1",
-        )
-        .bind(&user_id)
-        .fetch_optional(&mut *tx)
-        .await?;
-        let Some((tenant_id,)) = tenant else {
+        let tenant: Option<String> = sqlx::query_scalar("SELECT identity_sign_in_tenant($1)")
+            .bind(&user_id)
+            .fetch_one(&mut *tx)
+            .await?;
+        let Some(tenant_id) = tenant else {
             return Ok(None);
         };
         sqlx::query("SELECT set_config('quansio.tenant_id', $1, true)")
