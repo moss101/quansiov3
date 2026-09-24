@@ -27,8 +27,7 @@ if _version_not_supported:
 
 
 class IntelligenceGatewayStub:
-    """Served by python/intelligence. Rust is the only caller.
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -71,11 +70,15 @@ class IntelligenceGatewayStub:
                 request_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.EvaluationRequest.SerializeToString,
                 response_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.EvaluationReport.FromString,
                 _registered_method=True)
+        self.ProposeSkillCandidates = channel.unary_unary(
+                '/quansio.v1.intelligence.IntelligenceGateway/ProposeSkillCandidates',
+                request_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesRequest.SerializeToString,
+                response_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesResponse.FromString,
+                _registered_method=True)
 
 
 class IntelligenceGatewayServicer:
-    """Served by python/intelligence. Rust is the only caller.
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def FulfillModel(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -119,6 +122,12 @@ class IntelligenceGatewayServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ProposeSkillCandidates(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_IntelligenceGatewayServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -157,6 +166,11 @@ def add_IntelligenceGatewayServicer_to_server(servicer, server):
                     request_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.EvaluationRequest.FromString,
                     response_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.EvaluationReport.SerializeToString,
             ),
+            'ProposeSkillCandidates': grpc.unary_unary_rpc_method_handler(
+                    servicer.ProposeSkillCandidates,
+                    request_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesRequest.FromString,
+                    response_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesResponse.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
             'quansio.v1.intelligence.IntelligenceGateway', rpc_method_handlers)
@@ -166,8 +180,7 @@ def add_IntelligenceGatewayServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class IntelligenceGateway:
-    """Served by python/intelligence. Rust is the only caller.
-    """
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
     def FulfillModel(request,
@@ -348,6 +361,33 @@ class IntelligenceGateway:
             '/quansio.v1.intelligence.IntelligenceGateway/Evaluate',
             quansio_dot_v1_dot_intelligence_dot_service__pb2.EvaluationRequest.SerializeToString,
             quansio_dot_v1_dot_intelligence_dot_service__pb2.EvaluationReport.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ProposeSkillCandidates(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/quansio.v1.intelligence.IntelligenceGateway/ProposeSkillCandidates',
+            quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesRequest.SerializeToString,
+            quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesResponse.FromString,
             options,
             channel_credentials,
             insecure,

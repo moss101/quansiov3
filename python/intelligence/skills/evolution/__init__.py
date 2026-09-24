@@ -15,6 +15,13 @@ from intelligence.skills.evolution.candidates import (
     propose_from_pattern,
     propose_promotion,
 )
+from intelligence.skills.evolution.evaluate import (
+    CandidateEvaluation,
+    SkillCase,
+    default_thresholds,
+    evaluate_candidate,
+    synthesized_suite,
+)
 from intelligence.skills.evolution.patterns import (
     MIN_REPEATS,
     PATTERN_KINDS,
@@ -24,19 +31,27 @@ from intelligence.skills.evolution.patterns import (
     Pattern,
     detect_patterns,
 )
+from intelligence.skills.evolution.propose import EvolutionProposal, propose_candidates
 
 __all__ = [
     "MIN_REPEATS",
     "PATTERN_KINDS",
+    "CandidateEvaluation",
     "CandidatePatch",
     "EvidenceKind",
     "EvidenceRecord",
     "EvolutionError",
+    "EvolutionProposal",
     "Pattern",
     "PromotionProposal",
+    "SkillCase",
     "apply_to_production",
     "bind_evaluation",
+    "default_thresholds",
     "detect_patterns",
+    "evaluate_candidate",
+    "propose_candidates",
     "propose_from_pattern",
     "propose_promotion",
+    "synthesized_suite",
 ]
