@@ -1,0 +1,50 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3/python
+configfile: pyproject.toml
+collecting ... collected 40 items
+
+python/tests/intelligence/test_turn_context.py::test_instructions_come_first_then_the_conversation_in_order PASSED [  2%]
+python/tests/intelligence/test_turn_context.py::test_trust_is_the_sources_and_untrusted_content_is_bounded_data PASSED [  5%]
+python/tests/intelligence/test_turn_context.py::test_a_trust_hint_only_ever_lowers_trust PASSED [  7%]
+python/tests/intelligence/test_turn_context.py::test_untrusted_content_never_travels_in_an_instruction_channel PASSED [ 10%]
+python/tests/intelligence/test_turn_context.py::test_a_source_renders_only_in_its_roles[tool_result-user] PASSED [ 12%]
+python/tests/intelligence/test_turn_context.py::test_a_source_renders_only_in_its_roles[thread-system] PASSED [ 15%]
+python/tests/intelligence/test_turn_context.py::test_a_source_renders_only_in_its_roles[knowledge-operator] PASSED [ 17%]
+python/tests/intelligence/test_turn_context.py::test_a_source_renders_only_in_its_roles[search-assistant] PASSED [ 20%]
+python/tests/intelligence/test_turn_context.py::test_the_label_ladder_by_source PASSED [ 22%]
+python/tests/intelligence/test_turn_context.py::test_a_malformed_segment_request_fails_closed[not json] PASSED [ 25%]
+python/tests/intelligence/test_turn_context.py::test_a_malformed_segment_request_fails_closed[[1]] PASSED [ 27%]
+python/tests/intelligence/test_turn_context.py::test_a_malformed_segment_request_fails_closed[{"seq": 0, "source": {"kind": "thread", "ref": "x"}, "role": "user", "content": "x"}] PASSED [ 30%]
+python/tests/intelligence/test_turn_context.py::test_a_malformed_segment_request_fails_closed[{"seq": 0, "source": {"kind": "thread", "ref": "thread:0"}, "role": "user", "content": "x", "snapshot_ref": "thr_01J8Z3K6F1N8VQ2X5W9Y0ABCDE@12", "extra": 1}] PASSED [ 32%]
+python/tests/intelligence/test_turn_context.py::test_a_malformed_segment_request_fails_closed[{"seq": -1, "source": {"kind": "thread", "ref": "thread:0"}, "role": "user", "content": "x", "snapshot_ref": "thr_01J8Z3K6F1N8VQ2X5W9Y0ABCDE@12"}] PASSED [ 35%]
+python/tests/intelligence/test_turn_context.py::test_a_malformed_segment_request_fails_closed[{"seq": 0, "source": {"kind": "rumour", "ref": "x"}, "role": "user", "content": "x", "snapshot_ref": "thr_01J8Z3K6F1N8VQ2X5W9Y0ABCDE@12"}] PASSED [ 37%]
+python/tests/intelligence/test_turn_context.py::test_a_malformed_segment_request_fails_closed[{"seq": 0, "source": {"kind": "thread", "ref": "thread:0"}, "role": "narrator", "content": "x", "snapshot_ref": "thr_01J8Z3K6F1N8VQ2X5W9Y0ABCDE@12"}] PASSED [ 40%]
+python/tests/intelligence/test_turn_context.py::test_a_malformed_segment_request_fails_closed[{"seq": 0, "source": {"kind": "thread", "ref": "thread:0"}, "role": "user", "content": "x", "snapshot_ref": "thr_01J8Z3K6F1N8VQ2X5W9Y0ABCDE@12", "required": "yes"}] PASSED [ 42%]
+python/tests/intelligence/test_turn_context.py::test_a_malformed_segment_request_fails_closed[{"seq": 0, "source": {"kind": "thread", "ref": "thread:0"}, "role": "user", "content": "x", "snapshot_ref": "thr_01J8Z3K6F1N8VQ2X5W9Y0ABCDE@12", "trust_hint": "sort_of"}] PASSED [ 45%]
+python/tests/intelligence/test_turn_context.py::test_a_malformed_segment_request_fails_closed[{"seq": 0, "source": {"kind": "thread", "ref": "thread:0"}, "role": "user", "content": {"tool_calls": [{"id": "c", "name": "fs.read", "args": {}}]}, "snapshot_ref": "thr_01J8Z3K6F1N8VQ2X5W9Y0ABCDE@12"}] PASSED [ 47%]
+python/tests/intelligence/test_turn_context.py::test_a_malformed_segment_request_fails_closed[{"seq": 0, "source": {"kind": "tool_result", "ref": "tool_result:0"}, "role": "tool", "content": {"parts": []}, "snapshot_ref": "thr_01J8Z3K6F1N8VQ2X5W9Y0ABCDE@12"}] PASSED [ 50%]
+python/tests/intelligence/test_turn_context.py::test_repeated_seq_and_a_missing_snapshot_are_refused PASSED [ 52%]
+python/tests/intelligence/test_turn_context.py::test_a_tool_result_must_answer_the_call_before_it PASSED [ 55%]
+python/tests/intelligence/test_turn_context.py::test_the_newest_window_is_kept_whole_and_the_rest_is_reported PASSED [ 57%]
+python/tests/intelligence/test_turn_context.py::test_a_window_never_opens_on_an_answer_without_its_question PASSED [ 60%]
+python/tests/intelligence/test_turn_context.py::test_an_older_required_turn_survives_a_newer_round_that_does_not_fit PASSED [ 62%]
+python/tests/intelligence/test_turn_context.py::test_a_required_segment_is_never_kept_by_overrunning_the_budget PASSED [ 65%]
+python/tests/intelligence/test_turn_context.py::test_required_context_that_does_not_fit_is_refused PASSED [ 67%]
+python/tests/intelligence/test_turn_context.py::test_the_rendered_messages_are_a_valid_model_call[anthropic] PASSED [ 70%]
+python/tests/intelligence/test_turn_context.py::test_the_rendered_messages_are_a_valid_model_call[openai_compatible] PASSED [ 72%]
+python/tests/intelligence/test_turn_context.py::test_build_context_over_grpc_returns_the_projection_and_its_messages PASSED [ 75%]
+python/tests/intelligence/test_turn_context.py::test_build_context_over_grpc_refuses_with_a_typed_error PASSED [ 77%]
+python/tests/intelligence/test_turn_context.py::test_a_relevant_active_skill_is_rendered_after_the_instructions_as_verified_guidance PASSED [ 80%]
+python/tests/intelligence/test_turn_context.py::test_a_skill_that_may_not_resolve_is_excluded_and_recorded[{"skill_id": "skl_draft", "version_id": "sklv_draft_1", "name": "draft", "semver": "1.0.0", "status": "candidate", "manifest": {"instructions": "Follow the procedure.", "examples": ["notes file"], "tool_needs": [], "capability_needs": [], "recovery_guidance": "Say what failed and stop."}}-skill.not_active] PASSED [ 82%]
+python/tests/intelligence/test_turn_context.py::test_a_skill_that_may_not_resolve_is_excluded_and_recorded[{"skill_id": "skl_writer", "version_id": "sklv_writer_1", "name": "writer", "semver": "1.0.0", "status": "active", "manifest": {"instructions": "Follow the procedure.", "examples": ["notes file"], "tool_needs": ["fs.write"], "capability_needs": [], "recovery_guidance": "Say what failed and stop."}}-skill.tool_not_available] PASSED [ 85%]
+python/tests/intelligence/test_turn_context.py::test_a_skill_that_may_not_resolve_is_excluded_and_recorded[{"skill_id": "skl_mailer", "version_id": "sklv_mailer_1", "name": "mailer", "semver": "1.0.0", "status": "active", "manifest": {"instructions": "Follow the procedure.", "examples": ["notes file"], "tool_needs": [], "capability_needs": ["send.external"], "recovery_guidance": "Say what failed and stop."}}-skill.capability_not_granted] PASSED [ 87%]
+python/tests/intelligence/test_turn_context.py::test_a_skill_that_may_not_resolve_is_excluded_and_recorded[{"skill_id": "skl_unrelated", "version_id": "sklv_unrelated_1", "name": "unrelated", "semver": "1.0.0", "status": "active", "manifest": {"instructions": "Follow the procedure.", "examples": ["quarterly taxes"], "tool_needs": [], "capability_needs": [], "recovery_guidance": "Say what failed and stop."}}-skill.irrelevant] PASSED [ 90%]
+python/tests/intelligence/test_turn_context.py::test_skill_resolution_is_bounded_and_deterministic PASSED [ 92%]
+python/tests/intelligence/test_turn_context.py::test_a_skill_the_budget_cannot_hold_is_dropped_before_the_conversation_is PASSED [ 95%]
+python/tests/intelligence/test_turn_context.py::test_a_skill_whose_manifest_cannot_be_read_is_excluded_not_fatal PASSED [ 97%]
+python/tests/intelligence/test_turn_context.py::test_a_candidate_that_is_not_a_version_fails_closed PASSED [100%]
+
+============================== 40 passed in 1.56s ==============================
+exit=0

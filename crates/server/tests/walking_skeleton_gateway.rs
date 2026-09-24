@@ -20,7 +20,12 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
+use quansio_core::{CanonicalId, CorrelationId, UlidGenerator};
+use quansio_events::Actor;
 use quansio_server::control::schema;
+use quansio_server::control::skills::{
+    NewSkill, NewSkillVersion, SkillAdmin, SkillScope, SkillStatus, SkillStore,
+};
 use quansio_server::intelligence::model_source::{GatewayModelSource, ModelCallSettings};
 use quansio_server::intelligence::IntelligenceClient;
 use quansio_server::runtime::context_bridge::GatewayContextBridge;
@@ -56,6 +61,51 @@ async fn seed_policy(pool: &sqlx::PgPool) {
     .await
     .expect("policy");
     tx.commit().await.expect("commit");
+}
+
+/// An ACTIVE skill, walked up the §11.5 ladder through the registry; returns its version id.
+async fn active_skill(pool: &sqlx::PgPool, name: &str, manifest: Value) -> String {
+    let skills = SkillStore::new(pool.clone());
+    let admin = || {
+        SkillAdmin::new(
+            TENANT,
+            Actor::system("skeleton-gateway"),
+            CorrelationId::generate(&mut UlidGenerator::new()),
+        )
+    };
+    let skill = skills
+        .create_skill(
+            &admin(),
+            NewSkill {
+                scope: SkillScope::Tenant,
+                name: name.to_string(),
+                owner: "ai-platform".to_string(),
+            },
+        )
+        .await
+        .expect("skill");
+    let version = skills
+        .create_version(
+            &admin(),
+            &skill.id,
+            NewSkillVersion {
+                semver: "1.0.0".to_string(),
+                manifest,
+                provenance: Some("walking skeleton".to_string()),
+            },
+        )
+        .await
+        .expect("version");
+    let id: CanonicalId = version.id;
+    for step in [
+        SkillStatus::Candidate,
+        SkillStatus::Evaluating,
+        SkillStatus::Approved,
+        SkillStatus::Active,
+    ] {
+        skills.promote(&admin(), &id, step).await.expect("promote");
+    }
+    id.to_string()
 }
 
 async fn model_calls(pool: &sqlx::PgPool, run_id: &str) -> Vec<(String, String, String, String)> {
@@ -121,6 +171,29 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
     schema::migrate(&pool).await.expect("migrate");
     common::seed_tenant(&pool, TENANT, USER, WORKSPACE, NODE).await;
     seed_policy(&pool).await;
+    // Two ACTIVE skills (INT-009): one relevant and within the run's authority, one that needs a
+    // tool the run is not offered, so it must stay out of context however relevant it is.
+    let notes_skill = active_skill(
+        &pool,
+        "notes-reader",
+        json!({
+            "instructions": "Read the file, then quote what matters.",
+            "examples": ["read the notes"],
+            "tool_needs": ["fs.read"],
+            "capability_needs": ["read.internal"],
+        }),
+    )
+    .await;
+    active_skill(
+        &pool,
+        "notes-writer",
+        json!({
+            "instructions": "Rewrite the notes.",
+            "examples": ["read the notes"],
+            "tool_needs": ["fs.write"],
+        }),
+    )
+    .await;
 
     // The deployable's composition: the gateway model source over the Python process.
     let settings = ModelCallSettings::load().expect("config/intelligence.yaml");
@@ -277,6 +350,7 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
         sources,
         [
             ("system".to_string(), "trusted_system".to_string()),
+            ("skill".to_string(), "verified_knowledge".to_string()),
             ("thread".to_string(), "trusted_user".to_string()),
             ("thread".to_string(), "agent_generated".to_string()),
             ("tool_result".to_string(), "untrusted_external".to_string()),
@@ -285,6 +359,18 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
     );
     assert!(
         context["token_ledger"]["used"].as_u64().unwrap_or(0) > 0,
+        "{timeline}"
+    );
+    // The relevant skill resolved into the context; the one needing fs.write was excluded, and
+    // the projection says why — a durable record of which skills a run's calls were given.
+    assert_eq!(context["sources"][1]["source"], notes_skill, "{timeline}");
+    assert!(
+        context["degradation"]
+            .as_array()
+            .expect("degradation")
+            .iter()
+            .any(|entry| entry["source_kind"] == "skill"
+                && entry["reason"] == "skill.tool_not_available"),
         "{timeline}"
     );
     let mut tx = pool.begin().await.expect("begin");

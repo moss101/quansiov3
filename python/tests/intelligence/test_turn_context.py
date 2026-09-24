@@ -422,3 +422,132 @@ def test_build_context_over_grpc_refuses_with_a_typed_error() -> None:
         with pytest.raises(grpc.RpcError) as refused_scope:
             client.BuildContext(unscoped)
         assert refused_scope.value.code() != grpc.StatusCode.OK
+
+
+# -- skills (INT-009) ----------------------------------------------------------------------
+
+
+def skill(
+    name: str,
+    *,
+    status: str = "active",
+    examples: tuple[str, ...] = (),
+    tool_needs: tuple[str, ...] = (),
+    capability_needs: tuple[str, ...] = (),
+    instructions: str = "Follow the procedure.",
+) -> str:
+    return json.dumps(
+        {
+            "skill_id": f"skl_{name}",
+            "version_id": f"sklv_{name}_1",
+            "name": name,
+            "semver": "1.0.0",
+            "status": status,
+            "manifest": {
+                "instructions": instructions,
+                "examples": list(examples),
+                "tool_needs": list(tool_needs),
+                "capability_needs": list(capability_needs),
+                "recovery_guidance": "Say what failed and stop.",
+            },
+        }
+    )
+
+
+def build_with_skills(candidates: list[str], *, budget: int = 4_000, max_skills: int = 3):
+    return build_turn_context(
+        run_id=RUN_ID,
+        turn_id=TURN_ID,
+        snapshot_id=SNAPSHOT,
+        token_budget=budget,
+        policy_snapshot_digest="sha256:policy",
+        segment_requests=conversation(),
+        skill_candidates=candidates,
+        task_text="Read the value from the notes file.",
+        exposed_tools=["fs.read"],
+        granted_effect_classes=["read.internal"],
+        max_skills=max_skills,
+    ).projection
+
+
+def test_a_relevant_active_skill_is_rendered_after_the_instructions_as_verified_guidance() -> None:
+    projection = build_with_skills(
+        [
+            skill(
+                "notes",
+                examples=("notes file",),
+                tool_needs=("fs.read",),
+                capability_needs=("read.internal",),
+            )
+        ]
+    )
+    kinds = [(segment.source_kind, segment.trust_level) for segment in projection.segments]
+    assert kinds[:4] == [
+        ("system", "trusted_system"),
+        ("policy", "trusted_system"),
+        ("skill", "verified_knowledge"),
+        ("thread", "trusted_user"),
+    ]
+    skill_segment = projection.segments[2]
+    assert skill_segment.source_ref == "sklv_notes_1"
+    message = projection.messages[2]
+    assert message.role == ROLE.ROLE_OPERATOR and message.cache_hint == "stable"
+    text = content(message)
+    assert text.startswith("Skill notes 1.0.0:") and "Follow the procedure." in text
+    assert "Say what failed and stop." in text
+
+
+@pytest.mark.parametrize(
+    ("candidate", "rule"),
+    [
+        (skill("draft", status="candidate", examples=("notes file",)), "skill.not_active"),
+        (skill("writer", examples=("notes file",), tool_needs=("fs.write",)), "skill.tool_not_available"),
+        (
+            skill("mailer", examples=("notes file",), capability_needs=("send.external",)),
+            "skill.capability_not_granted",
+        ),
+        (skill("unrelated", examples=("quarterly taxes",)), "skill.irrelevant"),
+    ],
+)
+def test_a_skill_that_may_not_resolve_is_excluded_and_recorded(candidate: str, rule: str) -> None:
+    projection = build_with_skills([candidate])
+    assert "skill" not in [segment.source_kind for segment in projection.segments]
+    degradation = [json.loads(entry) for entry in projection.degradation_json]
+    assert {"source_kind": "skill", "dropped": 1, "reason": rule} in degradation
+
+
+def test_skill_resolution_is_bounded_and_deterministic() -> None:
+    candidates = [skill(name, examples=("notes file",)) for name in ("gamma", "alpha", "beta")]
+    first = build_with_skills(candidates, max_skills=2)
+    second = build_with_skills(list(reversed(candidates)), max_skills=2)
+    refs = [segment.source_ref for segment in first.segments if segment.source_kind == "skill"]
+    assert refs == ["sklv_alpha_1", "sklv_beta_1"]
+    assert refs == [segment.source_ref for segment in second.segments if segment.source_kind == "skill"]
+    degradation = [json.loads(entry) for entry in first.degradation_json]
+    assert {"source_kind": "skill", "dropped": 1, "reason": "resolver.budget"} in degradation
+
+
+def test_a_skill_the_budget_cannot_hold_is_dropped_before_the_conversation_is() -> None:
+    big = skill("notes", examples=("notes file",), instructions="step " * 2_000)
+    projection = build_with_skills([big], budget=400)
+    assert "skill" not in [segment.source_kind for segment in projection.segments]
+    degradation = [json.loads(entry) for entry in projection.degradation_json]
+    assert {"source_kind": "skill", "dropped": 1, "reason": "budget"} in degradation
+
+
+def test_a_skill_whose_manifest_cannot_be_read_is_excluded_not_fatal() -> None:
+    """The registry stores any manifest JSON; one the resolver cannot read stays out of context
+    and is recorded, and the turn goes on."""
+    unreadable = json.loads(skill("legacy", examples=("notes file",)))
+    unreadable["manifest"]["triggers"] = ["notes file"]  # not a §11.5 manifest key
+    projection = build_with_skills([json.dumps(unreadable)])
+    assert "skill" not in [segment.source_kind for segment in projection.segments]
+    degradation = [json.loads(entry) for entry in projection.degradation_json]
+    assert {"source_kind": "skill", "dropped": 1, "reason": "skill.manifest_keys"} in degradation
+
+
+def test_a_candidate_that_is_not_a_version_fails_closed() -> None:
+    for raw in ("not json", json.dumps([1]), json.dumps({"skill_id": "skl_x", "status": "active"})):
+        with pytest.raises(ContextError) as refused:
+            build_with_skills([raw])
+        assert refused.value.code == "VALIDATION_SCHEMA"

@@ -48,6 +48,15 @@ impl ContextBridgePort for GatewayContextBridge {
             token_budget: u64::from(request.token_budget),
             policy_snapshot_digest: request.policy_snapshot_digest,
             segment_requests_json: request.segments.iter().map(|s| s.to_json()).collect(),
+            skill_candidates_json: request
+                .skill_candidates
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
+            task_text: request.task_text,
+            exposed_tools: request.exposed_tools,
+            granted_effect_classes: request.granted_effect_classes,
+            max_skills: request.max_skills,
             ..ContextBuildRequest::default()
         };
         let mut client = self.client.clone();

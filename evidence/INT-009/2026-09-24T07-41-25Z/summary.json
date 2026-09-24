@@ -1,0 +1,80 @@
+{
+  "task_id": "INT-009",
+  "git_commit": "88ec533085c855de8e6218836716a8888684f889",
+  "recorded_at": "2026-09-24T07:41:33Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_turn_context.py -v (skill resolution into the turn context: placement, trust, every exclusion rule, bound, determinism, budget, unreadable manifests)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-24T07-41-25Z/pytest-turn-context.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test walking_skeleton_gateway (registry ACTIVE skills: the relevant one reaches the context through the real plane, the one needing fs.write is excluded and recorded)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-24T07-41-25Z/cargo-walking-skeleton-gateway.log"
+    },
+    {
+      "command": "int009_mutations.sh (5 compiling mutants: authority widened in the plane, exclusions hidden, skill trust raised, registry not offered, runtime widens exposed tools)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-24T07-41-25Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-009/2026-09-24T07-41-25Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_turn_context.py -v (skill resolution into the turn context: placement, trust, every exclusion rule, bound, determinism, budget, unreadable manifests)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test walking_skeleton_gateway (registry ACTIVE skills: the relevant one reaches the context through the real plane, the one needing fs.write is excluded and recorded)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "int009_mutations.sh (5 compiling mutants: authority widened in the plane, exclusions hidden, skill trust raised, registry not offered, runtime widens exposed tools)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-009/2026-09-24T07-41-25Z/NOTES.md",
+      "sha256": "5542c0fbcfee438aca1365efdb5953ce1fe956b51d495923c4d0cf7db179ad7c",
+      "bytes": 3242
+    },
+    {
+      "path": "evidence/INT-009/2026-09-24T07-41-25Z/pytest-turn-context.log",
+      "sha256": "2133e1f4cf2018658270b020e3b002881e0938bf6dad1e5d04b988a2c8ef4136",
+      "bytes": 7822
+    },
+    {
+      "path": "evidence/INT-009/2026-09-24T07-41-25Z/cargo-walking-skeleton-gateway.log",
+      "sha256": "1e959210a6e0eb7f0077fec8e8029644c75316d047da3d6819d1d721386fb5d3",
+      "bytes": 706
+    },
+    {
+      "path": "evidence/INT-009/2026-09-24T07-41-25Z/mutation-checks.log",
+      "sha256": "7308c530d5035c2b40bad30fe5402b2e2cc5c8798dd6b73f6914a38dec28c7cb",
+      "bytes": 290
+    },
+    {
+      "path": "evidence/INT-009/2026-09-24T07-41-25Z/ci-summary.json",
+      "sha256": "69ac4ef90af3c7d31523106f0b2351df28996d218b7a52eea957840866f0f223",
+      "bytes": 7889
+    }
+  ]
+}
