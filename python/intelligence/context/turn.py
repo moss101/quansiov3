@@ -311,21 +311,27 @@ def _pack(
 
     # The conversation, newest first, as one contiguous window of whole units.
     units = _units([segment for segment in segments if not segment.is_instruction])
+    # Required units are always kept (their required cost is already reserved); the window only
+    # decides which optional units survive, so an older required turn is never lost to a newer
+    # optional one that did not fit.
     window_closed = False
     for unit in reversed(units):
         mandatory = any(segment.required for segment in unit)
         cost = sum(segment.tokens for segment in unit if segment.seq not in kept_ids)
-        if not window_closed and (mandatory or used + cost <= budget):
+        if mandatory:
+            if used + cost > budget:  # a required segment cannot be split from its unit
+                raise ContextError(
+                    "VALIDATION_BOUNDS",
+                    RULE_REQUIRED_BUDGET,
+                    "a required segment's turn does not fit the budget with the rest of its unit",
+                )
+            used += cost
+            kept_ids.update(segment.seq for segment in unit)
+        elif not window_closed and used + cost <= budget:
             used += cost
             kept_ids.update(segment.seq for segment in unit)
         else:
             window_closed = True
-            if mandatory:  # a required segment cannot be split from its unit
-                raise ContextError(
-                    "VALIDATION_BOUNDS",
-                    RULE_REQUIRED_BUDGET,
-                    "a required segment's turn does not fit the budget with the newer turns it follows",
-                )
             dropped_budget.extend(unit)
 
     # A conversation opens with a user turn: an assistant or tool turn with nothing before it

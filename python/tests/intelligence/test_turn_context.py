@@ -19,7 +19,7 @@ import pytest
 from quansio.v1.intelligence import intelligence_pb2, service_pb2, service_pb2_grpc
 
 from intelligence.context.projection import ContextError
-from intelligence.context.turn import build_turn_context, trust_for
+from intelligence.context.turn import build_turn_context, parse_segment_request, trust_for
 from intelligence.model_gateway import ModelGateway
 from intelligence.model_gateway.catalog import ProviderKind
 from intelligence.model_gateway.conformance import (
@@ -290,6 +290,37 @@ def test_a_window_never_opens_on_an_answer_without_its_question() -> None:
     assert roles[0] == ROLE.ROLE_USER
     reasons = {json.loads(entry)["reason"] for entry in projection.degradation_json}
     assert "no_preceding_user_turn" in reasons
+
+
+def test_an_older_required_turn_survives_a_newer_round_that_does_not_fit() -> None:
+    """The run's question is required; the tool rounds after it are kept newest-first."""
+    requests = [
+        segment(0, "system", "system", "You are the teammate.", required=True),
+        segment(1, "thread", "user", "Read both files.", required=True),
+        assistant_call(2, "call_a"),
+        tool_result(3, "call_a", "a" * 600),
+        assistant_call(4, "call_b"),
+        tool_result(5, "call_b", "b" * 40),
+    ]
+    projection = build(requests, budget=150)
+    assert [segment.seq for segment in projection.segments] == [0, 1, 4, 5]
+    assert projection.token_ledger.used <= 150
+    degradation = [json.loads(entry) for entry in projection.degradation_json]
+    assert {"source_kind": "thread", "dropped": 1, "reason": "budget"} in degradation
+    assert {"source_kind": "tool_result", "dropped": 1, "reason": "budget"} in degradation
+
+
+def test_a_required_segment_is_never_kept_by_overrunning_the_budget() -> None:
+    question = segment(0, "thread", "user", "q")
+    call = assistant_call(1, "call_a")
+    result = json.dumps({**json.loads(tool_result(2, "call_a", "z" * 800)), "required": True})
+    required_cost = parse_segment_request(result).tokens
+    call_cost = parse_segment_request(call).tokens
+    # The required result fits alone, but not with the call it answers, and a unit never splits.
+    with pytest.raises(ContextError) as refused:
+        build([question, call, result], budget=required_cost + call_cost - 1)
+    assert refused.value.rule_id == "turn.required_budget"
+    assert "rest of its unit" in refused.value.detail
 
 
 def test_required_context_that_does_not_fit_is_refused() -> None:
