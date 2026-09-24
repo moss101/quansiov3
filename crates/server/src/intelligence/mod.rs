@@ -248,7 +248,9 @@ impl IntelligenceClient {
         request.schema_version = SCHEMA_VERSION.to_string();
         request.scope = Some(scope.context());
         let span = rpc_span("BuildContext", scope);
-        let call = self.inner.build_context(Self::request(scope, request, &span));
+        let call = self
+            .inner
+            .build_context(Self::request(scope, request, &span));
         let result = match tokio::time::timeout(scope.deadline, call).await {
             Err(_) => Err(IntelligenceError::DeadlineExceeded),
             Ok(Err(status)) => Err(refused(&status)),
@@ -347,5 +349,8 @@ fn finish<T>(span: Span, method: &'static str, result: &Result<T, IntelligenceEr
         "Calls to the intelligence plane by method and outcome.",
         &[("method", method), ("outcome", outcome)],
     );
-    span.end(if outcome == "ok" { "ok" } else { "error" }, json!({ "code": code }));
+    span.end(
+        if outcome == "ok" { "ok" } else { "error" },
+        json!({ "code": code }),
+    );
 }

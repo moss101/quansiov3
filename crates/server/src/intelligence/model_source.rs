@@ -231,7 +231,10 @@ impl ModelProposalSource for GatewayModelSource {
 }
 
 impl GatewayModelSource {
-    async fn propose_in_span(&self, request: ModelCallRequest) -> Result<ModelProposal, RuntimeError> {
+    async fn propose_in_span(
+        &self,
+        request: ModelCallRequest,
+    ) -> Result<ModelProposal, RuntimeError> {
         let started = Instant::now();
         let run = self.run_facts(&request).await?;
         let definition = TeammateStore::new(self.pool.clone())
@@ -385,11 +388,18 @@ impl GatewayModelSource {
         // 4. Record, then propose.
         let latency = i64::try_from(started.elapsed().as_millis()).unwrap_or(i64::MAX);
         let route = outcome.route.clone().unwrap_or_default();
-        let provider = if route.provider.is_empty() { "unknown" } else { route.provider.as_str() };
+        let provider = if route.provider.is_empty() {
+            "unknown"
+        } else {
+            route.provider.as_str()
+        };
         crate::observability::metrics::increment(
             "quansio_model_calls_total",
             "Model calls through the intelligence gateway by provider and stop reason.",
-            &[("provider", provider), ("stop_reason", &outcome.stop_reason)],
+            &[
+                ("provider", provider),
+                ("stop_reason", &outcome.stop_reason),
+            ],
         );
         crate::observability::metrics::observe(
             "quansio_model_call_duration_seconds",

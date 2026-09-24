@@ -424,7 +424,10 @@ impl RuntimeEngine {
         request: ToolDispatchRequest,
     ) -> Result<ToolDispatchOutcome, RuntimeError> {
         // A name the model invented is not a label: it would make the metric unbounded.
-        let tool = if quansio_tools::ToolRegistry::builtin().get(&call.tool).is_some() {
+        let tool = if quansio_tools::ToolRegistry::builtin()
+            .get(&call.tool)
+            .is_some()
+        {
             call.tool.clone()
         } else {
             "unregistered".to_string()

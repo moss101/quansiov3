@@ -146,7 +146,7 @@ impl Composition {
         // The deployable believes bearer sessions only; a development harness may opt into the
         // trusted tenant/user headers explicitly, and the choice is logged so it is never silent.
         let trust = if env::var("QUANSIO_TRUST_SCOPE_HEADERS").as_deref() == Ok("1") {
-            crate::observability::notice(crate::observability::Level::Info, &format!("QUANSIO_TRUST_SCOPE_HEADERS=1: x-quansio-tenant/x-quansio-user headers are trusted (development only)"));
+            crate::observability::notice(crate::observability::Level::Info, "QUANSIO_TRUST_SCOPE_HEADERS=1: x-quansio-tenant/x-quansio-user headers are trusted (development only)");
             crate::api::ScopeTrust::TrustedHeaders
         } else {
             crate::api::ScopeTrust::SessionOnly
@@ -222,7 +222,7 @@ impl Composition {
                     ),
                 ));
         } else {
-            crate::observability::notice(crate::observability::Level::Info, &format!("QUANSIO_INTELLIGENCE_ENDPOINT is not set: turns are answered by the conformance stub, not a model"));
+            crate::observability::notice(crate::observability::Level::Info, "QUANSIO_INTELLIGENCE_ENDPOINT is not set: turns are answered by the conformance stub, not a model");
         }
         if let Some(root) = config.web_root.as_deref() {
             let root = crate::api::web::WebRoot::new(root)?;

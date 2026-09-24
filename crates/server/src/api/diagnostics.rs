@@ -22,7 +22,9 @@ use sha2::{Digest as _, Sha256};
 use super::error::{ApiError, ApiErrorCode};
 use super::rbac::Authorization;
 use super::ApiState;
-use crate::observability::{metrics, DiagnosticBundle, Span, TraceContext, DEFAULT_BUNDLE_LIMIT, TRACEPARENT};
+use crate::observability::{
+    metrics, DiagnosticBundle, Span, TraceContext, DEFAULT_BUNDLE_LIMIT, TRACEPARENT,
+};
 use crate::policy::rbac::ActionFamily;
 
 /// Trace one HTTP request (see the module docs).
@@ -50,7 +52,11 @@ pub async fn trace_requests(request: Request, next: Next) -> Response {
     metrics::increment(
         "quansio_http_requests_total",
         "HTTP requests by route, method and status.",
-        &[("route", &route), ("method", &method), ("status", &status_label)],
+        &[
+            ("route", &route),
+            ("method", &method),
+            ("status", &status_label),
+        ],
     );
     metrics::observe(
         "quansio_http_request_duration_seconds",
@@ -90,9 +96,19 @@ pub async fn metrics_endpoint(State(state): State<ApiState>, headers: HeaderMap)
 }
 
 /// `GET /v1/diagnostics/bundle`: the tenant's recent redacted log lines, bounded.
-pub async fn bundle(State(state): State<ApiState>, headers: HeaderMap) -> Result<Response, ApiError> {
+pub async fn bundle(
+    State(state): State<ApiState>,
+    headers: HeaderMap,
+) -> Result<Response, ApiError> {
     let scope = super::TenantScope::resolve(&state, &headers).await?;
-    Authorization::check(state.pool(), &scope, None, ActionFamily::ManageTenant, "diagnostics").await?;
+    Authorization::check(
+        state.pool(),
+        &scope,
+        None,
+        ActionFamily::ManageTenant,
+        "diagnostics",
+    )
+    .await?;
     let bundle = DiagnosticBundle::for_tenant(&scope.tenant_id, DEFAULT_BUNDLE_LIMIT);
     Response::builder()
         .status(StatusCode::OK)
