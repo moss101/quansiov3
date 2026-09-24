@@ -2154,24 +2154,38 @@
       "notes": "EvidenceBundle is content-addressed and provider-independent: the same claims and descriptors rebuild the same digest whatever made them. Existence and coverage checks are deterministic; digest drift in cited evidence fails verification."
     },
     "CAP-003": {
-      "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "coverage": "PARTIAL",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5.5",
       "started_at": "2026-09-23T11:31:48Z",
-      "updated_at": "2026-09-23T11:31:48Z",
-      "git_commit": null,
+      "updated_at": "2026-09-24T01:38:56Z",
+      "git_commit": "ebee6e2074d2fcc0e628a8d1dbee73e2077d5955",
       "tests": [
-        "uv run --project python pytest tests/intelligence/test_artifact_workflows.py -q (5 passed: document/spreadsheet/slide fixtures round-trip; edit mints a new immutable version with parent/seq/digest; malformed document/CSV/slides/chat-blob/script block completion; quality-empty body blocks; skill pack tool_needs cannot grant artifact.create)"
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack> QUANSIO_TEST_MINIO_*=<dev MinIO> cargo test -p quansio-server --test artifact_workflows (governed create/edit through the real dispatch path, malformed and digest-mismatched sources refused, every editable kind's fixture, a malformed deliverable blocks completion, Rust corpus verdicts)",
+        "cargo test -p quansio-server --lib -- artifacts:: verification policy::rules",
+        "uv run --project python pytest python/tests/intelligence/test_artifact_tool_calls.py python/tests/intelligence/test_artifact_workflows.py",
+        "(cd apps/desktop && pnpm exec vitest run tests/artifacts.test.ts tests/artifacts.e2e.test.ts)",
+        "mutation checks: host format check, digest binding, artifact_valid, recorded format_check, Python pre-check each removed -> named test fails (evidence)",
+        "bash scripts/ci/ci.sh (11/11 gates PASS, binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)"
       ],
       "artifacts": [
-        "evidence/CAP-003/2026-09-15T07-10-00Z/summary.json",
-        "python/intelligence/artifacts/workflow.py",
-        "packs/skills/artifacts/skill.yaml"
+        "evidence/CAP-003/2026-09-23T11-57-11Z/summary.json",
+        "evidence/CAP-003/2026-09-23T11-57-11Z/NOTES.md",
+        "evidence/CAP-003/RECONCILIATION.md",
+        "crates/server/src/artifacts/formats.rs",
+        "crates/server/src/artifacts/tool_host.rs",
+        "crates/server/src/runtime/verification/checks.rs",
+        "migrations/0018_artifact_format_check.sql",
+        "python/intelligence/artifacts/proposals.py",
+        "packs/skills/artifacts/fixtures/corpus.yaml",
+        "crates/server/tests/artifact_workflows.rs",
+        "python/tests/intelligence/test_artifact_tool_calls.py",
+        "apps/desktop/src/renderer/Artifacts.tsx"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Artifacts are versioned source files (document/spreadsheet/slides/code) with format validation and quality checks that block completion. Skill pack proposes artifact.create/update and cannot grant those tools. 2026-09-19 correction: was BLOCKED_EXTERNAL at 885f7cd467556b855aec0892ab7eb26cd0e2228d claimed by agent:principal-1 (started 2026-09-15T06:50:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['APP-008'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "Artifacts are made and edited through governed tools: artifact.create/artifact.update carry the source bound to content_digest; the server hosts them (ArtifactToolHost behind ServerToolHost), refusing a source whose digest or format/quality check fails with no version created, storing an immutable version produced by the run and granted to the acting user. Every version records format_check (migration 0018); the artifact_valid completion check blocks run.verification_passed on a malformed deliverable. The intelligence plane builds the calls (proposals.py) and never proposes a source failing check_source; a shared corpus keeps the Rust and Python validators in agreement. The desktop shows each version's source check and saves an in-place text edit as the next version. Found on the way: CSV uploads were inferred as data (now spreadsheet); another worktree's CARGO_TARGET_DIR points at the primary target/, replacing shared binaries mid-CI (CI ran with pinned binaries)."
     },
     "CAP-004": {
       "coverage": "GENUINE_GAP",
