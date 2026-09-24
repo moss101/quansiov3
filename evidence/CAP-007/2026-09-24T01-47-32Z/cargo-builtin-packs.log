@@ -1,0 +1,4 @@
+test a_skills_capability_needs_are_exactly_what_its_tools_require ... ok
+test every_tool_a_builtin_pack_names_is_callable_in_the_registry ... ok
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+exit=0

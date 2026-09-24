@@ -1,0 +1,12 @@
+python/tests/intelligence/test_builtin_packs.py::test_pack_schema_and_eval_checks PASSED [ 10%]
+python/tests/intelligence/test_builtin_packs.py::test_capability_scan_refuses_unknown_tools_and_daemons PASSED [ 20%]
+python/tests/intelligence/test_builtin_packs.py::test_tool_availability_uses_the_resolver PASSED [ 30%]
+python/tests/intelligence/test_builtin_packs.py::test_the_capability_scan_names_what_is_wrong PASSED [ 40%]
+python/tests/intelligence/test_builtin_packs.py::test_every_governance_record_names_the_content_it_approved PASSED [ 50%]
+python/tests/intelligence/test_artifact_workflows.py::test_fixtures_round_trip_document_spreadsheet_and_slides PASSED [ 60%]
+python/tests/intelligence/test_artifact_workflows.py::test_round_trip_edit_mints_a_new_version PASSED [ 70%]
+python/tests/intelligence/test_artifact_workflows.py::test_malformed_artifact_blocks_completion PASSED [ 80%]
+python/tests/intelligence/test_artifact_workflows.py::test_quality_failure_also_blocks_and_skill_pack_declares_tools PASSED [ 90%]
+python/tests/intelligence/test_artifact_workflows.py::test_spreadsheet_and_slides_parsers_are_closed PASSED [100%]
+============================== 10 passed in 0.23s ==============================
+exit=0

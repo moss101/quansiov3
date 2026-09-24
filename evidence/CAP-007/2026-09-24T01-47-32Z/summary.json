@@ -1,0 +1,112 @@
+{
+  "task_id": "CAP-007",
+  "git_commit": "f3706410a873b92e943ae6c82683772857f0a89a",
+  "recorded_at": "2026-09-24T01:56:16Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-tools --test builtin_packs (every pack tool callable in ToolRegistry::builtin; capability needs are exactly the tools' grant templates)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-007/2026-09-24T01-47-32Z/cargo-builtin-packs.log"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_builtin_packs.py python/tests/intelligence/test_artifact_workflows.py -v (schema/eval checks, capability scan with negatives, provenance digests, pack/skill consistency)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-007/2026-09-24T01-47-32Z/pytest-builtin-packs.log"
+    },
+    {
+      "command": "uv run --project python python scripts/dev/pack_records.py (every record digest names its content)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-007/2026-09-24T01-47-32Z/pack-records.log"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py (OPS-007 quarantine gate)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-007/2026-09-24T01-47-32Z/supply-chain.log"
+    },
+    {
+      "command": "python3.12 cap007_mutations.py (old coding manifest, non-effect-class need, surplus need, stale digest, daemon flag each fail the named tests; sources restored with git checkout)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-007/2026-09-24T01-47-32Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-007/2026-09-24T01-47-32Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-tools --test builtin_packs (every pack tool callable in ToolRegistry::builtin; capability needs are exactly the tools' grant templates)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_builtin_packs.py python/tests/intelligence/test_artifact_workflows.py -v (schema/eval checks, capability scan with negatives, provenance digests, pack/skill consistency)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python scripts/dev/pack_records.py (every record digest names its content)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py (OPS-007 quarantine gate)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 cap007_mutations.py (old coding manifest, non-effect-class need, surplus need, stale digest, daemon flag each fail the named tests; sources restored with git checkout)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440> bash scripts/ci/ci.sh (binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-007/2026-09-24T01-47-32Z/NOTES.md",
+      "sha256": "6ba6af72db60f3d5df488c3dae4555265190f08b6a636983334521e6a41031b7",
+      "bytes": 3594
+    },
+    {
+      "path": "evidence/CAP-007/2026-09-24T01-47-32Z/cargo-builtin-packs.log",
+      "sha256": "4d2919635823e3a0de6a5feaa14c184c9f9c9b3d906191c853cbd0bceb9dc360",
+      "bytes": 246
+    },
+    {
+      "path": "evidence/CAP-007/2026-09-24T01-47-32Z/pytest-builtin-packs.log",
+      "sha256": "a9dd4d833a6d1b2f7f89223f5a46edc0ba6a280a2c844fc42070fd8a068162ba",
+      "bytes": 1226
+    },
+    {
+      "path": "evidence/CAP-007/2026-09-24T01-47-32Z/pack-records.log",
+      "sha256": "a3e06ddd9242ae18cabcc5960ed19890e0d4846f59519a5471a033a9c5f87d92",
+      "bytes": 52
+    },
+    {
+      "path": "evidence/CAP-007/2026-09-24T01-47-32Z/supply-chain.log",
+      "sha256": "5ab8deaedc204f195342c826cfa8cedd7ff11aedc7cd45bfa4334d2306fe46d6",
+      "bytes": 87
+    },
+    {
+      "path": "evidence/CAP-007/2026-09-24T01-47-32Z/mutation-checks.log",
+      "sha256": "d6575cecbf0eb1e73fb66a7c41015d1daadde493b3920bb654cade983721b2fc",
+      "bytes": 1775
+    },
+    {
+      "path": "evidence/CAP-007/2026-09-24T01-47-32Z/ci-summary.json",
+      "sha256": "9f8245ea8e082d1b4013af7f26c3eda62fcf0c91a4410986c24e5a5ee54048f3",
+      "bytes": 6876
+    }
+  ]
+}
