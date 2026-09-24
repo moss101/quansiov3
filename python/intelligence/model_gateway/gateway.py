@@ -298,7 +298,7 @@ class ModelGateway:
                 self._cancellations.forget(token_id)
 
         return Fulfillment(
-            factory=EventFactory(request.call_id, prepared.route.route_id),
+            factory=EventFactory(request.call_id, prepared.route.route_id, prepared.route.route),
             adapter=prepared.adapter,
             request=prepared.prepared_request.as_http_request(),
             transport=self._transport,
