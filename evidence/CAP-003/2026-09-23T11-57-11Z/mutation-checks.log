@@ -1,0 +1,25 @@
+== tool host stores an edit that fails its format check
+   a_run_creates_and_edits_a_versioned_artifact_through_the_governed_tools
+   outcome: FAILED (as required)
+   thread 'a_run_creates_and_edits_a_versioned_artifact_through_the_governed_tools' (3217170) panicked at crates/server/tests/artifact_workflows.rs:502:9:
+   assertion `left != right` failed: call 2 must be refused: {"artifact_id":"art_01M37226YFT1KVG8GVW3M4SBEJ","content_digest":"a89618d45ce271117231f889ee4d734d4a978db1ae7a6faaf7f9a4027bdeca42","replayed":false,"version":3,"version_id":"artv_01M372273VSDECN7NHA4M10BQN"}
+== tool host ignores the declared content digest
+   a_run_creates_and_edits_a_versioned_artifact_through_the_governed_tools
+   outcome: FAILED (as required)
+   thread 'a_run_creates_and_edits_a_versioned_artifact_through_the_governed_tools' (3219647) panicked at crates/server/tests/artifact_workflows.rs:502:9:
+   assertion `left != right` failed: call 3 must be refused: {"artifact_id":"art_01M3722HXN06Q293R5V875RQXK","content_digest":"64d0679cca1b56cf6074e696ee705868bd66cbe6620a8970ae26a5be1138ac2f","replayed":true,"version":2,"version_id":"artv_01M3722J101ZGK3K9BWWX19H02"}
+== artifact_valid passes whatever the recorded check says
+   a_malformed_deliverable_blocks_completion_until_a_valid_version_is_added
+   outcome: FAILED (as required)
+   thread 'a_malformed_deliverable_blocks_completion_until_a_valid_version_is_added' (3220988) panicked at crates/server/tests/artifact_workflows.rs:681:5:
+   assertion `left != right` failed: a malformed deliverable must block completion
+== the store records no format check
+   every_editable_kind_is_made_through_the_tool_from_its_fixture
+   outcome: FAILED (as required)
+   thread 'every_editable_kind_is_made_through_the_tool_from_its_fixture' (3223172) panicked at crates/server/tests/artifact_workflows.rs:610:5:
+   assertion failed: made.iter().all(|(_, check)|
+== the intelligence plane stops checking what it proposes
+   malformed_source_is_never_proposed
+   outcome: FAILED (as required)
+   1 failed, 19 deselected in 0.13s
+exit=0

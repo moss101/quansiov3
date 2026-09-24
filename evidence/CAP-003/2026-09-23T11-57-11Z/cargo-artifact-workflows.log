@@ -1,0 +1,26 @@
+test the_source_corpus_verdicts_are_the_same_as_the_intelligence_planes ... ok
+test a_malformed_deliverable_blocks_completion_until_a_valid_version_is_added ... ok
+test a_run_creates_and_edits_a_versioned_artifact_through_the_governed_tools ... ok
+test every_editable_kind_is_made_through_the_tool_from_its_fixture ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.35s
+test bytes_are_served_as_an_attachment_never_as_a_document_and_only_to_a_reader ... ok
+test artifacts_outlive_the_run_and_keep_their_version_history_with_links ... ok
+test search_is_one_typed_program_across_artifacts_threads_knowledge_and_evidence ... ok
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.45s
+test artifact_round_trip_verifies_the_recorded_digest_against_minio ... ok
+test evidence_is_insert_only_and_never_overwritten ... ok
+test evidence_bundle_records_claims_sources_and_verification ... ok
+test new_bytes_get_a_new_version_identity ... ok
+test grant_scope_denies_ungranted_callers_and_read_cannot_write ... ok
+test legal_hold_and_retention_are_recorded_not_silently_deleted ... ok
+test digest_corruption_is_rejected_against_minio ... ok
+test multipart_attachment_round_trips_against_minio ... ok
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.26s
+test a_model_claim_alone_cannot_succeed_a_run_without_its_artifact ... ok
+test the_same_claim_verifies_once_the_contract_is_satisfied ... ok
+test an_unsettled_effect_keeps_the_run_incomplete ... ok
+test a_contract_that_binds_nothing_cannot_certify_completion ... ok
+test an_unimplemented_check_kind_fails_closed_and_names_its_owner ... ok
+test a_semantic_verifier_disagreement_keeps_work_incomplete ... ok
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.96s
+exit=0
