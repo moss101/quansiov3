@@ -2551,10 +2551,10 @@
     },
     "OPS-008": {
       "coverage": "PARTIAL",
-      "status": "PASS",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-25T11:38:29Z",
-      "updated_at": "2026-09-25T13:04:19Z",
+      "updated_at": "2026-09-25T13:04:40Z",
       "git_commit": "663bb2e73fcd5f28cfac8d2d9673d29ed60bb1ac",
       "tests": [
         "cargo test -p quansio-server --test ops_kill_switches (8: kill-switch E2E through real turns \u2014 effect freeze stops new tier>=2 incl. an approved effect before reservation while reads, tier 0/1, the ledger and evidence stay untouched; emergency deny; worker quarantine (lease revoked, generation fenced, dispatch refused, release restores); drain/undrain; connector revoke; stream shed with STREAM_BACKPRESSURE; provider outage drill against the real Python plane (fail over, refuse with none left, restore); runbook drift)",
@@ -2577,7 +2577,7 @@
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
-      "blocker": null,
+      "blocker": "Implementation is complete and every OPS-008 test and CI gate passes. PASS is forbidden while dependency OPS-005 is BLOCKED_EXTERNAL (its PITR/object-store replica drill needs QUANSIO_TEST_PITR=1). Unblock: OPS-005 to PASS.",
       "notes": "Durable kill switches (ops_switches, ksw_): engage/release are runtime.control (tier 3, tenant admins), each with an ops.kill_switch_* event and an AuditEntry, reversible. Enforcement by the owners: dispatch and approval resume (effect.freeze EFFECTS_FROZEN for tier>=2, policy.emergency_deny, worker.quarantine TARGET_UNAVAILABLE), the model gateway (disabled_providers: fail over, else PROVIDER_UNAVAILABLE), machine control (target.drain DRAINING and the new DRAINING->READY release; quarantine revokes the lease), the connector owner (connector.revoke), the live hub (stream.shed). Runbook generated from the switch catalog with a drift test. Kill switches are audited and reversible. Effect freeze blocks new tier \u2265 2 actions without corrupting reads or evidence. 2026-09-19 correction: was BLOCKED_EXTERNAL at 85ca3934ed0d5afd979e016adeb64fb52a71aeb9 claimed by agent:principal-1 (started 2026-09-15T08:55:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['OPS-003'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md."
     },
     "QA-001": {
