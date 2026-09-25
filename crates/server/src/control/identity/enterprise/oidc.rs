@@ -343,12 +343,18 @@ impl EnterpriseIdentity {
             ));
         }
         if let Some(handle) = &settings.client_secret_handle {
-            let shaped = !handle.is_empty()
-                && handle.len() <= 128
-                && handle.starts_with(|c: char| c.is_ascii_lowercase())
+            // A custody handle is `<namespace>/<name>` in lower case (`sso/acme`), the model
+            // gateway's convention; anything else, or anything shaped like key material, is refused.
+            let shaped = handle.len() <= 128
+                && handle.split_once('/').is_some_and(|(namespace, name)| {
+                    !namespace.is_empty()
+                        && !name.is_empty()
+                        && namespace.starts_with(|c: char| c.is_ascii_lowercase())
+                })
                 && handle
                     .bytes()
-                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b"/_-".contains(&b));
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b"/_-".contains(&b))
+                && !crate::control::identity::settings::looks_like_secret(handle);
             if !shaped {
                 return Err(EnterpriseError::Invalid(
                     "client_secret_handle must be a custody handle such as sso/acme, never the secret"
@@ -1030,23 +1036,29 @@ impl EnterpriseIdentity {
                             "no workspace in this organization is open to your groups".to_string(),
                         )));
                     };
-                    if provisioned || !changes.is_empty() {
-                        stage_member_in(
-                            tx,
-                            batch,
-                            &tenant,
-                            &acting,
-                            &membership_id,
-                            if provisioned { "member.provisioned" } else { "member.updated" },
-                            json!({
-                                "membership_id": membership_id,
-                                "user_id": user_id,
-                                "source": "sso",
-                                "changes": changes,
-                            }),
-                        )
-                        .await?;
-                    }
+                    // Every sign-in is an event: a new member, a changed one, or a returning one.
+                    let event = if provisioned {
+                        "member.provisioned"
+                    } else if changes.is_empty() {
+                        "member.signed_in"
+                    } else {
+                        "member.updated"
+                    };
+                    stage_member_in(
+                        tx,
+                        batch,
+                        &tenant,
+                        &acting,
+                        &membership_id,
+                        event,
+                        json!({
+                            "membership_id": membership_id,
+                            "user_id": user_id,
+                            "source": "sso",
+                            "changes": changes,
+                        }),
+                    )
+                    .await?;
                     audit_in(
                         tx,
                         &tenant,

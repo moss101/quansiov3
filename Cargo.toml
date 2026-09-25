@@ -32,3 +32,11 @@ missing_docs = "warn"
 
 [workspace.lints.clippy]
 all = "warn"
+
+# The service principal key hash (argon2id, OPS-001) is memory-hard by design; unoptimized it
+# makes every test that authenticates a principal crawl. Only these two crates are optimized.
+[profile.dev.package.argon2]
+opt-level = 3
+
+[profile.dev.package.blake2]
+opt-level = 3

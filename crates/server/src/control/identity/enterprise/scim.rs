@@ -29,8 +29,8 @@ use super::mapping;
 use super::principals::PrincipalScope;
 use super::sessions::revoke_in;
 use super::{
-    audit_in, create_user_in, rejected, stage_member_in, user_by_email_in, Acting, EnterpriseError,
-    EnterpriseIdentity,
+    audit_in, create_user_in, rejected, stage_in, stage_member_in, user_by_email_in, Acting,
+    EnterpriseError, EnterpriseIdentity,
 };
 use crate::control::identity::auth::normalize_email;
 
@@ -1001,7 +1001,10 @@ impl EnterpriseIdentity {
                             set_active_in(tx, &tenant, &user_id, &role, active, default_workspace.as_deref()).await?;
                         detail.insert("active".into(), outcome);
                     }
-                    if !detail.is_empty() {
+                    if detail.is_empty() {
+                        return Err(rejected(EnterpriseError::Unchanged));
+                    }
+                    {
                         stage_member_in(
                             tx,
                             batch,
@@ -1020,7 +1023,11 @@ impl EnterpriseIdentity {
                 })
             })
             .await
-            .map_err(super::unwrap_rejection)?;
+            .map_err(super::unwrap_rejection)
+            .or_else(|error| match error {
+                EnterpriseError::Unchanged => Ok(()),
+                other => Err(other),
+            })?;
         self.user_reply(&principal.tenant_id, id, 200).await
     }
 
@@ -1262,6 +1269,9 @@ impl EnterpriseIdentity {
                     .fetch_all(&mut **tx)
                     .await?;
                     recompute_members_in(tx, batch, &tenant, &acting, &everyone).await?;
+                    stage_in(tx, batch, &tenant, &acting, ("directory_group", &id), "tenant.directory_group_created",
+                             json!({ "group_id": id, "display_name": name, "members": members }))
+                        .await?;
                     audit_in(tx, &tenant, &acting, "scim.create_group", &format!("group:{id}"), "applied",
                              &format!("{name} with {} member(s)", members.len()))
                         .await?;
@@ -1380,6 +1390,10 @@ impl EnterpriseIdentity {
                     touched.extend(change.remove_members.iter().cloned());
                     // A renamed group can change every member's mapping.
                     recompute_members_in(tx, batch, &tenant, &acting, &touched).await?;
+                    stage_in(tx, batch, &tenant, &acting, ("directory_group", &group_id), "tenant.directory_group_updated",
+                             json!({ "group_id": group_id, "added": change.add_members, "removed": change.remove_members,
+                                     "replaced": change.replace_members, "display_name": change.display_name }))
+                        .await?;
                     audit_in(tx, &tenant, &acting, operation, &format!("group:{group_id}"), "applied",
                              &format!("+{} -{} members", change.add_members.len(), change.remove_members.len()))
                         .await?;
@@ -1464,6 +1478,9 @@ impl EnterpriseIdentity {
                         return Err(rejected(EnterpriseError::NotFound(format!("group {group_id} does not exist"))));
                     }
                     recompute_members_in(tx, batch, &tenant, &acting, &members).await?;
+                    stage_in(tx, batch, &tenant, &acting, ("directory_group", &group_id), "tenant.directory_group_deleted",
+                             json!({ "group_id": group_id, "former_members": members }))
+                        .await?;
                     audit_in(tx, &tenant, &acting, "scim.delete_group", &format!("group:{group_id}"), "applied",
                              &format!("{} former member(s)", members.len()))
                         .await?;

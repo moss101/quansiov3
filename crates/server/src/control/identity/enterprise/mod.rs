@@ -186,6 +186,9 @@ pub enum EnterpriseError {
     /// The IdP could not be reached or answered outside the protocol.
     #[error("enterprise unavailable: {0}")]
     Unavailable(String),
+    /// A mutation found nothing to change (never surfaced: the caller answers as a success).
+    #[error("enterprise unchanged")]
+    Unchanged,
     /// Session issuance failed.
     #[error(transparent)]
     Auth(#[from] AuthError),
@@ -214,7 +217,7 @@ impl EnterpriseError {
             Self::Auth(AuthError::InvalidToken(_)) => "AUTH_INVALID_TOKEN",
             Self::Auth(AuthError::Expired(_)) => "AUTH_EXPIRED",
             Self::Identity(error) => error.code(),
-            Self::Auth(_) | Self::Event(_) | Self::Database(_) => "INTERNAL",
+            Self::Auth(_) | Self::Event(_) | Self::Database(_) | Self::Unchanged => "INTERNAL",
         }
     }
 }
@@ -242,6 +245,8 @@ pub(crate) fn unwrap_rejection(error: EventError) -> EnterpriseError {
                 EnterpriseError::Forbidden(rest)
             } else if let Some(rest) = strip("enterprise unauthenticated: ") {
                 EnterpriseError::Unauthenticated(rest)
+            } else if message == "enterprise unchanged" {
+                EnterpriseError::Unchanged
             } else if let Some(rest) = strip("identity conflict: ") {
                 EnterpriseError::Conflict(rest)
             } else {
