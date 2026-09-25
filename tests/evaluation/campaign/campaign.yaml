@@ -19,7 +19,7 @@ live:
   timeout_ms: 120000
   max_output_tokens: 1024
   # A hard stop for the whole campaign; exceeding either is a failed campaign, not a warning.
-  max_model_calls: 120
+  max_model_calls: 200
   max_cost_minor_units: 500
 
 retrieval:
