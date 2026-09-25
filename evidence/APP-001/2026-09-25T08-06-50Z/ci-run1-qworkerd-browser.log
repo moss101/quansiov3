@@ -1,0 +1,19 @@
+running 4 tests
+test the_dom_is_read_first_and_a_screenshot_only_when_it_says_nothing ... FAILED
+test a_takeover_fences_agent_input_without_creating_a_second_session ... ok
+test a_click_is_classified_from_the_page_s_own_semantics_before_it_happens ... ok
+test web_fetch_is_bounded_labelled_and_digested ... ok
+
+failures:
+
+---- the_dom_is_read_first_and_a_screenshot_only_when_it_says_nothing stdout ----
+
+thread 'the_dom_is_read_first_and_a_screenshot_only_when_it_says_nothing' (11655311) panicked at crates/qworkerd/tests/browser.rs:172:10:
+open a page: Unreachable("127.0.0.1:50039: Connection refused (os error 61)")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    the_dom_is_read_first_and_a_screenshot_only_when_it_says_nothing
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.92s
