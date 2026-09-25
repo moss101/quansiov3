@@ -810,6 +810,31 @@ async fn the_whole_sign_in_flow_works_as_the_application_role_under_rls() {
     assert_eq!(again["user_id"], session["user_id"], "{again}");
     assert_eq!(again["tenant_id"], session["tenant_id"], "{again}");
 
+    // An administrator adds an account that already exists elsewhere (it has its own personal
+    // tenant): as the application role the account is found, not provisioned a second time.
+    let other = sign_in(&router, &delivery, "rls-other@example.com").await;
+    let again_access = again["access_token"].as_str().expect("access").to_string();
+    let invited = router
+        .clone()
+        .oneshot(post_json(
+            "/v1/commands/InviteMember",
+            json!({ "command_id": "cmd_01J8Z3K6F1N8VQ2X5W9Y0AAAB1", "params": { "email": "rls-other@example.com", "role": "member" } }),
+            Some(&again_access),
+        ))
+        .await
+        .expect("invite");
+    let status = invited.status();
+    let invited = json_body(invited).await;
+    assert_eq!(status, StatusCode::OK, "{invited}");
+    assert_eq!(
+        invited["result"]["user"]["id"], other["user_id"],
+        "{invited}"
+    );
+    assert_eq!(
+        invited["result"]["status"], "active",
+        "an existing account joins directly: {invited}"
+    );
+
     // The pre-authentication tables are invisible to the application role without the gate.
     let mut tx = pool.begin().await.expect("begin");
     let visible: i64 = sqlx::query_scalar("SELECT count(*) FROM sessions")
