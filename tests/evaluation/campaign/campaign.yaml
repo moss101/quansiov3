@@ -26,3 +26,8 @@ retrieval:
   k: 10
   # Index-query latency is sampled on the real derived table over this many queries.
   latency_samples: 60
+
+# The context plane packs against its own estimate (four characters a token). The provider's own count
+# of the same rendered context must not exceed the estimate, or a budget the plane honoured could still
+# overflow the model's window.
+max_provider_token_ratio: 1.0

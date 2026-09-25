@@ -1,0 +1,336 @@
+{
+  "version": 1,
+  "notes": "Frozen protected outcomes of the first QA-004 campaign (offline and PostgreSQL legs, 2026-09-26). A later run counts a protected case that passed here and fails now as a regression (DOSSIER 21.3, last row); a case missing from a later run fails the campaign's coverage check.",
+  "outcomes": [
+    {
+      "dataset_id": "context_budget",
+      "case_id": "drops_oldest_first",
+      "passed": true
+    },
+    {
+      "dataset_id": "context_budget",
+      "case_id": "fits_without_loss",
+      "passed": true
+    },
+    {
+      "dataset_id": "context_budget",
+      "case_id": "product_budget_large_history",
+      "passed": true
+    },
+    {
+      "dataset_id": "context_budget",
+      "case_id": "required_old_turn_kept",
+      "passed": true
+    },
+    {
+      "dataset_id": "context_budget",
+      "case_id": "required_overflow_refused",
+      "passed": true
+    },
+    {
+      "dataset_id": "context_budget",
+      "case_id": "tight_budget_keeps_required",
+      "passed": true
+    },
+    {
+      "dataset_id": "context_budget",
+      "case_id": "tool_round_dropped_whole",
+      "passed": true
+    },
+    {
+      "dataset_id": "context_budget",
+      "case_id": "tool_round_kept_whole",
+      "passed": true
+    },
+    {
+      "dataset_id": "context_budget",
+      "case_id": "untrusted_instruction_refused",
+      "passed": true
+    },
+    {
+      "dataset_id": "context_budget",
+      "case_id": "untrusted_is_boundaried",
+      "passed": true
+    },
+    {
+      "dataset_id": "injection_corpus",
+      "case_id": "doc_tool_imperative",
+      "passed": true
+    },
+    {
+      "dataset_id": "injection_corpus",
+      "case_id": "email_role_play",
+      "passed": true
+    },
+    {
+      "dataset_id": "injection_corpus",
+      "case_id": "file_hidden_markup",
+      "passed": true
+    },
+    {
+      "dataset_id": "injection_corpus",
+      "case_id": "tool_output_exfiltration",
+      "passed": true
+    },
+    {
+      "dataset_id": "injection_corpus",
+      "case_id": "web_encoded_blob",
+      "passed": true
+    },
+    {
+      "dataset_id": "injection_corpus",
+      "case_id": "web_override",
+      "passed": true
+    },
+    {
+      "dataset_id": "injection_corpus",
+      "case_id": "web_token_url",
+      "passed": true
+    },
+    {
+      "dataset_id": "memory_adversarial",
+      "case_id": "candidate_never_served",
+      "passed": true
+    },
+    {
+      "dataset_id": "memory_adversarial",
+      "case_id": "cross_tenant_bulk",
+      "passed": true
+    },
+    {
+      "dataset_id": "memory_adversarial",
+      "case_id": "cross_tenant_identical",
+      "passed": true
+    },
+    {
+      "dataset_id": "memory_adversarial",
+      "case_id": "cross_tenant_only_match",
+      "passed": true
+    },
+    {
+      "dataset_id": "memory_adversarial",
+      "case_id": "cross_tenant_poisoned",
+      "passed": true
+    },
+    {
+      "dataset_id": "memory_adversarial",
+      "case_id": "deleted_after_refresh",
+      "passed": true
+    },
+    {
+      "dataset_id": "memory_adversarial",
+      "case_id": "deleted_before_refresh",
+      "passed": true
+    },
+    {
+      "dataset_id": "memory_adversarial",
+      "case_id": "deleted_then_restated",
+      "passed": true
+    },
+    {
+      "dataset_id": "memory_adversarial",
+      "case_id": "expired_after_refresh",
+      "passed": true
+    },
+    {
+      "dataset_id": "memory_adversarial",
+      "case_id": "forged_tenant_row",
+      "passed": true
+    },
+    {
+      "dataset_id": "memory_adversarial",
+      "case_id": "tenantless_read",
+      "passed": true
+    },
+    {
+      "dataset_id": "resolution_behaviour",
+      "case_id": "approved_but_not_active_is_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "resolution_behaviour",
+      "case_id": "insufficient_snapshot_is_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_matrix",
+      "case_id": "chat_12_messages_4096",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_matrix",
+      "case_id": "chat_1_messages_256",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_matrix",
+      "case_id": "chat_48_messages_8192",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_matrix",
+      "case_id": "embedding_shape",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_matrix",
+      "case_id": "hint_anthropic_opus",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_matrix",
+      "case_id": "hint_anthropic_sonnet",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_matrix",
+      "case_id": "hint_openai_compatible_local",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_matrix",
+      "case_id": "hint_openai_gpt",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_matrix",
+      "case_id": "tools_fs_read",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_matrix",
+      "case_id": "tools_terminal_exec_fs_read_fs_patch",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_matrix",
+      "case_id": "tools_web_search_web_fetch",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_quality",
+      "case_id": "chat_default",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_quality",
+      "case_id": "embedding_shape",
+      "passed": true
+    },
+    {
+      "dataset_id": "route_quality",
+      "case_id": "tool_heavy_with_tools",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_artifacts",
+      "case_id": "missing_capability_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_artifacts",
+      "case_id": "missing_tool_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_artifacts",
+      "case_id": "permitted_resolves",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_business_ops",
+      "case_id": "missing_capability_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_business_ops",
+      "case_id": "missing_tool_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_business_ops",
+      "case_id": "permitted_resolves",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_cloud_devops",
+      "case_id": "missing_capability_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_cloud_devops",
+      "case_id": "missing_tool_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_cloud_devops",
+      "case_id": "permitted_resolves",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_coding",
+      "case_id": "missing_capability_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_coding",
+      "case_id": "missing_tool_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_coding",
+      "case_id": "permitted_resolves",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_data_analysis",
+      "case_id": "missing_capability_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_data_analysis",
+      "case_id": "missing_tool_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_data_analysis",
+      "case_id": "permitted_resolves",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_research",
+      "case_id": "missing_capability_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_research",
+      "case_id": "missing_tool_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_research",
+      "case_id": "permitted_resolves",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_wiki",
+      "case_id": "missing_capability_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_wiki",
+      "case_id": "missing_tool_excluded",
+      "passed": true
+    },
+    {
+      "dataset_id": "skill_wiki",
+      "case_id": "permitted_resolves",
+      "passed": true
+    },
+    {
+      "dataset_id": "wiki_navigation",
+      "case_id": "campaign",
+      "passed": true
+    }
+  ]
+}
