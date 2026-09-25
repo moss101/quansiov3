@@ -1006,3 +1006,474 @@ async fn a_tenant_over_the_rate_limit_is_rate_limited() {
     assert_eq!(recorded, 0);
     common::drop_pool(&pool, &name).await;
 }
+
+// ------------------------------------------------------------------ the application role
+
+#[test]
+fn every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction() {
+    // Row-level security is forced on every tenant table, and the tenant setting lasts one transaction
+    // (`set_config(.., true)`). A statement on the bare pool, or on a connection taken from it outside a
+    // transaction, therefore runs with no tenant: as the application role it reads nothing and writes
+    // nothing. The superuser the development stack connects as bypasses the policies, so no handler's
+    // output shows this; the module is scanned instead, the way the ownership boundary above is.
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/api");
+    let executors = [
+        "execute",
+        "fetch",
+        "fetch_one",
+        "fetch_all",
+        "fetch_optional",
+    ];
+    let unscoped = ["state.pool()", "pool", "&pool", "self.pool()", "&self.pool"];
+    let mut scanned = 0;
+    let mut offenders = Vec::new();
+    let mut stack = vec![root];
+    while let Some(directory) = stack.pop() {
+        let Ok(entries) = std::fs::read_dir(&directory) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                stack.push(path);
+                continue;
+            }
+            if path.extension().is_none_or(|extension| extension != "rs") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).expect("read source");
+            scanned += 1;
+            // Whitespace is dropped so a call split over lines reads as one.
+            let flat: String = text.chars().filter(|c| !c.is_whitespace()).collect();
+            let mut found = Vec::new();
+            for executor in executors {
+                for pool in unscoped {
+                    for close in [")", ",)"] {
+                        let call = format!(".{executor}({pool}{close}");
+                        found.extend(flat.match_indices(&call).map(|(at, _)| at));
+                    }
+                }
+            }
+            found.extend(flat.match_indices(".acquire()").map(|(at, _)| at));
+            for at in found {
+                let statement = &flat[flat[..at].rfind(';').map_or(0, |end| end + 1)..at];
+                // The readiness probe names no table: it asks whether the database answers at all.
+                if statement.contains("(\"SELECT1\")") {
+                    continue;
+                }
+                // The statement's tail is enough to find it: the query text and its executor.
+                let tail: String = statement
+                    .chars()
+                    .rev()
+                    .take(160)
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .rev()
+                    .collect();
+                offenders.push(format!("{}: ...{tail}", path.display()));
+            }
+        }
+    }
+    assert!(scanned >= 2, "the scan must actually read the module");
+    assert!(
+        offenders.is_empty(),
+        "the API runs a statement outside a tenant-scoped transaction: {offenders:#?}"
+    );
+}
+
+/// A pool whose every connection acts as `quansio_app`, the least-privilege role a deployment connects as.
+async fn app_role_pool(url: &str) -> sqlx::PgPool {
+    sqlx::postgres::PgPoolOptions::new()
+        .max_connections(4)
+        .after_connect(|conn, _meta| {
+            Box::pin(async move {
+                sqlx::query("SET ROLE quansio_app").execute(conn).await?;
+                Ok(())
+            })
+        })
+        .connect(url)
+        .await
+        .expect("app-role pool")
+}
+
+fn as_user(method: &str, path: &str, body: Option<Value>) -> Request<Body> {
+    let mut request = request(method, path, Some(TENANT), body);
+    request
+        .headers_mut()
+        .insert("x-quansio-user", USER.parse().expect("header"));
+    request
+}
+
+async fn call(router: &axum::Router, request: Request<Body>) -> (StatusCode, Value) {
+    let response = router.clone().oneshot(request).await.expect("a response");
+    let status = response.status();
+    let bytes = axum::body::to_bytes(response.into_body(), 1 << 22)
+        .await
+        .expect("a body");
+    let body = serde_json::from_slice(&bytes)
+        .unwrap_or_else(|_| Value::String(format!("{} bytes", bytes.len())));
+    (status, body)
+}
+
+#[tokio::test]
+async fn the_public_surface_works_as_the_application_role_under_rls() {
+    use base64::Engine;
+    use quansio_server::artifacts::{
+        CapturedBy, EvidenceContent, EvidenceKind, EvidenceStore, NewEvidence, ObjectStore,
+        S3ObjectStore,
+    };
+    use serde_json::json;
+    use std::sync::Arc;
+
+    const NODE: &str = "wn_01J8Z3K6F1N8VQ2X5W9Y0CCCCC";
+    const TARGET: &str = "tgt_01J8Z3K6F1N8VQ2X5W9Y0CCCCC";
+    const LEGACY_WORKSPACE: &str = "ws_01J8Z3K6F1N8VQ2X5W9Y0CCCCD";
+    const LEGACY_THREAD: &str = "ath_01J8Z3K6F1N8VQ2X5W9Y0CCCCD";
+    let command = |n: u32| format!("cmd_01J8Z3K6F1N8VQ2X5W9Y0C{n:04}");
+
+    let name = common::scratch_name("api_app_role");
+    let Some(admin) = common::fresh_database(&name).await else {
+        common::blocked_marker();
+        return;
+    };
+    // The fixture is written by the superuser, as provisioning would; everything after it goes through a
+    // router whose pool is the application role, where every tenant table's policy is in force.
+    quansio_server::control::schema::migrate(&admin)
+        .await
+        .expect("migrate");
+    common::seed_tenant(&admin, TENANT, USER, WORKSPACE, NODE).await;
+    {
+        let mut tx = admin.begin().await.expect("begin");
+        quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .expect("tenant");
+        sqlx::query(
+            "INSERT INTO policies (id, tenant_id, workspace_id, scope, rules) \
+             VALUES ('pol_01J8Z3K6F1N8VQ2X5W9Y0CCCCC', $1, NULL, 'tenant', $2)",
+        )
+        .bind(TENANT)
+        .bind(json!([
+            { "effect_class": "read.internal", "resource": { "kind": "fs", "selector": "**" }, "decision": "allow" }
+        ]))
+        .execute(&mut *tx)
+        .await
+        .expect("policy");
+        // The workspace's execution target, which a message's run binds when its teammate names none.
+        sqlx::query(
+            "INSERT INTO execution_targets (id, tenant_id, workspace_id, target_class, substrate, status) \
+             VALUES ($1, $2, $3, 'persistent_workspace_computer', 'local_capsule_macos', 'READY')",
+        )
+        .bind(TARGET)
+        .bind(TENANT)
+        .bind(WORKSPACE)
+        .execute(&mut *tx)
+        .await
+        .expect("target");
+        // A second workspace that still has a pre-definition teammate thread, which its messages keep.
+        sqlx::query("INSERT INTO workspaces (id, tenant_id, name) VALUES ($1, $2, 'legacy')")
+            .bind(LEGACY_WORKSPACE)
+            .bind(TENANT)
+            .execute(&mut *tx)
+            .await
+            .expect("workspace");
+        sqlx::query(
+            "INSERT INTO workspace_memberships (id, tenant_id, workspace_id, user_id, role, status) \
+             VALUES ('wm_01J8Z3K6F1N8VQ2X5W9Y0CCCCD', $1, $2, $3, 'admin', 'active')",
+        )
+        .bind(TENANT)
+        .bind(LEGACY_WORKSPACE)
+        .bind(USER)
+        .execute(&mut *tx)
+        .await
+        .expect("membership");
+        sqlx::query(
+            "INSERT INTO work_nodes (id, tenant_id, workspace_id, kind, title, created_by) \
+             VALUES ('wn_01J8Z3K6F1N8VQ2X5W9Y0CCCCD', $1, $2, 'objective', 'legacy node', \
+                     '{\"kind\":\"user\",\"id\":\"usr_seed\"}'::jsonb)",
+        )
+        .bind(TENANT)
+        .bind(LEGACY_WORKSPACE)
+        .execute(&mut *tx)
+        .await
+        .expect("work node");
+        sqlx::query(
+            "INSERT INTO agent_threads (id, tenant_id, workspace_id, agent_kind, status) \
+             VALUES ($1, $2, $3, 'teammate', 'ACTIVE')",
+        )
+        .bind(LEGACY_THREAD)
+        .bind(TENANT)
+        .bind(LEGACY_WORKSPACE)
+        .execute(&mut *tx)
+        .await
+        .expect("legacy teammate thread");
+        tx.commit().await.expect("commit");
+    }
+    let (run, generation) = runtime_run(&admin).await;
+    let objects: Arc<dyn ObjectStore> =
+        Arc::new(S3ObjectStore::from_env().expect("QUANSIO_TEST_MINIO_* configuration"));
+    let evidence = {
+        let mut conn = admin.acquire().await.expect("conn");
+        EvidenceStore::new(objects.as_ref())
+            .record(
+                &mut conn,
+                TENANT,
+                &NewEvidence {
+                    workspace_id: WORKSPACE.to_string(),
+                    run_id: None,
+                    step_id: None,
+                    effect_id: None,
+                    kind: EvidenceKind::ToolOutput,
+                    content: EvidenceContent::Bytes {
+                        bytes: b"exit 0\n".to_vec(),
+                        media_type: "text/plain".to_string(),
+                    },
+                    inline_summary: Some("exit 0".to_string()),
+                    captured_at: None,
+                    captured_by: CapturedBy {
+                        kind: "run".to_string(),
+                        id: run.to_string(),
+                    },
+                    redaction_applied: false,
+                },
+            )
+            .await
+            .expect("evidence")
+            .id
+            .to_canonical()
+    };
+
+    let pool = app_role_pool(&common::scratch_url(&name)).await;
+    let state = ApiState::new(pool.clone())
+        .expect("api state")
+        .with_object_store(objects);
+    let router = quansio_server::api::router(state);
+
+    let (status, health) = call(&router, request("GET", "/v1/health", None, None)).await;
+    assert_eq!(status, StatusCode::OK, "{health}");
+
+    // A message: recorded in the command log, routed to the workspace's default teammate, bound to the
+    // workspace's execution target, projected, run to a question.
+    let post = json!({
+        "command_id": command(1),
+        "params": {
+            "workspace_id": WORKSPACE,
+            "content": format!("pick for me {}", quansio_server::api::seams::QUESTION_SCENARIO),
+        },
+    });
+    let (status, posted) = call(
+        &router,
+        as_user("POST", "/v1/commands/PostMessage", Some(post.clone())),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{posted}");
+    assert_eq!(posted["replayed"], false, "{posted}");
+    assert_eq!(posted["result"]["turn"]["kind"], "parked", "{posted}");
+    let thread_id = posted["result"]["thread_id"]
+        .as_str()
+        .expect("thread")
+        .to_string();
+    let run_id = posted["result"]["run_id"]
+        .as_str()
+        .expect("run")
+        .to_string();
+    let bound: Option<String> =
+        sqlx::query_scalar("SELECT execution_target_id FROM runs WHERE id = $1")
+            .bind(&run_id)
+            .fetch_one(&admin)
+            .await
+            .expect("the run");
+    assert_eq!(bound.as_deref(), Some(TARGET), "the workspace's target");
+
+    // A resend is answered from the command log.
+    let (status, again) = call(
+        &router,
+        as_user("POST", "/v1/commands/PostMessage", Some(post)),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{again}");
+    assert_eq!(again["replayed"], true, "{again}");
+    assert_eq!(again["result"], posted["result"], "{again}");
+
+    // The run's projection is readable, with the tenant policy it was resolved from.
+    let (status, projected) =
+        call(&router, as_user("GET", &format!("/v1/runs/{run_id}"), None)).await;
+    assert_eq!(status, StatusCode::OK, "{projected}");
+    let inputs = projected["capability_projection"]["inputs"]
+        .as_array()
+        .unwrap_or_else(|| panic!("the run has no capability projection: {projected}"));
+    assert!(
+        inputs
+            .iter()
+            .any(|input| input.to_string().contains("pol_01J8Z3K6F1N8VQ2X5W9Y0CCCCC")),
+        "the projection names the tenant policy: {projected}"
+    );
+
+    // Answering the question resumes the run, and the reply lands in the thread the run came from.
+    let (status, questions) = call(
+        &router,
+        as_user("GET", &format!("/v1/questions?run_id={run_id}"), None),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{questions}");
+    let question_id = questions["questions"][0]["id"]
+        .as_str()
+        .unwrap_or_else(|| panic!("no open question: {questions}"))
+        .to_string();
+    let (status, answered) = call(
+        &router,
+        as_user(
+            "POST",
+            "/v1/commands/AnswerQuestion",
+            Some(json!({
+                "command_id": command(2),
+                "params": { "question_id": question_id, "value": "alpha" },
+            })),
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{answered}");
+    assert_eq!(answered["result"]["thread_id"], thread_id, "{answered}");
+    assert!(
+        answered["result"]["reply_message_id"].is_string(),
+        "{answered}"
+    );
+    let (status, messages) = call(
+        &router,
+        as_user("GET", &format!("/v1/messages?thread_id={thread_id}"), None),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{messages}");
+    assert_eq!(
+        messages["messages"].as_array().map(Vec::len),
+        Some(2),
+        "{messages}"
+    );
+
+    // A workspace with a pre-definition teammate thread keeps it.
+    let (status, legacy) = call(
+        &router,
+        as_user(
+            "POST",
+            "/v1/commands/PostMessage",
+            Some(json!({
+                "command_id": command(3),
+                "params": { "workspace_id": LEGACY_WORKSPACE, "content": "hello" },
+            })),
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{legacy}");
+    let thread: String = sqlx::query_scalar("SELECT agent_thread_id FROM runs WHERE id = $1")
+        .bind(legacy["result"]["run_id"].as_str().expect("run"))
+        .fetch_one(&admin)
+        .await
+        .expect("the run");
+    assert_eq!(thread, LEGACY_THREAD, "{legacy}");
+
+    // A run command through the runtime, and a refusal, each kept as the command's outcome.
+    let (status, cancelled) = call(
+        &router,
+        as_user(
+            "POST",
+            "/v1/commands/CancelRun",
+            Some(json!({
+                "command_id": command(4),
+                "params": { "run_id": run.to_string(), "generation": generation },
+            })),
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{cancelled}");
+    assert_eq!(cancelled["result"]["status"], "CANCELLED", "{cancelled}");
+    let refused_call = json!({
+        "command_id": command(5),
+        "params": { "run_id": run.to_string(), "generation": 0 },
+    });
+    let (status, refused) = call(
+        &router,
+        as_user("POST", "/v1/commands/CancelRun", Some(refused_call.clone())),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST, "{refused}");
+    let (status, refused_again) = call(
+        &router,
+        as_user("POST", "/v1/commands/CancelRun", Some(refused_call)),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST, "{refused_again}");
+    assert_eq!(
+        refused_again, refused,
+        "the resend gets the recorded refusal"
+    );
+
+    // An upload, and its bytes read back.
+    let bytes: Vec<u8> = (0..=255u8).cycle().take(1024).collect();
+    let (status, created) = call(
+        &router,
+        as_user(
+            "POST",
+            "/v1/commands/CreateArtifact",
+            Some(json!({
+                "command_id": command(6),
+                "params": {
+                    "workspace_id": WORKSPACE,
+                    "title": "sample.bin",
+                    "media_type": "application/octet-stream",
+                    "bytes_base64": base64::engine::general_purpose::STANDARD.encode(&bytes),
+                },
+            })),
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{created}");
+    let artifact_id = created["result"]["artifact_id"].as_str().expect("artifact");
+    let version_id = created["result"]["version_id"].as_str().expect("version");
+    let (status, content) = call(
+        &router,
+        as_user(
+            "GET",
+            &format!("/v1/artifacts/{artifact_id}/versions/{version_id}/content"),
+            None,
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{content}");
+    assert_eq!(content, json!("1024 bytes"), "{content}");
+
+    // Evidence, as metadata and as bytes.
+    let (status, record) = call(
+        &router,
+        as_user("GET", &format!("/v1/evidence/{evidence}"), None),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{record}");
+    assert_eq!(record["id"], evidence, "{record}");
+    let (status, evidence_bytes) = call(
+        &router,
+        as_user("GET", &format!("/v1/evidence/{evidence}/content"), None),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{evidence_bytes}");
+
+    // Every command was recorded with its outcome, in this tenant.
+    let outcomes: Vec<(String, String)> = sqlx::query_as(
+        "SELECT command_id, status FROM commands WHERE tenant_id = $1 ORDER BY command_id",
+    )
+    .bind(TENANT)
+    .fetch_all(&admin)
+    .await
+    .expect("the command log");
+    assert_eq!(
+        outcomes,
+        vec![
+            (command(1), "applied".to_string()),
+            (command(2), "applied".to_string()),
+            (command(3), "applied".to_string()),
+            (command(4), "applied".to_string()),
+            (command(5), "rejected".to_string()),
+            (command(6), "applied".to_string()),
+        ]
+    );
+    drop(pool);
+    common::drop_pool(&admin, &name).await;
+}

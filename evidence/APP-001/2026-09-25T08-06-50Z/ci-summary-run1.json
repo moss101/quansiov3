@@ -1,0 +1,112 @@
+{
+  "commit": "f0ce9bcd0fcb914b931a415054210bcde5362f2a",
+  "recorded_at": "2026-09-25T07:58:30Z",
+  "results": [
+    {
+      "gate": "authority",
+      "command": "python3.12 scripts/validate_v81.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.033,
+      "tail": "V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 65 PASS, 6 ready)",
+      "log": "artifacts/ci/logs/f0ce9bcd0fcb/authority.log"
+    },
+    {
+      "gate": "dossier-consistency",
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 4.685,
+      "tail": "dossier consistency: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/f0ce9bcd0fcb/dossier-consistency.log"
+    },
+    {
+      "gate": "architecture",
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.652,
+      "tail": "architecture check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/f0ce9bcd0fcb/architecture.log"
+    },
+    {
+      "gate": "authority-pointers",
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.026,
+      "tail": "authority check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/f0ce9bcd0fcb/authority-pointers.log"
+    },
+    {
+      "gate": "workspace",
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.036,
+      "tail": "workspace check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/f0ce9bcd0fcb/workspace.log"
+    },
+    {
+      "gate": "supply-chain",
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 2.276,
+      "tail": "      \u2502   \u2502   \u251c\u2500\u2500 quansio-graph v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 (dev) quansio-indexer v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 quansio-machine v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-native-windows v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-qworkerd v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros-core v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx-macros v0.8.6 (*)\n      \u2502   \u2514\u2500\u2500 sqlx-postgres v0.8.6\n      \u2502       \u251c\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502       \u2514\u2500\u2500 sqlx-macros-core v0.8.6 (*)\n      \u2514\u2500\u2500 tokio-rustls v0.26.5\n          \u251c\u2500\u2500 hyper-rustls v0.27.9 (*)\n          \u2514\u2500\u2500 reqwest v0.12.28 (*)\n\nsupply-chain: CLEAN (1 informational)\nUsing CPython 3.12.13 interpreter at: /opt/homebrew/opt/python@3.12/bin/python3.12\nCreating virtual environment at: python/.venv\n   Building quansio-intelligence @ file://python\n      Built quansio-intelligence @ file://python\nInstalled 26 packages in 28ms",
+      "log": "artifacts/ci/logs/f0ce9bcd0fcb/supply-chain.log"
+    },
+    {
+      "gate": "legacy-map",
+      "command": "python3.12 scripts/ci/legacy_map_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.231,
+      "tail": "legacy map check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/f0ce9bcd0fcb/legacy-map.log"
+    },
+    {
+      "gate": "contract-drift",
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 13.716,
+      "tail": "contract regeneration check: CLEAN (catalog,openapi,rust,python,ts,sdk)",
+      "log": "artifacts/ci/logs/f0ce9bcd0fcb/contract-drift.log"
+    },
+    {
+      "gate": "contract-lint-compat",
+      "command": "uv run --project python python scripts/ci/contract_compat.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.52,
+      "tail": "contract check: CLEAN (lint + compatibility)",
+      "log": "artifacts/ci/logs/f0ce9bcd0fcb/contract-lint-compat.log"
+    },
+    {
+      "gate": "toolchains",
+      "command": "bash scripts/dev/bootstrap.sh",
+      "status": "FAIL",
+      "exit_code": 101,
+      "duration_s": 161.076,
+      "tail": "     Running tests/agent_graph.rs (target/debug/deps/agent_graph-35c7969b87ba5295)\n     Running tests/atomic_batch.rs (target/debug/deps/atomic_batch-1065d73ff3b93dfc)\n     Running tests/attempts_append_only.rs (target/debug/deps/attempts_append_only-20c226295082e1be)\n     Running tests/cycle_rejection.rs (target/debug/deps/cycle_rejection-acd8ee00a6342762)\n     Running tests/graph_transaction.rs (target/debug/deps/graph_transaction-887541be19ed93f1)\n     Running tests/illegal_transitions.rs (target/debug/deps/illegal_transitions-93e9d75ecd8a0e41)\n     Running tests/plan_proposal.rs (target/debug/deps/plan_proposal-d55b2345e95bccfc)\n     Running tests/revision_cas.rs (target/debug/deps/revision_cas-e9e7af46b306e9b8)\n     Running tests/tenant_isolation.rs (target/debug/deps/tenant_isolation-92d4ccd2fb248e6d)\n     Running unittests src/lib.rs (target/debug/deps/quansio_indexer-fc10ace5401dc006)\n     Running tests/postgres_rebuild.rs (target/debug/deps/postgres_rebuild-a04c1513d9d367e8)\n     Running tests/search_api.rs (target/debug/deps/search_api-d35fe49b352db4af)\n     Running unittests src/lib.rs (target/debug/deps/quansio_machine-83334ea8e194298d)\n     Running tests/browser.rs (target/debug/deps/browser-cd6c014f7f58a943)\n     Running tests/computer_use.rs (target/debug/deps/computer_use-b9d2ab73b4256593)\n     Running tests/control.rs (target/debug/deps/control-6ba5ac8c6bb564c0)\n     Running tests/egress.rs (target/debug/deps/egress-ba35963c07134329)\n     Running tests/macos_capsule.rs (target/debug/deps/macos_capsule-1517c59a526245ad)\n     Running tests/secrets.rs (target/debug/deps/secrets-b7915e373af24d80)\n     Running tests/terminal.rs (target/debug/deps/terminal-73b2dedfe4e3041b)\n     Running tests/windows_capsule.rs (target/debug/deps/windows_capsule-8bbed78b2694c732)\n     Running unittests src/lib.rs (target/debug/deps/quansio_native_windows-32a80d821acc6800)\n     Running unittests src/lib.rs (target/debug/deps/quansio_qworkerd-3d861845d99e53aa)\n     Running tests/browser.rs (target/debug/deps/browser-992ebe306e1d7907)\nerror: test failed, to rerun pass `-p quansio-qworkerd --test browser`",
+      "log": "artifacts/ci/logs/f0ce9bcd0fcb/toolchains.log"
+    },
+    {
+      "gate": "tests",
+      "command": "uv run --project python pytest tests -q",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 64.058,
+      "tail": "........................................................................ [ 24%]\n........................................................................ [ 48%]\n........................................................................ [ 73%]\n........................................................................ [ 97%]\n......                                                                   [100%]\n294 passed in 63.34s (0:01:03)",
+      "log": "artifacts/ci/logs/f0ce9bcd0fcb/tests.log"
+    }
+  ],
+  "artifacts": {
+    "registries/progress.json": "a5671a75e7a73a0d870d235616d4252bdea6be0aa2994335916eade4ff531ad2",
+    "TASKS.md": "84e42eac1a62f7239211c4378dfb2c6c56e601aab8cbb40b8509f5ebe3324544",
+    "MANIFEST.json": "aafdf797241596ce14f6a42828b73d9a51d5cb288174f4e98077a707f38a6842"
+  },
+  "status": "FAIL",
+  "database_backed_tests": true
+}

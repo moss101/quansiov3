@@ -1,0 +1,30 @@
+COMPILES unscoped-tx crates/server/src/api/commands.rs:72
+KILLED unscoped-tx crates/server/src/api/commands.rs:72 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11487676) panicked at crates/server/tests/api.rs:1268:5: assertion `left == right` failed: {"code":"INTERNAL","correlation_id":"database","message":"error returned from database: new row violates row-level security policy for table \"commands\"","retryable":true}
+COMPILES unscoped-tx crates/server/src/api/commands.rs:114
+KILLED unscoped-tx crates/server/src/api/commands.rs:114 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11488884) panicked at crates/server/tests/api.rs:1293:5: assertion `left == right` failed: {"code":"CONFLICT_STATE","correlation_id":"01M3BRKTQTTB4DS5P927SPV0NP","details":{"command_status":"accepted"},"message":"this command_id is still being applied; resend it later for its 
+COMPILES unscoped-tx crates/server/src/api/commands.rs:508
+KILLED unscoped-tx crates/server/src/api/commands.rs:508 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11490333) panicked at crates/server/tests/api.rs:1403:5: assertion `left == right` failed: {"code":"CONFLICT_STATE","correlation_id":"01M3BRM2MJHD329H77XF7BN9JF","details":{"command_status":"accepted"},"message":"this command_id is still being applied; resend it later for its 
+COMPILES unscoped-tx crates/server/src/api/commands.rs:542
+KILLED unscoped-tx crates/server/src/api/commands.rs:542 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11491606) panicked at crates/server/tests/api.rs:1293:5: assertion `left == right` failed: {"code":"INTERNAL","correlation_id":"01M3BRMAJQ97NJ3S1GCAAPCF6P","message":"a command conflicted but cannot be read back","retryable":true}
+COMPILES unscoped-tx crates/server/src/api/commands.rs:980
+KILLED unscoped-tx crates/server/src/api/commands.rs:980 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11492778) panicked at crates/server/tests/api.rs:1335:5: left: Null
+COMPILES unscoped-tx crates/server/src/api/commands.rs:1074
+KILLED unscoped-tx crates/server/src/api/commands.rs:1074 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11494138) panicked at crates/server/tests/api.rs:1371:5: left: "ath_01M3BRMS9W40D5KRT5K1B6R094"
+COMPILES unscoped-tx crates/server/src/api/commands.rs:1166
+KILLED unscoped-tx crates/server/src/api/commands.rs:1166 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11495368) panicked at crates/server/tests/api.rs:1268:5: assertion `left == right` failed: {"code":"VALIDATION_BOUNDS","correlation_id":"01M3BRN0PMHZ1Y9D7MJ2Y82G3H","message":"the workspace has no work node","retryable":false}
+COMPILES unscoped-tx crates/server/src/api/commands.rs:1192
+KILLED unscoped-tx crates/server/src/api/commands.rs:1192 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11496526) panicked at crates/server/tests/api.rs:1285:5: left: None
+COMPILES unscoped-tx crates/server/src/api/artifacts.rs:207
+SURVIVED unscoped-tx crates/server/src/api/artifacts.rs:207 ::  
+COMPILES unscoped-tx crates/server/src/api/artifacts.rs:493
+KILLED unscoped-tx crates/server/src/api/artifacts.rs:493 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11510469) panicked at crates/server/tests/api.rs:1440:5: assertion `left == right` failed: {"code":"NOT_FOUND","correlation_id":"projection","message":"artv_01M3BRNYGFARMQ7NFBVSS7SDZ5 is not a version of this tenant","retryable":false}
+COMPILES unscoped-tx crates/server/src/api/artifacts.rs:622
+SURVIVED unscoped-tx crates/server/src/api/artifacts.rs:622 ::  
+COMPILES unscoped-tx crates/server/src/api/projections.rs:58
+KILLED unscoped-tx crates/server/src/api/projections.rs:58 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11521873) panicked at crates/server/tests/api.rs:1303:28: 
+COMPILES unscoped-tx crates/server/src/api/trust.rs:217
+SURVIVED unscoped-tx crates/server/src/api/trust.rs:217 ::  
+COMPILES helper-sets-another-tenant
+KILLED helper-sets-another-tenant :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11524470) panicked at crates/server/tests/api.rs:1268:5: assertion `left == right` failed: {"code":"INTERNAL","correlation_id":"database","message":"error returned from database: new row violates row-level security policy for table \"commands\"","retryable":true}
+DONE
+exit=0

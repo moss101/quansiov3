@@ -214,16 +214,17 @@ pub async fn evidence_content(
         ));
     };
     let objects: Arc<dyn ObjectStore> = objects;
-    let mut conn = state.pool().acquire().await.map_err(projection_error)?;
+    let mut tx = state.tenant_tx(&scope.tenant_id, "projection").await?;
     let store = EvidenceStore::new(objects.as_ref());
     let evidence = store
-        .load(&mut conn, &scope.tenant_id, &id)
+        .load(&mut tx, &scope.tenant_id, &id)
         .await
         .map_err(|error| evidence_error(error, "projection"))?;
     let bytes = store
-        .fetch_bytes(&mut conn, &scope.tenant_id, &id)
+        .fetch_bytes(&mut tx, &scope.tenant_id, &id)
         .await
         .map_err(|error| evidence_error(error, "projection"))?;
+    tx.commit().await.map_err(projection_error)?;
     let response = Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "application/octet-stream")

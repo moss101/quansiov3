@@ -1,0 +1,10 @@
+COMPILES bare-connection crates/server/src/api/artifacts.rs:207
+KILLED bare-connection crates/server/src/api/artifacts.rs:207 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11528453) panicked at crates/server/tests/api.rs:1428:5: assertion `left == right` failed: {"code":"VALIDATION_BOUNDS","correlation_id":"01M3BRR90EJN2RQ9Q42W1JZC67","message":"artifact store database: error returned from database: new row violates row-level security policy for
+COMPILES bare-connection crates/server/src/api/artifacts.rs:622
+KILLED bare-connection crates/server/src/api/artifacts.rs:622 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11529966) panicked at crates/server/tests/api.rs:1449:5: assertion `left == right` failed: {"code":"NOT_FOUND","correlation_id":"projection","message":"evidence not found: evd_01M3BRRGSMTEKE4932GW399F9R","retryable":false}
+COMPILES bare-connection crates/server/src/api/trust.rs:217
+KILLED bare-connection crates/server/src/api/trust.rs:217 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11531148) panicked at crates/server/tests/api.rs:1456:5: assertion `left == right` failed: {"code":"NOT_FOUND","correlation_id":"projection","message":"evidence not found: evd_01M3BRRQVAZTMGY3PM0T4CHMGY","retryable":false}
+COMPILES bare-connection crates/server/src/api/artifacts.rs:493
+KILLED bare-connection crates/server/src/api/artifacts.rs:493 :: thread 'the_public_surface_works_as_the_application_role_under_rls' (11532332) panicked at crates/server/tests/api.rs:1440:5: assertion `left == right` failed: {"code":"NOT_FOUND","correlation_id":"projection","message":"artv_01M3BRRZC9VP78TMTP4FR49SPS is not a version of this tenant","retryable":false}
+DONE
+exit=0

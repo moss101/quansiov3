@@ -53,6 +53,9 @@ async fn capability_projection(
     tenant_id: &str,
     run_id: &CanonicalId,
 ) -> Result<Value, ApiError> {
+    let unreadable =
+        |error: sqlx::Error| ApiError::new(ApiErrorCode::Internal, error.to_string(), "projection");
+    let mut tx = state.tenant_tx(tenant_id, "projection").await?;
     let row = sqlx::query(
         "SELECT id, inputs, grants, inputs_digest, computed_at, expires_at \
          FROM capability_projections \
@@ -61,9 +64,10 @@ async fn capability_projection(
     )
     .bind(tenant_id)
     .bind(run_id.to_string())
-    .fetch_optional(state.pool())
+    .fetch_optional(&mut *tx)
     .await
-    .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), "projection"))?;
+    .map_err(unreadable)?;
+    tx.commit().await.map_err(unreadable)?;
     Ok(row.map_or(Value::Null, |row| {
         use sqlx::Row;
         json!({
