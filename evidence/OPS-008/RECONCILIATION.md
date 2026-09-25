@@ -92,13 +92,13 @@ gate rather than the table:
 
 ## Plan
 
-- [ ] migration 0021 + README; DOMAIN + proto + regenerate
-- [ ] `control/ops`: catalog, store (engage/release/list), gate, runbook generator
-- [ ] enforcement: dispatch + resume (freeze, emergency deny, quarantine); model source + Python
+- [x] migration 0021 + README; DOMAIN + proto + regenerate
+- [x] `control/ops`: catalog, store (engage/release/list), gate, runbook generator
+- [x] enforcement: dispatch + resume (freeze, emergency deny, quarantine); model source + Python
       gateway (provider disable); machine drain/undrain + lease revoke; connector revoke;
       live-hub shed
-- [ ] API: named + generic commands, `RevokeConnector`, `/v1/ops/switches`
-- [ ] tests:
+- [x] API: named + generic commands, `RevokeConnector`, `/v1/ops/switches`
+- [x] tests:
   - kill-switch E2E through real turns: freeze blocks tier ≥ 2 without touching reads,
     evidence or existing effects, including an approved effect resuming;
   - emergency deny;
@@ -110,4 +110,4 @@ gate rather than the table:
   - provider outage drill against the real Python plane (fail over, then no provider left);
   - runbook drift;
   - mutation checks.
-- [ ] evidence, CI
+- [x] evidence, CI
