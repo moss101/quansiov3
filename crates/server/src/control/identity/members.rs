@@ -183,14 +183,28 @@ impl IdentityStore {
                     schema::set_user_context(tx, &by.user_id)
                         .await
                         .map_err(|error| rejected(IdentityError::Schema(error.to_string())))?;
-                    let existing: Option<(String, String)> = sqlx::query_as(
-                        "SELECT id, display_name FROM users WHERE primary_email = $1",
-                    )
-                    .bind(&email)
-                    .fetch_optional(&mut **tx)
-                    .await?;
+                    // An account outside this tenant is invisible to the users policy, so it is
+                    // found through the id-only lookup (migration 0019) and read as itself.
+                    let existing: Option<String> =
+                        sqlx::query_scalar("SELECT identity_user_by_email($1)")
+                            .bind(&email)
+                            .fetch_one(&mut **tx)
+                            .await?;
                     let (user_id, display_name, provisioned) = match existing {
-                        Some((id, name)) => (id, name, false),
+                        Some(id) => {
+                            schema::set_user_context(tx, &id).await.map_err(|error| {
+                                rejected(IdentityError::Schema(error.to_string()))
+                            })?;
+                            let name: String =
+                                sqlx::query_scalar("SELECT display_name FROM users WHERE id = $1")
+                                    .bind(&id)
+                                    .fetch_one(&mut **tx)
+                                    .await?;
+                            schema::set_user_context(tx, &by.user_id).await.map_err(|error| {
+                                rejected(IdentityError::Schema(error.to_string()))
+                            })?;
+                            (id, name, false)
+                        }
                         None => {
                             let id = CanonicalId::generate(Prefix::User, &mut UlidGenerator::new())
                                 .to_string();

@@ -14,6 +14,7 @@ mod common;
 use common::{admin_url, blocked_marker, drop_pool, fresh_database, scratch_name, seed_tenant};
 
 const TENANT: &str = "tn_01J8Z3K6F1N8VQ2X5W9Y0CN011";
+const OTHER_TENANT: &str = "tn_01J8Z3K6F1N8VQ2X5W9Y0CN012";
 const USER: &str = "usr_01J8Z3K6F1N8VQ2X5W9Y0CN011";
 const WORKSPACE: &str = "ws_01J8Z3K6F1N8VQ2X5W9Y0CN011";
 const WORK_NODE: &str = "wn_01J8Z3K6F1N8VQ2X5W9Y0CN011";
@@ -246,6 +247,104 @@ async fn raw_token_material_and_foreign_state_are_refused() {
     assert!(matches!(foreign, Err(ConnectorError::StateMismatch { .. })));
     assert_eq!(foreign.expect_err("code").code(), "CONFLICT_STATE");
     drop_pool(&pool, &cn_scratch_name("cn_broker_refuse")).await;
+}
+
+/// A pool whose every connection acts as the application role, so row-level security is
+/// enforced exactly as it is for the deployed server.
+async fn app_role_pool(url: &str) -> sqlx::PgPool {
+    sqlx::postgres::PgPoolOptions::new()
+        .max_connections(4)
+        .after_connect(|conn, _meta| {
+            Box::pin(async move {
+                sqlx::query("SET ROLE quansio_app").execute(conn).await?;
+                Ok(())
+            })
+        })
+        .connect(url)
+        .await
+        .expect("app-role pool")
+}
+
+#[tokio::test]
+async fn the_connector_lifecycle_works_as_the_application_role_under_rls() {
+    let name = common::scratch_name("cn_broker_rls");
+    let Some(admin) = common::fresh_database(&name).await else {
+        blocked_marker();
+        return;
+    };
+    // Migrate and seed as the superuser; everything after runs as quansio_app, where every
+    // tenant table's policy is FORCED.
+    schema::migrate(&admin).await.expect("migrate");
+    seed_tenant(&admin, TENANT, USER, WORKSPACE, WORK_NODE).await;
+    let pool = app_role_pool(&common::scratch_url(&name)).await;
+    let broker = ConnectorBroker::new(pool.clone(), TENANT);
+
+    let start = broker
+        .begin_auth(
+            "github",
+            "GitHub workspace",
+            "https://github.com/login/oauth/authorize",
+            "state-rls0123456789ab",
+            Some(WORKSPACE),
+        )
+        .await
+        .expect("begin");
+    let exchange = FixtureExchange
+        .exchange("github", "code", &start.state)
+        .expect("exchange");
+    store_handle(&pool, &exchange.access_token, "github").await;
+    // The callback path reads the instance to check the state digest.
+    broker
+        .complete_auth(
+            &start.instance_id,
+            &start.state,
+            &exchange,
+            &exchange.access_token,
+        )
+        .await
+        .expect("complete as quansio_app");
+    let (_, connector_id, status, handle) = broker
+        .load_async(&start.instance_id)
+        .await
+        .expect("row as quansio_app");
+    assert_eq!(connector_id, "github");
+    assert_eq!(status, "connected");
+    assert_eq!(handle.as_deref(), Some(exchange.access_token.as_str()));
+
+    // MarkDegraded, re-connect and RevokeConnector each read the row first.
+    broker
+        .transition(&start.instance_id, ConnectorState::Degraded)
+        .await
+        .expect("degrade as quansio_app");
+    broker
+        .transition(&start.instance_id, ConnectorState::Connected)
+        .await
+        .expect("re-connect as quansio_app");
+    broker
+        .transition(&start.instance_id, ConnectorState::Revoked)
+        .await
+        .expect("revoke as quansio_app");
+    let (_, _, status, handle) = broker
+        .load_async(&start.instance_id)
+        .await
+        .expect("row after revoke");
+    assert_eq!(status, "revoked");
+    assert!(handle.is_none(), "revocation clears the credential handle");
+
+    // Tenant scope is structural: a broker bound to another tenant does not see the row,
+    // and cannot move it.
+    let foreign = ConnectorBroker::new(pool.clone(), OTHER_TENANT);
+    assert!(matches!(
+        foreign.load_async(&start.instance_id).await,
+        Err(ConnectorError::NotFound { .. })
+    ));
+    assert!(matches!(
+        foreign
+            .transition(&start.instance_id, ConnectorState::Degraded)
+            .await,
+        Err(ConnectorError::NotFound { .. })
+    ));
+    drop_pool(&admin, &name).await;
 }
 
 #[test]

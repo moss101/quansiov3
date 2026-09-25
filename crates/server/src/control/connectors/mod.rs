@@ -172,9 +172,12 @@ fn state_digest(state: &str) -> String {
 }
 
 /// The connector broker for one tenant.
+///
+/// It holds no bare pool: every statement runs in a transaction the event store opens
+/// with the tenant context set, because `connector_instances` has FORCED row-level
+/// security and the application role sees no rows without it.
 #[derive(Debug, Clone)]
 pub struct ConnectorBroker {
-    pool: PgPool,
     events: EventStore,
     tenant_id: String,
 }
@@ -183,11 +186,9 @@ impl ConnectorBroker {
     /// Bind the broker to one tenant.
     #[must_use]
     pub fn new(pool: PgPool, tenant_id: impl Into<String>) -> Self {
-        let tenant_id = tenant_id.into();
         Self {
-            events: EventStore::new(pool.clone()),
-            pool,
-            tenant_id,
+            events: EventStore::new(pool),
+            tenant_id: tenant_id.into(),
         }
     }
 
@@ -343,24 +344,31 @@ impl ConnectorBroker {
 
     /// Load one instance as `(metadata, connector_id, status, credential_handle)`.
     ///
+    /// The read runs in a tenant-scoped transaction so row-level security admits the
+    /// broker's own tenant and no other.
+    ///
     /// # Errors
     /// [`ConnectorError::NotFound`] when the row is not visible to this tenant.
     pub async fn load_async(
         &self,
         instance_id: &str,
     ) -> Result<(Value, String, String, Option<String>), ConnectorError> {
+        let mut tx = self
+            .events
+            .begin_tenant_transaction(&self.tenant_id)
+            .await?;
         let row = sqlx::query_as::<_, (Value, String, String, Option<String>)>(
             "SELECT metadata, connector_id, status, credential_handle \
              FROM connector_instances WHERE id = $1 AND tenant_id = $2",
         )
         .bind(instance_id)
         .bind(&self.tenant_id)
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or_else(|| ConnectorError::NotFound {
+        .fetch_optional(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        row.ok_or_else(|| ConnectorError::NotFound {
             id: instance_id.to_string(),
-        })?;
-        Ok(row)
+        })
     }
 
     /// Move an instance along the lifecycle (`MarkDegraded`, `RevokeConnector`, re-connect).

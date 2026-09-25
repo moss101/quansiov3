@@ -1,0 +1,58 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.49s
+     Running tests/api.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/api-30b3e110b30510ff)
+
+running 17 tests
+test the_error_vocabulary_is_the_one_the_catalog_generates ... ok
+test feature_flags_load_from_config_and_cannot_disable_escalation ... ok
+test every_code_maps_to_a_status_and_says_whether_a_retry_could_help ... ok
+test the_command_catalog_is_the_one_the_gate_checks ... ok
+test an_api_handler_reads_and_writes_only_its_own_table ... ok
+test every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction ... ok
+test generated_openapi_lists_every_catalog_command ... ok
+test the_deployable_composes_from_the_environment ... ok
+test health_reports_readiness_and_the_catalogues_it_serves ... ok
+test a_command_scoped_to_another_tenant_does_not_touch_this_one ... ok
+test two_tenants_may_send_the_same_command_id_and_each_replays_its_own ... ok
+test a_mutating_call_calls_the_owner_and_a_resend_returns_its_result_once ... ok
+test a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal ... ok
+test a_resend_while_the_first_is_still_being_applied_is_told_to_come_back ... ok
+test a_call_without_a_usable_tenant_is_refused_with_the_right_code ... ok
+test a_tenant_over_the_rate_limit_is_rate_limited ... ok
+test the_public_surface_works_as_the_application_role_under_rls ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.69s
+
+     Running tests/audit_lifecycle.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/audit_lifecycle-c8cb64e367528f8c)
+
+running 3 tests
+test derived_deletion_clears_index_memory_and_cache ... ok
+test export_and_delete_e2e_respects_legal_hold ... ok
+test audit_entries_cannot_be_edited_in_place ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/identity.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/identity-36aa9dc0cea900e8)
+
+running 10 tests
+test security_settings_merge_is_deterministic_and_most_restrictive ... ok
+test access_tokens_are_es256_and_expire ... ok
+test onboarding_refuses_a_raw_secret ... ok
+test a_fresh_user_signs_up_by_magic_link_and_gets_a_governed_workspace ... ok
+test oauth_signs_in_with_pkce_and_single_use_state ... ok
+test refresh_rotates_and_a_replayed_token_revokes_the_family ... ok
+test a_fresh_user_is_onboarded_without_a_config_file ... ok
+test identity_commands_manage_workspaces_and_settings_with_secrets_as_handles ... ok
+test the_whole_sign_in_flow_works_as_the_application_role_under_rls ... ok
+test sign_out_revokes_and_session_only_refuses_trusted_headers ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.13s
+
+     Running tests/web_admin_surface.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/web_admin_surface-2b28123bd51079d8)
+
+running 2 tests
+test the_web_app_is_served_under_app_with_a_locked_policy_and_no_way_out_of_its_root ... ok
+test admin_pages_and_commands_are_decided_by_the_servers_rbac_for_every_role ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.09s
+
+exit=0

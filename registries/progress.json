@@ -1574,23 +1574,29 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T09:50:00Z",
-      "updated_at": "2026-09-16T09:55:00Z",
-      "git_commit": "852e3675b0c1e541a983683dd333a101cfb94901",
+      "updated_at": "2026-09-25T08:33:05Z",
+      "git_commit": "2a8cc02e2c3886f07264f918898f34f4d32b45f8",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test connector_broker (4 passed: begin/complete stores a sec_ handle and never token material; replayed state refused after digest consumption; degrade keeps the credential, revocation clears it and is terminal; raw token material and foreign states refused before any write)",
         "uv run --project python pytest tests/adapters/test_connector_adapters.py (5 passed: all four GA adapters pass the contract tier; sandbox tier reports BLOCKED_EXTERNAL naming its flag; operation vocabulary closed; web.search served by the websearch adapter; raw token material refused at every seam; webhook redelivery idempotent and tenant scoped)",
-        "uv run --project python pytest tests (412 passed, 78 skipped live/absent-env)"
+        "uv run --project python pytest tests (412 passed, 78 skipped live/absent-env)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, private db> cargo test -p quansio-server --test connector_broker (5 passed, incl. the_connector_lifecycle_works_as_the_application_role_under_rls: begin -> complete -> degrade -> re-connect -> revoke on a quansio_app pool, and a foreign-tenant broker sees and moves nothing; red before the fix)",
+        "QUANSIO_TEST_POSTGRES_URL=<dev stack 55440, private db> cargo test -p quansio-server --no-fail-fast (51 binaries, 421 passed) and cargo clippy --workspace --all-targets -- -D warnings",
+        "bash scripts/ci/ci.sh on the merged fix branch de2d3aa (11/11 gates PASS)"
       ],
       "artifacts": [
         "evidence/EXEC-011/2026-09-16T09-40-00Z/summary.json",
         "crates/server/src/control/connectors/mod.rs",
         "python/intelligence/adapters/connectors/conformance.py",
-        "python/tests/adapters/test_connector_adapters.py"
+        "python/tests/adapters/test_connector_adapters.py",
+        "evidence/EXEC-011/2026-09-25T08-32-18Z/summary.json",
+        "evidence/EXEC-011/2026-09-25T08-32-18Z/NOTES.md",
+        "crates/server/tests/connector_broker.rs"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": "The connector broker and all four GA adapters (GitHub, Google Workspace, Slack, web-search) are implemented, and the shared conformance suite's contract tier passes offline. The remaining item is acceptance 3's sandbox tier: each GA connector must pass the suite in its provider sandbox. No sandbox credentials or OAuth client registrations exist on this host, and no mock can substitute. Unblock: register OAuth apps, provide sandbox credentials, set QUANSIO_TEST_CONNECTOR_GITHUB/GOOGLE/SLACK/WEBSEARCH=1, and run uv run --project python pytest tests/adapters/test_connector_adapters.py with the flags set.",
-      "notes": "Increment 2: GA adapter layer implemented in python/intelligence/adapters/connectors \u2014 GitHub, Google Workspace (gmail/drive/calendar), Slack and the web-search adapter behind web.search, with a closed operation vocabulary, consequential-op flags, and the shared conformance suite (contract tier always runs; sandbox tier emits an explicit BLOCKED_EXTERNAL marker naming QUANSIO_TEST_CONNECTOR_<NAME> when absent). Token isolation: adapters accept sec_ handles only and pass them opaquely to the transport; webhook redelivery is idempotent per (tenant, event_id). Remaining for the close: running the conformance sandbox tier against the four provider sandboxes (QUANSIO_TEST_CONNECTOR_* flags with credentials)."
+      "notes": "Increment 2: GA adapter layer implemented in python/intelligence/adapters/connectors \u2014 GitHub, Google Workspace (gmail/drive/calendar), Slack and the web-search adapter behind web.search, with a closed operation vocabulary, consequential-op flags, and the shared conformance suite (contract tier always runs; sandbox tier emits an explicit BLOCKED_EXTERNAL marker naming QUANSIO_TEST_CONNECTOR_<NAME> when absent). Token isolation: adapters accept sec_ handles only and pass them opaquely to the transport; webhook redelivery is idempotent per (tenant, event_id). Remaining for the close: running the conformance sandbox tier against the four provider sandboxes (QUANSIO_TEST_CONNECTOR_* flags with credentials). Regression fixed 2026-09-25 (fix/EXEC-011-connector-load-under-rls, found by the APP-001 fix fix/APP-001-api-queries-under-rls): ConnectorBroker::load_async read connector_instances on the bare pool with no tenant context, so as quansio_app (FORCED RLS) every instance was NotFound and complete_auth and every transition failed; the superuser dev stack hid it. Failing test: connector_broker the_connector_lifecycle_works_as_the_application_role_under_rls (red at c207b11). The read now runs in the event store's tenant transaction and the broker holds no bare pool. Evidence: evidence/EXEC-011/2026-09-25T08-32-18Z/."
     },
     "EXEC-012": {
       "coverage": "GENUINE_GAP",
@@ -1670,8 +1676,8 @@
       "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-19T18:54:15Z",
-      "updated_at": "2026-09-24T16:08:32Z",
-      "git_commit": "dc3bb7daeeb12c2fbfc8739a76722bd93fca0551",
+      "updated_at": "2026-09-25T08:34:57Z",
+      "git_commit": "691f44f2f9a0793b32ba494c271cef08b15e6bed",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test identity (10: magic-link sign-up/returning user, ES256, rotation+replay revocation, sign-out, session-only scope, identity commands, OAuth PKCE, whole flow as quansio_app under RLS)",
         "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server",
@@ -1685,7 +1691,8 @@
         "uv run --project python python scripts/ci/gen_contracts.py --check",
         "python3.12 scripts/validate_v81.py",
         "QUANSIO_TEST_POSTGRES_URL=<dev stack> bash scripts/ci/ci.sh",
-        "cargo test -p quansio-server --test identity (the RLS flow signs the same address in twice as quansio_app)"
+        "cargo test -p quansio-server --test identity (the RLS flow signs the same address in twice as quansio_app)",
+        "cargo test -p quansio-server --test identity (the RLS flow also invites an existing account as quansio_app)"
       ],
       "artifacts": [
         "evidence/APP-002/2026-09-19T19-26-21Z/summary.json",
@@ -1695,12 +1702,13 @@
         "apps/desktop/src/main/session-manager.ts",
         "apps/desktop/tests/onboarding.e2e.test.ts",
         "evidence/APP-002/2026-09-24T16-08-02Z/summary.json",
-        "migrations/0019_sign_in_lookup.sql"
+        "migrations/0019_sign_in_lookup.sql",
+        "evidence/APP-002/2026-09-25T08-34-26Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Onboard_email provisions a personal tenant and default workspace with magic-link + OAuth method names and a sec_ credential handle only. Settings layers merge deterministically; security booleans deny-wins and retention_days takes the minimum. 2026-09-19 correction: was BLOCKED_EXTERNAL at ef7002221cb097fe0074c774444ded9ee2ad608f claimed by agent:principal-1 (started 2026-09-15T04:30:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: a real IdentityStore (onboarding, layered settings) exists at crates/server/src/control/identity/ but nothing calls it; OAuth/magic link are names only; no JWT/refresh/keychain; the desktop onboarding module is a 35-line plan object. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-19 (fe88d7e) PASS: real identity \u2014 ES256 sessions with rotating refresh families, magic link, OAuth with PKCE, Bearer scope everywhere (headers trusted only in an explicit harness mode), CreateWorkspace/UpdateWorkspace/UpdateUserSettings with secrets as sec_ handles and restart/reindex effects, root objective per workspace, keychain custody on the desktop, onboarding flow; acceptance 1 proven by the new-user E2E against the real binary in session-only mode on an unseeded database. See evidence/APP-002/2026-09-19T19-26-21Z/NOTES.md. 2026-09-24 regression (found by OPS-001 reconciliation): as the application role a returning user's sign-in failed with users_primary_email_key (the_whole_sign_in_flow_works_as_the_application_role_under_rls extended to sign in twice; failing at 8d7474d) because lookup_by_email read users and tenant_memberships before any user or tenant context; fixed on fix/APP-002-returning-user-rls with id-only security-definer lookups (migration 0019_sign_in_lookup), merged dc3bb7daeeb12c2fbfc8739a76722bd93fca0551. Evidence evidence/APP-002/2026-09-24T16-08-02Z/."
+      "notes": "Onboard_email provisions a personal tenant and default workspace with magic-link + OAuth method names and a sec_ credential handle only. Settings layers merge deterministically; security booleans deny-wins and retention_days takes the minimum. 2026-09-19 correction: was BLOCKED_EXTERNAL at ef7002221cb097fe0074c774444ded9ee2ad608f claimed by agent:principal-1 (started 2026-09-15T04:30:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: a real IdentityStore (onboarding, layered settings) exists at crates/server/src/control/identity/ but nothing calls it; OAuth/magic link are names only; no JWT/refresh/keychain; the desktop onboarding module is a 35-line plan object. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-19 (fe88d7e) PASS: real identity \u2014 ES256 sessions with rotating refresh families, magic link, OAuth with PKCE, Bearer scope everywhere (headers trusted only in an explicit harness mode), CreateWorkspace/UpdateWorkspace/UpdateUserSettings with secrets as sec_ handles and restart/reindex effects, root objective per workspace, keychain custody on the desktop, onboarding flow; acceptance 1 proven by the new-user E2E against the real binary in session-only mode on an unseeded database. See evidence/APP-002/2026-09-19T19-26-21Z/NOTES.md. 2026-09-24 regression (found by OPS-001 reconciliation): as the application role a returning user's sign-in failed with users_primary_email_key (the_whole_sign_in_flow_works_as_the_application_role_under_rls extended to sign in twice; failing at 8d7474d) because lookup_by_email read users and tenant_memberships before any user or tenant context; fixed on fix/APP-002-returning-user-rls with id-only security-definer lookups (migration 0019_sign_in_lookup), merged dc3bb7daeeb12c2fbfc8739a76722bd93fca0551. Evidence evidence/APP-002/2026-09-24T16-08-02Z/. 2026-09-25 regression (found by OPS-001): as the application role InviteMember for an account that already exists elsewhere failed with users_primary_email_key (the RLS flow extended to invite one; failing at 24dc5fe) because invite_member looked the address up under the users policy; fixed on fix/APP-002-invite-existing-user-rls with the id-only identity_user_by_email() lookup, merged 691f44f2f9a0793b32ba494c271cef08b15e6bed. Evidence evidence/APP-002/2026-09-25T08-34-26Z/."
     },
     "APP-003": {
       "coverage": "PARTIAL",

@@ -1,0 +1,32 @@
+{
+  "task_id": "APP-002",
+  "git_commit": "8eae3d3a8143687056b8e5d20fc69be9cd29cdba",
+  "recorded_at": "2026-09-25T08:34:46Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database on the dev server> cargo test -p quansio-server --test identity --test web_admin_surface --test audit_lifecycle --test api # an existing account is invited as quansio_app",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-25T08-34-26Z/cargo-identity-members.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database on the dev server> cargo test -p quansio-server --test identity --test web_admin_surface --test audit_lifecycle --test api # an existing account is invited as quansio_app",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-002/2026-09-25T08-34-26Z/NOTES.md",
+      "sha256": "fa24791f3ffbd75199e3d3dba25eb8ad92460de8d9a00772532a41e0b3f9bb98",
+      "bytes": 1493
+    },
+    {
+      "path": "evidence/APP-002/2026-09-25T08-34-26Z/cargo-identity-members.log",
+      "sha256": "15ac6099e513fbb0b4aca2d6f08bd9e804748aa58815ec1e6d0887434078d936",
+      "bytes": 3185
+    }
+  ]
+}

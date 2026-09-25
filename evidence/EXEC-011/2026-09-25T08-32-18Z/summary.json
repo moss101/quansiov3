@@ -1,0 +1,85 @@
+{
+  "task_id": "EXEC-011",
+  "git_commit": "de2d3aaac359c62cf2ef9884471b4ee6944aa8f9",
+  "recorded_at": "2026-09-25T08:32:18Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private db> cargo test -p quansio-server --test connector_broker # red at c207b11 + the new test: complete_auth as quansio_app answers NotFound",
+      "exit_code": 101,
+      "result": "FAIL",
+      "log": "evidence/EXEC-011/2026-09-25T08-32-18Z/cargo-red.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private db> cargo test -p quansio-server --test connector_broker # green at de2d3aa: the connector lifecycle works as quansio_app under RLS; a foreign-tenant broker sees nothing",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-011/2026-09-25T08-32-18Z/cargo-connector-broker.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private db> cargo test -p quansio-server --test api --test schema_bootstrap # API ownership scan and RLS surface; migrations apply",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-011/2026-09-25T08-32-18Z/cargo-api-schema.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private db> bash scripts/ci/ci.sh # at de2d3aa from a detached worktree outside the checkout; 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-011/2026-09-25T08-32-18Z/ci-pipeline.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private db> cargo test -p quansio-server --test connector_broker # red at c207b11 + the new test: complete_auth as quansio_app answers NotFound",
+      "exit_code": 101,
+      "result": "FAIL"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private db> cargo test -p quansio-server --test connector_broker # green at de2d3aa: the connector lifecycle works as quansio_app under RLS; a foreign-tenant broker sees nothing",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private db> cargo test -p quansio-server --test api --test schema_bootstrap # API ownership scan and RLS surface; migrations apply",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private db> bash scripts/ci/ci.sh # at de2d3aa from a detached worktree outside the checkout; 11/11 gates",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/EXEC-011/2026-09-25T08-32-18Z/NOTES.md",
+      "sha256": "91cefbeb0ff80c9494beb63d212b93b113644f7c6ff48d53ea9e0a73d3b6c64a",
+      "bytes": 3323
+    },
+    {
+      "path": "evidence/EXEC-011/2026-09-25T08-32-18Z/cargo-red.log",
+      "sha256": "b7474a18bb59255b6a758187b67c549c00a2d2dfee998094bf30b55d86e1e32e",
+      "bytes": 923
+    },
+    {
+      "path": "evidence/EXEC-011/2026-09-25T08-32-18Z/cargo-connector-broker.log",
+      "sha256": "46da61468214d37530edf3965d4e392c89b9872b6e0d16cafe47601c6ab80e80",
+      "bytes": 611
+    },
+    {
+      "path": "evidence/EXEC-011/2026-09-25T08-32-18Z/cargo-api-schema.log",
+      "sha256": "f1e7b3495dfd84df9d103e18f716b5629e9a0291a771dfc77e1c40413dc52ca4",
+      "bytes": 1964
+    },
+    {
+      "path": "evidence/EXEC-011/2026-09-25T08-32-18Z/ci-pipeline.log",
+      "sha256": "b73f76549ebc3c4d1963018446eda3709821abf40385261fc5257ec2877143bf",
+      "bytes": 965
+    },
+    {
+      "path": "evidence/EXEC-011/2026-09-25T08-32-18Z/ci-summary.json",
+      "sha256": "bb415f096232e180727f62afc332b6bfeace4052646235cabb77fc65fa61519c",
+      "bytes": 7185
+    }
+  ]
+}
