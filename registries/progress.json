@@ -2371,32 +2371,43 @@
       "notes": "Skill evolution detects repeated verified evidence, proposes candidate patches with evidence+eval provenance, and refuses silent ACTIVE mutation. Promotion requires the INT-010 gate. 2026-09-19 correction: was BLOCKED_EXTERNAL at 7c59327fe6cde1e490ee53ca439a2315339e4394 claimed by agent:principal-1 (started 2026-09-15T07:50:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['CAP-007'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-24 (evidence/CAP-008/2026-09-24T08-10-34Z/): re-reconciled -- the library existed but nothing fed or consumed it. Now: SkillEvolution reads verified run outcomes from canonical state (terminal runs, latest evidence, the skill versions their recorded projections named), the plane (ProposeSkillCandidates RPC) detects patterns, proposes one CANDIDATE patch per pattern and evaluates it deterministically against the skill's suite through INT-010's gate (protected regressions and widened needs block promotion; config/evolution.yaml); the registry stores CANDIDATE versions with provenance naming evidence and evaluation, never ACTIVE, idempotent by semver; SkillStore::promote refuses APPROVED/ACTIVE for an evolution candidate without a passing evaluation (POLICY_DENIED); PromoteSkillVersion and ProposeSkillCandidates require ManageTenant (promotion was open to any member). 8 compiling mutants each fail the suites. Merged to main as 3c972d8."
     },
     "OPS-001": {
-      "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "coverage": "PARTIAL",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-24T15:39:11Z",
-      "updated_at": "2026-09-24T15:39:11Z",
-      "git_commit": null,
+      "updated_at": "2026-09-25T11:37:50Z",
+      "git_commit": "4f38f268e91bbea566f06bfc7076f7c3d699bcfe",
       "tests": [
-        "cargo test -p quansio-server --test enterprise_identity (3 passed: SSO ignores client roles; SCIM deprovision revokes sessions; service scopes explicit and auditable; live OIDC prints BLOCKED_EXTERNAL)"
+        "cargo test -p quansio-server --test enterprise_identity (7: a real in-test OIDC provider over loopback HTTP with ES256/RS256 keys, PKCE, rotation; every request as quansio_app; SSO maps groups server-side and ignores client and token role claims; 11 id_token forgeries refused with no account or session; SCIM deactivate/delete refuses the next request and the refresh token, sessions reach 0; session/token revocation incl. defense in depth; service principal scopes explicit, argon2id key returned once, family gate, audit as service actor, revocation; linking needs the account's own session; SSO enforcement with owner break-glass; the real-IdP case prints BLOCKED_EXTERNAL)",
+        "cargo test -p quansio-server --lib enterprise (11 unit tests)",
+        "cargo test -p quansio-server --test identity --test api --test schema_bootstrap",
+        "mutation checks: 21 compiling mutants, 21 killed",
+        "bash scripts/ci/ci.sh (PASS)"
       ],
       "artifacts": [
-        "evidence/OPS-001/2026-09-15T08-15-00Z/summary.json",
-        "crates/server/src/control/identity/enterprise.rs"
+        "evidence/OPS-001/2026-09-25T11-32-22Z/summary.json",
+        "evidence/OPS-001/2026-09-25T11-32-22Z/NOTES.md",
+        "evidence/OPS-001/RECONCILIATION.md",
+        "crates/server/src/control/identity/enterprise/",
+        "crates/server/src/api/enterprise.rs",
+        "crates/server/src/api/scim.rs",
+        "migrations/0020_enterprise_identity.sql",
+        "config/identity.yaml",
+        "crates/server/tests/enterprise_identity.rs"
       ],
       "real_boundary_evidence": [
         {
           "boundary": "oidc",
-          "environment": "QUANSIO_TEST_OIDC_ISSUER unset",
-          "command": "cargo test -p quansio-server --test enterprise_identity",
-          "artifact": "evidence/OPS-001/2026-09-15T08-15-00Z/tests.log",
-          "sha256": "94dfbbf1f0c2e65cccd36074a14682fa7cce97914f12d3736d38bd14fcc2faad",
-          "recorded_at": "2026-09-15T08:15:00Z"
+          "environment": "QUANSIO_TEST_OIDC_* unset (BLOCKED_EXTERNAL)",
+          "command": "cargo test -p quansio-server --test enterprise_identity -- --nocapture",
+          "artifact": "evidence/OPS-001/2026-09-25T11-32-22Z/cargo-enterprise-identity.log",
+          "sha256": "c734947f001446aebb7a82b74dec3621cd8e2e35f113e352ec80638f93a872b3",
+          "recorded_at": "2026-09-25T11:37:50Z"
         }
       ],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "SSO group mapping ignores client role claims. SCIM deprovision revokes sessions immediately. Service principals require explicit scopes and audit the key hash only. 2026-09-19 correction: was BLOCKED_EXTERNAL at ce9137dc0532b9dd984ba70c6305966502e4cd9f claimed by agent:principal-1 (started 2026-09-15T08:10:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['APP-002'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "implementation_complete": true,
+      "blocker": "Implementation is complete. The real-IdP proof needs a sandbox realm: QUANSIO_TEST_OIDC_ISSUER, QUANSIO_TEST_OIDC_CLIENT_ID, QUANSIO_TEST_OIDC_CLIENT_SECRET, QUANSIO_TEST_OIDC_USERNAME, QUANSIO_TEST_OIDC_PASSWORD (a confidential client with the password grant enabled). Unblock: set them and run cargo test -p quansio-server --test enterprise_identity a_real_idp -- --nocapture.",
+      "notes": "OIDC SSO per tenant (discovery, PKCE S256, hashed single-use state/nonce, RS256/ES256 id_token verification with ring, JWKS rotation, https-only issuers), server-side group->role mapping (highest wins, owner never mapped), consent-based account linking, SSO enforcement with owner break-glass; SCIM 2.0 Users/Groups for a Provisioning principal with deprovision revoking sessions in the same transaction; service principals with explicit command-family scopes, argon2id qsk_ keys returned once, a family gate on /v1/commands, audit as {kind: service}; authenticate reads session, account and membership standing per request; RemoveMember/suspension/RevokeUserSessions/own-session revocation. Limitation: SAML not native (needs a vetted XML-DSig library; connection carries protocol). Found and fixed on the way: APP-002 returning-user sign-in and InviteMember under RLS; the APP-001 command-surface RLS gap was fixed in a separate session. SSO group mapping ignores client role claims. SCIM deprovision revokes sessions immediately. Service principals require explicit scopes and audit the key hash only. 2026-09-19 correction: was BLOCKED_EXTERNAL at ce9137dc0532b9dd984ba70c6305966502e4cd9f claimed by agent:principal-1 (started 2026-09-15T08:10:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['APP-002'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md."
     },
     "OPS-002": {
       "coverage": "GENUINE_GAP",
