@@ -542,6 +542,8 @@ pub enum EntityPrefix {
     WebhookDelivery = 50,
     /// ctx_ (INT-005: minted by the Context plane)
     ContextProjection = 51,
+    /// dgr_ (OPS-001: a SCIM group of the tenant's IdP)
+    DirectoryGroup = 52,
 }
 impl EntityPrefix {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -602,6 +604,7 @@ impl EntityPrefix {
             Self::Session => "ENTITY_PREFIX_SESSION",
             Self::WebhookDelivery => "ENTITY_PREFIX_WEBHOOK_DELIVERY",
             Self::ContextProjection => "ENTITY_PREFIX_CONTEXT_PROJECTION",
+            Self::DirectoryGroup => "ENTITY_PREFIX_DIRECTORY_GROUP",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -659,6 +662,7 @@ impl EntityPrefix {
             "ENTITY_PREFIX_SESSION" => Some(Self::Session),
             "ENTITY_PREFIX_WEBHOOK_DELIVERY" => Some(Self::WebhookDelivery),
             "ENTITY_PREFIX_CONTEXT_PROJECTION" => Some(Self::ContextProjection),
+            "ENTITY_PREFIX_DIRECTORY_GROUP" => Some(Self::DirectoryGroup),
             _ => None,
         }
     }

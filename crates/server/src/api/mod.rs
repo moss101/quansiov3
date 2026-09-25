@@ -21,6 +21,7 @@ pub mod auth;
 pub mod collaboration;
 pub mod commands;
 pub mod diagnostics;
+pub mod enterprise;
 pub mod error;
 pub mod flags;
 pub mod knowledge;
@@ -30,6 +31,7 @@ pub mod live_sessions;
 pub mod projections;
 pub mod rbac;
 pub mod routines;
+pub mod scim;
 pub mod seams;
 pub mod search;
 pub mod stream;
@@ -53,7 +55,9 @@ use sqlx::{PgPool, Postgres, Transaction};
 
 use crate::artifacts::ObjectStore;
 use crate::control::identity::auth::{AuthError, AuthStore, SigningKey};
+use crate::control::identity::enterprise::KEY_PREFIX as PRINCIPAL_KEY_PREFIX;
 use crate::control::identity::oauth::{AuthFile, HttpExchange, OAuthExchange, ReadyProvider};
+use crate::control::identity::{EnterpriseConfig, EnterpriseIdentity, PrincipalScope};
 use crate::control::schema;
 
 pub use error::{ApiError, ApiErrorCode};
@@ -183,6 +187,9 @@ pub struct TenantScope {
     pub user_id: Option<String>,
     /// The `ses_` the bearer token belongs to, when authenticated by session.
     pub session_id: Option<String>,
+    /// The service principal, when the request presented a `qsk_` key (OPS-001). Only the
+    /// command surface and SCIM resolve one; see [`TenantScope::resolve_actor`].
+    pub principal: Option<PrincipalScope>,
 }
 
 /// Where a request's scope may come from.
@@ -195,6 +202,17 @@ pub enum ScopeTrust {
     TrustedHeaders,
 }
 
+/// The bearer credential a request presents, if any.
+#[must_use]
+pub fn bearer_of(headers: &HeaderMap) -> Option<&str> {
+    headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.strip_prefix("Bearer "))
+        .map(str::trim)
+        .filter(|token| !token.is_empty())
+}
+
 impl TenantScope {
     /// Resolve the scope: a bearer session first, then the trusted headers if the state allows them.
     ///
@@ -203,6 +221,13 @@ impl TenantScope {
     /// / [`ApiErrorCode::AuthExpired`] for a bearer token that does not verify, and
     /// [`ApiErrorCode::ValidationBounds`] for a malformed trusted header.
     pub async fn resolve(state: &ApiState, headers: &HeaderMap) -> Result<Self, ApiError> {
+        if bearer_of(headers).is_some_and(|bearer| bearer.starts_with(PRINCIPAL_KEY_PREFIX)) {
+            return Err(ApiError::new(
+                ApiErrorCode::ScopeForbidden,
+                "a service principal key is accepted only by the command surface and SCIM",
+                "unresolved",
+            ));
+        }
         if let Some(bearer) = headers
             .get(axum::http::header::AUTHORIZATION)
             .and_then(|value| value.to_str().ok())
@@ -227,6 +252,7 @@ impl TenantScope {
                 tenant_id: session.tenant_id,
                 user_id: Some(session.user_id),
                 session_id: Some(session.session_id),
+                principal: None,
             });
         }
         match state.scope_trust() {
@@ -272,7 +298,33 @@ impl TenantScope {
                     .and_then(|value| value.to_str().ok())
                     .map(str::to_string),
                 session_id: None,
+                principal: None,
             })
+    }
+
+    /// Resolve the acting identity for the command surface: a service principal key (OPS-001) as
+    /// well as everything [`Self::resolve`] accepts.
+    ///
+    /// # Errors
+    /// [`ApiErrorCode::AuthInvalidToken`] for a key that does not authenticate, otherwise as
+    /// [`Self::resolve`].
+    pub async fn resolve_actor(state: &ApiState, headers: &HeaderMap) -> Result<Self, ApiError> {
+        match bearer_of(headers) {
+            Some(key) if key.starts_with(PRINCIPAL_KEY_PREFIX) => {
+                let principal = state
+                    .enterprise()
+                    .authenticate_principal(key)
+                    .await
+                    .map_err(|error| enterprise::api_error(error, "unresolved"))?;
+                Ok(Self {
+                    tenant_id: principal.tenant_id.clone(),
+                    user_id: None,
+                    session_id: None,
+                    principal: Some(principal),
+                })
+            }
+            _ => Self::resolve(state, headers).await,
+        }
     }
 
     /// The idempotency anchor a mutating call must carry.
@@ -324,6 +376,7 @@ pub struct ApiState {
     keys: Option<Arc<dyn quansio_machine::secrets::KeyProvider>>,
     intelligence: Option<crate::intelligence::IntelligenceClient>,
     metrics_token: Option<Arc<str>>,
+    enterprise: Arc<EnterpriseIdentity>,
 }
 
 impl ApiState {
@@ -343,6 +396,9 @@ impl ApiState {
         let key = SigningKey::from_env()
             .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), "startup"))?;
         let auth = AuthStore::new(pool.clone(), Arc::new(key), auth_file.auth_config());
+        let enterprise = EnterpriseConfig::load()
+            .and_then(|config| EnterpriseIdentity::new(auth.clone(), config))
+            .map_err(|error| ApiError::new(ApiErrorCode::Internal, error, "startup"))?;
         Ok(Self {
             pool,
             catalog: Arc::new(Catalog::from_embedded()?),
@@ -367,7 +423,27 @@ impl ApiState {
             keys: None,
             intelligence: None,
             metrics_token: None,
+            enterprise: Arc::new(enterprise),
         })
+    }
+
+    /// Enterprise identity with `config` instead of `config/identity.yaml` (tests admit the
+    /// in-test IdP's loopback issuer this way).
+    ///
+    /// # Errors
+    /// Returns [`ApiError`] when the HTTP client cannot be built.
+    pub fn with_enterprise_config(mut self, config: EnterpriseConfig) -> Result<Self, ApiError> {
+        self.enterprise = Arc::new(
+            EnterpriseIdentity::new((*self.auth).clone(), config)
+                .map_err(|error| ApiError::new(ApiErrorCode::Internal, error, "startup"))?,
+        );
+        Ok(self)
+    }
+
+    /// Enterprise identity: SSO, SCIM, service principals (OPS-001).
+    #[must_use]
+    pub fn enterprise(&self) -> &EnterpriseIdentity {
+        &self.enterprise
     }
 
     /// Serve `GET /metrics` to the operator presenting `token` as a bearer (OPS-003).
@@ -630,6 +706,47 @@ pub fn router(state: ApiState) -> Router {
         )
         .route("/v1/auth/refresh", post(auth::refresh))
         .route("/v1/auth/sign-out", post(auth::sign_out))
+        .route("/v1/auth/sso/:tenant_id/start", get(enterprise::sso_start))
+        .route(
+            "/v1/auth/sso/:tenant_id/complete",
+            post(enterprise::sso_complete),
+        )
+        .route("/v1/auth/sessions", get(enterprise::sessions))
+        .route(
+            "/v1/auth/sessions/:session_id/revoke",
+            post(enterprise::revoke_session),
+        )
+        .route(
+            "/v1/service-principals",
+            get(enterprise::service_principals),
+        )
+        .route("/v1/sso", get(enterprise::sso))
+        .route(
+            "/scim/v2/ServiceProviderConfig",
+            get(scim::service_provider_config),
+        )
+        .route(
+            "/scim/v2/Users",
+            get(scim::list_users).post(scim::create_user),
+        )
+        .route(
+            "/scim/v2/Users/:id",
+            get(scim::get_user)
+                .put(scim::replace_user)
+                .patch(scim::patch_user)
+                .delete(scim::delete_user),
+        )
+        .route(
+            "/scim/v2/Groups",
+            get(scim::list_groups).post(scim::create_group),
+        )
+        .route(
+            "/scim/v2/Groups/:id",
+            get(scim::get_group)
+                .put(scim::replace_group)
+                .patch(scim::patch_group)
+                .delete(scim::delete_group),
+        )
         .route("/v1/me", get(auth::me))
         .route("/v1/stream", get(stream::stream))
         .route("/v1/stream/events", get(stream::stream_events))

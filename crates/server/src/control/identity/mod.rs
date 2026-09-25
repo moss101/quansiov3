@@ -3,7 +3,7 @@
 //! A fresh user is provisioned a personal tenant and a workspace without reading a
 //! configuration file. Secrets remain `sec_` handles. Settings merge is deterministic
 //! and most-restrictive for security controls. Sign-in and sessions live in [`auth`],
-//! OAuth providers in [`oauth`].
+//! OAuth providers in [`oauth`], organisation SSO, SCIM and service principals in [`enterprise`].
 
 pub mod auth;
 pub mod enterprise;
@@ -23,8 +23,8 @@ pub use auth::{
     AuthConfig, AuthError, AuthStore, IssuedSession, SessionScope, SignedInUser, SigningKey,
 };
 pub use enterprise::{
-    live_oidc_configured, DirectoryUser, GroupRoleMap, ServicePrincipal, Session, SsoAssertion,
-    LIVE_OIDC_ISSUER,
+    Acting, EnterpriseConfig, EnterpriseError, EnterpriseIdentity, PrincipalScope, ScimError,
+    ScimReply, SsoSettings, SsoStart,
 };
 pub use members::{Invitation, MemberAdmin, MemberView, WorkspaceMembershipView};
 pub use settings::{

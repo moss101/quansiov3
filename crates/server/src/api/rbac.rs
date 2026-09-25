@@ -5,7 +5,8 @@
 //! (APP-002's identity owner) and RUN-006's [`rbac::check`] is applied to the action
 //! family a handler names. A refusal is `SCOPE_FORBIDDEN` with the typed reason; a user
 //! with no membership at the scope holds no role, and no role is a denial. A page may
-//! mirror these rules to decide what to *offer*; it cannot widen them.
+//! mirror these rules to decide what to *offer*; it cannot widen them. A service principal is
+//! decided by its explicit command-family scopes before its command reaches a handler.
 
 use serde_json::json;
 use sqlx::PgPool;
@@ -33,6 +34,15 @@ impl Authorization {
         scope: &TenantScope,
         workspace_id: Option<&str>,
     ) -> Result<Self, ApiError> {
+        if scope.principal.is_some() {
+            // A service principal reaches a handler only through the command surface, after its
+            // explicit scopes admitted the command's family (OPS-001): the family is the grant, so
+            // inside it the principal holds the administrator's roles. `Trust` (approvals) is
+            // never grantable, so no principal decides an approval.
+            return Ok(Self {
+                roles: ActorRoles::new(Some(TenantRole::Admin), Some(WorkspaceRole::Admin)),
+            });
+        }
         let Some(user_id) = scope.user_id.as_deref() else {
             return Ok(Self {
                 roles: ActorRoles::default(),

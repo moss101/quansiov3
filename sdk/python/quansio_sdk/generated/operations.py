@@ -47,6 +47,26 @@ OPERATIONS: dict[str, dict[str, str]] = {
         "path": "/v1/commands/UpdateUserSettings",
         "family": "Identity",
     },
+    "ConfigureSso": {
+        "method": "POST",
+        "path": "/v1/commands/ConfigureSso",
+        "family": "Identity",
+    },
+    "SetGroupRoleMapping": {
+        "method": "POST",
+        "path": "/v1/commands/SetGroupRoleMapping",
+        "family": "Identity",
+    },
+    "RemoveGroupRoleMapping": {
+        "method": "POST",
+        "path": "/v1/commands/RemoveGroupRoleMapping",
+        "family": "Identity",
+    },
+    "RevokeUserSessions": {
+        "method": "POST",
+        "path": "/v1/commands/RevokeUserSessions",
+        "family": "Identity",
+    },
     "CreateTeammate": {
         "method": "POST",
         "path": "/v1/commands/CreateTeammate",
@@ -441,6 +461,8 @@ READ_PROJECTIONS: tuple[str, ...] = (
     "/v1/routines",
     "/v1/connectors",
     "/v1/members",
+    "/v1/service-principals",
+    "/v1/sso",
     "/v1/policies",
     "/v1/teammates",
     "/v1/notifications",

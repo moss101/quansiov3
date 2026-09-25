@@ -22,6 +22,8 @@ read_projections:
 - /v1/routines
 - /v1/connectors
 - /v1/members
+- /v1/service-principals
+- /v1/sso
 - /v1/policies
 - /v1/teammates
 - /v1/notifications

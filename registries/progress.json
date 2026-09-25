@@ -2372,10 +2372,10 @@
     },
     "OPS-001": {
       "coverage": "GENUINE_GAP",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-24T15:39:11Z",
+      "updated_at": "2026-09-24T15:39:11Z",
       "git_commit": null,
       "tests": [
         "cargo test -p quansio-server --test enterprise_identity (3 passed: SSO ignores client roles; SCIM deprovision revokes sessions; service scopes explicit and auditable; live OIDC prints BLOCKED_EXTERNAL)"

@@ -52,3 +52,4 @@ ids:
   Session: ses_
   Webhook delivery: whd_
   ContextProjection: ctx_
+  DirectoryGroup: dgr_

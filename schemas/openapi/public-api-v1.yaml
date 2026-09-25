@@ -367,6 +367,174 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/commands/ConfigureSso:
+    post:
+      operationId: ConfigureSso
+      summary: 'Identity: ConfigureSso'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/SetGroupRoleMapping:
+    post:
+      operationId: SetGroupRoleMapping
+      summary: 'Identity: SetGroupRoleMapping'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RemoveGroupRoleMapping:
+    post:
+      operationId: RemoveGroupRoleMapping
+      summary: 'Identity: RemoveGroupRoleMapping'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/RevokeUserSessions:
+    post:
+      operationId: RevokeUserSessions
+      summary: 'Identity: RevokeUserSessions'
+      tags:
+      - Identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/commands/CreateTeammate:
     post:
       operationId: CreateTeammate
@@ -4407,6 +4575,88 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/service-principals:
+    get:
+      operationId: ReadV1Service-Principals
+      summary: Read projection /v1/service-principals (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/sso:
+    get:
+      operationId: ReadV1Sso
+      summary: Read projection /v1/sso (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/policies:
     get:
       operationId: ReadV1Policies
@@ -5148,6 +5398,30 @@ components:
       type: object
       additionalProperties: true
       description: 'Identity command UpdateUserSettings. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ConfigureSsoParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command ConfigureSso. The concrete parameter schema is owned by the implementing task and must
+        be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    SetGroupRoleMappingParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command SetGroupRoleMapping. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RemoveGroupRoleMappingParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command RemoveGroupRoleMapping. The concrete parameter schema is owned by the implementing task
+        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    RevokeUserSessionsParams:
+      type: object
+      additionalProperties: true
+      description: 'Identity command RevokeUserSessions. The concrete parameter schema is owned by the implementing task and
         must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
       x-quansio-params-defined: false
     CreateTeammateParams:

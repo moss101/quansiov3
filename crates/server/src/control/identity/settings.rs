@@ -172,7 +172,7 @@ pub fn validate_settings(settings: &Value) -> Result<(), String> {
     Ok(())
 }
 
-fn looks_like_secret(text: &str) -> bool {
+pub(crate) fn looks_like_secret(text: &str) -> bool {
     let lower = text.to_ascii_lowercase();
     lower.starts_with("sk-")
         || lower.starts_with("sk_live")

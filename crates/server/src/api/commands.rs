@@ -37,10 +37,30 @@ pub async fn invoke(
     headers: HeaderMap,
     Json(request): Json<CommandRequest>,
 ) -> Result<Json<CommandResponse>, ApiError> {
-    let scope = TenantScope::resolve(&state, &headers).await?;
+    // The command surface is where a service principal may act (OPS-001).
+    let scope = TenantScope::resolve_actor(&state, &headers).await?;
     let command_id = TenantScope::command_id(&request)?;
     let correlation_id = CorrelationId::generate(&mut UlidGenerator::new());
     let correlation = correlation_id.to_string();
+    if let Some(principal) = &scope.principal {
+        // The principal's explicit scopes name the §14 command families it may run.
+        let family = super::enterprise::family_of(&state, &command);
+        if !family.is_some_and(|family| principal.holds(family)) {
+            let reason = format!(
+                "{command} is in the {} family, which this service principal does not hold",
+                family.unwrap_or("unknown")
+            );
+            let _ = state
+                .enterprise()
+                .audit_principal_command(principal, &command, "refused", &reason, &correlation)
+                .await;
+            return Err(ApiError::new(
+                ApiErrorCode::ScopeForbidden,
+                reason,
+                correlation,
+            ));
+        }
+    }
     if !state.limits().allow(&scope.tenant_id) {
         return Err(ApiError::new(
             ApiErrorCode::RateLimited,
@@ -102,6 +122,19 @@ pub async fn invoke(
         &correlation,
     )
     .await;
+    if let Some(principal) = &scope.principal {
+        let (decision, reason) = match &dispatched {
+            Ok(_) => (
+                "applied",
+                format!("command_id {}", command_id.as_canonical()),
+            ),
+            Err(refusal) => ("refused", format!("{}: {}", refusal.code, refusal.message)),
+        };
+        let _ = state
+            .enterprise()
+            .audit_principal_command(principal, &command, decision, &reason, &correlation)
+            .await;
+    }
     let result = match dispatched {
         Ok(result) => result,
         Err(refusal) => {
@@ -362,6 +395,22 @@ async fn dispatch(
         "InviteMember" => {
             super::admin::invite_member(state, scope, identity, &request.params, correlation)
                 .await?
+        }
+        "CreateServicePrincipal"
+        | "RevokeServicePrincipal"
+        | "ConfigureSso"
+        | "SetGroupRoleMapping"
+        | "RemoveGroupRoleMapping"
+        | "RevokeUserSessions" => {
+            super::enterprise::command(
+                state,
+                scope,
+                identity,
+                command,
+                &request.params,
+                correlation,
+            )
+            .await?
         }
         "UpdateMembership" => {
             super::admin::update_membership(state, scope, identity, &request.params, correlation)

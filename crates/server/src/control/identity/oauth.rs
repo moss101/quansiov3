@@ -113,7 +113,7 @@ impl AuthFile {
     }
 }
 
-fn locate(relative: &str) -> Option<PathBuf> {
+pub(crate) fn locate(relative: &str) -> Option<PathBuf> {
     let mut dir = std::env::current_dir().ok()?;
     loop {
         let candidate = dir.join(relative);
