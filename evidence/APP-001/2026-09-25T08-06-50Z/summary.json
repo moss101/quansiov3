@@ -1,0 +1,133 @@
+{
+  "task_id": "APP-001",
+  "git_commit": "f0ce9bcd0fcb914b931a415054210bcde5362f2a",
+  "recorded_at": "2026-09-25T08:07:21Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private database quansio_fix_app001_rls on 55440> cargo test -p quansio-server --test api -- the_public_surface_works_as_the_application_role_under_rls every_statement_the_api_runs # red run on the unfixed tree (base c207b11): 500 RLS violation on commands; 13 unscoped sites listed",
+      "exit_code": 101,
+      "result": "FAIL",
+      "log": "evidence/APP-001/2026-09-25T08-06-50Z/red-run.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private database quansio_fix_app001_rls on 55440> cargo test -p quansio-server --test api --test command_idempotency # 17 + 2 passed, both new tests included",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-25T08-06-50Z/cargo-api.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private database quansio_fix_app001_rls on 55440> cargo test -p quansio-server --no-fail-fast # 52 binaries, 422 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-25T08-06-50Z/cargo-server-all.log"
+    },
+    {
+      "command": "app001_rls_mutations.py # 13 transaction-without-tenant mutants, each COMPILES first: 10 KILLED; 3 survive where the store sets the tenant on the caller's transaction (upload, evidence metadata, evidence bytes)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-25T08-06-50Z/mutation-checks.log"
+    },
+    {
+      "command": "app001_rls_bare_mutations.py # revert-to-bare-pooled-connection mutants for upload, download, evidence metadata, evidence bytes: 4/4 COMPILES and KILLED",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-25T08-06-50Z/mutation-checks-bare.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private database quansio_fix_app001_rls on 55440> bash scripts/ci/ci.sh # first run, detached worktree at the fix commit: toolchains FAIL only, qworkerd browser test could not reach the headless browser under load (passes 3/3 alone)",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/APP-001/2026-09-25T08-06-50Z/ci-summary-run1.json"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private database quansio_fix_app001_rls on 55440> bash scripts/ci/ci.sh # rerun, same commit: 11/11 gates PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-001/2026-09-25T08-06-50Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private database quansio_fix_app001_rls on 55440> cargo test -p quansio-server --test api -- the_public_surface_works_as_the_application_role_under_rls every_statement_the_api_runs # red run on the unfixed tree (base c207b11): 500 RLS violation on commands; 13 unscoped sites listed",
+      "exit_code": 101,
+      "result": "FAIL"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private database quansio_fix_app001_rls on 55440> cargo test -p quansio-server --test api --test command_idempotency # 17 + 2 passed, both new tests included",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private database quansio_fix_app001_rls on 55440> cargo test -p quansio-server --no-fail-fast # 52 binaries, 422 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "app001_rls_mutations.py # 13 transaction-without-tenant mutants, each COMPILES first: 10 KILLED; 3 survive where the store sets the tenant on the caller's transaction (upload, evidence metadata, evidence bytes)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "app001_rls_bare_mutations.py # revert-to-bare-pooled-connection mutants for upload, download, evidence metadata, evidence bytes: 4/4 COMPILES and KILLED",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private database quansio_fix_app001_rls on 55440> bash scripts/ci/ci.sh # first run, detached worktree at the fix commit: toolchains FAIL only, qworkerd browser test could not reach the headless browser under load (passes 3/3 alone)",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, private database quansio_fix_app001_rls on 55440> bash scripts/ci/ci.sh # rerun, same commit: 11/11 gates PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-001/2026-09-25T08-06-50Z/NOTES.md",
+      "sha256": "13731074b36a7a2456a8614e9aba0bab20d0cdadfb8fa1949dea1084e5d6fd1e",
+      "bytes": 5702
+    },
+    {
+      "path": "evidence/APP-001/2026-09-25T08-06-50Z/cargo-api.log",
+      "sha256": "47e1463fc65c8332fe81d9b25102923296e68881ae5847de505c2c4b03ed6293",
+      "bytes": 1546
+    },
+    {
+      "path": "evidence/APP-001/2026-09-25T08-06-50Z/cargo-server-all.log",
+      "sha256": "fe2d24b44a8f2953bc5eb8135a56c0ceba30d56ef32f6762944c187398cdf562",
+      "bytes": 42117
+    },
+    {
+      "path": "evidence/APP-001/2026-09-25T08-06-50Z/ci-run1-qworkerd-browser.log",
+      "sha256": "3c2a4a93e863e7af391a2d662bbc426495ae00f837287d2593f196fcc77039c9",
+      "bytes": 879
+    },
+    {
+      "path": "evidence/APP-001/2026-09-25T08-06-50Z/ci-summary-run1.json",
+      "sha256": "3f465545b2064eeb84054e5e088f97041303cdfd8e6583b8459477d3a170190e",
+      "bytes": 7803
+    },
+    {
+      "path": "evidence/APP-001/2026-09-25T08-06-50Z/ci-summary.json",
+      "sha256": "014f4a77aa78397a43554e782dd4363460a55cd500b249468354774b81aea20b",
+      "bytes": 6863
+    },
+    {
+      "path": "evidence/APP-001/2026-09-25T08-06-50Z/mutation-checks-bare.log",
+      "sha256": "ca3ed1cf95fe999ba32e57f2246d92dc1c370c45d5504d00139d1c51846e17e4",
+      "bytes": 1756
+    },
+    {
+      "path": "evidence/APP-001/2026-09-25T08-06-50Z/mutation-checks.log",
+      "sha256": "d3e81c845415a75fa71dc4c68a4721c107844b71686911d132d379c514f0e895",
+      "bytes": 4480
+    },
+    {
+      "path": "evidence/APP-001/2026-09-25T08-06-50Z/red-run.log",
+      "sha256": "be01d0571c1c2922cfaeffe963e8aefb9ee8ae6a26e30a0728b702e12fa5f437",
+      "bytes": 5400
+    }
+  ]
+}

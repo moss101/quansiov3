@@ -203,7 +203,8 @@ pub async fn create_artifact(
         })?,
         None => kind_for(&request.media_type),
     };
-    let mut conn = state.pool().acquire().await.map_err(projection_error)?;
+    // The artifact and its version commit together, before the index learns of them.
+    let mut tx = state.tenant_tx(tenant_id, correlation).await?;
     let store = ArtifactStore::new(objects.as_ref());
     let artifact = match request.artifact_id.as_deref() {
         Some(existing) => {
@@ -215,7 +216,7 @@ pub async fn create_artifact(
                 )
             })?;
             let artifact = store
-                .load(&mut conn, tenant_id, &user_id, &id)
+                .load(&mut tx, tenant_id, &user_id, &id)
                 .await
                 .map_err(|error| artifact_error(error, correlation))?;
             if artifact.workspace_id != request.workspace_id {
@@ -232,7 +233,7 @@ pub async fn create_artifact(
         }
         None => store
             .create(
-                &mut conn,
+                &mut tx,
                 tenant_id,
                 &user_id,
                 &NewArtifact {
@@ -256,7 +257,7 @@ pub async fn create_artifact(
     };
     let stored = store
         .add_version(
-            &mut conn,
+            &mut tx,
             tenant_id,
             &user_id,
             &artifact.id,
@@ -273,6 +274,9 @@ pub async fn create_artifact(
         )
         .await
         .map_err(|error| artifact_error(error, correlation))?;
+    tx.commit()
+        .await
+        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
     // The derived search index learns about the new text right away; a failure there is
     // logged, not surfaced: the index is rebuildable and the upload already happened.
     if let Some(index) = state.search_index() {
@@ -486,17 +490,18 @@ pub async fn artifact_content(
             "projection",
         )
     })?;
-    let mut conn = state.pool().acquire().await.map_err(projection_error)?;
+    let mut tx = state.tenant_tx(&scope.tenant_id, "projection").await?;
     let store = ArtifactStore::new(objects.as_ref());
     let (bytes, media_type, title) = fetch_version(
         &store,
-        &mut conn,
+        &mut tx,
         &scope.tenant_id,
         &user_id,
         &artifact_id,
         &version,
     )
     .await?;
+    tx.commit().await.map_err(projection_error)?;
     let filename = sanitize_filename(&title);
     let mut response = Response::builder()
         .status(StatusCode::OK)
@@ -517,6 +522,7 @@ pub async fn artifact_content(
     Ok(response)
 }
 
+/// `conn` is a transaction in `tenant_id`'s scope ([`ApiState::tenant_tx`]).
 async fn fetch_version(
     store: &ArtifactStore<'_>,
     conn: &mut sqlx::PgConnection,
@@ -525,9 +531,6 @@ async fn fetch_version(
     artifact_id: &str,
     version: &ArtifactVersionId,
 ) -> Result<(Vec<u8>, String, String), ApiError> {
-    schema::set_tenant_context_conn(conn, tenant_id)
-        .await
-        .map_err(projection_error)?;
     let row = sqlx::query(
         "SELECT v.media_type, a.title, a.id AS artifact_id FROM artifact_versions v JOIN artifacts a ON a.id = v.artifact_id \
          WHERE v.tenant_id = $1 AND v.id = $2",
@@ -616,11 +619,12 @@ pub async fn evidence(
         Some(objects) => objects.clone(),
         None => Arc::new(NoObjects),
     };
-    let mut conn = state.pool().acquire().await.map_err(projection_error)?;
+    let mut tx = state.tenant_tx(&scope.tenant_id, "projection").await?;
     let evidence = EvidenceStore::new(objects.as_ref())
-        .load(&mut conn, &scope.tenant_id, &id)
+        .load(&mut tx, &scope.tenant_id, &id)
         .await
         .map_err(|error| artifact_error(error, "projection"))?;
+    tx.commit().await.map_err(projection_error)?;
     Ok(Json(json!({
         "id": evidence.id.to_canonical(),
         "workspace_id": evidence.workspace_id,

@@ -1,0 +1,40 @@
+test the_public_surface_works_as_the_application_role_under_rls ... FAILED
+
+failures:
+
+---- every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction stdout ----
+
+thread 'every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction' (11456199) panicked at crates/server/tests/api.rs:1063:5:
+the API runs a statement outside a tenant-scoped transaction: [
+    "crates/server/src/api/commands.rs: letinserted=sqlx::query(\"INSERTINTOcommands(id,tenant_id,command_name,command_id,params_digest,status,correlation_id)\\VALUES($1,$2,$3,$4,$5,'accepted',$6)\\ONCONFLICT(tenant_id,command_id)DONOTHING\",).bind(record_id.to_string()).bind(&scope.tenant_id).bind(&command).bind(command_id.as_canonical().to_string()).bind(&params_digest).bind(&correlation)",
+    "crates/server/src/api/commands.rs: //Aone-timevalue(awebhooksigningsecret)isreturnedonceandneverkept.sqlx::query(\"UPDATEcommandsSETstatus='applied',result=$3WHEREtenant_id=$1ANDcommand_id=$2\",).bind(&scope.tenant_id).bind(command_id.as_canonical().to_string()).bind(super::webhooks::stored_result(&result))",
+    "crates/server/src/api/commands.rs: Ok(result)}///Keepanowner'srefusalasthecommand'soutcome,soaresendisansweredwithit(DOMAIN.md§1.2).//////Aretryablerefusaliskeptaswell.Theownersarenotidempotentby`command_id`,andsomecommitpart///oftheirworkbeforetheycanstillfail(`PostMessage`storesthemessagebeforeitsturnruns),so///runningaresendagaincouldapplythatparttwice.Retryingsucharefusalisanewcommand.asyncfnrecord_refusal(state:&ApiState,scope:&TenantScope,command_id:&CommandId,refusal:&ApiError,){letrecorded=sqlx::query(\"UPDATEcommandsSETstatus='rejected',error=$3WHEREtenant_id=$1ANDcommand_id=$2\",).bind(&scope.tenant_id).bind(command_id.as_canonical().to_string()).bind(json!(refusal))",
+    "crates/server/src/api/commands.rs: }}asyncfnreplay(state:&ApiState,scope:&TenantScope,command_id:&CommandId,params_digest:&str,correlation:&str,)->Result<Json<CommandResponse>,ApiError>{let(digest,status,result,error)=sqlx::query_as::<_,(String,String,Option<Value>,Option<Value>)>(\"SELECTparams_digest,status,result,errorFROMcommandsWHEREtenant_id=$1ANDcommand_id=$2\",).bind(&scope.tenant_id).bind(command_id.as_canonical().to_string())",
+    "crates/server/src/api/commands.rs: Ok(result)}///Theconversationthreadarunwastriggeredfrom,whenitstriggerwasamessage.pub(super)asyncfnthread_of_run(state:&ApiState,tenant_id:&str,run_id:&str,)->Result<Option<String>,ApiError>{sqlx::query_scalar(\"SELECTm.thread_idFROMrunsrJOINmessagesmONm.id=r.trigger_refANDm.tenant_id=r.tenant_id\\WHEREr.tenant_id=$1ANDr.id=$2\",).bind(tenant_id).bind(run_id)",
+    "crates/server/src/api/commands.rs: matchdefault{Some(teammate)=>Some(teammate),None=>{letlegacy:Option<String>=sqlx::query_scalar(\"SELECTidFROMagent_threadsWHEREtenant_id=$1ANDworkspace_id=$2\\ANDagent_kind='teammate'ANDdefinition_idISNULL\\ANDstatus='ACTIVE'ORDERBYcreated_atLIMIT1\",).bind(&identity.tenant_id).bind(workspace_id)",
+    "crates/server/src/api/commands.rs: Ok((thread.id,Some(teammate)))}asyncfnload_work_node(state:&ApiState,tenant_id:&str,workspace_id:&str,correlation:&str,)->Result<CanonicalId,ApiError>{letid:Option<String>=sqlx::query_scalar(\"SELECTidFROMwork_nodesWHEREtenant_id=$1ANDworkspace_id=$2ORDERBYcreated_atLIMIT1\",).bind(tenant_id).bind(workspace_id)",
+    "crates/server/src/api/commands.rs: CanonicalId::parse_typed(&id,Prefix::WorkNode).map_err(|error|ApiError::new(ApiErrorCode::Internal,error.to_string(),correlation))}pub(super)asyncfnload_target(state:&ApiState,tenant_id:&str,workspace_id:&str,)->Result<Option<String>,ApiError>{sqlx::query_scalar(\"SELECTidFROMexecution_targetsWHEREtenant_id=$1ANDworkspace_id=$2\\ORDERBYcreated_atLIMIT1\",).bind(tenant_id).bind(workspace_id)",
+    "crates/server/src/api/artifacts.rs: letmutconn=state.pool()",
+    "crates/server/src/api/artifacts.rs: letmutconn=state.pool()",
+    "crates/server/src/api/artifacts.rs: letmutconn=state.pool()",
+    "crates/server/src/api/projections.rs: nothingherecanwidenit.asyncfncapability_projection(state:&ApiState,tenant_id:&str,run_id:&CanonicalId,)->Result<Value,ApiError>{letrow=sqlx::query(\"SELECTid,inputs,grants,inputs_digest,computed_at,expires_at\\FROMcapability_projections\\WHEREtenant_id=$1ANDsubject_kind='run'ANDsubject_id=$2\\ORDERBYcomputed_atDESC,idDESCLIMIT1\",).bind(tenant_id).bind(run_id.to_string())",
+    "crates/server/src/api/trust.rs: letmutconn=state.pool()",
+]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- the_public_surface_works_as_the_application_role_under_rls stdout ----
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+
+thread 'the_public_surface_works_as_the_application_role_under_rls' (11456200) panicked at crates/server/tests/api.rs:1253:5:
+assertion `left == right` failed: {"code":"INTERNAL","correlation_id":"database","message":"error returned from database: new row violates row-level security policy for table \"commands\"","retryable":true}
+  left: 500
+ right: 200
+
+
+failures:
+    every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction
+    the_public_surface_works_as_the_application_role_under_rls
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.55s
+
+error: test failed, to rerun pass `-p quansio-server --test api`
