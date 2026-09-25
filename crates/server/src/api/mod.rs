@@ -51,13 +51,14 @@ use axum::routing::{get, post};
 use axum::{Json, Router};
 use quansio_core::{CanonicalId, CommandId, Prefix};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, Transaction};
 
 use crate::artifacts::ObjectStore;
 use crate::control::identity::auth::{AuthError, AuthStore, SigningKey};
 use crate::control::identity::enterprise::KEY_PREFIX as PRINCIPAL_KEY_PREFIX;
 use crate::control::identity::oauth::{AuthFile, HttpExchange, OAuthExchange, ReadyProvider};
 use crate::control::identity::{EnterpriseConfig, EnterpriseIdentity, PrincipalScope};
+use crate::control::schema;
 
 pub use error::{ApiError, ApiErrorCode};
 pub use flags::FeatureFlags;
@@ -641,6 +642,30 @@ impl ApiState {
     #[must_use]
     pub const fn pool(&self) -> &PgPool {
         &self.pool
+    }
+
+    /// A transaction in `tenant_id`'s scope, for a statement the API runs itself (the command log, a read
+    /// projection) or a store that works on the caller's connection.
+    ///
+    /// Row-level security is forced on every tenant table and the tenant setting lasts one transaction, so
+    /// a statement on the bare pool, or on a connection taken from it outside a transaction, runs with no
+    /// tenant: as the application role it reads nothing and may write nothing.
+    ///
+    /// # Errors
+    /// Returns [`ApiErrorCode::Internal`] when no transaction can begin or the tenant id is not canonical.
+    pub(crate) async fn tenant_tx(
+        &self,
+        tenant_id: &str,
+        correlation: &str,
+    ) -> Result<Transaction<'static, Postgres>, ApiError> {
+        let unscoped = |error: &dyn std::fmt::Display| {
+            ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation)
+        };
+        let mut tx = self.pool.begin().await.map_err(|error| unscoped(&error))?;
+        schema::set_tenant_context(&mut tx, tenant_id)
+            .await
+            .map_err(|error| unscoped(&error))?;
+        Ok(tx)
     }
 
     /// Conformance-stub model source.
