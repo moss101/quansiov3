@@ -16,6 +16,7 @@
 //! unknown outcome after a dispatch is recorded as `OUTCOME_UNKNOWN` and is only ever
 //! resolved by reconciliation, so a resumed runtime cannot duplicate an external effect.
 
+use crate::control::ops::OpsGate;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -557,6 +558,49 @@ impl ToolDispatchService {
             .load(&pending.effect_id)
             .await
             .map_err(effect_refusal)?;
+        // An approved effect still meets the operator's switches (OPS-008) before it is
+        // reserved: a freeze or a quarantine engaged while it waited stops it here, and the
+        // receipt stays unconsumed.
+        if matches!(
+            effect.status,
+            EffectStatus::Authorized | EffectStatus::Proposed
+        ) {
+            let gate = OpsGate::load(&self.pool, &self.identity.tenant_id).await?;
+            let run = self
+                .runs
+                .load_run(&CanonicalId::parse_typed(&request.run_id, Prefix::Run)?)
+                .await?;
+            if let Some(target) = run
+                .execution_target_id
+                .as_deref()
+                .filter(|target| gate.quarantines(target))
+            {
+                return Ok(ToolDispatchOutcome::Rejected {
+                    code: "TARGET_UNAVAILABLE".to_string(),
+                    detail: format!(
+                        "an operator quarantined the worker of execution target {target}"
+                    ),
+                });
+            }
+            if let Some(deny) = gate.emergency_deny(plan.effect_class.as_str()) {
+                return Ok(ToolDispatchOutcome::Rejected {
+                    code: "POLICY_DENIED".to_string(),
+                    detail: format!(
+                        "an operator's emergency deny ({deny}) covers {}",
+                        plan.effect_class.as_str()
+                    ),
+                });
+            }
+            if gate.freezes(&run.workspace_id, effect.tier.get()) {
+                return Ok(ToolDispatchOutcome::Rejected {
+                    code: "EFFECTS_FROZEN".to_string(),
+                    detail: format!(
+                        "an operator froze new tier >= 2 effects; approved effect {} waits",
+                        pending.effect_id
+                    ),
+                });
+            }
+        }
         match effect.status {
             EffectStatus::Authorized => {}
             EffectStatus::Reserved => {}
@@ -677,6 +721,23 @@ impl ToolDispatchPort for ToolDispatchService {
             });
         }
         let context = self.call_context(&run).await?;
+        // Operator kill switches (OPS-008) are read once per call.
+        let gate = OpsGate::load(&self.pool, &self.identity.tenant_id).await?;
+        if let Some(target) = run
+            .execution_target_id
+            .as_deref()
+            .filter(|target| gate.quarantines(target))
+        {
+            return self
+                .reject(
+                    &run,
+                    &request,
+                    &call,
+                    "TARGET_UNAVAILABLE",
+                    &format!("an operator quarantined the worker of execution target {target}"),
+                )
+                .await;
+        }
 
         // 1. Resolve and validate strictly. Nothing is written when this refuses.
         let plan = match plan_call(
@@ -694,6 +755,20 @@ impl ToolDispatchPort for ToolDispatchService {
                     .await
             }
         };
+        if let Some(deny) = gate.emergency_deny(plan.effect_class.as_str()) {
+            return self
+                .reject(
+                    &run,
+                    &request,
+                    &call,
+                    "POLICY_DENIED",
+                    &format!(
+                        "an operator's emergency deny ({deny}) covers {}",
+                        plan.effect_class.as_str()
+                    ),
+                )
+                .await;
+        }
 
         // 2. Capability: the projection must cover the derived effect.
         let Some(projection) = self.projections.projection_for_run(&request.run_id).await? else {
@@ -762,6 +837,23 @@ impl ToolDispatchPort for ToolDispatchService {
                     &call,
                     "POLICY_DENIED",
                     &format!("policy denied the call: {}", outcome.reason.as_str()),
+                )
+                .await;
+        }
+        // An effect freeze stops new consequential work before anything is reserved or an
+        // approval is requested; tier 0/1 calls and everything already in the ledger continue.
+        if gate.freezes(&run.workspace_id, outcome.effective_tier.get()) {
+            return self
+                .reject(
+                    &run,
+                    &request,
+                    &call,
+                    "EFFECTS_FROZEN",
+                    &format!(
+                        "an operator froze new tier >= 2 effects; {} is tier {}",
+                        plan.effect_class.as_str(),
+                        outcome.effective_tier.get()
+                    ),
                 )
                 .await;
         }

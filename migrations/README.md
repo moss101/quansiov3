@@ -35,6 +35,7 @@ runner (`quansio_server::control::schema::migrate`).
 | `0018_artifact_format_check.sql` | Artifact source formats (CAP-003): `artifact_versions.format_check` (`{ok, rule, detail}`), written by the store for every version it adds and read by the `artifact_valid` completion check. Additive. |
 | `0019_sign_in_lookup.sql` | Sign-in under row-level security (APP-002 fix): `identity_user_by_email()` and `identity_sign_in_tenant()`, security definer, ids only, so a returning user's sign-in finds the account and its tenant before the user and tenant context exist, instead of onboarding the address a second time. Additive. |
 | `0020_enterprise_identity.sql` | Enterprise identity (OPS-001): `sso_connections` (one OIDC connection per tenant; the client secret is a custody handle), `sso_group_mappings` (external group → tenant or workspace role, never `owner`), `external_identities` (SSO subject, SCIM externalId, origin), `directory_groups`/`directory_group_members` (SCIM groups, `dgr_`), `sso_states` (hashed state and nonce, PKCE verifier, single use), the `auth_flow` gate on `service_principals` so a key can be checked before the tenant is known. SSO and SCIM tell a new address from an existing account through 0019's `identity_user_by_email()`. Additive. |
+| `0021_ops_switches.sql` | Operator kill switches (OPS-008): `ops_switches`, one row per engagement kept as history (`ksw_`, switch, target, reason, who and when engaged and released), a partial unique index so a switch is engaged at most once per target, tenant RLS. Additive. |
 
 ## Applying
 

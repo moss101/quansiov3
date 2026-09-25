@@ -70,6 +70,9 @@ pub struct Options {
     pub stderr: Option<PathBuf>,
     /// The provider credential the catalog's handle materializes.
     pub credential: Option<String>,
+    /// A whole model catalog (YAML) instead of the one-route default; `{provider}` is replaced
+    /// by the provider's base URL. Its credential handles should be `provider/int001-stub`.
+    pub catalog: Option<String>,
 }
 
 /// Start the service with `options`, or report why it cannot run here.
@@ -96,17 +99,25 @@ pub async fn start_with(options: Options) -> Option<Service> {
     }
     let dir = tempfile::tempdir().expect("temp dir");
     let catalog = dir.path().join("models.yaml");
-    std::fs::write(
+    let base = provider
+        .map_or_else(stub_provider, str::to_string)
+        .trim_end_matches('/')
+        .to_string();
+    if let Some(custom) = &options.catalog {
+        std::fs::write(&catalog, custom.replace("{provider}", &base)).expect("catalog");
+    } else {
+        std::fs::write(
         &catalog,
         format!(
             "version: 1\n\
              providers:\n  openai-compatible:\n    kind: openai_compatible\n    base_url: {}/v1\n    credential_handle: provider/int001-stub\n\
              routing:\n  strategy: deterministic\n  primary: {STUB_ROUTE}\n  fallback_order: []\n\
              models:\n  - id: {STUB_ROUTE}\n    provider: openai-compatible\n    model_id: {STUB_MODEL}\n    capabilities: [tools, streaming]\n    context_window: 32768\n    cost_class: low\n    dlp_eligible: false\n",
-            provider.map_or_else(stub_provider, str::to_string).trim_end_matches('/')
+            base
         ),
     )
     .expect("catalog");
+    }
     let port = TcpListener::bind("127.0.0.1:0")
         .expect("port")
         .local_addr()

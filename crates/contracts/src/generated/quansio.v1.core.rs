@@ -544,6 +544,8 @@ pub enum EntityPrefix {
     ContextProjection = 51,
     /// dgr_ (OPS-001: a SCIM group of the tenant's IdP)
     DirectoryGroup = 52,
+    /// ksw_ (OPS-008: a kill-switch engagement)
+    KillSwitch = 53,
 }
 impl EntityPrefix {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -605,6 +607,7 @@ impl EntityPrefix {
             Self::WebhookDelivery => "ENTITY_PREFIX_WEBHOOK_DELIVERY",
             Self::ContextProjection => "ENTITY_PREFIX_CONTEXT_PROJECTION",
             Self::DirectoryGroup => "ENTITY_PREFIX_DIRECTORY_GROUP",
+            Self::KillSwitch => "ENTITY_PREFIX_KILL_SWITCH",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -663,6 +666,7 @@ impl EntityPrefix {
             "ENTITY_PREFIX_WEBHOOK_DELIVERY" => Some(Self::WebhookDelivery),
             "ENTITY_PREFIX_CONTEXT_PROJECTION" => Some(Self::ContextProjection),
             "ENTITY_PREFIX_DIRECTORY_GROUP" => Some(Self::DirectoryGroup),
+            "ENTITY_PREFIX_KILL_SWITCH" => Some(Self::KillSwitch),
             _ => None,
         }
     }

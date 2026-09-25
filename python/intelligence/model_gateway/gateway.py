@@ -88,6 +88,22 @@ LOGGER_NAME = "intelligence.model_gateway"
 DEFAULT_EMBEDDING_TIMEOUT_MS = 60_000
 
 
+#: The route rule a call records when an operator-disabled provider made it fail over (OPS-008).
+RULE_OPERATOR_FAILOVER = "ops.provider_disabled_failover"
+
+
+def _without_disabled(catalog: ModelCatalog, decision: RouteDecision, disabled: set[str]) -> RouteDecision:
+    """The decision with every fallback on a disabled provider removed."""
+    kept = [
+        model_id
+        for model_id in decision.route.fallbacks
+        if model_id in catalog.models and catalog.provider_for(catalog.models[model_id]).name not in disabled
+    ]
+    del decision.route.fallbacks[:]
+    decision.route.fallbacks.extend(kept)
+    return decision
+
+
 @dataclass(frozen=True, slots=True)
 class EmbeddingOutcome:
     """One fulfilled embedding call: the vectors, in input order, and the route that produced them."""
@@ -247,8 +263,44 @@ class ModelGateway:
         return getattr(self, "_dlp_decision", None)
 
     def resolve_route(self, request: intelligence_pb2.ModelCallRequest) -> RouteDecision:
-        """Deterministic route resolution; raises `ROUTE_UNAVAILABLE` when nothing resolves."""
-        return self._selector.select(self._catalog, request)
+        """Deterministic route resolution; raises `ROUTE_UNAVAILABLE` when nothing resolves.
+
+        Providers an operator disabled (`disabled_providers`, OPS-008) are never routed to: the
+        selected route fails over to the first catalog fallback whose provider is enabled, the
+        remaining fallbacks exclude every disabled provider, and a call with no enabled route
+        left is refused with `PROVIDER_UNAVAILABLE` before a byte is sent.
+        """
+        decision = self._selector.select(self._catalog, request)
+        disabled = {name.strip() for name in request.disabled_providers if name.strip()}
+        if not disabled:
+            return decision
+        if decision.provider.name not in disabled:
+            return _without_disabled(self._catalog, decision, disabled)
+        for model_id in decision.route.fallbacks:
+            model = self._catalog.models.get(model_id)
+            if model is None or model.embedding_dimensions is not None:
+                continue
+            if self._catalog.provider_for(model).name in disabled:
+                continue
+            hinted = intelligence_pb2.ModelCallRequest()
+            hinted.CopyFrom(request)
+            hinted.route_hint = model.id
+            failover = CatalogPrimarySelector().select(self._catalog, hinted)
+            failover.route.chosen_by = RULE_OPERATOR_FAILOVER
+            self._logger.info(
+                "provider %s is disabled by an operator; call %s routes to %s",
+                decision.provider.name,
+                request.call_id,
+                model.id,
+            )
+            return _without_disabled(self._catalog, failover, disabled)
+        raise GatewayError(
+            GatewayErrorCode.PROVIDER_UNAVAILABLE,
+            "every provider this call could route to is disabled by an operator ("
+            + ", ".join(sorted(disabled))
+            + ")",
+            retryable=False,
+        )
 
     def cancel(self, cancellation_token: str) -> bool:
         """Cancel a live call by its request `cancellation_token`."""

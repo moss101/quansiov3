@@ -437,6 +437,16 @@ OPERATIONS: dict[str, dict[str, str]] = {
         "path": "/v1/commands/DeleteUserData",
         "family": "Admin/ops",
     },
+    "EngageKillSwitch": {
+        "method": "POST",
+        "path": "/v1/commands/EngageKillSwitch",
+        "family": "Admin/ops",
+    },
+    "ReleaseKillSwitch": {
+        "method": "POST",
+        "path": "/v1/commands/ReleaseKillSwitch",
+        "family": "Admin/ops",
+    },
 }
 
 READ_PROJECTIONS: tuple[str, ...] = (
@@ -471,6 +481,7 @@ READ_PROJECTIONS: tuple[str, ...] = (
     "/v1/search?q=",
     "/v1/webhooks",
     "/v1/webhooks/{id}/deliveries",
+    "/v1/ops/switches",
     "/v1/diagnostics/bundle",
     "/v1/stream",
     "/v1/stream/events",

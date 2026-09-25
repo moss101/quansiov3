@@ -220,7 +220,8 @@ impl TargetStatus {
             Self::Provisioning => matches!(to, Self::Ready),
             Self::Ready => matches!(to, Self::Busy | Self::Draining),
             Self::Busy => matches!(to, Self::Ready | Self::Draining),
-            Self::Draining => matches!(to, Self::Stopped),
+            // An operator releasing a drain (OPS-008) returns the target to service.
+            Self::Draining => matches!(to, Self::Stopped | Self::Ready),
             Self::Stopped => matches!(to, Self::Snapshotted | Self::Destroyed),
             Self::Snapshotted => matches!(to, Self::Destroyed | Self::Ready),
             Self::Failed => matches!(to, Self::Replacing | Self::Destroyed),

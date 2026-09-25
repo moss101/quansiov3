@@ -32,6 +32,8 @@ message ModelCallRequest {
   string dlp_profile = 13;
   uint64 timeout_ms = 14;
   string cancellation_token = 15;
+  // Providers an operator disabled (OPS-008 provider.disable): never routed to.
+  repeated string disabled_providers = 16;
 }
 
 message RenderedMessage {

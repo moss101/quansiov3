@@ -118,6 +118,8 @@ pub enum Prefix {
     ContextProjection,
     /// `dgr_` directory group (a SCIM group of the tenant's IdP, OPS-001).
     DirectoryGroup,
+    /// `ksw_` kill-switch engagement (OPS-008).
+    KillSwitch,
 }
 
 impl Prefix {
@@ -177,6 +179,7 @@ impl Prefix {
             Self::WebhookDelivery => "whd_",
             Self::ContextProjection => "ctx_",
             Self::DirectoryGroup => "dgr_",
+            Self::KillSwitch => "ksw_",
         }
     }
 
@@ -238,6 +241,7 @@ impl Prefix {
             Self::WebhookDelivery => "WEBHOOK_DELIVERY",
             Self::ContextProjection => "CONTEXT_PROJECTION",
             Self::DirectoryGroup => "DIRECTORY_GROUP",
+            Self::KillSwitch => "KILL_SWITCH",
         }
     }
 
@@ -297,6 +301,7 @@ impl Prefix {
             Self::WebhookDelivery,
             Self::ContextProjection,
             Self::DirectoryGroup,
+            Self::KillSwitch,
         ]
     }
 }

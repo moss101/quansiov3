@@ -396,6 +396,19 @@ async fn dispatch(
             super::admin::invite_member(state, scope, identity, &request.params, correlation)
                 .await?
         }
+        "FreezeEffects" | "UnfreezeEffects" | "DisableProvider" | "EnableProvider"
+        | "QuarantineWorker" | "DrainTarget" | "RevokeConnector" | "EngageKillSwitch"
+        | "ReleaseKillSwitch" => {
+            super::ops::command(
+                state,
+                scope,
+                identity,
+                command,
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
         "CreateServicePrincipal"
         | "RevokeServicePrincipal"
         | "ConfigureSso"

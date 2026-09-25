@@ -101,3 +101,5 @@ commands:
   - DrainTarget
   - ExportTenantData
   - DeleteUserData
+  - EngageKillSwitch
+  - ReleaseKillSwitch
