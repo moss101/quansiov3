@@ -2550,24 +2550,35 @@
       "notes": "Offline supply-chain gate: lockfile pinning (Rust/pnpm/uv), deny.toml completeness and licence allow-list, deterministic CycloneDX SBOM with drift verification, a real RUSTSEC-2019-0014 vulnerable-lockfile fixture, and skill/pack quarantine lifecycle checks. cargo-deny is optional and reports an explicit informational result when absent, so the gate never silently passes and never requires network. Wired into scripts/ci/ci_summary.py so ci.sh and the GitHub workflow both run it. REGRESSION FOUND AND FIXED 2026-09-16 (evidence/OPS-007/2026-09-16T18-43-39Z/): the quarantine-scan directory walk excluded any path segment literally named 'artifacts' anywhere in the tree (meant to skip the repo's own top-level artifacts/ci/), which silently exempted packs/capabilities/artifacts/ and packs/skills/artifacts/ from the scan -- a fail-open on a real shipped package, not a cosmetic miss. Once narrowed to the top-level directory only, the now-actually-scanned tree also surfaced that CAP-006/CAP-007's 14 built-in pack/skill manifests (shipped 2026-09-15, after this task) never carried the quarantine lifecycle this gate requires -- 4 tests were failing on main (tests/ci/test_supply_chain.py) until this fix. See NOTES.md for the full design rationale (why the lifecycle record lives in a meta.yaml sidecar for skills rather than skill.yaml, which SkillManifest's closed vocabulary must never carry it). 2026-09-18 regression (fixed same day, fix/OPS-007-nested-checkouts merged as 6913a23): tests/ci/test_supply_chain.py::test_real_repository_passes_the_gate and the three real-tree tests beside it failed at 376d614 when a concurrent session created .claude/worktrees/<name>/; the skill-lifecycle and package.json licence walks descended into the nested checkout and reported its negative fixtures as this tree's. No commit exposed it. Both scanners now stop at any directory carrying its own .git entry (scripts/ci/supply_chain/tree.py); test_nested_checkout_is_another_tree covers worktree and clone markers for both walks. Evidence: evidence/OPS-007/2026-09-18T13-37-50Z/."
     },
     "OPS-008": {
-      "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "coverage": "PARTIAL",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-25T11:38:29Z",
-      "updated_at": "2026-09-25T11:38:29Z",
-      "git_commit": null,
+      "updated_at": "2026-09-25T13:04:19Z",
+      "git_commit": "663bb2e73fcd5f28cfac8d2d9673d29ed60bb1ac",
       "tests": [
-        "cargo test -p quansio-server --test ops_kill_switches (4 passed: audited engage/release; worker quarantine; provider outage + effect freeze keeps evidence; all seven \u00a721.5 switches exist)"
+        "cargo test -p quansio-server --test ops_kill_switches (8: kill-switch E2E through real turns \u2014 effect freeze stops new tier>=2 incl. an approved effect before reservation while reads, tier 0/1, the ledger and evidence stay untouched; emergency deny; worker quarantine (lease revoked, generation fenced, dispatch refused, release restores); drain/undrain; connector revoke; stream shed with STREAM_BACKPRESSURE; provider outage drill against the real Python plane (fail over, refuse with none left, restore); runbook drift)",
+        "cargo test -p quansio-server --lib ops (3)",
+        "uv run --project python pytest python/tests/intelligence/test_model_provider_disable.py (3)",
+        "cargo test -p quansio-machine",
+        "mutation checks: 12 compiling mutants, 12 killed",
+        "bash scripts/ci/ci.sh (PASS)"
       ],
       "artifacts": [
-        "evidence/OPS-008/2026-09-15T09-00-00Z/summary.json",
+        "evidence/OPS-008/2026-09-25T12-56-05Z/summary.json",
+        "evidence/OPS-008/2026-09-25T12-56-05Z/NOTES.md",
+        "evidence/OPS-008/RECONCILIATION.md",
         "crates/server/src/control/ops/mod.rs",
-        "docs/runbooks/kill-switches.md"
+        "crates/server/src/api/ops.rs",
+        "migrations/0021_ops_switches.sql",
+        "docs/runbooks/kill-switches.md",
+        "crates/server/tests/ops_kill_switches.rs",
+        "python/intelligence/model_gateway/gateway.py"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": "Kill switches are audited and reversible. Effect freeze blocks new tier \u2265 2 actions without corrupting reads or evidence. 2026-09-19 correction: was BLOCKED_EXTERNAL at 85ca3934ed0d5afd979e016adeb64fb52a71aeb9 claimed by agent:principal-1 (started 2026-09-15T08:55:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['OPS-003'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "notes": "Durable kill switches (ops_switches, ksw_): engage/release are runtime.control (tier 3, tenant admins), each with an ops.kill_switch_* event and an AuditEntry, reversible. Enforcement by the owners: dispatch and approval resume (effect.freeze EFFECTS_FROZEN for tier>=2, policy.emergency_deny, worker.quarantine TARGET_UNAVAILABLE), the model gateway (disabled_providers: fail over, else PROVIDER_UNAVAILABLE), machine control (target.drain DRAINING and the new DRAINING->READY release; quarantine revokes the lease), the connector owner (connector.revoke), the live hub (stream.shed). Runbook generated from the switch catalog with a drift test. Kill switches are audited and reversible. Effect freeze blocks new tier \u2265 2 actions without corrupting reads or evidence. 2026-09-19 correction: was BLOCKED_EXTERNAL at 85ca3934ed0d5afd979e016adeb64fb52a71aeb9 claimed by agent:principal-1 (started 2026-09-15T08:55:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['OPS-003'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md."
     },
     "QA-001": {
       "coverage": "GENUINE_GAP",
