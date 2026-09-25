@@ -160,15 +160,16 @@ revocation.
 
 ## Plan
 
-- [ ] migration 0019 + README inventory
-- [ ] DOMAIN §1.1/§2/§14 + prefix in core/proto + regenerate catalog/contracts
-- [ ] `config/identity.yaml` + loader
-- [ ] enterprise module: jwt, oidc, mapping, scim, principals, sessions; replace the toy structs
-- [ ] auth.rs: authenticate checks membership/user status; sign-in enforcement
-- [ ] members.rs: removal/suspension revokes sessions
-- [ ] API: SSO + sessions routes, SCIM router, principal resolution/gate, command handlers,
-      read projections, one-time key never stored in the command result
-- [ ] tests: in-test OIDC provider (ES256/RS256, rotation), id_token negatives, client-claim
-      mapping, SCIM deprovision/reactivate/groups, token/session revocation, principals
-      (scopes, argon2id, gate, audit, revocation), enforcement, RLS as `quansio_app`, live gated
-- [ ] mutation checks, evidence, CI
+- [x] migration 0020 (0019 is the APP-002 sign-in lookup fix found here) + README inventory
+- [x] DOMAIN §1.1/§2/§14 + `dgr_` in core/proto + regenerated catalog/contracts
+- [x] `config/identity.yaml` + loader
+- [x] enterprise module: jwt, oidc, mapping, scim, principals, sessions; the toy structs removed
+- [x] auth.rs: authenticate reads session, account and membership standing; sign-in enforcement
+- [x] members.rs: removal/suspension revokes sessions
+- [x] API: SSO + sessions routes, SCIM router, principal resolution and family gate, command
+      handlers, read projections, the one-time key never stored in the command log
+- [x] tests: in-test OIDC provider (ES256/RS256, rotation, PKCE), id_token negatives,
+      client-claim mapping, SCIM deprovision/reactivate/groups, token/session revocation,
+      principals (scopes, argon2id, gate, audit, revocation), linking consent and enforcement,
+      identity paths as `quansio_app`, live IdP gated (BLOCKED_EXTERNAL)
+- [x] mutation checks (21 compiling, 21 killed), evidence, CI
