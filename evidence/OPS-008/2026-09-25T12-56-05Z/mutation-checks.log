@@ -1,0 +1,26 @@
+COMPILES freeze-ignored-at-dispatch
+KILLED freeze-ignored-at-dispatch
+COMPILES freeze-ignored-at-resume
+KILLED freeze-ignored-at-resume
+COMPILES freeze-blocks-reads
+KILLED freeze-blocks-reads
+COMPILES emergency-deny-ignored
+KILLED emergency-deny-ignored
+COMPILES quarantine-ignored-at-dispatch
+KILLED quarantine-ignored-at-dispatch
+COMPILES quarantine-keeps-lease
+KILLED quarantine-keeps-lease
+COMPILES drain-not-applied
+KILLED drain-not-applied
+COMPILES undrain-not-applied
+KILLED undrain-not-applied
+COMPILES double-engage-allowed
+KILLED double-engage-allowed
+COMPILES providers-not-sent
+KILLED providers-not-sent
+COMPILES shed-not-signalled
+KILLED shed-not-signalled
+COMPILES gateway-routes-to-disabled
+KILLED gateway-routes-to-disabled
+DONE
+exit=0

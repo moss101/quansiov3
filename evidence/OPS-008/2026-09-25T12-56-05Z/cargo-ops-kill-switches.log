@@ -1,0 +1,17 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 05s
+     Running tests/ops_kill_switches.rs (target/debug/deps/ops_kill_switches-597dff7875d7a173)
+
+running 8 tests
+test the_runbook_is_generated_from_the_switch_catalog ... ok
+test drain_and_undrain_move_the_target_lifecycle_and_are_audited ... ok
+test stream_shed_disconnects_live_sessions_with_backpressure ... ok
+test connector_revoke_goes_through_the_connector_owner ... ok
+test worker_quarantine_fences_the_target_and_release_restores_dispatch ... ok
+test emergency_deny_refuses_matching_classes_before_policy_and_scoped_freezes_stay_scoped ... ok
+test provider_outage_drill_fails_over_refuses_and_restores ... ok
+test effect_freeze_stops_new_consequential_actions_without_touching_reads_or_evidence ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.47s
+
+exit=0

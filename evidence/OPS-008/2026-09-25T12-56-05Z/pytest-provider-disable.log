@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3/python
+configfile: pyproject.toml
+collecting ... collected 3 items
+
+python/tests/intelligence/test_model_provider_disable.py::test_a_disabled_provider_fails_over_and_is_dropped_from_the_fallbacks PASSED [ 33%]
+python/tests/intelligence/test_model_provider_disable.py::test_with_every_provider_disabled_nothing_is_sent PASSED [ 66%]
+python/tests/intelligence/test_model_provider_disable.py::test_without_disabled_providers_routing_is_unchanged PASSED [100%]
+
+============================== 3 passed in 1.26s ===============================
+exit=0
