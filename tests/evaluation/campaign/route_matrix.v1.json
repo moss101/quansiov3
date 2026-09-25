@@ -1,0 +1,187 @@
+{
+  "dataset_id": "route_matrix",
+  "version": 1,
+  "kind": "route_quality",
+  "notes": "QA-004 route matrix over config/models.yaml: an explicit hint to every chat model, chat at several sizes, tool-bearing requests and the embedding shape. Every case is protected: the same inputs must resolve to the same route and to the pinned class or rule (DOSSIER 21.3: 100 %).",
+  "cases": [
+    {
+      "case_id": "hint_anthropic_sonnet",
+      "payload": {
+        "request": {
+          "messages": 2,
+          "tools": [],
+          "max_output_tokens": 1024,
+          "route_hint": "anthropic-sonnet"
+        },
+        "expected_rule": "catalog.route_hint"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    },
+    {
+      "case_id": "hint_anthropic_opus",
+      "payload": {
+        "request": {
+          "messages": 2,
+          "tools": [],
+          "max_output_tokens": 1024,
+          "route_hint": "anthropic-opus"
+        },
+        "expected_rule": "catalog.route_hint"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    },
+    {
+      "case_id": "hint_openai_gpt",
+      "payload": {
+        "request": {
+          "messages": 2,
+          "tools": [],
+          "max_output_tokens": 1024,
+          "route_hint": "openai-gpt"
+        },
+        "expected_rule": "catalog.route_hint"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    },
+    {
+      "case_id": "hint_openai_compatible_local",
+      "payload": {
+        "request": {
+          "messages": 2,
+          "tools": [],
+          "max_output_tokens": 1024,
+          "route_hint": "openai-compatible-local"
+        },
+        "expected_rule": "catalog.route_hint"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    },
+    {
+      "case_id": "chat_1_messages_256",
+      "payload": {
+        "request": {
+          "messages": 1,
+          "tools": [],
+          "max_output_tokens": 256
+        },
+        "expected_class": "chat"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    },
+    {
+      "case_id": "chat_12_messages_4096",
+      "payload": {
+        "request": {
+          "messages": 12,
+          "tools": [],
+          "max_output_tokens": 4096
+        },
+        "expected_class": "chat"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    },
+    {
+      "case_id": "chat_48_messages_8192",
+      "payload": {
+        "request": {
+          "messages": 48,
+          "tools": [],
+          "max_output_tokens": 8192
+        },
+        "expected_class": "chat"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    },
+    {
+      "case_id": "tools_fs_read",
+      "payload": {
+        "request": {
+          "messages": 3,
+          "tools": [
+            "fs.read"
+          ],
+          "max_output_tokens": 2048
+        },
+        "expected_class": "tool_heavy"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    },
+    {
+      "case_id": "tools_web_search_web_fetch",
+      "payload": {
+        "request": {
+          "messages": 3,
+          "tools": [
+            "web.search",
+            "web.fetch"
+          ],
+          "max_output_tokens": 2048
+        },
+        "expected_class": "tool_heavy"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    },
+    {
+      "case_id": "tools_terminal_exec_fs_read_fs_patch",
+      "payload": {
+        "request": {
+          "messages": 3,
+          "tools": [
+            "terminal.exec",
+            "fs.read",
+            "fs.patch"
+          ],
+          "max_output_tokens": 2048
+        },
+        "expected_class": "tool_heavy"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    },
+    {
+      "case_id": "embedding_shape",
+      "payload": {
+        "request": {
+          "messages": 0,
+          "tools": [],
+          "max_output_tokens": 0
+        },
+        "expected_class": "embedding"
+      },
+      "protected": true,
+      "tags": [
+        "determinism"
+      ]
+    }
+  ],
+  "digest": "8d2ad1e7e06e690389b4e8683bf7f3dc3226c81db53d5964708cb0c4c2961b14"
+}

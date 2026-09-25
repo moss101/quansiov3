@@ -1,0 +1,120 @@
+{
+  "dataset_id": "research_questions",
+  "version": 1,
+  "kind": "grounding",
+  "notes": "QA-004 pinned research set: each question comes with the corpus documents the answer may cite. The live model answers through the context plane with cited claims; the unsupported-claim rate is taken over those generated claims.",
+  "cases": [
+    {
+      "case_id": "retention_policy",
+      "payload": {
+        "question": "What is our log and audit retention policy?",
+        "evidence": [
+          "log_retention",
+          "memory_deletion"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "research"
+      ]
+    },
+    {
+      "case_id": "freeze_semantics",
+      "payload": {
+        "question": "What does the effect freeze block and what keeps working?",
+        "evidence": [
+          "effect_freeze",
+          "approval_receipts"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "research"
+      ]
+    },
+    {
+      "case_id": "fencing_a_worker",
+      "payload": {
+        "question": "How do operators take a misbehaving machine out of service?",
+        "evidence": [
+          "worker_quarantine",
+          "target_drain"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "research"
+      ]
+    },
+    {
+      "case_id": "webhook_reliability",
+      "payload": {
+        "question": "How reliable are webhook deliveries and how are they verified?",
+        "evidence": [
+          "webhook_retries",
+          "webhook_signing"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "research"
+      ]
+    },
+    {
+      "case_id": "disaster_recovery",
+      "payload": {
+        "question": "What are the disaster recovery objectives?",
+        "evidence": [
+          "backup_restore"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "research"
+      ]
+    },
+    {
+      "case_id": "provider_outage",
+      "payload": {
+        "question": "What happens to model calls during a provider outage?",
+        "evidence": [
+          "provider_failover",
+          "stream_shedding"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "research"
+      ]
+    },
+    {
+      "case_id": "untrusted_content",
+      "payload": {
+        "question": "How is untrusted content handled in a prompt?",
+        "evidence": [
+          "injection_boundary",
+          "context_budget"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "research"
+      ]
+    },
+    {
+      "case_id": "automation_access",
+      "payload": {
+        "question": "How do automations authenticate and what limits them?",
+        "evidence": [
+          "service_principals",
+          "rate_limits"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "research"
+      ]
+    }
+  ],
+  "digest": "f899985abdff9b44be7fbcbb3741884ce8bda6f7eabf0854dde0727c8ce8dfd8"
+}

@@ -1,0 +1,291 @@
+{
+  "dataset_id": "grounding_calibration",
+  "version": 1,
+  "kind": "grounding",
+  "notes": "QA-004 judge calibration: labelled claims over the pinned corpus (retrieval_corpus). Half are supported by their citations; half contradict them, overreach, or cite the wrong document. The grounding judge must agree with these labels before its verdicts on generated answers are counted.",
+  "cases": [
+    {
+      "case_id": "logs_ninety_days",
+      "payload": {
+        "claim": "Operational logs are retained for ninety days.",
+        "citations": [
+          "log_retention"
+        ],
+        "supported": true
+      },
+      "protected": false,
+      "tags": [
+        "supported"
+      ]
+    },
+    {
+      "case_id": "logs_one_year",
+      "payload": {
+        "claim": "Operational logs are retained for one year.",
+        "citations": [
+          "log_retention"
+        ],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "audit_seven_years",
+      "payload": {
+        "claim": "Audit records are kept for seven years.",
+        "citations": [
+          "log_retention"
+        ],
+        "supported": true
+      },
+      "protected": false,
+      "tags": [
+        "supported"
+      ]
+    },
+    {
+      "case_id": "audit_deleted",
+      "payload": {
+        "claim": "Audit records are deleted together with operational logs.",
+        "citations": [
+          "log_retention"
+        ],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "freeze_reads_continue",
+      "payload": {
+        "claim": "Reads keep working while the effect freeze is engaged.",
+        "citations": [
+          "effect_freeze"
+        ],
+        "supported": true
+      },
+      "protected": false,
+      "tags": [
+        "supported"
+      ]
+    },
+    {
+      "case_id": "freeze_honours_approvals",
+      "payload": {
+        "claim": "An action that was already approved still runs during an effect freeze.",
+        "citations": [
+          "effect_freeze"
+        ],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "receipt_single_use",
+      "payload": {
+        "claim": "An approval receipt can be consumed only once.",
+        "citations": [
+          "approval_receipts"
+        ],
+        "supported": true
+      },
+      "protected": false,
+      "tags": [
+        "supported"
+      ]
+    },
+    {
+      "case_id": "receipt_reusable",
+      "payload": {
+        "claim": "An approval receipt may be reused for similar actions.",
+        "citations": [
+          "approval_receipts"
+        ],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "rpo_five",
+      "payload": {
+        "claim": "The recovery point objective is five minutes.",
+        "citations": [
+          "backup_restore"
+        ],
+        "supported": true
+      },
+      "protected": false,
+      "tags": [
+        "supported"
+      ]
+    },
+    {
+      "case_id": "rto_five",
+      "payload": {
+        "claim": "The recovery time objective is five minutes.",
+        "citations": [
+          "backup_restore"
+        ],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "webhook_eight",
+      "payload": {
+        "claim": "A webhook delivery is dead-lettered after eight failed attempts.",
+        "citations": [
+          "webhook_retries"
+        ],
+        "supported": true
+      },
+      "protected": false,
+      "tags": [
+        "supported"
+      ]
+    },
+    {
+      "case_id": "webhook_forever",
+      "payload": {
+        "claim": "A failing webhook delivery is retried until it succeeds.",
+        "citations": [
+          "webhook_retries"
+        ],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "drain_finishes",
+      "payload": {
+        "claim": "Current work finishes on a draining target.",
+        "citations": [
+          "target_drain"
+        ],
+        "supported": true
+      },
+      "protected": false,
+      "tags": [
+        "supported"
+      ]
+    },
+    {
+      "case_id": "drain_kills",
+      "payload": {
+        "claim": "Draining a target cancels the work already running on it.",
+        "citations": [
+          "target_drain"
+        ],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "failover_refuses",
+      "payload": {
+        "claim": "With every provider disabled, a model call is refused before any request is sent.",
+        "citations": [
+          "provider_failover"
+        ],
+        "supported": true
+      },
+      "protected": false,
+      "tags": [
+        "supported"
+      ]
+    },
+    {
+      "case_id": "rate_limit_wrong_source",
+      "payload": {
+        "claim": "The API allows six hundred requests per minute per tenant.",
+        "citations": [
+          "log_retention"
+        ],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "key_hash",
+      "payload": {
+        "claim": "Service principal keys are stored as argon2 hashes.",
+        "citations": [
+          "service_principals"
+        ],
+        "supported": true
+      },
+      "protected": false,
+      "tags": [
+        "supported"
+      ]
+    },
+    {
+      "case_id": "key_plain",
+      "payload": {
+        "claim": "Service principal keys can be viewed again later in the admin console.",
+        "citations": [
+          "service_principals"
+        ],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "multi_source",
+      "payload": {
+        "claim": "Quarantine revokes the worker's lease, and draining lets current work finish.",
+        "citations": [
+          "worker_quarantine",
+          "target_drain"
+        ],
+        "supported": true
+      },
+      "protected": false,
+      "tags": [
+        "supported"
+      ]
+    },
+    {
+      "case_id": "multi_source_half",
+      "payload": {
+        "claim": "Quarantine revokes the lease and also deletes the worker's evidence.",
+        "citations": [
+          "worker_quarantine",
+          "effect_freeze"
+        ],
+        "supported": false
+      },
+      "protected": false,
+      "tags": [
+        "unsupported"
+      ]
+    }
+  ],
+  "digest": "d26865f33cb358894ad1a811a16b7933124beeb0ac9d1be2ece6cfb5ff705f7b"
+}

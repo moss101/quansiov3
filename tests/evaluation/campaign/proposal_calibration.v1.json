@@ -1,0 +1,242 @@
+{
+  "dataset_id": "proposal_calibration",
+  "version": 1,
+  "kind": "tool_proposal",
+  "notes": "QA-004 checker calibration: proposals against real config/tools.yaml declarations, labelled valid or invalid. The Tool Registry's own check (quansio-tool-check) must agree with every label before it judges live proposals.",
+  "cases": [
+    {
+      "case_id": "read_ok",
+      "payload": {
+        "tool": "fs.read",
+        "args": {
+          "path": "README.md"
+        },
+        "valid": true
+      },
+      "protected": false,
+      "tags": [
+        "valid"
+      ]
+    },
+    {
+      "case_id": "read_missing_path",
+      "payload": {
+        "tool": "fs.read",
+        "args": {},
+        "valid": false
+      },
+      "protected": false,
+      "tags": [
+        "invalid"
+      ]
+    },
+    {
+      "case_id": "read_extra_field",
+      "payload": {
+        "tool": "fs.read",
+        "args": {
+          "path": "README.md",
+          "encoding": "utf-8"
+        },
+        "valid": false
+      },
+      "protected": false,
+      "tags": [
+        "invalid"
+      ]
+    },
+    {
+      "case_id": "read_empty_path",
+      "payload": {
+        "tool": "fs.read",
+        "args": {
+          "path": ""
+        },
+        "valid": false
+      },
+      "protected": false,
+      "tags": [
+        "invalid"
+      ]
+    },
+    {
+      "case_id": "search_ok",
+      "payload": {
+        "tool": "web.search",
+        "args": {
+          "query": "retention policy",
+          "limit": 5
+        },
+        "valid": true
+      },
+      "protected": false,
+      "tags": [
+        "valid"
+      ]
+    },
+    {
+      "case_id": "search_limit_high",
+      "payload": {
+        "tool": "web.search",
+        "args": {
+          "query": "retention policy",
+          "limit": 500
+        },
+        "valid": false
+      },
+      "protected": false,
+      "tags": [
+        "invalid"
+      ]
+    },
+    {
+      "case_id": "search_limit_string",
+      "payload": {
+        "tool": "web.search",
+        "args": {
+          "query": "retention policy",
+          "limit": "5"
+        },
+        "valid": false
+      },
+      "protected": false,
+      "tags": [
+        "invalid"
+      ]
+    },
+    {
+      "case_id": "fetch_ok",
+      "payload": {
+        "tool": "web.fetch",
+        "args": {
+          "url": "https://example.com/policy"
+        },
+        "valid": true
+      },
+      "protected": false,
+      "tags": [
+        "valid"
+      ]
+    },
+    {
+      "case_id": "exec_ok",
+      "payload": {
+        "tool": "terminal.exec",
+        "args": {
+          "command": "ls -la",
+          "cwd": "/work"
+        },
+        "valid": true
+      },
+      "protected": false,
+      "tags": [
+        "valid"
+      ]
+    },
+    {
+      "case_id": "exec_argv_array",
+      "payload": {
+        "tool": "terminal.exec",
+        "args": {
+          "command": [
+            "ls",
+            "-la"
+          ]
+        },
+        "valid": false
+      },
+      "protected": false,
+      "tags": [
+        "invalid"
+      ]
+    },
+    {
+      "case_id": "navigate_ok",
+      "payload": {
+        "tool": "browser.navigate",
+        "args": {
+          "url": "https://example.com",
+          "session_id": "bs_1"
+        },
+        "valid": true
+      },
+      "protected": false,
+      "tags": [
+        "valid"
+      ]
+    },
+    {
+      "case_id": "navigate_no_session",
+      "payload": {
+        "tool": "browser.navigate",
+        "args": {
+          "url": "https://example.com"
+        },
+        "valid": false
+      },
+      "protected": false,
+      "tags": [
+        "invalid"
+      ]
+    },
+    {
+      "case_id": "ask_ok",
+      "payload": {
+        "tool": "user.ask",
+        "args": {
+          "kind": "confirm",
+          "prompt": "Proceed with the deploy?"
+        },
+        "valid": true
+      },
+      "protected": false,
+      "tags": [
+        "valid"
+      ]
+    },
+    {
+      "case_id": "ask_bad_kind",
+      "payload": {
+        "tool": "user.ask",
+        "args": {
+          "kind": "yes_no",
+          "prompt": "Proceed?"
+        },
+        "valid": false
+      },
+      "protected": false,
+      "tags": [
+        "invalid"
+      ]
+    },
+    {
+      "case_id": "cite_ok",
+      "payload": {
+        "tool": "knowledge.cite",
+        "args": {
+          "entry_id": "ke_01J8Z3K6F1N8VQ2X5W9Y0ABCDE"
+        },
+        "valid": true
+      },
+      "protected": false,
+      "tags": [
+        "valid"
+      ]
+    },
+    {
+      "case_id": "undeclared",
+      "payload": {
+        "tool": "fs.teleport",
+        "args": {
+          "path": "/"
+        },
+        "valid": false
+      },
+      "protected": false,
+      "tags": [
+        "invalid"
+      ]
+    }
+  ],
+  "digest": "ee765a3f5a0dbd3fd16ef45a87e9e78ab9e38048955aa51ae98d803d5955a947"
+}
