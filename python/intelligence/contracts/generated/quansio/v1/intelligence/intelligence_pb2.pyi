@@ -25,7 +25,7 @@ MODEL_STOP_REASON_CANCELLED: ModelStopReason
 MODEL_STOP_REASON_ERROR: ModelStopReason
 
 class ModelCallRequest(_message.Message):
-    __slots__ = ("schema_version", "call_id", "run_id", "turn_id", "route_hint", "capability_projection_id", "context_projection_id", "messages", "tools", "output_constraints_json", "effort", "max_output_tokens", "stream", "dlp_profile", "timeout_ms", "cancellation_token")
+    __slots__ = ("schema_version", "call_id", "run_id", "turn_id", "route_hint", "capability_projection_id", "context_projection_id", "messages", "tools", "output_constraints_json", "effort", "max_output_tokens", "stream", "dlp_profile", "timeout_ms", "cancellation_token", "disabled_providers")
     SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
     CALL_ID_FIELD_NUMBER: _ClassVar[int]
     RUN_ID_FIELD_NUMBER: _ClassVar[int]
@@ -42,6 +42,7 @@ class ModelCallRequest(_message.Message):
     DLP_PROFILE_FIELD_NUMBER: _ClassVar[int]
     TIMEOUT_MS_FIELD_NUMBER: _ClassVar[int]
     CANCELLATION_TOKEN_FIELD_NUMBER: _ClassVar[int]
+    DISABLED_PROVIDERS_FIELD_NUMBER: _ClassVar[int]
     schema_version: str
     call_id: str
     run_id: str
@@ -58,7 +59,8 @@ class ModelCallRequest(_message.Message):
     dlp_profile: str
     timeout_ms: int
     cancellation_token: str
-    def __init__(self, schema_version: _Optional[str] = ..., call_id: _Optional[str] = ..., run_id: _Optional[str] = ..., turn_id: _Optional[str] = ..., route_hint: _Optional[str] = ..., capability_projection_id: _Optional[str] = ..., context_projection_id: _Optional[str] = ..., messages: _Optional[_Iterable[_Union[RenderedMessage, _Mapping]]] = ..., tools: _Optional[_Iterable[str]] = ..., output_constraints_json: _Optional[str] = ..., effort: _Optional[str] = ..., max_output_tokens: _Optional[int] = ..., stream: _Optional[bool] = ..., dlp_profile: _Optional[str] = ..., timeout_ms: _Optional[int] = ..., cancellation_token: _Optional[str] = ...) -> None: ...
+    disabled_providers: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, schema_version: _Optional[str] = ..., call_id: _Optional[str] = ..., run_id: _Optional[str] = ..., turn_id: _Optional[str] = ..., route_hint: _Optional[str] = ..., capability_projection_id: _Optional[str] = ..., context_projection_id: _Optional[str] = ..., messages: _Optional[_Iterable[_Union[RenderedMessage, _Mapping]]] = ..., tools: _Optional[_Iterable[str]] = ..., output_constraints_json: _Optional[str] = ..., effort: _Optional[str] = ..., max_output_tokens: _Optional[int] = ..., stream: _Optional[bool] = ..., dlp_profile: _Optional[str] = ..., timeout_ms: _Optional[int] = ..., cancellation_token: _Optional[str] = ..., disabled_providers: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class RenderedMessage(_message.Message):
     __slots__ = ("schema_version", "role", "trust_level", "content_json", "cache_hint")

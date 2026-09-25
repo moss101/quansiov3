@@ -53,3 +53,4 @@ ids:
   Webhook delivery: whd_
   ContextProjection: ctx_
   DirectoryGroup: dgr_
+  KillSwitch: ksw_

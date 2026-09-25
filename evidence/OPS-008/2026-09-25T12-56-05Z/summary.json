@@ -1,0 +1,112 @@
+{
+  "task_id": "OPS-008",
+  "git_commit": "4bd3b4b87730d93e2d68135d37f065bed456be32",
+  "recorded_at": "2026-09-25T13:03:52Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test ops_kill_switches # kill-switch E2E through real turns, emergency deny, worker quarantine, drain/undrain, connector revoke, stream shed, provider outage drill against the real Python plane, runbook drift",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-008/2026-09-25T12-56-05Z/cargo-ops-kill-switches.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib ops # target shapes, the gate, the runbook catalog",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-008/2026-09-25T12-56-05Z/cargo-ops-unit.log"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_model_provider_disable.py -v # the gateway never routes to a disabled provider",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-008/2026-09-25T12-56-05Z/pytest-provider-disable.log"
+    },
+    {
+      "command": "cargo test -p quansio-machine # the target lifecycle with DRAINING -> READY",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-008/2026-09-25T12-56-05Z/cargo-machine.log"
+    },
+    {
+      "command": "ops008_mutations.sh # compiling mutants across dispatch, the gate, machine side effects, the model source, the live hub and the Python gateway",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-008/2026-09-25T12-56-05Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh # binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-008/2026-09-25T12-56-05Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test ops_kill_switches # kill-switch E2E through real turns, emergency deny, worker quarantine, drain/undrain, connector revoke, stream shed, provider outage drill against the real Python plane, runbook drift",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib ops # target shapes, the gate, the runbook catalog",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest python/tests/intelligence/test_model_provider_disable.py -v # the gateway never routes to a disabled provider",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-machine # the target lifecycle with DRAINING -> READY",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "ops008_mutations.sh # compiling mutants across dispatch, the gate, machine side effects, the model source, the live hub and the Python gateway",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh # binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-008/2026-09-25T12-56-05Z/NOTES.md",
+      "sha256": "c698ef1835222b9b1f6b6718d9d85f76a26fc70e14e09e49f2614aa0223eebad",
+      "bytes": 3942
+    },
+    {
+      "path": "evidence/OPS-008/2026-09-25T12-56-05Z/cargo-ops-kill-switches.log",
+      "sha256": "d6ab7a52770a4ac57dbfc133f33c81b1088af8a1130d61dbb4120392c03283c5",
+      "bytes": 971
+    },
+    {
+      "path": "evidence/OPS-008/2026-09-25T12-56-05Z/cargo-ops-unit.log",
+      "sha256": "55868bd26826ef2e4c3e392f254ca5ef9d31e3feb9728a8a1b906e3bc6507f25",
+      "bytes": 578
+    },
+    {
+      "path": "evidence/OPS-008/2026-09-25T12-56-05Z/pytest-provider-disable.log",
+      "sha256": "980083ff4dc15c5ce49b34ab190c540e12ae8b7323c179166de212b3030bc527",
+      "bytes": 815
+    },
+    {
+      "path": "evidence/OPS-008/2026-09-25T12-56-05Z/cargo-machine.log",
+      "sha256": "5b63dfb5d95edadc439a808749c58461331ec5b141e8fa66194ee6977d8dddf1",
+      "bytes": 8364
+    },
+    {
+      "path": "evidence/OPS-008/2026-09-25T12-56-05Z/mutation-checks.log",
+      "sha256": "8dee99e478703affae856ed0b545e6b2eef401be326d64585d1a3e9f568ff94f",
+      "bytes": 752
+    },
+    {
+      "path": "evidence/OPS-008/2026-09-25T12-56-05Z/ci-summary.json",
+      "sha256": "24f81dc72e13e270d7c0c13303e22badb6923f7a0d30f3d7e3c259ad19664866",
+      "bytes": 7839
+    }
+  ]
+}

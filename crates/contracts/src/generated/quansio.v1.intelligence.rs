@@ -33,6 +33,9 @@ pub struct ModelCallRequest {
     pub timeout_ms: u64,
     #[prost(string, tag = "15")]
     pub cancellation_token: ::prost::alloc::string::String,
+    /// Providers an operator disabled (OPS-008 provider.disable): never routed to.
+    #[prost(string, repeated, tag = "16")]
+    pub disabled_providers: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RenderedMessage {

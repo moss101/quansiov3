@@ -89,6 +89,8 @@ export const OPERATIONS = {
   DrainTarget: { method: "POST", path: "/v1/commands/DrainTarget", family: "Admin/ops" },
   ExportTenantData: { method: "POST", path: "/v1/commands/ExportTenantData", family: "Admin/ops" },
   DeleteUserData: { method: "POST", path: "/v1/commands/DeleteUserData", family: "Admin/ops" },
+  EngageKillSwitch: { method: "POST", path: "/v1/commands/EngageKillSwitch", family: "Admin/ops" },
+  ReleaseKillSwitch: { method: "POST", path: "/v1/commands/ReleaseKillSwitch", family: "Admin/ops" },
 } as const;
 
 export type OperationId = keyof typeof OPERATIONS;
@@ -125,6 +127,7 @@ export const READ_PROJECTIONS = [
   "/v1/search?q=",
   "/v1/webhooks",
   "/v1/webhooks/{id}/deliveries",
+  "/v1/ops/switches",
   "/v1/diagnostics/bundle",
   "/v1/stream",
   "/v1/stream/events",

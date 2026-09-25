@@ -204,6 +204,12 @@ async fn handle_socket(
         }
     }
     let live = state.live().subscribe(&scope.tenant_id);
+    let mut shed = state.live().shed_signal(&scope.tenant_id);
+    // The durable switch decides after a restart too (OPS-008 `stream.shed`).
+    let engaged = crate::control::ops::OpsGate::load(state.pool(), &scope.tenant_id)
+        .await
+        .is_ok_and(|gate| gate.shedding());
+    shed.mark_unchanged();
     tail_events(
         &mut socket,
         &store,
@@ -213,6 +219,10 @@ async fn handle_socket(
         last_cursor,
         live,
         &mut gate,
+        Shedding {
+            signal: shed,
+            engaged,
+        },
     )
     .await;
 }
@@ -227,6 +237,7 @@ async fn tail_events(
     mut last_cursor: Option<String>,
     mut live: tokio::sync::broadcast::Receiver<quansio_events::LiveFrame>,
     gate: &mut ThreadGate,
+    mut shedding: Shedding,
 ) {
     let subscribed: Vec<String> = subscription
         .channels()
@@ -256,8 +267,25 @@ async fn tail_events(
                         return;
                     }
                 }
-                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {}
+                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
+                    // A laggard misses transient frames, unless the operator is shedding.
+                    if shedding.engaged || shedding.signal.borrow().shedding {
+                        let _ = socket.send(Message::Text(shed_error_json().to_string())).await;
+                        return;
+                    }
+                }
                 Err(tokio::sync::broadcast::error::RecvError::Closed) => {}
+            },
+            changed = shedding.signal.changed() => {
+                if changed.is_ok() {
+                    let state = *shedding.signal.borrow_and_update();
+                    shedding.engaged = state.shedding;
+                    if state.shedding {
+                        let _ = socket.send(Message::Text(shed_error_json().to_string())).await;
+                        let _ = socket.send(Message::Close(None)).await;
+                        return;
+                    }
+                }
             },
             () = tokio::time::sleep(Duration::from_millis(50)) => {
                 let batch = match store
@@ -298,6 +326,19 @@ async fn tail_events(
             }
         }
     }
+}
+
+/// A live session's view of the tenant's `stream.shed` switch.
+struct Shedding {
+    signal: tokio::sync::watch::Receiver<crate::api::live::ShedState>,
+    engaged: bool,
+}
+
+/// The frame a shed session receives before it is closed.
+fn shed_error_json() -> serde_json::Value {
+    stream_error_json(&StreamError::Backpressure {
+        capacity: crate::api::live::LIVE_CAPACITY,
+    })
 }
 
 async fn next_text(socket: &mut WebSocket) -> Option<String> {
@@ -414,6 +455,7 @@ struct SseTail {
     gate: ThreadGate,
     pending: std::collections::VecDeque<SseEvent>,
     failed: bool,
+    shed: tokio::sync::watch::Receiver<crate::api::live::ShedState>,
 }
 
 /// `GET /v1/stream/events?channel=…&cursor=…&consumer=…`: the stream as Server-Sent Events.
@@ -483,6 +525,11 @@ pub async fn stream_events(
         ),
         pending: std::collections::VecDeque::new(),
         failed: false,
+        shed: {
+            let mut signal = state.live().shed_signal(&scope.tenant_id);
+            signal.mark_unchanged();
+            signal
+        },
     };
     let stream = futures_util::stream::unfold(tail, |mut tail| async move {
         loop {
@@ -491,6 +538,16 @@ pub async fn stream_events(
             }
             if tail.failed {
                 return None;
+            }
+            // The operator shed the tenant's sessions (OPS-008): close with the typed error.
+            if tail.shed.has_changed().unwrap_or(false) && tail.shed.borrow_and_update().shedding {
+                tail.failed = true;
+                tail.pending.push_back(
+                    SseEvent::default()
+                        .event("error")
+                        .data(shed_error_json().to_string()),
+                );
+                continue;
             }
             match tail
                 .store

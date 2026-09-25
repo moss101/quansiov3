@@ -1,0 +1,12 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 25s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-ae3e0f5ced695b63)
+
+running 3 tests
+test control::ops::tests::every_switch_has_a_runbook_entry ... ok
+test control::ops::tests::targets_are_checked_per_switch ... ok
+test control::ops::tests::the_gate_reads_each_switch_as_its_owner_needs_it ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 169 filtered out; finished in 0.01s
+
+exit=0

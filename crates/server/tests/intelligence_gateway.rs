@@ -78,6 +78,7 @@ fn model_call(call_id: &str, route_hint: &str, text: &str) -> ModelCallRequest {
         dlp_profile: String::new(),
         timeout_ms: 15_000,
         cancellation_token: format!("cancel-{call_id}"),
+        disabled_providers: Vec::new(),
     }
 }
 

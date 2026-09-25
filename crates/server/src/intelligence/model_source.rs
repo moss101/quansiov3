@@ -350,6 +350,12 @@ impl GatewayModelSource {
         // 3. The model call.
         let call_id = format!("call_{}", request.step_id);
         let deadline_ms = u64::try_from(self.settings.deadline.as_millis()).unwrap_or(u64::MAX);
+        // Providers an operator disabled (OPS-008) are never routed to.
+        let disabled_providers = crate::control::ops::OpsGate::load(&self.pool, &request.tenant_id)
+            .await
+            .map_err(RuntimeError::Database)?
+            .disabled_providers()
+            .to_vec();
         let wire = WireCall {
             schema_version: crate::intelligence::SCHEMA_VERSION.to_string(),
             call_id: call_id.clone(),
@@ -370,6 +376,7 @@ impl GatewayModelSource {
             dlp_profile: String::new(),
             timeout_ms: deadline_ms,
             cancellation_token: request.step_id.clone(),
+            disabled_providers,
         };
         let scope = CallScope {
             tenant_id: request.tenant_id.clone(),

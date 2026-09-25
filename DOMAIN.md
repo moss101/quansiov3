@@ -109,6 +109,7 @@ Use these names in code, contracts, events, UI copy and tests. Do not introduce 
 | TerminalSession | `tsn_` | | BrowserSession | `bsn_` |
 | Session (auth) | `ses_` | | Webhook delivery | `whd_` |
 | ContextProjection | `ctx_` | | DirectoryGroup | `dgr_` |
+| KillSwitch (engagement) | `ksw_` | | | |
 
 ### 1.2 Replay-safety primitives (CORE-002)
 - `command_id`: client-generated ULID; unique per tenant; duplicate submission returns the original result (idempotent).
@@ -364,6 +365,19 @@ timeout/disconnect → OUTCOME_UNKNOWN → reconcile before any retry
 
 Tools are registered in the Tool Registry (control plane) and exposed to models only through CapabilityProjection filtering; a model never sees a tool it cannot use.
 
+### 7.6 Operator kill switches (OPS-008)
+`KillSwitch: id (ksw_), tenant_id, switch, target, reason, engaged_by, engaged_at, released_by?, released_at?, release_reason?` — one row per engagement, history kept, at most one active per (switch, target). Engaging and releasing are `runtime.control` (tier 3, tenant administrators, audited) and emit `ops.kill_switch_engaged` / `ops.kill_switch_released`. Releasing restores service; nothing is deleted.
+
+| Switch | Target | While engaged |
+|---|---|---|
+| `effect.freeze` | `*` or a `ws_` | New tier ≥ 2 effects are refused `EFFECTS_FROZEN` before any effect is reserved or approval requested (the refusal is recorded like any rejected tool call), and an approved effect is refused before reservation with its receipt unconsumed. Tier 0/1 calls, reads, evidence and effects already in the ledger are untouched. |
+| `policy.emergency_deny` | an effect class, `<family>.*` or `*` | Matching calls are refused `POLICY_DENIED` before policy evaluation. |
+| `provider.disable` | a provider name | Model calls carry `disabled_providers`; the gateway routes to an enabled fallback, else `PROVIDER_UNAVAILABLE`. |
+| `worker.quarantine` | a `tgt_` | The target's lease is revoked on engage (generation bump fences the worker); every tool call of a run on it is refused `TARGET_UNAVAILABLE`. |
+| `target.drain` | a `tgt_` | The target is `DRAINING`: no new lease, in-flight work finishes; release returns it to `READY`. |
+| `connector.revoke` | a `cnx_` | The instance is revoked and its credential handle cleared (terminal); recovery is reconnecting, release closes the incident. |
+| `stream.shed` | `*` | Every live `/v1/stream` subscriber of the tenant is disconnected with `STREAM_BACKPRESSURE` (reconnect with the cursor); while engaged a lagging subscriber is disconnected instead of missing frames. |
+
 ---
 
 ## 8. Execution model
@@ -387,7 +401,7 @@ The managed browser (§8.4) runs **inside the execution target**, never in the d
 ### 8.2 ExecutionTarget
 `id, workspace_id, class, substrate, status, desired_state, observed_state, image_digest, lease_id?, generation, network_policy_id, resources {cpu, mem, disk}, endpoint (private control channel ref), last_heartbeat_at, checkpoint_ids[], owner {workspace|user|run}`.
 
-States: `REQUESTED → PROVISIONING → READY ⇄ BUSY; READY → DRAINING → STOPPED → (SNAPSHOTTED) → DESTROYED; any → FAILED (typed) → REPLACING → PROVISIONING`.
+States: `REQUESTED → PROVISIONING → READY ⇄ BUSY; READY → DRAINING → STOPPED → (SNAPSHOTTED) → DESTROYED; DRAINING → READY (an operator releases a drain, OPS-008); any → FAILED (typed) → REPLACING → PROVISIONING`.
 
 ### 8.3 Lease
 `id, target_id, holder {controller_id, generation}, acquired_at, expires_at, renewed_at, status (held|released|expired|revoked)`. qworkerd rejects any action whose `(lease_id, generation)` does not match its current lease.
@@ -453,6 +467,7 @@ Source formats (CAP-003). An editable artifact is a versioned source file, not a
 
 ### 11.1 Model Gateway contract (INT-002/003)
 `ModelCallRequest: call_id, run_id, turn_id, route_hint? (explicit user choice), capability_projection_id, context_projection_id, messages (rendered by Context plane; stable prefix first for caching), tools[] (filtered), output_constraints?, effort?, max_output_tokens, stream: true, dlp_profile, timeout_ms, cancellation_token`.
+`ModelCallRequest.disabled_providers[]` (OPS-008): provider names an operator disabled (`provider.disable`); the gateway never routes to them, fails over to an enabled fallback, and refuses with `PROVIDER_UNAVAILABLE` when none is left.
 
 `ModelEvent (stream): call_started {route}, delta {text|tool_input_partial}, tool_call {id, name, args}, thinking_summary?, usage {input, output, cache_read, cache_write}, stop {reason: end_turn|tool_use|max_tokens|refusal|cancelled|error}, error {code, retryable}, call_completed {route, latency_ms, cost_estimate}`.
 
@@ -553,8 +568,8 @@ Commands are `POST /v1/commands/<Name>` (one endpoint per command; OpenAPI-gener
 | Routines | `CreateRoutine`, `UpdateRoutine`, `PauseRoutine`, `ResumeRoutine`, `TriggerRoutineNow`, `DeleteRoutine` |
 | Connectors | `BeginConnectorAuth`, `CompleteConnectorAuth`, `RevokeConnector`, `CreateWebhookSubscription`, `UpdateWebhookSubscription`, `RedeliverWebhook`, `DeleteWebhookSubscription` |
 | Notifications | `UpdateNotificationPreferences`, `MarkNotificationRead` |
-| Admin/ops | `SetPolicy`, `FreezeEffects`, `UnfreezeEffects`, `DisableProvider`, `EnableProvider`, `QuarantineWorker`, `DrainTarget`, `ExportTenantData`, `DeleteUserData` |
-| Read projections | `GET /v1/threads/{id}`, `/messages`, `/workgraph`, `/runs/{id}`, `/runs/{id}/timeline`, `/effects`, `/approvals`, `/questions`, `/artifacts`, `/artifacts/{id}/versions`, `/artifacts/{id}/versions/{vid}/content`, `/evidence/{id}`, `/targets`, `/browser-sessions/{id}`, `/knowledge`, `/memory`, `/skills`, `/packs`, `/routines`, `/connectors`, `/members`, `/service-principals`, `/sso`, `/policies`, `/teammates`, `/notifications`, `/usage`, `/audit`, `/search?q=` (typed SearchProgram), `/webhooks`, `/webhooks/{id}/deliveries`, `/diagnostics/bundle` (tenant administrators; the tenant's recent redacted log lines, bounded), `GET /v1/stream` (WS), `GET /v1/stream/events` (SSE) |
+| Admin/ops | `SetPolicy`, `FreezeEffects`, `UnfreezeEffects`, `DisableProvider`, `EnableProvider`, `QuarantineWorker`, `DrainTarget`, `ExportTenantData`, `DeleteUserData`, `EngageKillSwitch`, `ReleaseKillSwitch` |
+| Read projections | `GET /v1/threads/{id}`, `/messages`, `/workgraph`, `/runs/{id}`, `/runs/{id}/timeline`, `/effects`, `/approvals`, `/questions`, `/artifacts`, `/artifacts/{id}/versions`, `/artifacts/{id}/versions/{vid}/content`, `/evidence/{id}`, `/targets`, `/browser-sessions/{id}`, `/knowledge`, `/memory`, `/skills`, `/packs`, `/routines`, `/connectors`, `/members`, `/service-principals`, `/sso`, `/policies`, `/teammates`, `/notifications`, `/usage`, `/audit`, `/search?q=` (typed SearchProgram), `/webhooks`, `/webhooks/{id}/deliveries`, `/ops/switches` (tenant administrators; active kill switches and recent history), `/diagnostics/bundle` (tenant administrators; the tenant's recent redacted log lines, bounded), `GET /v1/stream` (WS), `GET /v1/stream/events` (SSE) |
 
 Agent-originated intents (`work.delegate`, `work.propose_plan`, `user.ask`, `memory.propose`) are Tools (§7.5), not public commands.
 

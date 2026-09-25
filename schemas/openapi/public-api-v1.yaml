@@ -3643,6 +3643,90 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/commands/EngageKillSwitch:
+    post:
+      operationId: EngageKillSwitch
+      summary: 'Admin/ops: EngageKillSwitch'
+      tags:
+      - Admin/ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/ReleaseKillSwitch:
+    post:
+      operationId: ReleaseKillSwitch
+      summary: 'Admin/ops: ReleaseKillSwitch'
+      tags:
+      - Admin/ops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/stream:
     get:
       operationId: Stream
@@ -4985,6 +5069,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/ops/switches:
+    get:
+      operationId: ReadV1OpsSwitches
+      summary: Read projection /v1/ops/switches (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/diagnostics/bundle:
     get:
       operationId: ReadV1DiagnosticsBundle
@@ -5915,6 +6040,18 @@ components:
       type: object
       additionalProperties: true
       description: 'Admin/ops command DeleteUserData. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    EngageKillSwitchParams:
+      type: object
+      additionalProperties: true
+      description: 'Admin/ops command EngageKillSwitch. The concrete parameter schema is owned by the implementing task and
+        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    ReleaseKillSwitchParams:
+      type: object
+      additionalProperties: true
+      description: 'Admin/ops command ReleaseKillSwitch. The concrete parameter schema is owned by the implementing task and
         must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
       x-quansio-params-defined: false
     RuntimeEvent:

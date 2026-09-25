@@ -2551,10 +2551,10 @@
     },
     "OPS-008": {
       "coverage": "GENUINE_GAP",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-25T11:38:29Z",
+      "updated_at": "2026-09-25T11:38:29Z",
       "git_commit": null,
       "tests": [
         "cargo test -p quansio-server --test ops_kill_switches (4 passed: audited engage/release; worker quarantine; provider outage + effect freeze keeps evidence; all seven \u00a721.5 switches exist)"
