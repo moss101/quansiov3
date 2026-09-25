@@ -1,0 +1,20 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 16.33s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-ae3e0f5ced695b63)
+
+running 11 tests
+test control::identity::enterprise::oidc::tests::custody_handles_materialize_like_the_model_gateway ... ok
+test control::identity::enterprise::oidc::tests::groups_come_from_the_configured_claim_only ... ok
+test control::identity::enterprise::scim::tests::filters_are_equality_only ... ok
+test control::identity::enterprise::scim::tests::errors_have_the_scim_shape ... ok
+test control::identity::enterprise::scim::tests::patch_reads_entra_and_okta_shapes ... ok
+test control::identity::enterprise::principals::tests::only_a_key_shaped_value_names_a_principal ... ok
+test control::identity::enterprise::mapping::tests::owner_is_never_mapped_and_unmanaged_scopes_are_left_alone ... ok
+test control::identity::enterprise::mapping::tests::the_highest_mapped_role_wins_and_unmatched_scopes_lose_access ... ok
+test control::identity::enterprise::oidc::tests::redirects_must_be_https_loopback_or_the_desktop_scheme ... ok
+test control::identity::enterprise::jwt::tests::algorithm_key_and_signature_substitutions_are_refused ... ok
+test control::identity::enterprise::jwt::tests::a_well_formed_es256_token_verifies_and_every_claim_rule_refuses ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 158 filtered out; finished in 0.00s
+
+exit=0

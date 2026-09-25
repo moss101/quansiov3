@@ -1,0 +1,96 @@
+{
+  "task_id": "OPS-001",
+  "git_commit": "328ab9bd18fe9b45f88e15023d49a0ae0a6021a8",
+  "recorded_at": "2026-09-25T11:37:16Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test enterprise_identity -- --nocapture # in-test OIDC provider over loopback HTTP, identity paths as quansio_app; the real-IdP case prints BLOCKED_EXTERNAL without QUANSIO_TEST_OIDC_*",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-001/2026-09-25T11-32-22Z/cargo-enterprise-identity.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib enterprise # id_token checks, mapping resolution, SCIM parsing, key shape, custody handles",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-001/2026-09-25T11-32-22Z/cargo-enterprise-unit.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test identity --test api --test schema_bootstrap # sign-in (incl. a returning user as quansio_app), API ownership scan, migrations",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-001/2026-09-25T11-32-22Z/cargo-identity-api.log"
+    },
+    {
+      "command": "ops001_mutations.sh # 21 compiling mutants across the verifier, mapping, linking, enforcement, SCIM, principals, RBAC and authentication",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-001/2026-09-25T11-32-22Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh # binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-001/2026-09-25T11-32-22Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test enterprise_identity -- --nocapture # in-test OIDC provider over loopback HTTP, identity paths as quansio_app; the real-IdP case prints BLOCKED_EXTERNAL without QUANSIO_TEST_OIDC_*",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib enterprise # id_token checks, mapping resolution, SCIM parsing, key shape, custody handles",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test identity --test api --test schema_bootstrap # sign-in (incl. a returning user as quansio_app), API ownership scan, migrations",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "ops001_mutations.sh # 21 compiling mutants across the verifier, mapping, linking, enforcement, SCIM, principals, RBAC and authentication",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh # binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-001/2026-09-25T11-32-22Z/NOTES.md",
+      "sha256": "24dc568d34399f08d3877112ab7574ddd54d39977b91c57f79cc4c5afaaa2ecc",
+      "bytes": 6495
+    },
+    {
+      "path": "evidence/OPS-001/2026-09-25T11-32-22Z/cargo-enterprise-identity.log",
+      "sha256": "c734947f001446aebb7a82b74dec3621cd8e2e35f113e352ec80638f93a872b3",
+      "bytes": 1070
+    },
+    {
+      "path": "evidence/OPS-001/2026-09-25T11-32-22Z/cargo-enterprise-unit.log",
+      "sha256": "2683d6928d44b71464dd154ee791c46ebdbcccda12cee74dfbae570437ea5207",
+      "bytes": 1510
+    },
+    {
+      "path": "evidence/OPS-001/2026-09-25T11-32-22Z/cargo-identity-api.log",
+      "sha256": "c8e871d7f7104050a2b548c88231902cba77c6294f1b3c4091eb6c77eae61afa",
+      "bytes": 2907
+    },
+    {
+      "path": "evidence/OPS-001/2026-09-25T11-32-22Z/mutation-checks.log",
+      "sha256": "0e4a8896b9ac16b0b8286f1f8473a279602b0027dbe61970845259294794c936",
+      "bytes": 1406
+    },
+    {
+      "path": "evidence/OPS-001/2026-09-25T11-32-22Z/ci-summary.json",
+      "sha256": "a60253a4b16827f342b9480ed4628b3e2348b647de542b8d48dfa1b010ba1a7b",
+      "bytes": 7837
+    }
+  ]
+}

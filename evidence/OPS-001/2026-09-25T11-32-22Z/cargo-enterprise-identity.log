@@ -1,0 +1,17 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 34s
+     Running tests/enterprise_identity.rs (target/debug/deps/enterprise_identity-8dd39c5706ed11fc)
+
+running 7 tests
+BLOCKED_EXTERNAL: QUANSIO_TEST_OIDC_ISSUER, QUANSIO_TEST_OIDC_CLIENT_ID, QUANSIO_TEST_OIDC_CLIENT_SECRET, QUANSIO_TEST_OIDC_USERNAME, QUANSIO_TEST_OIDC_PASSWORD are not all set; the real-IdP proof did not run
+test a_real_idp_issues_id_tokens_the_verifier_accepts ... ok
+test service_principal_scopes_are_explicit_and_auditable ... ok
+test token_and_session_revocation_take_effect_on_the_next_request ... ok
+test existing_accounts_link_only_with_consent_and_enforcement_admits_only_sso ... ok
+test sso_sign_in_maps_groups_server_side_and_ignores_client_claims ... ok
+test scim_deprovision_revokes_access_promptly ... ok
+test id_tokens_that_do_not_verify_are_refused_and_issue_no_session ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.61s
+
+exit=0
