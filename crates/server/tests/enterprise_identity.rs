@@ -7,15 +7,8 @@
 //! - the authorization-code flow with PKCE S256;
 //! - signed id_tokens.
 //!
-//! The identity surface runs as the application role (`quansio_app`), so every row-level-security
-//! policy of the identity tables is in force:
-//! - sign-in and SSO;
-//! - SCIM;
-//! - bearer and principal authentication;
-//! - the session and SSO/principal read endpoints.
-//!
-//! `/v1/commands/*` runs on the superuser pool, as every other API test does. The command log
-//! itself is not yet RLS-clean for the application role, which is a separate finding.
+//! Every request runs as the application role (`quansio_app`), so every row-level-security policy
+//! is in force: of the new identity tables and of every table the commands touch.
 //!
 //! The live proof against a real IdP (`a_real_idp_issues_id_tokens_the_verifier_accepts`) reads:
 //! - `QUANSIO_TEST_OIDC_ISSUER`: a sandbox realm's issuer (https);
@@ -382,25 +375,8 @@ async fn start_idp() -> Idp {
 
 // ------------------------------------------------------------------ the server under test
 
-/// The two routers: the command surface on the superuser pool, everything else as `quansio_app`.
-#[derive(Clone)]
-struct Api {
-    superuser: Router,
-    rls: Router,
-}
-
-impl Api {
-    fn pick(&self, path: &str) -> Router {
-        if path.starts_with("/v1/commands/") {
-            self.superuser.clone()
-        } else {
-            self.rls.clone()
-        }
-    }
-}
-
 struct Harness {
-    router: Api,
+    router: Router,
     admin: sqlx::PgPool,
     name: String,
     idp: Idp,
@@ -459,20 +435,14 @@ async fn harness(prefix: &str, loopback_issuers: bool) -> Option<Harness> {
     let mut config = EnterpriseConfig::load().expect("config/identity.yaml");
     config.allow_loopback_http_issuers = loopback_issuers;
     let delivery = Arc::new(RecordingDelivery::default());
-    let build = |pool: sqlx::PgPool| {
-        quansio_server::api::router(
-            ApiState::new(pool)
-                .expect("state")
-                .with_scope_trust(ScopeTrust::SessionOnly)
-                .with_magic_link_delivery(delivery.clone())
-                .with_enterprise_config(config.clone())
-                .expect("enterprise"),
-        )
-    };
-    let router = Api {
-        superuser: build(admin.clone()),
-        rls: build(pool),
-    };
+    let router = quansio_server::api::router(
+        ApiState::new(pool)
+            .expect("state")
+            .with_scope_trust(ScopeTrust::SessionOnly)
+            .with_magic_link_delivery(delivery.clone())
+            .with_enterprise_config(config)
+            .expect("enterprise"),
+    );
     let idp = start_idp().await;
     let issuer = idp.lock().expect("idp").issuer.clone();
     let owner = sign_in(&router, &delivery, "owner@corp.test").await;
@@ -494,7 +464,7 @@ async fn harness(prefix: &str, loopback_issuers: bool) -> Option<Harness> {
 }
 
 async fn call(
-    router: &Api,
+    router: &Router,
     method: &str,
     path: &str,
     body: Option<Value>,
@@ -511,7 +481,7 @@ async fn call(
         None => builder.body(axum::body::Body::empty()),
     }
     .expect("request");
-    let response = router.pick(path).oneshot(request).await.expect("response");
+    let response = router.clone().oneshot(request).await.expect("response");
     let status = response.status();
     let bytes = axum::body::to_bytes(response.into_body(), 1 << 22)
         .await
@@ -522,7 +492,7 @@ async fn call(
     )
 }
 
-async fn sign_in(router: &Api, delivery: &RecordingDelivery, email: &str) -> Value {
+async fn sign_in(router: &Router, delivery: &RecordingDelivery, email: &str) -> Value {
     let (status, _) = call(
         router,
         "POST",
@@ -551,7 +521,7 @@ async fn sign_in(router: &Api, delivery: &RecordingDelivery, email: &str) -> Val
 }
 
 async fn try_sign_in(
-    router: &Api,
+    router: &Router,
     delivery: &RecordingDelivery,
     email: &str,
 ) -> (StatusCode, Value) {
@@ -583,12 +553,12 @@ fn command_id() -> String {
     CanonicalId::generate(Prefix::Command, &mut UlidGenerator::new()).to_string()
 }
 
-async fn command(router: &Api, name: &str, params: Value, bearer: &str) -> (StatusCode, Value) {
+async fn command(router: &Router, name: &str, params: Value, bearer: &str) -> (StatusCode, Value) {
     command_with_id(router, name, &command_id(), params, bearer).await
 }
 
 async fn command_with_id(
-    router: &Api,
+    router: &Router,
     name: &str,
     id: &str,
     params: Value,
