@@ -68,6 +68,8 @@ pub async fn invoke(
     // The record's id is minted here (DOMAIN.md §1.1). The client's command_id is unique only within its
     // tenant (§1.2), so as the key it would let one tenant's id collide with another's instead of replaying.
     let record_id = CanonicalId::generate(Prefix::Command, &mut UlidGenerator::new());
+    // The record is committed before the owner is called, so a resend while it works is told to come back.
+    let mut log = state.tenant_tx(&scope.tenant_id, &correlation).await?;
     let inserted = sqlx::query(
         "INSERT INTO commands (id, tenant_id, command_name, command_id, params_digest, status, correlation_id) \
          VALUES ($1, $2, $3, $4, $5, 'accepted', $6) \
@@ -79,9 +81,10 @@ pub async fn invoke(
     .bind(command_id.as_canonical().to_string())
     .bind(&params_digest)
     .bind(&correlation)
-    .execute(state.pool())
+    .execute(&mut *log)
     .await
     .map_err(database_error)?;
+    log.commit().await.map_err(database_error)?;
 
     if inserted.rows_affected() == 0 {
         return replay(&state, &scope, &command_id, &params_digest, &correlation).await;
@@ -108,15 +111,17 @@ pub async fn invoke(
     };
 
     // A one-time value (a webhook signing secret) is returned once and never kept.
+    let mut log = state.tenant_tx(&scope.tenant_id, &correlation).await?;
     sqlx::query(
         "UPDATE commands SET status = 'applied', result = $3 WHERE tenant_id = $1 AND command_id = $2",
     )
     .bind(&scope.tenant_id)
     .bind(command_id.as_canonical().to_string())
     .bind(super::webhooks::stored_result(&result))
-    .execute(state.pool())
+    .execute(&mut *log)
     .await
     .map_err(database_error)?;
+    log.commit().await.map_err(database_error)?;
 
     Ok(Json(CommandResponse {
         command_id: command_id.as_canonical().to_string().to_string(),
@@ -499,21 +504,30 @@ async fn record_refusal(
     command_id: &CommandId,
     refusal: &ApiError,
 ) {
-    let recorded = sqlx::query(
-        "UPDATE commands SET status = 'rejected', error = $3 WHERE tenant_id = $1 AND command_id = $2",
-    )
-    .bind(&scope.tenant_id)
-    .bind(command_id.as_canonical().to_string())
-    .bind(json!(refusal))
-    .execute(state.pool())
+    let recorded = async {
+        let mut log = state
+            .tenant_tx(&scope.tenant_id, &refusal.correlation_id)
+            .await?;
+        sqlx::query(
+            "UPDATE commands SET status = 'rejected', error = $3 WHERE tenant_id = $1 AND command_id = $2",
+        )
+        .bind(&scope.tenant_id)
+        .bind(command_id.as_canonical().to_string())
+        .bind(json!(refusal))
+        .execute(&mut *log)
+        .await
+        .map_err(database_error)?;
+        log.commit().await.map_err(database_error)
+    }
     .await;
     // The caller is still told the refusal. The record stays accepted, and a resend is told the outcome is
     // not known rather than that the command succeeded.
     if let Err(error) = recorded {
         eprintln!(
-            "quansio-server: command {} was refused ({}) and the refusal was not recorded: {error}",
+            "quansio-server: command {} was refused ({}) and the refusal was not recorded: {}",
             command_id.as_canonical(),
-            refusal.code
+            refusal.code,
+            error.message
         );
     }
 }
@@ -525,22 +539,23 @@ async fn replay(
     params_digest: &str,
     correlation: &str,
 ) -> Result<Json<CommandResponse>, ApiError> {
-    let (digest, status, result, error) =
-        sqlx::query_as::<_, (String, String, Option<Value>, Option<Value>)>(
-            "SELECT params_digest, status, result, error FROM commands WHERE tenant_id = $1 AND command_id = $2",
+    let mut log = state.tenant_tx(&scope.tenant_id, correlation).await?;
+    let record = sqlx::query_as::<_, (String, String, Option<Value>, Option<Value>)>(
+        "SELECT params_digest, status, result, error FROM commands WHERE tenant_id = $1 AND command_id = $2",
+    )
+    .bind(&scope.tenant_id)
+    .bind(command_id.as_canonical().to_string())
+    .fetch_optional(&mut *log)
+    .await
+    .map_err(database_error)?;
+    log.commit().await.map_err(database_error)?;
+    let (digest, status, result, error) = record.ok_or_else(|| {
+        ApiError::new(
+            ApiErrorCode::Internal,
+            "a command conflicted but cannot be read back",
+            correlation.to_string(),
         )
-        .bind(&scope.tenant_id)
-        .bind(command_id.as_canonical().to_string())
-        .fetch_optional(state.pool())
-        .await
-        .map_err(database_error)?
-        .ok_or_else(|| {
-            ApiError::new(
-                ApiErrorCode::Internal,
-                "a command conflicted but cannot be read back",
-                correlation.to_string(),
-            )
-        })?;
+    })?;
     if digest != params_digest {
         return Err(ApiError::new(
             ApiErrorCode::ConflictIdempotencyMismatch,
@@ -962,15 +977,18 @@ pub(super) async fn thread_of_run(
     tenant_id: &str,
     run_id: &str,
 ) -> Result<Option<String>, ApiError> {
-    sqlx::query_scalar(
+    let mut tx = state.tenant_tx(tenant_id, "database").await?;
+    let thread = sqlx::query_scalar(
         "SELECT m.thread_id FROM runs r JOIN messages m ON m.id = r.trigger_ref AND m.tenant_id = r.tenant_id \
          WHERE r.tenant_id = $1 AND r.id = $2",
     )
     .bind(tenant_id)
     .bind(run_id)
-    .fetch_optional(state.pool())
+    .fetch_optional(&mut *tx)
     .await
-    .map_err(database_error)
+    .map_err(database_error)?;
+    tx.commit().await.map_err(database_error)?;
+    Ok(thread)
 }
 
 pub(super) fn chat_engine(
@@ -1053,6 +1071,7 @@ pub(super) async fn route_to_teammate(
             match default {
                 Some(teammate) => Some(teammate),
                 None => {
+                    let mut tx = state.tenant_tx(&identity.tenant_id, correlation).await?;
                     let legacy: Option<String> = sqlx::query_scalar(
                         "SELECT id FROM agent_threads WHERE tenant_id = $1 AND workspace_id = $2 \
                          AND agent_kind = 'teammate' AND definition_id IS NULL \
@@ -1060,9 +1079,10 @@ pub(super) async fn route_to_teammate(
                     )
                     .bind(&identity.tenant_id)
                     .bind(workspace_id)
-                    .fetch_optional(state.pool())
+                    .fetch_optional(&mut *tx)
                     .await
                     .map_err(database_error)?;
+                    tx.commit().await.map_err(database_error)?;
                     if let Some(id) = legacy {
                         let id = CanonicalId::parse_typed(&id, Prefix::AgentThread).map_err(
                             |error| {
@@ -1143,14 +1163,16 @@ async fn load_work_node(
     workspace_id: &str,
     correlation: &str,
 ) -> Result<CanonicalId, ApiError> {
+    let mut tx = state.tenant_tx(tenant_id, correlation).await?;
     let id: Option<String> = sqlx::query_scalar(
         "SELECT id FROM work_nodes WHERE tenant_id = $1 AND workspace_id = $2 ORDER BY created_at LIMIT 1",
     )
     .bind(tenant_id)
     .bind(workspace_id)
-    .fetch_optional(state.pool())
+    .fetch_optional(&mut *tx)
     .await
     .map_err(database_error)?;
+    tx.commit().await.map_err(database_error)?;
     let id = id.ok_or_else(|| {
         ApiError::new(
             ApiErrorCode::ValidationBounds,
@@ -1167,15 +1189,18 @@ pub(super) async fn load_target(
     tenant_id: &str,
     workspace_id: &str,
 ) -> Result<Option<String>, ApiError> {
-    sqlx::query_scalar(
+    let mut tx = state.tenant_tx(tenant_id, "database").await?;
+    let target = sqlx::query_scalar(
         "SELECT id FROM execution_targets WHERE tenant_id = $1 AND workspace_id = $2 \
          ORDER BY created_at LIMIT 1",
     )
     .bind(tenant_id)
     .bind(workspace_id)
-    .fetch_optional(state.pool())
+    .fetch_optional(&mut *tx)
     .await
-    .map_err(database_error)
+    .map_err(database_error)?;
+    tx.commit().await.map_err(database_error)?;
+    Ok(target)
 }
 
 pub(super) async fn seed_projection(
