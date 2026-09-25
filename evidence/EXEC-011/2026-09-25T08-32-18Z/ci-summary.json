@@ -1,0 +1,112 @@
+{
+  "commit": "de2d3aaac359c62cf2ef9884471b4ee6944aa8f9",
+  "recorded_at": "2026-09-25T08:31:41Z",
+  "results": [
+    {
+      "gate": "authority",
+      "command": "python3.12 scripts/validate_v81.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.038,
+      "tail": "V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 65 PASS, 6 ready)",
+      "log": "artifacts/ci/logs/de2d3aaac359/authority.log"
+    },
+    {
+      "gate": "dossier-consistency",
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 6.337,
+      "tail": "dossier consistency: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/de2d3aaac359/dossier-consistency.log"
+    },
+    {
+      "gate": "architecture",
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.866,
+      "tail": "architecture check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/de2d3aaac359/architecture.log"
+    },
+    {
+      "gate": "authority-pointers",
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.041,
+      "tail": "authority check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/de2d3aaac359/authority-pointers.log"
+    },
+    {
+      "gate": "workspace",
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.063,
+      "tail": "workspace check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/de2d3aaac359/workspace.log"
+    },
+    {
+      "gate": "supply-chain",
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 4.088,
+      "tail": "      \u2502   \u2502   \u251c\u2500\u2500 quansio-graph v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 (dev) quansio-indexer v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 quansio-machine v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-native-windows v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-qworkerd v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros-core v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx-macros v0.8.6 (*)\n      \u2502   \u2514\u2500\u2500 sqlx-postgres v0.8.6\n      \u2502       \u251c\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502       \u2514\u2500\u2500 sqlx-macros-core v0.8.6 (*)\n      \u2514\u2500\u2500 tokio-rustls v0.26.5\n          \u251c\u2500\u2500 hyper-rustls v0.27.9 (*)\n          \u2514\u2500\u2500 reqwest v0.12.28 (*)\n\nsupply-chain: CLEAN (1 informational)\nUsing CPython 3.12.13 interpreter at: /opt/homebrew/opt/python@3.12/bin/python3.12\nCreating virtual environment at: python/.venv\n   Building quansio-intelligence @ file:///private/tmp/claude-501/-Users-mohsin-projects-quansiov3--claude-worktrees-sad-easley-3cb1c4/b6ae0e4c-48da-4c98-845c-5123f499e6ce/scratchpad/ci-verify/python\n      Built quansio-intelligence @ file:///private/tmp/claude-501/-Users-mohsin-projects-quansiov3--claude-worktrees-sad-easley-3cb1c4/b6ae0e4c-48da-4c98-845c-5123f499e6ce/scratchpad/ci-verify/python\nInstalled 26 packages in 75ms",
+      "log": "artifacts/ci/logs/de2d3aaac359/supply-chain.log"
+    },
+    {
+      "gate": "legacy-map",
+      "command": "python3.12 scripts/ci/legacy_map_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.34,
+      "tail": "legacy map check: CLEAN (0 findings)",
+      "log": "artifacts/ci/logs/de2d3aaac359/legacy-map.log"
+    },
+    {
+      "gate": "contract-drift",
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 15.469,
+      "tail": "contract regeneration check: CLEAN (catalog,openapi,rust,python,ts,sdk)",
+      "log": "artifacts/ci/logs/de2d3aaac359/contract-drift.log"
+    },
+    {
+      "gate": "contract-lint-compat",
+      "command": "uv run --project python python scripts/ci/contract_compat.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 1.081,
+      "tail": "contract check: CLEAN (lint + compatibility)",
+      "log": "artifacts/ci/logs/de2d3aaac359/contract-lint-compat.log"
+    },
+    {
+      "gate": "toolchains",
+      "command": "bash scripts/dev/bootstrap.sh",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 806.096,
+      "tail": "   Doc-tests quansio_native_windows\n   Doc-tests quansio_qworkerd\n   Doc-tests quansio_server\n   Doc-tests quansio_tools\n$ pnpm -r --if-present build\n$ pnpm -r --if-present typecheck\n$ pnpm -r --if-present test\n$ eslint .\nBuilding for debugging...\n[0/7] /private/tmp/claude-501/-Users-mohsin-projects-quansiov3--claude-worktrees-sad-easley-3cb1c4/b6ae0e4c-48da-4c98-845c-5123f499e6ce/scratchpad/ci-verify/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.derived/runner.swift\n[1/7] Write sources\n[4/7] Write swift-version--58304C5D6DBC2206.txt\n[6/11] Compiling QuansioMacBridge ComputerUse.swift\n[7/11] Compiling QuansioMacBridge MacOSCapsule.swift\n[8/11] Emitting module QuansioMacBridge\n[9/11] Compiling QuansioMacBridge MacBridge.swift\n[10/15] Compiling QuansioMacBridgeTests MacBridgeTests.swift\n[11/15] Compiling QuansioMacBridgeTests ComputerUseTests.swift\n[12/15] Emitting module QuansioMacBridgeTests\n[13/15] Compiling QuansioMacBridgeTests MacOSCapsuleTests.swift\n[14/17] Compiling QuansioMacBridgePackageTests runner.swift\n[15/17] Emitting module QuansioMacBridgePackageTests\n[15/17] Write Objects.LinkFileList\n[16/17] Linking QuansioMacBridgePackageTests\nBuild complete! (16.42s)",
+      "log": "artifacts/ci/logs/de2d3aaac359/toolchains.log"
+    },
+    {
+      "gate": "tests",
+      "command": "uv run --project python pytest tests -q",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 98.196,
+      "tail": "........................................................................ [ 24%]\n........................................................................ [ 48%]\n........................................................................ [ 73%]\n........................................................................ [ 97%]\n......                                                                   [100%]\n294 passed in 97.69s (0:01:37)",
+      "log": "artifacts/ci/logs/de2d3aaac359/tests.log"
+    }
+  ],
+  "artifacts": {
+    "registries/progress.json": "bccad8517701d9a09aa67315ae6ff7c68061cb3c91549b870685b77bbfa760c2",
+    "TASKS.md": "84e42eac1a62f7239211c4378dfb2c6c56e601aab8cbb40b8509f5ebe3324544",
+    "MANIFEST.json": "c70de9b44bb2b0a3808ce5e0f927606e5c4e93fd736fd5d84fd1cf7267714de5"
+  },
+  "status": "PASS",
+  "database_backed_tests": true
+}

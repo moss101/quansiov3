@@ -1,0 +1,22 @@
+
+running 5 tests
+test sandbox_boundary_is_reported_when_absent ... ok
+test the_connector_lifecycle_works_as_the_application_role_under_rls ... FAILED
+test begin_and_complete_auth_stores_a_handle_and_never_token_material ... ok
+test lifecycle_degrades_and_revocation_clears_the_handle ... ok
+test raw_token_material_and_foreign_state_are_refused ... ok
+
+failures:
+
+---- the_connector_lifecycle_works_as_the_application_role_under_rls stdout ----
+
+thread 'the_connector_lifecycle_works_as_the_application_role_under_rls' (12056934) panicked at crates/server/tests/connector_broker.rs:305:10:
+complete as quansio_app: NotFound { id: "cnx_01M3BSQ8RTCYSJPY7X6SQ640R5" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    the_connector_lifecycle_works_as_the_application_role_under_rls
+
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.28s
+
