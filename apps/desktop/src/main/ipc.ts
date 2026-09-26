@@ -943,6 +943,20 @@ export class DesktopBridge {
 
   #onError(error: StreamErrorFrame): void {
     this.#options.push("stream.error", error);
+    if (error.code.startsWith("AUTH_") && this.sessions) {
+      // The server ended the stream because the session no longer admits it (revoked, expired,
+      // the person removed). A refresh either renews it — resume from the cursor — or finds the
+      // session gone, which signs out and returns the person to sign-in (the stream closes
+      // with the session state).
+      this.#stream?.close();
+      this.#stream = null;
+      void this.sessions.refresh().then((token) => {
+        if (token && !this.#stream) {
+          this.#openStream();
+        }
+      });
+      return;
+    }
     if (!error.retryable) {
       // The server refused the subscription itself, so the durable cursor is no longer a
       // position it will honour. Resume from its current position: continuity is lost only

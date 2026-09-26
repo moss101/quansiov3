@@ -70,6 +70,17 @@ export function App(): ReactElement {
   const onReady = useCallback(() => {
     setReady(true);
   }, []);
+  // Signing out — by the button, or because the server revoked or expired the session and a
+  // refresh found it gone — returns the person to sign-in rather than leaving a dead shell.
+  useEffect(
+    () =>
+      window.quansio.onSessionState((session) => {
+        if ((session as { readonly kind?: string } | null)?.kind === "signed-out") {
+          setReady(false);
+        }
+      }),
+    [],
+  );
   if (!ready) {
     return <Onboarding onReady={onReady} />;
   }
