@@ -1,0 +1,17 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3
+
+ ✓ |qa-e2e| tests/e2e/web.e2e.spec.ts (7 tests) 17832ms
+   ✓ web journeys (Chrome, real server) > signs in from the emailed link and reviews the work 977ms
+   ✓ web journeys (Chrome, real server) > lets an approver decide a request remotely, bound to its preview 1501ms
+   ✓ web journeys (Chrome, real server) > administers members and the change is audited 873ms
+   ✓ web journeys (Chrome, real server) > offers a viewer no administration and the server agrees 530ms
+   ✓ web journeys (Chrome, real server) > has no accessibility blockers on any page, works by keyboard, and fits a phone 9280ms
+   ✓ web journeys (Chrome, real server) > signs out 720ms
+   ✓ web journeys (Chrome, real server) > the accessibility checks find what they look for (a control with no name, hidden focus) 624ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  20:25:04
+   Duration  18.65s (transform 73ms, setup 0ms, collect 254ms, tests 17.83s, environment 0ms, prepare 107ms)
+

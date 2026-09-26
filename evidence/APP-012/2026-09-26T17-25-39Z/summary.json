@@ -1,0 +1,83 @@
+{
+  "task_id": "APP-012",
+  "git_commit": "b05d809df3babfc6ca60c5aa103a20cb8c305003",
+  "recorded_at": "2026-09-26T17:25:40Z",
+  "commands": [
+    {
+      "command": "cd apps/web && npm run build && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run # web package suite incl. real-server RBAC/approval E2E",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-012/2026-09-26T17-25-39Z/vitest-web.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run --config tests/e2e/vitest.config.ts tests/e2e/web.e2e.spec.ts # web journeys in Chrome on the refreshed design",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-012/2026-09-26T17-25-39Z/web-journeys.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cd apps/web && npm run build && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run # web package suite incl. real-server RBAC/approval E2E",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run --config tests/e2e/vitest.config.ts tests/e2e/web.e2e.spec.ts # web journeys in Chrome on the refreshed design",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-012/2026-09-26T17-25-39Z/NOTES.md",
+      "sha256": "57e7f8f3519b62181e3fd70ffc370f3598e2fea3ba47e96ef6eef99605ac2504",
+      "bytes": 1755
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-25-39Z/before-w-users.png",
+      "sha256": "8cbda06f3d796b9de9278b85c5cf7675f996d28ae140a22f7fb377ce14984f89",
+      "bytes": 67481
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-25-39Z/vitest-web.log",
+      "sha256": "539bcf8a5091cf1ca997b9b64a17f29b534aead8ded43c68144e1bec1df4ab8e",
+      "bytes": 766
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-25-39Z/w-approval-dialog.png",
+      "sha256": "94f301ed3a65e4b239668b043c7921e8526f296a818c69c3ede721cb718cea7b",
+      "bytes": 60507
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-25-39Z/w-phone-menu.png",
+      "sha256": "cecf47075201988e79950b59d4aa5422b9eee95b2e05005b05352927e6d2d3c3",
+      "bytes": 23753
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-25-39Z/w-phone.png",
+      "sha256": "65322cb60bbedf2e09cc7e715708dbf045346ed3297c5b6addac5bc26035f1b0",
+      "bytes": 11617
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-25-39Z/w-signin.png",
+      "sha256": "d7bf3b7efb795639043e5bb1d0b8bdd945c345d3000859b1faefbfb93a02eec8",
+      "bytes": 20032
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-25-39Z/w-tablet.png",
+      "sha256": "34ae38ba332fe0bfeb3ccc970311f36ef2fc9f5d82cb4262fac48c9a080c50ed",
+      "bytes": 15261
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-25-39Z/w-users-dark.png",
+      "sha256": "1791dde52acdf03009c1b7c18fe4213eb0f70d216715fd9cd25fa8e52844e3b9",
+      "bytes": 76049
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-25-39Z/web-journeys.log",
+      "sha256": "45f1145bf5b2b95147996efd4cfe32e4f11bff9972f70b991e88bd76c958e74e",
+      "bytes": 1039
+    }
+  ]
+}

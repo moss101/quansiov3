@@ -42,6 +42,15 @@ export const STRINGS = {
   download: "Download",
   versions: "versions",
   noWorkspaceRole: "You hold no role in this workspace.",
+  review: "Review",
+  close: "Close",
+  edit: "Edit",
+  closeMenu: "Close menu",
+  noTenantRole: "no tenant role",
+  noWorkspaceRoleShort: "no workspace role",
+  signInTitle: "Sign in to review and administer your workspace.",
+  pages: "Pages",
+  actions: "Actions",
 } as const;
 
 export type StringKey = keyof typeof STRINGS;
