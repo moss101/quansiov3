@@ -73,6 +73,7 @@ describe("preload bridge", () => {
         "artifactVersions",
         "artifactContent",
         "saveArtifact",
+        "setAppearance",
         "openArtifact",
         "getEvidence",
         "search",
@@ -210,6 +211,7 @@ describe("preload bridge", () => {
     await api.markNotificationRead("ntf_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.setNotificationPreference({ kind: "mention", channels: ["in_app"] });
     await api.exportDiagnostics();
+    await api.setAppearance("dark");
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

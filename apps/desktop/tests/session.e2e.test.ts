@@ -213,6 +213,49 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
     }
   }, 120_000);
 
+  it("follows the theme chosen in Settings over the system's, on the page and the window (APP-003)", async () => {
+    const background = (page: Page): Promise<string> => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    const chrome = (app: ElectronApplication): Promise<string> => app.evaluate(({ nativeTheme }) => nativeTheme.themeSource);
+    const choose = async (page: Page, theme: string): Promise<void> => {
+      await page.getByRole("button", { name: "Account" }).click();
+      await page.getByRole("menuitem", { name: "Settings" }).click();
+      const settings = page.getByRole("region", { name: "Settings" });
+      // Settings shows the effective values once it has read them; choose after that.
+      await until(async () => (await settings.locator("dt", { hasText: "theme" }).count()) > 0, "the settings to load");
+      await settings.getByLabel("Theme").selectOption(theme);
+      await settings.getByRole("button", { name: "Save my settings" }).click();
+      await until(async () => (await settings.locator("dt", { hasText: "theme" }).locator("+ dd").textContent()) === theme, `the ${theme} theme saved`);
+    };
+    const first = await launch();
+    try {
+      await signIn(first.page, email(OWNER));
+      await first.page.emulateMedia({ colorScheme: "light" });
+      await choose(first.page, "dark");
+      await until(async () => (await background(first.page)) === "rgb(7, 7, 7)", "the page to turn dark on a light system");
+      await expect(first.page.evaluate(() => document.documentElement.dataset["theme"])).resolves.toBe("dark");
+      await until(async () => (await chrome(first.app)) === "dark", "the window chrome to turn dark");
+    } finally {
+      await first.done();
+    }
+    // The choice is the person's: the next launch opens in it before anything is touched.
+    const second = await launch();
+    try {
+      await second.page.emulateMedia({ colorScheme: "light" });
+      await signIn(second.page, email(OWNER));
+      await until(async () => (await background(second.page)) === "rgb(7, 7, 7)", "the chosen theme on the next launch");
+      await until(async () => (await chrome(second.app)) === "dark", "the window chrome on the next launch");
+      await second.page.emulateMedia({ colorScheme: "dark" });
+      await choose(second.page, "light");
+      await until(async () => (await background(second.page)) === "rgb(252, 252, 252)", "the page to stay light on a dark system");
+      await choose(second.page, "system");
+      await until(async () => (await background(second.page)) === "rgb(7, 7, 7)", "the page to follow the dark system again");
+      await expect(second.page.evaluate(() => document.documentElement.dataset["theme"] ?? null)).resolves.toBeNull();
+      await until(async () => (await chrome(second.app)) === "system", "the window chrome to follow the system again");
+    } finally {
+      await second.done();
+    }
+  }, 180_000);
+
   it("shows a viewer the workspace settings without letting them change them", async () => {
     const desktop = await launch();
     try {

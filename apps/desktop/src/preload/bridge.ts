@@ -78,6 +78,7 @@ export const PRELOAD_ALLOWLIST = [
   "notifications.read",
   "notifications.preference",
   "diagnostics.export",
+  "appearance.set",
 ] as const;
 
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
@@ -234,6 +235,8 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     // Diagnostics (OPS-003): the server's tenant bundle merged with the desktop's own frames,
     // redacted and bounded; the page offers it for saving.
     exportDiagnostics: () => send("diagnostics.export", {}),
+    // The person's theme preference (system / light / dark) for the window's native chrome.
+    setAppearance: (theme: string) => send("appearance.set", { theme }),
     onStreamFrame: (listener: (payload: unknown) => void) => subscribe("stream.frame", listener),
     onStreamState: (listener: (payload: unknown) => void) => subscribe("stream.state", listener),
     onStreamError: (listener: (payload: unknown) => void) => subscribe("stream.error", listener),
