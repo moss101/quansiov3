@@ -77,10 +77,10 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("approves an effect from the preview it was asked about", async () => {
     const page = desktop.page;
-    await nav("conversation").click();
+    await nav("Chat").click();
     await page.getByRole("textbox", { name: "Message your teammates…" }).fill("write the summary [[scenario:approval]]");
     await page.getByRole("button", { name: "Send" }).click();
-    await nav("approvals").click();
+    await nav("Approvals").click();
     const trust = page.getByRole("region", { name: "Trust" });
     await waitFor(async () => (await trust.getByRole("heading", { name: "Approvals (1)" }).count()) > 0, "the approval request", 30_000);
     await trust.getByRole("button", { name: /^Approve fs\.write/ }).click();
@@ -103,11 +103,14 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("steers the plan: adds a task under the objective and moves it to ready", async () => {
     const page = desktop.page;
-    await nav("objectives").click();
+    await nav("Objectives and plan").click();
     const work = page.getByRole("region", { name: "Work" });
     await work.getByRole("button", { name: /objective e2e seed/ }).click();
     await work.getByRole("textbox", { name: "New node title…" }).fill("Draft the release notes");
     await work.getByRole("button", { name: "Add under" }).click();
+    // Edits are drafted against the current revision, then proposed as one plan change.
+    await waitFor(async () => (await work.getByText('add task "Draft the release notes"', { exact: false }).count()) > 0, "the drafted edit", 30_000);
+    await work.getByRole("button", { name: "Propose" }).click();
     await waitFor(async () => (await work.getByRole("button", { name: /Draft the release notes/ }).count()) > 0, "the new task in the plan", 30_000);
     await waitFor(async () => (await work.getByText(/revision [2-9]/).count()) > 0, "a new plan revision", 30_000);
     const owner = await stack.session(emailOf(OWNER));
@@ -117,7 +120,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("takes over the live browser and hands it back", async () => {
     const page = desktop.page;
-    await nav("live-browser-terminal").click();
+    await nav("Live browser and terminal").click();
     const live = page.getByRole("region", { name: "Live browser and terminal" });
     await live.getByRole("button", { name: "https://example.com/" }).click();
     await live.getByRole("button", { name: "Take over" }).first().click();
@@ -138,7 +141,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
       media_type: "text/markdown",
       bytes_base64: Buffer.from("# Launch plan\n\n- ship the desktop\n").toString("base64"),
     });
-    await nav("artifacts").click();
+    await nav("Files and artifacts").click();
     const artifacts = page.getByRole("region", { name: "Artifacts" });
     await waitFor(async () => (await artifacts.getByRole("button", { name: /Launch plan\.md/ }).count()) > 0, "the artifact in the list", 30_000);
     await artifacts.getByRole("button", { name: /Launch plan\.md/ }).click();
@@ -148,7 +151,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("starts a group thread with a colleague", async () => {
     const page = desktop.page;
-    await nav("collaboration").click();
+    await nav("Group threads").click();
     const collaboration = page.getByRole("region", { name: "Collaboration" });
     await collaboration.getByRole("textbox", { name: "Title" }).fill("Launch war room");
     await collaboration.getByRole("textbox", { name: "People (usr_… ids, comma separated)" }).fill(APPROVER);
@@ -161,7 +164,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("creates a routine", async () => {
     const page = desktop.page;
-    await nav("automations").click();
+    await nav("Routines and notifications").click();
     const automations = page.getByRole("region", { name: "Automations" });
     await automations.getByRole("textbox", { name: "Title" }).fill("Morning digest");
     await automations.getByRole("textbox", { name: "What should the teammate do?" }).fill("Summarize yesterday's runs");
@@ -171,13 +174,32 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
     expect(JSON.stringify(await stack.get(owner.access_token, `/v1/routines?workspace_id=${owner.workspace_id}`))).toContain("Morning digest");
   }, 120_000);
 
+  it("changes settings and sees what the change sets in motion", async () => {
+    const page = desktop.page;
+    await page.getByRole("button", { name: "Settings" }).click();
+    const settings = page.getByRole("region", { name: "Settings" });
+    await settings.getByLabel("Where work runs").selectOption("private_worker");
+    await settings.getByRole("button", { name: "Save workspace settings" }).click();
+    await waitFor(async () => (await settings.getByRole("status").textContent())?.includes("re-provisioned") ?? false, "the restart the change causes");
+    const owner = await stack.session(emailOf(OWNER));
+    const me = await stack.get(owner.access_token, "/v1/me");
+    const workspace = (me["workspaces"] as { id: string; effective_settings: Record<string, unknown> }[]).find((item) => item.id === owner.workspace_id);
+    expect(workspace?.effective_settings["execution_target"]).toBe("private_worker");
+  }, 120_000);
+
   it("returns a person whose sessions were revoked to sign-in", async () => {
     const colleague = await launchDesktop(stack.origin);
     try {
       await signInDesktop(colleague.page, stack, emailOf(APPROVER));
       const owner = await stack.session(emailOf(OWNER));
       await stack.command(owner.access_token, "RevokeUserSessions", { user_id: APPROVER });
-      await waitFor(async () => (await colleague.page.getByRole("heading", { name: "Sign in" }).count()) > 0, "the revoked person to see sign-in", 30_000);
+      try {
+        await waitFor(async () => (await colleague.page.getByRole("heading", { name: "Sign in" }).count()) > 0, "the revoked person to see sign-in", 30_000);
+      } catch (error) {
+        console.log("REVOKED UI:\n" + (await colleague.page.locator("body").ariaSnapshot()).slice(0, 800));
+        console.log(stack.log.join("").split("\n").filter((line) => /refresh|stream"|\/v1\/stream/.test(line)).slice(-8).join("\n"));
+        throw error;
+      }
     } finally {
       await colleague.close();
     }
@@ -185,10 +207,10 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("has no accessibility blockers on any surface and every control is keyboard reachable", async () => {
     const page = desktop.page;
-    const surfaces = ["conversation", "objectives", "teammates", "approvals", "live-browser-terminal", "artifacts", "knowledge-controls", "collaboration", "automations"];
+    const surfaces = ["Chat", "Objectives and plan", "Teammates", "Approvals", "Live browser and terminal", "Files and artifacts", "Knowledge, memory and skills", "Group threads", "Routines and notifications"];
     const failures: string[] = [];
-    for (const surface of surfaces) {
-      await nav(surface).click();
+    for (const surface of [...surfaces, "Settings"]) {
+      await (surface === "Settings" ? page.getByRole("button", { name: "Settings" }) : nav(surface)).click();
       await page.waitForTimeout(500);
       const audit = await auditAccessibility(page);
       failures.push(...audit.violations.map((violation) => `${surface}: ${violation}`));
