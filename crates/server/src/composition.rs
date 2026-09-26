@@ -22,6 +22,11 @@ use crate::artifacts::{ObjectStore, S3Config, S3ObjectStore};
 pub struct ServerConfig {
     /// The database this deployment writes to.
     pub database_url: String,
+    /// `QUANSIO_MIGRATION_DATABASE_URL`: when set, the schema is applied over this connection (the
+    /// schema owner) and requests are served over `database_url`, which can then be a login role in
+    /// `quansio_app` — never the owner, never a superuser, so row-level security always applies and
+    /// the serving process cannot alter the schema. Unset, one DSN does both (development).
+    pub migration_database_url: Option<String>,
     /// The address the API listens on.
     pub bind: String,
     /// How many connections the pool holds.
@@ -56,6 +61,9 @@ impl ServerConfig {
             .ok()
             .filter(|value| !value.is_empty())
             .ok_or_else(|| "QUANSIO_DATABASE_URL is not set".to_string())?;
+        let migration_database_url = env::var("QUANSIO_MIGRATION_DATABASE_URL")
+            .ok()
+            .filter(|value| !value.is_empty());
         let bind = env::var("QUANSIO_BIND")
             .ok()
             .filter(|value| !value.is_empty())
@@ -106,6 +114,7 @@ impl ServerConfig {
             secrets_key_file,
             secrets_key_ref,
             database_url,
+            migration_database_url,
             bind,
             max_connections,
             object_store,
@@ -138,11 +147,26 @@ impl Composition {
             .await
             .map_err(|error| format!("cannot open the database pool: {error}"))?;
         // The schema is applied here rather than assumed: a deployment that starts against a database
-        // missing a table would otherwise fail later, per request, with a worse message.
-        sqlx::migrate!("../../migrations")
-            .run(&pool)
-            .await
-            .map_err(|error| format!("cannot apply the schema: {error}"))?;
+        // missing a table would otherwise fail later, per request, with a worse message. With a
+        // migration DSN the owner applies it over its own short-lived connection, and the serving
+        // pool never holds schema privileges.
+        match config.migration_database_url.as_deref() {
+            Some(owner_url) => {
+                let owner = PgPoolOptions::new()
+                    .max_connections(1)
+                    .acquire_timeout(Duration::from_secs(10))
+                    .connect(owner_url)
+                    .await
+                    .map_err(|error| format!("cannot open the migration connection: {error}"))?;
+                let applied = sqlx::migrate!("../../migrations").run(&owner).await;
+                owner.close().await;
+                applied.map_err(|error| format!("cannot apply the schema: {error}"))?;
+            }
+            None => sqlx::migrate!("../../migrations")
+                .run(&pool)
+                .await
+                .map_err(|error| format!("cannot apply the schema: {error}"))?,
+        }
         // The deployable believes bearer sessions only; a development harness may opt into the
         // trusted tenant/user headers explicitly, and the choice is logged so it is never silent.
         let trust = if env::var("QUANSIO_TRUST_SCOPE_HEADERS").as_deref() == Ok("1") {
