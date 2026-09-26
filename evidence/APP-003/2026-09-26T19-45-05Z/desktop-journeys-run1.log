@@ -1,0 +1,181 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3
+
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > chats with a teammate
+- region "Conversation":
+  - list:
+    - listitem:
+      - time: Today 10:40 PM
+    - listitem:
+      - text: user
+      - paragraph: Summarize the launch checklist
+    - listitem:
+      - text: Teammate
+      - paragraph: done
+      - button "Inspect"
+  - textbox "Message your teammates…"
+  - button "Attach"
+  - button "Send" [disabled]
+
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > reviews an artifact's versions and preview
+- region "Artifacts":
+  - complementary:
+    - heading "Artifacts" [level=2]
+    - searchbox "Search threads, artifacts, knowledge and evidence…"
+    - checkbox "artifacts" [checked]
+    - text: artifacts
+    - checkbox "threads" [checked]
+    - text: threads
+    - checkbox "knowledge" [checked]
+    - text: knowledge
+    - checkbox "evidence" [checked]
+    - text: evidence
+    - button "Search" [disabled]
+    - text: Kind
+    - combobox "Kind":
+      - option "All kinds" [selected]
+      - option "document"
+      - option "spreadsheet"
+      - option "presentation"
+      - option "code"
+      - option "data"
+      - option "image"
+      - option "audio"
+      - option "video"
+      - option "archive"
+      - option "other"
+    - list:
+      - listitem:
+        - button "document Launch plan.md v1"
+  - heading "Launch plan.md" [level=2]
+  - text: "document Source: upload usr_01J8Z3K6F1N8VQ2X5W9Y0QA8AA"
+  - heading "Versions" [level=3]
+  - list:
+    - listitem:
+      - button "v1 · text/markdown · 34 B"
+      - text: uploaded by usr_01J8Z3K6F1N8VQ2X5W9Y0QA8AAvalid source
+  - button "Save…"
+  - button "Open"
+  - button "Edit"
+  - code: b169a11ddb663ab5f339c53c26aa58a905db041d040dd1c1ccafcb064193f9d2
+  - text: "# Launch plan - ship the desktop"
+
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > reports the server going away and recovers when it returns
+offline: - complementary:
+  - heading "Quansio" [level=1]
+  - button "Search conversations"
+  - button "New thread"
+  - navigation "Surfaces":
+    - list:
+      - listitem:
+        - button "Chat"
+      - listitem:
+        - button "Objectives and plan"
+      - listitem:
+        - button "Teammates"
+      - listitem:
+        - button "Plan and agents"
+      - listitem:
+        - button "Run status"
+      - listitem:
+        - button "Approvals"
+      - listitem:
+        - button "Evidence and effects"
+      - listitem:
+        - button "Live browser and terminal"
+      - listitem:
+        - button "Files and artifacts"
+      - listitem:
+        - button "Knowledge, memory and skills"
+      - listitem:
+        - button "Group threads"
+      - listitem:
+        - button "Routines and notifications"
+      - listitem: Connectors (web admin)
+      - listitem:
+        - button "Capabilities"
+      - listitem:
+        - button "Models and tools used"
+  - button "Account"
+  - button "Chats"
+
+ ❯ |qa-e2e| tests/e2e/desktop.e2e.spec.ts (12 tests | 1 failed) 105874ms
+   × desktop journeys (real Electron, real server) > onboards a new person with nothing but an email address 60015ms
+     → electron.launch: Timeout 60000ms exceeded.
+Call log:
+  - <launching> /Users/mohsin/projects/quansiov3/apps/desktop/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron --inspect=0 --remote-debugging-port=0 /Users/mohsin/projects/quansiov3/apps/desktop/dist/app/main.cjs --use-mock-keychain --user-data-dir=/var/folders/_1/1xvpd9n50m97rq8_c4ylpw940000gn/T/qa008-desktop-BiJtDq
+  - <launched> pid=47810
+
+   ✓ desktop journeys (real Electron, real server) > chats with a teammate 767ms
+   ✓ desktop journeys (real Electron, real server) > approves an effect from the preview it was asked about 817ms
+   ✓ desktop journeys (real Electron, real server) > steers the plan: adds a task under the objective and moves it to ready 519ms
+   ✓ desktop journeys (real Electron, real server) > takes over the live browser and hands it back 521ms
+   ✓ desktop journeys (real Electron, real server) > reviews an artifact's versions and preview 342ms
+   ✓ desktop journeys (real Electron, real server) > starts a group thread with a colleague 507ms
+   ✓ desktop journeys (real Electron, real server) > creates a routine 508ms
+   ✓ desktop journeys (real Electron, real server) > changes settings and sees what the change sets in motion 518ms
+   ✓ desktop journeys (real Electron, real server) > returns a person whose sessions were revoked to sign-in 12730ms
+   ✓ desktop journeys (real Electron, real server) > has no accessibility blockers on any surface and every control is keyboard reachable 5592ms
+   ✓ desktop journeys (real Electron, real server) > reports the server going away and recovers when it returns 15865ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL |qa-e2e|  tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > onboards a new person with nothing but an email address
+TimeoutError: electron.launch: Timeout 60000ms exceeded.
+Call log:
+  - <launching> /Users/mohsin/projects/quansiov3/apps/desktop/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron --inspect=0 --remote-debugging-port=0 /Users/mohsin/projects/quansiov3/apps/desktop/dist/app/main.cjs --use-mock-keychain --user-data-dir=/var/folders/_1/1xvpd9n50m97rq8_c4ylpw940000gn/T/qa008-desktop-BiJtDq
+  - <launched> pid=47810
+
+ ❯ Module.launchDesktop tests/e2e/harness.ts:264:15
+    262| export async function launchDesktop(origin: string): Promise<Desktop> {
+    263|   const userData = mkdtempSync(join(tmpdir(), "qa008-desktop-"));
+    264|   const app = await electron.launch({
+       |               ^
+    265|     executablePath: ELECTRON,
+    266|     args: [DESKTOP_MAIN, "--use-mock-keychain", `--user-data-dir=${use…
+ ❯ tests/e2e/desktop.e2e.spec.ts:51:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 3 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+TimeoutError: Timeout 60000ms exceeded.
+ ❯ _ProgressController.run node_modules/.pnpm/playwright-core@1.63.0/node_modules/playwright-core/lib/coreBundle.js:12360:32
+ ❯ DispatcherConnection.dispatch node_modules/.pnpm/playwright-core@1.63.0/node_modules/playwright-core/lib/coreBundle.js:19135:44
+
+This error originated in "tests/e2e/desktop.e2e.spec.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "onboards a new person with nothing but an email address". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+TimeoutError: Timeout 60000ms exceeded.
+ ❯ _ProgressController.run node_modules/.pnpm/playwright-core@1.63.0/node_modules/playwright-core/lib/coreBundle.js:12360:32
+ ❯ DispatcherConnection.dispatch node_modules/.pnpm/playwright-core@1.63.0/node_modules/playwright-core/lib/coreBundle.js:19135:44
+
+This error originated in "tests/e2e/desktop.e2e.spec.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "onboards a new person with nothing but an email address". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+TimeoutError: Timeout 60000ms exceeded.
+ ❯ _ProgressController.run node_modules/.pnpm/playwright-core@1.63.0/node_modules/playwright-core/lib/coreBundle.js:12360:32
+ ❯ DispatcherConnection.dispatch node_modules/.pnpm/playwright-core@1.63.0/node_modules/playwright-core/lib/coreBundle.js:19135:44
+
+This error originated in "tests/e2e/desktop.e2e.spec.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "onboards a new person with nothing but an email address". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+     Errors  3 errors
+   Start at  22:39:40
+   Duration  106.39s (transform 43ms, setup 0ms, collect 170ms, tests 105.87s, environment 0ms, prepare 37ms)
+
