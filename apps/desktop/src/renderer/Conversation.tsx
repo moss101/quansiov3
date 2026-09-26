@@ -1,15 +1,16 @@
 /**
- * Conversation surface (APP-004): threads, messages, the streaming reply, tool and
- * progress cards, agent questions answered in the thread, the composer with attachments,
- * cancel, and the per-turn inspector. State is `conversationReducer`; every read and
- * command goes through `window.quansio`, and the page holds no scope, cursor or bytes it
- * could replay on its own.
+ * Conversation surface (APP-004): the transcript (grouped bubbles, time dividers, the streaming
+ * reply and what the teammate is doing), agent questions answered as cards in the thread, the
+ * composer with attachments and cancel, and the per-turn details pane. State is
+ * `conversationReducer`; every read and command goes through `window.quansio`, and the page
+ * holds no scope, cursor or bytes it could replay on its own.
  */
 
-import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState, type ReactElement } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type ReactElement } from "react";
 
-import { attachmentFromUpload, postedIdentities } from "../conversation/composer.js";
+import { attachmentFromUpload, postedIdentities, postedRunStatus } from "../conversation/composer.js";
 import { decodeTimeline, type RunInspection } from "../conversation/inspector.js";
+import { byAgentThread, dividerDay, faceLetter, faceTone, transcript, turnInFlight, type Face as FaceData, type RosterEntry } from "../conversation/presentation.js";
 import {
   cancellableRun,
   conversationReducer,
@@ -17,23 +18,28 @@ import {
   decodeQuestions,
   initialConversation,
   openQuestions,
+  runIsLive,
   type ConversationQuestion,
+  type RunActivity,
 } from "../conversation/state.js";
 import { t } from "../i18n/strings.js";
-import { ArrowUpIcon, CloseIcon, PlusIcon, StopIcon } from "./icons.js";
-
-/** A conversation as the sidebar lists it. */
-export interface ThreadRow {
-  readonly id: string;
-  readonly title: string | null;
-  readonly kind: string;
-  readonly messageCount: number;
-}
+import { Face } from "./Face.js";
+import { ArrowDownIcon, ArrowUpIcon, CloseIcon, InfoIcon, PlusIcon, SpinnerIcon, StopIcon } from "./icons.js";
+import { Prose } from "./Prose.js";
 
 interface ConversationProps {
   readonly workspaceId: string;
   /** The open thread (chosen in the sidebar); `null` starts a new one. */
   readonly threadId: string | null;
+  /** The teammate this thread's replies come from, when there is one. */
+  readonly teammateId: string | null;
+  readonly teammateName: string | null;
+  /** The conversation's own face, for replies from a teammate the roster does not name. */
+  readonly threadFace: FaceData | null;
+  /** The workspace's teammates: who replied, and whom a new conversation can be addressed to. */
+  readonly roster: readonly RosterEntry[];
+  /** The signed-in person, so their own messages are never labelled with a name. */
+  readonly personId: string | null;
   /** Posting into a new thread creates it; the shell learns which one is now open. */
   readonly onThreadChange: (threadId: string | null) => void;
   /** Message counts and titles changed; the sidebar re-reads its list. */
@@ -42,35 +48,53 @@ interface ConversationProps {
   readonly onInspectorOpen: (open: boolean) => void;
 }
 
-export function decodeThreads(payload: unknown): ThreadRow[] {
-  const record = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
-  const rows = Array.isArray(record["threads"]) ? (record["threads"] as unknown[]) : [];
-  const threads: ThreadRow[] = [];
-  for (const raw of rows) {
-    const row = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
-    if (typeof row["id"] !== "string") {
-      continue;
-    }
-    threads.push({
-      id: row["id"],
-      title: typeof row["title"] === "string" ? row["title"] : null,
-      kind: typeof row["kind"] === "string" ? row["kind"] : "direct",
-      messageCount: typeof row["message_count"] === "number" ? row["message_count"] : 0,
-    });
-  }
-  return threads;
-}
-
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : t("commandFailed");
 }
 
-const COMPOSER_MAX_HEIGHT = 200;
+/** The composer grows to six lines, then scrolls. */
+const COMPOSER_MAX_HEIGHT = 120;
+/** Closer than this to the end counts as reading the latest messages. */
+const PINNED_SLACK_PX = 80;
 
-export function Conversation({ workspaceId, threadId, onThreadChange, onThreadsChanged, inspectorOpen, onInspectorOpen }: ConversationProps): ReactElement {
+const CARD_DONE: ReadonlySet<string> = new Set(["completed", "succeeded", "failed", "cancelled", "denied"]);
+
+/** What a live run is doing, as the working row says it. */
+function activityLabel(run: RunActivity): string {
+  if (run.status === "WAITING_QUESTION") {
+    return t("waitingOnAnswer");
+  }
+  const step = [...run.cards].reverse().find((card) => !CARD_DONE.has(card.status.toLowerCase()));
+  if (step?.ref && step.kind === "tool_call") {
+    return `${t("usingTool")} ${step.ref}…`;
+  }
+  return t("working");
+}
+
+/** A divider's words: "Today 5:39 PM", "Yesterday 5:39 PM", "Mon 5:39 PM" or "Sep 12, 5:39 PM". */
+function dividerLabel(at: Date, now: Date): string {
+  const time = at.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  switch (dividerDay(at, now)) {
+    case "today":
+      return `${t("today")} ${time}`;
+    case "yesterday":
+      return `${t("yesterday")} ${time}`;
+    case "week":
+      return `${at.toLocaleDateString(undefined, { weekday: "short" })} ${time}`;
+    default:
+      return `${at.toLocaleDateString(undefined, { month: "short", day: "numeric", ...(at.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }) })}, ${time}`;
+  }
+}
+
+export function Conversation(props: ConversationProps): ReactElement {
+  const { workspaceId, threadId, teammateId, teammateName, threadFace, roster, personId, onThreadChange, onThreadsChanged, inspectorOpen, onInspectorOpen } = props;
   const [state, dispatch] = useReducer(conversationReducer, initialConversation(workspaceId, threadId));
   const [inspection, setInspection] = useState<RunInspection | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Whom a new conversation is addressed to; null lets the workspace route it.
+  const [addressee, setAddressee] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [pinned, setPinned] = useState(true);
   const fileInput = useRef<HTMLInputElement | null>(null);
   const composer = useRef<HTMLTextAreaElement | null>(null);
   const scroller = useRef<HTMLDivElement | null>(null);
@@ -81,6 +105,8 @@ export function Conversation({ workspaceId, threadId, onThreadChange, onThreadsC
   useEffect(() => {
     agreed.current = threadId;
     dispatch({ type: "thread.selected", threadId });
+    setAddressee(null);
+    setPinned(true);
   }, [threadId]);
 
   useEffect(() => {
@@ -145,7 +171,7 @@ export function Conversation({ workspaceId, threadId, onThreadChange, onThreadsC
     };
   }, [state.threadId, state.stale.questions]);
 
-  // The inspector reads the timeline for the inspected run whenever its state changes.
+  // The details pane reads the timeline for the inspected run whenever its state changes.
   const inspectedRunId = state.inspectedRunId;
   const inspectedStatus = inspectedRunId ? state.runs[inspectedRunId]?.status : undefined;
   useEffect(() => {
@@ -158,7 +184,13 @@ export function Conversation({ workspaceId, threadId, onThreadChange, onThreadsC
       .runTimeline(inspectedRunId)
       .then((payload) => {
         if (!cancelled) {
-          setInspection(decodeTimeline(payload));
+          const timeline = decodeTimeline(payload);
+          setInspection(timeline);
+          // The timeline is also the run's current state: it settles a run whose terminal
+          // event arrived before this thread knew the run.
+          if (timeline.runId === inspectedRunId && timeline.status !== "?") {
+            dispatch({ type: "run.loaded", runId: inspectedRunId, status: timeline.status });
+          }
         }
       })
       .catch((error: unknown) => {
@@ -179,14 +211,21 @@ export function Conversation({ workspaceId, threadId, onThreadChange, onThreadsC
         threadId: state.threadId,
         content: state.composer.text.trim(),
         attachments: state.composer.attachments.map((attachment) => attachment.artifactId),
+        // A new conversation goes to the teammate chosen for it; a thread keeps its own routing.
+        ...(state.threadId === null && addressee ? { teammateId: addressee } : {}),
       });
       const identities = postedIdentities(result);
       dispatch({ type: "composer.posted", ...identities });
+      const status = postedRunStatus(result);
+      if (status) {
+        dispatch({ type: "run.loaded", runId: identities.runId, status });
+      }
       dispatch({ type: "inspect", runId: identities.runId });
+      setPinned(true);
     } catch (error) {
       dispatch({ type: "composer.failed", error: errorText(error) });
     }
-  }, [state.composer, state.threadId]);
+  }, [state.composer, state.threadId, addressee]);
 
   const attach = useCallback(async (file: File) => {
     try {
@@ -227,112 +266,223 @@ export function Conversation({ workspaceId, threadId, onThreadChange, onThreadsC
     }
   }, [state]);
 
-  // The composer grows with what is typed, up to a limit, then scrolls.
+  // The composer grows with what is typed; past one line it becomes a box with its controls
+  // along the bottom.
   const text = state.composer.text;
   useLayoutEffect(() => {
     const field = composer.current;
-    if (field) {
-      field.style.height = "auto";
-      field.style.height = `${String(Math.min(field.scrollHeight, COMPOSER_MAX_HEIGHT))}px`;
+    if (!field) {
+      return;
     }
+    // An empty field is one line whatever its placeholder would wrap to.
+    if (!text) {
+      field.style.height = "";
+      setExpanded(false);
+      return;
+    }
+    field.style.height = "auto";
+    const height = Math.min(field.scrollHeight, COMPOSER_MAX_HEIGHT);
+    field.style.height = `${String(height)}px`;
+    setExpanded(text.includes("\n") || field.scrollHeight > 28);
   }, [text]);
 
-  const live = cancellableRun(state);
+  const rosterIndex = useMemo(() => byAgentThread(roster), [roster]);
   const questions = openQuestions(state);
-  const activeRuns = Object.values(state.runs).filter((run) => run.streaming || run.stage || run.cards.length > 0);
-  const empty = state.messages.length === 0 && activeRuns.length === 0 && questions.length === 0;
+  // Work is a turn in flight, not an open run: a conversation's run stays open between turns.
+  const liveRuns = Object.values(state.runs).filter((run) => runIsLive(run) && turnInFlight(run, state.messages));
+  const cancellable = cancellableRun(state);
+  const live = cancellable && liveRuns.some((run) => run.runId === cancellable.runId) ? cancellable : null;
+  const items = useMemo(() => transcript(state.messages), [state.messages]);
+  const empty = state.threadId === null && state.messages.length === 0 && liveRuns.length === 0;
+  // Names are shown only when more than one teammate or person speaks besides the reader.
+  const voices = new Set(state.messages.filter((message) => message.authorKind !== "system" && message.authorId !== personId && message.authorKind !== "user").map((message) => message.authorId));
+  const showNames = voices.size > 1;
+  const replyFace = (authorId: string): ReactElement => {
+    const teammate = rosterIndex.get(authorId);
+    return <Face face={{ key: authorId, letter: faceLetter(teammate?.name ?? t("agent")), tone: faceTone(teammate?.id ?? authorId) }} size="md" />;
+  };
+  const liveFaceId = teammateId ? roster.find((entry) => entry.id === teammateId)?.agentThreadId ?? teammateId : null;
+  const now = new Date();
 
-  // New replies keep the thread scrolled to its end.
-  const lastStreaming = activeRuns.map((run) => run.streaming.length).join(",");
+  // Keep the latest messages in view while the reader is at the end; leave them where they
+  // are when they have scrolled back.
+  const lastStreaming = liveRuns.map((run) => run.streaming.length).join(",");
   useEffect(() => {
     const element = scroller.current;
-    if (element) {
+    if (element && pinned) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [state.messages.length, lastStreaming, questions.length]);
+  }, [state.messages.length, lastStreaming, questions.length, liveRuns.length, pinned]);
+
+  const addresseeName = addressee ? (roster.find((entry) => entry.id === addressee)?.name ?? null) : null;
+  const placeholderName = state.threadId === null ? addresseeName : teammateName;
+  const placeholder = placeholderName ? `${t("messageTo")} ${placeholderName}` : t("composerPlaceholder");
+  const canSend = Boolean(state.composer.text.trim()) && !state.composer.posting;
 
   return (
-    <section className={inspectorOpen ? "conversation with-inspector" : "conversation"} aria-label={t("conversation")}>
+    <section className={inspectorOpen ? "conversation with-details" : "conversation"} aria-label={t("conversation")}>
       <div className="thread">
-        <div className="thread-scroll" ref={scroller}>
-          {empty ? (
-            <div className="thread-empty">
-              <h3>{t("emptyThreadTitle")}</h3>
-              <p>{t("emptyThreadHint")}</p>
-            </div>
-          ) : null}
-          <ol className="messages" aria-live="polite">
-            {state.messages.map((message) => (
-              <li key={message.id} className={`message message-${message.authorKind}`} data-run={message.runId ?? undefined}>
-                <span className="author">{message.authorKind === "agent" ? t("agent") : message.authorKind}</span>
-                <div className="bubble">
-                  <p>{message.text}</p>
-                  {message.attachments.length > 0 ? (
-                    <ul className="attachments">
-                      {message.attachments.map((artifactId) => (
-                        <li key={artifactId}>{artifactId}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-                {message.runId ? (
-                  <button
-                    type="button"
-                    className="inspect"
-                    onClick={() => {
-                      dispatch({ type: "inspect", runId: message.runId });
-                      onInspectorOpen(true);
-                    }}
-                  >
-                    {t("inspectTurn")}
-                  </button>
+        <div
+          className="thread-scroll"
+          ref={scroller}
+          onScroll={(event) => {
+            const element = event.currentTarget;
+            setPinned(element.scrollHeight - element.scrollTop - element.clientHeight < PINNED_SLACK_PX);
+          }}
+        >
+          <div className="transcript">
+            {empty ? (
+              <div className="thread-empty">
+                <h3>{t("emptyThreadTitle")}</h3>
+                <p>{t("emptyThreadHint")}</p>
+                {roster.length > 0 ? (
+                  <div className="addressees" role="group" aria-label={t("sendTo")}>
+                    <button type="button" className="addressee" aria-pressed={addressee === null} onClick={() => { setAddressee(null); }}>
+                      {t("anyTeammate")}
+                    </button>
+                    {roster.map((entry) => (
+                      <button key={entry.id} type="button" className="addressee" aria-pressed={addressee === entry.id} onClick={() => { setAddressee(entry.id); }}>
+                        <Face face={{ key: entry.id, letter: faceLetter(entry.name), tone: faceTone(entry.id) }} size="xs" />
+                        {entry.name}
+                      </button>
+                    ))}
+                  </div>
                 ) : null}
-              </li>
-            ))}
-            {activeRuns.map((run) => (
-              <li key={run.runId} className="message message-live" data-run={run.runId}>
-                <span className="author">{t("agent")}</span>
-                <div className="bubble">
-                  {run.stage ? <span className="stage">{run.stage}</span> : null}
-                  {run.cards.length > 0 ? (
-                    <ul className="cards">
-                      {run.cards.map((card) => (
-                        <li key={card.stepId} className={`card card-${card.kind} card-${card.status}`}>
-                          {card.kind}
-                          {card.ref ? ` · ${card.ref}` : ""} · {card.status}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {run.streaming ? <p className="streaming">{run.streaming}</p> : null}
-                </div>
-              </li>
-            ))}
-          </ol>
-          {questions.length > 0 ? (
-            <div className="questions">
+              </div>
+            ) : null}
+            <ol className="messages" aria-live="polite">
+              {items.map((item, index) => {
+                if (item.kind === "divider") {
+                  return (
+                    <li key={item.key} className="meta meta-time">
+                      <time dateTime={item.at.toISOString()}>{dividerLabel(item.at, now)}</time>
+                    </li>
+                  );
+                }
+                const { message, continues } = item;
+                if (message.authorKind === "system") {
+                  return (
+                    <li key={item.key} className="meta meta-event" data-run={message.runId ?? undefined}>
+                      {message.text}
+                    </li>
+                  );
+                }
+                const next = items[index + 1];
+                const joinsNext = next?.kind === "message" && next.continues;
+                const mine = message.authorKind === "user";
+                const name = message.authorKind === "agent" ? (rosterIndex.get(message.authorId)?.name ?? t("agent")) : message.authorKind;
+                return (
+                  <li
+                    key={item.key}
+                    className={`row row-${mine ? "user" : "agent"}${continues ? "" : " starts"}`}
+                    data-run={message.runId ?? undefined}
+                  >
+                    <span className={showNames && !continues && !mine ? "sender" : "sr-only"}>{name}</span>
+                    <div className="row-body">
+                      <div className={`bubble${continues ? " joins-prev" : ""}${joinsNext ? " joins-next" : ""}`}>
+                        <Prose text={message.text} />
+                        {message.attachments.length > 0 ? (
+                          <ul className="attachments">
+                            {message.attachments.map((artifactId) => (
+                              <li key={artifactId}>{artifactId}</li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </div>
+                      {message.runId ? (
+                        <div className="row-tools">
+                          <button
+                            type="button"
+                            className="icon-button ghost tiny inspect"
+                            aria-label={t("inspectTurn")}
+                            data-tip={t("inspectTurn")}
+                            onClick={() => {
+                              dispatch({ type: "inspect", runId: message.runId });
+                              onInspectorOpen(true);
+                            }}
+                          >
+                            <InfoIcon size={14} />
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
+              {liveRuns.map((run) =>
+                run.streaming ? (
+                  <li key={run.runId} className="row row-agent starts message-live" data-run={run.runId}>
+                    <span className="sr-only">{t("agent")}</span>
+                    <div className="row-body">
+                      <div className="bubble streaming">
+                        <Prose text={run.streaming} />
+                      </div>
+                    </div>
+                  </li>
+                ) : (
+                  <li key={run.runId} className="working message-live" data-run={run.runId} role="status">
+                    {liveFaceId ? replyFace(liveFaceId) : threadFace ? <Face face={threadFace} size="md" /> : <span className="face face-md face-blank" aria-hidden="true" />}
+                    <span className="shimmer">{activityLabel(run)}</span>
+                  </li>
+                ),
+              )}
               {questions.map((question) => (
-                <QuestionCard key={question.id} question={question} onAnswer={answer} />
+                <li key={question.id} className="row row-agent starts">
+                  <QuestionCard question={question} onAnswer={answer} />
+                </li>
               ))}
-            </div>
-          ) : null}
+            </ol>
+          </div>
         </div>
+        {!pinned ? (
+          <button
+            type="button"
+            className="jump"
+            aria-label={t("jumpToLatest")}
+            onClick={() => {
+              setPinned(true);
+            }}
+          >
+            <ArrowDownIcon />
+          </button>
+        ) : null}
         <div className="composer">
-          {notice ? <p className="notice">{notice}</p> : null}
-          {state.composer.error ? <p className="notice">{state.composer.error}</p> : null}
-          {state.composer.attachments.length > 0 ? (
-            <div className="composer-chips">
-              {state.composer.attachments.map((attachment) => (
-                <span key={attachment.artifactId} className="chip">
-                  {attachment.title}
-                  <button type="button" aria-label={t("remove")} onClick={() => { dispatch({ type: "composer.detach", artifactId: attachment.artifactId }); }}>
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          ) : null}
-          <div className="composer-box">
+          {notice ? <p className="tray" role="alert">{notice}<button type="button" className="icon-button ghost tiny" aria-label={t("close")} onClick={() => { setNotice(null); }}><CloseIcon size={12} /></button></p> : null}
+          {state.composer.error ? <p className="tray" role="alert">{state.composer.error}</p> : null}
+          <div className={expanded ? "composer-pill expanded" : "composer-pill"} onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              event.preventDefault();
+              composer.current?.focus();
+            }
+          }}>
+            {state.composer.attachments.length > 0 ? (
+              <div className="composer-chips">
+                {state.composer.attachments.map((attachment) => (
+                  <span key={attachment.artifactId} className="chip">
+                    {attachment.title}
+                    <button type="button" aria-label={t("remove")} onClick={() => { dispatch({ type: "composer.detach", artifactId: attachment.artifactId }); }}>
+                      <CloseIcon size={10} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            <textarea
+              ref={composer}
+              rows={1}
+              value={state.composer.text}
+              placeholder={placeholder}
+              // One name for the field whoever it is addressed to; the placeholder says whom.
+              aria-label={t("composerPlaceholder")}
+              onChange={(event) => { dispatch({ type: "composer.text", text: event.target.value }); }}
+              onKeyDown={(event) => {
+                // Return sends, Shift+Return breaks the line; an IME composition is never sent.
+                if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  void send();
+                }
+              }}
+            />
             <input
               ref={fileInput}
               type="file"
@@ -345,49 +495,31 @@ export function Conversation({ workspaceId, threadId, onThreadChange, onThreadsC
                 event.target.value = "";
               }}
             />
-            <button type="button" className="icon-button round" aria-label={t("attach")} onClick={() => fileInput.current?.click()}>
-              <PlusIcon />
+            <button type="button" className="circle lead" aria-label={t("attach")} data-tip={t("attach")} onClick={() => fileInput.current?.click()}>
+              <PlusIcon size={14} />
             </button>
-            <textarea
-              ref={composer}
-              rows={1}
-              value={state.composer.text}
-              placeholder={t("composerPlaceholder")}
-              onChange={(event) => { dispatch({ type: "composer.text", text: event.target.value }); }}
-              onKeyDown={(event) => {
-                // Return sends, Shift+Return breaks the line; an IME composition is never sent.
-                if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-                  event.preventDefault();
-                  void send();
-                }
-              }}
-            />
-            {live ? (
-              <button type="button" className="icon-button round cancel" aria-label={t("cancelTurn")} onClick={() => void cancel()}>
-                <StopIcon />
+            <div className="composer-trail">
+              {live ? (
+                <button type="button" className="circle" aria-label={t("cancelTurn")} data-tip={t("cancelTurn")} onClick={() => void cancel()}>
+                  <StopIcon size={14} />
+                </button>
+              ) : null}
+              <button type="button" className="circle send" aria-label={t("send")} onClick={() => void send()} disabled={!canSend}>
+                <ArrowUpIcon size={16} />
               </button>
-            ) : null}
-            <button
-              type="button"
-              className="icon-button round send"
-              aria-label={t("send")}
-              onClick={() => void send()}
-              disabled={!state.composer.text.trim() || state.composer.posting}
-            >
-              <ArrowUpIcon />
-            </button>
+            </div>
           </div>
         </div>
       </div>
       {inspectorOpen ? (
-        <aside className="inspector" aria-label={t("inspector")}>
+        <aside className="details" id="details" aria-label={t("inspector")}>
           <header>
             <h2>{t("inspector")}</h2>
-            <button type="button" className="icon-button small" aria-label={t("close")} onClick={() => { onInspectorOpen(false); }}>
-              <CloseIcon />
+            <button type="button" className="icon-button ghost small" aria-label={t("close")} onClick={() => { onInspectorOpen(false); }}>
+              <CloseIcon size={14} />
             </button>
           </header>
-          {inspection ? <Inspector inspection={inspection} /> : <p>{t("inspectorEmpty")}</p>}
+          {inspection ? <Inspector inspection={inspection} /> : <p className="muted">{t("inspectorEmpty")}</p>}
         </aside>
       ) : null}
     </section>
@@ -399,51 +531,59 @@ interface QuestionCardProps {
   readonly onAnswer: (question: ConversationQuestion, value: unknown) => Promise<void>;
 }
 
+/** A question the teammate is waiting on, as an action card in the thread. */
 function QuestionCard({ question, onAnswer }: QuestionCardProps): ReactElement {
   const [text, setText] = useState("");
   const [chosen, setChosen] = useState<readonly string[]>([]);
   const choice = question.kind === "single_choice" || question.kind === "multi_choice";
   return (
-    <div className="question" data-question={question.id}>
+    <div className="card-action question" data-question={question.id}>
       <header>
-        <span className="author">{t("agent")}</span>
-        <span className="pill">{t("actionNeeded")}</span>
+        <span className="card-title">{t("question")}</span>
+        <span className="badge badge-waiting">
+          <span className="spin" aria-hidden="true"><SpinnerIcon size={12} /></span>
+          {t("actionNeeded")}
+        </span>
       </header>
       <p>{question.prompt}</p>
       {question.kind === "confirm" ? (
-        <div>
-          <button type="button" className="primary" onClick={() => void onAnswer(question, true)}>{t("yes")}</button>
-          <button type="button" onClick={() => void onAnswer(question, false)}>{t("no")}</button>
+        <div className="card-buttons">
+          <button type="button" className="card-button primary" onClick={() => void onAnswer(question, true)}>{t("yes")}</button>
+          <button type="button" className="card-button outline" onClick={() => void onAnswer(question, false)}>{t("no")}</button>
         </div>
       ) : choice ? (
-        <div>
-          {question.options.map((option) => (
-            <label key={option}>
-              <input
-                type={question.kind === "multi_choice" ? "checkbox" : "radio"}
-                name={question.id}
-                value={option}
-                checked={chosen.includes(option)}
-                onChange={() => {
-                  setChosen(question.kind === "multi_choice" ? (chosen.includes(option) ? chosen.filter((item) => item !== option) : [...chosen, option]) : [option]);
-                }}
-              />
-              {option}
-            </label>
-          ))}
-          <button
-            type="button"
-            className="primary"
-            disabled={chosen.length === 0}
-            onClick={() => void onAnswer(question, question.kind === "multi_choice" ? chosen : chosen[0])}
-          >
-            {t("answer")}
-          </button>
-        </div>
+        <>
+          <div className="options" role={question.kind === "multi_choice" ? "group" : "radiogroup"} aria-label={question.prompt}>
+            {question.options.map((option) => (
+              <label key={option} className="option">
+                <input
+                  type={question.kind === "multi_choice" ? "checkbox" : "radio"}
+                  name={question.id}
+                  value={option}
+                  checked={chosen.includes(option)}
+                  onChange={() => {
+                    setChosen(question.kind === "multi_choice" ? (chosen.includes(option) ? chosen.filter((item) => item !== option) : [...chosen, option]) : [option]);
+                  }}
+                />
+                {option}
+              </label>
+            ))}
+          </div>
+          <div className="card-buttons">
+            <button
+              type="button"
+              className="card-button primary"
+              disabled={chosen.length === 0}
+              onClick={() => void onAnswer(question, question.kind === "multi_choice" ? chosen : chosen[0])}
+            >
+              {t("answer")}
+            </button>
+          </div>
+        </>
       ) : (
-        <div>
-          <input type="text" aria-label={question.prompt} value={text} onChange={(event) => { setText(event.target.value); }} />
-          <button type="button" className="primary" disabled={!text.trim()} onClick={() => void onAnswer(question, text.trim())}>
+        <div className="card-buttons">
+          <input type="text" className="card-input" aria-label={question.prompt} value={text} onChange={(event) => { setText(event.target.value); }} />
+          <button type="button" className="card-button primary" disabled={!text.trim()} onClick={() => void onAnswer(question, text.trim())}>
             {t("answer")}
           </button>
         </div>

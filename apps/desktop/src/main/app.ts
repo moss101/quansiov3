@@ -112,12 +112,12 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
   const window = new BrowserWindow({
     width: 1280,
     height: 860,
-    minWidth: 720,
+    minWidth: 640,
     minHeight: 520,
     show: false,
     // A macOS window like its peers: no title bar, the traffic lights inset over the sidebar
     // (the renderer leaves room for them and marks where the window is dragged from).
-    ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 18, y: 18 } } : {}),
+    ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 16, y: 15 } } : {}),
     webPreferences: { ...RENDERER_WEB_PREFERENCES, preload: preloadPath(bundleRoot) },
   });
   window.webContents.on("will-navigate", (event, url) => {

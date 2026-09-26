@@ -1,0 +1,62 @@
+{
+  "task_id": "APP-003",
+  "git_commit": "d30de171f4270e96fe04b019de84fa1d720cbd6f",
+  "recorded_at": "2026-09-26T17:07:38Z",
+  "commands": [
+    {
+      "command": "cd apps/desktop && npm run build && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run --no-file-parallelism # desktop design refresh: shell, sidebar, transcript, palette, session journeys (real Electron + real server)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-26T17-07-29Z/vitest-desktop.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cd apps/desktop && npm run build && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run --no-file-parallelism # desktop design refresh: shell, sidebar, transcript, palette, session journeys (real Electron + real server)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-003/2026-09-26T17-07-29Z/NOTES.md",
+      "sha256": "af2b7422f4b483ff9485a43890579fe5d603c49bd02e608cf48e5fbc2022decc",
+      "bytes": 2655
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T17-07-29Z/before-d-chat.png",
+      "sha256": "5f28ee793795ecf24314b358fcd9240b2b9714ce40eab94d4271c6d7e645fbd0",
+      "bytes": 95502
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T17-07-29Z/d-chat-dark.png",
+      "sha256": "f2047242886ed81b40b18fff589be3e4d4f5922ef7d92126a5361956dc340c2b",
+      "bytes": 93728
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T17-07-29Z/d-chat.png",
+      "sha256": "fc3b7c63d67ea60141cfb91a15955fc403c31e1e45835560dd028eb040d8c62b",
+      "bytes": 97933
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T17-07-29Z/d-new.png",
+      "sha256": "4b48f850415c7e90c61ae67cd82ccf219c2d103c1079001524cc113ab7bef3ec",
+      "bytes": 87493
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T17-07-29Z/d-page.png",
+      "sha256": "88b25c44d599caf866921f48493ba100f27f43399ee987b59029fb4da583b417",
+      "bytes": 135975
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T17-07-29Z/d-palette.png",
+      "sha256": "a500ef4b43508a77ccc83471e36893de30df896cd3c4b3b0dcfb4967fefd5323",
+      "bytes": 72092
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T17-07-29Z/vitest-desktop.log",
+      "sha256": "7300a9a2cc5c5cc0d2fd52eae65f8e1190bd5e5b20d605802a8096f1ccdb5c91",
+      "bytes": 5521
+    }
+  ]
+}
