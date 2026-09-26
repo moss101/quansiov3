@@ -563,20 +563,39 @@ async fn fetch_version(
 }
 
 /// Active document types are re-labelled so a browser that ignores `nosniff` still has no
-/// document to render; the desktop shows them as text regardless.
+/// document to render; the desktop shows them as text regardless. Media types are
+/// case-insensitive (RFC 9110 §8.3.1), so the comparison is on the lower-cased type, and
+/// every script-capable family is caught — HTML, any XML (`*/xml`, `*+xml`, XSLT), SVG,
+/// JavaScript/ECMAScript and multipart — not a list of exact spellings (QA-007 F-6).
 fn safe_content_type(media_type: &str) -> String {
-    let media = media_type.split(';').next().unwrap_or("").trim();
-    match media {
-        "text/html"
-        | "application/xhtml+xml"
-        | "image/svg+xml"
-        | "application/javascript"
-        | "application/x-javascript"
-        | "text/javascript"
-        | "application/xml"
-        | "text/xml" => "text/plain; charset=utf-8".to_string(),
-        "" => "application/octet-stream".to_string(),
-        other => other.to_string(),
+    let media = media_type
+        .split(';')
+        .next()
+        .unwrap_or("")
+        .trim()
+        .to_ascii_lowercase();
+    let active = media.contains("html")
+        || media.contains("xml")
+        || media.contains("xsl")
+        || media.contains("svg")
+        || media.contains("javascript")
+        || media.contains("ecmascript")
+        || media.starts_with("multipart/");
+    let token = |part: &str| {
+        !part.is_empty()
+            && part
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '+' | '_'))
+    };
+    let well_formed = media
+        .split_once('/')
+        .is_some_and(|(kind, sub)| token(kind) && token(sub));
+    if active {
+        "text/plain; charset=utf-8".to_string()
+    } else if well_formed {
+        media
+    } else {
+        "application/octet-stream".to_string()
     }
 }
 
@@ -664,5 +683,47 @@ impl ObjectStore for NoObjects {
     }
     async fn delete(&self, _key: &ObjectKey) -> Result<(), ObjectStoreError> {
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::safe_content_type;
+
+    #[test]
+    fn active_types_are_relabelled_whatever_their_spelling() {
+        for media in [
+            "text/html",
+            "TEXT/HTML",
+            "Text/Html; charset=utf-8",
+            "image/svg+xml",
+            "IMAGE/SVG+XML",
+            "application/xhtml+xml",
+            "text/xsl",
+            "application/rss+xml",
+            "application/atom+xml",
+            "text/xml",
+            "application/javascript",
+            "text/ecmascript",
+            "multipart/x-mixed-replace",
+        ] {
+            assert_eq!(
+                safe_content_type(media),
+                "text/plain; charset=utf-8",
+                "{media}"
+            );
+        }
+    }
+
+    #[test]
+    fn inert_types_pass_lowercased_and_nonsense_is_opaque() {
+        assert_eq!(safe_content_type("application/PDF"), "application/pdf");
+        assert_eq!(safe_content_type("image/png"), "image/png");
+        assert_eq!(safe_content_type(""), "application/octet-stream");
+        assert_eq!(
+            safe_content_type("text/plain\r\nx: y"),
+            "application/octet-stream"
+        );
+        assert_eq!(safe_content_type("not a type"), "application/octet-stream");
     }
 }

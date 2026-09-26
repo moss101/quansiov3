@@ -84,6 +84,45 @@ pub async fn invoke(
             correlation,
         ));
     }
+    // A command names a workspace of the caller's tenant or none at all (QA-007 F-7). Foreign keys
+    // alone would admit another tenant's workspace id, so the tenant boundary is checked here, once,
+    // before any owner sees the params; a malformed id is left to the owner's own validation.
+    if let Some(workspace_id) = request
+        .params
+        .get("workspace_id")
+        .and_then(Value::as_str)
+        .filter(|id| id.starts_with("ws_") && id.len() == 29)
+    {
+        let mut tx = state.tenant_tx(&scope.tenant_id, &correlation).await?;
+        let exists: bool = sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM workspaces WHERE tenant_id = $1 AND id = $2)",
+        )
+        .bind(&scope.tenant_id)
+        .bind(workspace_id)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(|_| {
+            ApiError::new(
+                ApiErrorCode::Internal,
+                "the workspace could not be checked",
+                correlation.clone(),
+            )
+        })?;
+        tx.commit().await.map_err(|_| {
+            ApiError::new(
+                ApiErrorCode::Internal,
+                "the workspace could not be checked",
+                correlation.clone(),
+            )
+        })?;
+        if !exists {
+            return Err(ApiError::new(
+                ApiErrorCode::NotFound,
+                format!("{workspace_id} is not a workspace of this tenant"),
+                correlation,
+            ));
+        }
+    }
 
     // The record's id is minted here (DOMAIN.md §1.1). The client's command_id is unique only within its
     // tenant (§1.2), so as the key it would let one tenant's id collide with another's instead of replaying.

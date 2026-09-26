@@ -44,8 +44,14 @@ sys.path.insert(0, str(ROOT / "sdk" / "python"))
 
 from quansio_sdk import ApiError, Client, Credential, new_command_id  # noqa: E402
 
-SERVER_BIN = Path(os.environ.get("QUANSIO_TEST_SERVER_BIN") or ROOT / "target" / "debug" / "quansio-server")
-SEED_BIN = Path(os.environ.get("QUANSIO_TEST_SEED_BIN") or ROOT / "target" / "debug" / "quansio-dev-seed")
+SERVER_BIN = Path(
+    os.environ.get("QUANSIO_TEST_SERVER_BIN")
+    or ROOT / "target" / "debug" / "quansio-server"
+)
+SEED_BIN = Path(
+    os.environ.get("QUANSIO_TEST_SEED_BIN")
+    or ROOT / "target" / "debug" / "quansio-dev-seed"
+)
 ADMIN_URL = os.environ.get("QUANSIO_TEST_POSTGRES_URL", "").strip()
 
 TENANT = "tn_01J8Z3K6F1N8VQ2X5W9Y0QA7AA"
@@ -58,6 +64,9 @@ OUTSIDER_EMAIL = "qa007-outsider@example.com"
 
 #: The canary: a value shaped like a secret that must never leave custody.
 CANARY = "qncy_test_canary_not_for_prod"
+#: A file beside the web root (never inside it) that path traversal must not reach.
+OUTSIDE_SECRET_NAME = "outside-secret.txt"
+OUTSIDE_SECRET = "qa007-outside-the-web-root-must-never-be-served"
 
 
 def blocked_reason() -> str | None:
@@ -129,24 +138,48 @@ class Identity:
             result = self.client.command(name, dict(params))
         except ApiError as error:
             return error
-        raise AssertionError(f"{self.name}: {name} was accepted: {json.dumps(result)[:300]}")
+        raise AssertionError(
+            f"{self.name}: {name} was accepted: {json.dumps(result)[:300]}"
+        )
 
     def get(self, resource: str) -> Any:
         return self.client.get(resource)
 
-    def raw(self, method: str, path: str, *, body: Any = None, headers: Mapping[str, str] | None = None) -> Response:
+    def raw(
+        self,
+        method: str,
+        path: str,
+        *,
+        body: Any = None,
+        headers: Mapping[str, str] | None = None,
+    ) -> Response:
         return raw_request(
-            self.origin, method, path, body=body, headers={"authorization": f"Bearer {self.token}", **(headers or {})}
+            self.origin,
+            method,
+            path,
+            body=body,
+            headers={"authorization": f"Bearer {self.token}", **(headers or {})},
         )
 
 
 def raw_request(
-    origin: str, method: str, path: str, *, body: Any = None, headers: Mapping[str, str] | None = None
+    origin: str,
+    method: str,
+    path: str,
+    *,
+    body: Any = None,
+    headers: Mapping[str, str] | None = None,
 ) -> Response:
     """One HTTP request with the path sent exactly as given (no client-side normalization)."""
     parts = urlsplit(origin)
-    connection = http.client.HTTPConnection(parts.hostname or "127.0.0.1", parts.port, timeout=30)
-    payload = None if body is None else (body if isinstance(body, bytes) else json.dumps(body).encode("utf-8"))
+    connection = http.client.HTTPConnection(
+        parts.hostname or "127.0.0.1", parts.port, timeout=30
+    )
+    payload = (
+        None
+        if body is None
+        else (body if isinstance(body, bytes) else json.dumps(body).encode("utf-8"))
+    )
     sent = dict(headers or {})
     if payload is not None:
         sent.setdefault("content-type", "application/json")
@@ -154,7 +187,9 @@ def raw_request(
         connection.request(method, path, body=payload, headers=sent)
         answer = connection.getresponse()
         return Response(
-            status=answer.status, headers={k.lower(): v for k, v in answer.getheaders()}, body=answer.read()
+            status=answer.status,
+            headers={k.lower(): v for k, v in answer.getheaders()},
+            body=answer.read(),
         )
     finally:
         connection.close()
@@ -184,7 +219,10 @@ class ServerUnderAttack:
         deadline = time.monotonic() + 20
         while token is None:
             for line in reversed(self.log_text()[mark:].splitlines()):
-                if f"magic-link for {email.lower()}" in line.lower() and "token=" in line:
+                if (
+                    f"magic-link for {email.lower()}" in line.lower()
+                    and "token=" in line
+                ):
                     token = line.split("token=", 1)[1].strip().strip('"}').split('"')[0]
                     break
             if token is None:
@@ -199,7 +237,9 @@ class ServerUnderAttack:
             self.issued_secrets[f"refresh_token:{name}"] = str(session["refresh_token"])
         return identity
 
-    def sql(self, statement: str, params: tuple[Any, ...] = (), *, as_owner: bool = True) -> list[tuple[Any, ...]]:
+    def sql(
+        self, statement: str, params: tuple[Any, ...] = (), *, as_owner: bool = True
+    ) -> list[tuple[Any, ...]]:
         import psycopg
 
         with psycopg.connect(self.owner_url, autocommit=True) as connection:
@@ -240,7 +280,11 @@ def _seed(database: str) -> str:
         text=True,
         check=True,
     )
-    return next(line.split("=", 1)[1] for line in seeded.stdout.splitlines() if line.startswith("database_url="))
+    return next(
+        line.split("=", 1)[1]
+        for line in seeded.stdout.splitlines()
+        if line.startswith("database_url=")
+    )
 
 
 def _serving_url(owner_url: str, database: str) -> tuple[str, str]:
@@ -250,7 +294,9 @@ def _serving_url(owner_url: str, database: str) -> tuple[str, str]:
     role = f"qa007_app_{os.getpid()}"
     password = secrets.token_hex(16)
     with psycopg.connect(ADMIN_URL, autocommit=True) as admin:
-        exists = admin.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (role,)).fetchone()
+        exists = admin.execute(
+            "SELECT 1 FROM pg_roles WHERE rolname = %s", (role,)
+        ).fetchone()
         verb = "ALTER" if exists else "CREATE"
         admin.execute(
             f"{verb} ROLE {role} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS PASSWORD '{password}'"
@@ -258,7 +304,15 @@ def _serving_url(owner_url: str, database: str) -> tuple[str, str]:
         admin.execute(f"GRANT quansio_app TO {role}")
         admin.execute(f"GRANT CONNECT ON DATABASE {database} TO {role}")
     parts = urlsplit(owner_url)
-    return role, urlunsplit((parts.scheme, f"{role}:{password}@{parts.hostname}:{parts.port}", parts.path, parts.query, ""))
+    return role, urlunsplit(
+        (
+            parts.scheme,
+            f"{role}:{password}@{parts.hostname}:{parts.port}",
+            parts.path,
+            parts.query,
+            "",
+        )
+    )
 
 
 def _drop(database: str, role: str) -> None:
@@ -284,6 +338,13 @@ def start(label: str = "campaign") -> Iterator[ServerUnderAttack]:
     master_key.write_text(base64.b64encode(secrets.token_bytes(32)).decode())
     master_key.chmod(0o600)
     stderr_path = workdir / "server.log"
+    # A web root to traverse out of, and a file just outside it that must never be served.
+    web_root = workdir / "web"
+    web_root.mkdir()
+    (web_root / "index.html").write_text(
+        "<!doctype html><title>qa007</title>", encoding="utf-8"
+    )
+    (workdir / OUTSIDE_SECRET_NAME).write_text(OUTSIDE_SECRET, encoding="utf-8")
     port = _free_port()
     env = {
         **os.environ,
@@ -296,13 +357,16 @@ def start(label: str = "campaign") -> Iterator[ServerUnderAttack]:
         "QUANSIO_OBJECT_STORE": "1",
         "QUANSIO_METRICS_TOKEN": f"metrics-{secrets.token_hex(8)}",
         "QUANSIO_SCHEDULER_INTERVAL_MS": "200",
+        "QUANSIO_WEB_ROOT": str(web_root),
         # A provider credential in the process environment: it must never surface anywhere.
         "QUANSIO_SECRET_PROVIDER_ANTHROPIC": CANARY,
     }
     env.pop("QUANSIO_TRUST_SCOPE_HEADERS", None)
     env.pop("QUANSIO_INTELLIGENCE_ENDPOINT", None)
     log = stderr_path.open("w", encoding="utf-8")
-    process = subprocess.Popen([str(SERVER_BIN)], env=env, stdout=log, stderr=log, text=True)
+    process = subprocess.Popen(
+        [str(SERVER_BIN)], env=env, stdout=log, stderr=log, text=True
+    )
     origin = f"http://127.0.0.1:{port}"
     server = ServerUnderAttack(
         origin=origin,
@@ -324,9 +388,13 @@ def start(label: str = "campaign") -> Iterator[ServerUnderAttack]:
             except (OSError, ApiError, ValueError):
                 pass
             if process.poll() is not None:
-                raise RuntimeError(f"quansio-server exited: {server.log_text()[-2000:]}")
+                raise RuntimeError(
+                    f"quansio-server exited: {server.log_text()[-2000:]}"
+                )
             if time.monotonic() > deadline:
-                raise RuntimeError(f"quansio-server did not become healthy: {server.log_text()[-2000:]}")
+                raise RuntimeError(
+                    f"quansio-server did not become healthy: {server.log_text()[-2000:]}"
+                )
             time.sleep(0.2)
         server.sign_in("owner", f"{OWNER}@example.com")
         server.sign_in("approver", f"{APPROVER}@example.com")
@@ -343,12 +411,20 @@ def start(label: str = "campaign") -> Iterator[ServerUnderAttack]:
         out = os.environ.get("QUANSIO_SECURITY_OUT", "").strip()
         if out:
             Path(out).mkdir(parents=True, exist_ok=True)
-            (Path(out) / f"server-{label}.log").write_text(server.log_text(), encoding="utf-8")
+            (Path(out) / f"server-{label}.log").write_text(
+                server.log_text(), encoding="utf-8"
+            )
         _drop(database, role)
         shutil.rmtree(workdir, ignore_errors=True)
 
 
-def wait_for(predicate: Any, *, timeout: float = 30.0, interval: float = 0.2, what: str = "condition") -> Any:
+def wait_for(
+    predicate: Any,
+    *,
+    timeout: float = 30.0,
+    interval: float = 0.2,
+    what: str = "condition",
+) -> Any:
     deadline = time.monotonic() + timeout
     while True:
         value = predicate()
@@ -372,6 +448,7 @@ def pump(stream: Any, sink: list[str]) -> threading.Thread:
 __all__ = [
     "APPROVER",
     "CANARY",
+    "OUTSIDE_SECRET",
     "NODE",
     "OWNER",
     "TENANT",
