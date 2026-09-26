@@ -313,7 +313,7 @@ export function Conversation({ workspaceId, initialThreadId }: ConversationProps
                 </button>
               </span>
             ))}
-            <button type="button" onClick={() => void send()} disabled={!state.composer.text.trim() || state.composer.posting}>
+            <button type="button" className="primary" onClick={() => void send()} disabled={!state.composer.text.trim() || state.composer.posting}>
               {t("send")}
             </button>
             {live ? (

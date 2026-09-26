@@ -275,7 +275,7 @@ export function Collaboration({ workspaceId }: CollaborationProps): ReactElement
                 ))}
               </ul>
             ) : null}
-            <button type="button" onClick={() => { void send(); }}>{t("send")}</button>
+            <button type="button" className="primary" onClick={() => { void send(); }}>{t("send")}</button>
           </div>
         </div>
       ) : (

@@ -241,8 +241,15 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
       for (let index = 0; index < count; index += 1) {
         await buttons.nth(index).click();
         await until(async () => (await page.getByRole("region").count()) > 0, `the page of ${String(index)}`);
-        await expect(buttons.nth(index).getAttribute("aria-current")).resolves.toBe("page");
+        // Exactly one entry — the open page's own — is marked current, even when the entry
+        // clicked is one that lives inside that page.
+        await expect(nav.locator('[aria-current="page"]').count()).resolves.toBe(1);
       }
+      await nav.getByRole("button", { name: "Approvals", exact: true }).click();
+      await expect(nav.getByRole("button", { name: "Approvals", exact: true }).getAttribute("aria-current")).resolves.toBe("page");
+      await nav.getByRole("button", { name: "Evidence and effects", exact: true }).click();
+      await expect(nav.getByRole("button", { name: "Approvals", exact: true }).getAttribute("aria-current")).resolves.toBe("page");
+      await expect(nav.getByRole("button", { name: "Evidence and effects", exact: true }).getAttribute("aria-current")).resolves.toBeNull();
     } finally {
       await desktop.done();
     }
