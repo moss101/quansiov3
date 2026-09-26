@@ -1,0 +1,32 @@
+test feature_flags_load_from_config_and_cannot_disable_escalation ... ok
+test the_error_vocabulary_is_the_one_the_catalog_generates ... ok
+test every_code_maps_to_a_status_and_says_whether_a_retry_could_help ... ok
+test the_command_catalog_is_the_one_the_gate_checks ... ok
+test an_api_handler_reads_and_writes_only_its_own_table ... ok
+test every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction ... ok
+test generated_openapi_lists_every_catalog_command ... ok
+test the_deployable_composes_from_the_environment ... ok
+test a_call_without_a_usable_tenant_is_refused_with_the_right_code ... ok
+test two_tenants_may_send_the_same_command_id_and_each_replays_its_own ... ok
+test a_mutating_call_calls_the_owner_and_a_resend_returns_its_result_once ... ok
+test health_reports_readiness_and_the_catalogues_it_serves ... ok
+test a_command_scoped_to_another_tenant_does_not_touch_this_one ... ok
+test a_tenant_over_the_rate_limit_is_rate_limited ... ok
+test a_resend_while_the_first_is_still_being_applied_is_told_to_come_back ... ok
+test a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal ... ok
+test the_public_surface_works_as_the_application_role_under_rls ... ok
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.16s
+test a_thread_list_decides_access_exactly_as_one_thread_does ... ok
+test membership_rules_protect_a_thread_for_its_participants ... ok
+test a_handoff_moves_the_thread_to_the_next_teammate ... ok
+test reactions_mentions_and_attention ... ok
+test concurrent_posts_from_two_people_keep_one_stable_order ... ok
+test a_removed_participant_receives_no_new_protected_event ... ok
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.21s
+test without_an_object_store_uploads_fail_closed ... ok
+test a_question_parks_the_run_and_the_answer_in_thread_resumes_it ... ok
+test cancel_turn_stops_a_parked_run_and_withdraws_its_question ... ok
+test an_upload_becomes_an_attachment_the_message_and_the_inspector_carry ... ok
+test live_frames_reach_a_workspace_subscriber_while_the_turn_runs ... ok
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.80s
+exit=0

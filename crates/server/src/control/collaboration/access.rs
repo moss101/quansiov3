@@ -84,6 +84,54 @@ pub async fn thread_access(
     })
 }
 
+/// [`thread_access`] for many threads in one query (a thread list), with the same rules: a thread
+/// absent from the answer is [`Access::Missing`].
+///
+/// # Errors
+/// Returns a database error.
+pub async fn thread_access_many(
+    pool: &PgPool,
+    tenant_id: &str,
+    thread_ids: &[String],
+    user_id: Option<&str>,
+) -> Result<HashMap<String, Access>, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    schema::set_tenant_context(&mut tx, tenant_id)
+        .await
+        .map_err(|error| sqlx::Error::Protocol(error.to_string()))?;
+    let rows = sqlx::query(
+        "SELECT t.id, t.kind, \
+                EXISTS (SELECT 1 FROM thread_participants p WHERE p.tenant_id = t.tenant_id AND p.thread_id = t.id) AS has_participants, \
+                EXISTS (SELECT 1 FROM thread_participants p \
+                         JOIN workspace_memberships m ON m.tenant_id = p.tenant_id AND m.workspace_id = t.workspace_id \
+                              AND m.user_id = p.principal_id AND m.status = 'active' \
+                         WHERE p.tenant_id = t.tenant_id AND p.thread_id = t.id AND p.kind = 'user' \
+                           AND p.principal_id = $3 AND p.left_at IS NULL) AS participates \
+         FROM threads t WHERE t.tenant_id = $1 AND t.id = ANY($2)",
+    )
+    .bind(tenant_id)
+    .bind(thread_ids)
+    .bind(user_id.unwrap_or(""))
+    .fetch_all(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    Ok(rows
+        .iter()
+        .map(|row| {
+            let kind: String = row.get("kind");
+            let protected = kind != "objective" && row.get::<bool, _>("has_participants");
+            let access = if !protected {
+                Access::Open
+            } else if user_id.is_some() && row.get::<bool, _>("participates") {
+                Access::Participant
+            } else {
+                Access::Denied
+            };
+            (row.get::<String, _>("id"), access)
+        })
+        .collect())
+}
+
 /// The per-subscriber filter the stream applies to durable events and live frames.
 #[derive(Debug)]
 pub struct ThreadGate {

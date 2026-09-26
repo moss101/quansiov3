@@ -1,0 +1,85 @@
+{
+  "task_id": "APP-009",
+  "git_commit": "0b8862c05805df5de47d6d60460d9000a0496de0",
+  "recorded_at": "2026-09-26T20:34:05Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test collaboration --test conversation_surface --test api",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-09-26T20-25-32Z/tests.log"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check; cargo clippy -p quansio-server --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-09-26T20-25-32Z/lint.log"
+    },
+    {
+      "command": "mutant: the batched decision admits every thread; cargo test --test collaboration a_thread_list_decides (must fail)",
+      "exit_code": 101,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-09-26T20-25-32Z/mutation.log"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release builds of main and of this branch> python served_thread_list_check.py # 200 threads, 200 reads",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-09-26T20-25-32Z/served-thread-list.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test collaboration --test conversation_surface --test api",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check; cargo clippy -p quansio-server --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutant: the batched decision admits every thread; cargo test --test collaboration a_thread_list_decides (must fail)",
+      "exit_code": 101,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release builds of main and of this branch> python served_thread_list_check.py # 200 threads, 200 reads",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-009/2026-09-26T20-25-32Z/NOTES.md",
+      "sha256": "6dabf65249d2ce52dedbaa56e49f72a9512e69c5b88584dce12776d10cd02ea2",
+      "bytes": 1616
+    },
+    {
+      "path": "evidence/APP-009/2026-09-26T20-25-32Z/lint.log",
+      "sha256": "339176d24414ba8c6cbf00fb6d78176317b0e5936ed362672d532665bd8c22fb",
+      "bytes": 105
+    },
+    {
+      "path": "evidence/APP-009/2026-09-26T20-25-32Z/mutation.log",
+      "sha256": "f5ddfbe9a4ec815b6a50cc37b631350ef06c71e1949cc73118f703ae6adf870c",
+      "bytes": 529
+    },
+    {
+      "path": "evidence/APP-009/2026-09-26T20-25-32Z/served-thread-list.log",
+      "sha256": "f4a0038d1cbf0b737f35fb52c44a012d2d37dac16e3e74f48dde4703cdd703bc",
+      "bytes": 365
+    },
+    {
+      "path": "evidence/APP-009/2026-09-26T20-25-32Z/served_thread_list_check.py",
+      "sha256": "a0fe24da9aec078ac696e98a40040283253ac5154b4b67aa6dc298cb7d5573d3",
+      "bytes": 580
+    },
+    {
+      "path": "evidence/APP-009/2026-09-26T20-25-32Z/tests.log",
+      "sha256": "0bf6a770a782f1ee15afacb7f4093224ef2d8ac47a2265af9bb9fecb4bb0f15a",
+      "bytes": 2202
+    }
+  ]
+}
