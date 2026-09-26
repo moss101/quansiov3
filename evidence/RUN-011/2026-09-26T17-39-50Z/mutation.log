@@ -1,0 +1,22 @@
+CONTROL:
+test a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 7.91s
+MUTANT: the usage event is not emitted
+cargo(48592) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+cargo(48601) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+COMPILES
+test a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger ... FAILED
+thread 'a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger' (38360015) panicked at crates/server/tests/walking_skeleton_gateway.rs:278:5:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 1.54s
+exit=101
+
+SECOND MUTANT (the metered payload, not the row):
+CONTROL:
+test a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 4.11s
+MUTANT: input tokens metered as zero
+COMPILES
+test a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger ... FAILED
+thread 'a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger' (38391246) panicked at crates/server/tests/walking_skeleton_gateway.rs:332:5:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 1.10s
+exit=101
