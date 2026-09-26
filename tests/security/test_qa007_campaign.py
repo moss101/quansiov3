@@ -38,10 +38,35 @@ def server() -> Iterator[ServerUnderAttack]:
 def post(
     identity: Identity, content: str, *, thread_id: str | None = None
 ) -> dict[str, Any]:
+    """Post a message and wait for its turn: the served server answers once the command is accepted."""
     params: dict[str, Any] = {"workspace_id": identity.workspace_id, "content": content}
     if thread_id:
         params["thread_id"] = thread_id
-    return dict(identity.command("PostMessage", params))
+    posted = dict(identity.command("PostMessage", params))
+    return {**posted, "run_status": settle(identity, posted["run_id"])}
+
+
+def turns_of(identity: Identity, run_id: str) -> int:
+    return len(identity.get(f"runs/{run_id}/timeline").get("turns") or [])
+
+
+def settle(
+    identity: Identity, run_id: str, *, turns_before: int = 0, timeout: float = 60.0
+) -> str:
+    """Wait until a turn newer than `turns_before` has ended or parked (on a question or an
+    approval); returns the run's status then."""
+    deadline = time.monotonic() + timeout
+    while True:
+        view = identity.get(f"runs/{run_id}/timeline")
+        turns = view.get("turns") or []
+        status = str(view["run"]["status"])
+        if len(turns) > turns_before and (
+            turns[-1]["status"] != "active" or status.startswith("WAITING")
+        ):
+            return status
+        if time.monotonic() > deadline:
+            raise AssertionError(f"the turn of {run_id} did not end within {timeout} s: {view}")
+        time.sleep(0.05)
 
 
 def artifact(
@@ -69,7 +94,7 @@ def world(server: ServerUnderAttack) -> dict[str, Any]:
     """Resources in both tenants: what each tenant's attacker aims at."""
     owner, outsider = server.identities["owner"], server.identities["outsider"]
     parked = post(owner, f"write the summary {APPROVAL_SCENARIO}")
-    assert parked["turn"]["state"] == "WAITING_APPROVAL"
+    assert parked["run_status"] == "WAITING_APPROVAL"
     request = approvals(owner, parked["run_id"])[0]
     a_art = artifact(owner, "tenant-a-plan.txt", "text/plain", b"tenant A only")
     b_run = post(outsider, "hello from tenant B")
@@ -319,12 +344,15 @@ def test_approval_substitution_and_replay_fail_closed(
 
     # The approver grants the previewed digest; the effect settles once under a consumed receipt.
     command_id = harness.command_id()
+    turns_before = turns_of(owner, parked["run_id"])
     grant = approver.client.command_envelope(
         "ApproveEffect",
         {"approval_request_id": request["id"], "params_digest": digest},
         command_id,
     )
     assert grant["result"]["params_digest"] == digest
+    # The released turn consumes the receipt after the command is accepted.
+    settle(owner, parked["run_id"], turns_before=turns_before)
     granted = approvals(owner, parked["run_id"])[0]
     assert granted["status"] == "granted"
     assert len(granted["receipts"]) == 1 and granted["receipts"][0]["consumed"] is True

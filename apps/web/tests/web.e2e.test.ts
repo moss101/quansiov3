@@ -241,14 +241,20 @@ describe.skipIf(blocked !== null)("web E2E against quansio-server", () => {
 
   it("approval E2E: a viewer cannot decide, an approver decides bound to the preview, and the audit log says who", async () => {
     const owner = session(OWNER).client();
-    const posted = await owner.invoke<{ run_id: string; turn: { kind: string } }>("PostMessage", { workspace_id: WORKSPACE, content: `write the summary ${APPROVAL_SCENARIO}` });
-    expect(posted.turn.kind).toBe("parked");
-    const load = async (client = owner): Promise<ApprovalView> => {
-      const found = decodeApprovals(await client.get(`/v1/approvals?run_id=${posted.run_id}`))[0];
-      if (!found) {
-        throw new Error("no approval request");
+    // The command is accepted before its turn runs; the turn then parks on the approval.
+    const posted = await owner.invoke<{ run_id: string }>("PostMessage", { workspace_id: WORKSPACE, content: `write the summary ${APPROVAL_SCENARIO}` });
+    const load = async (client = owner, timeoutMs = 15_000): Promise<ApprovalView> => {
+      const deadline = Date.now() + timeoutMs;
+      for (;;) {
+        const found = decodeApprovals(await client.get(`/v1/approvals?run_id=${posted.run_id}`))[0];
+        if (found) {
+          return found;
+        }
+        if (Date.now() > deadline) {
+          throw new Error("no approval request");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
-      return found;
     };
     const previewed = await load();
     expect(previewed.status).toBe("requested");
@@ -271,10 +277,17 @@ describe.skipIf(blocked !== null)("web E2E against quansio-server", () => {
     const approver = session(APPROVER).client();
     expect(decide("approve", { ...previewed, digest: "0".repeat(64) }, previewed)).toMatchObject({ ok: false, code: "APPROVAL_SUPERSEDED" });
     expect((await refusal(approver.invoke("ApproveEffect", { approval_request_id: previewed.id, params_digest: "0".repeat(64) }))).code).toBe("APPROVAL_SUPERSEDED");
-    const granted = await approver.invoke<{ params_digest: string; turn: { kind: string } }>(decision.command, decision.params);
+    const granted = await approver.invoke<{ params_digest: string }>(decision.command, decision.params);
     expect(granted.params_digest).toBe(previewed.digest);
-    expect(granted.turn.kind).toBe("completed");
     expect((await load()).status).toBe("granted");
+    // The released turn runs after the grant is accepted and consumes the receipt.
+    const deadline = Date.now() + 15_000;
+    while (!(await load()).receipts[0]?.consumed) {
+      if (Date.now() > deadline) {
+        throw new Error("the receipt was not consumed");
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
     expect(decide("approve", previewed, await load())).toMatchObject({ ok: false, code: "CONFLICT_STATE" });
     const audit = decodeAudit(await owner.get(`/v1/audit?workspace_id=${WORKSPACE}`));
     expect(audit.chain.holds).toBe(true);
