@@ -36,8 +36,8 @@ pub use store::{
 pub use turn_loop::{
     CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort, DelegationRequest,
     LiveFramePort, ModelCallRequest, ModelProposal, ModelProposalSource, ProposedQuestion,
-    ProposedToolCall, QuestionContext, QuestionOutcome, QuestionPort, TextSink, ToolDispatchOutcome,
-    ToolDispatchPort, ToolDispatchRequest, TurnOutcome, UnavailableDelegation,
+    ProposedToolCall, QuestionContext, QuestionOutcome, QuestionPort, TextSink,
+    ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest, TurnOutcome, UnavailableDelegation,
     UnavailableModelProposalSource, UnavailableQuestions, UnavailableToolDispatch,
     UnavailableVerification, VerificationContext, VerificationOutcome, VerificationPort,
     DELEGATION_OWNER, MEMORY_OWNER, MODEL_GATEWAY_OWNER, PLAN_VALIDATION_OWNER, QUESTION_OWNER,

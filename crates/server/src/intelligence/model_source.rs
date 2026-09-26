@@ -207,7 +207,8 @@ struct StreamOutcome {
 #[async_trait]
 impl ModelProposalSource for GatewayModelSource {
     async fn propose(&self, request: ModelCallRequest) -> Result<ModelProposal, RuntimeError> {
-        self.propose_streaming(request, Arc::new(|_: &str| {})).await
+        self.propose_streaming(request, Arc::new(|_: &str| {}))
+            .await
     }
 
     async fn propose_streaming(

@@ -566,7 +566,10 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
         };
         let frame: Value = serde_json::from_str(&text).expect("frame");
         let live = &frame["frame"];
-        if frame["kind"] != "live" || live["kind"] != "model.delta" || live["run_id"] != run_id.as_str() {
+        if frame["kind"] != "live"
+            || live["kind"] != "model.delta"
+            || live["run_id"] != run_id.as_str()
+        {
             continue;
         }
         let text = live["text"].as_str().unwrap_or_default();
