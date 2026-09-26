@@ -708,8 +708,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T09:34:41Z",
-      "updated_at": "2026-09-12T09:43:11Z",
-      "git_commit": "a0568951c3fd4341e78fe068fef7f504d3b21d5d",
+      "updated_at": "2026-09-26T23:06:27Z",
+      "git_commit": "771bb22474fd857dcb4833407bbdb53f7be7ac4b",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test budgets (3 tests: budget inheritance, capacity saturation, graceful stop)",
         "cargo test -p quansio-server --lib (103 unit tests, 6 new budget rules)",
@@ -724,12 +724,13 @@
         "crates/server/src/runtime/budgets/limits.rs",
         "crates/server/src/runtime/budgets/service.rs",
         "crates/server/src/runtime/mod.rs",
-        "crates/server/tests/budgets.rs"
+        "crates/server/tests/budgets.rs",
+        "evidence/RUN-010/2026-09-26T22-45-53Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Runtime budgets, quotas and capacity control. crates/server/src/runtime/budgets implements DOMAIN.md \u00a713.2: limits.rs holds the pure rules (the seven meters, remaining/fits, the deterministic first-exhausted report, the child<=parent-remaining check and the narrowing helper), and service.rs is the durable authority that grants budgets, charges them and emits usage.* events. Acceptance 2 is enforced at grant time against the parent's REMAINING allowance, not its original limit, and nesting holds through the chain (a grandchild is bounded by its child parent). Acceptance 1 is met twice over: a charge beyond a limit is refused, marks the budget exhausted and emits usage.exhausted, and capacity_limit reports 0 so RUN-004's orchestration gate admits nothing; and the service writes only the budget row and its usage event, so an effect already reserved or dispatched is left untouched for the Effect Ledger \u2014 the graceful-stop test asserts an in-flight effect keeps its exact row and that no settlement event appears. The concurrency meter is the same number RUN-004's capacity gate takes from its caller, which the capacity test drives through the real gate and select(). Recorded gap, not worked around: the canonical prefix catalog (quansio.v1.core.EntityPrefix, DOMAIN.md \u00a71.1) has no budget prefix, so a budget id is supplied by its creator (BudgetService::create takes the id) rather than minted by the typed generator; extending the authority set is not this module's call."
+      "notes": "Runtime budgets, quotas and capacity control. crates/server/src/runtime/budgets implements DOMAIN.md \u00a713.2: limits.rs holds the pure rules (the seven meters, remaining/fits, the deterministic first-exhausted report, the child<=parent-remaining check and the narrowing helper), and service.rs is the durable authority that grants budgets, charges them and emits usage.* events. Acceptance 2 is enforced at grant time against the parent's REMAINING allowance, not its original limit, and nesting holds through the chain (a grandchild is bounded by its child parent). Acceptance 1 is met twice over: a charge beyond a limit is refused, marks the budget exhausted and emits usage.exhausted, and capacity_limit reports 0 so RUN-004's orchestration gate admits nothing; and the service writes only the budget row and its usage event, so an effect already reserved or dispatched is left untouched for the Effect Ledger \u2014 the graceful-stop test asserts an in-flight effect keeps its exact row and that no settlement event appears. The concurrency meter is the same number RUN-004's capacity gate takes from its caller, which the capacity test drives through the real gate and select(). Recorded gap, not worked around: the canonical prefix catalog (quansio.v1.core.EntityPrefix, DOMAIN.md \u00a71.1) has no budget prefix, so a budget id is supplied by its creator (BudgetService::create takes the id) rather than minted by the typed generator; extending the authority set is not this module's call. 2026-09-26 (fix/RUN-010-budgets-enforced, merge 771bb22, found by QA-009, P1): no cost control was enforced in production (BudgetService and usage::quota had no caller); budgets are granted (SetBudget, bdg_ ids) and enforced by the engine: the run's agent-thread, workspace and tenant budgets are checked before each model call and tool round and charged with reported tokens and tool calls after, suspending the run with BUDGET_EXHAUSTED; charges are atomic under a row lock. Evidence evidence/RUN-010/2026-09-26T22-45-53Z."
     },
     "RUN-011": {
       "coverage": "GENUINE_GAP",
@@ -2501,8 +2502,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:35:00Z",
-      "updated_at": "2026-09-26T18:53:50Z",
-      "git_commit": "01ebe0de4f3edaadb4a090f66ea9db628818daa7",
+      "updated_at": "2026-09-26T23:06:27Z",
+      "git_commit": "771bb22474fd857dcb4833407bbdb53f7be7ac4b",
       "tests": [
         "cargo test -p quansio-server --test usage (4 passed: rebuild is a pure function of the event set; soft quota alerts and still admits; hard quota refuses without committing an effect; concurrent admits produce one winner)"
       ],
@@ -2511,12 +2512,13 @@
         "crates/server/src/usage/project.rs",
         "crates/server/src/usage/quota.rs",
         "evidence/OPS-004/2026-09-26T18-36-48Z/summary.json",
-        "evidence/OPS-004/2026-09-26T18-49-43Z/summary.json"
+        "evidence/OPS-004/2026-09-26T18-49-43Z/summary.json",
+        "evidence/RUN-010/2026-09-26T22-45-53Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "UsageRecords rebuild deterministically from RuntimeEvents. Hard quotas refuse before effect commit. Soft quotas emit a budget alert and still admit. Billing is this projection, not runtime truth. 2026-09-26 (fix/OPS-004-usage-materialized, merge 67e20d6, found by QA-009, P1): GET /v1/usage re-projected the tenant's oldest 20,000 events on every read, so nothing newer was metered; the background loop now materializes usage_records behind a consumer cursor (idempotent, cursor in the same transaction) and a read sums the rows plus the events after the cursor from one snapshot. Open, recorded by QA-009: quota enforcement (usage::quota) has no production caller and DOMAIN.md defines no quota settings. Evidence evidence/OPS-004/2026-09-26T18-36-48Z. Correction (merge 01ebe0d): the 18-36-48Z bundle's lint.log recorded exit=0 over a clippy failure (unnecessary_sort_by in usage/store.rs; the captured status was the output filter's); fixed with sort_by_key and re-verified with each status captured before filtering. Evidence evidence/OPS-004/2026-09-26T18-49-43Z."
+      "notes": "UsageRecords rebuild deterministically from RuntimeEvents. Hard quotas refuse before effect commit. Soft quotas emit a budget alert and still admit. Billing is this projection, not runtime truth. 2026-09-26 (fix/OPS-004-usage-materialized, merge 67e20d6, found by QA-009, P1): GET /v1/usage re-projected the tenant's oldest 20,000 events on every read, so nothing newer was metered; the background loop now materializes usage_records behind a consumer cursor (idempotent, cursor in the same transaction) and a read sums the rows plus the events after the cursor from one snapshot. Open, recorded by QA-009: quota enforcement (usage::quota) has no production caller and DOMAIN.md defines no quota settings. Evidence evidence/OPS-004/2026-09-26T18-36-48Z. Correction (merge 01ebe0d): the 18-36-48Z bundle's lint.log recorded exit=0 over a clippy failure (unnecessary_sort_by in usage/store.rs; the captured status was the output filter's); fixed with sort_by_key and re-verified with each status captured before filtering. Evidence evidence/OPS-004/2026-09-26T18-49-43Z. 2026-09-26 (fix/RUN-010-budgets-enforced, merge 771bb22, found by QA-009, P1): no cost control was enforced in production (BudgetService and usage::quota had no caller); the budgets' limits are the hard quota and crossing 80 % of a limit emits usage.threshold_crossed once (the soft quota), closing the open quota-enforcement finding; /v1/usage lists the budgets. Evidence evidence/RUN-010/2026-09-26T22-45-53Z."
     },
     "OPS-005": {
       "coverage": "GENUINE_GAP",
