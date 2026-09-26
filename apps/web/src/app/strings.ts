@@ -51,6 +51,11 @@ export const STRINGS = {
   signInTitle: "Sign in to review and administer your workspace.",
   pages: "Pages",
   actions: "Actions",
+  search: "Search",
+  paletteTitle: "Go to",
+  palettePlaceholder: "Search pages, workspaces and actions…",
+  paletteEmpty: "Nothing matches.",
+  workspaces: "Workspaces",
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

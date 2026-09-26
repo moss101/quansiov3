@@ -337,7 +337,13 @@ textarea:focus-visible {
   right: 0;
 }
 
-nav [data-tip]::after {
+.brand [data-tip]::after {
+  top: calc(100% + 8px);
+  right: 0;
+}
+
+nav [data-tip]::after,
+.nav-rail .brand [data-tip]::after {
   left: calc(100% + 10px);
   top: 50%;
   transform: translateY(-50%);
@@ -860,6 +866,93 @@ main {
 
 .invite button { height: 32px; }
 
+/* ============================================================================ palette */
+
+.palette-scrim { z-index: 40; }
+
+.palette {
+  position: fixed;
+  left: 50%;
+  top: 14vh;
+  z-index: 41;
+  width: min(600px, calc(100vw - 32px));
+  max-height: min(520px, 72vh);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-50%);
+  border-radius: var(--radius-lg);
+  border: 0.5px solid var(--line-strong);
+  background: var(--surface);
+  overflow: hidden;
+  animation: palette-in 100ms var(--ease-out);
+}
+
+@keyframes palette-in {
+  from { opacity: 0; transform: translate(-50%, 2px) scale(0.98); }
+  to { opacity: 1; transform: translateX(-50%); }
+}
+
+.palette-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 14px 14px 16px;
+  border-bottom: 0.5px solid var(--line);
+  color: var(--fg-3);
+}
+
+.palette-field input {
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.palette-field input:focus-visible { outline: none; }
+.palette:has(.palette-field input:focus-visible) .palette-field { box-shadow: inset 0 -2px 0 var(--focus); }
+
+.palette ul {
+  list-style: none;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.palette-group {
+  display: block;
+  padding: 10px 8px 4px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--fg-2);
+}
+
+.palette-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.palette-row[aria-selected="true"] { background: var(--selected); }
+.palette-icon { display: inline-flex; width: 18px; justify-content: center; color: var(--fg-2); }
+.palette-label { font-size: 13px; color: var(--fg); white-space: nowrap; }
+
+.palette-detail {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--fg-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-empty { margin: 0; padding: 16px; color: var(--fg-2); }
+
 /* ============================================================================ sign-in */
 
 .shell.sign-in {
@@ -927,7 +1020,8 @@ main {
 
 .shell.nav-rail { grid-template-columns: var(--rail) minmax(0, 1fr); }
 .nav-rail .sidebar { padding: 16px 12px; align-items: center; }
-.nav-rail .brand { padding: 4px 0 8px; }
+.nav-rail .brand { flex-direction: column; gap: 12px; padding: 4px 0 8px; }
+.nav-rail .brand [data-tip]::after { right: auto; }
 .nav-rail .brand h1,
 .nav-rail .workspace,
 .nav-rail .nav-label,
