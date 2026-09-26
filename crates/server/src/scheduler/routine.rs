@@ -198,6 +198,7 @@ pub struct RoutineScheduler {
     tenant_id: String,
     misfire_threshold: Duration,
     concurrent_fires: usize,
+    execute_fires: bool,
 }
 
 impl RoutineScheduler {
@@ -213,7 +214,16 @@ impl RoutineScheduler {
             tenant_id,
             misfire_threshold: Duration::seconds(DEFAULT_MISFIRE_THRESHOLD_SECONDS),
             concurrent_fires: DEFAULT_CONCURRENT_FIRES,
+            execute_fires: true,
         })
+    }
+
+    /// Claim due windows in [`Self::tick`] but leave executing the fires to a
+    /// [`super::FireExecutor`].
+    #[must_use]
+    pub fn claims_only(mut self) -> Self {
+        self.execute_fires = false;
+        self
     }
 
     /// Use `threshold` instead of the default misfire threshold.
@@ -341,7 +351,11 @@ impl RoutineScheduler {
                 }
             }
         }
-        let (executed, failures) = self.execute_pending(dispatch, now, limit).await?;
+        let (executed, failures) = if self.execute_fires {
+            self.execute_pending(dispatch, now, limit).await?
+        } else {
+            (0, 0)
+        };
         report.executed = executed;
         report.execution_failures = failures;
         Ok(report)
@@ -464,7 +478,7 @@ impl RoutineScheduler {
 
     /// Execute one leased fire: `Some(true)` executed, `Some(false)` failed (retried later or
     /// failed for good), `None` cancelled because its routine is gone or no longer active.
-    async fn execute_fire(
+    pub(crate) async fn execute_fire(
         &self,
         ledger: &crate::control::routines::FireLedger,
         dispatch: &dyn RunDispatch,

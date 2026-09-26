@@ -294,7 +294,8 @@ impl Composition {
             .await
             .map_err(|error| format!("cannot bind {}: {error}", self.config.bind))?;
         if let Some(interval) = self.config.background_interval {
-            let background = Background::new(self.pool.clone(), self.api.clone());
+            let mut background = Background::new(self.pool.clone(), self.api.clone());
+            tokio::spawn(background.fire_executor().run(interval));
             crate::observability::notice(
                 crate::observability::Level::Info,
                 &format!(
@@ -344,6 +345,8 @@ pub struct Background {
     dispatch: Arc<dyn crate::scheduler::RunDispatch>,
     email: Option<Arc<dyn crate::notify::EmailTransport>>,
     instance: String,
+    /// Wakes the routine fire executor after a pass; `None` executes fires inside the pass.
+    fires: Option<Arc<tokio::sync::Notify>>,
 }
 
 impl Background {
@@ -360,7 +363,21 @@ impl Background {
                 "scheduler:{}",
                 quansio_core::UlidGenerator::new().generate()
             ),
+            fires: None,
         }
+    }
+
+    /// A routine fire executor over this loop's pool and dispatch; the loop's passes then only
+    /// claim fires and wake it.
+    #[must_use]
+    pub fn fire_executor(&mut self) -> crate::scheduler::FireExecutor {
+        let executor = crate::scheduler::FireExecutor::new(
+            self.pool.clone(),
+            Arc::clone(&self.dispatch),
+            crate::scheduler::DEFAULT_FIRE_EXECUTORS,
+        );
+        self.fires = Some(executor.waker());
+        executor
     }
 
     /// Run forever: a pass, then sleep until the next due work — a routine window, a timer, a
@@ -463,6 +480,9 @@ impl Background {
                 );
             }
         }
+        if let Some(fires) = &self.fires {
+            fires.notify_one();
+        }
         Ok(())
     }
 
@@ -472,10 +492,12 @@ impl Background {
             .scan(512)
             .await
             .map_err(|error| format!("routine triggers: {error}"))?;
+        let mut config = crate::scheduler::SchedulerConfig::new(self.instance.clone());
+        config.execute_routine_fires = self.fires.is_none();
         let scheduler = crate::scheduler::Scheduler::new(
             self.pool.clone(),
             tenant,
-            crate::scheduler::SchedulerConfig::new(self.instance.clone()),
+            config,
             Arc::clone(&self.dispatch),
         )
         .map_err(|error| format!("scheduler: {error}"))?;

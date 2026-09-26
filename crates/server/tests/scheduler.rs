@@ -26,6 +26,7 @@ use quansio_server::scheduler::{
     RoutineFireRequest, RunDispatch, RunDispatchRequest, RunResumeRequest, Scheduler,
     SchedulerConfig, SchedulerError, TimerStatus, TimerStore, WaitError, WaitRegistry,
 };
+use quansio_server::scheduler::{FireExecutor, DEFAULT_FIRE_EXECUTORS};
 use serde_json::json;
 use sqlx::PgPool;
 
@@ -659,6 +660,60 @@ async fn routines_due_together_fire_side_by_side() {
         took < std::time::Duration::from_millis(1200),
         "eight 300 ms fires took {took:?}: they ran one after another"
     );
+    finish(fixture).await;
+}
+
+#[tokio::test]
+async fn a_pass_only_claims_and_the_executor_runs_the_fires_beside_it() {
+    let Some(fixture) = prepare("sched_executor").await else {
+        blocked_marker();
+        return;
+    };
+    let window = window_just_due(Utc::now());
+    for _ in 0..8 {
+        seed_routine(&fixture.pool, AbsencePolicy::Skip, window).await;
+    }
+    let dispatch = Arc::new(RecordingDispatch {
+        fire_takes: std::time::Duration::from_millis(300),
+        ..RecordingDispatch::new(1)
+    });
+    // The pass claims the eight windows and executes nothing: it is not held up by their turns.
+    let mut config = SchedulerConfig::new("inst-claims");
+    config.execute_routine_fires = false;
+    let report = Scheduler::new(
+        fixture.pool.clone(),
+        TENANT,
+        config,
+        Arc::clone(&dispatch) as Arc<dyn RunDispatch>,
+    )
+    .expect("scheduler")
+    .tick()
+    .await
+    .expect("tick");
+    assert_eq!(report.routines_fired, 8);
+    assert_eq!(report.routine_fires_executed, 0);
+    assert!(
+        dispatch.routines().is_empty(),
+        "the pass fired nothing itself"
+    );
+
+    // The executor starts every claimed fire as its own task, side by side.
+    let executor = FireExecutor::new(
+        fixture.pool.clone(),
+        Arc::clone(&dispatch) as Arc<dyn RunDispatch>,
+        DEFAULT_FIRE_EXECUTORS,
+    );
+    let started = std::time::Instant::now();
+    assert_eq!(executor.drain().await, Ok(8));
+    while dispatch.routines().len() < 8 {
+        assert!(
+            started.elapsed() < std::time::Duration::from_millis(1200),
+            "eight 300 ms fires are not running side by side"
+        );
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+    // Leased fires are not started twice.
+    assert_eq!(executor.drain().await, Ok(0));
     finish(fixture).await;
 }
 
