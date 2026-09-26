@@ -383,6 +383,11 @@ export async function walkKeyboard(page: Page, maxSteps = 200): Promise<Keyboard
   await page.evaluate(() => {
     (document.activeElement as HTMLElement | null)?.blur();
     window.scrollTo(0, 0);
+    // A control's resting shadow (a raised button) is not a focus indicator: remember it, so only
+    // a shadow that appears or changes on focus counts as showing focus.
+    for (const element of document.querySelectorAll<HTMLElement>("[data-qa008-key]")) {
+      element.dataset["qa008Shadow"] = window.getComputedStyle(element).boxShadow;
+    }
   });
   await page.locator("body").focus();
   const reached = new Set<string>();
@@ -396,7 +401,9 @@ export async function walkKeyboard(page: Page, maxSteps = 200): Promise<Keyboard
         return null;
       }
       const style = window.getComputedStyle(element);
-      const visible = style.outlineStyle !== "none" && style.outlineWidth !== "0px" || style.boxShadow !== "none";
+      const outline = style.outlineStyle !== "none" && style.outlineWidth !== "0px";
+      const ring = style.boxShadow !== "none" && style.boxShadow !== (element.dataset["qa008Shadow"] ?? "none");
+      const visible = outline || ring;
       return { key: element.dataset["qa008Key"] ?? null, visible };
     });
     if (!focused || focused.key === null) {
