@@ -1,0 +1,6 @@
+test api::artifacts::tests::inert_types_pass_lowercased_and_nonsense_is_opaque ... ok
+test api::artifacts::tests::a_callers_mistake_stays_a_validation_refusal ... ok
+test api::artifacts::tests::active_types_are_relabelled_whatever_their_spelling ... ok
+test api::artifacts::tests::a_store_failure_is_internal_and_keeps_its_detail_out_of_the_response ... FAILED
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 172 filtered out; finished in 0.00s
+exit=101
