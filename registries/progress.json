@@ -464,8 +464,8 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-run001",
       "started_at": "2026-09-12T03:32:13Z",
-      "updated_at": "2026-09-12T03:32:13Z",
-      "git_commit": "9026a48a457705f54df0ef154ce0d2d729ef8959",
+      "updated_at": "2026-09-26T18:36:24Z",
+      "git_commit": "f1f564a5c63c93617f6903ceca2eb13107c3ea2a",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test runtime_state_machine",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
@@ -477,12 +477,13 @@
         "crates/server/src/runtime/state_machine/engine.rs",
         "crates/server/src/runtime/state_machine/store.rs",
         "crates/server/src/runtime/state_machine/turn_loop.rs",
-        "crates/server/tests/runtime_state_machine.rs"
+        "crates/server/tests/runtime_state_machine.rs",
+        "evidence/RUN-001/2026-09-26T18-17-34Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Authoritative runtime: Run/Turn/Step/Attempt transitions evaluated inside the event-emitting transaction (illegal transitions roll back state and events together), generation fencing before any write, attempts appended never overwritten, cancellation and suspension as authoritative transitions, and recovery that applies next_safe_action (a WAITING_* run is released only by its matching resolution, an unsettled effect is reconciled never retried) and is idempotent across repeated calls. Turn-loop seams (model proposal, tool dispatch, delegation, verification) return typed not-available errors naming INT-002/RUN-011/RUN-002/RUN-008 rather than fabricating success. Two deviations are recorded: the runtime commits through EventStore::commit_mutation_tx instead of crates/graph because graph depends on the server's schema module (consolidation steps in HANDOFF.md), and the parity of both state tables with the database constraints is enforced by tests/architecture/test_runtime_state_parity.py added during integration. Also fixed a real CORE-006 defect found by the recovery test: cancellation_at is TIMESTAMPTZ and was decoded as a String."
+      "notes": "Authoritative runtime: Run/Turn/Step/Attempt transitions evaluated inside the event-emitting transaction (illegal transitions roll back state and events together), generation fencing before any write, attempts appended never overwritten, cancellation and suspension as authoritative transitions, and recovery that applies next_safe_action (a WAITING_* run is released only by its matching resolution, an unsettled effect is reconciled never retried) and is idempotent across repeated calls. Turn-loop seams (model proposal, tool dispatch, delegation, verification) return typed not-available errors naming INT-002/RUN-011/RUN-002/RUN-008 rather than fabricating success. Two deviations are recorded: the runtime commits through EventStore::commit_mutation_tx instead of crates/graph because graph depends on the server's schema module (consolidation steps in HANDOFF.md), and the parity of both state tables with the database constraints is enforced by tests/architecture/test_runtime_state_parity.py added during integration. Also fixed a real CORE-006 defect found by the recovery test: cancellation_at is TIMESTAMPTZ and was decoded as a String. 2026-09-26 (fix/RUN-001-stream-model-deltas, merge f1f564a, found by QA-009): the engine published a model's reply as one final model.delta after the call, so a person saw the first token only with the last; ModelProposalSource::propose_streaming lets the gateway source hand over each text delta as it arrives and the engine publishes it as a non-final model.delta (the final frame still carries the whole text; DOMAIN.md 9.3). Evidence evidence/RUN-001/2026-09-26T18-17-34Z."
     },
     "RUN-002": {
       "coverage": "GENUINE_GAP",
