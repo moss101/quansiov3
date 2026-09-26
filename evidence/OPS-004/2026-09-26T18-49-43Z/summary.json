@@ -1,0 +1,48 @@
+{
+  "task_id": "OPS-004",
+  "git_commit": "09f511434c536ef98e399ff7e779a6a38726aea2",
+  "recorded_at": "2026-09-26T18:53:41Z",
+  "commands": [
+    {
+      "command": "cargo fmt -p quansio-server --check; cargo clippy -p quansio-server --all-targets -- -D warnings (each status captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-26T18-49-43Z/lint.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test usage_store --test web_admin_surface",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-26T18-49-43Z/tests.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt -p quansio-server --check; cargo clippy -p quansio-server --all-targets -- -D warnings (each status captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test usage_store --test web_admin_surface",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-004/2026-09-26T18-49-43Z/NOTES.md",
+      "sha256": "d7fb2ed864b035cd374058ba6ac18ee97a882af54a0dcd27c3936cad1676c0c1",
+      "bytes": 824
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-26T18-49-43Z/lint.log",
+      "sha256": "b12ea8c87da8bc75481f8f0a141866ee22b1f8ba4f3bde3d6a2fd41e9e3b97a2",
+      "bytes": 105
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-26T18-49-43Z/tests.log",
+      "sha256": "5da04570ec741b7e36be3e8c2eb63353288138452a247f3da18d290aa0471455",
+      "bytes": 448
+    }
+  ]
+}

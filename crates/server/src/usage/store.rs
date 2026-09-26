@@ -228,7 +228,7 @@ impl UsageStore {
         }
         record_count += u64::try_from(fresh.len()).unwrap_or_default();
 
-        fresh.sort_by(|left, right| right.occurred_at.cmp(&left.occurred_at));
+        fresh.sort_by_key(|record| std::cmp::Reverse(record.occurred_at));
         let mut seen: HashSet<String> = HashSet::new();
         let mut recent_records: Vec<UsageRecord> = Vec::new();
         for record in fresh {
