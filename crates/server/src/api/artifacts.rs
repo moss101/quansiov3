@@ -52,6 +52,7 @@ fn artifact_error(error: ArtifactError, correlation: &str) -> ApiError {
         | ArtifactError::Schema(_)
         | ArtifactError::ObjectStore(_)
         | ArtifactError::Decode { .. }
+        | ArtifactError::Event(_)
         | ArtifactError::DigestMismatch { .. } => {
             eprintln!("quansio-server: artifact store failed ({correlation}): {error}");
             return ApiError::new(

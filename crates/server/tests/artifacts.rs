@@ -822,3 +822,98 @@ async fn evidence_bundle_records_claims_sources_and_verification() {
 
     drop_pool(&pool, &name).await;
 }
+
+async fn artifact_events(pool: &PgPool) -> Vec<(String, String, serde_json::Value)> {
+    let mut tx = pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant");
+    let rows: Vec<(String, String, serde_json::Value)> = sqlx::query_as(
+        "SELECT type, aggregate_id, payload FROM runtime_events \
+         WHERE tenant_id = $1 AND aggregate_type = 'artifact' ORDER BY sequence",
+    )
+    .bind(TENANT)
+    .fetch_all(&mut *tx)
+    .await
+    .expect("events");
+    tx.commit().await.expect("commit");
+    rows
+}
+
+#[tokio::test]
+async fn artifact_writes_are_runtime_events_committed_with_them() {
+    let Some((pool, name)) = scratch("artevents").await else {
+        blocked_marker();
+        return;
+    };
+    let objects = MemoryStore::default();
+    let store = ArtifactStore::new(&objects);
+
+    // A creation, a version, a repeated upload of the same bytes and a grant, in one transaction.
+    let mut tx = pool.begin().await.expect("begin");
+    let artifact = store
+        .create(
+            &mut tx,
+            TENANT,
+            USER,
+            &new_artifact(vec![write_grant(USER)], Retention::default()),
+        )
+        .await
+        .expect("create");
+    store
+        .add_version(&mut tx, TENANT, USER, &artifact.id, &new_version(b"hello"))
+        .await
+        .expect("version");
+    let replay = store
+        .add_version(&mut tx, TENANT, USER, &artifact.id, &new_version(b"hello"))
+        .await
+        .expect("the same bytes again");
+    assert!(replay.replayed);
+    store
+        .set_grant(
+            &mut tx,
+            TENANT,
+            USER,
+            &artifact.id,
+            &ArtifactGrant {
+                principal: OTHER.to_string(),
+                level: GrantLevel::Read,
+            },
+        )
+        .await
+        .expect("grant");
+    tx.commit().await.expect("commit");
+
+    let events = artifact_events(&pool).await;
+    let types: Vec<&str> = events.iter().map(|(kind, _, _)| kind.as_str()).collect();
+    assert_eq!(
+        types,
+        [
+            "artifact.created",
+            "artifact.version_added",
+            "artifact.grant_changed"
+        ],
+        "one event per change; the repeated upload changed nothing"
+    );
+    assert!(events
+        .iter()
+        .all(|(_, id, _)| *id == artifact.id.to_canonical()));
+    assert_eq!(events[1].2["size_bytes"], 5, "{:?}", events[1].2);
+    assert_eq!(events[2].2["principal"], OTHER);
+
+    // A write that rolls back leaves no event behind.
+    let mut tx = pool.begin().await.expect("begin");
+    store
+        .create(
+            &mut tx,
+            TENANT,
+            USER,
+            &new_artifact(vec![write_grant(USER)], Retention::default()),
+        )
+        .await
+        .expect("create");
+    tx.rollback().await.expect("rollback");
+    assert_eq!(artifact_events(&pool).await.len(), 3);
+
+    drop_pool(&pool, &name).await;
+}

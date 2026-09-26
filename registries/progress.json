@@ -387,8 +387,8 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-core007",
       "started_at": "2026-09-12T02:05:45Z",
-      "updated_at": "2026-09-26T14:44:00Z",
-      "git_commit": "aa8d057646073aaf391cbe7f7c46f4a4591f2b9f",
+      "updated_at": "2026-09-26T20:51:29Z",
+      "git_commit": "b2532cbdf79ef0335480860327aa7d78dc481b1f",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
@@ -399,12 +399,13 @@
         "crates/server/src/artifacts/metadata.rs",
         "crates/server/src/artifacts/object_store.rs",
         "crates/server/tests/artifacts.rs",
-        "evidence/CORE-007/2026-09-26T14-36-21Z/summary.json"
+        "evidence/CORE-007/2026-09-26T14-36-21Z/summary.json",
+        "evidence/CORE-007/2026-09-26T20-37-41Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Artifact/ArtifactVersion/Evidence/EvidenceBundle metadata with immutable evidence (insert-only, new identities per capture), tenant-prefixed content-addressed object keys verified by sha256, SigV4 S3 client with multipart upload and SSE-S3 against the real dev MinIO, fail-closed grants, and retention/legal-hold decisions recorded rather than silently deleting. Verification required two dev-stack fixes, both committed here: the generated .env now picks up settings added to config/dev.yaml (the MinIO SSE key previously stayed unset), and credentials stay stable across upgrades. 2026-09-26 (fix/CORE-007-artifact-error-codes, merge aa8d057, found by QA-008 U-9): the artifact API sent database/schema/object-store/decode failures as VALIDATION_BOUNDS with the raw driver message; they are now INTERNAL with a fixed sentence (detail in the server log), NoBytes is NOT_FOUND, and the mapping is exhaustive. Evidence evidence/CORE-007/2026-09-26T14-36-21Z."
+      "notes": "Artifact/ArtifactVersion/Evidence/EvidenceBundle metadata with immutable evidence (insert-only, new identities per capture), tenant-prefixed content-addressed object keys verified by sha256, SigV4 S3 client with multipart upload and SSE-S3 against the real dev MinIO, fail-closed grants, and retention/legal-hold decisions recorded rather than silently deleting. Verification required two dev-stack fixes, both committed here: the generated .env now picks up settings added to config/dev.yaml (the MinIO SSE key previously stayed unset), and credentials stay stable across upgrades. 2026-09-26 (fix/CORE-007-artifact-error-codes, merge aa8d057, found by QA-008 U-9): the artifact API sent database/schema/object-store/decode failures as VALIDATION_BOUNDS with the raw driver message; they are now INTERNAL with a fixed sentence (detail in the server log), NoBytes is NOT_FOUND, and the mapping is exhaustive. Evidence evidence/CORE-007/2026-09-26T14-36-21Z. 2026-09-26 (fix/CORE-007-artifact-events, merge b2532cb, found by QA-009, P1): the artifact store wrote rows but no artifact.* RuntimeEvents, so storage was never metered and artifact triggers, webhooks and streams never saw an artifact; the store now writes artifact.created, artifact.version_added (size_bytes) and artifact.grant_changed in the caller's transaction via quansio_events::append_in. Evidence evidence/CORE-007/2026-09-26T20-37-41Z."
     },
     "CORE-008": {
       "coverage": "GENUINE_GAP",

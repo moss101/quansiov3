@@ -1,0 +1,87 @@
+c7e.out:test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+c7e.out:test malformed_types_are_rejected ... ok
+c7e.out:test unknown_family_is_rejected_with_a_typed_error ... ok
+c7e.out:test canonical_families_match_the_generated_catalog ... ok
+c7e.out:test known_types_parse_and_subjects_follow_domain_naming ... ok
+c7e.out:test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+c7e.out:test unavailable_transport_fails_closed_instead_of_dropping ... ok
+c7e.out:test crash_between_send_and_mark_cannot_duplicate_and_loses_no_event ... ok
+c7e.out:test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s
+c7e.out:test projections_do_not_write_rows_for_unrelated_events ... ok
+c7e.out:test rebuild_is_byte_identical_to_incremental_application ... ok
+c7e.out:test reapplying_an_applied_event_neither_double_counts_nor_regresses ... ok
+c7e.out:test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.75s
+c7e.out:test checkpoint_resumes_after_a_crash_without_gaps_or_duplicates ... ok
+c7e.out:test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.56s
+c7e.out:test committing_without_an_event_is_refused ... ok
+c7e.out:test failing_mutation_rolls_back_state_event_and_outbox ... ok
+c7e.out:test a_rolled_back_commit_releases_its_sequence_instead_of_burning_it ... ok
+c7e.out:test consumer_resumes_exactly_after_the_stored_sequence ... ok
+c7e.out:test committed_mutation_writes_state_event_and_outbox_together ... ok
+c7e.out:test concurrent_writers_get_distinct_gap_free_sequences ... ok
+c7e.out:test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.98s
+c7e.out:test a_slow_consumer_is_disconnected_without_blocking_the_publisher ... ok
+c7e.out:test a_consumer_that_keeps_reading_replays_far_past_the_buffer ... ok
+c7e.out:test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.87s
+c7e.out:test channel_and_subscription_validation_fails_closed ... ok
+c7e.out:test live_frames_are_transient_droppable_and_never_persisted ... ok
+c7e.out:test a_subscriber_receives_only_its_own_channel_and_tenant ... ok
+c7e.out:test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.59s
+c7e.out:test a_cursor_from_another_stream_is_rejected ... ok
+c7e.out:test a_client_without_a_cursor_resumes_from_the_persisted_consumer_position ... ok
+c7e.out:test reconnecting_with_the_last_cursor_replays_exactly_the_missed_events ... ok
+c7e.out:test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.56s
+c7e.out:test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+c7.out:test the_error_vocabulary_is_the_one_the_catalog_generates ... ok
+c7.out:test feature_flags_load_from_config_and_cannot_disable_escalation ... ok
+c7.out:test every_code_maps_to_a_status_and_says_whether_a_retry_could_help ... ok
+c7.out:test the_command_catalog_is_the_one_the_gate_checks ... ok
+c7.out:test an_api_handler_reads_and_writes_only_its_own_table ... ok
+c7.out:test every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction ... ok
+c7.out:test generated_openapi_lists_every_catalog_command ... ok
+c7.out:test the_deployable_composes_from_the_environment ... ok
+c7.out:test a_tenant_over_the_rate_limit_is_rate_limited ... ok
+c7.out:test a_resend_while_the_first_is_still_being_applied_is_told_to_come_back ... ok
+c7.out:test a_command_scoped_to_another_tenant_does_not_touch_this_one ... ok
+c7.out:test a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal ... ok
+c7.out:test a_call_without_a_usable_tenant_is_refused_with_the_right_code ... ok
+c7.out:test health_reports_readiness_and_the_catalogues_it_serves ... ok
+c7.out:test a_mutating_call_calls_the_owner_and_a_resend_returns_its_result_once ... ok
+c7.out:test two_tenants_may_send_the_same_command_id_and_each_replays_its_own ... ok
+c7.out:test the_public_surface_works_as_the_application_role_under_rls ... ok
+c7.out:test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.91s
+c7.out:test the_source_corpus_verdicts_are_the_same_as_the_intelligence_planes ... ok
+c7.out:test a_malformed_deliverable_blocks_completion_until_a_valid_version_is_added ... ok
+c7.out:test a_run_creates_and_edits_a_versioned_artifact_through_the_governed_tools ... ok
+c7.out:test every_editable_kind_is_made_through_the_tool_from_its_fixture ... ok
+c7.out:test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.03s
+c7.out:test bytes_are_served_as_an_attachment_never_as_a_document_and_only_to_a_reader ... ok
+c7.out:test artifacts_outlive_the_run_and_keep_their_version_history_with_links ... ok
+c7.out:test search_is_one_typed_program_across_artifacts_threads_knowledge_and_evidence ... ok
+c7.out:test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.92s
+c7.out:test evidence_bundle_records_claims_sources_and_verification ... ok
+c7.out:test digest_corruption_is_rejected_against_minio ... ok
+c7.out:test evidence_is_insert_only_and_never_overwritten ... ok
+c7.out:test artifact_writes_are_runtime_events_committed_with_them ... ok
+c7.out:test new_bytes_get_a_new_version_identity ... ok
+c7.out:test legal_hold_and_retention_are_recorded_not_silently_deleted ... ok
+c7.out:test grant_scope_denies_ungranted_callers_and_read_cannot_write ... ok
+c7.out:test artifact_round_trip_verifies_the_recorded_digest_against_minio ... ok
+c7.out:test multipart_attachment_round_trips_against_minio ... ok
+c7.out:test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.51s
+c7.out:test routine_commands_validate_and_transition ... ok
+c7.out:test an_event_fires_its_routine_once_however_it_is_consumed ... ok
+c7.out:test a_scheduled_window_fires_once_across_restarts ... ok
+c7.out:test notifications_follow_preferences_and_deliver_email ... ok
+c7.out:test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.80s
+c7.out:test a_usage_read_is_the_whole_history_wherever_the_projection_stands ... ok
+c7.out:test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.65s
+c7.out:test a_deployment_without_a_key_provider_refuses_to_create_a_webhook ... ok
+c7.out:test the_event_stream_is_also_served_as_server_sent_events ... ok
+c7.out:test payloads_never_carry_secrets_or_protected_data ... ok
+c7.out:test deliveries_stay_in_their_tenant_and_workspace ... ok
+c7.out:test delivery_is_signed_at_least_once_and_retried_until_dead_lettered ... ok
+c7.out:test destinations_obey_egress_policy_and_the_kill_switches ... ok
+c7.out:test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.24s
+events_exit=0 server_exit=0
+exit=0
