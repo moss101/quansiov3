@@ -58,6 +58,7 @@ async fn a_slow_consumer_is_disconnected_without_blocking_the_publisher() {
     let channel = Channel::parse(TENANT, &format!("run:{RUN}")).expect("canonical channel");
     let config = StreamConfig {
         buffer_capacity: 2,
+        stall_timeout: Duration::from_millis(200),
         live_capacity: 2,
         batch_size: 256,
     };
@@ -121,5 +122,47 @@ async fn a_slow_consumer_is_disconnected_without_blocking_the_publisher() {
         .expect("read events");
     assert_eq!(events.len(), 13, "every event committed");
 
+    drop_pool(&pool, &name).await;
+}
+
+#[tokio::test]
+async fn a_consumer_that_keeps_reading_replays_far_past_the_buffer() {
+    let Some((name, pool)) = prepare("streamreplaylong").await else {
+        blocked_marker();
+        return;
+    };
+    let store = EventStore::new(pool.clone());
+    for version in 1..=300 {
+        commit_run(&store, version).await;
+    }
+    // A history a hundred and fifty times the buffer: a reader that keeps up receives all of it.
+    let channel = Channel::parse(TENANT, &format!("run:{RUN}")).expect("canonical channel");
+    let config = StreamConfig {
+        buffer_capacity: 2,
+        stall_timeout: Duration::from_millis(500),
+        live_capacity: 2,
+        batch_size: 256,
+    };
+    let (mut session, live) = store
+        .subscribe(
+            StreamSubscription::new(TENANT, "keeps-up", vec![channel]).expect("subscription"),
+            config,
+        )
+        .await
+        .expect("subscribe");
+    drop(live);
+    let mut received = 0;
+    loop {
+        match tokio::time::timeout(Duration::from_secs(10), session.next_frame()).await {
+            Ok(Ok(_)) => received += 1,
+            Ok(Err(StreamError::Closed)) => break,
+            Ok(Err(error)) => {
+                panic!("a consumer that keeps reading was cut off after {received}: {error:?}")
+            }
+            Err(_) => panic!("the replay stalled after {received} frames"),
+        }
+    }
+    assert_eq!(received, 300);
+    session.close().await;
     drop_pool(&pool, &name).await;
 }
