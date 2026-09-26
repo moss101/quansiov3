@@ -657,6 +657,32 @@ async fn the_misfire_threshold_decides_when_a_window_was_missed() {
 }
 
 #[tokio::test]
+async fn the_background_loop_learns_when_the_next_work_falls_due() {
+    let Some(fixture) = prepare("sched_next_due").await else {
+        blocked_marker();
+        return;
+    };
+    let next_due = |pool: PgPool| async move {
+        sqlx::query_scalar::<_, Option<DateTime<Utc>>>("SELECT background_next_due()")
+            .fetch_one(&pool)
+            .await
+            .expect("background_next_due")
+    };
+    assert_eq!(
+        next_due(fixture.pool.clone()).await,
+        None,
+        "nothing scheduled"
+    );
+    let later = (Utc::now() + ChronoDuration::minutes(10)).trunc_subsecs(6);
+    let sooner = (Utc::now() + ChronoDuration::seconds(2)).trunc_subsecs(6);
+    seed_routine(&fixture.pool, AbsencePolicy::Skip, later).await;
+    seed_routine(&fixture.pool, AbsencePolicy::Skip, sooner).await;
+    // The earliest window, read without a tenant context (the loop serves every tenant).
+    assert_eq!(next_due(fixture.pool.clone()).await, Some(sooner));
+    finish(fixture).await;
+}
+
+#[tokio::test]
 async fn saturated_due_queue_returns_a_typed_error_and_drops_nothing() {
     let Some(fixture) = prepare("sched_backpressure").await else {
         blocked_marker();

@@ -313,6 +313,26 @@ impl Composition {
     }
 }
 
+/// The shortest sleep between background passes.
+pub const MIN_BACKGROUND_WAIT: Duration = Duration::from_millis(50);
+
+/// How long the background loop sleeps before its next pass: until `next` when that is still
+/// ahead (bounded by [`MIN_BACKGROUND_WAIT`] and `interval`), otherwise the whole `interval`.
+#[must_use]
+pub fn wait_until(
+    next: Option<chrono::DateTime<chrono::Utc>>,
+    now: chrono::DateTime<chrono::Utc>,
+    interval: Duration,
+) -> Duration {
+    match next {
+        Some(at) if at > now => (at - now)
+            .to_std()
+            .unwrap_or(interval)
+            .clamp(MIN_BACKGROUND_WAIT, interval.max(MIN_BACKGROUND_WAIT)),
+        _ => interval,
+    }
+}
+
 /// The deployable's background loop (APP-010): for every tenant, one CORE-008 scheduler tick
 /// (timers, routine windows and their fires, queued runs), one pass of the routine event
 /// triggers, the notifier, and email delivery. Each pass is bounded; a failing tenant is
@@ -343,17 +363,40 @@ impl Background {
         }
     }
 
-    /// Run forever, one pass per `interval`.
+    /// Run forever: a pass, then sleep until the next due work — a routine window, a timer, a
+    /// fire's retry — but never longer than `interval` (so work that arrives unannounced, such
+    /// as events for triggers and notifications, waits at most that long) and never less than
+    /// [`MIN_BACKGROUND_WAIT`]. Work still due after a pass (a backlog beyond one pass's bounds)
+    /// waits the whole interval, so a stuck item cannot spin the loop.
     pub async fn run(self, interval: Duration) {
+        let mut wait = interval;
         loop {
-            tokio::time::sleep(interval).await;
+            tokio::time::sleep(wait).await;
             if let Err(message) = self.pass().await {
                 crate::observability::notice(
                     crate::observability::Level::Warn,
                     &format!("background pass: {message}"),
                 );
             }
+            wait = match self.next_due().await {
+                Ok(next) => wait_until(next, chrono::Utc::now(), interval),
+                Err(message) => {
+                    crate::observability::notice(
+                        crate::observability::Level::Warn,
+                        &format!("background wake-up: {message}"),
+                    );
+                    interval
+                }
+            };
         }
+    }
+
+    /// The earliest due work across tenants (`background_next_due()`, migration 0024).
+    async fn next_due(&self) -> Result<Option<chrono::DateTime<chrono::Utc>>, String> {
+        sqlx::query_scalar("SELECT background_next_due()")
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|error| format!("cannot read the next due time: {error}"))
     }
 
     /// Run the webhook fan-out and deliveries forever, one pass per `interval`. They run beside
@@ -449,5 +492,44 @@ impl Background {
             .await
             .map_err(|error| format!("email: {error}"))?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{wait_until, MIN_BACKGROUND_WAIT};
+    use chrono::{Duration as ChronoDuration, Utc};
+    use std::time::Duration;
+
+    #[test]
+    fn the_loop_wakes_when_work_falls_due_within_its_interval() {
+        let now = Utc::now();
+        let interval = Duration::from_secs(1);
+        assert_eq!(
+            wait_until(Some(now + ChronoDuration::milliseconds(300)), now, interval),
+            Duration::from_millis(300)
+        );
+        // Never longer than the interval, never shorter than the floor.
+        assert_eq!(
+            wait_until(Some(now + ChronoDuration::minutes(5)), now, interval),
+            interval
+        );
+        assert_eq!(
+            wait_until(Some(now + ChronoDuration::milliseconds(1)), now, interval),
+            MIN_BACKGROUND_WAIT
+        );
+    }
+
+    #[test]
+    fn work_still_due_after_a_pass_waits_the_whole_interval() {
+        let now = Utc::now();
+        let interval = Duration::from_secs(1);
+        // Due already (a backlog, or an item a pass could not clear): no spinning.
+        assert_eq!(
+            wait_until(Some(now - ChronoDuration::seconds(3)), now, interval),
+            interval
+        );
+        assert_eq!(wait_until(Some(now), now, interval), interval);
+        assert_eq!(wait_until(None, now, interval), interval);
     }
 }

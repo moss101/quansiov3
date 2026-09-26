@@ -38,6 +38,7 @@ runner (`quansio_server::control::schema::migrate`).
 | `0021_ops_switches.sql` | Operator kill switches (OPS-008): `ops_switches`, one row per engagement kept as history (`ksw_`, switch, target, reason, who and when engaged and released), a partial unique index so a switch is engaged at most once per target, tenant RLS. Additive. |
 | `0022_audit_append_only.sql` | Append-only audit (QA-007 F-3): `quansio_app` loses UPDATE/DELETE/TRUNCATE on `audit_entries`, and triggers refuse UPDATE, DELETE and TRUNCATE for every role, so an entry cannot be rewritten (and the unkeyed chain recomputed) with the application's credentials. Additive. |
 | `0023_workspace_tenant_integrity.sql` | Workspace/tenant integrity (QA-007 F-7): `UNIQUE (tenant_id, id)` on `workspaces`, and on every table that references `workspaces(id)` from `workspace_id` a composite key `(tenant_id, workspace_id) → workspaces(tenant_id, id)` (`NOT VALID`: new rows enforced, legacy rows not rescanned), so no row can name another tenant's workspace. Additive. |
+| `0024_background_next_due.sql` | The background loop's wake-up (CORE-008, found by QA-009): `background_next_due()` (security definer, one timestamp only) — the earliest active routine window, scheduled or expiring timer, and pending or expiring routine fire across tenants — so the loop sleeps until due work instead of a fixed interval. Additive. |
 
 ## Applying
 
