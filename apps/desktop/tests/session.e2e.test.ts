@@ -225,6 +225,28 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
       await desktop.done();
     }
   }, 120_000);
+  it("names every surface for a person and every entry opens a page (APP-003)", async () => {
+    const desktop = await launch();
+    try {
+      const page = desktop.page;
+      await signIn(page, email(OWNER));
+      const nav = page.getByRole("navigation", { name: "Surfaces" });
+      const entries = (await nav.getByRole("listitem").allTextContents()).map((text) => text.trim());
+      expect(entries).toHaveLength(15);
+      // No surface is shown by its internal id (lower-case, hyphenated).
+      expect(entries.filter((text) => /^[a-z]+(-[a-z]+)+$|^[a-z]+$/.test(text))).toEqual([]);
+      const buttons = nav.getByRole("button");
+      const count = await buttons.count();
+      expect(count).toBe(14);
+      for (let index = 0; index < count; index += 1) {
+        await buttons.nth(index).click();
+        await until(async () => (await page.getByRole("region").count()) > 0, `the page of ${String(index)}`);
+        await expect(buttons.nth(index).getAttribute("aria-current")).resolves.toBe("page");
+      }
+    } finally {
+      await desktop.done();
+    }
+  }, 120_000);
 });
 
 if (blocked !== null) {

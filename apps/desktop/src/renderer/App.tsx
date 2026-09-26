@@ -8,8 +8,8 @@
 
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 
-import { DESKTOP_SURFACES } from "../surfaces.js";
-import { t } from "../i18n/strings.js";
+import { DESKTOP_SURFACES, type SurfaceId } from "../surfaces.js";
+import { t, type StringKey } from "../i18n/strings.js";
 import { Artifacts } from "./Artifacts.js";
 import { Conversation } from "./Conversation.js";
 import { Knowledge } from "./Knowledge.js";
@@ -88,11 +88,55 @@ export function App(): ReactElement {
   return <Shell />;
 }
 
+type Page = "conversation" | "artifacts" | "objectives" | "approvals" | "knowledge-controls" | "teammates" | "live-browser-terminal" | "collaboration" | "automations" | "settings";
+
+/** Every DOSSIER §15 surface by a person's name for it (not its internal id). */
+const SURFACE_LABELS: Record<SurfaceId, StringKey> = {
+  "conversation": "surfaceConversation",
+  "objectives": "surfaceObjectives",
+  "teammates": "surfaceTeammates",
+  "plan-and-agents": "surfacePlanAndAgents",
+  "run-status": "surfaceRunStatus",
+  "approvals": "surfaceApprovals",
+  "evidence-timeline": "surfaceEvidenceTimeline",
+  "live-browser-terminal": "surfaceLiveBrowserTerminal",
+  "artifacts": "surfaceArtifacts",
+  "knowledge-controls": "surfaceKnowledgeControls",
+  "collaboration": "surfaceCollaboration",
+  "automations": "surfaceAutomations",
+  "connectors": "surfaceConnectors",
+  "capability-admin": "surfaceCapabilityAdmin",
+  "model-usage": "surfaceModelUsage",
+};
+
+/**
+ * The page each surface opens. Several surfaces live inside another page (the agent roster and
+ * plan beside the objectives, run status with the chat, the effect timeline under approvals,
+ * capability resolution with knowledge, the models and tools of a turn in the chat inspector),
+ * so they open that page; connector setup is administered in the web app and has no page here.
+ */
+const OPENS: Partial<Record<SurfaceId, Page>> = {
+  "conversation": "conversation",
+  "objectives": "objectives",
+  "teammates": "teammates",
+  "plan-and-agents": "objectives",
+  "run-status": "conversation",
+  "approvals": "approvals",
+  "evidence-timeline": "approvals",
+  "live-browser-terminal": "live-browser-terminal",
+  "artifacts": "artifacts",
+  "knowledge-controls": "knowledge-controls",
+  "collaboration": "collaboration",
+  "automations": "automations",
+  "capability-admin": "knowledge-controls",
+  "model-usage": "conversation",
+};
+
 function Shell(): ReactElement {
   const [projection, setProjection] = useState<RunProjection | null>(null);
   const [log, setLog] = useState<readonly LogLine[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
-  const [surface, setSurface] = useState<"conversation" | "artifacts" | "objectives" | "approvals" | "knowledge-controls" | "teammates" | "live-browser-terminal" | "collaboration" | "automations" | "settings">("conversation");
+  const [surface, setSurface] = useState<Page>("conversation");
 
   const refresh = useCallback(async () => {
     const next = (await window.quansio.activeRun()) as RunProjection;
@@ -134,15 +178,18 @@ function Shell(): ReactElement {
       </header>
       <nav aria-label={t("surfaces")}>
         <ul>
-          {DESKTOP_SURFACES.map((entry) => (
-            <li key={entry.id} className={entry.id === surface ? "selected" : undefined}>
-              {entry.id === "conversation" || entry.id === "artifacts" || entry.id === "objectives" || entry.id === "approvals" || entry.id === "knowledge-controls" || entry.id === "teammates" || entry.id === "live-browser-terminal" || entry.id === "collaboration" || entry.id === "automations" ? (
-                <button type="button" onClick={() => { setSurface(entry.id === "artifacts" ? "artifacts" : entry.id === "objectives" ? "objectives" : entry.id === "approvals" ? "approvals" : entry.id === "knowledge-controls" ? "knowledge-controls" : entry.id === "teammates" ? "teammates" : entry.id === "live-browser-terminal" ? "live-browser-terminal" : entry.id === "collaboration" ? "collaboration" : entry.id === "automations" ? "automations" : "conversation"); }}>{entry.id}</button>
-              ) : (
-                entry.id
-              )}
-            </li>
-          ))}
+          {DESKTOP_SURFACES.map((entry) => {
+            const opens = OPENS[entry.id];
+            return (
+              <li key={entry.id} className={opens === surface ? "selected" : undefined}>
+                {opens ? (
+                  <button type="button" aria-current={opens === surface ? "page" : undefined} onClick={() => { setSurface(opens); }}>{t(SURFACE_LABELS[entry.id])}</button>
+                ) : (
+                  <span>{t(SURFACE_LABELS[entry.id])}</span>
+                )}
+              </li>
+            );
+          })}
         </ul>
         <section className="run">
           <h2>{t("activeRun")}</h2>
