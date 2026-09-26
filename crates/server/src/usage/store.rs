@@ -88,7 +88,10 @@ impl UsageStore {
         let Some(last) = batch.last().map(|event| event.sequence) else {
             return Ok(0);
         };
-        let mut tx = self.events.begin_tenant_transaction(&self.tenant_id).await?;
+        let mut tx = self
+            .events
+            .begin_tenant_transaction(&self.tenant_id)
+            .await?;
         for record in batch.iter().flat_map(project_event) {
             sqlx::query(
                 "INSERT INTO usage_records (id, tenant_id, workspace_id, scope_refs, meter, quantity, \
@@ -141,7 +144,10 @@ impl UsageStore {
         workspace_id: Option<&str>,
         recent: i64,
     ) -> Result<UsageSummary, EventError> {
-        let mut tx = self.events.begin_tenant_transaction(&self.tenant_id).await?;
+        let mut tx = self
+            .events
+            .begin_tenant_transaction(&self.tenant_id)
+            .await?;
         // The cursor and the totals come from one statement, so from one snapshot: the rows it
         // sums are exactly those of the events up to the cursor it returns.
         let rows = sqlx::query(
@@ -200,7 +206,9 @@ impl UsageStore {
             .read_events_after(&self.tenant_id, after, MAX_TAIL_EVENTS + 1)
             .await?;
         let complete = i64::try_from(tail.len()).unwrap_or(i64::MAX) <= MAX_TAIL_EVENTS;
-        let tail = &tail[..tail.len().min(usize::try_from(MAX_TAIL_EVENTS).unwrap_or(usize::MAX))];
+        let tail = &tail[..tail
+            .len()
+            .min(usize::try_from(MAX_TAIL_EVENTS).unwrap_or(usize::MAX))];
         let through_sequence = tail
             .last()
             .map(|event| event.sequence.get())
@@ -209,12 +217,12 @@ impl UsageStore {
         let mut fresh: Vec<UsageRecord> = tail
             .iter()
             .flat_map(project_event)
-            .filter(|record| workspace_id.is_none_or(|ws| record.workspace_id.as_deref() == Some(ws)))
+            .filter(|record| {
+                workspace_id.is_none_or(|ws| record.workspace_id.as_deref() == Some(ws))
+            })
             .collect();
         for record in &fresh {
-            let entry = totals
-                .entry(record.meter.as_str())
-                .or_insert((0.0, None));
+            let entry = totals.entry(record.meter.as_str()).or_insert((0.0, None));
             entry.0 += record.quantity;
             entry.1.get_or_insert_with(|| record.unit.to_string());
         }

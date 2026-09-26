@@ -19,7 +19,13 @@ const USER: &str = "usr_01J8Z3K6F1N8VQ2X5W9YUSAGE1";
 const WORKSPACE: &str = "ws_01J8Z3K6F1N8VQ2X5W9YUSAGE1";
 const NODE: &str = "wn_01J8Z3K6F1N8VQ2X5W9YUSAGE1";
 
-async fn emit(pool: &sqlx::PgPool, workspace: Option<&str>, aggregate_id: &str, event_type: &str, payload: Value) {
+async fn emit(
+    pool: &sqlx::PgPool,
+    workspace: Option<&str>,
+    aggregate_id: &str,
+    event_type: &str,
+    payload: Value,
+) {
     let aggregate_id = aggregate_id.to_string();
     let workspace = workspace.map(str::to_string);
     let event_type = event_type.to_string();
@@ -71,7 +77,10 @@ async fn emit_usage(pool: &sqlx::PgPool, from: usize, count: usize) {
 }
 
 /// What a rebuild from every event says, per meter, optionally for one workspace.
-async fn rebuilt(pool: &sqlx::PgPool, workspace: Option<&str>) -> (BTreeMap<&'static str, f64>, usize) {
+async fn rebuilt(
+    pool: &sqlx::PgPool,
+    workspace: Option<&str>,
+) -> (BTreeMap<&'static str, f64>, usize) {
     let events = EventStore::new(pool.clone())
         .read_events_after(TENANT, None, 1_000_000)
         .await
@@ -86,14 +95,22 @@ async fn rebuilt(pool: &sqlx::PgPool, workspace: Option<&str>) -> (BTreeMap<&'st
     for meter in UsageMeter::ALL {
         totals.insert(
             meter.as_str(),
-            records.iter().filter(|record| record.meter == meter).map(|record| record.quantity).sum(),
+            records
+                .iter()
+                .filter(|record| record.meter == meter)
+                .map(|record| record.quantity)
+                .sum(),
         );
     }
     (totals, records.len())
 }
 
 fn totals(summary: &UsageSummary) -> BTreeMap<&'static str, f64> {
-    summary.meters.iter().map(|meter| (meter.meter.as_str(), meter.total)).collect()
+    summary
+        .meters
+        .iter()
+        .map(|meter| (meter.meter.as_str(), meter.total))
+        .collect()
 }
 
 async fn assert_matches_rebuild(pool: &sqlx::PgPool, store: &UsageStore, when: &str) {
@@ -101,14 +118,19 @@ async fn assert_matches_rebuild(pool: &sqlx::PgPool, store: &UsageStore, when: &
         let summary = store.summary(workspace, 500).await.expect("summary");
         let (expected, records) = rebuilt(pool, workspace).await;
         assert_eq!(totals(&summary), expected, "{when} ({workspace:?})");
-        assert_eq!(summary.record_count, records as u64, "{when} ({workspace:?})");
+        assert_eq!(
+            summary.record_count, records as u64,
+            "{when} ({workspace:?})"
+        );
         assert!(summary.complete, "{when}");
     }
 }
 
 async fn stored_rows(pool: &sqlx::PgPool) -> i64 {
     let mut tx = pool.begin().await.expect("begin");
-    schema::set_tenant_context(&mut tx, TENANT).await.expect("tenant");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant");
     let rows: i64 = sqlx::query_scalar("SELECT count(*) FROM usage_records WHERE tenant_id = $1")
         .bind(TENANT)
         .fetch_one(&mut *tx)
@@ -124,7 +146,9 @@ async fn a_usage_read_is_the_whole_history_wherever_the_projection_stands() {
         common::blocked_marker();
         return;
     };
-    let pool = common::fresh_database(&name).await.expect("scratch database");
+    let pool = common::fresh_database(&name)
+        .await
+        .expect("scratch database");
     schema::migrate(&pool).await.expect("migrate");
     common::seed_tenant(&pool, TENANT, USER, WORKSPACE, NODE).await;
     let store = UsageStore::new(pool.clone(), TENANT);
@@ -143,11 +167,16 @@ async fn a_usage_read_is_the_whole_history_wherever_the_projection_stands() {
     assert_matches_rebuild(&pool, &store, "new events after the cursor").await;
     store.catch_up(4).await.expect("catch up");
     let (_, records) = rebuilt(&pool, None).await;
-    assert_eq!(stored_rows(&pool).await, i64::try_from(records).unwrap_or(0));
+    assert_eq!(
+        stored_rows(&pool).await,
+        i64::try_from(records).unwrap_or(0)
+    );
 
     // Replaying the whole stream (a lost cursor) meters nothing twice.
     let mut tx = pool.begin().await.expect("begin");
-    schema::set_tenant_context(&mut tx, TENANT).await.expect("tenant");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant");
     sqlx::query("DELETE FROM event_cursors WHERE tenant_id = $1 AND consumer = 'usage-projection'")
         .bind(TENANT)
         .execute(&mut *tx)
@@ -155,14 +184,20 @@ async fn a_usage_read_is_the_whole_history_wherever_the_projection_stands() {
         .expect("drop the cursor");
     tx.commit().await.expect("commit");
     store.catch_up(4).await.expect("replay");
-    assert_eq!(stored_rows(&pool).await, i64::try_from(records).unwrap_or(0));
+    assert_eq!(
+        stored_rows(&pool).await,
+        i64::try_from(records).unwrap_or(0)
+    );
     assert_matches_rebuild(&pool, &store, "after a replay").await;
 
     // The listing is bounded; the count and the totals are not.
     let summary = store.summary(None, 5).await.expect("summary");
     assert_eq!(summary.recent.len(), 5);
     assert_eq!(summary.record_count, records as u64);
-    assert!(summary.recent.windows(2).all(|pair| pair[0].occurred_at >= pair[1].occurred_at));
+    assert!(summary
+        .recent
+        .windows(2)
+        .all(|pair| pair[0].occurred_at >= pair[1].occurred_at));
 
     common::drop_pool(&pool, &name).await;
 }
