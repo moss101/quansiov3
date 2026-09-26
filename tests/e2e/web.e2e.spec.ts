@@ -17,6 +17,7 @@ import {
   emailOf,
   launchChrome,
   OWNER,
+  settle,
   Stack,
   VIEWER,
   waitFor,
@@ -133,7 +134,7 @@ describe.skipIf(blocked !== null)("web journeys (Chrome, real server)", () => {
       const urls: string[] = [];
       for (const name of pages) {
         await nav(page, name).click();
-        await page.waitForTimeout(400);
+        await settle(page);
         urls.push(page.url());
         const audit = await auditAccessibility(page);
         failures.push(...audit.violations.map((violation) => `${name}: ${violation}`));
@@ -145,7 +146,7 @@ describe.skipIf(blocked !== null)("web journeys (Chrome, real server)", () => {
       for (const url of urls) {
         await page.goto(url);
         await page.getByRole("main").waitFor();
-        await page.waitForTimeout(300);
+        await settle(page);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         if (overflow > 1) {
           failures.push(`${url}: ${String(overflow)}px of horizontal scroll at 375px`);

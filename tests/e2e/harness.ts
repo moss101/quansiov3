@@ -365,6 +365,33 @@ export interface KeyboardReport {
   readonly invisibleFocus: readonly string[];
 }
 
+/**
+ * Wait until the page stops changing: no DOM mutation for `quietMs` (bounded by `timeoutMs`). A
+ * surface that loads its data after it opens replaces its controls; auditing before then would
+ * judge controls that are about to disappear.
+ */
+export async function settle(page: Page, quietMs = 400, timeoutMs = 10_000): Promise<void> {
+  await page.evaluate(
+    ([quiet, limit]) =>
+      new Promise<void>((resolve) => {
+        let timer = window.setTimeout(done, quiet);
+        const deadline = window.setTimeout(done, limit);
+        const observer = new MutationObserver(() => {
+          window.clearTimeout(timer);
+          timer = window.setTimeout(done, quiet);
+        });
+        observer.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
+        function done(): void {
+          observer.disconnect();
+          window.clearTimeout(timer);
+          window.clearTimeout(deadline);
+          resolve();
+        }
+      }),
+    [quietMs, timeoutMs] as const,
+  );
+}
+
 /** Tab through the page: every enabled, visible control must take focus, and focus must show. */
 export async function walkKeyboard(page: Page, maxSteps = 200): Promise<KeyboardReport> {
   const expected = await page.evaluate(() => {

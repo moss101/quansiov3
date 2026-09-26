@@ -16,6 +16,7 @@ import {
   emailOf,
   launchDesktop,
   OWNER,
+  settle,
   signInDesktop,
   Stack,
   waitFor,
@@ -213,7 +214,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
     const failures: string[] = [];
     for (const surface of [...surfaces, "Settings"]) {
       await (surface === "Settings" ? page.getByRole("button", { name: "Settings" }) : nav(surface)).click();
-      await page.waitForTimeout(500);
+      await settle(page);
       const audit = await auditAccessibility(page);
       failures.push(...audit.violations.map((violation) => `${surface}: ${violation}`));
       const keyboard = await walkKeyboard(page);
