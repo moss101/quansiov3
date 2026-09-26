@@ -177,7 +177,8 @@ impl Composition {
         };
         let mut api = ApiState::new(pool.clone())
             .map_err(|error| error.message)?
-            .with_scope_trust(trust);
+            .with_scope_trust(trust)
+            .with_background_turns();
         if let Some(store) = config.object_store.clone() {
             crate::observability::notice(
                 crate::observability::Level::Info,

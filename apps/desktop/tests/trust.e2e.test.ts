@@ -8,6 +8,7 @@
  * error, never as content.
  */
 
+import { eventually } from "./settle.js";
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -190,11 +191,14 @@ describe.skipIf(blocked !== null)("desktop trust E2E against quansio-server", ()
     await waitFor(() => (pushed.some((p) => p.channel === "stream.state" && p.payload === "open") ? true : undefined), "stream open");
 
     // 1. A write that policy makes ask: the run parks and the page sees the request.
-    const posted = (await handlers["messages.post"]({ threadId: null, content: `write the summary ${APPROVAL_SCENARIO}` })) as { run_id: string; thread_id: string; turn: { kind: string; state?: string } };
-    expect(posted.turn.kind).toBe("parked");
-    expect(posted.turn.state).toBe("WAITING_APPROVAL");
-    await waitFor(() => (pushed.some((p) => p.channel === "stream.frame" && (p.payload as { kind: string }).kind === "event" && ((p.payload as { event: { type?: string } }).event.type ?? "").startsWith("run.")) ? true : undefined), "run event");
-    const previews = decodeApprovals(await handlers["approvals.list"]({ runId: posted.run_id }));
+    // The command is accepted before its turn runs; the turn then parks on the approval.
+    const posted = (await handlers["messages.post"]({ threadId: null, content: `write the summary ${APPROVAL_SCENARIO}` })) as { run_id: string; thread_id: string };
+    expect(posted.run_id).toMatch(/^run_/);
+    await waitFor(() => (pushed.some((p) => p.channel === "stream.frame" && (p.payload as { kind: string }).kind === "event" && ((p.payload as { event: { type?: string } }).event.type ?? "") === "run.waiting") ? true : undefined), "the run to park");
+    const previews = await eventually(async () => {
+      const listed = decodeApprovals(await handlers["approvals.list"]({ runId: posted.run_id }));
+      return listed.length > 0 ? listed : undefined;
+    }, "the approval request");
     const previewed = previews[0];
     if (!previewed) {
       throw new Error("no approval request");
@@ -226,16 +230,19 @@ describe.skipIf(blocked !== null)("desktop trust E2E against quansio-server", ()
     if (!binding.ok) {
       throw new Error("expected a binding");
     }
-    const granted = (await handlers["approvals.approve"]({ approvalRequestId: binding.params.approval_request_id, paramsDigest: binding.params.params_digest })) as Settled<{ params_digest: string; receipt_id: string; turn: { kind: string } }>;
+    const granted = (await handlers["approvals.approve"]({ approvalRequestId: binding.params.approval_request_id, paramsDigest: binding.params.params_digest })) as Settled<{ params_digest: string; receipt_id: string }>;
     expect(granted.ok).toBe(true);
     if (granted.ok) {
       expect(granted.result.params_digest).toBe(previewed.digest);
-      expect(granted.result.turn.kind).toBe("completed");
     }
+    // The released turn runs after the grant is accepted: the call settles under the receipt.
+    const effects = await eventually(async () => {
+      const listed = decodeEffects(await handlers["effects.list"]({ runId: posted.run_id }));
+      return listed[0]?.status === "SETTLED_SUCCESS" ? listed : undefined;
+    }, "the effect to settle");
     const afterGrant = decodeApprovals(await handlers["approvals.list"]({ runId: posted.run_id }))[0];
     expect(afterGrant?.status).toBe("granted");
     expect(afterGrant?.receipts[0]?.consumed).toBe(true);
-    const effects = decodeEffects(await handlers["effects.list"]({ runId: posted.run_id }));
     expect(effects[0]?.status).toBe("SETTLED_SUCCESS");
     expect(effects[0]?.approvalReceiptId).toBe(afterGrant?.receipts[0]?.id ?? null);
     expect(resolution(effects[0] as never)).toBe("succeeded");

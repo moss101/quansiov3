@@ -129,10 +129,10 @@ pub async fn invoke(
     let record_id = CanonicalId::generate(Prefix::Command, &mut UlidGenerator::new());
     // The record is committed before the owner is called, so a resend while it works is told to come back.
     let mut log = state.tenant_tx(&scope.tenant_id, &correlation).await?;
-    let inserted = sqlx::query(
+    let accepted_at: Option<chrono::DateTime<chrono::Utc>> = sqlx::query_scalar(
         "INSERT INTO commands (id, tenant_id, command_name, command_id, params_digest, status, correlation_id) \
          VALUES ($1, $2, $3, $4, $5, 'accepted', $6) \
-         ON CONFLICT (tenant_id, command_id) DO NOTHING",
+         ON CONFLICT (tenant_id, command_id) DO NOTHING RETURNING created_at",
     )
     .bind(record_id.to_string())
     .bind(&scope.tenant_id)
@@ -140,14 +140,14 @@ pub async fn invoke(
     .bind(command_id.as_canonical().to_string())
     .bind(&params_digest)
     .bind(&correlation)
-    .execute(&mut *log)
+    .fetch_optional(&mut *log)
     .await
     .map_err(database_error)?;
     log.commit().await.map_err(database_error)?;
 
-    if inserted.rows_affected() == 0 {
+    let Some(accepted_at) = accepted_at else {
         return replay(&state, &scope, &command_id, &params_digest, &correlation).await;
-    }
+    };
 
     let identity = RuntimeIdentity::system(&scope.tenant_id, "api", correlation_id)
         .with_command_id(command_id);
@@ -197,6 +197,7 @@ pub async fn invoke(
 
     Ok(Json(CommandResponse {
         command_id: command_id.as_canonical().to_string().to_string(),
+        accepted_at,
         replayed: false,
         result,
     }))
@@ -672,8 +673,18 @@ async fn replay(
     correlation: &str,
 ) -> Result<Json<CommandResponse>, ApiError> {
     let mut log = state.tenant_tx(&scope.tenant_id, correlation).await?;
-    let record = sqlx::query_as::<_, (String, String, Option<Value>, Option<Value>)>(
-        "SELECT params_digest, status, result, error FROM commands WHERE tenant_id = $1 AND command_id = $2",
+    let record = sqlx::query_as::<
+        _,
+        (
+            String,
+            String,
+            Option<Value>,
+            Option<Value>,
+            chrono::DateTime<chrono::Utc>,
+        ),
+    >(
+        "SELECT params_digest, status, result, error, created_at FROM commands \
+         WHERE tenant_id = $1 AND command_id = $2",
     )
     .bind(&scope.tenant_id)
     .bind(command_id.as_canonical().to_string())
@@ -681,7 +692,7 @@ async fn replay(
     .await
     .map_err(database_error)?;
     log.commit().await.map_err(database_error)?;
-    let (digest, status, result, error) = record.ok_or_else(|| {
+    let (digest, status, result, error, accepted_at) = record.ok_or_else(|| {
         ApiError::new(
             ApiErrorCode::Internal,
             "a command conflicted but cannot be read back",
@@ -698,6 +709,7 @@ async fn replay(
     match status.as_str() {
         "applied" => Ok(Json(CommandResponse {
             command_id: command_id.as_canonical().to_string(),
+            accepted_at,
             replayed: true,
             result: result.unwrap_or(Value::Null),
         })),
@@ -944,32 +956,78 @@ async fn post_message(
         .start(&run.id, run.generation)
         .await
         .map_err(|error| runtime_error(error, correlation))?;
-    let outcome = engine
-        .run_turn(
-            &run.id,
-            run.generation,
-            TurnInput::new(RunTriggerKind::Message).with_reference(posted.message.id.clone()),
-        )
-        .await
-        .map_err(|error| runtime_error(error, correlation))?;
-    let reply = post_agent_reply(
-        &store,
-        &posted.thread.id,
-        &agent_thread.to_string(),
-        &run.id.to_string(),
-        &outcome,
-        correlation,
-    )
-    .await?;
-    Ok(json!({
+    let turn = {
+        let (state, identity, correlation) =
+            (state.clone(), identity.clone(), correlation.to_string());
+        let (run_id, generation) = (run.id, run.generation);
+        let (message_id, thread_id) = (posted.message.id.clone(), posted.thread.id.clone());
+        let agent = agent_thread.to_string();
+        async move {
+            let outcome = engine
+                .run_turn(
+                    &run_id,
+                    generation,
+                    TurnInput::new(RunTriggerKind::Message).with_reference(message_id),
+                )
+                .await
+                .map_err(|error| runtime_error(error, &correlation))?;
+            let store = ConversationStore::new(state.pool().clone(), identity)
+                .map_err(|error| internal(error, &correlation))?;
+            let reply = post_agent_reply(
+                &store,
+                &thread_id,
+                &agent,
+                &run_id.to_string(),
+                &outcome,
+                &correlation,
+            )
+            .await?;
+            Ok((outcome, reply))
+        }
+    };
+    let mut result = json!({
         "thread_id": posted.thread.id,
         "message_id": posted.message.id,
         "run_id": run.id.to_string(),
         "run_status": run.status.as_db_str(),
-        "turn": turn_json(&outcome),
-        "reply_message_id": reply,
         "teammate": teammate_json,
-    }))
+    });
+    if let Some((outcome, reply)) = continue_run(state, turn).await? {
+        result["turn"] = turn_json(&outcome);
+        result["reply_message_id"] = json!(reply);
+    }
+    Ok(result)
+}
+
+/// Continue a run with its next turn and post the teammate's reply. Served, the command answers
+/// once it is accepted and the turn runs after it ([`ApiState::with_background_turns`]); its
+/// progress, reply, and any question or approval it raises reach clients as events and live
+/// frames, and a failure is the run's own (logged here). Otherwise the command waits for the turn
+/// and reports its outcome and reply.
+pub(super) async fn continue_run<F>(
+    state: &ApiState,
+    turn: F,
+) -> Result<Option<(TurnOutcome, Option<String>)>, ApiError>
+where
+    F: std::future::Future<Output = Result<(TurnOutcome, Option<String>), ApiError>>
+        + Send
+        + 'static,
+{
+    if !state.background_turns() {
+        return turn.await.map(Some);
+    }
+    tokio::spawn(async move {
+        if let Err(error) = turn.await {
+            crate::observability::notice(
+                crate::observability::Level::Warn,
+                &format!(
+                    "a turn after its accepted command failed: {} ({})",
+                    error.message, error.code
+                ),
+            );
+        }
+    });
+    Ok(None)
 }
 
 /// The assistant text of a completed turn becomes the agent's durable message in the thread.
@@ -1049,30 +1107,47 @@ async fn answer_question(
         .load_run(&run_id)
         .await
         .map_err(|error| runtime_error(error, correlation))?;
-    let outcome = engine
-        .run_turn(
-            &run.id,
-            run.generation,
-            TurnInput::new(RunTriggerKind::Wake).with_reference(question_id.to_string()),
-        )
-        .await
-        .map_err(|error| runtime_error(error, correlation))?;
-    result["turn"] = turn_json(&outcome);
-    if let Some(thread_id) = thread_of_run(state, &identity.tenant_id, resumed).await? {
-        let store = ConversationStore::new(state.pool().clone(), identity.clone())
-            .map_err(|error| internal(error, correlation))?;
-        result["reply_message_id"] = json!(
-            post_agent_reply(
-                &store,
-                &thread_id,
-                &run.agent_thread_id.to_string(),
-                resumed,
-                &outcome,
-                correlation,
-            )
-            .await?
-        );
+    let thread_id = thread_of_run(state, &identity.tenant_id, resumed).await?;
+    if let Some(thread_id) = &thread_id {
         result["thread_id"] = json!(thread_id);
+    }
+    let turn = {
+        let (state, identity, correlation) =
+            (state.clone(), identity.clone(), correlation.to_string());
+        let (question_id, resumed) = (question_id.to_string(), resumed.to_string());
+        async move {
+            let outcome = engine
+                .run_turn(
+                    &run.id,
+                    run.generation,
+                    TurnInput::new(RunTriggerKind::Wake).with_reference(question_id),
+                )
+                .await
+                .map_err(|error| runtime_error(error, &correlation))?;
+            let reply = match thread_id {
+                Some(thread_id) => {
+                    let store = ConversationStore::new(state.pool().clone(), identity)
+                        .map_err(|error| internal(error, &correlation))?;
+                    post_agent_reply(
+                        &store,
+                        &thread_id,
+                        &run.agent_thread_id.to_string(),
+                        &resumed,
+                        &outcome,
+                        &correlation,
+                    )
+                    .await?
+                }
+                None => None,
+            };
+            Ok((outcome, reply))
+        }
+    };
+    if let Some((outcome, reply)) = continue_run(state, turn).await? {
+        result["turn"] = turn_json(&outcome);
+        if result.get("thread_id").is_some() {
+            result["reply_message_id"] = json!(reply);
+        }
     }
     Ok(result)
 }

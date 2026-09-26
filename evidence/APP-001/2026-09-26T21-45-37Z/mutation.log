@@ -1,0 +1,9 @@
+CONTROL:
+test served_a_message_is_accepted_before_its_turn_and_the_reply_follows ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 1.90s
+MUTANT: the command always waits for the turn
+COMPILES
+test served_a_message_is_accepted_before_its_turn_and_the_reply_follows ... FAILED
+thread 'served_a_message_is_accepted_before_its_turn_and_the_reply_follows' (39620331) panicked at crates/server/tests/conversation_surface.rs:580:5:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 1.29s
+exit=101

@@ -173,6 +173,8 @@ pub struct CommandRequest {
 pub struct CommandResponse {
     /// The `cmd_` identifier the call carried.
     pub command_id: String,
+    /// When the command was accepted (its record committed); a replay reports the original.
+    pub accepted_at: chrono::DateTime<chrono::Utc>,
     /// Whether this call applied the command or found it already applied.
     pub replayed: bool,
     /// The canonical owner's result.
@@ -377,6 +379,7 @@ pub struct ApiState {
     keys: Option<Arc<dyn quansio_machine::secrets::KeyProvider>>,
     intelligence: Option<crate::intelligence::IntelligenceClient>,
     metrics_token: Option<Arc<str>>,
+    background_turns: bool,
     enterprise: Arc<EnterpriseIdentity>,
 }
 
@@ -424,6 +427,7 @@ impl ApiState {
             keys: None,
             intelligence: None,
             metrics_token: None,
+            background_turns: false,
             enterprise: Arc::new(enterprise),
         })
     }
@@ -445,6 +449,23 @@ impl ApiState {
     #[must_use]
     pub fn enterprise(&self) -> &EnterpriseIdentity {
         &self.enterprise
+    }
+
+    /// Answer a command that continues a run once it is accepted, and run the turn after it: a
+    /// model's turn takes as long as the model does, and a command is accepted when its own state is
+    /// committed (DOMAIN.md §9; DOSSIER.md §21.2 "command accepted"). The turn's progress, reply and
+    /// any question or approval it raises reach clients as events and live frames.
+    #[must_use]
+    pub fn with_background_turns(mut self) -> Self {
+        self.background_turns = true;
+        self
+    }
+
+    /// Whether a command that continues a run answers once it is accepted and runs the turn after
+    /// (the served composition), rather than waiting for the turn inside the command.
+    #[must_use]
+    pub const fn background_turns(&self) -> bool {
+        self.background_turns
     }
 
     /// Serve `GET /metrics` to the operator presenting `token` as a bearer (OPS-003).
