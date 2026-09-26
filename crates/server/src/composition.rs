@@ -317,11 +317,15 @@ impl Composition {
 /// The shortest sleep between background passes.
 pub const MIN_BACKGROUND_WAIT: Duration = Duration::from_millis(50);
 
-/// How long the background loop sleeps before its next pass: until `next` when that is still
-/// ahead (bounded by [`MIN_BACKGROUND_WAIT`] and `interval`), otherwise the whole `interval`.
+/// How long the background loop sleeps before its next pass, given the earliest due work `next`
+/// after a pass that started at `pass_started`: until `next` when that is still ahead (bounded by
+/// [`MIN_BACKGROUND_WAIT`] and `interval`); the floor when it fell due during the pass; the whole
+/// `interval` when it was already due before the pass began — a backlog beyond one pass's bounds
+/// or an item the pass could not clear, which must not spin the loop.
 #[must_use]
 pub fn wait_until(
     next: Option<chrono::DateTime<chrono::Utc>>,
+    pass_started: chrono::DateTime<chrono::Utc>,
     now: chrono::DateTime<chrono::Utc>,
     interval: Duration,
 ) -> Duration {
@@ -330,6 +334,7 @@ pub fn wait_until(
             .to_std()
             .unwrap_or(interval)
             .clamp(MIN_BACKGROUND_WAIT, interval.max(MIN_BACKGROUND_WAIT)),
+        Some(at) if at > pass_started => MIN_BACKGROUND_WAIT,
         _ => interval,
     }
 }
@@ -389,6 +394,7 @@ impl Background {
         let mut wait = interval;
         loop {
             tokio::time::sleep(wait).await;
+            let pass_started = chrono::Utc::now();
             if let Err(message) = self.pass().await {
                 crate::observability::notice(
                     crate::observability::Level::Warn,
@@ -396,7 +402,7 @@ impl Background {
                 );
             }
             wait = match self.next_due().await {
-                Ok(next) => wait_until(next, chrono::Utc::now(), interval),
+                Ok(next) => wait_until(next, pass_started, chrono::Utc::now(), interval),
                 Err(message) => {
                     crate::observability::notice(
                         crate::observability::Level::Warn,
@@ -532,32 +538,71 @@ mod tests {
     #[test]
     fn the_loop_wakes_when_work_falls_due_within_its_interval() {
         let now = Utc::now();
+        let started = now - ChronoDuration::milliseconds(200);
         let interval = Duration::from_secs(1);
         assert_eq!(
-            wait_until(Some(now + ChronoDuration::milliseconds(300)), now, interval),
+            wait_until(
+                Some(now + ChronoDuration::milliseconds(300)),
+                started,
+                now,
+                interval
+            ),
             Duration::from_millis(300)
         );
         // Never longer than the interval, never shorter than the floor.
         assert_eq!(
-            wait_until(Some(now + ChronoDuration::minutes(5)), now, interval),
+            wait_until(
+                Some(now + ChronoDuration::minutes(5)),
+                started,
+                now,
+                interval
+            ),
             interval
         );
         assert_eq!(
-            wait_until(Some(now + ChronoDuration::milliseconds(1)), now, interval),
+            wait_until(
+                Some(now + ChronoDuration::milliseconds(1)),
+                started,
+                now,
+                interval
+            ),
             MIN_BACKGROUND_WAIT
         );
     }
 
     #[test]
-    fn work_still_due_after_a_pass_waits_the_whole_interval() {
+    fn work_that_fell_due_during_a_pass_runs_at_once() {
         let now = Utc::now();
-        let interval = Duration::from_secs(1);
-        // Due already (a backlog, or an item a pass could not clear): no spinning.
+        let started = now - ChronoDuration::milliseconds(200);
+        // A window that came due while the pass was running is taken by the next pass straight away.
         assert_eq!(
-            wait_until(Some(now - ChronoDuration::seconds(3)), now, interval),
+            wait_until(
+                Some(now - ChronoDuration::milliseconds(50)),
+                started,
+                now,
+                Duration::from_secs(1)
+            ),
+            MIN_BACKGROUND_WAIT
+        );
+    }
+
+    #[test]
+    fn work_already_due_before_the_pass_waits_the_whole_interval() {
+        let now = Utc::now();
+        let started = now - ChronoDuration::milliseconds(200);
+        let interval = Duration::from_secs(1);
+        // Due before the pass began and still due after it (a backlog, or an item the pass could
+        // not clear): no spinning.
+        assert_eq!(
+            wait_until(
+                Some(now - ChronoDuration::seconds(3)),
+                started,
+                now,
+                interval
+            ),
             interval
         );
-        assert_eq!(wait_until(Some(now), now, interval), interval);
-        assert_eq!(wait_until(None, now, interval), interval);
+        assert_eq!(wait_until(Some(started), started, now, interval), interval);
+        assert_eq!(wait_until(None, started, now, interval), interval);
     }
 }
