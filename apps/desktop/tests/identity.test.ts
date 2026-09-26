@@ -94,6 +94,32 @@ describe("token store", () => {
 });
 
 describe("session manager and client", () => {
+  it("signs a person out when the server says their session was revoked (QA-008)", async () => {
+    // The session is revoked at the server: the access token is refused with AUTH_INVALID_TOKEN,
+    // and so is the refresh token. The client tries one refresh, finds the session gone, and the
+    // manager signs out and clears custody instead of surfacing a raw refusal forever.
+    const server = fakeServer({
+      "POST /v1/auth/magic-link/complete": () => ({ body: session() }),
+      "GET /v1/me": () => ({ status: 401, body: { code: "AUTH_INVALID_TOKEN", message: "session was revoked", correlation_id: "x", retryable: false } }),
+      "POST /v1/auth/refresh": () => ({ status: 401, body: { code: "AUTH_INVALID_TOKEN", message: "session was revoked", correlation_id: "x", retryable: false } }),
+    });
+    const tokens = new TokenStore(userData(), XOR_CIPHER);
+    const states: string[] = [];
+    const manager = new SessionManager({
+      serverOrigin: "http://127.0.0.1:8080",
+      tokens,
+      client: (credential) => new ServerClient({ origin: "http://127.0.0.1:8080", credential, fetch: server.fetchImpl }),
+      onState: (state) => states.push(state.kind),
+    });
+    await manager.completeMagicLink("qml_good");
+    expect(manager.state().kind).toBe("signed-in");
+    await expect(manager.me()).rejects.toMatchObject({ code: "AUTH_INVALID_TOKEN" });
+    expect(server.requests.filter((request) => request.path === "/v1/auth/refresh")).toHaveLength(1);
+    expect(manager.state()).toEqual({ kind: "signed-out", persistent: true });
+    expect(tokens.load()).toBeNull();
+    expect(states.at(-1)).toBe("signed-out");
+  });
+
   it("signs in by magic link, presents the bearer, refreshes once on AUTH_EXPIRED, and clears custody when refused", async () => {
     let issued = 0;
     const server = fakeServer({
