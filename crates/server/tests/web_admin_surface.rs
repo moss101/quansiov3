@@ -607,7 +607,24 @@ async fn admin_pages_and_commands_are_decided_by_the_servers_rbac_for_every_role
         "invite-with-workspace, workspace policy, default teammate, grant, deny: {by_workspace}"
     );
     let tampered = entries[4]["id"].as_str().expect("id").to_string();
+    // Append-only (migration 0022): an edit is refused outright, whoever issues it.
     let mut tx = h.pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant");
+    let refused = sqlx::query("UPDATE audit_entries SET reason = 'edited after the fact' WHERE tenant_id = $1 AND id = $2")
+        .bind(TENANT)
+        .bind(&tampered)
+        .execute(&mut *tx)
+        .await;
+    assert!(refused.is_err(), "an audit entry was edited in place");
+    tx.rollback().await.expect("rollback");
+    // An attacker with DDL on the table can lift the guard; the chain still names the edit.
+    let mut tx = h.pool.begin().await.expect("begin");
+    sqlx::query("ALTER TABLE audit_entries DISABLE TRIGGER audit_entries_append_only")
+        .execute(&mut *tx)
+        .await
+        .expect("lift the guard");
     schema::set_tenant_context(&mut tx, TENANT)
         .await
         .expect("tenant");
@@ -617,6 +634,10 @@ async fn admin_pages_and_commands_are_decided_by_the_servers_rbac_for_every_role
         .execute(&mut *tx)
         .await
         .expect("tamper");
+    sqlx::query("ALTER TABLE audit_entries ENABLE TRIGGER audit_entries_append_only")
+        .execute(&mut *tx)
+        .await
+        .expect("restore the guard");
     tx.commit().await.expect("commit");
     let (_, audit) = get(&h.router, OWNER, "/v1/audit").await;
     assert_eq!(audit["chain"]["holds"], false, "{audit}");

@@ -336,6 +336,16 @@ async fn dispatch(
             .await?
         }
         "InstallSkill" => {
+            // Installing registers a skill in the tenant's registry: a tenant administrator's call,
+            // like promotion (DOMAIN.md §11.5).
+            super::rbac::Authorization::check(
+                state.pool(),
+                scope,
+                None,
+                crate::policy::rbac::ActionFamily::ManageTenant,
+                correlation,
+            )
+            .await?;
             super::knowledge::install_skill(
                 state,
                 identity,
@@ -383,6 +393,16 @@ async fn dispatch(
             .await?
         }
         "DisableSkill" => {
+            // Disabling deprecates a version out of production context, irreversibly: a tenant administrator's call,
+            // like promotion (DOMAIN.md §11.5).
+            super::rbac::Authorization::check(
+                state.pool(),
+                scope,
+                None,
+                crate::policy::rbac::ActionFamily::ManageTenant,
+                correlation,
+            )
+            .await?;
             super::knowledge::disable_skill(
                 state,
                 identity,
@@ -1559,6 +1579,25 @@ async fn identity_command(
     let text = |key: &str| params.get(key).and_then(Value::as_str);
     let schema =
         |message: String| ApiError::new(ApiErrorCode::ValidationSchema, message, correlation);
+    // The owner's refusal keeps its own code; a database or event-store failure is `INTERNAL`
+    // and never echoes the database's message (table names, policy names) to the caller.
+    let refused = |error: crate::control::identity::IdentityError| {
+        use crate::control::identity::IdentityError;
+        match error {
+            IdentityError::Schema(message) => schema(message),
+            IdentityError::NotFound(message) => {
+                ApiError::new(ApiErrorCode::NotFound, message, correlation)
+            }
+            IdentityError::Conflict(message) => {
+                ApiError::new(ApiErrorCode::ConflictState, message, correlation)
+            }
+            IdentityError::Event(_) | IdentityError::Database(_) => ApiError::new(
+                ApiErrorCode::Internal,
+                format!("{command} could not be completed"),
+                correlation,
+            ),
+        }
+    };
     let outcome = match command {
         "CreateWorkspace" => {
             let name =
@@ -1566,7 +1605,7 @@ async fn identity_command(
             let workspace_id = identity
                 .create_workspace(&scope.tenant_id, user_id, name)
                 .await
-                .map_err(|error| schema(error.to_string()))?;
+                .map_err(refused)?;
             json!({ "workspace_id": workspace_id, "tenant_id": scope.tenant_id, "name": name.trim() })
         }
         "UpdateWorkspace" => {
@@ -1581,7 +1620,7 @@ async fn identity_command(
                     params.get("settings"),
                 )
                 .await
-                .map_err(|error| schema(error.to_string()))?;
+                .map_err(refused)?;
             json!({
                 "workspace_id": workspace_id,
                 "effective_settings": change.effective,
@@ -1601,7 +1640,7 @@ async fn identity_command(
             let change = identity
                 .update_user_settings(&scope.tenant_id, workspace_id, user_id, settings)
                 .await
-                .map_err(|error| schema(error.to_string()))?;
+                .map_err(refused)?;
             json!({
                 "user_id": user_id,
                 "workspace_id": workspace_id,
