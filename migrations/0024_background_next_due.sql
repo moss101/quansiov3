@@ -1,9 +1,10 @@
 -- The background loop sleeps until its next due work instead of a fixed interval (CORE-008,
 -- found by QA-009: a routine window waited for the next one-second pass, so dispatch took up to
--- a second against a 500 ms budget). `routines`, `durable_timers` and `routine_fires` are readable
+-- a second against a 500 ms budget). `routines` and `durable_timers` are readable
 -- only for the active tenant (0001), so, like `background_tenants()` (0016), this function returns
--- one timestamp and nothing else: the earliest routine window, timer, or routine-fire retry or
--- lease expiry across every tenant.
+-- one timestamp and nothing else: the earliest routine window or timer across every tenant.
+-- Claimed routine fires are not the loop's: the fire executor runs them, and retries them on its
+-- own cadence.
 CREATE OR REPLACE FUNCTION background_next_due() RETURNS TIMESTAMPTZ
     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
     AS $$
@@ -14,10 +15,6 @@ CREATE OR REPLACE FUNCTION background_next_due() RETURNS TIMESTAMPTZ
             SELECT MIN(due_at) FROM durable_timers WHERE status = 'scheduled'
             UNION ALL
             SELECT MIN(claimed_until) FROM durable_timers WHERE status = 'claimed'
-            UNION ALL
-            SELECT MIN(next_attempt_at) FROM routine_fires WHERE status = 'pending'
-            UNION ALL
-            SELECT MIN(lease_until) FROM routine_fires WHERE status = 'running'
         ) AS due_work
     $$;
 REVOKE ALL ON FUNCTION background_next_due() FROM PUBLIC;

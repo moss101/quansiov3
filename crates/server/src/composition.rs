@@ -380,8 +380,8 @@ impl Background {
         executor
     }
 
-    /// Run forever: a pass, then sleep until the next due work — a routine window, a timer, a
-    /// fire's retry — but never longer than `interval` (so work that arrives unannounced, such
+    /// Run forever: a pass, then sleep until the next due work — a routine window or a timer —
+    /// but never longer than `interval` (so work that arrives unannounced, such
     /// as events for triggers and notifications, waits at most that long) and never less than
     /// [`MIN_BACKGROUND_WAIT`]. Work still due after a pass (a backlog beyond one pass's bounds)
     /// waits the whole interval, so a stuck item cannot spin the loop.
