@@ -28,8 +28,8 @@
       "log": "evidence/RUN-010/2026-09-26T22-45-53Z/lint.log"
     },
     {
-      "command": "three mutants, each after a passing control; cargo test --test budgets_enforced a_spent_budget (must fail)",
-      "exit_code": 101,
+      "command": "three mutants, each after a passing control; cargo test --test budgets_enforced a_spent_budget (each must fail; the log records each mutant's exit)",
+      "exit_code": 0,
       "result": "PASS",
       "log": "evidence/RUN-010/2026-09-26T22-45-53Z/mutation.log"
     }
@@ -56,8 +56,8 @@
       "result": "PASS"
     },
     {
-      "command": "three mutants, each after a passing control; cargo test --test budgets_enforced a_spent_budget (must fail)",
-      "exit_code": 101,
+      "command": "three mutants, each after a passing control; cargo test --test budgets_enforced a_spent_budget (each must fail; the log records each mutant's exit)",
+      "exit_code": 0,
       "result": "PASS"
     }
   ],
