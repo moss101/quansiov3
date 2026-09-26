@@ -20,6 +20,7 @@ import { Automations } from "./Automations.js";
 import { Trust } from "./Trust.js";
 import { Work } from "./Work.js";
 import { Onboarding } from "./Onboarding.js";
+import { Settings } from "./Settings.js";
 
 interface RunProjection {
   readonly connected: boolean;
@@ -91,7 +92,7 @@ function Shell(): ReactElement {
   const [projection, setProjection] = useState<RunProjection | null>(null);
   const [log, setLog] = useState<readonly LogLine[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
-  const [surface, setSurface] = useState<"conversation" | "artifacts" | "objectives" | "approvals" | "knowledge-controls" | "teammates" | "live-browser-terminal" | "collaboration" | "automations">("conversation");
+  const [surface, setSurface] = useState<"conversation" | "artifacts" | "objectives" | "approvals" | "knowledge-controls" | "teammates" | "live-browser-terminal" | "collaboration" | "automations" | "settings">("conversation");
 
   const refresh = useCallback(async () => {
     const next = (await window.quansio.activeRun()) as RunProjection;
@@ -124,6 +125,9 @@ function Shell(): ReactElement {
         <span className={`status status-${projection?.streamState ?? "closed"}`}>
           {connectionLabel(projection?.streamState ?? "closed")}
         </span>
+        <button type="button" aria-pressed={surface === "settings"} onClick={() => { setSurface("settings"); }}>
+          {t("settings")}
+        </button>
         <button type="button" onClick={() => { void window.quansio.signOut(); }}>
           {t("signOut")}
         </button>
@@ -174,6 +178,8 @@ function Shell(): ReactElement {
           <Collaboration key={`collaboration-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
         ) : surface === "automations" ? (
           <Automations key={`automations-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+        ) : surface === "settings" ? (
+          <Settings key={`settings-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
         ) : (
           <Conversation
             key={projection.workspaceId}

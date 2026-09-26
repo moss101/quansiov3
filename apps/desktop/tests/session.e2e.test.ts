@@ -1,7 +1,9 @@
 /**
- * Session end E2E (APP-002 regression found by QA-008): the real Electron app against the real
+ * Account E2E (APP-002 regressions found by QA-008): the real Electron app against the real
  * server returns a person to sign-in when their session ends — by the Sign out button, or because
- * an administrator revoked it while the app was open.
+ * an administrator revoked it while the app was open — and lets a workspace administrator change
+ * the workspace's and their own settings, showing the effective result and what the change sets in
+ * motion (the desktop had no settings surface at all).
  *
  * Before the fix the shell stayed on screen in both cases: the renderer only listened for the
  * session while signing in, and a revoked token was surfaced as a raw `AUTH_INVALID_TOKEN` on the
@@ -33,6 +35,7 @@ const MAIN = join(ROOT, "dist", "app", "main.cjs");
 const TENANT = "tn_01J8Z3K6F1N8VQ2X5W9Y0SESEE";
 const OWNER = "usr_01J8Z3K6F1N8VQ2X5W9Y0SESE1";
 const MEMBER = "usr_01J8Z3K6F1N8VQ2X5W9Y0SESE2";
+const VIEWER = "usr_01J8Z3K6F1N8VQ2X5W9Y0SESE3";
 const WORKSPACE = "ws_01J8Z3K6F1N8VQ2X5W9Y0SESEE";
 const NODE = "wn_01J8Z3K6F1N8VQ2X5W9Y0SESEE";
 
@@ -76,7 +79,7 @@ async function until(probe: () => Promise<boolean>, what: string, ms = 30_000): 
   }
 }
 
-describe.skipIf(blocked !== null)("desktop session end (real Electron, real server)", () => {
+describe.skipIf(blocked !== null)("desktop account (real Electron, real server)", () => {
   let database: string;
   let child: ChildProcess;
   let origin: string;
@@ -117,7 +120,7 @@ describe.skipIf(blocked !== null)("desktop session end (real Electron, real serv
     database = `quansio_desktop_session_${String(process.pid)}`;
     const output = execFileSync(
       SEED_BIN,
-      ["create", "--database", database, "--tenant", TENANT, "--user", OWNER, "--workspace", WORKSPACE, "--node", NODE, "--member", `${MEMBER}:member:editor`],
+      ["create", "--database", database, "--tenant", TENANT, "--user", OWNER, "--workspace", WORKSPACE, "--node", NODE, "--member", `${MEMBER}:member:editor`, "--member", `${VIEWER}:member:viewer`],
       { env: { ...process.env, QUANSIO_DATABASE_URL: ADMIN_URL }, encoding: "utf8" },
     );
     const url = output.split("\n").find((line) => line.startsWith("database_url="))?.slice("database_url=".length) ?? "";
@@ -177,6 +180,47 @@ describe.skipIf(blocked !== null)("desktop session end (real Electron, real serv
       });
       expect(revoked.ok).toBe(true);
       await desktop.page.getByRole("heading", { name: "Sign in" }).waitFor({ timeout: 20_000 });
+    } finally {
+      await desktop.done();
+    }
+  }, 120_000);
+  it("changes workspace and personal settings and shows the effective result", async () => {
+    const desktop = await launch();
+    try {
+      const page = desktop.page;
+      await signIn(page, email(OWNER));
+      await page.getByRole("button", { name: "Settings" }).click();
+      const settings = page.getByRole("region", { name: "Settings" });
+      await settings.getByLabel("Where work runs").selectOption("local_capsule");
+      await settings.getByLabel("Keep data for (days)").fill("30");
+      await settings.getByRole("button", { name: "Save workspace settings" }).click();
+      const status = settings.getByRole("status");
+      await until(async () => (await status.textContent())?.includes("re-provisioned") ?? false, "the restart the target change causes");
+      await until(async () => (await settings.getByText("local_capsule").count()) > 0, "the effective execution target");
+      await expect(settings.locator("dt", { hasText: "retention_days" }).locator("+ dd").textContent()).resolves.toBe("30");
+      await settings.getByLabel("Theme").selectOption("dark");
+      await settings.getByRole("button", { name: "Save my settings" }).click();
+      await until(async () => (await settings.locator("dt", { hasText: "theme" }).locator("+ dd").textContent()) === "dark", "the personal theme");
+      // A security control only gets stricter: telemetry stays off whatever the workspace asks.
+      await settings.getByLabel("Send diagnostic telemetry").check();
+      await settings.getByRole("button", { name: "Save workspace settings" }).click();
+      await until(async () => (await status.textContent())?.startsWith("Saved.") ?? false, "the save");
+      await expect(settings.locator("dt", { hasText: "telemetry" }).locator("+ dd").textContent()).resolves.toBe("false");
+    } finally {
+      await desktop.done();
+    }
+  }, 120_000);
+
+  it("shows a viewer the workspace settings without letting them change them", async () => {
+    const desktop = await launch();
+    try {
+      const page = desktop.page;
+      await signIn(page, email(VIEWER));
+      await page.getByRole("button", { name: "Settings" }).click();
+      const settings = page.getByRole("region", { name: "Settings" });
+      await settings.getByText("Only a workspace administrator can change these.").waitFor();
+      await expect(settings.getByRole("button", { name: "Save workspace settings" }).isDisabled()).resolves.toBe(true);
+      await expect(settings.getByRole("button", { name: "Save my settings" }).isEnabled()).resolves.toBe(true);
     } finally {
       await desktop.done();
     }
