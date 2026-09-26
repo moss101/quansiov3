@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 
+import { applyTheme, themeFromMe } from "../appearance.js";
 import { type WebClient } from "../client.js";
 import { layoutFor, type Layout } from "../layout.js";
 import { rolesFromMe, type Roles } from "../rbac.js";
@@ -68,6 +69,11 @@ export function App({ session, width }: { readonly session: WebSession; readonly
       (error: unknown) => { setMeError(error); },
     );
   }, [client]);
+
+  // The person's theme preference for the workspace in view (Settings on the desktop sets it).
+  useEffect(() => {
+    applyTheme(me ? themeFromMe(me, workspaceId) : "system", document.documentElement);
+  }, [me, workspaceId]);
 
   // The phone drawer closes on Escape, and whenever the layout stops being a drawer.
   useEffect(() => {

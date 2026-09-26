@@ -80,8 +80,12 @@
   --tone-7: #9a7250;
 }
 
+/*
+ * Dark tokens: when the person chose dark, or chose to follow the system and the system is dark.
+ * A chosen light theme keeps the light tokens whatever the system says.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #070707;
     --sidebar-bg: #111111;
     --surface: #181818;
@@ -117,6 +121,45 @@
     --shadow-popover: 0 0 0 0 transparent;
   }
 }
+
+:root[data-theme="dark"] {
+  --bg: #070707;
+  --sidebar-bg: #111111;
+  --surface: #181818;
+  --surface-2: #1f1f1f;
+  --sunken: #7777771a;
+
+  --fg: #fcfcfc;
+  --fg-2: #fcfcfc99;
+  --fg-3: #fcfcfc8f;
+  --fg-4: #fcfcfc4d;
+  --fg-on-primary: #141414;
+
+  --line: #fcfcfc1a;
+  --line-strong: #fcfcfc26;
+  --line-heavy: #fcfcfc4d;
+
+  --primary: #fafafa;
+  --primary-hover: #d5d5d5;
+  --hover: #7777772c;
+  --selected: #77777752;
+  --tint: #7777771f;
+  --neutral-subtle: #7777772c;
+
+  --link: #459ffe;
+  --focus: #1c8bfe;
+  --ok: #38d591;
+  --ok-ink: #38d591;
+  --warn: #ffaf38;
+  --warn-ink: #ffaf38;
+  --danger: #ff5667;
+
+  --shadow-inline: 0 0 0 0 transparent;
+  --shadow-popover: 0 0 0 0 transparent;
+}
+
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 
 /* ============================================================================ base */
 
