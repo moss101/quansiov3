@@ -280,8 +280,8 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-core003",
       "started_at": "2026-09-12T01:31:18Z",
-      "updated_at": "2026-09-12T01:31:18Z",
-      "git_commit": "8da14c49a42a768bfd67086422f5e0c1346534a0",
+      "updated_at": "2026-09-26T20:25:10Z",
+      "git_commit": "5612ae362338340573c344ada50da448de7434f1",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-events",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
@@ -291,12 +291,13 @@
         "evidence/CORE-003/2026-09-12T01-30-16Z/summary.json",
         "crates/events/src/envelope.rs",
         "crates/events/src/store.rs",
-        "migrations/0002_runtime_event_sequences.sql"
+        "migrations/0002_runtime_event_sequences.sql",
+        "evidence/CORE-003/2026-09-26T20-17-10Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "RuntimeEvent envelope and 34 event families from DOMAIN.md \u00a79; sequence assigned inside the commit transaction through a per-tenant counter row (concurrent writers serialize, rollback releases the value so the stream stays gap-free); mutation + event + outbox written atomically with NoEventStaged failing closed; outbox publishing behind an EventTransport trait with an explicit UnavailableTransport that never drops events silently; durable consumer cursors with resume. Reviewed and re-run on main (12 tests pass)."
+      "notes": "RuntimeEvent envelope and 34 event families from DOMAIN.md \u00a79; sequence assigned inside the commit transaction through a per-tenant counter row (concurrent writers serialize, rollback releases the value so the stream stays gap-free); mutation + event + outbox written atomically with NoEventStaged failing closed; outbox publishing behind an EventTransport trait with an explicit UnavailableTransport that never drops events silently; durable consumer cursors with resume. Reviewed and re-run on main (12 tests pass). 2026-09-26 (fix/CORE-003-replay-backpressure, merge 5612ae3, found by QA-009, P1): the replay reader try_sent each frame into the 64-frame subscriber buffer and disconnected on the first full buffer, so any subscriber replaying more than 64 events was cut off after 64 frames however fast it read; the reader now waits on a full buffer and disconnects with STREAM_BACKPRESSURE only after a 5 s stall (DOMAIN.md 9.3). Evidence evidence/CORE-003/2026-09-26T20-17-10Z."
     },
     "CORE-004": {
       "coverage": "GENUINE_GAP",
@@ -386,8 +387,8 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-core007",
       "started_at": "2026-09-12T02:05:45Z",
-      "updated_at": "2026-09-26T14:44:00Z",
-      "git_commit": "aa8d057646073aaf391cbe7f7c46f4a4591f2b9f",
+      "updated_at": "2026-09-26T20:51:29Z",
+      "git_commit": "b2532cbdf79ef0335480860327aa7d78dc481b1f",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
@@ -398,12 +399,13 @@
         "crates/server/src/artifacts/metadata.rs",
         "crates/server/src/artifacts/object_store.rs",
         "crates/server/tests/artifacts.rs",
-        "evidence/CORE-007/2026-09-26T14-36-21Z/summary.json"
+        "evidence/CORE-007/2026-09-26T14-36-21Z/summary.json",
+        "evidence/CORE-007/2026-09-26T20-37-41Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Artifact/ArtifactVersion/Evidence/EvidenceBundle metadata with immutable evidence (insert-only, new identities per capture), tenant-prefixed content-addressed object keys verified by sha256, SigV4 S3 client with multipart upload and SSE-S3 against the real dev MinIO, fail-closed grants, and retention/legal-hold decisions recorded rather than silently deleting. Verification required two dev-stack fixes, both committed here: the generated .env now picks up settings added to config/dev.yaml (the MinIO SSE key previously stayed unset), and credentials stay stable across upgrades. 2026-09-26 (fix/CORE-007-artifact-error-codes, merge aa8d057, found by QA-008 U-9): the artifact API sent database/schema/object-store/decode failures as VALIDATION_BOUNDS with the raw driver message; they are now INTERNAL with a fixed sentence (detail in the server log), NoBytes is NOT_FOUND, and the mapping is exhaustive. Evidence evidence/CORE-007/2026-09-26T14-36-21Z."
+      "notes": "Artifact/ArtifactVersion/Evidence/EvidenceBundle metadata with immutable evidence (insert-only, new identities per capture), tenant-prefixed content-addressed object keys verified by sha256, SigV4 S3 client with multipart upload and SSE-S3 against the real dev MinIO, fail-closed grants, and retention/legal-hold decisions recorded rather than silently deleting. Verification required two dev-stack fixes, both committed here: the generated .env now picks up settings added to config/dev.yaml (the MinIO SSE key previously stayed unset), and credentials stay stable across upgrades. 2026-09-26 (fix/CORE-007-artifact-error-codes, merge aa8d057, found by QA-008 U-9): the artifact API sent database/schema/object-store/decode failures as VALIDATION_BOUNDS with the raw driver message; they are now INTERNAL with a fixed sentence (detail in the server log), NoBytes is NOT_FOUND, and the mapping is exhaustive. Evidence evidence/CORE-007/2026-09-26T14-36-21Z. 2026-09-26 (fix/CORE-007-artifact-events, merge b2532cb, found by QA-009, P1): the artifact store wrote rows but no artifact.* RuntimeEvents, so storage was never metered and artifact triggers, webhooks and streams never saw an artifact; the store now writes artifact.created, artifact.version_added (size_bytes) and artifact.grant_changed in the caller's transaction via quansio_events::append_in. Evidence evidence/CORE-007/2026-09-26T20-37-41Z."
     },
     "CORE-008": {
       "coverage": "GENUINE_GAP",
@@ -706,8 +708,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T09:34:41Z",
-      "updated_at": "2026-09-12T09:43:11Z",
-      "git_commit": "a0568951c3fd4341e78fe068fef7f504d3b21d5d",
+      "updated_at": "2026-09-26T23:06:27Z",
+      "git_commit": "771bb22474fd857dcb4833407bbdb53f7be7ac4b",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test budgets (3 tests: budget inheritance, capacity saturation, graceful stop)",
         "cargo test -p quansio-server --lib (103 unit tests, 6 new budget rules)",
@@ -722,12 +724,13 @@
         "crates/server/src/runtime/budgets/limits.rs",
         "crates/server/src/runtime/budgets/service.rs",
         "crates/server/src/runtime/mod.rs",
-        "crates/server/tests/budgets.rs"
+        "crates/server/tests/budgets.rs",
+        "evidence/RUN-010/2026-09-26T22-45-53Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Runtime budgets, quotas and capacity control. crates/server/src/runtime/budgets implements DOMAIN.md \u00a713.2: limits.rs holds the pure rules (the seven meters, remaining/fits, the deterministic first-exhausted report, the child<=parent-remaining check and the narrowing helper), and service.rs is the durable authority that grants budgets, charges them and emits usage.* events. Acceptance 2 is enforced at grant time against the parent's REMAINING allowance, not its original limit, and nesting holds through the chain (a grandchild is bounded by its child parent). Acceptance 1 is met twice over: a charge beyond a limit is refused, marks the budget exhausted and emits usage.exhausted, and capacity_limit reports 0 so RUN-004's orchestration gate admits nothing; and the service writes only the budget row and its usage event, so an effect already reserved or dispatched is left untouched for the Effect Ledger \u2014 the graceful-stop test asserts an in-flight effect keeps its exact row and that no settlement event appears. The concurrency meter is the same number RUN-004's capacity gate takes from its caller, which the capacity test drives through the real gate and select(). Recorded gap, not worked around: the canonical prefix catalog (quansio.v1.core.EntityPrefix, DOMAIN.md \u00a71.1) has no budget prefix, so a budget id is supplied by its creator (BudgetService::create takes the id) rather than minted by the typed generator; extending the authority set is not this module's call."
+      "notes": "Runtime budgets, quotas and capacity control. crates/server/src/runtime/budgets implements DOMAIN.md \u00a713.2: limits.rs holds the pure rules (the seven meters, remaining/fits, the deterministic first-exhausted report, the child<=parent-remaining check and the narrowing helper), and service.rs is the durable authority that grants budgets, charges them and emits usage.* events. Acceptance 2 is enforced at grant time against the parent's REMAINING allowance, not its original limit, and nesting holds through the chain (a grandchild is bounded by its child parent). Acceptance 1 is met twice over: a charge beyond a limit is refused, marks the budget exhausted and emits usage.exhausted, and capacity_limit reports 0 so RUN-004's orchestration gate admits nothing; and the service writes only the budget row and its usage event, so an effect already reserved or dispatched is left untouched for the Effect Ledger \u2014 the graceful-stop test asserts an in-flight effect keeps its exact row and that no settlement event appears. The concurrency meter is the same number RUN-004's capacity gate takes from its caller, which the capacity test drives through the real gate and select(). Recorded gap, not worked around: the canonical prefix catalog (quansio.v1.core.EntityPrefix, DOMAIN.md \u00a71.1) has no budget prefix, so a budget id is supplied by its creator (BudgetService::create takes the id) rather than minted by the typed generator; extending the authority set is not this module's call. 2026-09-26 (fix/RUN-010-budgets-enforced, merge 771bb22, found by QA-009, P1): no cost control was enforced in production (BudgetService and usage::quota had no caller); budgets are granted (SetBudget, bdg_ ids) and enforced by the engine: the run's agent-thread, workspace and tenant budgets are checked before each model call and tool round and charged with reported tokens and tool calls after, suspending the run with BUDGET_EXHAUSTED; charges are atomic under a row lock. Evidence evidence/RUN-010/2026-09-26T22-45-53Z."
     },
     "RUN-011": {
       "coverage": "GENUINE_GAP",
@@ -918,8 +921,8 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-int004",
       "started_at": "2026-09-12T03:04:55Z",
-      "updated_at": "2026-09-12T03:04:55Z",
-      "git_commit": "4974a336d4c8f206149066e3afb6dffcb840bd1a",
+      "updated_at": "2026-09-26T21:02:19Z",
+      "git_commit": "5715ce39dffcf9b74d5905f0da6bd3fea063b5bb",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-indexer",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
@@ -929,12 +932,13 @@
         "evidence/INT-004/2026-09-12T03-01-56Z/summary.json",
         "crates/indexer/src/program.rs",
         "crates/indexer/src/tantivy_engine.rs",
-        "crates/indexer/tests/search_api.rs"
+        "crates/indexer/tests/search_api.rs",
+        "evidence/INT-004/2026-09-26T20-51-45Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Derived exact/lexical/symbol SearchIndex over authoritative artifact text with typed SearchProgram filters (no free-form predicates), provenance (source, locator, snapshot), budgets with reported truncation, tenant isolation, incremental add/update/delete including idempotent re-application, and a rebuild from PostgreSQL that reproduces identical hits. Integrated and re-verified by the principal agent after the subagent was killed by a full disk."
+      "notes": "Derived exact/lexical/symbol SearchIndex over authoritative artifact text with typed SearchProgram filters (no free-form predicates), provenance (source, locator, snapshot), budgets with reported truncation, tenant isolation, incremental add/update/delete including idempotent re-application, and a rebuild from PostgreSQL that reproduces identical hits. Integrated and re-verified by the principal agent after the subagent was killed by a full disk. 2026-09-26 (fix/INT-004-incremental-search-refresh, merge 5715ce3, found by QA-009 against 21.2's index budget): every search after an artifact change rebuilt the tenant's index from the whole corpus (p50 385 ms over 120 notes, growing with the corpus); the refresh now indexes only versions newer than the last one it saw and rebuilds only on first sight, a deletion, or an unaccounted change (p50 12 ms served). Evidence evidence/INT-004/2026-09-26T20-51-45Z."
     },
     "INT-005": {
       "coverage": "GENUINE_GAP",
@@ -1633,8 +1637,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-14T11:20:00Z",
-      "updated_at": "2026-09-25T08:07:51Z",
-      "git_commit": "6bce25e29f5ed620b77f526ff6cd9b614b92f55b",
+      "updated_at": "2026-09-26T22:41:00Z",
+      "git_commit": "b6e76461a00afaded80c1dbc4b7abfb5e6f6dc2d",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test api (12 passed: \u00a715 vocabulary, ownership scan, OpenAPI/catalog contract, feature flags, per-tenant RATE_LIMITED, CancelRun owner path, composition)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test walking_skeleton (2 passed: HTTP PostMessage -> conformance-stub fs.read -> Effect Ledger -> projections; WebSocket reconnect-from-cursor)",
@@ -1671,12 +1675,13 @@
         "crates/server/tests/walking_skeleton_gateway.rs",
         "config/intelligence.yaml",
         "evidence/APP-001/2026-09-25T08-06-50Z/summary.json",
-        "evidence/APP-001/2026-09-25T08-06-50Z/NOTES.md"
+        "evidence/APP-001/2026-09-25T08-06-50Z/NOTES.md",
+        "evidence/APP-001/2026-09-26T21-45-37Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Units landed: public v1 API with \u00a715 errors, tenant scope, command log idempotency, CancelRun/PauseRun/ResumeRun through the runtime, CreateThread/PostMessage through the conversation owner, walking skeleton (PostMessage -> run_turn with conformance-stub fs.read -> Effect Ledger -> read projections), WebSocket GET /v1/stream with cursor reconnect, per-tenant rate limits, feature flags from config/flags.yaml, OpenAPI/catalog contract. Remaining catalog commands fail closed naming the missing handler rather than writing foreign tables. The API module still writes only `commands`. 2026-09-18 (e631fb5) PASS: re-verified in full on main after INT-002 reached PASS; the only blocker was the dependency rule; every recorded suite green (see evidence/APP-001/2026-09-18T13-59-00Z/NOTES.md). 2026-09-19 regression (fixed same day, fix/APP-001-stream-tail merged as 0943011): the stream handler kept the live-frame sender alive so tail_events never ran and no client received an event committed after it subscribed; exposed by APP-003's reconnect E2E, reproduced by websocket_delivers_events_committed_after_subscribe, fixed by dropping the sender. quansio-dev-seed added for harness seeding (305b3f8). Evidence: evidence/APP-001/2026-09-19T18-41-53Z/. 2026-09-23 regression (fixed same day, fix/APP-001-tenant-scoped-command-rows merged as 5c5334e): api/commands.rs stored the client's command_id as the commands primary key, so a second tenant sending a command_id another tenant had used hit commands_pkey instead of the (tenant_id, command_id) conflict target and got 500 INTERNAL; found by review against 6f88144, reproduced by two_tenants_may_send_the_same_command_id_and_each_replays_its_own, fixed by minting the record id server-side (DOMAIN.md \u00a71.1) with no migration; the CORE-002 schema test now gives its duplicate row its own id so it tests the per-tenant constraint. Evidence: evidence/APP-001/2026-09-23T10-35-14Z/. 2026-09-23 regression (fixed same day, fix/APP-001-record-refused-commands merged as be3af26): api/commands.rs recorded a command as 'accepted' and wrote an outcome only when the owner succeeded, so an owner refusal left the record accepted with no result or error, and a resend of the same command_id (or a concurrent duplicate) got 200 {replayed: true, result: null}. The client saw a refused command as succeeded. Found by reading main at 7d54410. Reproduced by a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal (CancelRun on a failed run -> 409 RUNTIME_ILLEGAL_TRANSITION, record stayed accepted) and a_resend_while_the_first_is_still_being_applied_is_told_to_come_back (200 null). Fixed by recording every refusal as status 'rejected' with the \u00a715 error. Replay returns it with its original status and correlation id; a still-accepted record gets 409 CONFLICT_STATE, retryable, details.command_status. Retryable refusals are recorded too, because owners are not idempotent by command_id. RATE_LIMITED stays unrecorded. No migration. Open follow-up: a handler cancelled by a client disconnect can leave a record accepted for good. Evidence: evidence/APP-001/2026-09-23T12-32-42Z/. 2026-09-24 regression (fixed same day, fix/APP-001-gateway-walking-skeleton merged as 72244ea; evidence/APP-001/2026-09-24T07-13-36Z/): the build item says the walking skeleton goes HTTP -> runtime -> gateway (conformance-stub or live provider) -> tool proposal -> Effect Ledger -> projection -> WebSocket event, but every ApiState answered with the in-process ConformanceStubModel and nothing ever called the gateway. After the INT-001/INT-002/INT-005 regression fixes, intelligence::model_source::GatewayModelSource reads the turn's canonical content (teammate instructions or config/intelligence.yaml's default, the thread up to the trigger, this run's tool rounds), builds and checks the context through the Context plane, calls FulfillModel with exactly the rendered messages and the capability-filtered tools, and records the gateway's mr_ route, usage and ctx_ projection; failures keep their DOMAIN 15 code (and the API now maps every catalog code instead of turning unlisted ones into INTERNAL). ModelEvent carries the route on call_started/call_completed (DOMAIN 11.1). Composition installs it when QUANSIO_INTELLIGENCE_ENDPOINT is set; otherwise startup says turns are answered by the conformance stub. The dev stub provider scripts a deterministic tool round. The deployable binary answered through the stub and live through Z.ai GLM-5.3-Flash (including a tool round). 6 mutations each fail walking_skeleton_gateway. Known follow-ups outside APP-001: context_projections is never written (the inspector's context stays null), resolved skills do not enter a turn's context, fs.* tools still dispatch to the conformance host. 2026-09-25 regression (found by OPS-001 reconciliation, 2026-09-24): as the least-privilege role quansio_app the public command surface answered 500 'new row violates row-level security policy for table commands' (the_public_surface_works_as_the_application_role_under_rls, failing at c207b11): the command log's INSERT/UPDATEs/replay and the handler's own reads ran on the bare pool with no tenant context, and artifact/evidence handlers used a pooled connection outside any transaction; fixed on fix/APP-001-api-queries-under-rls (f0ce9bc) with ApiState::tenant_tx for every API statement, guarded by the quansio_app surface test and a src/api scan; merged 6bce25e29f5ed620b77f526ff6cd9b614b92f55b. Evidence evidence/APP-001/2026-09-25T08-06-50Z/. 2026-09-26 (QA-007 662f245): the deployable can apply the schema over QUANSIO_MIGRATION_DATABASE_URL and serve as a quansio_app login (finding F-1); a command naming a workspace outside the caller's tenant is NOT_FOUND at the command surface (F-7)."
+      "notes": "Units landed: public v1 API with \u00a715 errors, tenant scope, command log idempotency, CancelRun/PauseRun/ResumeRun through the runtime, CreateThread/PostMessage through the conversation owner, walking skeleton (PostMessage -> run_turn with conformance-stub fs.read -> Effect Ledger -> read projections), WebSocket GET /v1/stream with cursor reconnect, per-tenant rate limits, feature flags from config/flags.yaml, OpenAPI/catalog contract. Remaining catalog commands fail closed naming the missing handler rather than writing foreign tables. The API module still writes only `commands`. 2026-09-18 (e631fb5) PASS: re-verified in full on main after INT-002 reached PASS; the only blocker was the dependency rule; every recorded suite green (see evidence/APP-001/2026-09-18T13-59-00Z/NOTES.md). 2026-09-19 regression (fixed same day, fix/APP-001-stream-tail merged as 0943011): the stream handler kept the live-frame sender alive so tail_events never ran and no client received an event committed after it subscribed; exposed by APP-003's reconnect E2E, reproduced by websocket_delivers_events_committed_after_subscribe, fixed by dropping the sender. quansio-dev-seed added for harness seeding (305b3f8). Evidence: evidence/APP-001/2026-09-19T18-41-53Z/. 2026-09-23 regression (fixed same day, fix/APP-001-tenant-scoped-command-rows merged as 5c5334e): api/commands.rs stored the client's command_id as the commands primary key, so a second tenant sending a command_id another tenant had used hit commands_pkey instead of the (tenant_id, command_id) conflict target and got 500 INTERNAL; found by review against 6f88144, reproduced by two_tenants_may_send_the_same_command_id_and_each_replays_its_own, fixed by minting the record id server-side (DOMAIN.md \u00a71.1) with no migration; the CORE-002 schema test now gives its duplicate row its own id so it tests the per-tenant constraint. Evidence: evidence/APP-001/2026-09-23T10-35-14Z/. 2026-09-23 regression (fixed same day, fix/APP-001-record-refused-commands merged as be3af26): api/commands.rs recorded a command as 'accepted' and wrote an outcome only when the owner succeeded, so an owner refusal left the record accepted with no result or error, and a resend of the same command_id (or a concurrent duplicate) got 200 {replayed: true, result: null}. The client saw a refused command as succeeded. Found by reading main at 7d54410. Reproduced by a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal (CancelRun on a failed run -> 409 RUNTIME_ILLEGAL_TRANSITION, record stayed accepted) and a_resend_while_the_first_is_still_being_applied_is_told_to_come_back (200 null). Fixed by recording every refusal as status 'rejected' with the \u00a715 error. Replay returns it with its original status and correlation id; a still-accepted record gets 409 CONFLICT_STATE, retryable, details.command_status. Retryable refusals are recorded too, because owners are not idempotent by command_id. RATE_LIMITED stays unrecorded. No migration. Open follow-up: a handler cancelled by a client disconnect can leave a record accepted for good. Evidence: evidence/APP-001/2026-09-23T12-32-42Z/. 2026-09-24 regression (fixed same day, fix/APP-001-gateway-walking-skeleton merged as 72244ea; evidence/APP-001/2026-09-24T07-13-36Z/): the build item says the walking skeleton goes HTTP -> runtime -> gateway (conformance-stub or live provider) -> tool proposal -> Effect Ledger -> projection -> WebSocket event, but every ApiState answered with the in-process ConformanceStubModel and nothing ever called the gateway. After the INT-001/INT-002/INT-005 regression fixes, intelligence::model_source::GatewayModelSource reads the turn's canonical content (teammate instructions or config/intelligence.yaml's default, the thread up to the trigger, this run's tool rounds), builds and checks the context through the Context plane, calls FulfillModel with exactly the rendered messages and the capability-filtered tools, and records the gateway's mr_ route, usage and ctx_ projection; failures keep their DOMAIN 15 code (and the API now maps every catalog code instead of turning unlisted ones into INTERNAL). ModelEvent carries the route on call_started/call_completed (DOMAIN 11.1). Composition installs it when QUANSIO_INTELLIGENCE_ENDPOINT is set; otherwise startup says turns are answered by the conformance stub. The dev stub provider scripts a deterministic tool round. The deployable binary answered through the stub and live through Z.ai GLM-5.3-Flash (including a tool round). 6 mutations each fail walking_skeleton_gateway. Known follow-ups outside APP-001: context_projections is never written (the inspector's context stays null), resolved skills do not enter a turn's context, fs.* tools still dispatch to the conformance host. 2026-09-25 regression (found by OPS-001 reconciliation, 2026-09-24): as the least-privilege role quansio_app the public command surface answered 500 'new row violates row-level security policy for table commands' (the_public_surface_works_as_the_application_role_under_rls, failing at c207b11): the command log's INSERT/UPDATEs/replay and the handler's own reads ran on the bare pool with no tenant context, and artifact/evidence handlers used a pooled connection outside any transaction; fixed on fix/APP-001-api-queries-under-rls (f0ce9bc) with ApiState::tenant_tx for every API statement, guarded by the quansio_app surface test and a src/api scan; merged 6bce25e29f5ed620b77f526ff6cd9b614b92f55b. Evidence evidence/APP-001/2026-09-25T08-06-50Z/. 2026-09-26 (QA-007 662f245): the deployable can apply the schema over QUANSIO_MIGRATION_DATABASE_URL and serve as a quansio_app login (finding F-1); a command naming a workspace outside the caller's tenant is NOT_FOUND at the command surface (F-7). 2026-09-26 (fix/APP-001-accept-then-run, merge b6e7646, found by QA-009 against 21.2's command-accepted budget and DOMAIN 9): PostMessage, AnswerQuestion and approval decisions ran the next turn inside the request (p95 1 s even with the stub; seconds with a real model) and no command response carried accepted_at though the OpenAPI requires it; the served composition now answers once the command is accepted and runs the turn after it (ApiState::with_background_turns), every response carries accepted_at (a replay the original), and the E2E suites and the QA-007 campaign wait for turns. Evidence evidence/APP-001/2026-09-26T21-45-37Z."
     },
     "APP-002": {
       "coverage": "PARTIAL",
@@ -1952,8 +1957,8 @@
       "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-23T05:16:46Z",
-      "updated_at": "2026-09-23T10:16:55Z",
-      "git_commit": "53c39c0a40436b6549a26c32bd88a9d2093ad9e5",
+      "updated_at": "2026-09-26T20:34:05Z",
+      "git_commit": "5a7a220cc5596f927f6e6a9dd8443c22843bf27a",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test collaboration (5 passed against real PostgreSQL: concurrent posts from two people keep one gap-free seq order with events committed in that order; a removed participant receives their removal and no later thread event or live frame, and reads, posts and reactions are refused; membership rules (protection, owner/admin management, last-owner guard, workspace membership, objective threads); reactions, mentions and derived attention; handoff with notice, RUN-002 mailbox item and routing, refused while the source has live work)",
         "cargo test -p quansio-server --lib control::conversation (idempotent reactions and their validation)",
@@ -1982,12 +1987,13 @@
         "apps/desktop/tests/collaboration.test.ts",
         "apps/desktop/tests/collaboration.e2e.test.ts",
         "evidence/APP-009/2026-09-23T10-16-25Z/summary.json",
-        "evidence/APP-009/2026-09-23T10-16-25Z/NOTES.md"
+        "evidence/APP-009/2026-09-23T10-16-25Z/NOTES.md",
+        "evidence/APP-009/2026-09-26T20-25-32Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Messages sort by seq then id. Removed/suspended participants cannot receive protected events. 2026-09-19 correction: was BLOCKED_EXTERNAL at c7c6008fc1e05b88af919673da69a89e1de6b064 claimed by agent:principal-1 (started 2026-09-15T06:20:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/server/src/control/collaboration is order_messages (a sort) and can_receive(status == 'active'); apps/desktop/src/collaboration is 12 lines. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-23 (agent:claude-opus-5): implemented at 165614a \u2014 control/collaboration owns thread_participants (membership, protection gate for projections, commands and the stream, derived attention, HandOffThread); the conversation owner assigns seq under the thread lock and versions thread events per thread; reactions and mentions; migration 0015; desktop Collaboration surface. REGRESSION FOUND AND FIXED 2026-09-23 (evidence/APP-009/2026-09-23T10-16-25Z/): apps/desktop/tests/collaboration.e2e.test.ts (two clients posting at once) failed intermittently with RUNTIME_ILLEGAL_TRANSITION ACTIVE -> ACTIVE, exposed by APP-015's CI at b1b61e9 (2 of 6 isolated reruns) \u2014 concurrent PostMessage calls read the teammate's agent thread as PROVISIONED and the losing activation was refused. Fix f32d3e5: AgentStore::ensure_active re-reads and accepts a thread a concurrent caller already activated (a terminated one is still refused); regression test races six callers from one read; the E2E passed 8/8. Merged to main as 53c39c0."
+      "notes": "Messages sort by seq then id. Removed/suspended participants cannot receive protected events. 2026-09-19 correction: was BLOCKED_EXTERNAL at c7c6008fc1e05b88af919673da69a89e1de6b064 claimed by agent:principal-1 (started 2026-09-15T06:20:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/server/src/control/collaboration is order_messages (a sort) and can_receive(status == 'active'); apps/desktop/src/collaboration is 12 lines. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-23 (agent:claude-opus-5): implemented at 165614a \u2014 control/collaboration owns thread_participants (membership, protection gate for projections, commands and the stream, derived attention, HandOffThread); the conversation owner assigns seq under the thread lock and versions thread events per thread; reactions and mentions; migration 0015; desktop Collaboration surface. REGRESSION FOUND AND FIXED 2026-09-23 (evidence/APP-009/2026-09-23T10-16-25Z/): apps/desktop/tests/collaboration.e2e.test.ts (two clients posting at once) failed intermittently with RUNTIME_ILLEGAL_TRANSITION ACTIVE -> ACTIVE, exposed by APP-015's CI at b1b61e9 (2 of 6 isolated reruns) \u2014 concurrent PostMessage calls read the teammate's agent thread as PROVISIONED and the losing activation was refused. Fix f32d3e5: AgentStore::ensure_active re-reads and accepts a thread a concurrent caller already activated (a terminated one is still refused); regression test races six callers from one read; the E2E passed 8/8. Merged to main as 53c39c0. 2026-09-26 (fix/APP-009-thread-list-access, merge 5a7a220, found by QA-009 against 21.2's read budget): GET /v1/threads decided access with one query per thread (p50 397 ms at ~200 threads, 8 readers); thread_access_many decides for the whole list in one query with the same rules (p50 5.5 ms served). Evidence evidence/APP-009/2026-09-26T20-25-32Z."
     },
     "APP-010": {
       "coverage": "PARTIAL",
@@ -2496,8 +2502,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:35:00Z",
-      "updated_at": "2026-09-26T18:53:50Z",
-      "git_commit": "01ebe0de4f3edaadb4a090f66ea9db628818daa7",
+      "updated_at": "2026-09-26T23:06:27Z",
+      "git_commit": "771bb22474fd857dcb4833407bbdb53f7be7ac4b",
       "tests": [
         "cargo test -p quansio-server --test usage (4 passed: rebuild is a pure function of the event set; soft quota alerts and still admits; hard quota refuses without committing an effect; concurrent admits produce one winner)"
       ],
@@ -2506,12 +2512,13 @@
         "crates/server/src/usage/project.rs",
         "crates/server/src/usage/quota.rs",
         "evidence/OPS-004/2026-09-26T18-36-48Z/summary.json",
-        "evidence/OPS-004/2026-09-26T18-49-43Z/summary.json"
+        "evidence/OPS-004/2026-09-26T18-49-43Z/summary.json",
+        "evidence/RUN-010/2026-09-26T22-45-53Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "UsageRecords rebuild deterministically from RuntimeEvents. Hard quotas refuse before effect commit. Soft quotas emit a budget alert and still admit. Billing is this projection, not runtime truth. 2026-09-26 (fix/OPS-004-usage-materialized, merge 67e20d6, found by QA-009, P1): GET /v1/usage re-projected the tenant's oldest 20,000 events on every read, so nothing newer was metered; the background loop now materializes usage_records behind a consumer cursor (idempotent, cursor in the same transaction) and a read sums the rows plus the events after the cursor from one snapshot. Open, recorded by QA-009: quota enforcement (usage::quota) has no production caller and DOMAIN.md defines no quota settings. Evidence evidence/OPS-004/2026-09-26T18-36-48Z. Correction (merge 01ebe0d): the 18-36-48Z bundle's lint.log recorded exit=0 over a clippy failure (unnecessary_sort_by in usage/store.rs; the captured status was the output filter's); fixed with sort_by_key and re-verified with each status captured before filtering. Evidence evidence/OPS-004/2026-09-26T18-49-43Z."
+      "notes": "UsageRecords rebuild deterministically from RuntimeEvents. Hard quotas refuse before effect commit. Soft quotas emit a budget alert and still admit. Billing is this projection, not runtime truth. 2026-09-26 (fix/OPS-004-usage-materialized, merge 67e20d6, found by QA-009, P1): GET /v1/usage re-projected the tenant's oldest 20,000 events on every read, so nothing newer was metered; the background loop now materializes usage_records behind a consumer cursor (idempotent, cursor in the same transaction) and a read sums the rows plus the events after the cursor from one snapshot. Open, recorded by QA-009: quota enforcement (usage::quota) has no production caller and DOMAIN.md defines no quota settings. Evidence evidence/OPS-004/2026-09-26T18-36-48Z. Correction (merge 01ebe0d): the 18-36-48Z bundle's lint.log recorded exit=0 over a clippy failure (unnecessary_sort_by in usage/store.rs; the captured status was the output filter's); fixed with sort_by_key and re-verified with each status captured before filtering. Evidence evidence/OPS-004/2026-09-26T18-49-43Z. 2026-09-26 (fix/RUN-010-budgets-enforced, merge 771bb22, found by QA-009, P1): no cost control was enforced in production (BudgetService and usage::quota had no caller); the budgets' limits are the hard quota and crossing 80 % of a limit emits usage.threshold_crossed once (the soft quota), closing the open quota-enforcement finding; /v1/usage lists the budgets. Evidence evidence/RUN-010/2026-09-26T22-45-53Z."
     },
     "OPS-005": {
       "coverage": "GENUINE_GAP",

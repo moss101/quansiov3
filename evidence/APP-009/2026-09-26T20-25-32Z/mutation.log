@@ -1,0 +1,9 @@
+CONTROL:
+test a_thread_list_decides_access_exactly_as_one_thread_does ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.66s
+MUTANT: the list admits every thread
+COMPILES
+test a_thread_list_decides_access_exactly_as_one_thread_does ... FAILED
+thread 'a_thread_list_decides_access_exactly_as_one_thread_does' (39128752) panicked at crates/server/tests/collaboration.rs:232:13:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.47s
+exit=101

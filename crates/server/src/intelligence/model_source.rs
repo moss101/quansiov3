@@ -38,8 +38,8 @@ use crate::runtime::context_bridge::{
     ProjectionRequest, SegmentRequest, SegmentRole, SegmentSource,
 };
 use crate::runtime::state_machine::{
-    ModelCallRequest, ModelProposal, ModelProposalSource, ProposedToolCall, RuntimeError,
-    RuntimeIdentity, TextSink,
+    ModelCallRequest, ModelProposal, ModelProposalSource, ModelUsage, ProposedToolCall,
+    RuntimeError, RuntimeIdentity, TextSink,
 };
 use crate::runtime::turn_loop::{
     ModelCallLedger, ProjectionProvider, RecordedCall, StoredProjectionProvider,
@@ -451,7 +451,18 @@ impl GatewayModelSource {
                 format!("the model call {call_id} failed"),
             ));
         }
+        let tokens = |field: &str| {
+            outcome
+                .usage
+                .get(field)
+                .and_then(Value::as_u64)
+                .unwrap_or(0)
+        };
         Ok(ModelProposal {
+            usage: Some(ModelUsage {
+                input_tokens: tokens("input"),
+                output_tokens: tokens("output"),
+            }),
             assistant_text: (!outcome.text.is_empty()).then_some(outcome.text),
             tool_calls: outcome.tool_calls,
             ..ModelProposal::default()

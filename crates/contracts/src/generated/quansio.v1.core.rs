@@ -546,6 +546,8 @@ pub enum EntityPrefix {
     DirectoryGroup = 52,
     /// ksw_ (OPS-008: a kill-switch engagement)
     KillSwitch = 53,
+    /// bdg_ (RUN-010: a budget grant)
+    Budget = 54,
 }
 impl EntityPrefix {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -608,6 +610,7 @@ impl EntityPrefix {
             Self::ContextProjection => "ENTITY_PREFIX_CONTEXT_PROJECTION",
             Self::DirectoryGroup => "ENTITY_PREFIX_DIRECTORY_GROUP",
             Self::KillSwitch => "ENTITY_PREFIX_KILL_SWITCH",
+            Self::Budget => "ENTITY_PREFIX_BUDGET",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -667,6 +670,7 @@ impl EntityPrefix {
             "ENTITY_PREFIX_CONTEXT_PROJECTION" => Some(Self::ContextProjection),
             "ENTITY_PREFIX_DIRECTORY_GROUP" => Some(Self::DirectoryGroup),
             "ENTITY_PREFIX_KILL_SWITCH" => Some(Self::KillSwitch),
+            "ENTITY_PREFIX_BUDGET" => Some(Self::Budget),
             _ => None,
         }
     }

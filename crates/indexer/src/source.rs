@@ -17,6 +17,9 @@ pub struct SourceScope {
     pub tenant_id: String,
     /// Workspace restriction, when rebuilding a single workspace.
     pub workspace_id: Option<String>,
+    /// Only versions newer than this version id (version ids are time-ordered), when catching an
+    /// index up rather than rebuilding it.
+    pub after_version_id: Option<String>,
 }
 
 impl SourceScope {
@@ -26,7 +29,15 @@ impl SourceScope {
         Self {
             tenant_id: tenant_id.into(),
             workspace_id: None,
+            after_version_id: None,
         }
+    }
+
+    /// The same scope, narrowed to versions newer than `version_id`.
+    #[must_use]
+    pub fn after(mut self, version_id: impl Into<String>) -> Self {
+        self.after_version_id = Some(version_id.into());
+        self
     }
 
     /// A workspace-narrowed scope.
@@ -35,6 +46,7 @@ impl SourceScope {
         Self {
             tenant_id: tenant_id.into(),
             workspace_id: Some(workspace_id.into()),
+            after_version_id: None,
         }
     }
 }

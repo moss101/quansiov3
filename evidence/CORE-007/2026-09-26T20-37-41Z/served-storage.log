@@ -1,0 +1,8 @@
+host: 23:51  up 4 days, 11:11, 2 users, load averages: 8.91 6.91 6.57
+== bin-app009 (main before the fix; must fail)
+artifact events [] bytes written 1800 storage metered 0.0
+AssertionError
+exit=1
+== bin-core007 (this branch)
+artifact events ['artifact.created', 'artifact.version_added'] bytes written 1800 storage metered 1800.0
+exit=0

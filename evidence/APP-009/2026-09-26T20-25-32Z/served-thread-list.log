@@ -1,0 +1,6 @@
+host: 23:33  up 4 days, 10:53, 2 users, load averages: 14.18 10.11 7.97
+== bin-core003 (main before the fix)
+threads 200 {'n': 200, 'p50_ms': 174.59, 'p95_ms': 201.02, 'p99_ms': 243.71, 'max_ms': 298.55, 'mean_ms': 178.09}
+== bin-app009 (this branch)
+threads 200 {'n': 200, 'p50_ms': 5.52, 'p95_ms': 10.12, 'p99_ms': 12.86, 'max_ms': 20.25, 'mean_ms': 6.25}
+exit=0

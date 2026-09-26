@@ -120,6 +120,8 @@ pub enum Prefix {
     DirectoryGroup,
     /// `ksw_` kill-switch engagement (OPS-008).
     KillSwitch,
+    /// `bdg_` budget grant (RUN-010).
+    Budget,
 }
 
 impl Prefix {
@@ -180,6 +182,7 @@ impl Prefix {
             Self::ContextProjection => "ctx_",
             Self::DirectoryGroup => "dgr_",
             Self::KillSwitch => "ksw_",
+            Self::Budget => "bdg_",
         }
     }
 
@@ -242,6 +245,7 @@ impl Prefix {
             Self::ContextProjection => "CONTEXT_PROJECTION",
             Self::DirectoryGroup => "DIRECTORY_GROUP",
             Self::KillSwitch => "KILL_SWITCH",
+            Self::Budget => "BUDGET",
         }
     }
 
@@ -302,6 +306,7 @@ impl Prefix {
             Self::ContextProjection,
             Self::DirectoryGroup,
             Self::KillSwitch,
+            Self::Budget,
         ]
     }
 }

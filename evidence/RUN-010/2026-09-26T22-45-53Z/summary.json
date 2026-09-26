@@ -1,0 +1,96 @@
+{
+  "task_id": "RUN-010",
+  "git_commit": "e262b3ec46af90247384ca0699251c8b8d75ea55",
+  "recorded_at": "2026-09-26T23:06:02Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test budgets_enforced --test budgets --test usage --test usage_store --test runtime_state_machine --test walking_skeleton_gateway --test conversation_surface --test api --test agents --test scheduler; cargo test -p quansio-server --lib",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-010/2026-09-26T22-45-53Z/tests.log"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check; python3.12 scripts/validate_v81.py; dossier_consistency.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-010/2026-09-26T22-45-53Z/contracts.log"
+    },
+    {
+      "command": "cd sdk/typescript && npx vitest run; uv run --project python pytest tests/sdk -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-010/2026-09-26T22-45-53Z/sdk.log"
+    },
+    {
+      "command": "cargo fmt --all --check; cargo clippy -p quansio-core -p quansio-contracts -p quansio-server --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-010/2026-09-26T22-45-53Z/lint.log"
+    },
+    {
+      "command": "three mutants, each after a passing control; cargo test --test budgets_enforced a_spent_budget (each must fail; the log records each mutant's exit)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-010/2026-09-26T22-45-53Z/mutation.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test budgets_enforced --test budgets --test usage --test usage_store --test runtime_state_machine --test walking_skeleton_gateway --test conversation_surface --test api --test agents --test scheduler; cargo test -p quansio-server --lib",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check; python3.12 scripts/validate_v81.py; dossier_consistency.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd sdk/typescript && npx vitest run; uv run --project python pytest tests/sdk -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check; cargo clippy -p quansio-core -p quansio-contracts -p quansio-server --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "three mutants, each after a passing control; cargo test --test budgets_enforced a_spent_budget (each must fail; the log records each mutant's exit)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/RUN-010/2026-09-26T22-45-53Z/NOTES.md",
+      "sha256": "29baf978022a79c186008176b51f9f3a3b00bf829f0b71260a3df9fb283616a4",
+      "bytes": 3315
+    },
+    {
+      "path": "evidence/RUN-010/2026-09-26T22-45-53Z/contracts.log",
+      "sha256": "050a1ea1749e9352d5d173a2d0c87dff5781f32690e69da1df17389ab6d4415a",
+      "bytes": 208
+    },
+    {
+      "path": "evidence/RUN-010/2026-09-26T22-45-53Z/lint.log",
+      "sha256": "e7c5df127a8451e3a7136674f707813e115b71108c4a9a438287f671311a42d7",
+      "bytes": 105
+    },
+    {
+      "path": "evidence/RUN-010/2026-09-26T22-45-53Z/mutation.log",
+      "sha256": "ab62a4a958fa202c7cd41a7283cd46421cb3036f682bcceacb90484184c1927f",
+      "bytes": 1175
+    },
+    {
+      "path": "evidence/RUN-010/2026-09-26T22-45-53Z/sdk.log",
+      "sha256": "6a5fe7fd9d82dc78180096795e845200eaee65defab84b071477bcc26372a14b",
+      "bytes": 134
+    },
+    {
+      "path": "evidence/RUN-010/2026-09-26T22-45-53Z/tests.log",
+      "sha256": "01833a1748db78f36a020e17663b0dcf644602e76ead33ddc2ebc409ef1cfbc1",
+      "bytes": 21833
+    }
+  ]
+}

@@ -18,8 +18,8 @@ use serde_json::{json, Value};
 use super::rbac::Authorization;
 use super::{ApiError, ApiErrorCode, ApiState, TenantScope};
 use crate::control::collaboration::{
-    participant_attention, thread_access, thread_attention_for, Access, CollaborationError,
-    CollaborationStore, Participant, ParticipantKind, ParticipantRole,
+    participant_attention, thread_access, thread_access_many, thread_attention_for, Access,
+    CollaborationError, CollaborationStore, Participant, ParticipantKind, ParticipantRole,
 };
 use crate::control::conversation::{ConversationError, ConversationStore, Mention, Thread};
 use crate::control::teammates::TeammateStore;
@@ -763,16 +763,22 @@ pub async fn list_threads(
         }
         None => std::collections::HashMap::new(),
     };
+    // One access decision for the whole list (a query per thread made the list grow slow).
+    let ids: Vec<String> = threads.iter().map(|thread| thread.id.clone()).collect();
+    let access_of = thread_access_many(
+        state.pool(),
+        &scope.tenant_id,
+        &ids,
+        scope.user_id.as_deref(),
+    )
+    .await
+    .map_err(|error| internal(error, "projection"))?;
     let mut visible = Vec::new();
     for thread in &threads {
-        let access = thread_access(
-            state.pool(),
-            &scope.tenant_id,
-            &thread.id,
-            scope.user_id.as_deref(),
-        )
-        .await
-        .map_err(|error| internal(error, "projection"))?;
+        let access = access_of
+            .get(&thread.id)
+            .cloned()
+            .unwrap_or(Access::Missing);
         if !access.admits() {
             continue;
         }

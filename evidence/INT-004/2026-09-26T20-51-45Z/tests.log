@@ -1,0 +1,29 @@
+i4.out:test bytes_are_served_as_an_attachment_never_as_a_document_and_only_to_a_reader ... ok
+i4.out:test artifacts_outlive_the_run_and_keep_their_version_history_with_links ... ok
+i4.out:test search_indexes_only_what_arrived_since_it_last_looked ... ok
+i4.out:test search_is_one_typed_program_across_artifacts_threads_knowledge_and_evidence ... ok
+i4.out:test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.30s
+i4.out:test a_deleted_or_superseded_entry_leaves_every_retrieval_path_and_stays_as_a_tombstone ... ok
+i4.out:test a_skill_version_climbs_the_ladder_one_rung_at_a_time_and_grants_nothing ... ok
+i4.out:test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.86s
+i4a.out:test snapshot::tests::round_trips_canonical_form ... ok
+i4a.out:test snapshot::tests::rejects_malformed_snapshot ... ok
+i4a.out:test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+i4a.out:test maintenance_reflects_updates_deletes_and_idempotent_replay ... ok
+i4a.out:test rebuild_propagates_authoritative_new_versions_and_deletions ... ok
+i4a.out:test rebuild_from_authoritative_rows_is_deterministic_and_tenant_isolated ... ok
+i4a.out:test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.15s
+i4a.out:test searching_an_unrebuilt_tenant_returns_an_empty_set ... ok
+i4a.out:test provenance_carries_source_locator_and_snapshot ... ok
+i4a.out:test semantic_and_unowned_channels_are_rejected_with_a_typed_error ... ok
+i4a.out:test exact_lexical_and_symbol_channels_round_trip_real_content ... ok
+i4a.out:test typed_filters_and_workspace_scope_narrow_results ... ok
+i4a.out:test budget_truncation_is_reported_and_oversized_requests_fail_closed ... ok
+i4a.out:test stale_snapshot_is_detected ... ok
+i4a.out:test tenant_isolation_never_returns_another_tenants_documents ... ok
+i4a.out:test incremental_add_update_delete_is_idempotent ... ok
+i4a.out:test rebuild_is_deterministic_for_a_fixed_corpus ... ok
+i4a.out:test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.47s
+i4a.out:test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+indexer_exit=0 server_exit=0
+exit=0

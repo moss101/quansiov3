@@ -30,7 +30,7 @@ pub use projection::{
     ApplyOutcome, CatchUpReport, Projection, ProjectionRunner, RunStatusProjection,
     WorkNodeStatusProjection,
 };
-pub use store::{BoxEventFuture, EventBatch, EventStore};
+pub use store::{append_in, BoxEventFuture, EventBatch, EventStore};
 pub use stream::{
     Channel, ChannelKind, EventFrame, LiveFrame, LiveSendOutcome, LiveSender, StreamConfig,
     StreamError, StreamFrame, StreamSession, StreamSubscription,
