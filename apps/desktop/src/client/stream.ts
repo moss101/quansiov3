@@ -63,7 +63,7 @@ export function parseStreamFrame(text: string): StreamFrame | StreamErrorFrame {
 
 /** The HTTP status of a refused WebSocket handshake, from the socket's error event, if any. */
 export function handshakeStatus(event: unknown): number | null {
-  const message = event && typeof event === "object" && "message" in event ? String((event as { message: unknown }).message) : "";
+  const message = event && typeof event === "object" && "message" in event ? String(event.message) : "";
   const found = /Unexpected server response: (\d{3})/.exec(message);
   return found?.[1] ? Number(found[1]) : null;
 }
