@@ -101,7 +101,7 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
     await page.getByRole("button", { name: "Email me a sign-in link" }).click();
     await page.getByRole("textbox", { name: "Paste the sign-in token" }).fill(await tokenFor(address, mark));
     await page.getByRole("button", { name: "Continue" }).click();
-    await page.getByRole("navigation", { name: "Surfaces" }).waitFor({ state: "visible", timeout: 30_000 });
+    await page.getByRole("navigation", { name: "Conversations" }).waitFor({ state: "visible", timeout: 30_000 });
   };
 
   const launch = async (): Promise<{ app: ElectronApplication; page: Page; done: () => Promise<void> }> => {
@@ -157,9 +157,10 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
     const desktop = await launch();
     try {
       await signIn(desktop.page, email(OWNER));
-      await desktop.page.getByRole("button", { name: "Sign out" }).click();
+      await desktop.page.getByRole("button", { name: "Account" }).click();
+      await desktop.page.getByRole("menuitem", { name: "Sign out" }).click();
       await desktop.page.getByRole("heading", { name: "Sign in" }).waitFor({ timeout: 15_000 });
-      expect(await desktop.page.getByRole("navigation", { name: "Surfaces" }).count()).toBe(0);
+      expect(await desktop.page.getByRole("navigation", { name: "Conversations" }).count()).toBe(0);
     } finally {
       await desktop.done();
     }
@@ -189,7 +190,8 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
     try {
       const page = desktop.page;
       await signIn(page, email(OWNER));
-      await page.getByRole("button", { name: "Settings" }).click();
+      await page.getByRole("button", { name: "Account" }).click();
+      await page.getByRole("menuitem", { name: "Settings" }).click();
       const settings = page.getByRole("region", { name: "Settings" });
       await settings.getByLabel("Where work runs").selectOption("local_capsule");
       await settings.getByLabel("Keep data for (days)").fill("30");
@@ -216,7 +218,8 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
     try {
       const page = desktop.page;
       await signIn(page, email(VIEWER));
-      await page.getByRole("button", { name: "Settings" }).click();
+      await page.getByRole("button", { name: "Account" }).click();
+      await page.getByRole("menuitem", { name: "Settings" }).click();
       const settings = page.getByRole("region", { name: "Settings" });
       await settings.getByText("Only a workspace administrator can change these.").waitFor();
       await expect(settings.getByRole("button", { name: "Save workspace settings" }).isDisabled()).resolves.toBe(true);
@@ -225,11 +228,42 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
       await desktop.done();
     }
   }, 120_000);
+  it("lists the conversation a message starts in the sidebar, and + starts another (APP-003)", async () => {
+    const desktop = await launch();
+    try {
+      const page = desktop.page;
+      await signIn(page, email(OWNER));
+      const chats = page.getByRole("navigation", { name: "Conversations" });
+      await page.getByRole("button", { name: "New thread" }).click();
+      await expect(chats.locator('[aria-current="page"]').count()).resolves.toBe(0);
+      const before = await chats.getByRole("listitem").count();
+      const composer = page.getByRole("textbox", { name: "Message your teammates…" });
+      await composer.fill("Plan the chat-first shell review");
+      // Return sends (Shift+Return would break the line).
+      await composer.press("Enter");
+      const conversation = page.getByRole("region", { name: "Conversation" });
+      await until(async () => (await conversation.getByText("Plan the chat-first shell review").count()) > 0, "the message in the thread");
+      // The thread the message created is listed and is the one marked open.
+      await until(async () => (await chats.getByRole("listitem").count()) === before + 1, "the new conversation in the sidebar");
+      await until(async () => (await chats.locator('[aria-current="page"]').count()) === 1, "the new conversation marked open");
+      // + leaves it for an empty conversation; picking it again brings its messages back.
+      await page.getByRole("button", { name: "New thread" }).click();
+      await until(async () => (await conversation.getByText("Plan the chat-first shell review").count()) === 0, "an empty conversation");
+      await expect(chats.locator('[aria-current="page"]').count()).resolves.toBe(0);
+      await chats.getByRole("button").first().click();
+      await until(async () => (await chats.locator('[aria-current="page"]').count()) === 1, "a conversation reopened from the sidebar");
+    } finally {
+      await desktop.done();
+    }
+  }, 120_000);
+
   it("names every surface for a person and every entry opens a page (APP-003)", async () => {
     const desktop = await launch();
     try {
       const page = desktop.page;
       await signIn(page, email(OWNER));
+      // Chat-first: the sidebar lists conversations; Workspace switches it to every surface.
+      await page.getByRole("button", { name: "Workspace", exact: true }).click();
       const nav = page.getByRole("navigation", { name: "Surfaces" });
       const entries = (await nav.getByRole("listitem").allTextContents()).map((text) => text.trim());
       expect(entries).toHaveLength(15);
