@@ -1,0 +1,112 @@
+{
+  "commit": "109bdcd92522c519bc1198efb1824dc86fa8f737",
+  "recorded_at": "2026-09-26T15:47:04Z",
+  "results": [
+    {
+      "gate": "authority",
+      "command": "python3.12 scripts/validate_v81.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.051,
+      "tail": "V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 65 PASS, 2 ready)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/109bdcd92522/authority.log"
+    },
+    {
+      "gate": "dossier-consistency",
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 7.825,
+      "tail": "dossier consistency: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/109bdcd92522/dossier-consistency.log"
+    },
+    {
+      "gate": "architecture",
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.856,
+      "tail": "architecture check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/109bdcd92522/architecture.log"
+    },
+    {
+      "gate": "authority-pointers",
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.031,
+      "tail": "authority check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/109bdcd92522/authority-pointers.log"
+    },
+    {
+      "gate": "workspace",
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.044,
+      "tail": "workspace check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/109bdcd92522/workspace.log"
+    },
+    {
+      "gate": "supply-chain",
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 3.529,
+      "tail": "      \u2502   \u2502   \u251c\u2500\u2500 quansio-graph v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 (dev) quansio-indexer v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 quansio-machine v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-native-windows v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-qworkerd v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros-core v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx-macros v0.8.6 (*)\n      \u2502   \u2514\u2500\u2500 sqlx-postgres v0.8.6\n      \u2502       \u251c\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502       \u2514\u2500\u2500 sqlx-macros-core v0.8.6 (*)\n      \u2514\u2500\u2500 tokio-rustls v0.26.5\n          \u251c\u2500\u2500 hyper-rustls v0.27.9 (*)\n          \u2514\u2500\u2500 reqwest v0.12.28 (*)\n\nsupply-chain: CLEAN (1 informational)\nUsing CPython 3.12.13 interpreter at: /opt/homebrew/opt/python@3.12/bin/python3.12\nCreating virtual environment at: python/.venv\n   Building quansio-intelligence @ file:///private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa008/python\n      Built quansio-intelligence @ file:///private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa008/python\nInstalled 26 packages in 119ms",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/109bdcd92522/supply-chain.log"
+    },
+    {
+      "gate": "legacy-map",
+      "command": "python3.12 scripts/ci/legacy_map_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.35,
+      "tail": "legacy map check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/109bdcd92522/legacy-map.log"
+    },
+    {
+      "gate": "contract-drift",
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 107.507,
+      "tail": "contract regeneration check: CLEAN (catalog,openapi,rust,python,ts,sdk)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/109bdcd92522/contract-drift.log"
+    },
+    {
+      "gate": "contract-lint-compat",
+      "command": "uv run --project python python scripts/ci/contract_compat.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.697,
+      "tail": "contract check: CLEAN (lint + compatibility)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/109bdcd92522/contract-lint-compat.log"
+    },
+    {
+      "gate": "toolchains",
+      "command": "bash scripts/dev/bootstrap.sh",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 3057.079,
+      "tail": "   Doc-tests quansio_qworkerd\n   Doc-tests quansio_server\n   Doc-tests quansio_tools\n$ pnpm -r --if-present build\n$ pnpm -r --if-present typecheck\n$ pnpm -r --if-present test\n$ eslint .\nBuilding for debugging...\n[0/7] Write sources\n[2/7] /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa008/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.derived/runner.swift\n[3/7] Write sources\n[4/7] Write swift-version--58304C5D6DBC2206.txt\n[6/11] Compiling QuansioMacBridge MacBridge.swift\n[7/11] Compiling QuansioMacBridge ComputerUse.swift\n[8/11] Emitting module QuansioMacBridge\n[9/11] Compiling QuansioMacBridge MacOSCapsule.swift\n[10/15] Compiling QuansioMacBridgeTests MacBridgeTests.swift\n[11/15] Compiling QuansioMacBridgeTests ComputerUseTests.swift\n[12/15] Compiling QuansioMacBridgeTests MacOSCapsuleTests.swift\n[13/15] Emitting module QuansioMacBridgeTests\n[14/17] Emitting module QuansioMacBridgePackageTests\n[15/17] Compiling QuansioMacBridgePackageTests runner.swift\n[15/17] Write Objects.LinkFileList\n[16/17] Linking QuansioMacBridgePackageTests\nBuild complete! (11.83s)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/109bdcd92522/toolchains.log"
+    },
+    {
+      "gate": "tests",
+      "command": "uv run --project python pytest tests -q",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 106.548,
+      "tail": "........................................................................ [ 21%]\n........................................................................ [ 43%]\n........................................................................ [ 65%]\n................ssss.................................................... [ 86%]\n............................................                             [100%]\n328 passed, 4 skipped in 106.03s (0:01:46)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/109bdcd92522/tests.log"
+    }
+  ],
+  "artifacts": {
+    "registries/progress.json": "52ad1ec730cc7c1b16c2acf65159483f1399055e412ffbfd3d7b6bcab52031ba",
+    "TASKS.md": "84e42eac1a62f7239211c4378dfb2c6c56e601aab8cbb40b8509f5ebe3324544",
+    "MANIFEST.json": "0c4b22c152bffd02a1b6458d34d2c4203982ed0361a3b22049fa3561b1d07f26"
+  },
+  "status": "PASS",
+  "database_backed_tests": true
+}
