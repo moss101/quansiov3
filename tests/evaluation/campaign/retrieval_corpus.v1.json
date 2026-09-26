@@ -1,0 +1,693 @@
+{
+  "dataset_id": "retrieval_corpus",
+  "version": 1,
+  "kind": "retrieval",
+  "notes": "QA-004 retrieval benchmark: 24 pinned operational documents and 30 paraphrased questions, each naming the document that answers it. Questions deliberately avoid the documents' wording, so recall measures meaning rather than shared words. The documents are also the evidence the grounding sets cite.",
+  "cases": [
+    {
+      "case_id": "doc_log_retention",
+      "payload": {
+        "ref": "log_retention",
+        "text": "Operational logs are kept for ninety days. After ninety days the retention job deletes them; audit records are exempt and are kept for seven years."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_run_budgets",
+      "payload": {
+        "ref": "run_budgets",
+        "text": "Every run carries a budget for tokens, cost and wall-clock time. When the token budget is exhausted the runtime stops scheduling new steps and asks the owner to raise the limit."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_worker_quarantine",
+      "payload": {
+        "ref": "worker_quarantine",
+        "text": "An operator quarantines a worker that misbehaves. Quarantine revokes the worker's lease at once, so the old worker is fenced, and every tool call aimed at that machine is refused."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_target_drain",
+      "payload": {
+        "ref": "target_drain",
+        "text": "Draining a target stops new leases from being granted on it while current work finishes. Releasing the drain returns the machine to the ready pool."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_effect_freeze",
+      "payload": {
+        "ref": "effect_freeze",
+        "text": "The effect freeze blocks new actions of consequence tier two or higher, even ones a person already approved. Reads, low-tier calls and evidence collection keep working during a freeze."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_approval_receipts",
+      "payload": {
+        "ref": "approval_receipts",
+        "text": "A tier three action needs a fresh approval receipt. The receipt binds the exact parameters that were previewed, and it can be consumed only once."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_egress_grants",
+      "payload": {
+        "ref": "egress_grants",
+        "text": "Outbound network access is denied unless the policy grants the destination. A request to a new host needs the network egress new destination grant, and private address ranges are always blocked."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_backup_restore",
+      "payload": {
+        "ref": "backup_restore",
+        "text": "The database is backed up continuously with point-in-time recovery. The recovery point objective is five minutes and the recovery time objective is sixty minutes."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_sso_enforcement",
+      "payload": {
+        "ref": "sso_enforcement",
+        "text": "When single sign-on is enforced for a tenant, members must sign in through the identity provider. The tenant owner keeps a break-glass password sign-in for emergencies."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_webhook_retries",
+      "payload": {
+        "ref": "webhook_retries",
+        "text": "A failed webhook delivery is retried with exponential backoff starting at thirty seconds and capped at one hour. After eight failed attempts the delivery is dead-lettered."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_webhook_signing",
+      "payload": {
+        "ref": "webhook_signing",
+        "text": "Each webhook request carries an HMAC SHA-256 signature over the timestamp and the body. Consumers reject a signature older than three hundred seconds."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_skill_promotion",
+      "payload": {
+        "ref": "skill_promotion",
+        "text": "A skill version resolves into production context only when it is active. Promoting a version is a tenant administrator's command, and an evolution candidate needs a passing evaluation first."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_memory_deletion",
+      "payload": {
+        "ref": "memory_deletion",
+        "text": "Deleting a memory removes it from retrieval once the derived index refreshes. The published objective for that refresh is sixty seconds."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_context_budget",
+      "payload": {
+        "ref": "context_budget",
+        "text": "The context plane packs each turn into a token budget. Required segments must fit; optional conversation is kept newest first, and whatever is dropped is recorded as degradation."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_injection_boundary",
+      "payload": {
+        "ref": "injection_boundary",
+        "text": "Content from web pages, emails and tool outputs is untrusted external data. It is wrapped in a typed boundary and can never be treated as an instruction from the user."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_provider_failover",
+      "payload": {
+        "ref": "provider_failover",
+        "text": "When an operator disables a model provider, the gateway fails over to a fallback model on an enabled provider. If no enabled provider is left the call is refused before anything is sent."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_stream_shedding",
+      "payload": {
+        "ref": "stream_shedding",
+        "text": "Stream shedding disconnects live event streams with a backpressure error. Clients reconnect from their cursor and lose no events."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_usage_metering",
+      "payload": {
+        "ref": "usage_metering",
+        "text": "Usage is metered per run as model input tokens, output tokens, cache tokens and machine seconds. Billing is a projection rebuilt from runtime events."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_routine_schedules",
+      "payload": {
+        "ref": "routine_schedules",
+        "text": "A routine fires on its schedule once per fire key. A fire that crashed mid-way is retried with backoff after its lease lapses, and duplicate fires are suppressed."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_artifact_versions",
+      "payload": {
+        "ref": "artifact_versions",
+        "text": "Every artifact edit creates a new immutable version with its content digest. The format check result is stored with the version and read by the completion check."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_browser_sessions",
+      "payload": {
+        "ref": "browser_sessions",
+        "text": "Browser actions run inside an isolated session on an execution target. Every navigate, click or type names the session it acts in, and screenshots are captured as evidence."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_service_principals",
+      "payload": {
+        "ref": "service_principals",
+        "text": "A service principal authenticates with an API key that is shown once at creation and stored only as an argon2 hash. Its scopes limit which command families it may call."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_search_programs",
+      "payload": {
+        "ref": "search_programs",
+        "text": "A search program is a typed plan over channels such as lexical, semantic and memory, with a result and token budget. Every result carries its provenance and snapshot."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "doc_rate_limits",
+      "payload": {
+        "ref": "rate_limits",
+        "text": "The public API applies a per-tenant rate limit of six hundred requests per minute. Exceeding it returns a rate limited error with a retry-after hint."
+      },
+      "protected": false,
+      "tags": [
+        "document"
+      ]
+    },
+    {
+      "case_id": "query_01",
+      "payload": {
+        "query": "how long do we keep operational logs",
+        "expected_sources": [
+          "log_retention"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_02",
+      "payload": {
+        "query": "are audit records deleted with the logs",
+        "expected_sources": [
+          "log_retention"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_03",
+      "payload": {
+        "query": "what happens when a run runs out of tokens",
+        "expected_sources": [
+          "run_budgets"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_04",
+      "payload": {
+        "query": "how do I fence a worker that is behaving badly",
+        "expected_sources": [
+          "worker_quarantine"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_05",
+      "payload": {
+        "query": "stop giving new work to a machine but let current jobs finish",
+        "expected_sources": [
+          "target_drain"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_06",
+      "payload": {
+        "query": "can approved high-consequence actions still run during a freeze",
+        "expected_sources": [
+          "effect_freeze"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_07",
+      "payload": {
+        "query": "does a freeze stop evidence collection",
+        "expected_sources": [
+          "effect_freeze"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_08",
+      "payload": {
+        "query": "can an approval receipt be reused for a second action",
+        "expected_sources": [
+          "approval_receipts"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_09",
+      "payload": {
+        "query": "why was my request to a new external host blocked",
+        "expected_sources": [
+          "egress_grants"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_10",
+      "payload": {
+        "query": "what are the recovery point and recovery time objectives",
+        "expected_sources": [
+          "backup_restore"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_11",
+      "payload": {
+        "query": "how can the owner get in if the identity provider is down",
+        "expected_sources": [
+          "sso_enforcement"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_12",
+      "payload": {
+        "query": "how many times is a failing webhook retried",
+        "expected_sources": [
+          "webhook_retries"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_13",
+      "payload": {
+        "query": "how should a consumer verify a webhook signature",
+        "expected_sources": [
+          "webhook_signing"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_14",
+      "payload": {
+        "query": "when does a new skill version start being used in production",
+        "expected_sources": [
+          "skill_promotion"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_15",
+      "payload": {
+        "query": "how quickly does a forgotten memory stop showing up",
+        "expected_sources": [
+          "memory_deletion"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_16",
+      "payload": {
+        "query": "what is dropped when the prompt does not fit",
+        "expected_sources": [
+          "context_budget"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_17",
+      "payload": {
+        "query": "are instructions inside a fetched web page obeyed",
+        "expected_sources": [
+          "injection_boundary"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_18",
+      "payload": {
+        "query": "what if the model provider we use is switched off",
+        "expected_sources": [
+          "provider_failover"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_19",
+      "payload": {
+        "query": "clients were disconnected with a backpressure error; did they lose events",
+        "expected_sources": [
+          "stream_shedding"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_20",
+      "payload": {
+        "query": "which quantities are billed per run",
+        "expected_sources": [
+          "usage_metering"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_21",
+      "payload": {
+        "query": "could a scheduled job run twice after a crash",
+        "expected_sources": [
+          "routine_schedules"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_22",
+      "payload": {
+        "query": "is an edited document overwritten in place",
+        "expected_sources": [
+          "artifact_versions"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_23",
+      "payload": {
+        "query": "where do browser clicks run and what evidence is kept",
+        "expected_sources": [
+          "browser_sessions"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_24",
+      "payload": {
+        "query": "how is an automation API key stored",
+        "expected_sources": [
+          "service_principals"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_25",
+      "payload": {
+        "query": "what does a search result record about where it came from",
+        "expected_sources": [
+          "search_programs"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_26",
+      "payload": {
+        "query": "how many API calls per minute may a tenant make",
+        "expected_sources": [
+          "rate_limits"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_27",
+      "payload": {
+        "query": "a signature timestamp is ten minutes old; accept it",
+        "expected_sources": [
+          "webhook_signing"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_28",
+      "payload": {
+        "query": "release a drained machine back into service",
+        "expected_sources": [
+          "target_drain"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_29",
+      "payload": {
+        "query": "who can promote a skill version",
+        "expected_sources": [
+          "skill_promotion"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    },
+    {
+      "case_id": "query_30",
+      "payload": {
+        "query": "what untrusted sources get wrapped in a boundary",
+        "expected_sources": [
+          "injection_boundary"
+        ],
+        "k": 10
+      },
+      "protected": false,
+      "tags": [
+        "query"
+      ]
+    }
+  ],
+  "digest": "c19c5b1e9cae88ff1e8a7dacffa040cdb8871356d46098f49e0b750e2e4a6ac2"
+}

@@ -1,0 +1,154 @@
+{
+  "dataset_id": "memory_adversarial",
+  "version": 1,
+  "kind": "retrieval",
+  "notes": "QA-004 memory isolation adversarial set: every case is protected. Cross-tenant cases count rows of another tenant a query returns (or a write that claims another tenant); deletion cases count deleted, expired or never-promoted memories still served. Both counts must be zero (DOSSIER 21.3).",
+  "cases": [
+    {
+      "case_id": "cross_tenant_identical",
+      "payload": {
+        "scenario": "cross_tenant_identical",
+        "description": "The other tenant holds a memory with exactly the words tenant A queries for.",
+        "foreign": "Prefers weekly status reports delivered on Monday mornings.",
+        "own": "Keeps release notes short and links the tracking ticket.",
+        "query": "Prefers weekly status reports delivered on Monday mornings."
+      },
+      "protected": true,
+      "tags": [
+        "cross_tenant"
+      ]
+    },
+    {
+      "case_id": "cross_tenant_only_match",
+      "payload": {
+        "scenario": "cross_tenant_only_match",
+        "description": "Only the other tenant has a relevant memory; tenant A must get nothing from it.",
+        "foreign": "Deploys to production only after the staging soak passes for a day.",
+        "own": "Uses metric units in every report.",
+        "query": "when does this team deploy to production"
+      },
+      "protected": true,
+      "tags": [
+        "cross_tenant"
+      ]
+    },
+    {
+      "case_id": "cross_tenant_poisoned",
+      "payload": {
+        "scenario": "cross_tenant_poisoned",
+        "description": "The other tenant stuffs a memory with tenant A's query terms.",
+        "foreign": "budget budget budget tokens tokens limit limit raise raise owner owner budget tokens",
+        "own": "Raises the token budget only with the owner's written approval.",
+        "query": "who may raise the token budget"
+      },
+      "protected": true,
+      "tags": [
+        "cross_tenant"
+      ]
+    },
+    {
+      "case_id": "cross_tenant_bulk",
+      "payload": {
+        "scenario": "cross_tenant_bulk",
+        "description": "The other tenant holds the whole retrieval corpus as memory; tenant A runs every corpus question.",
+        "foreign_corpus": true,
+        "own": "Answers in British English."
+      },
+      "protected": true,
+      "tags": [
+        "cross_tenant"
+      ]
+    },
+    {
+      "case_id": "forged_tenant_row",
+      "payload": {
+        "scenario": "forged_tenant_row",
+        "description": "Under its own tenant context, the other tenant tries to write a derived row that claims tenant A.",
+        "query": "forged row"
+      },
+      "protected": true,
+      "tags": [
+        "cross_tenant"
+      ]
+    },
+    {
+      "case_id": "tenantless_read",
+      "payload": {
+        "scenario": "tenantless_read",
+        "description": "A quansio_app connection with no tenant context reads memory and derived rows."
+      },
+      "protected": true,
+      "tags": [
+        "cross_tenant"
+      ]
+    },
+    {
+      "case_id": "deleted_after_refresh",
+      "payload": {
+        "scenario": "deleted_after_refresh",
+        "description": "Tenant A forgets a memory; after the index refreshes neither the index nor retrieval returns it.",
+        "own": "Stores the on-call rota in the shared calendar.",
+        "keep": "Names incident channels after the service they cover.",
+        "query": "where is the on-call rota kept"
+      },
+      "protected": true,
+      "tags": [
+        "deleted"
+      ]
+    },
+    {
+      "case_id": "deleted_before_refresh",
+      "payload": {
+        "scenario": "deleted_before_refresh",
+        "description": "Tenant A deletes a memory but the index has not refreshed; retrieval still refuses the stale row.",
+        "own": "Signs off change requests with initials and the date.",
+        "query": "how are change requests signed off"
+      },
+      "protected": true,
+      "tags": [
+        "deleted"
+      ]
+    },
+    {
+      "case_id": "expired_after_refresh",
+      "payload": {
+        "scenario": "expired_after_refresh",
+        "description": "An expired memory is pruned from the channel and never served.",
+        "own": "Is travelling until the end of the quarter and prefers async updates.",
+        "expires_at": "2026-01-01T00:00:00Z",
+        "query": "is the owner travelling"
+      },
+      "protected": true,
+      "tags": [
+        "deleted"
+      ]
+    },
+    {
+      "case_id": "candidate_never_served",
+      "payload": {
+        "scenario": "candidate_never_served",
+        "description": "A memory that was proposed but never promoted is never indexed or retrieved.",
+        "own": "Wants invoices exported as CSV.",
+        "query": "invoice export format"
+      },
+      "protected": true,
+      "tags": [
+        "deleted"
+      ]
+    },
+    {
+      "case_id": "deleted_then_restated",
+      "payload": {
+        "scenario": "deleted_then_restated",
+        "description": "A deleted memory's text is later restated as a new memory; only the new entry answers.",
+        "own": "Prefers dark mode dashboards.",
+        "query": "dashboard theme preference"
+      },
+      "protected": true,
+      "tags": [
+        "deleted"
+      ]
+    }
+  ],
+  "digest": "c899d3c7ee39520f63251c358bebfe88e59438aa190e44849530ecc4cb966dfb"
+}

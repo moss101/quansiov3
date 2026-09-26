@@ -1,0 +1,33 @@
+# QA-004 campaign configuration: how the campaign spends and when a measuring instrument is trusted.
+#
+# The quality and safety bars are not here: they are DOSSIER.md §21.3's, frozen in
+# tests/evaluation/thresholds.yaml, and the §21.2 index-query SLO is read from
+# tests/performance/slos.yaml. This file only bounds the campaign itself.
+
+version: 1
+
+# The grounding judge's verdicts count only when it agrees with the labelled calibration set
+# (grounding_calibration.v1) at least this often; below it, `unsupported_claim_rate` is reported
+# unmeasured and the gate fails closed, rather than trusting an instrument that misjudges.
+judge_calibration_min_agreement: 0.9
+
+# The Tool Registry check is the authority for proposal validity, so it must agree with every
+# calibration label (proposal_calibration.v1); one disagreement means the set or the check drifted.
+checker_calibration_min_agreement: 1.0
+
+live:
+  timeout_ms: 120000
+  max_output_tokens: 1024
+  # A hard stop for the whole campaign; exceeding either is a failed campaign, not a warning.
+  max_model_calls: 200
+  max_cost_minor_units: 500
+
+retrieval:
+  k: 10
+  # Index-query latency is sampled on the real derived table over this many queries.
+  latency_samples: 60
+
+# The context plane packs against its own estimate (four characters a token). The provider's own count
+# of the same rendered context must not exceed the estimate, or a budget the plane honoured could still
+# overflow the model's window.
+max_provider_token_ratio: 1.0

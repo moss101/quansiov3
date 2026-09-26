@@ -1,0 +1,111 @@
+{
+  "task_id": "QA-004",
+  "git_commit": "2e3a806d3275cb322631e5481cd8c8546950e8ae",
+  "recorded_at": "2026-09-26T00:24:35Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_OPENAI_COMPATIBLE_*=<Z.ai, GLM-5.3-Flash> QUANSIO_TEST_ANTHROPIC_*=<Z.ai Anthropic wire> QUANSIO_TOOL_CHECK_BIN=<pinned copy> uv run --project python pytest tests/evaluation/test_qa004_campaign.py -v # the live campaign gated on DOSSIER 21.3 (recall@10 BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-004/2026-09-25T22-51-14Z/pytest-campaign-live.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> uv run --project python pytest tests/evaluation tests/security -v # the harness, datasets, gate and the campaign without live model boundaries",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-004/2026-09-25T22-51-14Z/pytest-evaluation-security.log"
+    },
+    {
+      "command": "cargo test -p quansio-tools && cargo clippy -p quansio-tools --all-targets -- -D warnings # quansio-tool-check answers with the registry's own check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-004/2026-09-25T22-51-14Z/cargo-tools.log"
+    },
+    {
+      "command": "qa004_mutations.sh # compiling mutants across memory retrieval, the indexer, context packing, trust boundaries, the skill resolver, the route selector, the Rust registry check and derived-table RLS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-004/2026-09-25T22-51-14Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh # binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN and QUANSIO_TOOL_CHECK_BIN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-004/2026-09-25T22-51-14Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_OPENAI_COMPATIBLE_*=<Z.ai, GLM-5.3-Flash> QUANSIO_TEST_ANTHROPIC_*=<Z.ai Anthropic wire> QUANSIO_TOOL_CHECK_BIN=<pinned copy> uv run --project python pytest tests/evaluation/test_qa004_campaign.py -v # the live campaign gated on DOSSIER 21.3 (recall@10 BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> uv run --project python pytest tests/evaluation tests/security -v # the harness, datasets, gate and the campaign without live model boundaries",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-tools && cargo clippy -p quansio-tools --all-targets -- -D warnings # quansio-tool-check answers with the registry's own check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "qa004_mutations.sh # compiling mutants across memory retrieval, the indexer, context packing, trust boundaries, the skill resolver, the route selector, the Rust registry check and derived-table RLS",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh # binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN and QUANSIO_TOOL_CHECK_BIN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-004/2026-09-25T22-51-14Z/NOTES.md",
+      "sha256": "77b6743dfb61fcd72592264818afdf86335d36ab919d73d9c8260da9dc34412c",
+      "bytes": 3580
+    },
+    {
+      "path": "evidence/QA-004/2026-09-25T22-51-14Z/campaign-run.json",
+      "sha256": "0348e041064d5511c50caa3e9195419b5752e03a8fb769e5a8f57d91e5fa13c0",
+      "bytes": 19577
+    },
+    {
+      "path": "evidence/QA-004/2026-09-25T22-51-14Z/campaign-verdict.json",
+      "sha256": "433500d217ab6bb4d7d1dcdccd09d67abf0753c1733b34b81882de8195f70f3d",
+      "bytes": 19921
+    },
+    {
+      "path": "evidence/QA-004/2026-09-25T22-51-14Z/campaign-verdict-research-v1.json",
+      "sha256": "5be12c21141f0a21966a7b056407a91e43f8e1c22b9f133bb1e7b0cb05c66d44",
+      "bytes": 13357
+    },
+    {
+      "path": "evidence/QA-004/2026-09-25T22-51-14Z/pytest-campaign-live.log",
+      "sha256": "6f95083217f7f9263947fcd3ef455342397c13bc3ac7d31d44823052b8a610b8",
+      "bytes": 2555
+    },
+    {
+      "path": "evidence/QA-004/2026-09-25T22-51-14Z/pytest-evaluation-security.log",
+      "sha256": "2a7ec2ae7e9269902daff12cefa4566823e38e8785916d2ac46294d1273602e7",
+      "bytes": 9856
+    },
+    {
+      "path": "evidence/QA-004/2026-09-25T22-51-14Z/cargo-tools.log",
+      "sha256": "927aec21b884fedb730a2b95ca9c158b88d6915125c815dfe9fa77423f469372",
+      "bytes": 6375
+    },
+    {
+      "path": "evidence/QA-004/2026-09-25T22-51-14Z/mutation-checks.log",
+      "sha256": "e10ba5c1fa1d749d6f6bc91f5f780dd04f7ba396702b48237ed2bd6c8b39827e",
+      "bytes": 616
+    },
+    {
+      "path": "evidence/QA-004/2026-09-25T22-51-14Z/ci-summary.json",
+      "sha256": "11747baad34b08353a44ebfbc21db4ab196ce7bd4b962d9226c5adedd0c1ac4d",
+      "bytes": 7936
+    }
+  ]
+}

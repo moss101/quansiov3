@@ -1,0 +1,172 @@
+{
+  "dataset_id": "proposal_tasks",
+  "version": 1,
+  "kind": "tool_proposal",
+  "notes": "QA-004 pinned tool tasks: each instruction is offered with real registry tools. The live model proposes calls; every proposed call is judged by the Tool Registry's own check, and the validity rate is taken over those proposals.",
+  "cases": [
+    {
+      "case_id": "read_readme",
+      "payload": {
+        "instruction": "Read the file README.md in the workspace root.",
+        "tools": [
+          "fs.read",
+          "fs.write"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    },
+    {
+      "case_id": "search_retention",
+      "payload": {
+        "instruction": "Search the web for 'PostgreSQL point-in-time recovery', at most 5 results.",
+        "tools": [
+          "web.search",
+          "web.fetch"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    },
+    {
+      "case_id": "fetch_page",
+      "payload": {
+        "instruction": "Fetch the page https://example.com/status.",
+        "tools": [
+          "web.fetch",
+          "web.search"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    },
+    {
+      "case_id": "list_directory",
+      "payload": {
+        "instruction": "List the files in /srv/app using a shell command.",
+        "tools": [
+          "terminal.exec"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    },
+    {
+      "case_id": "run_tests_in_dir",
+      "payload": {
+        "instruction": "Run the command 'make test' in the directory /srv/app.",
+        "tools": [
+          "terminal.exec",
+          "fs.read"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    },
+    {
+      "case_id": "open_dashboard",
+      "payload": {
+        "instruction": "In browser session bs_01J8Z3K6F1N8VQ2X5W9Y0ABCDE open https://example.com/dashboard.",
+        "tools": [
+          "browser.navigate",
+          "browser.click"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    },
+    {
+      "case_id": "click_login",
+      "payload": {
+        "instruction": "In browser session bs_01J8Z3K6F1N8VQ2X5W9Y0ABCDE click the element matching '#login'.",
+        "tools": [
+          "browser.click",
+          "browser.navigate"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    },
+    {
+      "case_id": "extract_table",
+      "payload": {
+        "instruction": "In browser session bs_01J8Z3K6F1N8VQ2X5W9Y0ABCDE extract the element 'table.results' as text.",
+        "tools": [
+          "browser.extract"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    },
+    {
+      "case_id": "confirm_deploy",
+      "payload": {
+        "instruction": "Ask the user to confirm (yes or no) before deploying to production.",
+        "tools": [
+          "user.ask"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    },
+    {
+      "case_id": "choose_region",
+      "payload": {
+        "instruction": "Ask the user to choose one region from eu-west, us-east and ap-south.",
+        "tools": [
+          "user.ask"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    },
+    {
+      "case_id": "cite_entry",
+      "payload": {
+        "instruction": "Cite knowledge entry ke_01J8Z3K6F1N8VQ2X5W9Y0ABCDE as the source for the answer.",
+        "tools": [
+          "knowledge.cite"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    },
+    {
+      "case_id": "delegate_review",
+      "payload": {
+        "instruction": "Delegate the instruction 'review the release notes' to another agent.",
+        "tools": [
+          "work.delegate",
+          "user.ask"
+        ]
+      },
+      "protected": false,
+      "tags": [
+        "live"
+      ]
+    }
+  ],
+  "digest": "5edc3e6755003a592d2d50622d98b3766c89ab2b7b18c483fc4e34a0404b6cc5"
+}

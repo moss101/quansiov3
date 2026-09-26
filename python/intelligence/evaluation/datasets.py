@@ -6,8 +6,8 @@ order are hashed into one digest, and loading refuses a dataset whose content do
 digest the file records. So "reproducible from pinned inputs" is enforced at load time rather than
 promised, and a run whose inputs moved is visibly a different run.
 
-Five kinds, one per question the harness has to answer before a model, context or skill change is
-promoted (the families INT-010 names):
+Six kinds, one per question the harness has to answer before a model, context or skill change is
+promoted (the families INT-010 names, and the context budget QA-004 qualifies):
 
 * `route_quality` — does the same request resolve to the same route?
 * `retrieval` — does retrieval find the pinned sources it should, and never a tenant's or a deleted
@@ -15,6 +15,7 @@ promoted (the families INT-010 names):
 * `grounding` — are the claims in an answer supported by the evidence cited?
 * `tool_proposal` — are proposed tool calls valid against the tool declarations?
 * `skill_behaviour` — does a skill resolve and behave as its manifest says?
+* `context_budget` — does a turn's context stay within its budget without losing what it must keep?
 
 A case's `payload` is deliberately opaque here: interpreting it is the metric's job, and keeping it
 opaque means this module cannot invent case semantics the dataset did not state. A case marked
@@ -47,6 +48,7 @@ KINDS: tuple[str, ...] = (
     "grounding",
     "tool_proposal",
     "skill_behaviour",
+    "context_budget",
 )
 
 DATASET_ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,63}$")
