@@ -1,0 +1,33 @@
+test queued_run_is_dispatched_through_the_graph_state_machine ... ok
+test routine_firing_creates_its_objective_through_the_command_path ... ok
+test an_idle_tenant_tick_commits_no_event ... ok
+test timer_fire_resumes_the_run_through_the_graph_state_machine ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.05s
+test routine_commands_validate_and_transition ... ok
+test an_event_fires_its_routine_once_however_it_is_consumed ... ok
+test a_scheduled_window_fires_once_across_restarts ... ok
+test notifications_follow_preferences_and_deliver_email ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.90s
+test queued_run_is_offered_to_the_graph_dispatch_port ... ok
+test due_timer_fires_once_clears_the_wait_and_emits_one_event ... ok
+test stale_generation_timer_is_fenced_and_never_wakes_the_run ... ok
+test the_misfire_threshold_decides_when_a_window_was_missed ... ok
+test a_pass_only_claims_and_the_executor_runs_the_fires_beside_it ... ok
+test routines_due_together_fire_side_by_side ... ok
+test saturated_due_queue_returns_a_typed_error_and_drops_nothing ... ok
+test two_concurrent_loops_fire_a_timer_exactly_once ... ok
+test fire_reports_a_lost_claim_without_emitting ... ok
+test an_on_time_window_fires_under_every_absence_policy ... ok
+test scheduled_timer_registers_a_wait_and_emits_run_waiting ... ok
+test absence_policy_applies_skip_queue_and_catch_up_once ... ok
+test resolving_wait_a_cannot_resume_run_b ... ok
+test the_background_loop_learns_when_the_next_work_falls_due ... ok
+test durable_timer_survives_a_pool_drop_and_still_fires_at_its_due_time ... ok
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.34s
+test tenant_context_validation_rejects_non_canonical_ids ... ok
+test migrations_are_reapplied_safely_over_existing_data ... ok
+test tenant_isolation_returns_zero_rows_without_context ... ok
+test bootstrap_from_zero_creates_the_authoritative_schema ... ok
+test unset_context_fails_closed_on_a_plain_connection ... ok
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.87s
+exit=0

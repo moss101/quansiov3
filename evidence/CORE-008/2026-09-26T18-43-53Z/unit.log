@@ -1,0 +1,10 @@
+test composition::tests::work_that_fell_due_during_a_pass_runs_at_once ... ok
+test composition::tests::work_already_due_before_the_pass_waits_the_whole_interval ... ok
+test composition::tests::the_loop_wakes_when_work_falls_due_within_its_interval ... ok
+test scheduler::routine::tests::absence_policies_round_trip_through_the_stored_form ... ok
+test scheduler::routine::tests::event_triggers_have_no_due_time_and_intervals_advance ... ok
+test scheduler::routine::tests::interval_specs_parse_to_positive_durations ... ok
+test scheduler::routine::tests::timezones_are_utc_or_fixed_offsets_and_fail_closed_otherwise ... ok
+test scheduler::routine::tests::cron_next_due_respects_fields_and_timezone ... ok
+test result: ok. 179 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+exit=0

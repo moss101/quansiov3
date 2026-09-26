@@ -52,6 +52,9 @@ pub struct SchedulerConfig {
     pub due_queue_capacity: i64,
     /// How late a routine window may be reached and still fire as on time.
     pub misfire_threshold: chrono::Duration,
+    /// Whether a tick executes the fires it claims (`false` when a [`super::FireExecutor`] runs
+    /// beside the loop).
+    pub execute_routine_fires: bool,
 }
 
 impl SchedulerConfig {
@@ -68,6 +71,7 @@ impl SchedulerConfig {
             misfire_threshold: chrono::Duration::seconds(
                 super::routine::DEFAULT_MISFIRE_THRESHOLD_SECONDS,
             ),
+            execute_routine_fires: true,
         }
     }
 }
@@ -158,8 +162,12 @@ impl Scheduler {
     pub async fn tick(&self) -> Result<TickReport, SchedulerError> {
         let now = Utc::now();
         let timers = TimerStore::new(self.events.pool().clone(), self.tenant_id.clone())?;
-        let routines = RoutineScheduler::new(self.events.pool().clone(), self.tenant_id.clone())?
-            .with_misfire_threshold(self.config.misfire_threshold);
+        let mut routines =
+            RoutineScheduler::new(self.events.pool().clone(), self.tenant_id.clone())?
+                .with_misfire_threshold(self.config.misfire_threshold);
+        if !self.config.execute_routine_fires {
+            routines = routines.claims_only();
+        }
 
         let due_timers = timers.due_count().await?;
         if due_timers > self.config.due_queue_capacity {

@@ -26,6 +26,7 @@ use quansio_server::scheduler::{
     RoutineFireRequest, RunDispatch, RunDispatchRequest, RunResumeRequest, Scheduler,
     SchedulerConfig, SchedulerError, TimerStatus, TimerStore, WaitError, WaitRegistry,
 };
+use quansio_server::scheduler::{FireExecutor, DEFAULT_FIRE_EXECUTORS};
 use serde_json::json;
 use sqlx::PgPool;
 
@@ -48,6 +49,8 @@ struct RecordingDispatch {
     routines: Mutex<Vec<RoutineFireRequest>>,
     /// Generation the recording run is currently in; a resume older than this is fenced.
     current_generation: Mutex<u64>,
+    /// How long firing a routine takes (a turn's worth of work).
+    fire_takes: std::time::Duration,
 }
 
 impl RecordingDispatch {
@@ -99,6 +102,7 @@ impl RunDispatch for RecordingDispatch {
         &self,
         request: RoutineFireRequest,
     ) -> Result<RoutineFireOutcome, SchedulerError> {
+        tokio::time::sleep(self.fire_takes).await;
         let mut generator = UlidGenerator::new();
         let objective = CanonicalId::generate(Prefix::WorkNode, &mut generator).to_string();
         let run = CanonicalId::generate(Prefix::Run, &mut generator).to_string();
@@ -627,6 +631,93 @@ async fn an_on_time_window_fires_under_every_absence_policy() {
 }
 
 #[tokio::test]
+async fn routines_due_together_fire_side_by_side() {
+    let Some(fixture) = prepare("sched_burst").await else {
+        blocked_marker();
+        return;
+    };
+    // Eight routines due at the same moment, each taking 300 ms to fire (a turn's worth of work):
+    // one after another the last would start 2.1 s late; side by side, all start at once.
+    let now = Utc::now();
+    let window = window_just_due(now);
+    for _ in 0..8 {
+        seed_routine(&fixture.pool, AbsencePolicy::Skip, window).await;
+    }
+    let dispatch = Arc::new(RecordingDispatch {
+        fire_takes: std::time::Duration::from_millis(300),
+        ..RecordingDispatch::new(1)
+    });
+    let started = std::time::Instant::now();
+    let report = scheduler(fixture.pool.clone(), "inst-burst", Arc::clone(&dispatch))
+        .tick()
+        .await
+        .expect("tick");
+    let took = started.elapsed();
+    assert_eq!(report.routines_fired, 8);
+    assert_eq!(report.routine_fires_executed, 8);
+    assert_eq!(dispatch.routines().len(), 8);
+    assert!(
+        took < std::time::Duration::from_millis(1200),
+        "eight 300 ms fires took {took:?}: they ran one after another"
+    );
+    finish(fixture).await;
+}
+
+#[tokio::test]
+async fn a_pass_only_claims_and_the_executor_runs_the_fires_beside_it() {
+    let Some(fixture) = prepare("sched_executor").await else {
+        blocked_marker();
+        return;
+    };
+    let window = window_just_due(Utc::now());
+    for _ in 0..8 {
+        seed_routine(&fixture.pool, AbsencePolicy::Skip, window).await;
+    }
+    let dispatch = Arc::new(RecordingDispatch {
+        fire_takes: std::time::Duration::from_millis(300),
+        ..RecordingDispatch::new(1)
+    });
+    // The pass claims the eight windows and executes nothing: it is not held up by their turns.
+    let mut config = SchedulerConfig::new("inst-claims");
+    config.execute_routine_fires = false;
+    let report = Scheduler::new(
+        fixture.pool.clone(),
+        TENANT,
+        config,
+        Arc::clone(&dispatch) as Arc<dyn RunDispatch>,
+    )
+    .expect("scheduler")
+    .tick()
+    .await
+    .expect("tick");
+    assert_eq!(report.routines_fired, 8);
+    assert_eq!(report.routine_fires_executed, 0);
+    assert!(
+        dispatch.routines().is_empty(),
+        "the pass fired nothing itself"
+    );
+
+    // The executor starts every claimed fire as its own task, side by side.
+    let executor = FireExecutor::new(
+        fixture.pool.clone(),
+        Arc::clone(&dispatch) as Arc<dyn RunDispatch>,
+        DEFAULT_FIRE_EXECUTORS,
+    );
+    let started = std::time::Instant::now();
+    assert_eq!(executor.drain().await, Ok(8));
+    while dispatch.routines().len() < 8 {
+        assert!(
+            started.elapsed() < std::time::Duration::from_millis(1200),
+            "eight 300 ms fires are not running side by side"
+        );
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+    // Leased fires are not started twice.
+    assert_eq!(executor.drain().await, Ok(0));
+    finish(fixture).await;
+}
+
+#[tokio::test]
 async fn the_misfire_threshold_decides_when_a_window_was_missed() {
     let Some(fixture) = prepare("sched_misfire").await else {
         blocked_marker();
@@ -653,6 +744,32 @@ async fn the_misfire_threshold_decides_when_a_window_was_missed() {
     assert_eq!(report.routines_skipped, 1);
     assert!(dispatch.routines().is_empty());
     assert!(routine_next_due(&fixture.pool, &skip).await.expect("next") > now);
+    finish(fixture).await;
+}
+
+#[tokio::test]
+async fn the_background_loop_learns_when_the_next_work_falls_due() {
+    let Some(fixture) = prepare("sched_next_due").await else {
+        blocked_marker();
+        return;
+    };
+    let next_due = |pool: PgPool| async move {
+        sqlx::query_scalar::<_, Option<DateTime<Utc>>>("SELECT background_next_due()")
+            .fetch_one(&pool)
+            .await
+            .expect("background_next_due")
+    };
+    assert_eq!(
+        next_due(fixture.pool.clone()).await,
+        None,
+        "nothing scheduled"
+    );
+    let later = (Utc::now() + ChronoDuration::minutes(10)).trunc_subsecs(6);
+    let sooner = (Utc::now() + ChronoDuration::seconds(2)).trunc_subsecs(6);
+    seed_routine(&fixture.pool, AbsencePolicy::Skip, later).await;
+    seed_routine(&fixture.pool, AbsencePolicy::Skip, sooner).await;
+    // The earliest window, read without a tenant context (the loop serves every tenant).
+    assert_eq!(next_due(fixture.pool.clone()).await, Some(sooner));
     finish(fixture).await;
 }
 
