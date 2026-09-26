@@ -1,0 +1,9 @@
+CONTROL:
+test an_on_time_window_fires_under_every_absence_policy ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 1.05s
+MUTANT: on-time branch disabled
+COMPILES
+test an_on_time_window_fires_under_every_absence_policy ... FAILED
+thread 'an_on_time_window_fires_under_every_absence_policy' (38194028) panicked at crates/server/tests/scheduler.rs:611:5:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.67s
+exit=101
