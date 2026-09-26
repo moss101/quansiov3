@@ -9,8 +9,8 @@
     },
     {
       "path": "DOMAIN.md",
-      "bytes": 69252,
-      "sha256": "ac850da2bf8c9075735c8ebc553bc0814c11324a683dfe1951c48efed1f9dbb6"
+      "bytes": 69678,
+      "sha256": "bb623f0d882e6796cf6313f719b6fdc742da95c463cc12a032e091cbafb6215f"
     },
     {
       "path": "AGENTS.md",
@@ -39,8 +39,8 @@
     },
     {
       "path": "registries/progress.json",
-      "bytes": 324109,
-      "sha256": "e9b337c2fba9eaad79538493719fb34962b8e24362f2dda1eb418b81646aeef4"
+      "bytes": 332220,
+      "sha256": "072f3635e222915d2f1bb105f8605ed371f9b24c52413ec0c6db2a9b8fa8e42a"
     },
     {
       "path": "scripts/validate_v81.py",

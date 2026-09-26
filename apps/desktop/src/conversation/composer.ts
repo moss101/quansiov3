@@ -102,6 +102,17 @@ export function postedIdentities(result: unknown): { threadId: string; runId: st
   return { threadId, runId, messageId };
 }
 
+/**
+ * The run's state as `PostMessage` returned it. The turn can finish inside the command, so its
+ * terminal event may reach the renderer before the renderer knows the run is this thread's; the
+ * returned state is the projection that settles it.
+ */
+export function postedRunStatus(result: unknown): string | null {
+  const record = result && typeof result === "object" ? (result as Record<string, unknown>) : {};
+  const status = record["run_status"];
+  return typeof status === "string" && status.length > 0 ? status : null;
+}
+
 function toBase64(bytes: Uint8Array): string {
   if (typeof Buffer !== "undefined") {
     return Buffer.from(bytes).toString("base64");

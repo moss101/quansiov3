@@ -1,0 +1,70 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/session.e2e.test.ts (9 tests) 14229ms
+   ✓ desktop account (real Electron, real server) > returns to sign-in when the person signs out 1552ms
+   ✓ desktop account (real Electron, real server) > returns to sign-in when an administrator revokes the session 3008ms
+   ✓ desktop account (real Electron, real server) > changes workspace and personal settings and shows the effective result 1088ms
+   ✓ desktop account (real Electron, real server) > follows the theme chosen in Settings over the system's, on the page and the window (APP-003) 2489ms
+   ✓ desktop account (real Electron, real server) > keeps a choice made before Settings has finished reading the current values 1218ms
+   ✓ desktop account (real Electron, real server) > shows a viewer the workspace settings without letting them change them 909ms
+   ✓ desktop account (real Electron, real server) > lists the conversation a message starts in the sidebar, and + starts another (APP-003) 1365ms
+   ✓ desktop account (real Electron, real server) > jumps to a page from the command palette (APP-003) 672ms
+   ✓ desktop account (real Electron, real server) > names every surface for a person and every entry opens a page (APP-003) 1287ms
+ ✓ tests/shell-modules.test.ts (14 tests) 13ms
+ ✓ tests/knowledge.e2e.test.ts (2 tests) 3554ms
+   ✓ desktop knowledge E2E against quansio-server > forgetting memory or knowledge removes it from every future retrieval and leaves a tombstone with its provenance 1803ms
+   ✓ desktop knowledge E2E against quansio-server > a skill climbs the ladder one rung at a time; an unapproved version cannot be activated; the run's resolution names it and grants nothing 893ms
+ ✓ tests/identity.test.ts (6 tests) 14ms
+ ✓ tests/artifacts.e2e.test.ts (2 tests) 1888ms
+   ✓ desktop artifact workspace E2E against quansio-server > keeps artifacts after the run closes, shows history with links and diffs, survives reload, and search finds them by content 965ms
+ ✓ tests/conversation.e2e.test.ts (4 tests) 4930ms
+   ✓ desktop conversation E2E against quansio-server > streams the reply, lands it as a durable message, and a reload rebuilds the same thread with its inspector 829ms
+   ✓ desktop conversation E2E against quansio-server > asks a question in the thread, waits, and continues from the answer 1124ms
+   ✓ desktop conversation E2E against quansio-server > cancels a turn and the run stops: the page loses its cancel, the question is withdrawn, a late answer is refused 1173ms
+   ✓ desktop conversation E2E against quansio-server > uploads a real binary as an artifact and attaches it to a message the inspector shows 1042ms
+ ✓ tests/live.e2e.test.ts (1 test) 3231ms
+   ✓ desktop live surface E2E against quansio-server > takes over the same session, fences the agent, survives a reconnect, and hands back 2382ms
+ ✓ tests/automation.e2e.test.ts (2 tests) 9232ms
+   ✓ desktop automation E2E against quansio-server > delivers a mention on exactly the channels the person chose 1360ms
+   ✓ desktop automation E2E against quansio-server > keeps firing a routine across a server restart without firing a window twice 7071ms
+ ✓ tests/conversation.test.ts (10 tests) 4ms
+ ✓ tests/collaboration.e2e.test.ts (2 tests) 6525ms
+   ✓ desktop collaboration E2E against quansio-server > keeps one order for two clients posting at once, then revokes the removed one 4039ms
+   ✓ desktop collaboration E2E against quansio-server > hands a conversation from one teammate to another 1133ms
+ ✓ tests/work.e2e.test.ts (1 test) 2499ms
+   ✓ desktop work graph E2E against quansio-server > shows the canonical revision, resolves a concurrent edit as a rebase, and shows a handoff 727ms
+ ✓ tests/knowledge.test.ts (9 tests) 7ms
+ ✓ tests/trust.e2e.test.ts (1 test) 1862ms
+   ✓ desktop trust E2E against quansio-server > binds the approval to the preview, keeps unsettled effects open, and refuses evidence that fails its digest 955ms
+ ✓ tests/onboarding.e2e.test.ts (1 test) 1470ms
+   ✓ new-user onboarding E2E against quansio-server (session-only) > takes a fresh user from a magic link to a governed workspace with a running stream, then resumes from the keychain 631ms
+ ✓ tests/teammates.e2e.test.ts (1 test) 1774ms
+   ✓ desktop roster E2E against quansio-server > creates, routes to, edits and archives a teammate: capability narrows, lineage stays 928ms
+ ✓ tests/artifacts.test.ts (10 tests) 6ms
+ ✓ tests/reconnect.e2e.test.ts (1 test) 1962ms
+   ✓ desktop reconnect E2E against quansio-server > posts a message, persists the run and cursor, drops the socket, and resumes the same run from the cursor 1111ms
+ ✓ tests/work.test.ts (5 tests) 6ms
+ ✓ tests/preload.test.ts (4 tests) 9ms
+ ✓ tests/live.test.ts (10 tests) 6ms
+ ✓ tests/collaboration.test.ts (11 tests) 6ms
+ ✓ tests/trust.test.ts (4 tests) 11ms
+ ✓ tests/presentation.test.ts (13 tests) 6ms
+ ✓ tests/automation.test.ts (7 tests) 4ms
+ ✓ tests/teammates.test.ts (2 tests) 4ms
+ ✓ tests/trace.test.ts (4 tests) 60ms
+ ✓ tests/security.test.ts (5 tests) 24ms
+ ✓ tests/renderer-parts.test.ts (6 tests) 3ms
+ ✓ tests/launch.e2e.test.ts (1 test) 5392ms
+   ✓ desktop launch (real Electron) > renders the bundled renderer from the app: scheme 5391ms
+ ✓ tests/settings-form.test.ts (4 tests) 3ms
+ ✓ tests/appearance.test.ts (2 tests) 1ms
+ ✓ tests/diagnostics.test.ts (2 tests) 2ms
+ ✓ tests/surfaces.test.ts (3 tests) 2ms
+ ✓ tests/onboarding.test.ts (1 test) 2ms
+
+ Test Files  34 passed (34)
+      Tests  160 passed (160)
+   Start at  22:38:34
+   Duration  65.40s (transform 403ms, setup 0ms, collect 1.55s, tests 58.74s, environment 3ms, prepare 1.03s)
+

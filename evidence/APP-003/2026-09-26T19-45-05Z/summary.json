@@ -1,0 +1,58 @@
+{
+  "task_id": "APP-003",
+  "git_commit": "582f596ee84a1c6bf654b3efc5483dfbfde16493",
+  "recorded_at": "2026-09-26T19:45:11Z",
+  "commands": [
+    {
+      "command": "cd apps/desktop && npm run build && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run --no-file-parallelism # desktop suite incl. the settings race",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-26T19-45-05Z/desktop-suite.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run --config tests/e2e/vitest.config.ts tests/e2e/desktop.e2e.spec.ts # QA-008 desktop journeys",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-26T19-45-05Z/desktop-journeys-run3.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cd apps/desktop && npm run build && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run --no-file-parallelism # desktop suite incl. the settings race",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run --config tests/e2e/vitest.config.ts tests/e2e/desktop.e2e.spec.ts # QA-008 desktop journeys",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-003/2026-09-26T19-45-05Z/NOTES.md",
+      "sha256": "a90fb943c09d7ff9d4568d56b5672151a5ae5be61b12054ba7b49699ed05585a",
+      "bytes": 1311
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T19-45-05Z/desktop-journeys-run1.log",
+      "sha256": "856fa008c295e777eda5b8b5281bf8b3570c66b5c14ebee170c81ea18bb4fc37",
+      "bytes": 9065
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T19-45-05Z/desktop-journeys-run2.log",
+      "sha256": "c85e51c217d0b3368fd18789c6631939181a375d861d4644d967da91039a8414",
+      "bytes": 4642
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T19-45-05Z/desktop-journeys-run3.log",
+      "sha256": "c39105c3ca4e71d61b69f4ba9c20b373e20494ae4c7623f559a680fa41462584",
+      "bytes": 4332
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T19-45-05Z/desktop-suite.log",
+      "sha256": "a7162018068a34f4fb0f3208e5a86586986712a57088111f495d8bf811bedd8a",
+      "bytes": 5752
+    }
+  ]
+}

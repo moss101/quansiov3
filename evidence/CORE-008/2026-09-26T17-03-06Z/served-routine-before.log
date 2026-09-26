@@ -1,0 +1,5 @@
+== before the fix (release build of main at dc84014; must fail)
+routine rtn_01M3FCR1FDCES7Z915MN4KYWCT absence_policy skip next_due_at 2026-09-26T17:38:32.949225Z
+fires 0 skipped_events 4
+AssertionError
+exit=1

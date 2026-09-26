@@ -205,11 +205,25 @@ pub enum VerificationOutcome {
     },
 }
 
+/// Receives the assistant text of a streaming model call, one delta at a time, in order.
+pub type TextSink = std::sync::Arc<dyn Fn(&str) + Send + Sync>;
+
 /// Injected source of one model proposal (DOMAIN.md §5.6, §11.1).
 #[async_trait]
 pub trait ModelProposalSource: Send + Sync {
     /// Produce the next proposal for the request, or a typed error.
     async fn propose(&self, request: ModelCallRequest) -> Result<ModelProposal, RuntimeError>;
+
+    /// Produce the next proposal, handing each assistant-text delta to `on_text` as the model
+    /// streams it. A source that cannot stream proposes whole (the default) and never calls it.
+    async fn propose_streaming(
+        &self,
+        request: ModelCallRequest,
+        on_text: TextSink,
+    ) -> Result<ModelProposal, RuntimeError> {
+        let _ = on_text;
+        self.propose(request).await
+    }
 }
 
 /// Injected tool dispatch seam (DOMAIN.md §7.4).

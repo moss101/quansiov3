@@ -325,7 +325,7 @@ describe("update hooks", () => {
 });
 
 describe("IPC bridge", () => {
-  function bridgeWith(dir: string, fetchImpl: (input: string, init?: RequestInit) => Promise<Response>) {
+  function bridgeWith(dir: string, fetchImpl: (input: string, init?: RequestInit) => Promise<Response>, setAppearance?: (theme: string) => void) {
     const pushed: { channel: string; payload: unknown }[] = [];
     const sockets: FakeSocket[] = [];
     const bridge = new DesktopBridge({
@@ -345,9 +345,22 @@ describe("IPC bridge", () => {
       consumer: "desktop:test",
       push: (channel, payload) => pushed.push({ channel, payload }),
       fetch: fetchImpl,
+      ...(setAppearance ? { setAppearance } : {}),
     });
     return { bridge, pushed, sockets };
   }
+
+  it("applies only a theme the person can choose to the native chrome", async () => {
+    const applied: string[] = [];
+    const { bridge } = bridgeWith(userData(), () => Promise.reject(new Error("unused")), (theme) => applied.push(theme));
+    const handlers = bridge.handlers();
+    await expect(handlers["appearance.set"]({ theme: "dark" })).resolves.toEqual({ theme: "dark" });
+    await expect(handlers["appearance.set"]({ theme: "system" })).resolves.toEqual({ theme: "system" });
+    await expect(handlers["appearance.set"]({ theme: "blue" })).rejects.toThrow(/system, light or dark/);
+    await expect(handlers["appearance.set"]({})).rejects.toThrow(/system, light or dark/);
+    await expect(handlers["appearance.set"]("dark")).rejects.toThrow();
+    expect(applied).toEqual(["dark", "system"]);
+  });
 
   it("registers exactly the allowlisted channels", () => {
     const registered: string[] = [];

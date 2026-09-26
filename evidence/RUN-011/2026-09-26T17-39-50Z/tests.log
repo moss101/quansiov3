@@ -1,0 +1,38 @@
+test a_run_is_traced_end_to_end_and_no_canary_leaves_any_signal ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.83s
+test the_runbook_is_generated_from_the_switch_catalog ... ok
+test connector_revoke_goes_through_the_connector_owner ... ok
+test worker_quarantine_fences_the_target_and_release_restores_dispatch ... ok
+test stream_shed_disconnects_live_sessions_with_backpressure ... ok
+test drain_and_undrain_move_the_target_lifecycle_and_are_audited ... ok
+test emergency_deny_refuses_matching_classes_before_policy_and_scoped_freezes_stay_scoped ... ok
+test effect_freeze_stops_new_consequential_actions_without_touching_reads_or_evidence ... ok
+test provider_outage_drill_fails_over_refuses_and_restores ... ok
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.80s
+test recovery_never_retries_an_unsettled_effect ... ok
+test attempts_are_appended_never_overwritten ... ok
+test protocol_state_round_trips_for_recovery ... ok
+test illegal_transitions_of_each_family_leave_state_and_events_untouched ... ok
+test unknown_tool_outcome_suspends_for_reconciliation_never_retry ... ok
+test parked_run_is_not_released_by_a_mismatched_wait_state ... ok
+test canonical_ownership_and_tenant_isolation_hold ... ok
+test only_the_cancellation_that_did_the_work_reports_that_it_cancelled_the_run ... ok
+test recovery_honours_a_cancellation_requested_before_the_crash_once ... ok
+test cancellation_during_running_ends_cancelled_with_one_event ... ok
+test recovery_waits_for_the_matching_approval_and_is_idempotent ... ok
+test cancellation_during_waiting_ends_cancelled_with_one_event ... ok
+test stale_generation_is_fenced_before_any_write ... ok
+test budget_exhaustion_stops_the_loop_without_further_model_calls ... ok
+test suspended_run_resumes_only_with_the_current_generation ... ok
+test happy_path_emits_every_event_in_order_with_contiguous_sequences ... ok
+test unavailable_seams_name_the_task_that_owns_them ... ok
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.86s
+test quota_failure_does_not_partially_commit_a_new_effect ... ok
+test budget_alert_on_soft_quota_still_admits ... ok
+test usage_rebuild_from_source_events_is_deterministic ... ok
+test quota_race_admits_at_most_one_winner ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test a_provider_failure_fails_the_turn_with_its_code ... ok
+test a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger ... ok
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.42s
+exit=0

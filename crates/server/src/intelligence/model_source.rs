@@ -39,7 +39,7 @@ use crate::runtime::context_bridge::{
 };
 use crate::runtime::state_machine::{
     ModelCallRequest, ModelProposal, ModelProposalSource, ProposedToolCall, RuntimeError,
-    RuntimeIdentity,
+    RuntimeIdentity, TextSink,
 };
 use crate::runtime::turn_loop::{
     ModelCallLedger, ProjectionProvider, RecordedCall, StoredProjectionProvider,
@@ -207,6 +207,15 @@ struct StreamOutcome {
 #[async_trait]
 impl ModelProposalSource for GatewayModelSource {
     async fn propose(&self, request: ModelCallRequest) -> Result<ModelProposal, RuntimeError> {
+        self.propose_streaming(request, Arc::new(|_: &str| {}))
+            .await
+    }
+
+    async fn propose_streaming(
+        &self,
+        request: ModelCallRequest,
+        on_text: TextSink,
+    ) -> Result<ModelProposal, RuntimeError> {
         // One span per model call (OPS-003); its context build and model call are children.
         let span = crate::observability::Span::start(
             "runtime.model_call",
@@ -220,7 +229,7 @@ impl ModelProposalSource for GatewayModelSource {
         let result = span
             .context()
             .clone()
-            .scope(self.propose_in_span(request))
+            .scope(self.propose_in_span(request, on_text))
             .await;
         match &result {
             Ok(_) => span.end("ok", json!({})),
@@ -234,6 +243,7 @@ impl GatewayModelSource {
     async fn propose_in_span(
         &self,
         request: ModelCallRequest,
+        on_text: TextSink,
     ) -> Result<ModelProposal, RuntimeError> {
         let started = Instant::now();
         let run = self.run_facts(&request).await?;
@@ -387,7 +397,11 @@ impl GatewayModelSource {
         };
         let mut client = self.client.clone();
         let events = client
-            .fulfill_model(&scope, wire)
+            .fulfill_model_observed(&scope, wire, &mut |event| {
+                if event.kind() == Kind::Delta && !event.text_delta.is_empty() {
+                    on_text(&event.text_delta);
+                }
+            })
             .await
             .map_err(model_error)?;
         let outcome = read_stream(&events);

@@ -213,6 +213,71 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
     }
   }, 120_000);
 
+  it("follows the theme chosen in Settings over the system's, on the page and the window (APP-003)", async () => {
+    const background = (page: Page): Promise<string> => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    const chrome = (app: ElectronApplication): Promise<string> => app.evaluate(({ nativeTheme }) => nativeTheme.themeSource);
+    const choose = async (page: Page, theme: string): Promise<void> => {
+      await page.getByRole("button", { name: "Account" }).click();
+      await page.getByRole("menuitem", { name: "Settings" }).click();
+      const settings = page.getByRole("region", { name: "Settings" });
+      await settings.getByLabel("Theme").selectOption(theme);
+      await settings.getByRole("button", { name: "Save my settings" }).click();
+      await until(async () => (await settings.locator("dt", { hasText: "theme" }).locator("+ dd").textContent()) === theme, `the ${theme} theme saved`);
+    };
+    const first = await launch();
+    try {
+      await signIn(first.page, email(OWNER));
+      await first.page.emulateMedia({ colorScheme: "light" });
+      await choose(first.page, "dark");
+      await until(async () => (await background(first.page)) === "rgb(7, 7, 7)", "the page to turn dark on a light system");
+      await expect(first.page.evaluate(() => document.documentElement.dataset["theme"])).resolves.toBe("dark");
+      await until(async () => (await chrome(first.app)) === "dark", "the window chrome to turn dark");
+    } finally {
+      await first.done();
+    }
+    // The choice is the person's: the next launch opens in it before anything is touched.
+    const second = await launch();
+    try {
+      await second.page.emulateMedia({ colorScheme: "light" });
+      await signIn(second.page, email(OWNER));
+      await until(async () => (await background(second.page)) === "rgb(7, 7, 7)", "the chosen theme on the next launch");
+      await until(async () => (await chrome(second.app)) === "dark", "the window chrome on the next launch");
+      await second.page.emulateMedia({ colorScheme: "dark" });
+      await choose(second.page, "light");
+      await until(async () => (await background(second.page)) === "rgb(252, 252, 252)", "the page to stay light on a dark system");
+      await choose(second.page, "system");
+      await until(async () => (await background(second.page)) === "rgb(7, 7, 7)", "the page to follow the dark system again");
+      await expect(second.page.evaluate(() => document.documentElement.dataset["theme"] ?? null)).resolves.toBeNull();
+      await until(async () => (await chrome(second.app)) === "system", "the window chrome to follow the system again");
+    } finally {
+      await second.done();
+    }
+  }, 180_000);
+
+  it("keeps a choice made before Settings has finished reading the current values", async () => {
+    const desktop = await launch();
+    try {
+      const page = desktop.page;
+      await signIn(page, email(OWNER));
+      await page.getByRole("button", { name: "Account" }).click();
+      await page.getByRole("menuitem", { name: "Settings" }).click();
+      const settings = page.getByRole("region", { name: "Settings" });
+      // Chosen at once, while the page is still reading the effective settings.
+      await settings.getByLabel("Theme").selectOption("light");
+      await settings.getByLabel("Keep data for (days)").fill("45");
+      await expect(settings.getByLabel("Theme").inputValue()).resolves.toBe("light");
+      await settings.getByRole("button", { name: "Save my settings" }).click();
+      await until(async () => (await settings.locator("dt", { hasText: "theme" }).locator("+ dd").textContent()) === "light", "the chosen theme saved");
+      // The other form's unsaved edit survived both reads (on opening and after the save).
+      await expect(settings.getByLabel("Keep data for (days)").inputValue()).resolves.toBe("45");
+      await settings.getByLabel("Theme").selectOption("system");
+      await settings.getByRole("button", { name: "Save my settings" }).click();
+      await until(async () => (await settings.locator("dt", { hasText: "theme" }).locator("+ dd").textContent()) === "system", "the theme back to system");
+    } finally {
+      await desktop.done();
+    }
+  }, 120_000);
+
   it("shows a viewer the workspace settings without letting them change them", async () => {
     const desktop = await launch();
     try {
@@ -243,15 +308,49 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
       await composer.press("Enter");
       const conversation = page.getByRole("region", { name: "Conversation" });
       await until(async () => (await conversation.getByText("Plan the chat-first shell review").count()) > 0, "the message in the thread");
-      // The thread the message created is listed and is the one marked open.
+      // The thread the message created is listed and is the one marked open, previewing its
+      // latest message.
       await until(async () => (await chats.getByRole("listitem").count()) === before + 1, "the new conversation in the sidebar");
       await until(async () => (await chats.locator('[aria-current="page"]').count()) === 1, "the new conversation marked open");
+      const open = chats.locator('[aria-current="page"]');
+      const flat = (text: string | null): string => (text ?? "").replace(/\s+/g, " ").trim();
+      await until(async () => {
+        const latest = flat(await conversation.locator(".row .bubble").last().textContent());
+        return latest.length > 0 && flat(await open.locator(".chat-preview").textContent()).startsWith(latest.slice(0, 20));
+      }, "the sidebar to preview the thread's latest message");
+      // Once the teammate has answered, nothing says it is still working and nothing offers to
+      // cancel it, although the conversation's run stays open for the next turn.
+      await until(async () => (await conversation.locator(".working").count()) === 0 && (await page.getByRole("button", { name: "Cancel" }).count()) === 0, "the finished run to leave the thread");
       // + leaves it for an empty conversation; picking it again brings its messages back.
       await page.getByRole("button", { name: "New thread" }).click();
       await until(async () => (await conversation.getByText("Plan the chat-first shell review").count()) === 0, "an empty conversation");
       await expect(chats.locator('[aria-current="page"]').count()).resolves.toBe(0);
       await chats.getByRole("button").first().click();
       await until(async () => (await chats.locator('[aria-current="page"]').count()) === 1, "a conversation reopened from the sidebar");
+    } finally {
+      await desktop.done();
+    }
+  }, 120_000);
+
+  it("jumps to a page from the command palette (APP-003)", async () => {
+    const desktop = await launch();
+    try {
+      const page = desktop.page;
+      await signIn(page, email(OWNER));
+      await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
+      const palette = page.getByRole("dialog", { name: "Go to" });
+      await palette.waitFor();
+      await palette.getByRole("combobox", { name: "Go to" }).fill("approvals");
+      await expect(palette.getByRole("option", { selected: true }).textContent()).resolves.toContain("Approvals");
+      await page.keyboard.press("Enter");
+      await page.getByRole("region", { name: "Trust" }).waitFor({ timeout: 15_000 });
+      expect(await palette.count()).toBe(0);
+      // Escape closes it without going anywhere.
+      await page.getByRole("button", { name: "Search conversations" }).click();
+      await palette.waitFor();
+      await page.keyboard.press("Escape");
+      await until(async () => (await palette.count()) === 0, "the palette to close");
+      await expect(page.getByRole("region", { name: "Trust" }).count()).resolves.toBe(1);
     } finally {
       await desktop.done();
     }

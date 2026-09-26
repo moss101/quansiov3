@@ -13,7 +13,6 @@
 use axum::extract::{Query, State};
 use axum::http::HeaderMap;
 use axum::Json;
-use quansio_events::EventStore;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::Row;
@@ -26,12 +25,12 @@ use crate::control::schema;
 use crate::policy::rbac::{ActionFamily, TenantRole, WorkspaceRole};
 use crate::policy::{PolicyChange, PolicyError, PolicyScope, PolicyStore};
 use crate::runtime::state_machine::RuntimeIdentity;
-use crate::usage::{UsageMeter, UsageProjection};
+use crate::usage::UsageStore;
 
 /// Audit rows one page returns at most.
 pub const MAX_AUDIT_ROWS: i64 = 500;
-/// RuntimeEvents the usage projection reads at most.
-pub const MAX_USAGE_EVENTS: i64 = 20_000;
+/// Usage records `GET /v1/usage` lists (the newest); totals cover them all.
+pub const MAX_USAGE_RECORDS: i64 = 500;
 
 fn projection_error(error: impl std::fmt::Display) -> ApiError {
     ApiError::new(ApiErrorCode::Internal, error.to_string(), "projection")
@@ -158,8 +157,9 @@ pub async fn connectors(
     })).collect::<Vec<_>>() })))
 }
 
-/// `GET /v1/usage[?workspace_id=]`: OPS-004's projection rebuilt from the tenant's
-/// RuntimeEvents — totals per meter and the records behind them.
+/// `GET /v1/usage[?workspace_id=]`: OPS-004's projection — totals per meter over the tenant's
+/// whole history (the materialized `usage_records` and the events after them), and the newest
+/// records behind them.
 pub async fn usage(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -174,32 +174,20 @@ pub async fn usage(
         "projection",
     )
     .await?;
-    let events = EventStore::new(state.pool().clone())
-        .read_events_after(&scope.tenant_id, None, MAX_USAGE_EVENTS)
+    let summary = UsageStore::new(state.pool().clone(), scope.tenant_id.clone())
+        .summary(query.workspace_id.as_deref(), MAX_USAGE_RECORDS)
         .await
         .map_err(projection_error)?;
-    let projection = UsageProjection::rebuild(&events);
-    let records: Vec<_> = projection
-        .records()
-        .iter()
-        .filter(|record| {
-            query
-                .workspace_id
-                .as_deref()
-                .is_none_or(|workspace| record.workspace_id.as_deref() == Some(workspace))
-        })
-        .collect();
-    let meters: Vec<Value> = UsageMeter::ALL
-        .iter()
-        .map(|meter| {
-            let total: f64 = records.iter().filter(|record| record.meter == *meter).map(|record| record.quantity).sum();
-            json!({ "meter": meter.as_str(), "total": total, "unit": records.iter().find(|record| record.meter == *meter).map(|record| record.unit) })
-        })
-        .collect();
     Ok(Json(json!({
-        "events_read": events.len(),
-        "meters": meters,
-        "records": records.iter().map(|record| json!({
+        "events_read": summary.through_sequence,
+        "complete": summary.complete,
+        "meters": summary.meters.iter().map(|meter| json!({
+            "meter": meter.meter.as_str(),
+            "total": meter.total,
+            "unit": meter.unit,
+        })).collect::<Vec<_>>(),
+        "record_count": summary.record_count,
+        "records": summary.recent.iter().map(|record| json!({
             "id": record.id,
             "workspace_id": record.workspace_id,
             "meter": record.meter.as_str(),

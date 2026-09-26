@@ -15,7 +15,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { app, autoUpdater, BrowserWindow, dialog, ipcMain, net, Notification, protocol, safeStorage, session, shell } from "electron";
+import { app, autoUpdater, BrowserWindow, dialog, ipcMain, nativeTheme, net, Notification, protocol, safeStorage, session, shell } from "electron";
 import WebSocket from "ws";
 
 import type { SocketFactory, SocketLike } from "../client/stream.js";
@@ -112,12 +112,12 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
   const window = new BrowserWindow({
     width: 1280,
     height: 860,
-    minWidth: 720,
+    minWidth: 640,
     minHeight: 520,
     show: false,
     // A macOS window like its peers: no title bar, the traffic lights inset over the sidebar
     // (the renderer leaves room for them and marks where the window is dragged from).
-    ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 18, y: 18 } } : {}),
+    ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 16, y: 15 } } : {}),
     webPreferences: { ...RENDERER_WEB_PREFERENCES, preload: preloadPath(bundleRoot) },
   });
   window.webContents.on("will-navigate", (event, url) => {
@@ -143,6 +143,10 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
     openExternal: (url) => shell.openExternal(url),
     // Native desktop notifications (APP-010): only for events the person's preference sends
     // to the desktop channel; clicking one brings the window forward.
+    // The theme preference also drives the native chrome (traffic lights, menus, scrollbars).
+    setAppearance: (theme) => {
+      nativeTheme.themeSource = theme;
+    },
     notifyNative: (notice) => {
       if (Notification.isSupported()) {
         const native = new Notification({ title: notice.title, body: notice.body, silent: false });

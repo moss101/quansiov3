@@ -22,6 +22,7 @@ import {
   openQuestions,
   postParams,
   postedIdentities,
+  postedRunStatus,
   uploadParams,
   type ConversationAction,
   type ConversationState,
@@ -91,8 +92,8 @@ describe("streaming UI", () => {
       type: "messages.loaded",
       threadId: THREAD,
       messages: [
-        { id: "msg_1", threadId: THREAD, seq: 1, authorKind: "user", authorId: "usr_1", runId: null, turnId: null, text: "hello", attachments: [] },
-        { id: "msg_2", threadId: THREAD, seq: 2, authorKind: "agent", authorId: "ath_1", runId: RUN, turnId: TURN, text: "working on it", attachments: [] },
+        { id: "msg_1", threadId: THREAD, seq: 1, authorKind: "user", authorId: "usr_1", runId: null, turnId: null, text: "hello", attachments: [], createdAt: null },
+        { id: "msg_2", threadId: THREAD, seq: 2, authorKind: "agent", authorId: "ath_1", runId: RUN, turnId: TURN, text: "working on it", attachments: [], createdAt: null },
       ],
     });
     expect(state.stale.messages).toBe(false);
@@ -252,5 +253,23 @@ describe("inspector", () => {
     expect(turn?.tools).toEqual([{ toolName: "fs.read", status: "completed", effectId: "eff_1", effectClass: "read.internal", effectStatus: "settled" }]);
     expect(turn?.question).toEqual({ id: QUESTION, prompt: "Which?", status: "answered", answer: "alpha" });
     expect(() => decodeTimeline({})).toThrow(/run/);
+  });
+});
+
+describe("a run that finishes inside the post", () => {
+  it("is settled by the post's run status even when its terminal event came first", () => {
+    const thread = "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
+    const run = "run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
+    let state = initialConversation(WORKSPACE, thread);
+    // The terminal event arrives before the renderer knows the run: it is not this thread's yet.
+    state = conversationReducer(state, { type: "frame", frame: { kind: "event", cursor: "c1", event: { type: "run.state_changed", aggregate_id: run, payload: { run_id: run, to: "SUCCEEDED" } } } as never });
+    state = conversationReducer(state, { type: "composer.posted", threadId: thread, runId: run, messageId: "msg_1" });
+    expect(cancellableRun(state)?.runId).toBe(run);
+    const status = postedRunStatus({ thread_id: thread, run_id: run, message_id: "msg_1", run_status: "SUCCEEDED" });
+    expect(status).toBe("SUCCEEDED");
+    state = conversationReducer(state, { type: "run.loaded", runId: run, status: status ?? "" });
+    expect(cancellableRun(state)).toBeNull();
+    expect(postedRunStatus({ run_status: "" })).toBeNull();
+    expect(postedRunStatus(null)).toBeNull();
   });
 });
