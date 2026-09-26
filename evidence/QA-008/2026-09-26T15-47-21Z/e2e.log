@@ -1,0 +1,142 @@
+$ vitest run --config tests/e2e/vitest.config.ts --no-file-parallelism
+
+ RUN  v2.1.9 /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa008
+
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > chats with a teammate
+- region "Conversation":
+  - complementary:
+    - heading "Threads" [level=2]
+    - button "New thread"
+    - list:
+      - listitem:
+        - button "thr_01M3F36CF4YYH5336HS2Z7ZR1Q (2)"
+  - list:
+    - listitem:
+      - text: user
+      - paragraph: Summarize the launch checklist
+    - listitem:
+      - text: Teammate
+      - paragraph: done
+      - button "Inspect"
+  - textbox "Message your teammates…"
+  - button "Attach"
+  - button "Send" [disabled]
+  - button "Cancel"
+  - complementary:
+    - heading "Inspector" [level=2]
+    - paragraph: Pick a reply to see which model answered, what it saw and which tools it used.
+
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > reviews an artifact's versions and preview
+- region "Artifacts":
+  - complementary:
+    - heading "Artifacts" [level=2]
+    - searchbox "Search threads, artifacts, knowledge and evidence…"
+    - checkbox "artifacts" [checked]
+    - text: artifacts
+    - checkbox "threads" [checked]
+    - text: threads
+    - checkbox "knowledge" [checked]
+    - text: knowledge
+    - checkbox "evidence" [checked]
+    - text: evidence
+    - button "Search" [disabled]
+    - text: Kind
+    - combobox "Kind":
+      - option "All kinds" [selected]
+      - option "document"
+      - option "spreadsheet"
+      - option "presentation"
+      - option "code"
+      - option "data"
+      - option "image"
+      - option "audio"
+      - option "video"
+      - option "archive"
+      - option "other"
+    - list:
+      - listitem:
+        - button "document Launch plan.md v1"
+  - heading "Launch plan.md" [level=2]
+  - text: "document Source: upload usr_01J8Z3K6F1N8VQ2X5W9Y0QA8AA"
+  - heading "Versions" [level=3]
+  - list:
+    - listitem:
+      - button "v1 · text/markdown · 34 B"
+      - text: uploaded by usr_01J8Z3K6F1N8VQ2X5W9Y0QA8AAvalid source
+  - button "Save…"
+  - button "Open"
+  - button "Edit"
+  - code: b169a11ddb663ab5f339c53c26aa58a905db041d040dd1c1ccafcb064193f9d2
+  - text: "# Launch plan - ship the desktop"
+
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > reports the server going away and recovers when it returns
+offline: - complementary:
+  - heading "Quansio" [level=1]
+  - navigation "Surfaces":
+    - list:
+      - listitem:
+        - button "Chat"
+      - listitem:
+        - button "Objectives and plan"
+      - listitem:
+        - button "Teammates"
+      - listitem:
+        - button "Plan and agents"
+      - listitem:
+        - button "Run status"
+      - listitem:
+        - button "Approvals"
+      - listitem:
+        - button "Evidence and effects"
+      - listitem:
+        - button "Live browser and terminal"
+      - listitem:
+        - button "Files and artifacts"
+      - listitem:
+        - button "Knowledge, memory and skills"
+      - listitem:
+        - button "Group threads"
+      - listitem:
+        - button "Routines and notifications"
+      - listitem: Connectors (web admin)
+      - listitem:
+        - button "Capabilities"
+      - listitem:
+        - button "Models and tools used"
+  - heading "Active run" [level=2]
+  - term: Workspace
+  - definition: ws_01J8Z3K6F1N8VQ2X5W9Y0QA8AA
+  - term: run
+  - definition: run_01M3F36D6ZDFRTB0TCNEY5PKWH
+  - term: thread
+  - definition: thr_01M3F36CF4YYH5336HS2Z7ZR1Q
+
+ ✓ |qa-e2e| tests/e2e/desktop.e2e.spec.ts (12 tests) 20539ms
+   ✓ desktop journeys (real Electron, real server) > onboards a new person with nothing but an email address 2817ms
+   ✓ desktop journeys (real Electron, real server) > chats with a teammate 897ms
+   ✓ desktop journeys (real Electron, real server) > approves an effect from the preview it was asked about 1380ms
+   ✓ desktop journeys (real Electron, real server) > steers the plan: adds a task under the objective and moves it to ready 1477ms
+   ✓ desktop journeys (real Electron, real server) > takes over the live browser and hands it back 503ms
+   ✓ desktop journeys (real Electron, real server) > reviews an artifact's versions and preview 465ms
+   ✓ desktop journeys (real Electron, real server) > starts a group thread with a colleague 1201ms
+   ✓ desktop journeys (real Electron, real server) > creates a routine 496ms
+   ✓ desktop journeys (real Electron, real server) > changes settings and sees what the change sets in motion 543ms
+   ✓ desktop journeys (real Electron, real server) > returns a person whose sessions were revoked to sign-in 1891ms
+   ✓ desktop journeys (real Electron, real server) > has no accessibility blockers on any surface and every control is keyboard reachable 5456ms
+   ✓ desktop journeys (real Electron, real server) > reports the server going away and recovers when it returns 882ms
+ ✓ |qa-e2e| tests/e2e/journeys.spec.ts (4 tests) 20ms
+ ✓ |qa-e2e| tests/e2e/web.e2e.spec.ts (7 tests) 18539ms
+   ✓ web journeys (Chrome, real server) > signs in from the emailed link and reviews the work 822ms
+   ✓ web journeys (Chrome, real server) > lets an approver decide a request remotely, bound to its preview 1215ms
+   ✓ web journeys (Chrome, real server) > administers members and the change is audited 731ms
+   ✓ web journeys (Chrome, real server) > offers a viewer no administration and the server agrees 1088ms
+   ✓ web journeys (Chrome, real server) > has no accessibility blockers on any page, works by keyboard, and fits a phone 11117ms
+   ✓ web journeys (Chrome, real server) > signs out 480ms
+   ✓ web journeys (Chrome, real server) > the accessibility checks find what they look for (a control with no name, hidden focus) 488ms
+
+ Test Files  3 passed (3)
+      Tests  23 passed (23)
+   Start at  17:51:26
+   Duration  40.35s (transform 123ms, setup 0ms, collect 566ms, tests 39.10s, environment 0ms, prepare 151ms)
+
+exit=0

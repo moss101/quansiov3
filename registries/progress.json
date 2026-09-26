@@ -2803,10 +2803,10 @@
     },
     "QA-008": {
       "coverage": "GENUINE_GAP",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-26T09:52:56Z",
+      "updated_at": "2026-09-26T09:52:56Z",
       "git_commit": null,
       "tests": [
         "pnpm exec vitest run --config tests/e2e/vitest.config.ts (7 passed, 1 skipped: onboarding-to-artifact-review journey, teammate archive lineage + protected delivery, externalized strings, offline/reconnect, a11y baseline zero violations + keyboard-reachable surfaces; served Playwright matrix prints BLOCKED_EXTERNAL)",

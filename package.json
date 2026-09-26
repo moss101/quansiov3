@@ -10,7 +10,8 @@
     "build": "pnpm -r --if-present build",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:e2e": "vitest run --config tests/e2e/vitest.config.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
