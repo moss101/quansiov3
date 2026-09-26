@@ -1,0 +1,18 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/launch.e2e.test.ts (1 test) 435ms
+   ✓ desktop launch (real Electron) > renders the bundled renderer from the app: scheme 434ms
+ ✓ tests/session.e2e.test.ts (5 tests) 7019ms
+   ✓ desktop account (real Electron, real server) > returns to sign-in when the person signs out 718ms
+   ✓ desktop account (real Electron, real server) > returns to sign-in when an administrator revokes the session 3003ms
+   ✓ desktop account (real Electron, real server) > changes workspace and personal settings and shows the effective result 965ms
+   ✓ desktop account (real Electron, real server) > shows a viewer the workspace settings without letting them change them 710ms
+   ✓ desktop account (real Electron, real server) > names every surface for a person and every entry opens a page (APP-003) 905ms
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  15:17:36
+   Duration  7.40s (transform 51ms, setup 0ms, collect 332ms, tests 7.45s, environment 0ms, prepare 78ms)
+
+exit=0

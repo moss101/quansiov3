@@ -305,6 +305,21 @@ export const STRINGS = {
   settingsEffective: "Effective settings",
   settingsSaved: "Saved.",
   settingsAdminOnly: "Only a workspace administrator can change these.",
+  surfaceConversation: "Chat",
+  surfaceObjectives: "Objectives and plan",
+  surfaceTeammates: "Teammates",
+  surfacePlanAndAgents: "Plan and agents",
+  surfaceRunStatus: "Run status",
+  surfaceApprovals: "Approvals",
+  surfaceEvidenceTimeline: "Evidence and effects",
+  surfaceLiveBrowserTerminal: "Live browser and terminal",
+  surfaceArtifacts: "Files and artifacts",
+  surfaceKnowledgeControls: "Knowledge, memory and skills",
+  surfaceCollaboration: "Group threads",
+  surfaceAutomations: "Routines and notifications",
+  surfaceConnectors: "Connectors (web admin)",
+  surfaceCapabilityAdmin: "Capabilities",
+  surfaceModelUsage: "Models and tools used",
 } as const;
 
 export type StringKey = keyof typeof STRINGS;
