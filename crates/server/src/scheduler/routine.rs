@@ -21,6 +21,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use chrono::{DateTime, Datelike, Duration, FixedOffset, TimeZone, Timelike, Utc};
+use futures_util::StreamExt;
 use quansio_core::{CorrelationId, UlidGenerator};
 use quansio_events::{Actor, EventDraft, EventError, EventStore, EventType};
 use serde::{Deserialize, Serialize};
@@ -187,6 +188,8 @@ pub struct RoutineTickReport {
 
 /// How late the scheduler may reach a window and still fire it as on time (DOMAIN.md §13.1).
 pub const DEFAULT_MISFIRE_THRESHOLD_SECONDS: i64 = 60;
+/// Leased fires one tenant pass executes side by side.
+pub const DEFAULT_CONCURRENT_FIRES: usize = 8;
 
 /// Routine timing store for one tenant.
 #[derive(Debug, Clone)]
@@ -194,6 +197,7 @@ pub struct RoutineScheduler {
     events: EventStore,
     tenant_id: String,
     misfire_threshold: Duration,
+    concurrent_fires: usize,
 }
 
 impl RoutineScheduler {
@@ -208,6 +212,7 @@ impl RoutineScheduler {
             events: EventStore::new(pool),
             tenant_id,
             misfire_threshold: Duration::seconds(DEFAULT_MISFIRE_THRESHOLD_SECONDS),
+            concurrent_fires: DEFAULT_CONCURRENT_FIRES,
         })
     }
 
@@ -434,48 +439,75 @@ impl RoutineScheduler {
             self.events.pool().clone(),
             self.tenant_id.clone(),
         );
+        // Leased fires are independent: run them side by side (bounded), so a burst of routines
+        // due at the same moment — every morning digest at nine — does not wait turn by turn.
+        let outcomes: Vec<Result<Option<bool>, SchedulerError>> =
+            futures_util::stream::iter(ledger.lease_due(now, limit).await?)
+                .map(|fire| {
+                    let ledger = &ledger;
+                    async move { self.execute_fire(ledger, dispatch, fire, now).await }
+                })
+                .buffer_unordered(self.concurrent_fires)
+                .collect()
+                .await;
         let mut executed = 0usize;
         let mut failures = 0usize;
-        for fire in ledger.lease_due(now, limit).await? {
-            let Some(routine) = self.load(&fire.routine_id).await? else {
-                ledger.cancel(&fire, "the routine no longer exists").await?;
-                continue;
-            };
-            if routine.status != "active" {
-                ledger
-                    .cancel(&fire, &format!("the routine is {}", routine.status))
-                    .await?;
-                continue;
-            }
-            let window = fire.window_at.unwrap_or(now);
-            match dispatch
-                .fire_routine(self.fire_request(&routine, window, &fire.fire_key))
-                .await
-            {
-                Ok(outcome) => {
-                    ledger
-                        .complete(
-                            &fire,
-                            &routine.owner_user_id,
-                            json!({
-                                "objective_id": outcome.objective_id,
-                                "run_id": outcome.run_id,
-                                "window": fire.window_at.map(|at| at.to_rfc3339()),
-                                "source": fire.source,
-                            }),
-                        )
-                        .await?;
-                    executed += 1;
-                }
-                Err(error) => {
-                    ledger
-                        .fail(&fire, &routine.owner_user_id, &error.to_string(), now)
-                        .await?;
-                    failures += 1;
-                }
+        for outcome in outcomes {
+            match outcome? {
+                Some(true) => executed += 1,
+                Some(false) => failures += 1,
+                None => {}
             }
         }
         Ok((executed, failures))
+    }
+
+    /// Execute one leased fire: `Some(true)` executed, `Some(false)` failed (retried later or
+    /// failed for good), `None` cancelled because its routine is gone or no longer active.
+    async fn execute_fire(
+        &self,
+        ledger: &crate::control::routines::FireLedger,
+        dispatch: &dyn RunDispatch,
+        fire: crate::control::routines::Fire,
+        now: DateTime<Utc>,
+    ) -> Result<Option<bool>, SchedulerError> {
+        let Some(routine) = self.load(&fire.routine_id).await? else {
+            ledger.cancel(&fire, "the routine no longer exists").await?;
+            return Ok(None);
+        };
+        if routine.status != "active" {
+            ledger
+                .cancel(&fire, &format!("the routine is {}", routine.status))
+                .await?;
+            return Ok(None);
+        }
+        let window = fire.window_at.unwrap_or(now);
+        match dispatch
+            .fire_routine(self.fire_request(&routine, window, &fire.fire_key))
+            .await
+        {
+            Ok(outcome) => {
+                ledger
+                    .complete(
+                        &fire,
+                        &routine.owner_user_id,
+                        json!({
+                            "objective_id": outcome.objective_id,
+                            "run_id": outcome.run_id,
+                            "window": fire.window_at.map(|at| at.to_rfc3339()),
+                            "source": fire.source,
+                        }),
+                    )
+                    .await?;
+                Ok(Some(true))
+            }
+            Err(error) => {
+                ledger
+                    .fail(&fire, &routine.owner_user_id, &error.to_string(), now)
+                    .await?;
+                Ok(Some(false))
+            }
+        }
     }
 
     async fn load(&self, routine_id: &str) -> Result<Option<Routine>, SchedulerError> {

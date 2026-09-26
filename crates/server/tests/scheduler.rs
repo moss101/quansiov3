@@ -48,6 +48,8 @@ struct RecordingDispatch {
     routines: Mutex<Vec<RoutineFireRequest>>,
     /// Generation the recording run is currently in; a resume older than this is fenced.
     current_generation: Mutex<u64>,
+    /// How long firing a routine takes (a turn's worth of work).
+    fire_takes: std::time::Duration,
 }
 
 impl RecordingDispatch {
@@ -99,6 +101,7 @@ impl RunDispatch for RecordingDispatch {
         &self,
         request: RoutineFireRequest,
     ) -> Result<RoutineFireOutcome, SchedulerError> {
+        tokio::time::sleep(self.fire_takes).await;
         let mut generator = UlidGenerator::new();
         let objective = CanonicalId::generate(Prefix::WorkNode, &mut generator).to_string();
         let run = CanonicalId::generate(Prefix::Run, &mut generator).to_string();
@@ -623,6 +626,39 @@ async fn an_on_time_window_fires_under_every_absence_policy() {
         );
     }
     assert_eq!(event_count(&fixture.pool, "routine.skipped").await, 0);
+    finish(fixture).await;
+}
+
+#[tokio::test]
+async fn routines_due_together_fire_side_by_side() {
+    let Some(fixture) = prepare("sched_burst").await else {
+        blocked_marker();
+        return;
+    };
+    // Eight routines due at the same moment, each taking 300 ms to fire (a turn's worth of work):
+    // one after another the last would start 2.1 s late; side by side, all start at once.
+    let now = Utc::now();
+    let window = window_just_due(now);
+    for _ in 0..8 {
+        seed_routine(&fixture.pool, AbsencePolicy::Skip, window).await;
+    }
+    let dispatch = Arc::new(RecordingDispatch {
+        fire_takes: std::time::Duration::from_millis(300),
+        ..RecordingDispatch::new(1)
+    });
+    let started = std::time::Instant::now();
+    let report = scheduler(fixture.pool.clone(), "inst-burst", Arc::clone(&dispatch))
+        .tick()
+        .await
+        .expect("tick");
+    let took = started.elapsed();
+    assert_eq!(report.routines_fired, 8);
+    assert_eq!(report.routine_fires_executed, 8);
+    assert_eq!(dispatch.routines().len(), 8);
+    assert!(
+        took < std::time::Duration::from_millis(1200),
+        "eight 300 ms fires took {took:?}: they ran one after another"
+    );
     finish(fixture).await;
 }
 
