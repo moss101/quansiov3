@@ -171,7 +171,8 @@ export function decodeUsage(payload: unknown): UsageView {
       const meter = text(row["meter"]);
       return meter ? [{ meter, total: number(row["total"]) ?? 0, unit: text(row["unit"]) }] : [];
     }),
-    records: list(root["records"]).length,
+    // The server lists the newest records and counts them all.
+    records: number(root["record_count"]) ?? list(root["records"]).length,
   };
 }
 

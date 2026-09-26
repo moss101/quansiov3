@@ -2489,20 +2489,21 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:35:00Z",
-      "updated_at": "2026-09-15T08:41:00Z",
-      "git_commit": "21d96c4462e3943035f31ed4048262f4f11178cd",
+      "updated_at": "2026-09-26T18:43:30Z",
+      "git_commit": "67e20d6abd004ac227c3f484398cb885e3e69ae2",
       "tests": [
         "cargo test -p quansio-server --test usage (4 passed: rebuild is a pure function of the event set; soft quota alerts and still admits; hard quota refuses without committing an effect; concurrent admits produce one winner)"
       ],
       "artifacts": [
         "evidence/OPS-004/2026-09-15T08-40-00Z/summary.json",
         "crates/server/src/usage/project.rs",
-        "crates/server/src/usage/quota.rs"
+        "crates/server/src/usage/quota.rs",
+        "evidence/OPS-004/2026-09-26T18-36-48Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "UsageRecords rebuild deterministically from RuntimeEvents. Hard quotas refuse before effect commit. Soft quotas emit a budget alert and still admit. Billing is this projection, not runtime truth."
+      "notes": "UsageRecords rebuild deterministically from RuntimeEvents. Hard quotas refuse before effect commit. Soft quotas emit a budget alert and still admit. Billing is this projection, not runtime truth. 2026-09-26 (fix/OPS-004-usage-materialized, merge 67e20d6, found by QA-009, P1): GET /v1/usage re-projected the tenant's oldest 20,000 events on every read, so nothing newer was metered; the background loop now materializes usage_records behind a consumer cursor (idempotent, cursor in the same transaction) and a read sums the rows plus the events after the cursor from one snapshot. Open, recorded by QA-009: quota enforcement (usage::quota) has no production caller and DOMAIN.md defines no quota settings. Evidence evidence/OPS-004/2026-09-26T18-36-48Z."
     },
     "OPS-005": {
       "coverage": "GENUINE_GAP",

@@ -1,0 +1,14 @@
+test quota_failure_does_not_partially_commit_a_new_effect ... ok
+test budget_alert_on_soft_quota_still_admits ... ok
+test usage_rebuild_from_source_events_is_deterministic ... ok
+test quota_race_admits_at_most_one_winner ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test a_usage_read_is_the_whole_history_wherever_the_projection_stands ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.69s
+test a_provider_failure_fails_the_turn_with_its_code ... ok
+test a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger ... ok
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.17s
+test the_web_app_is_served_under_app_with_a_locked_policy_and_no_way_out_of_its_root ... ok
+test admin_pages_and_commands_are_decided_by_the_servers_rbac_for_every_role ... ok
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.21s
+exit=0

@@ -1,0 +1,80 @@
+{
+  "task_id": "OPS-004",
+  "git_commit": "b7bb9dea730899ed4f48210d194d4f7c1dd788ec",
+  "recorded_at": "2026-09-26T18:43:21Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test usage_store --test usage --test web_admin_surface --test walking_skeleton_gateway",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-26T18-36-48Z/tests.log"
+    },
+    {
+      "command": "cd apps/web && npx vitest run tests/review.test.ts",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-26T18-36-48Z/web.log"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check && cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-26T18-36-48Z/lint.log"
+    },
+    {
+      "command": "mutant: a usage read ignores the events after the cursor; cargo test --test usage_store (must fail)",
+      "exit_code": 101,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-26T18-36-48Z/mutation.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test usage_store --test usage --test web_admin_surface --test walking_skeleton_gateway",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/web && npx vitest run tests/review.test.ts",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check && cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutant: a usage read ignores the events after the cursor; cargo test --test usage_store (must fail)",
+      "exit_code": 101,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-004/2026-09-26T18-36-48Z/NOTES.md",
+      "sha256": "4ecb744ac1ca852bdf7cc1c3ab0db52187da9b6f2a901d5fccfe0bc0374c290d",
+      "bytes": 2644
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-26T18-36-48Z/lint.log",
+      "sha256": "764cb286e87337458a18080e1798e8530cb4e7561078200fffeda338ad3ef749",
+      "bytes": 84
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-26T18-36-48Z/mutation.log",
+      "sha256": "799473a2e3964ab87ad089df15c25993571aea8d31eca0e20605054004ba2849",
+      "bytes": 567
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-26T18-36-48Z/tests.log",
+      "sha256": "6d2a95ba4e0b9a380d7811bbcfd17b56814558438a8ee2085a8fbf607d179d81",
+      "bytes": 1006
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-26T18-36-48Z/web.log",
+      "sha256": "1ac22c01536be73a52f36888ec4ba5c9a6ed7f8d5a4aa1e77071bdedf6ee610b",
+      "bytes": 159
+    }
+  ]
+}
