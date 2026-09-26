@@ -444,6 +444,12 @@ impl Background {
             .scan(512)
             .await
             .map_err(|error| format!("notifier: {error}"))?;
+        // The usage projection keeps up with the tenant's events (OPS-004), so a usage read
+        // projects only the last moments on the fly.
+        crate::usage::UsageStore::new(self.pool.clone(), tenant)
+            .catch_up(8)
+            .await
+            .map_err(|error| format!("usage projection: {error}"))?;
         crate::notify::EmailDeliveries::new(self.pool.clone(), tenant, self.email.clone())
             .deliver_due(chrono::Utc::now(), 64)
             .await
