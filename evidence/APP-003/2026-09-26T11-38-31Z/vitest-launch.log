@@ -1,0 +1,12 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/launch.e2e.test.ts (1 test) 1424ms
+   ✓ desktop launch (real Electron) > renders the bundled renderer from the app: scheme 1423ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  14:38:32
+   Duration  1.92s (transform 36ms, setup 0ms, collect 203ms, tests 1.42s, environment 0ms, prepare 113ms)
+
+exit=0
