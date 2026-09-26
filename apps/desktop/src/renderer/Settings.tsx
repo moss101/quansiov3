@@ -9,6 +9,8 @@
 
 import { useCallback, useEffect, useId, useState, type ReactElement } from "react";
 
+import { applyTheme, themeFromMe } from "../appearance.js";
+
 import { t, type StringKey } from "../i18n/strings.js";
 
 interface WorkspaceView {
@@ -55,8 +57,13 @@ export function Settings({ workspaceId }: { readonly workspaceId: string }): Rea
   const [status, setStatus] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const me = (await window.quansio.me()) as { readonly workspaces: readonly WorkspaceView[] };
+    const payload = await window.quansio.me();
+    const me = payload as { readonly workspaces: readonly WorkspaceView[] };
     const current = me.workspaces.find((candidate) => candidate.id === workspaceId) ?? null;
+    // A saved theme takes effect at once, as the effective settings now say it.
+    const effectiveTheme = themeFromMe(payload, workspaceId);
+    applyTheme(effectiveTheme, document.documentElement);
+    void window.quansio.setAppearance(effectiveTheme);
     setWorkspace(current);
     if (current) {
       const effective = current.effective_settings;

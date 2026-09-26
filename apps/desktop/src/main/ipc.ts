@@ -65,6 +65,11 @@ export interface DesktopBridgeOptions {
    * Called for a `notification.created` event that asks for the desktop channel.
    */
   readonly notifyNative?: (notice: DesktopNotice) => void;
+  /**
+   * Applies the person's theme preference to the window's native chrome (main supplies
+   * Electron's `nativeTheme.themeSource`); the renderer applies it to the page itself.
+   */
+  readonly setAppearance?: (theme: Appearance) => void;
   /** Injectable for tests; defaults to the global `fetch`. */
   readonly fetch?: FetchLike;
   /**
@@ -259,6 +264,12 @@ export class DesktopBridge {
       "notifications.read": (payload) => settled(Promise.resolve(payload).then((raw) => this.markNotificationRead(raw))),
       "notifications.preference": (payload) => settled(Promise.resolve(payload).then((raw) => this.setNotificationPreference(raw))),
       "diagnostics.export": () => this.server.exportDiagnostics(),
+      "appearance.set": (payload) =>
+        Promise.resolve(payload).then((raw) => {
+          const theme = asAppearance(raw);
+          this.#options.setAppearance?.(theme);
+          return { theme };
+        }),
     };
   }
 
@@ -1089,6 +1100,18 @@ function asWorkspaceUpdate(payload: unknown): { workspaceId: string; name?: stri
     result.settings = asSettings(record["settings"], "settings.updateWorkspace");
   }
   return result;
+}
+
+/** The themes a person can choose (`UpdateUserSettings {theme}`). */
+export const APPEARANCES = ["system", "light", "dark"] as const;
+export type Appearance = (typeof APPEARANCES)[number];
+
+function asAppearance(payload: unknown): Appearance {
+  const theme = asRecord(payload, "appearance.set")["theme"];
+  if (typeof theme !== "string" || !(APPEARANCES as readonly string[]).includes(theme)) {
+    throw new Error("appearance.set needs system, light or dark");
+  }
+  return theme as Appearance;
 }
 
 function asUserSettingsUpdate(payload: unknown): { workspaceId: string; settings: Record<string, unknown> } {

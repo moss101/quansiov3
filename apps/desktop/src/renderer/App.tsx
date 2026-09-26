@@ -18,6 +18,7 @@ import {
   type SidebarRow,
   type ThreadSummary,
 } from "../conversation/presentation.js";
+import { applyTheme, themeFromMe } from "../appearance.js";
 import { decodeMessages, type ConversationMessage } from "../conversation/state.js";
 import { t } from "../i18n/strings.js";
 import { decodeRoster } from "../teammates/roster.js";
@@ -277,6 +278,18 @@ function Shell(): ReactElement {
       void loadRoster();
     }
   }, [workspaceId, loadThreads, loadRoster]);
+
+  // The person's theme preference for this workspace, on the page and the window chrome.
+  useEffect(() => {
+    if (!workspaceId) {
+      return;
+    }
+    void window.quansio.me().then((me) => {
+      const theme = themeFromMe(me, workspaceId);
+      applyTheme(theme, document.documentElement);
+      return window.quansio.setAppearance(theme);
+    }, report);
+  }, [workspaceId, report]);
 
   // The open thread is seen as it grows.
   const openCount = threads.find((thread) => thread.id === threadId)?.messageCount;

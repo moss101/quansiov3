@@ -15,7 +15,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { app, autoUpdater, BrowserWindow, dialog, ipcMain, net, Notification, protocol, safeStorage, session, shell } from "electron";
+import { app, autoUpdater, BrowserWindow, dialog, ipcMain, nativeTheme, net, Notification, protocol, safeStorage, session, shell } from "electron";
 import WebSocket from "ws";
 
 import type { SocketFactory, SocketLike } from "../client/stream.js";
@@ -143,6 +143,10 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
     openExternal: (url) => shell.openExternal(url),
     // Native desktop notifications (APP-010): only for events the person's preference sends
     // to the desktop channel; clicking one brings the window forward.
+    // The theme preference also drives the native chrome (traffic lights, menus, scrollbars).
+    setAppearance: (theme) => {
+      nativeTheme.themeSource = theme;
+    },
     notifyNative: (notice) => {
       if (Notification.isSupported()) {
         const native = new Notification({ title: notice.title, body: notice.body, silent: false });
