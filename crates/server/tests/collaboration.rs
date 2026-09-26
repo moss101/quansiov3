@@ -14,7 +14,7 @@
 use axum::http::Request;
 use quansio_events::{EventStore, LiveFrame, RuntimeEvent};
 use quansio_server::api::ApiState;
-use quansio_server::control::collaboration::ThreadGate;
+use quansio_server::control::collaboration::{thread_access, thread_access_many, ThreadGate};
 use quansio_server::control::schema;
 use serde_json::{json, Value};
 use tower::ServiceExt;
@@ -185,6 +185,54 @@ async fn group_thread(h: &Harness, id: u32, members: &[&str]) -> String {
         .as_str()
         .expect("thread")
         .to_string()
+}
+
+#[tokio::test]
+async fn a_thread_list_decides_access_exactly_as_one_thread_does() {
+    let Some(h) = prepare("collab_access_many").await else {
+        common::blocked_marker();
+        return;
+    };
+    // A protected group thread, a second with other members, and an open objective thread.
+    let group = group_thread(&h, 1, &[EDITOR]).await;
+    let other = group_thread(&h, 2, &[VIEWER]).await;
+    let (status, open) = command(
+        &h.router,
+        OWNER,
+        "CreateThread",
+        3,
+        json!({ "workspace_id": WORKSPACE, "kind": "objective", "title": "plan" }),
+    )
+    .await;
+    assert_eq!(status, 200, "{open}");
+    let open = open["result"]["thread_id"]
+        .as_str()
+        .expect("thread")
+        .to_string();
+    let missing = "thr_01J8Z3K6F1N8VQ2X5W9Y0C0EZZ".to_string();
+    let ids = vec![group, other, open, missing];
+    for reader in [
+        Some(OWNER),
+        Some(EDITOR),
+        Some(VIEWER),
+        Some(OUTSIDER),
+        None,
+    ] {
+        let many = thread_access_many(&h.pool, TENANT, &ids, reader)
+            .await
+            .expect("access for the list");
+        for id in &ids {
+            let one = thread_access(&h.pool, TENANT, id, reader)
+                .await
+                .expect("access");
+            let listed = many
+                .get(id)
+                .cloned()
+                .unwrap_or(quansio_server::control::collaboration::Access::Missing);
+            assert_eq!(listed, one, "{reader:?} on {id}");
+        }
+    }
+    common::drop_pool(&h.pool, &h.name).await;
 }
 
 #[tokio::test]

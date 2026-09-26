@@ -19,7 +19,7 @@ pub mod access;
 pub mod attention;
 mod store;
 
-pub use access::{thread_access, Access, ThreadGate};
+pub use access::{thread_access, thread_access_many, Access, ThreadGate};
 pub use attention::{participant_attention, thread_attention_for, ParticipantAttention};
 pub use store::{
     CollaborationError, CollaborationStore, HandOff, Participant, ParticipantKind, ParticipantRole,
