@@ -1,0 +1,64 @@
+{
+  "task_id": "RUN-011",
+  "git_commit": "4453ebedb485f2819e3325dcf0dc8165f6c15ef1",
+  "recorded_at": "2026-09-26T18:17:02Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test walking_skeleton_gateway --test usage --test runtime_state_machine --test observability --test ops_kill_switches # the gateway skeleton runs the Python intelligence service against the dev stub provider",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-26T17-39-50Z/tests.log"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check && cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-26T17-39-50Z/lint.log"
+    },
+    {
+      "command": "two mutants (event not emitted; input tokens metered as zero), each after a passing control; cargo test --test walking_skeleton_gateway a_chat_turn must fail",
+      "exit_code": 101,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-26T17-39-50Z/mutation.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test walking_skeleton_gateway --test usage --test runtime_state_machine --test observability --test ops_kill_switches # the gateway skeleton runs the Python intelligence service against the dev stub provider",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check && cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "two mutants (event not emitted; input tokens metered as zero), each after a passing control; cargo test --test walking_skeleton_gateway a_chat_turn must fail",
+      "exit_code": 101,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/RUN-011/2026-09-26T17-39-50Z/NOTES.md",
+      "sha256": "51860d4bd13a153367d15c2820a0c491e358b19b95e85b5409b2557d0c2498df",
+      "bytes": 1606
+    },
+    {
+      "path": "evidence/RUN-011/2026-09-26T17-39-50Z/lint.log",
+      "sha256": "c4d167772f16ed1a69693eebc775ba946861b75d8793677e9ee6e4117d48121f",
+      "bytes": 80
+    },
+    {
+      "path": "evidence/RUN-011/2026-09-26T17-39-50Z/mutation.log",
+      "sha256": "3bd3e61ff67ded14b3b758b21cdd1f2714374b4ced9c13224e099d982d427c9a",
+      "bytes": 1409
+    },
+    {
+      "path": "evidence/RUN-011/2026-09-26T17-39-50Z/tests.log",
+      "sha256": "8a0dc9e3cd87b450a946e1e948c80c4c9e1219f6e2539869f7006a9fe0fb8025",
+      "bytes": 2656
+    }
+  ]
+}

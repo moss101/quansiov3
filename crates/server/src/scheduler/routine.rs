@@ -185,11 +185,15 @@ pub struct RoutineTickReport {
     pub execution_failures: usize,
 }
 
+/// How late the scheduler may reach a window and still fire it as on time (DOMAIN.md §13.1).
+pub const DEFAULT_MISFIRE_THRESHOLD_SECONDS: i64 = 60;
+
 /// Routine timing store for one tenant.
 #[derive(Debug, Clone)]
 pub struct RoutineScheduler {
     events: EventStore,
     tenant_id: String,
+    misfire_threshold: Duration,
 }
 
 impl RoutineScheduler {
@@ -203,7 +207,15 @@ impl RoutineScheduler {
         Ok(Self {
             events: EventStore::new(pool),
             tenant_id,
+            misfire_threshold: Duration::seconds(DEFAULT_MISFIRE_THRESHOLD_SECONDS),
         })
+    }
+
+    /// Use `threshold` instead of the default misfire threshold.
+    #[must_use]
+    pub fn with_misfire_threshold(mut self, threshold: Duration) -> Self {
+        self.misfire_threshold = threshold;
+        self
     }
 
     /// Number of active routines whose window has passed.
@@ -280,6 +292,19 @@ impl RoutineScheduler {
                     spec: routine.trigger.spec.clone(),
                     reason: "due routine has no next_due_at".to_string(),
                 })?;
+
+            // The latest due window, reached within the misfire threshold, is on time and fires
+            // whatever the policy; the absence policy decides only what a window reached late (or
+            // followed by another window that has also come due) means.
+            let following = routine.trigger.next_due_after(window)?;
+            let on_time =
+                now - window <= self.misfire_threshold && following.is_none_or(|next| next > now);
+            if on_time {
+                if self.claim(&routine, window, following, now).await? {
+                    report.fired += 1;
+                }
+                continue;
+            }
 
             match routine.absence_policy {
                 AbsencePolicy::Skip => {
