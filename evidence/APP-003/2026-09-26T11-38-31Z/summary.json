@@ -1,0 +1,48 @@
+{
+  "task_id": "APP-003",
+  "git_commit": "eb5b1b2a2bd3724f4b9f57bbbe8f042b4392bb90",
+  "recorded_at": "2026-09-26T11:38:51Z",
+  "commands": [
+    {
+      "command": "cd apps/desktop && npx vitest run tests/launch.e2e.test.ts # the real Electron binary renders the bundled renderer",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-26T11-38-31Z/vitest-launch.log"
+    },
+    {
+      "command": "cd apps/desktop && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run # the full desktop suite",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-26T11-38-31Z/vitest-desktop.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cd apps/desktop && npx vitest run tests/launch.e2e.test.ts # the real Electron binary renders the bundled renderer",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run # the full desktop suite",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-003/2026-09-26T11-38-31Z/NOTES.md",
+      "sha256": "03adac3b1e0405bdd93f6a9c86effbcefcc839016bbbaefd9b981d7a7c6f7fc0",
+      "bytes": 899
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T11-38-31Z/vitest-launch.log",
+      "sha256": "ef28561cd15990613814a10abb0c2c29cfb48a5c587afff255930f9f70de3002",
+      "bytes": 394
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T11-38-31Z/vitest-desktop.log",
+      "sha256": "1d06795ea3d09ba40c1bf1067473aeeacec64e97778573e8fbcd8619a385324f",
+      "bytes": 461
+    }
+  ]
+}
