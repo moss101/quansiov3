@@ -1,0 +1,101 @@
+{
+  "task_id": "CORE-008",
+  "git_commit": "f3cf840bc35668db5a8adc9d2669ce38d05d59e3",
+  "recorded_at": "2026-09-26T19:50:45Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test scheduler --test routines --test graph_scheduler_dispatch --test schema_bootstrap",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-26T18-43-53Z/scheduler-tests.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-26T18-43-53Z/unit.log"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check; cargo clippy -p quansio-server --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-26T18-43-53Z/lint.log"
+    },
+    {
+      "command": "three mutants (work that fell due during a pass waits the interval; the executor runs one fire at a time; the on-time window is not fired), each after a passing control; each must fail",
+      "exit_code": 101,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-26T18-43-53Z/mutation.log"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release build of this branch> python served_scheduling_check.py '{}' 20 # twenty 5 s routines at shipped defaults, on a shared host",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-26T18-43-53Z/served-scheduling.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test scheduler --test routines --test graph_scheduler_dispatch --test schema_bootstrap",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check; cargo clippy -p quansio-server --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "three mutants (work that fell due during a pass waits the interval; the executor runs one fire at a time; the on-time window is not fired), each after a passing control; each must fail",
+      "exit_code": 101,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release build of this branch> python served_scheduling_check.py '{}' 20 # twenty 5 s routines at shipped defaults, on a shared host",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CORE-008/2026-09-26T18-43-53Z/NOTES.md",
+      "sha256": "f4e87d8ee1b08dd7b6abaf55f883d5c4525f4919cd2df51aeeb38bb7fd1521b7",
+      "bytes": 3071
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T18-43-53Z/lint.log",
+      "sha256": "339176d24414ba8c6cbf00fb6d78176317b0e5936ed362672d532665bd8c22fb",
+      "bytes": 105
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T18-43-53Z/mutation.log",
+      "sha256": "ae405f243a9a26faf5d502f7a5f685d315385572c631852c325b62c5dbb11867",
+      "bytes": 1139
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T18-43-53Z/scheduler-tests.log",
+      "sha256": "dd84d3d23a6635edcf72901c6737f59ab1a5b82c291e4292eb6ad1fd287c0511",
+      "bytes": 2171
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T18-43-53Z/served-scheduling.log",
+      "sha256": "be651f374221ecc8d8e0d138743702a793282d391008b958e09249b628e2bbd9",
+      "bytes": 622
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T18-43-53Z/served_scheduling_check.py",
+      "sha256": "2087865acda13bb52205727009ee13e31f4d0e0ed86d69d4d74b8652b112bcad",
+      "bytes": 1011
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T18-43-53Z/unit.log",
+      "sha256": "69cfb04c594f31371b8c50c238a8202fc0191d1a5951479ce2c97e536b015837",
+      "bytes": 806
+    }
+  ]
+}

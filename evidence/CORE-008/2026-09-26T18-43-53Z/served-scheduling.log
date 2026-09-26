@@ -1,0 +1,7 @@
+binary: release build of f3cf840bc35668db5a8adc9d2669ce38d05d59e3
+host: 22:49  up 4 days, 10:10, 2 users, load averages: 8.48 8.87 9.05
+window->claimed {'n': 141, 'p50_ms': 99.03, 'p95_ms': 191.99, 'p99_ms': 286.72, 'max_ms': 297.7, 'mean_ms': 108.11}
+claimed->run_created {'n': 141, 'p50_ms': 168.06, 'p95_ms': 366.53, 'p99_ms': 1111.6, 'max_ms': 1139.7, 'mean_ms': 184.23}
+run_created->started {'n': 141, 'p50_ms': 55.95, 'p95_ms': 135.47, 'p99_ms': 142.09, 'max_ms': 156.18, 'mean_ms': 65.03}
+window->started {'n': 141, 'p50_ms': 370.45, 'p95_ms': 610.45, 'p99_ms': 1415.27, 'max_ms': 1426.3, 'mean_ms': 357.37}
+exit=0
