@@ -397,6 +397,11 @@ OPERATIONS: dict[str, dict[str, str]] = {
         "path": "/v1/commands/SetPolicy",
         "family": "Admin/ops",
     },
+    "SetBudget": {
+        "method": "POST",
+        "path": "/v1/commands/SetBudget",
+        "family": "Admin/ops",
+    },
     "FreezeEffects": {
         "method": "POST",
         "path": "/v1/commands/FreezeEffects",

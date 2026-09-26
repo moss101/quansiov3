@@ -289,6 +289,192 @@ impl BudgetService {
         })
     }
 
+    /// The tenant's budget and its workspaces' budgets (only `workspace_id`'s, when given).
+    ///
+    /// # Errors
+    /// Returns a database error.
+    pub async fn list(&self, workspace_id: Option<&str>) -> Result<Vec<BudgetRecord>, BudgetError> {
+        let mut tx = self.tenant_tx().await?;
+        let rows = sqlx::query(
+            "SELECT id, workspace_id, scope, scope_ref, limits, consumed, parent_budget_id, status \
+             FROM budgets WHERE tenant_id = $1 AND scope IN ('tenant', 'workspace') \
+             AND ($2::text IS NULL OR scope = 'tenant' OR workspace_id = $2) \
+             ORDER BY scope DESC, created_at",
+        )
+        .bind(&self.identity.tenant_id)
+        .bind(workspace_id)
+        .fetch_all(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        rows.iter().map(decode).collect()
+    }
+
+    /// Record what work already done used (a model call's tokens, a dispatched tool call): the
+    /// charge is applied whatever the limit — the work happened — and a budget it takes to or past
+    /// a limit becomes `exhausted`, so no new work starts against it. The row is locked for the
+    /// update, so concurrent records add up. Crossing 80 % of a limit emits
+    /// `usage.threshold_crossed` for that meter (the soft quota, OPS-004).
+    ///
+    /// # Errors
+    /// Returns [`BudgetError::NotFound`] when the budget is unknown.
+    pub async fn record(
+        &self,
+        budget_id: &str,
+        charges: &MeterUsage,
+    ) -> Result<ChargeOutcome, BudgetError> {
+        let mut tx = self.tenant_tx().await?;
+        let row = sqlx::query(
+            "SELECT id, workspace_id, scope, scope_ref, limits, consumed, parent_budget_id, status \
+             FROM budgets WHERE tenant_id = $1 AND id = $2 FOR UPDATE",
+        )
+        .bind(&self.identity.tenant_id)
+        .bind(budget_id)
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or_else(|| BudgetError::NotFound {
+            id: budget_id.to_string(),
+        })?;
+        let record = decode(&row)?;
+        let next = applied(&record.consumed, charges);
+        let meters = exhausted_meters(&record.limits, &next);
+        let status = if meters.is_empty() {
+            record.status.clone()
+        } else {
+            "exhausted".to_string()
+        };
+        sqlx::query(
+            "UPDATE budgets SET consumed = $3, status = $4, updated_at = now() \
+             WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(budget_id)
+        .bind(&self.identity.tenant_id)
+        .bind(next.to_json())
+        .bind(&status)
+        .execute(&mut *tx)
+        .await?;
+        tx.commit().await?;
+
+        self.emit(
+            budget_id,
+            "usage.recorded",
+            json!({
+                "budget_id": budget_id,
+                "scope": record.scope,
+                "scope_ref": record.scope_ref,
+                "charged": charges.to_json(),
+                "consumed": next.to_json(),
+                "status": status,
+            }),
+        )
+        .await?;
+        for (meter, _) in charges.entries() {
+            if !record.limits.has(*meter) {
+                continue;
+            }
+            let limit = record.limits.get(*meter);
+            let crossed = |amount: u64| u128::from(amount) * 5 >= u128::from(limit) * 4;
+            if limit > 0 && !crossed(record.consumed.get(*meter)) && crossed(next.get(*meter)) {
+                self.emit(
+                    budget_id,
+                    "usage.threshold_crossed",
+                    json!({
+                        "budget_id": budget_id,
+                        "scope": record.scope,
+                        "scope_ref": record.scope_ref,
+                        "meter": meter.as_str(),
+                        "consumed": next.get(*meter),
+                        "limit": limit,
+                        "threshold_percent": 80,
+                    }),
+                )
+                .await?;
+            }
+        }
+        if record.status != "exhausted" && status == "exhausted" {
+            self.emit(
+                budget_id,
+                "usage.exhausted",
+                json!({
+                    "budget_id": budget_id,
+                    "scope": record.scope,
+                    "scope_ref": record.scope_ref,
+                    "meters": meters.iter().map(|meter| meter.as_str()).collect::<Vec<_>>(),
+                    "consumed": next.to_json(),
+                    "limits": record.limits.to_json(),
+                }),
+            )
+            .await?;
+        }
+        Ok(ChargeOutcome {
+            budget_id: budget_id.to_string(),
+            consumed: next,
+            exhausted: status == "exhausted",
+            status,
+        })
+    }
+
+    /// Replace a budget's limits, keeping what it has consumed: a nested budget still may not ask
+    /// for more than its parent has left, and the status follows the new limits.
+    ///
+    /// # Errors
+    /// Returns [`BudgetError::ExceedsParent`] when a meter asks for more than the parent has left,
+    /// and [`BudgetError::NotFound`] when the budget or its parent is unknown.
+    pub async fn set_limits(
+        &self,
+        budget_id: &str,
+        limits: BudgetLimits,
+    ) -> Result<BudgetRecord, BudgetError> {
+        let current = self.load(budget_id).await?;
+        if let Some(parent_id) = &current.parent_budget_id {
+            let parent = self.load(parent_id).await?;
+            ensure_child_within_parent(
+                budget_id,
+                parent_id,
+                &limits,
+                &parent.limits,
+                &parent.consumed,
+            )?;
+        }
+        let mut tx = self.tenant_tx().await?;
+        let consumed: Value = sqlx::query_scalar(
+            "SELECT consumed FROM budgets WHERE tenant_id = $1 AND id = $2 FOR UPDATE",
+        )
+        .bind(&self.identity.tenant_id)
+        .bind(budget_id)
+        .fetch_one(&mut *tx)
+        .await?;
+        let consumed = BudgetConsumed::parse(budget_id, &consumed)?;
+        let status = if exhausted_meters(&limits, &consumed).is_empty() {
+            "active"
+        } else {
+            "exhausted"
+        };
+        sqlx::query(
+            "UPDATE budgets SET limits = $3, status = $4, updated_at = now() \
+             WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(budget_id)
+        .bind(&self.identity.tenant_id)
+        .bind(limits.to_json())
+        .bind(status)
+        .execute(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        self.emit(
+            budget_id,
+            "usage.budget_set",
+            json!({
+                "budget_id": budget_id,
+                "scope": current.scope,
+                "scope_ref": current.scope_ref,
+                "limits": limits.to_json(),
+                "status": status,
+            }),
+        )
+        .await?;
+        self.load(budget_id).await
+    }
+
     /// The concurrency limit a budget sets, or `0` once it is exhausted.
     ///
     /// This is the number RUN-004's orchestration capacity gate takes from its caller, so a

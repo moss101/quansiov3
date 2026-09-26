@@ -593,6 +593,17 @@ async fn dispatch(
         "DeleteWebhookSubscription" => {
             super::webhooks::delete_subscription(state, scope, &request.params, correlation).await?
         }
+        "SetBudget" => {
+            super::admin::set_budget(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
         "SetPolicy" => {
             super::admin::set_policy(
                 state,
@@ -1205,7 +1216,10 @@ pub(super) fn chat_engine(
     )?;
     let questions = QuestionService::new(state.pool().clone(), identity.clone())?;
     let live: Arc<dyn crate::runtime::state_machine::LiveFramePort> = state.live().clone();
+    let budgets =
+        crate::runtime::budgets::RuntimeBudgets::new(state.pool().clone(), identity.clone())?;
     Ok(RuntimeEngine::new(state.pool().clone(), identity)?
+        .with_budgets(Arc::new(budgets))
         .with_model_source(state.model())
         .with_tool_dispatch(Arc::new(dispatcher))
         .with_delegation(delegation)
