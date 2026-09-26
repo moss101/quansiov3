@@ -220,8 +220,6 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
       await page.getByRole("button", { name: "Account" }).click();
       await page.getByRole("menuitem", { name: "Settings" }).click();
       const settings = page.getByRole("region", { name: "Settings" });
-      // Settings shows the effective values once it has read them; choose after that.
-      await until(async () => (await settings.locator("dt", { hasText: "theme" }).count()) > 0, "the settings to load");
       await settings.getByLabel("Theme").selectOption(theme);
       await settings.getByRole("button", { name: "Save my settings" }).click();
       await until(async () => (await settings.locator("dt", { hasText: "theme" }).locator("+ dd").textContent()) === theme, `the ${theme} theme saved`);
@@ -255,6 +253,30 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
       await second.done();
     }
   }, 180_000);
+
+  it("keeps a choice made before Settings has finished reading the current values", async () => {
+    const desktop = await launch();
+    try {
+      const page = desktop.page;
+      await signIn(page, email(OWNER));
+      await page.getByRole("button", { name: "Account" }).click();
+      await page.getByRole("menuitem", { name: "Settings" }).click();
+      const settings = page.getByRole("region", { name: "Settings" });
+      // Chosen at once, while the page is still reading the effective settings.
+      await settings.getByLabel("Theme").selectOption("light");
+      await settings.getByLabel("Keep data for (days)").fill("45");
+      await expect(settings.getByLabel("Theme").inputValue()).resolves.toBe("light");
+      await settings.getByRole("button", { name: "Save my settings" }).click();
+      await until(async () => (await settings.locator("dt", { hasText: "theme" }).locator("+ dd").textContent()) === "light", "the chosen theme saved");
+      // The other form's unsaved edit survived both reads (on opening and after the save).
+      await expect(settings.getByLabel("Keep data for (days)").inputValue()).resolves.toBe("45");
+      await settings.getByLabel("Theme").selectOption("system");
+      await settings.getByRole("button", { name: "Save my settings" }).click();
+      await until(async () => (await settings.locator("dt", { hasText: "theme" }).locator("+ dd").textContent()) === "system", "the theme back to system");
+    } finally {
+      await desktop.done();
+    }
+  }, 120_000);
 
   it("shows a viewer the workspace settings without letting them change them", async () => {
     const desktop = await launch();
