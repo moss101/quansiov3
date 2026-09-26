@@ -920,8 +920,8 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-int004",
       "started_at": "2026-09-12T03:04:55Z",
-      "updated_at": "2026-09-12T03:04:55Z",
-      "git_commit": "4974a336d4c8f206149066e3afb6dffcb840bd1a",
+      "updated_at": "2026-09-26T21:02:19Z",
+      "git_commit": "5715ce39dffcf9b74d5905f0da6bd3fea063b5bb",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-indexer",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
@@ -931,12 +931,13 @@
         "evidence/INT-004/2026-09-12T03-01-56Z/summary.json",
         "crates/indexer/src/program.rs",
         "crates/indexer/src/tantivy_engine.rs",
-        "crates/indexer/tests/search_api.rs"
+        "crates/indexer/tests/search_api.rs",
+        "evidence/INT-004/2026-09-26T20-51-45Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Derived exact/lexical/symbol SearchIndex over authoritative artifact text with typed SearchProgram filters (no free-form predicates), provenance (source, locator, snapshot), budgets with reported truncation, tenant isolation, incremental add/update/delete including idempotent re-application, and a rebuild from PostgreSQL that reproduces identical hits. Integrated and re-verified by the principal agent after the subagent was killed by a full disk."
+      "notes": "Derived exact/lexical/symbol SearchIndex over authoritative artifact text with typed SearchProgram filters (no free-form predicates), provenance (source, locator, snapshot), budgets with reported truncation, tenant isolation, incremental add/update/delete including idempotent re-application, and a rebuild from PostgreSQL that reproduces identical hits. Integrated and re-verified by the principal agent after the subagent was killed by a full disk. 2026-09-26 (fix/INT-004-incremental-search-refresh, merge 5715ce3, found by QA-009 against 21.2's index budget): every search after an artifact change rebuilt the tenant's index from the whole corpus (p50 385 ms over 120 notes, growing with the corpus); the refresh now indexes only versions newer than the last one it saw and rebuilds only on first sight, a deletion, or an unaccounted change (p50 12 ms served). Evidence evidence/INT-004/2026-09-26T20-51-45Z."
     },
     "INT-005": {
       "coverage": "GENUINE_GAP",
