@@ -866,3 +866,93 @@ async fn the_whole_sign_in_flow_works_as_the_application_role_under_rls() {
     pool.close().await;
     common::drop_pool(&admin, &name).await;
 }
+
+/// Read Server-Sent Events until one named `event: error` arrives; its data, or None at timeout.
+async fn sse_error(
+    response: axum::response::Response,
+    within: std::time::Duration,
+) -> Option<Value> {
+    use futures_util::StreamExt;
+    let mut body = response.into_body().into_data_stream();
+    let mut buffer = String::new();
+    let deadline = tokio::time::Instant::now() + within;
+    loop {
+        if let Some(start) = buffer.find("event: error\n") {
+            let rest = &buffer[start..];
+            if let Some(data) = rest.lines().find_map(|line| line.strip_prefix("data: ")) {
+                return serde_json::from_str(data).ok();
+            }
+        }
+        let chunk = tokio::time::timeout_at(deadline, body.next())
+            .await
+            .ok()??;
+        buffer.push_str(&String::from_utf8_lossy(&chunk.ok()?));
+    }
+}
+
+/// An open stream ends when its session does (CORE-009 regression found by QA-008): streams
+/// were authenticated only when they opened, so a revoked session kept receiving the tenant's
+/// events for as long as the connection stayed up.
+#[tokio::test]
+async fn an_open_stream_closes_when_its_session_is_revoked() {
+    let Some((state, delivery, pool, name)) = session_state("auth_stream_revoked").await else {
+        common::blocked_marker();
+        return;
+    };
+    let router = quansio_server::api::router(state);
+    let session = sign_in(&router, &delivery, "stream@example.com").await;
+    let access = session["access_token"]
+        .as_str()
+        .expect("access")
+        .to_string();
+    let workspace = session["workspace_id"]
+        .as_str()
+        .expect("workspace")
+        .to_string();
+    let path = format!("/v1/stream/events?channel=workspace%3A{workspace}");
+
+    // Positive control: with the session live the stream stays open past a re-check.
+    let open = router
+        .clone()
+        .oneshot(get_bearer(&path, &access))
+        .await
+        .expect("stream");
+    assert_eq!(open.status(), StatusCode::OK);
+    let quiet = sse_error(
+        open,
+        quansio_server::api::stream::REVALIDATE_EVERY + std::time::Duration::from_secs(1),
+    )
+    .await;
+    assert!(
+        quiet.is_none(),
+        "a live session's stream was closed: {quiet:?}"
+    );
+
+    // Revoke while a stream is open: it ends with a typed refusal within one re-check.
+    let open = router
+        .clone()
+        .oneshot(get_bearer(&path, &access))
+        .await
+        .expect("stream");
+    assert_eq!(open.status(), StatusCode::OK);
+    let signed_out = router
+        .clone()
+        .oneshot(post_json("/v1/auth/sign-out", json!({}), Some(&access)))
+        .await
+        .expect("sign-out");
+    assert_eq!(signed_out.status(), StatusCode::OK);
+    let refusal = sse_error(open, quansio_server::api::stream::REVALIDATE_EVERY * 3)
+        .await
+        .expect("the stream of a revoked session ends with an error event");
+    assert_eq!(refusal["code"], "AUTH_INVALID_TOKEN", "{refusal}");
+
+    // And a new stream with the revoked token is refused outright.
+    let again = router
+        .clone()
+        .oneshot(get_bearer(&path, &access))
+        .await
+        .expect("stream");
+    assert_eq!(again.status(), StatusCode::UNAUTHORIZED);
+
+    common::drop_pool(&pool, &name).await;
+}
