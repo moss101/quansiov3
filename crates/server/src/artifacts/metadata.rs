@@ -1400,7 +1400,7 @@ async fn emit(
         "artifact",
         artifact_id.to_string(),
         u64::try_from(version).unwrap_or(1),
-        EventType::parse(event_type).map_err(quansio_events::EventError::from)?,
+        EventType::parse(event_type)?,
         CorrelationId::generate(&mut UlidGenerator::new()),
         actor,
     )
