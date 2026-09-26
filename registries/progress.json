@@ -2802,26 +2802,39 @@
       "notes": "2026-09-26: the campaign attacks the deployable over HTTP with real bearer sessions while it serves as a quansio_app login (new QUANSIO_MIGRATION_DATABASE_URL: the owner applies the schema, the serving role holds no schema privileges, forced RLS applies). Findings fixed in their owners: F-1 composition (APP-001), F-2 skill command RBAC (APP-011, DOMAIN 11.5), F-3 append-only audit (OPS-002, migration 0022), F-5 settings under RLS and no SQL in refusals (APP-002), F-6 case-insensitive family-based content relabelling (APP-008), F-7 workspace outside the caller's tenant refused at the command surface plus composite (tenant_id, workspace_id) keys (migration 0023). Test tooling: quansio-dev-seed stores addresses lower-cased; seed_test_database.py places ws_...@tn_... in its tenant; the indexer rebuild fixture and a desktop e2e expectation were corrected. Previous history: Adversarial campaign drives the shipped defenses through their real entry points. No P0/P1 finding open; every ambiguous attack input fails closed with a typed refusal or a zero. 2026-09-19 correction: was BLOCKED_EXTERNAL at dcbcd9df1a2ef1f3a3c18d5b28285b99113225f7 claimed by agent:principal-1 (started 2026-09-15T10:10:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['OPS-001'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md."
     },
     "QA-008": {
-      "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "coverage": "PARTIAL",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-26T09:52:56Z",
-      "updated_at": "2026-09-26T09:52:56Z",
-      "git_commit": null,
+      "updated_at": "2026-09-26T16:30:10Z",
+      "git_commit": "a392334d30ac57acd9117c8b540428aff38071ae",
       "tests": [
-        "pnpm exec vitest run --config tests/e2e/vitest.config.ts (7 passed, 1 skipped: onboarding-to-artifact-review journey, teammate archive lineage + protected delivery, externalized strings, offline/reconnect, a11y baseline zero violations + keyboard-reachable surfaces; served Playwright matrix prints BLOCKED_EXTERNAL)",
-        "pnpm --filter @quansio/desktop test (25 passed)",
-        "pnpm --filter @quansio/desktop typecheck"
+        "QUANSIO_TEST_POSTGRES_URL=... QUANSIO_TEST_SERVER_BIN/SEED_BIN=... pnpm test:e2e (23 passed: 12 desktop journeys in the real Electron 44.4.3 binary on the chat-first shell - onboarding, chat, exact-preview approval with the bound digest, plan steering, live takeover and hand-back, artifact review, group thread, routine, settings and their effects, revocation back to sign-in, accessibility audit plus keyboard walk with visible focus on every surface, offline/reconnect; 7 web journeys in Chrome 153 - emailed-link sign-in, remote approval bound to its preview, member administration audited, viewer refused, accessibility/keyboard/375 px on every page, sign-out, audit self-test; 4 module journeys)",
+        "qa008_mutations.sh: 7 compiling UI mutants (desktop Approve, Propose, unnamed Send, web Approve, settings not saved, focus outline removed, composer focus ring removed), each after a passing control on a fresh build, 7 killed",
+        "bash scripts/ci/ci.sh (pipeline PASS, 11 gates)"
       ],
       "artifacts": [
-        "evidence/QA-008/2026-09-15T10-35-00Z/summary.json",
-        "tests/e2e/journeys.spec.ts",
-        "tests/e2e/a11y-baseline.json"
+        "evidence/QA-008/2026-09-26T16-29-22Z/summary.json",
+        "evidence/QA-008/2026-09-26T16-29-22Z/NOTES.md",
+        "evidence/QA-008/RECONCILIATION.md",
+        "tests/e2e/harness.ts",
+        "tests/e2e/desktop.e2e.spec.ts",
+        "tests/e2e/web.e2e.spec.ts",
+        "tests/e2e/journeys.spec.ts"
       ],
-      "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Critical journeys drive the shipped desktop modules in-process: onboarding without config, chat/objective, question-answer, exact-preview approval, versioned artifact review, takeover/handback fencing, archive lineage, offline reconnect. Accessibility baseline records zero violations and keyboard-reachable surfaces. 2026-09-19 correction: was BLOCKED_EXTERNAL at 6e6085876c188a120e0e382e5a27adf9644a8a01 claimed by agent:principal-1 (started 2026-09-15T10:25:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['APP-003', 'APP-012', 'APP-011', 'APP-014'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "real_boundary_evidence": [
+        {
+          "boundary": "desktop-electron-and-chrome-against-quansio-server",
+          "environment": "macOS 26.5.1 Apple Silicon; Electron 44.4.3 (apps/desktop build); Google Chrome 153 via playwright-core 1.63.0; QUANSIO_TEST_SERVER_BIN/QUANSIO_TEST_SEED_BIN (the deployable, served as a quansio_app login), QUANSIO_TEST_POSTGRES_URL (PostgreSQL 17 dev stack), dev MinIO",
+          "command": "pnpm test:e2e --no-file-parallelism",
+          "artifact": "evidence/QA-008/2026-09-26T16-29-22Z/e2e.log",
+          "sha256": "b8a3b4543856dc1247e9d82135271ced3958921ec6750e1dc7464ce7308a512f",
+          "recorded_at": "2026-09-26T16:30:10Z"
+        }
+      ],
+      "implementation_complete": true,
+      "blocker": "Implementation is complete and every dependency is PASS; the critical journeys pass on macOS (Electron) and Chrome with no open accessibility blocker and no open P0/P1 finding (U-1 P0, U-3, U-5a/b/c P1 fixed; U-2, U-8, U-9 fixed; U-4, U-6, U-7 P3 recorded). The DOSSIER 21.1 support matrix is incomplete: Windows 11 desktop needs a Windows host (QUANSIO_TEST_WINDOWS_DESKTOP=1); Edge and Firefox are not installed (the owner approved only playwright-core and the Electron binary); Safari needs Remote Automation enabled, a system setting. Unblock: run pnpm test:e2e on those hosts/browsers.",
+      "notes": "Critical journeys drive the shipped desktop modules in-process: onboarding without config, chat/objective, question-answer, exact-preview approval, versioned artifact review, takeover/handback fencing, archive lineage, offline reconnect. Accessibility baseline records zero violations and keyboard-reachable surfaces. 2026-09-19 correction: was BLOCKED_EXTERNAL at 6e6085876c188a120e0e382e5a27adf9644a8a01 claimed by agent:principal-1 (started 2026-09-15T10:25:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['APP-003', 'APP-012', 'APP-011', 'APP-014'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-26 (task/QA-008-ux-qualification, merge a392334): the self-certified baseline and never-run gated tier were replaced by a real tier (tests/e2e/harness.ts) driving the built desktop in Electron and the web app in Chrome against quansio-server on a seeded scratch database with the real magic-link sign-in. Findings fixed on their owners' branches: U-1 blank desktop window (APP-003), U-3 no settings surface (APP-002), U-5a streams outliving revoked sessions (CORE-009, security), U-5b/U-5c revoked session left the shell and retried forever (APP-002), U-2 internal navigation names (APP-003), U-8 no visual design (APP-003/APP-012), U-9 store failures as VALIDATION_BOUNDS (CORE-007). The keyboard walk counts focus only when an outline or shadow appears on focus (the control's or a nearby container's), and audits a surface once it stops changing. Evidence evidence/QA-008/2026-09-26T16-29-22Z."
     },
     "QA-009": {
       "coverage": "GENUINE_GAP",
