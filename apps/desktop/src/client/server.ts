@@ -471,8 +471,9 @@ export class ServerClient {
     let result = await attempt(headers);
     if (!result.ok && authenticated && this.#credential.kind === "session") {
       const error = asErrorBody(result.decoded, result.status);
-      if (error.code === "AUTH_EXPIRED") {
-        // One refresh, then the same request again; a second failure is the caller's.
+      if (error.code === "AUTH_EXPIRED" || error.code === "AUTH_INVALID_TOKEN") {
+        // One refresh, then the same request again; a second failure is the caller's. A
+        // revoked session cannot be refreshed either: the refusal signs the person out.
         const refreshed = await this.#credential.refresh();
         if (refreshed) {
           result = await attempt({ "content-type": "application/json", authorization: `Bearer ${refreshed}` });
