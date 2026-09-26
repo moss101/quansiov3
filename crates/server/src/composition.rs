@@ -486,9 +486,6 @@ impl Background {
                 );
             }
         }
-        if let Some(fires) = &self.fires {
-            fires.notify_one();
-        }
         Ok(())
     }
 
@@ -507,10 +504,16 @@ impl Background {
             Arc::clone(&self.dispatch),
         )
         .map_err(|error| format!("scheduler: {error}"))?;
-        scheduler
+        let report = scheduler
             .tick()
             .await
             .map_err(|error| format!("scheduler tick: {error}"))?;
+        // Claimed fires start now, not after the rest of the pass (notifications, email, usage).
+        if let Some(fires) = &self.fires {
+            if report.routines_fired > 0 {
+                fires.notify_one();
+            }
+        }
         crate::notify::Notifier::new(self.pool.clone(), tenant)
             .scan(512)
             .await
