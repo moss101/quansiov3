@@ -6,7 +6,7 @@
  * could replay on its own.
  */
 
-import { useCallback, useEffect, useReducer, useRef, useState, type ReactElement } from "react";
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState, type ReactElement } from "react";
 
 import { attachmentFromUpload, postedIdentities } from "../conversation/composer.js";
 import { decodeTimeline, type RunInspection } from "../conversation/inspector.js";
@@ -20,8 +20,10 @@ import {
   type ConversationQuestion,
 } from "../conversation/state.js";
 import { t } from "../i18n/strings.js";
+import { ArrowUpIcon, CloseIcon, PlusIcon, StopIcon } from "./icons.js";
 
-interface ThreadRow {
+/** A conversation as the sidebar lists it. */
+export interface ThreadRow {
   readonly id: string;
   readonly title: string | null;
   readonly kind: string;
@@ -30,11 +32,17 @@ interface ThreadRow {
 
 interface ConversationProps {
   readonly workspaceId: string;
-  /** The thread the durable session restored, when any. */
-  readonly initialThreadId: string | null;
+  /** The open thread (chosen in the sidebar); `null` starts a new one. */
+  readonly threadId: string | null;
+  /** Posting into a new thread creates it; the shell learns which one is now open. */
+  readonly onThreadChange: (threadId: string | null) => void;
+  /** Message counts and titles changed; the sidebar re-reads its list. */
+  readonly onThreadsChanged: () => Promise<void>;
+  readonly inspectorOpen: boolean;
+  readonly onInspectorOpen: (open: boolean) => void;
 }
 
-function decodeThreads(payload: unknown): ThreadRow[] {
+export function decodeThreads(payload: unknown): ThreadRow[] {
   const record = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
   const rows = Array.isArray(record["threads"]) ? (record["threads"] as unknown[]) : [];
   const threads: ThreadRow[] = [];
@@ -57,63 +65,73 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : t("commandFailed");
 }
 
-export function Conversation({ workspaceId, initialThreadId }: ConversationProps): ReactElement {
-  const [state, dispatch] = useReducer(conversationReducer, initialConversation(workspaceId, initialThreadId));
-  const [threads, setThreads] = useState<readonly ThreadRow[]>([]);
+const COMPOSER_MAX_HEIGHT = 200;
+
+export function Conversation({ workspaceId, threadId, onThreadChange, onThreadsChanged, inspectorOpen, onInspectorOpen }: ConversationProps): ReactElement {
+  const [state, dispatch] = useReducer(conversationReducer, initialConversation(workspaceId, threadId));
   const [inspection, setInspection] = useState<RunInspection | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement | null>(null);
+  const composer = useRef<HTMLTextAreaElement | null>(null);
+  const scroller = useRef<HTMLDivElement | null>(null);
+  // The thread last agreed with the shell: a change from the sidebar is followed, and a thread
+  // created here by posting is reported back, without either undoing the other.
+  const agreed = useRef<string | null>(threadId);
 
-  const loadThreads = useCallback(async () => {
-    try {
-      setThreads(decodeThreads(await window.quansio.listThreads()));
-    } catch (error) {
-      setNotice(errorText(error));
+  useEffect(() => {
+    agreed.current = threadId;
+    dispatch({ type: "thread.selected", threadId });
+  }, [threadId]);
+
+  useEffect(() => {
+    if (state.threadId !== agreed.current) {
+      agreed.current = state.threadId;
+      onThreadChange(state.threadId);
     }
-  }, []);
+  }, [state.threadId, onThreadChange]);
 
   // Frames arrive for the whole workspace; the reducer keeps the ones for this thread.
-  useEffect(() => {
-    const off = window.quansio.onStreamFrame((frame) => {
-      if (frame && typeof frame === "object" && "kind" in frame) {
-        dispatch({ type: "frame", frame: frame as never });
-      }
-    });
-    void loadThreads();
-    return off;
-  }, [loadThreads]);
+  useEffect(
+    () =>
+      window.quansio.onStreamFrame((frame) => {
+        if (frame && typeof frame === "object" && "kind" in frame) {
+          dispatch({ type: "frame", frame: frame as never });
+        }
+      }),
+    [],
+  );
 
   // Stale projections are re-read; an event says what changed, the projection says how.
   useEffect(() => {
-    const threadId = state.threadId;
-    if (!threadId || !state.stale.messages) {
+    const current = state.threadId;
+    if (!current || !state.stale.messages) {
       return;
     }
     let cancelled = false;
     void window.quansio
-      .threadMessages(threadId)
+      .threadMessages(current)
       .then((payload) => {
         if (!cancelled) {
-          dispatch({ type: "messages.loaded", threadId, messages: decodeMessages(payload) });
+          dispatch({ type: "messages.loaded", threadId: current, messages: decodeMessages(payload) });
         }
       })
-      .then(loadThreads)
+      .then(onThreadsChanged)
       .catch((error: unknown) => {
         setNotice(errorText(error));
       });
     return () => {
       cancelled = true;
     };
-  }, [state.threadId, state.stale.messages, loadThreads]);
+  }, [state.threadId, state.stale.messages, onThreadsChanged]);
 
   useEffect(() => {
-    const threadId = state.threadId;
-    if (!threadId || !state.stale.questions) {
+    const current = state.threadId;
+    if (!current || !state.stale.questions) {
       return;
     }
     let cancelled = false;
     void window.quansio
-      .listQuestions({ threadId })
+      .listQuestions({ threadId: current })
       .then((payload) => {
         if (!cancelled) {
           dispatch({ type: "questions.loaded", questions: decodeQuestions(payload) });
@@ -209,87 +227,112 @@ export function Conversation({ workspaceId, initialThreadId }: ConversationProps
     }
   }, [state]);
 
+  // The composer grows with what is typed, up to a limit, then scrolls.
+  const text = state.composer.text;
+  useLayoutEffect(() => {
+    const field = composer.current;
+    if (field) {
+      field.style.height = "auto";
+      field.style.height = `${String(Math.min(field.scrollHeight, COMPOSER_MAX_HEIGHT))}px`;
+    }
+  }, [text]);
+
   const live = cancellableRun(state);
   const questions = openQuestions(state);
+  const activeRuns = Object.values(state.runs).filter((run) => run.streaming || run.stage || run.cards.length > 0);
+  const empty = state.messages.length === 0 && activeRuns.length === 0 && questions.length === 0;
+
+  // New replies keep the thread scrolled to its end.
+  const lastStreaming = activeRuns.map((run) => run.streaming.length).join(",");
+  useEffect(() => {
+    const element = scroller.current;
+    if (element) {
+      element.scrollTop = element.scrollHeight;
+    }
+  }, [state.messages.length, lastStreaming, questions.length]);
 
   return (
-    <section className="conversation" aria-label={t("conversation")}>
-      <aside className="threads">
-        <h2>{t("threads")}</h2>
-        <button type="button" onClick={() => { dispatch({ type: "thread.selected", threadId: null }); }}>
-          {t("newThread")}
-        </button>
-        <ul>
-          {threads.map((thread) => (
-            <li key={thread.id} className={thread.id === state.threadId ? "selected" : undefined}>
-              <button type="button" onClick={() => { dispatch({ type: "thread.selected", threadId: thread.id }); }}>
-                {thread.title ?? thread.id} <small>({String(thread.messageCount)})</small>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </aside>
+    <section className={inspectorOpen ? "conversation with-inspector" : "conversation"} aria-label={t("conversation")}>
       <div className="thread">
-        <ol className="messages" aria-live="polite">
-          {state.messages.map((message) => (
-            <li key={message.id} className={`message message-${message.authorKind}`} data-run={message.runId ?? undefined}>
-              <span className="author">{message.authorKind === "agent" ? t("agent") : message.authorKind}</span>
-              <p>{message.text}</p>
-              {message.attachments.length > 0 ? (
-                <ul className="attachments">
-                  {message.attachments.map((artifactId) => (
-                    <li key={artifactId}>{artifactId}</li>
-                  ))}
-                </ul>
-              ) : null}
-              {message.runId ? (
-                <button type="button" className="inspect" onClick={() => { dispatch({ type: "inspect", runId: message.runId }); }}>
-                  {t("inspectTurn")}
-                </button>
-              ) : null}
-            </li>
-          ))}
-          {Object.values(state.runs)
-            .filter((run) => run.streaming || run.stage || run.cards.length > 0)
-            .map((run) => (
-              <li key={run.runId} className="message message-live" data-run={run.runId}>
-                <span className="author">{t("agent")}</span>
-                {run.stage ? <span className="stage">{run.stage}</span> : null}
-                {run.cards.length > 0 ? (
-                  <ul className="cards">
-                    {run.cards.map((card) => (
-                      <li key={card.stepId} className={`card card-${card.kind} card-${card.status}`}>
-                        {card.kind}
-                        {card.ref ? ` · ${card.ref}` : ""} · {card.status}
-                      </li>
-                    ))}
-                  </ul>
+        <div className="thread-scroll" ref={scroller}>
+          {empty ? (
+            <div className="thread-empty">
+              <h3>{t("emptyThreadTitle")}</h3>
+              <p>{t("emptyThreadHint")}</p>
+            </div>
+          ) : null}
+          <ol className="messages" aria-live="polite">
+            {state.messages.map((message) => (
+              <li key={message.id} className={`message message-${message.authorKind}`} data-run={message.runId ?? undefined}>
+                <span className="author">{message.authorKind === "agent" ? t("agent") : message.authorKind}</span>
+                <div className="bubble">
+                  <p>{message.text}</p>
+                  {message.attachments.length > 0 ? (
+                    <ul className="attachments">
+                      {message.attachments.map((artifactId) => (
+                        <li key={artifactId}>{artifactId}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+                {message.runId ? (
+                  <button
+                    type="button"
+                    className="inspect"
+                    onClick={() => {
+                      dispatch({ type: "inspect", runId: message.runId });
+                      onInspectorOpen(true);
+                    }}
+                  >
+                    {t("inspectTurn")}
+                  </button>
                 ) : null}
-                {run.streaming ? <p className="streaming">{run.streaming}</p> : null}
               </li>
             ))}
-        </ol>
-        {questions.length > 0 ? (
-          <div className="questions">
-            {questions.map((question) => (
-              <QuestionCard key={question.id} question={question} onAnswer={answer} />
+            {activeRuns.map((run) => (
+              <li key={run.runId} className="message message-live" data-run={run.runId}>
+                <span className="author">{t("agent")}</span>
+                <div className="bubble">
+                  {run.stage ? <span className="stage">{run.stage}</span> : null}
+                  {run.cards.length > 0 ? (
+                    <ul className="cards">
+                      {run.cards.map((card) => (
+                        <li key={card.stepId} className={`card card-${card.kind} card-${card.status}`}>
+                          {card.kind}
+                          {card.ref ? ` · ${card.ref}` : ""} · {card.status}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {run.streaming ? <p className="streaming">{run.streaming}</p> : null}
+                </div>
+              </li>
             ))}
-          </div>
-        ) : null}
-        {notice ? <p className="notice">{notice}</p> : null}
-        {state.composer.error ? <p className="notice">{state.composer.error}</p> : null}
+          </ol>
+          {questions.length > 0 ? (
+            <div className="questions">
+              {questions.map((question) => (
+                <QuestionCard key={question.id} question={question} onAnswer={answer} />
+              ))}
+            </div>
+          ) : null}
+        </div>
         <div className="composer">
-          <textarea
-            value={state.composer.text}
-            placeholder={t("composerPlaceholder")}
-            onChange={(event) => { dispatch({ type: "composer.text", text: event.target.value }); }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-                void send();
-              }
-            }}
-          />
-          <div className="composer-actions">
+          {notice ? <p className="notice">{notice}</p> : null}
+          {state.composer.error ? <p className="notice">{state.composer.error}</p> : null}
+          {state.composer.attachments.length > 0 ? (
+            <div className="composer-chips">
+              {state.composer.attachments.map((attachment) => (
+                <span key={attachment.artifactId} className="chip">
+                  {attachment.title}
+                  <button type="button" aria-label={t("remove")} onClick={() => { dispatch({ type: "composer.detach", artifactId: attachment.artifactId }); }}>
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <div className="composer-box">
             <input
               ref={fileInput}
               type="file"
@@ -302,32 +345,51 @@ export function Conversation({ workspaceId, initialThreadId }: ConversationProps
                 event.target.value = "";
               }}
             />
-            <button type="button" onClick={() => fileInput.current?.click()}>
-              {t("attach")}
+            <button type="button" className="icon-button round" aria-label={t("attach")} onClick={() => fileInput.current?.click()}>
+              <PlusIcon />
             </button>
-            {state.composer.attachments.map((attachment) => (
-              <span key={attachment.artifactId} className="chip">
-                {attachment.title}
-                <button type="button" aria-label={t("remove")} onClick={() => { dispatch({ type: "composer.detach", artifactId: attachment.artifactId }); }}>
-                  ×
-                </button>
-              </span>
-            ))}
-            <button type="button" className="primary" onClick={() => void send()} disabled={!state.composer.text.trim() || state.composer.posting}>
-              {t("send")}
-            </button>
+            <textarea
+              ref={composer}
+              rows={1}
+              value={state.composer.text}
+              placeholder={t("composerPlaceholder")}
+              onChange={(event) => { dispatch({ type: "composer.text", text: event.target.value }); }}
+              onKeyDown={(event) => {
+                // Return sends, Shift+Return breaks the line; an IME composition is never sent.
+                if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  void send();
+                }
+              }}
+            />
             {live ? (
-              <button type="button" className="cancel" onClick={() => void cancel()}>
-                {t("cancelTurn")}
+              <button type="button" className="icon-button round cancel" aria-label={t("cancelTurn")} onClick={() => void cancel()}>
+                <StopIcon />
               </button>
             ) : null}
+            <button
+              type="button"
+              className="icon-button round send"
+              aria-label={t("send")}
+              onClick={() => void send()}
+              disabled={!state.composer.text.trim() || state.composer.posting}
+            >
+              <ArrowUpIcon />
+            </button>
           </div>
         </div>
       </div>
-      <aside className="inspector">
-        <h2>{t("inspector")}</h2>
-        {inspection ? <Inspector inspection={inspection} /> : <p>{t("inspectorEmpty")}</p>}
-      </aside>
+      {inspectorOpen ? (
+        <aside className="inspector" aria-label={t("inspector")}>
+          <header>
+            <h2>{t("inspector")}</h2>
+            <button type="button" className="icon-button small" aria-label={t("close")} onClick={() => { onInspectorOpen(false); }}>
+              <CloseIcon />
+            </button>
+          </header>
+          {inspection ? <Inspector inspection={inspection} /> : <p>{t("inspectorEmpty")}</p>}
+        </aside>
+      ) : null}
     </section>
   );
 }
@@ -343,10 +405,14 @@ function QuestionCard({ question, onAnswer }: QuestionCardProps): ReactElement {
   const choice = question.kind === "single_choice" || question.kind === "multi_choice";
   return (
     <div className="question" data-question={question.id}>
+      <header>
+        <span className="author">{t("agent")}</span>
+        <span className="pill">{t("actionNeeded")}</span>
+      </header>
       <p>{question.prompt}</p>
       {question.kind === "confirm" ? (
         <div>
-          <button type="button" onClick={() => void onAnswer(question, true)}>{t("yes")}</button>
+          <button type="button" className="primary" onClick={() => void onAnswer(question, true)}>{t("yes")}</button>
           <button type="button" onClick={() => void onAnswer(question, false)}>{t("no")}</button>
         </div>
       ) : choice ? (
@@ -367,6 +433,7 @@ function QuestionCard({ question, onAnswer }: QuestionCardProps): ReactElement {
           ))}
           <button
             type="button"
+            className="primary"
             disabled={chosen.length === 0}
             onClick={() => void onAnswer(question, question.kind === "multi_choice" ? chosen : chosen[0])}
           >
@@ -375,8 +442,8 @@ function QuestionCard({ question, onAnswer }: QuestionCardProps): ReactElement {
         </div>
       ) : (
         <div>
-          <input type="text" value={text} onChange={(event) => { setText(event.target.value); }} />
-          <button type="button" disabled={!text.trim()} onClick={() => void onAnswer(question, text.trim())}>
+          <input type="text" aria-label={question.prompt} value={text} onChange={(event) => { setText(event.target.value); }} />
+          <button type="button" className="primary" disabled={!text.trim()} onClick={() => void onAnswer(question, text.trim())}>
             {t("answer")}
           </button>
         </div>

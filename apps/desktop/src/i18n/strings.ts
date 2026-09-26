@@ -320,6 +320,20 @@ export const STRINGS = {
   surfaceConnectors: "Connectors (web admin)",
   surfaceCapabilityAdmin: "Capabilities",
   surfaceModelUsage: "Models and tools used",
+  // The chat-first shell (APP-003): conversations in the sidebar, every other surface one
+  // switch away under Workspace.
+  chats: "Chats",
+  conversations: "Conversations",
+  sidebarView: "Show in the sidebar",
+  searchConversations: "Search conversations",
+  untitledThread: "New conversation",
+  messageOne: "message",
+  messageMany: "messages",
+  noConversations: "No conversations yet. Start one with the + button.",
+  account: "Account",
+  emptyThreadTitle: "What should your teammates work on?",
+  emptyThreadHint: "Ask a question, hand off a task or attach a file. Replies, tool steps and approvals appear here.",
+  actionNeeded: "Action needed",
 } as const;
 
 export type StringKey = keyof typeof STRINGS;
