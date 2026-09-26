@@ -1,0 +1,7 @@
+host: 23:19  up 4 days, 10:40, 2 users, load averages: 5.09 5.39 6.46
+== bin-rel2 (main before the fix)
+ERROR after 65 frames: ConnectionError('stream closed') 0.04 s
+== bin-core003 (this branch)
+replayed 600 frames in 2.28 s
+ok after live
+exit=0

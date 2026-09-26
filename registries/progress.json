@@ -280,8 +280,8 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-core003",
       "started_at": "2026-09-12T01:31:18Z",
-      "updated_at": "2026-09-12T01:31:18Z",
-      "git_commit": "8da14c49a42a768bfd67086422f5e0c1346534a0",
+      "updated_at": "2026-09-26T20:25:10Z",
+      "git_commit": "5612ae362338340573c344ada50da448de7434f1",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-events",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
@@ -291,12 +291,13 @@
         "evidence/CORE-003/2026-09-12T01-30-16Z/summary.json",
         "crates/events/src/envelope.rs",
         "crates/events/src/store.rs",
-        "migrations/0002_runtime_event_sequences.sql"
+        "migrations/0002_runtime_event_sequences.sql",
+        "evidence/CORE-003/2026-09-26T20-17-10Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "RuntimeEvent envelope and 34 event families from DOMAIN.md \u00a79; sequence assigned inside the commit transaction through a per-tenant counter row (concurrent writers serialize, rollback releases the value so the stream stays gap-free); mutation + event + outbox written atomically with NoEventStaged failing closed; outbox publishing behind an EventTransport trait with an explicit UnavailableTransport that never drops events silently; durable consumer cursors with resume. Reviewed and re-run on main (12 tests pass)."
+      "notes": "RuntimeEvent envelope and 34 event families from DOMAIN.md \u00a79; sequence assigned inside the commit transaction through a per-tenant counter row (concurrent writers serialize, rollback releases the value so the stream stays gap-free); mutation + event + outbox written atomically with NoEventStaged failing closed; outbox publishing behind an EventTransport trait with an explicit UnavailableTransport that never drops events silently; durable consumer cursors with resume. Reviewed and re-run on main (12 tests pass). 2026-09-26 (fix/CORE-003-replay-backpressure, merge 5612ae3, found by QA-009, P1): the replay reader try_sent each frame into the 64-frame subscriber buffer and disconnected on the first full buffer, so any subscriber replaying more than 64 events was cut off after 64 frames however fast it read; the reader now waits on a full buffer and disconnects with STREAM_BACKPRESSURE only after a 5 s stall (DOMAIN.md 9.3). Evidence evidence/CORE-003/2026-09-26T20-17-10Z."
     },
     "CORE-004": {
       "coverage": "GENUINE_GAP",

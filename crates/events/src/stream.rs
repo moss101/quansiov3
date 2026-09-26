@@ -14,6 +14,7 @@
 //! events.
 
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use quansio_core::{CanonicalId, Cursor, Prefix, Sequence};
 use serde_json::Value;
@@ -28,10 +29,14 @@ use crate::store::EventStore;
 /// Stream tuning. The bounds are documented because backpressure is defined by them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StreamConfig {
-    /// Maximum durable event frames buffered for one subscriber. When the buffer is
-    /// full the subscriber is disconnected with `STREAM_BACKPRESSURE`; this bounds
-    /// server memory per stream (default 64).
+    /// Maximum durable event frames buffered for one subscriber; this bounds server memory
+    /// per stream (default 64). A full buffer makes the reader wait for the subscriber, not
+    /// disconnect it: a replay longer than the buffer is normal.
     pub buffer_capacity: usize,
+    /// How long the reader waits on a full buffer before it disconnects the subscriber with
+    /// `STREAM_BACKPRESSURE`: a subscriber that takes no frame for this long is not keeping up
+    /// (default 5 s).
+    pub stall_timeout: Duration,
     /// Maximum transient live frames buffered for one subscriber. Live frames that do
     /// not fit are dropped, never persisted and never disconnect the client
     /// (default 64).
@@ -44,6 +49,7 @@ impl Default for StreamConfig {
     fn default() -> Self {
         Self {
             buffer_capacity: 64,
+            stall_timeout: Duration::from_secs(5),
             live_capacity: 64,
             batch_size: 256,
         }
@@ -576,6 +582,7 @@ impl EventStore {
     ) -> Result<(StreamSession, LiveSender), StreamError> {
         let config = StreamConfig {
             buffer_capacity: config.buffer_capacity.max(1),
+            stall_timeout: config.stall_timeout,
             live_capacity: config.live_capacity.max(1),
             batch_size: config.batch_size.max(1),
         };
@@ -684,9 +691,12 @@ async fn pump_events(
                 cursor: Cursor::new(stream_id.clone(), event.sequence).encode(),
                 event,
             }));
-            match tx.try_send(frame) {
-                Ok(()) => delivered = position,
-                Err(TrySendError::Full(_)) => {
+            // A full buffer waits for the subscriber; only one that takes nothing for the
+            // stall window is disconnected (memory stays bounded by the buffer either way).
+            match tokio::time::timeout(config.stall_timeout, tx.send(frame)).await {
+                Ok(Ok(())) => delivered = position,
+                Ok(Err(_)) => return,
+                Err(_) => {
                     record_failure(
                         &failure,
                         StreamError::Backpressure {
@@ -695,7 +705,6 @@ async fn pump_events(
                     );
                     return;
                 }
-                Err(TrySendError::Closed(_)) => return,
             }
         }
         if let Some(sequence) = delivered {
