@@ -436,24 +436,26 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-core009",
       "started_at": "2026-09-12T03:00:48Z",
-      "updated_at": "2026-09-12T03:00:48Z",
-      "git_commit": "b850fd98ef0e8375069471725c6ff22154941983",
+      "updated_at": "2026-09-26T12:03:49Z",
+      "git_commit": "12ca2a4b567d115a61fe36d684ab5646b56aa54b",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-events",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
-        "bash scripts/ci/ci.sh"
+        "bash scripts/ci/ci.sh",
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test identity an_open_stream_closes_when_its_session_is_revoked (an open stream ends with AUTH_INVALID_TOKEN within one re-check after sign-out)"
       ],
       "artifacts": [
         "evidence/CORE-009/2026-09-12T02-58-59Z/summary.json",
         "crates/events/src/projection.rs",
         "crates/events/src/stream.rs",
         "crates/events/tests/projection_determinism.rs",
-        "migrations/0005_projections.sql"
+        "migrations/0005_projections.sql",
+        "evidence/CORE-009/2026-09-26T12-03-24Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Rebuildable projections with a checkpoint per projection (deterministic incremental vs rebuilt state, idempotent re-application, crash/resume with no gaps or duplicates) and resumable client streaming per DOMAIN.md \u00a79.3: durable event frames with cursors, transient live frames, channel and tenant scoping, and bounded backpressure that disconnects a slow consumer with a typed error. Integrated and re-verified by the principal agent after the subagent was killed by a full disk; the projections migration was renumbered to 0005 and the dev-dependency cycle the workspace gate caught was removed."
+      "notes": "Rebuildable projections with a checkpoint per projection (deterministic incremental vs rebuilt state, idempotent re-application, crash/resume with no gaps or duplicates) and resumable client streaming per DOMAIN.md \u00a79.3: durable event frames with cursors, transient live frames, channel and tenant scoping, and bounded backpressure that disconnects a slow consumer with a typed error. Integrated and re-verified by the principal agent after the subagent was killed by a full disk; the projections migration was renumbered to 0005 and the dev-dependency cycle the workspace gate caught was removed. 2026-09-26 regression (FAIL -> PASS in one step, fix/CORE-009-stream-session-revalidation, merge 12ca2a4): found by QA-008 - /v1/stream and /v1/stream/events authenticated only on connect, so a revoked, removed or expired session kept receiving the tenant's events on an open connection. Both loops now re-resolve the opening credential every 2 s and close with the typed refusal. Failing test: crates/server/tests/identity.rs::an_open_stream_closes_when_its_session_is_revoked. Evidence evidence/CORE-009/2026-09-26T12-03-24Z."
     },
     "RUN-001": {
       "coverage": "GENUINE_GAP",
