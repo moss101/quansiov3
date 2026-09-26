@@ -1,0 +1,14 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/identity.test.ts (6 tests) 15ms
+ ✓ tests/session.e2e.test.ts (2 tests) 4706ms
+   ✓ desktop session end (real Electron, real server) > returns to sign-in when the person signs out 1211ms
+   ✓ desktop session end (real Electron, real server) > returns to sign-in when an administrator revokes the session 2939ms
+
+ Test Files  2 passed (2)
+      Tests  8 passed (8)
+   Start at  15:11:14
+   Duration  5.10s (transform 161ms, setup 0ms, collect 333ms, tests 4.72s, environment 0ms, prepare 95ms)
+
+exit=0
