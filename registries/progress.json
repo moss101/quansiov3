@@ -1953,8 +1953,8 @@
       "status": "PASS",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-23T05:16:46Z",
-      "updated_at": "2026-09-23T10:16:55Z",
-      "git_commit": "53c39c0a40436b6549a26c32bd88a9d2093ad9e5",
+      "updated_at": "2026-09-26T20:34:05Z",
+      "git_commit": "5a7a220cc5596f927f6e6a9dd8443c22843bf27a",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test collaboration (5 passed against real PostgreSQL: concurrent posts from two people keep one gap-free seq order with events committed in that order; a removed participant receives their removal and no later thread event or live frame, and reads, posts and reactions are refused; membership rules (protection, owner/admin management, last-owner guard, workspace membership, objective threads); reactions, mentions and derived attention; handoff with notice, RUN-002 mailbox item and routing, refused while the source has live work)",
         "cargo test -p quansio-server --lib control::conversation (idempotent reactions and their validation)",
@@ -1983,12 +1983,13 @@
         "apps/desktop/tests/collaboration.test.ts",
         "apps/desktop/tests/collaboration.e2e.test.ts",
         "evidence/APP-009/2026-09-23T10-16-25Z/summary.json",
-        "evidence/APP-009/2026-09-23T10-16-25Z/NOTES.md"
+        "evidence/APP-009/2026-09-23T10-16-25Z/NOTES.md",
+        "evidence/APP-009/2026-09-26T20-25-32Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Messages sort by seq then id. Removed/suspended participants cannot receive protected events. 2026-09-19 correction: was BLOCKED_EXTERNAL at c7c6008fc1e05b88af919673da69a89e1de6b064 claimed by agent:principal-1 (started 2026-09-15T06:20:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/server/src/control/collaboration is order_messages (a sort) and can_receive(status == 'active'); apps/desktop/src/collaboration is 12 lines. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-23 (agent:claude-opus-5): implemented at 165614a \u2014 control/collaboration owns thread_participants (membership, protection gate for projections, commands and the stream, derived attention, HandOffThread); the conversation owner assigns seq under the thread lock and versions thread events per thread; reactions and mentions; migration 0015; desktop Collaboration surface. REGRESSION FOUND AND FIXED 2026-09-23 (evidence/APP-009/2026-09-23T10-16-25Z/): apps/desktop/tests/collaboration.e2e.test.ts (two clients posting at once) failed intermittently with RUNTIME_ILLEGAL_TRANSITION ACTIVE -> ACTIVE, exposed by APP-015's CI at b1b61e9 (2 of 6 isolated reruns) \u2014 concurrent PostMessage calls read the teammate's agent thread as PROVISIONED and the losing activation was refused. Fix f32d3e5: AgentStore::ensure_active re-reads and accepts a thread a concurrent caller already activated (a terminated one is still refused); regression test races six callers from one read; the E2E passed 8/8. Merged to main as 53c39c0."
+      "notes": "Messages sort by seq then id. Removed/suspended participants cannot receive protected events. 2026-09-19 correction: was BLOCKED_EXTERNAL at c7c6008fc1e05b88af919673da69a89e1de6b064 claimed by agent:principal-1 (started 2026-09-15T06:20:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: crates/server/src/control/collaboration is order_messages (a sort) and can_receive(status == 'active'); apps/desktop/src/collaboration is 12 lines. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-23 (agent:claude-opus-5): implemented at 165614a \u2014 control/collaboration owns thread_participants (membership, protection gate for projections, commands and the stream, derived attention, HandOffThread); the conversation owner assigns seq under the thread lock and versions thread events per thread; reactions and mentions; migration 0015; desktop Collaboration surface. REGRESSION FOUND AND FIXED 2026-09-23 (evidence/APP-009/2026-09-23T10-16-25Z/): apps/desktop/tests/collaboration.e2e.test.ts (two clients posting at once) failed intermittently with RUNTIME_ILLEGAL_TRANSITION ACTIVE -> ACTIVE, exposed by APP-015's CI at b1b61e9 (2 of 6 isolated reruns) \u2014 concurrent PostMessage calls read the teammate's agent thread as PROVISIONED and the losing activation was refused. Fix f32d3e5: AgentStore::ensure_active re-reads and accepts a thread a concurrent caller already activated (a terminated one is still refused); regression test races six callers from one read; the E2E passed 8/8. Merged to main as 53c39c0. 2026-09-26 (fix/APP-009-thread-list-access, merge 5a7a220, found by QA-009 against 21.2's read budget): GET /v1/threads decided access with one query per thread (p50 397 ms at ~200 threads, 8 readers); thread_access_many decides for the whole list in one query with the same rules (p50 5.5 ms served). Evidence evidence/APP-009/2026-09-26T20-25-32Z."
     },
     "APP-010": {
       "coverage": "PARTIAL",
