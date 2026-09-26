@@ -1,0 +1,80 @@
+{
+  "task_id": "CORE-007",
+  "git_commit": "849bf896bc7c9084cf03b590a4f66fcd1cda6e71",
+  "recorded_at": "2026-09-26T14:44:00Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --lib api::artifacts",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-26T14-36-21Z/unit.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test artifacts --test artifact_workspace --test artifact_workflows --test api",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-26T14-36-21Z/integration.log"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check && cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-26T14-36-21Z/lint.log"
+    },
+    {
+      "command": "mutant: store failure mapped back to VALIDATION_BOUNDS with the raw message; cargo test -p quansio-server --lib api::artifacts (must fail)",
+      "exit_code": 101,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-26T14-36-21Z/mutation.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --lib api::artifacts",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test artifacts --test artifact_workspace --test artifact_workflows --test api",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check && cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutant: store failure mapped back to VALIDATION_BOUNDS with the raw message; cargo test -p quansio-server --lib api::artifacts (must fail)",
+      "exit_code": 101,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CORE-007/2026-09-26T14-36-21Z/NOTES.md",
+      "sha256": "2b11f7b4cdba6995db166771156991b57fc383db913097889020352950941bee",
+      "bytes": 1195
+    },
+    {
+      "path": "evidence/CORE-007/2026-09-26T14-36-21Z/integration.log",
+      "sha256": "ee406bfaa4f2ce6c1d98bc2449f09b4fbda220aa9e2f3b0be272130b2de7806a",
+      "bytes": 2655
+    },
+    {
+      "path": "evidence/CORE-007/2026-09-26T14-36-21Z/lint.log",
+      "sha256": "dc65c91a6d54ef1f4c35e4734eb03dd5734ce0763d1ad531f3e7ad73c75a055d",
+      "bytes": 80
+    },
+    {
+      "path": "evidence/CORE-007/2026-09-26T14-36-21Z/mutation.log",
+      "sha256": "faf66514e6ebe401fa05c1c2fbad2f21fba61b5fd9d1799171b680e09cce2ea6",
+      "bytes": 470
+    },
+    {
+      "path": "evidence/CORE-007/2026-09-26T14-36-21Z/unit.log",
+      "sha256": "cf5d5fdb0f60ee0a06f951b73495a78d30258cf93d2c90a8e9f911d76795c228",
+      "bytes": 460
+    }
+  ]
+}

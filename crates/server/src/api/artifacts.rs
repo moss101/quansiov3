@@ -38,12 +38,28 @@ fn projection_error(error: impl std::fmt::Display) -> ApiError {
     ApiError::new(ApiErrorCode::Internal, error.to_string(), "projection")
 }
 
+/// Map a store refusal to the public error table. Only the caller's own mistakes are
+/// `VALIDATION_BOUNDS`; a failure of the store itself is `INTERNAL`, and its detail (a
+/// database or object-store message) goes to the server log, not to the client.
 fn artifact_error(error: ArtifactError, correlation: &str) -> ApiError {
     let code = match &error {
         ArtifactError::AccessDenied { .. } => ApiErrorCode::CapabilityDenied,
-        ArtifactError::NotFound { .. } | ArtifactError::Deleted(_) => ApiErrorCode::NotFound,
-        ArtifactError::DigestMismatch { .. } => ApiErrorCode::Internal,
-        _ => ApiErrorCode::ValidationBounds,
+        ArtifactError::NotFound { .. } | ArtifactError::Deleted(_) | ArtifactError::NoBytes(_) => {
+            ApiErrorCode::NotFound
+        }
+        ArtifactError::InvalidValue { .. } => ApiErrorCode::ValidationBounds,
+        ArtifactError::Database(_)
+        | ArtifactError::Schema(_)
+        | ArtifactError::ObjectStore(_)
+        | ArtifactError::Decode { .. }
+        | ArtifactError::DigestMismatch { .. } => {
+            eprintln!("quansio-server: artifact store failed ({correlation}): {error}");
+            return ApiError::new(
+                ApiErrorCode::Internal,
+                "the artifact store failed; try again",
+                correlation,
+            );
+        }
     };
     ApiError::new(code, error.to_string(), correlation)
 }
@@ -688,7 +704,49 @@ impl ObjectStore for NoObjects {
 
 #[cfg(test)]
 mod tests {
-    use super::safe_content_type;
+    use super::{artifact_error, safe_content_type, ApiErrorCode};
+    use crate::artifacts::ArtifactError;
+
+    #[test]
+    fn a_store_failure_is_internal_and_keeps_its_detail_out_of_the_response() {
+        let error = artifact_error(
+            ArtifactError::Database(sqlx::Error::Protocol(
+                "expected to read 5 bytes, got 0 bytes at EOF".to_owned(),
+            )),
+            "upload",
+        );
+        assert_eq!(error.code, ApiErrorCode::Internal.as_str());
+        assert!(
+            !error.message.contains("expected to read"),
+            "{}",
+            error.message
+        );
+        let decode = artifact_error(
+            ArtifactError::Decode {
+                entity: "json",
+                detail: "column origin".to_owned(),
+            },
+            "read",
+        );
+        assert_eq!(decode.code, ApiErrorCode::Internal.as_str());
+        assert!(!decode.message.contains("column origin"));
+    }
+
+    #[test]
+    fn a_callers_mistake_stays_a_validation_refusal() {
+        let error = artifact_error(
+            ArtifactError::InvalidValue {
+                field: "title",
+                value: String::new(),
+            },
+            "upload",
+        );
+        assert_eq!(error.code, ApiErrorCode::ValidationBounds.as_str());
+        assert_eq!(
+            artifact_error(ArtifactError::NoBytes("evd_x".to_owned()), "read").code,
+            ApiErrorCode::NotFound.as_str()
+        );
+    }
 
     #[test]
     fn active_types_are_relabelled_whatever_their_spelling() {

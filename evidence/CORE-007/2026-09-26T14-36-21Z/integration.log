@@ -1,0 +1,37 @@
+test the_error_vocabulary_is_the_one_the_catalog_generates ... ok
+test feature_flags_load_from_config_and_cannot_disable_escalation ... ok
+test every_code_maps_to_a_status_and_says_whether_a_retry_could_help ... ok
+test the_command_catalog_is_the_one_the_gate_checks ... ok
+test an_api_handler_reads_and_writes_only_its_own_table ... ok
+test generated_openapi_lists_every_catalog_command ... ok
+test every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction ... ok
+test the_deployable_composes_from_the_environment ... ok
+test a_command_scoped_to_another_tenant_does_not_touch_this_one ... ok
+test a_tenant_over_the_rate_limit_is_rate_limited ... ok
+test health_reports_readiness_and_the_catalogues_it_serves ... ok
+test a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal ... ok
+test two_tenants_may_send_the_same_command_id_and_each_replays_its_own ... ok
+test a_mutating_call_calls_the_owner_and_a_resend_returns_its_result_once ... ok
+test a_call_without_a_usable_tenant_is_refused_with_the_right_code ... ok
+test a_resend_while_the_first_is_still_being_applied_is_told_to_come_back ... ok
+test the_public_surface_works_as_the_application_role_under_rls ... ok
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.82s
+test the_source_corpus_verdicts_are_the_same_as_the_intelligence_planes ... ok
+test a_malformed_deliverable_blocks_completion_until_a_valid_version_is_added ... ok
+test a_run_creates_and_edits_a_versioned_artifact_through_the_governed_tools ... ok
+test every_editable_kind_is_made_through_the_tool_from_its_fixture ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.94s
+test bytes_are_served_as_an_attachment_never_as_a_document_and_only_to_a_reader ... ok
+test artifacts_outlive_the_run_and_keep_their_version_history_with_links ... ok
+test search_is_one_typed_program_across_artifacts_threads_knowledge_and_evidence ... ok
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.80s
+test evidence_is_insert_only_and_never_overwritten ... ok
+test legal_hold_and_retention_are_recorded_not_silently_deleted ... ok
+test digest_corruption_is_rejected_against_minio ... ok
+test evidence_bundle_records_claims_sources_and_verification ... ok
+test new_bytes_get_a_new_version_identity ... ok
+test artifact_round_trip_verifies_the_recorded_digest_against_minio ... ok
+test grant_scope_denies_ungranted_callers_and_read_cannot_write ... ok
+test multipart_attachment_round_trips_against_minio ... ok
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.32s
+exit=0
