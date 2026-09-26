@@ -2748,10 +2748,10 @@
     },
     "QA-007": {
       "coverage": "GENUINE_GAP",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-26T00:25:41Z",
+      "updated_at": "2026-09-26T00:25:41Z",
       "git_commit": null,
       "tests": [
         "uv run --project python pytest tests/security/test_adversarial_qualification.py (9 passed: injection corpus zero unauthorized and detection >= 0.95; injected text demoted to evidence reference; deleted/quarantined/superseded knowledge never retrievable; tenant poisoning cannot cross isolation; capability escalation excluded never granted; malicious artifact content refused before preview; secret canaries absent from logs and bundles; tampered SearchProgram refused on replay; stale-generation fence wired)"

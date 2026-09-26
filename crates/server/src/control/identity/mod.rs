@@ -499,6 +499,11 @@ impl IdentityStore {
             .effective_for_workspace(tenant_id, workspace_id, user_id)
             .await?;
         let mut tx = self.events.begin_tenant_transaction(tenant_id).await?;
+        // The users policy admits an update only by the user itself (row-level security,
+        // enforced for the application role), so the transaction acts as that user.
+        schema::set_user_context(&mut tx, user_id)
+            .await
+            .map_err(|error| IdentityError::Schema(error.to_string()))?;
         sqlx::query(
             "UPDATE users SET settings = settings || $2::jsonb, updated_at = now() WHERE id = $1",
         )

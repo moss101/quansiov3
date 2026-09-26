@@ -221,7 +221,9 @@ async fn run(args: Args) -> Result<(), String> {
         .map_err(|error| format!("tenant: {error}"))?;
     sqlx::query("INSERT INTO users (id, primary_email, display_name) VALUES ($1, $2, 'e2e seed')")
         .bind(&args.user)
-        .bind(format!("{}@example.com", args.user))
+        // Stored the way sign-in normalizes an address (lower case), so a seeded user can sign in
+        // through the real magic-link flow instead of being onboarded a second time.
+        .bind(format!("{}@example.com", args.user).to_ascii_lowercase())
         .execute(&mut *tx)
         .await
         .map_err(|error| format!("user: {error}"))?;
@@ -248,7 +250,7 @@ async fn run(args: Args) -> Result<(), String> {
     for (user, tenant_role, workspace_role) in &args.members {
         sqlx::query("INSERT INTO users (id, primary_email, display_name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING")
             .bind(user)
-            .bind(format!("{user}@example.com"))
+            .bind(format!("{user}@example.com").to_ascii_lowercase())
             .bind(format!("e2e {tenant_role}/{workspace_role}"))
             .execute(&mut *tx)
             .await

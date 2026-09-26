@@ -1109,7 +1109,7 @@ def seed_scratch_database(admin_url: str, name: str) -> str:
             f"--tenant={TENANT_A}",
             f"--tenant={TENANT_B}",
             f"--workspace={WORKSPACE_A}",
-            f"--workspace={WORKSPACE_B}",
+            f"--workspace={WORKSPACE_B}@{TENANT_B}",
         ],
         cwd=str(ROOT),
         capture_output=True,

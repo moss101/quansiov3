@@ -24,6 +24,8 @@ use tempfile::TempDir;
 const TENANT_A: &str = "tn_alpha";
 const TENANT_B: &str = "tn_beta";
 const WORKSPACE: &str = "ws_alpha";
+/// Tenant B's own workspace: a workspace belongs to exactly one tenant (migration 0023).
+const WORKSPACE_B: &str = "ws_beta";
 
 /// In-process stand-in for reading artifact bytes; the index owns no object store.
 #[derive(Default)]
@@ -106,7 +108,7 @@ async fn rebuild_from_authoritative_rows_is_deterministic_and_tenant_isolated() 
     common::seed_artifact(
         &pool,
         TENANT_B,
-        WORKSPACE,
+        WORKSPACE_B,
         "art_beta",
         "artv_beta1",
         "Beta orbital notes",

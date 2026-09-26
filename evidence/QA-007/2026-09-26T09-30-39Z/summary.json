@@ -1,0 +1,80 @@
+{
+  "task_id": "QA-007",
+  "git_commit": "4fdafe5d2f5e0a154e737a7350c360ec43779598",
+  "recorded_at": "2026-09-26T09:51:36Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_SERVER_BIN/SEED_BIN=<pinned copies> uv run --project python pytest tests/security -v # the HTTP attack campaign against quansio-server serving as a quansio_app login, the threat manifest and findings register, and the in-process adversarial checks",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-007/2026-09-26T09-30-39Z/pytest-security.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server/-machine/-qworkerd/-indexer --test <the owner suites threats.yaml names> # approval receipts, lease fencing, egress and DNS rebinding, qworkerd sandbox, secrets custody, RLS, RBAC, audit, content serving",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-007/2026-09-26T09-30-39Z/cargo-owner-suites.log"
+    },
+    {
+      "command": "qa007_mutations.sh # each security fix undone, the deployable rebuilt, the campaign re-run",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-007/2026-09-26T09-30-39Z/mutation-checks.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh # binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN and QUANSIO_TOOL_CHECK_BIN",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-007/2026-09-26T09-30-39Z/ci-summary.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_SERVER_BIN/SEED_BIN=<pinned copies> uv run --project python pytest tests/security -v # the HTTP attack campaign against quansio-server serving as a quansio_app login, the threat manifest and findings register, and the in-process adversarial checks",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server/-machine/-qworkerd/-indexer --test <the owner suites threats.yaml names> # approval receipts, lease fencing, egress and DNS rebinding, qworkerd sandbox, secrets custody, RLS, RBAC, audit, content serving",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "qa007_mutations.sh # each security fix undone, the deployable rebuilt, the campaign re-run",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> bash scripts/ci/ci.sh # binaries pinned via QUANSIO_TEST_SERVER_BIN/SEED_BIN and QUANSIO_TOOL_CHECK_BIN",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-007/2026-09-26T09-30-39Z/NOTES.md",
+      "sha256": "914feb0fb5509b15107406e9f9ae629e81a44e477a7c64e412fa4a48c3d2ff3a",
+      "bytes": 5144
+    },
+    {
+      "path": "evidence/QA-007/2026-09-26T09-30-39Z/pytest-security.log",
+      "sha256": "d1e91680787a1a569cd8fa9f11858d07de46086c640839a46256803833f60b42",
+      "bytes": 4289
+    },
+    {
+      "path": "evidence/QA-007/2026-09-26T09-30-39Z/cargo-owner-suites.log",
+      "sha256": "f63d6953a4e43051507899d64c4f271b1909c796bc801aff060569dc797ceee0",
+      "bytes": 15945
+    },
+    {
+      "path": "evidence/QA-007/2026-09-26T09-30-39Z/mutation-checks.log",
+      "sha256": "42feae718da92995f955717943b68c7b022b58040d95246e70ebb4a7dc481777",
+      "bytes": 856
+    },
+    {
+      "path": "evidence/QA-007/2026-09-26T09-30-39Z/ci-summary.json",
+      "sha256": "2cc234d04e01d4ce6eeb7b3003504e68d9c5cfbfd21f8980a7fcdde12a0a3182",
+      "bytes": 7936
+    }
+  ]
+}

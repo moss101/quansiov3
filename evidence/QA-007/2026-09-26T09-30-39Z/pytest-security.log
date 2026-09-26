@@ -1,0 +1,45 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3
+collecting ... collected 36 items
+
+tests/security/test_adversarial_qualification.py::test_injection_corpus_produces_zero_unauthorized_effects PASSED [  2%]
+tests/security/test_adversarial_qualification.py::test_injected_instructions_are_data_even_when_detection_misses PASSED [  5%]
+tests/security/test_adversarial_qualification.py::test_deleted_and_quarantined_knowledge_never_answers PASSED [  8%]
+tests/security/test_adversarial_qualification.py::test_tenant_poisoning_does_not_cross_isolation PASSED [ 11%]
+tests/security/test_adversarial_qualification.py::test_capability_escalation_is_excluded_never_granted PASSED [ 13%]
+tests/security/test_adversarial_qualification.py::test_malicious_artifact_content_is_refused_before_preview PASSED [ 16%]
+tests/security/test_adversarial_qualification.py::test_secret_canaries_never_reach_logs_or_bundles PASSED [ 19%]
+tests/security/test_adversarial_qualification.py::test_tampered_retrieval_program_is_refused_on_replay PASSED [ 22%]
+tests/security/test_qa007_campaign.py::test_tenant_isolation_campaign PASSED [ 25%]
+tests/security/test_qa007_campaign.py::test_cross_tenant_commands_are_refused_and_change_nothing PASSED [ 27%]
+tests/security/test_qa007_campaign.py::test_forged_scope_headers_are_ignored PASSED [ 30%]
+tests/security/test_qa007_campaign.py::test_the_server_serves_as_the_least_privileged_role PASSED [ 33%]
+tests/security/test_qa007_campaign.py::test_approval_substitution_and_replay_fail_closed PASSED [ 36%]
+tests/security/test_qa007_campaign.py::test_role_escalation_is_refused[viewer] PASSED [ 38%]
+tests/security/test_qa007_campaign.py::test_role_escalation_is_refused[approver] PASSED [ 41%]
+tests/security/test_qa007_campaign.py::test_a_service_principal_is_confined_to_its_scopes PASSED [ 44%]
+tests/security/test_qa007_campaign.py::test_ssrf_destinations_are_refused_at_creation_and_at_delivery PASSED [ 47%]
+tests/security/test_qa007_campaign.py::test_path_traversal_never_leaves_its_root PASSED [ 50%]
+tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable[text/html] PASSED [ 52%]
+tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable[TEXT/HTML] PASSED [ 55%]
+tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable[Text/Html; charset=utf-8] PASSED [ 58%]
+tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable[image/svg+xml] PASSED [ 61%]
+tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable[IMAGE/SVG+XML] PASSED [ 63%]
+tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable[application/xhtml+xml] PASSED [ 66%]
+tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable[text/xsl] PASSED [ 69%]
+tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable[application/rss+xml] PASSED [ 72%]
+tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable[text/javascript] PASSED [ 75%]
+tests/security/test_qa007_campaign.py::test_the_web_app_carries_its_content_security_policy PASSED [ 77%]
+tests/security/test_qa007_campaign.py::test_a_malicious_skill_cannot_reach_production_or_grant PASSED [ 80%]
+tests/security/test_qa007_campaign.py::test_the_audit_log_is_append_only_for_the_serving_role PASSED [ 83%]
+tests/security/test_qa007_campaign.py::test_settings_work_under_rls_and_refusals_do_not_echo_the_database PASSED [ 86%]
+tests/security/test_qa007_campaign.py::test_secret_canaries_never_leave_custody PASSED [ 88%]
+tests/security/test_threat_manifest.py::test_every_dossier_threat_has_an_attack PASSED [ 91%]
+tests/security/test_threat_manifest.py::test_every_build_item_has_an_attack PASSED [ 94%]
+tests/security/test_threat_manifest.py::test_every_attack_names_a_test_that_exists PASSED [ 97%]
+tests/security/test_threat_manifest.py::test_no_p0_or_p1_finding_is_open PASSED [100%]
+
+============================== 36 passed in 4.84s ==============================
+exit=0
