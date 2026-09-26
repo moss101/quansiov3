@@ -1,0 +1,9 @@
+CONTROL:
+test a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 4.43s
+MUTANT: text deltas are not forwarded
+COMPILES
+test a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger ... FAILED
+thread 'a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger' (38484758) panicked at crates/server/tests/walking_skeleton_gateway.rs:597:5:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 4.52s
+exit=101
