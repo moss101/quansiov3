@@ -197,6 +197,30 @@ describe.skipIf(blocked !== null)("web journeys (Chrome, real server)", () => {
     }
   }, 120_000);
 
+  it("follows the person's theme preference over the system's", async () => {
+    const owner = await stack.session(emailOf(OWNER));
+    const prefer = (theme: string) => stack.command(owner.access_token, "UpdateUserSettings", { workspace_id: owner.workspace_id, settings: { theme } });
+    const background = (page: Page): Promise<string> => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    await prefer("dark");
+    const page = await signIn(emailOf(OWNER));
+    try {
+      await page.emulateMedia({ colorScheme: "light" });
+      await waitFor(async () => (await background(page)) === "rgb(7, 7, 7)", "the page dark on a light system");
+      await prefer("light");
+      await page.emulateMedia({ colorScheme: "dark" });
+      await page.reload();
+      await page.getByRole("navigation").waitFor();
+      await waitFor(async () => (await background(page)) === "rgb(252, 252, 252)", "the page light on a dark system");
+      await prefer("system");
+      await page.reload();
+      await page.getByRole("navigation").waitFor();
+      await waitFor(async () => (await page.evaluate(() => document.documentElement.dataset["theme"] ?? null)) === null && (await background(page)) === "rgb(7, 7, 7)", "the page to follow the system again");
+    } finally {
+      await prefer("system");
+      await page.close();
+    }
+  }, 120_000);
+
   it("signs out", async () => {
     const page = await signIn(emailOf(OWNER));
     try {
