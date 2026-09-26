@@ -1,0 +1,24 @@
+COMPILES F1-serve-as-owner
+KILLED F1-serve-as-owner
+COMPILES F2-disable-skill-for-anyone
+SURVIVED F2-disable-skill-for-anyone
+COMPILES F2-install-skill-for-anyone
+SURVIVED F2-install-skill-for-anyone
+COMPILES F3-audit-writable
+KILLED F3-audit-writable
+COMPILES F5-settings-without-user-context
+KILLED F5-settings-without-user-context
+COMPILES F6-case-sensitive-relabel
+KILLED F6-case-sensitive-relabel
+COMPILES F7-foreign-workspace-admitted
+KILLED F7-foreign-workspace-admitted
+COMPILES RLS-off-for-memory
+KILLED RLS-off-for-memory
+DONE
+--- F-2 re-run with the authorization result discarded (the first-draft F-2 mutants above swapped the family to Read and still refused the viewer: equivalent mutants)
+COMPILES F2-disable-skill-unchecked
+KILLED F2-disable-skill-unchecked
+COMPILES F2-install-skill-unchecked
+KILLED F2-install-skill-unchecked
+DONE
+exit=0
