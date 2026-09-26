@@ -81,6 +81,7 @@ export const OPERATIONS = {
   UpdateNotificationPreferences: { method: "POST", path: "/v1/commands/UpdateNotificationPreferences", family: "Notifications" },
   MarkNotificationRead: { method: "POST", path: "/v1/commands/MarkNotificationRead", family: "Notifications" },
   SetPolicy: { method: "POST", path: "/v1/commands/SetPolicy", family: "Admin/ops" },
+  SetBudget: { method: "POST", path: "/v1/commands/SetBudget", family: "Admin/ops" },
   FreezeEffects: { method: "POST", path: "/v1/commands/FreezeEffects", family: "Admin/ops" },
   UnfreezeEffects: { method: "POST", path: "/v1/commands/UnfreezeEffects", family: "Admin/ops" },
   DisableProvider: { method: "POST", path: "/v1/commands/DisableProvider", family: "Admin/ops" },

@@ -28,14 +28,15 @@ use super::store::{
     Attempt, Budget, NewRun, NewStep, Run, RuntimeStore, Step, Turn, TurnInput, WaitResolution,
 };
 use super::turn_loop::{
-    CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort, LiveFramePort,
-    ModelCallRequest, ModelProposalSource, NoLiveFrames, ProposedToolCall, QuestionContext,
+    BudgetPort, CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort, LiveFramePort,
+    ModelCallRequest, ModelProposalSource, NoBudgets, NoLiveFrames, ProposedToolCall, QuestionContext,
     QuestionOutcome, QuestionPort, TextSink, ToolDispatchOutcome, ToolDispatchPort,
     ToolDispatchRequest, TurnOutcome, UnavailableDelegation, UnavailableModelProposalSource,
     UnavailableQuestions, UnavailableToolDispatch, UnavailableVerification, VerificationContext,
     VerificationOutcome, VerificationPort, MEMORY_OWNER, PLAN_VALIDATION_OWNER,
 };
 use super::{fence, RuntimeError, RuntimeIdentity};
+use crate::runtime::budgets::{Meter, MeterUsage};
 use crate::runtime::turn_loop::parallel;
 
 /// What `recover` concluded from durable state.
@@ -82,6 +83,7 @@ pub struct RuntimeEngine {
     verification: Arc<dyn VerificationPort>,
     questions: Arc<dyn QuestionPort>,
     live: Arc<dyn LiveFramePort>,
+    budgets: Arc<dyn BudgetPort>,
 }
 
 impl RuntimeEngine {
@@ -99,6 +101,7 @@ impl RuntimeEngine {
             verification: Arc::new(UnavailableVerification),
             questions: Arc::new(UnavailableQuestions),
             live: Arc::new(NoLiveFrames),
+            budgets: Arc::new(NoBudgets),
         })
     }
 
@@ -130,7 +133,14 @@ impl RuntimeEngine {
         self
     }
 
-    /// Install the live-frame publisher (DOMAIN.md §9.3): model deltas and progress to clients.
+    /// Enforce the budgets that govern each run (RUN-010) through `port`.
+    #[must_use]
+    pub fn with_budgets(mut self, port: Arc<dyn BudgetPort>) -> Self {
+        self.budgets = port;
+        self
+    }
+
+    /// Publish live frames (model deltas, progress) through `port`.
     #[must_use]
     pub fn with_live_frames(mut self, port: Arc<dyn LiveFramePort>) -> Self {
         self.live = port;
@@ -522,7 +532,9 @@ impl RuntimeEngine {
         }
 
         loop {
-            if steps_used >= budget.max_steps {
+            // A spent step budget, or a spent budget governing the run (RUN-010), starts no new
+            // model call.
+            if steps_used >= budget.max_steps || self.budgets.exhausted(&run).await?.is_some() {
                 return self
                     .exhaust_budget(&run, &turn, generation, steps_used, budget)
                     .await;
@@ -577,6 +589,15 @@ impl RuntimeEngine {
                             &turn.id.to_string(),
                             serde_json::json!({ "kind": "model.delta", "step_id": model_step.id.to_string(), "text": text, "final": true }),
                         );
+                    }
+                    // What the call used is charged to the budgets governing the run (RUN-010).
+                    if let Some(usage) = proposal.usage {
+                        let mut charge = MeterUsage::new();
+                        charge.set(
+                            Meter::Tokens,
+                            usage.input_tokens.saturating_add(usage.output_tokens),
+                        );
+                        self.budgets.charge(&run, &charge).await?;
                     }
                     proposal
                 }
@@ -774,6 +795,13 @@ impl RuntimeEngine {
         steps_used: &mut u32,
     ) -> Result<Option<TurnOutcome>, RuntimeError> {
         for round in parallel::plan_rounds(calls) {
+            // A spent budget governing the run (RUN-010) dispatches nothing new.
+            if self.budgets.exhausted(run).await?.is_some() {
+                let outcome = self
+                    .exhaust_budget(run, turn, generation, *steps_used, budget)
+                    .await?;
+                return Ok(Some(outcome));
+            }
             let mut pending = Vec::with_capacity(round.len());
             for index in round {
                 if *steps_used >= budget.max_steps {
@@ -817,6 +845,9 @@ impl RuntimeEngine {
                 })
                 .collect();
             let results = parallel::join_all(futures).await;
+            let mut dispatched = MeterUsage::new();
+            dispatched.set(Meter::ToolCalls, u64::try_from(results.len()).unwrap_or(u64::MAX));
+            self.budgets.charge(run, &dispatched).await?;
 
             for ((tool_step, attempt, call, _), result) in pending.into_iter().zip(results) {
                 let outcome = match result {

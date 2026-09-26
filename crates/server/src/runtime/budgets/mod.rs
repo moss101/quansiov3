@@ -17,13 +17,15 @@
 //! caller ([`service::BudgetService::capacity_limit`]), so the bound the orchestrator enforces and
 //! the bound policy states are one number.
 
+pub mod enforce;
 pub mod limits;
 pub mod service;
 
 use thiserror::Error;
 
 pub use limits::{BudgetConsumed, BudgetLimits, Meter, MeterUsage, EXHAUSTED_METERS};
-pub use service::{BudgetService, BudgetSpec, ChargeOutcome};
+pub use enforce::RuntimeBudgets;
+pub use service::{BudgetRecord, BudgetService, BudgetSpec, ChargeOutcome};
 
 /// Repository path of this module's canonical owner.
 pub const BUDGETS_OWNER: &str = "crates/server/src/runtime/budgets";

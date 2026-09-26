@@ -93,6 +93,7 @@ commands:
   - MarkNotificationRead
   Admin/ops:
   - SetPolicy
+  - SetBudget
   - FreezeEffects
   - UnfreezeEffects
   - DisableProvider

@@ -63,6 +63,7 @@ class EntityPrefix(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     ENTITY_PREFIX_CONTEXT_PROJECTION: _ClassVar[EntityPrefix]
     ENTITY_PREFIX_DIRECTORY_GROUP: _ClassVar[EntityPrefix]
     ENTITY_PREFIX_KILL_SWITCH: _ClassVar[EntityPrefix]
+    ENTITY_PREFIX_BUDGET: _ClassVar[EntityPrefix]
 
 class MembershipStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
@@ -141,6 +142,7 @@ ENTITY_PREFIX_WEBHOOK_DELIVERY: EntityPrefix
 ENTITY_PREFIX_CONTEXT_PROJECTION: EntityPrefix
 ENTITY_PREFIX_DIRECTORY_GROUP: EntityPrefix
 ENTITY_PREFIX_KILL_SWITCH: EntityPrefix
+ENTITY_PREFIX_BUDGET: EntityPrefix
 MEMBERSHIP_STATUS_UNSPECIFIED: MembershipStatus
 MEMBERSHIP_STATUS_INVITED: MembershipStatus
 MEMBERSHIP_STATUS_ACTIVE: MembershipStatus

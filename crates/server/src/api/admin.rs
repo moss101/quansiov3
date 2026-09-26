@@ -13,6 +13,7 @@
 use axum::extract::{Query, State};
 use axum::http::HeaderMap;
 use axum::Json;
+use quansio_core::{CanonicalId, CorrelationId, Prefix, UlidGenerator};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::Row;
@@ -24,6 +25,7 @@ use crate::control::identity::{IdentityError, Invitation, MemberAdmin};
 use crate::control::schema;
 use crate::policy::rbac::{ActionFamily, TenantRole, WorkspaceRole};
 use crate::policy::{PolicyChange, PolicyError, PolicyScope, PolicyStore};
+use crate::runtime::budgets::{BudgetError, BudgetLimits, BudgetRecord, BudgetService, BudgetSpec};
 use crate::runtime::state_machine::RuntimeIdentity;
 use crate::usage::UsageStore;
 
@@ -178,7 +180,20 @@ pub async fn usage(
         .summary(query.workspace_id.as_deref(), MAX_USAGE_RECORDS)
         .await
         .map_err(projection_error)?;
+    let budgets = BudgetService::new(
+        state.pool().clone(),
+        RuntimeIdentity::system(
+            scope.tenant_id.clone(),
+            "usage",
+            CorrelationId::generate(&mut UlidGenerator::new()),
+        ),
+    )
+    .map_err(projection_error)?
+    .list(query.workspace_id.as_deref())
+    .await
+    .map_err(projection_error)?;
     Ok(Json(json!({
+        "budgets": budgets.iter().map(budget_json).collect::<Vec<_>>(),
         "events_read": summary.through_sequence,
         "complete": summary.complete,
         "meters": summary.meters.iter().map(|meter| json!({
@@ -198,6 +213,107 @@ pub async fn usage(
             "occurred_at": record.occurred_at,
         })).collect::<Vec<_>>(),
     })))
+}
+
+/// `SetBudget {scope: tenant|workspace, workspace_id?, limits}` (RUN-010, DOMAIN.md §13.2): grant the
+/// tenant's or a workspace's budget, or re-limit it keeping what it has consumed. A workspace budget
+/// is nested under the tenant budget when there is one, and may not ask for more than it has left.
+pub async fn set_budget(
+    state: &ApiState,
+    scope: &TenantScope,
+    identity: &RuntimeIdentity,
+    user_id: Option<&str>,
+    params: &Value,
+    correlation: &str,
+) -> Result<Value, ApiError> {
+    let budget_scope = text(params, "scope").unwrap_or("workspace");
+    let workspace_id = match budget_scope {
+        "tenant" => None,
+        "workspace" => Some(text(params, "workspace_id").ok_or_else(|| {
+            ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                "a workspace budget names its workspace_id",
+                correlation,
+            )
+        })?),
+        other => {
+            return Err(ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                format!("{other:?} is not a budget scope (tenant or workspace)"),
+                correlation,
+            ))
+        }
+    };
+    let action = if workspace_id.is_some() {
+        ActionFamily::ManageWorkspace
+    } else {
+        ActionFamily::ManageTenant
+    };
+    Authorization::check(state.pool(), scope, workspace_id, action, correlation).await?;
+    let limits = BudgetLimits::parse(
+        "(request)",
+        params.get("limits").unwrap_or(&Value::Object(serde_json::Map::new())),
+    )
+    .map_err(|error| budget_error(&error, correlation))?;
+    let mut acting = identity.clone();
+    if let Some(user_id) = user_id {
+        acting.actor = quansio_events::Actor::user(user_id);
+    }
+    let service = BudgetService::new(state.pool().clone(), acting)
+        .map_err(|error| budget_error(&error, correlation))?;
+    let existing = service
+        .for_scope(budget_scope, workspace_id)
+        .await
+        .map_err(|error| budget_error(&error, correlation))?;
+    let record = match existing {
+        Some(budget) => service.set_limits(&budget.id, limits).await,
+        None => {
+            let parent = match workspace_id {
+                Some(_) => service
+                    .for_scope("tenant", None)
+                    .await
+                    .map_err(|error| budget_error(&error, correlation))?
+                    .map(|budget| budget.id),
+                None => None,
+            };
+            let id = CanonicalId::generate(Prefix::Budget, &mut UlidGenerator::new()).to_string();
+            service
+                .create(
+                    &id,
+                    BudgetSpec {
+                        workspace_id: workspace_id.map(str::to_string),
+                        scope: budget_scope.to_string(),
+                        scope_ref: workspace_id.map(str::to_string),
+                        limits,
+                        parent_budget_id: parent,
+                    },
+                )
+                .await
+        }
+    }
+    .map_err(|error| budget_error(&error, correlation))?;
+    Ok(budget_json(&record))
+}
+
+fn budget_json(budget: &BudgetRecord) -> Value {
+    json!({
+        "id": budget.id,
+        "scope": budget.scope,
+        "scope_ref": budget.scope_ref,
+        "workspace_id": budget.workspace_id,
+        "limits": budget.limits.to_json(),
+        "consumed": budget.consumed.to_json(),
+        "parent_budget_id": budget.parent_budget_id,
+        "status": budget.status,
+    })
+}
+
+fn budget_error(error: &BudgetError, correlation: &str) -> ApiError {
+    let code = ApiErrorCode::ALL
+        .into_iter()
+        .find(|code| code.as_str() == error.code())
+        .unwrap_or(ApiErrorCode::Internal);
+    ApiError::new(code, error.to_string(), correlation)
 }
 
 /// `GET /v1/audit[?workspace_id=][&limit=]`: the tenant's hash-chained audit log, newest

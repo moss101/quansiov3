@@ -14,6 +14,7 @@
 use async_trait::async_trait;
 use serde_json::Value;
 
+use super::store::Run;
 use super::{RunStatus, RunTriggerKind, RuntimeError};
 
 /// Task that owns the server-side model gateway (DOMAIN.md §11.1).
@@ -128,6 +129,52 @@ pub struct ModelProposal {
     pub question: Option<ProposedQuestion>,
     /// Delegations awaiting RUN-002.
     pub delegate_requests: Vec<DelegationRequest>,
+    /// Tokens the call used, as the provider reported them, when it reported them.
+    pub usage: Option<ModelUsage>,
+}
+
+/// Tokens one model call used (DOMAIN.md §11.1 `usage`).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ModelUsage {
+    /// Input tokens.
+    pub input_tokens: u64,
+    /// Output tokens.
+    pub output_tokens: u64,
+}
+
+/// The budgets that govern a run's work (RUN-010, DOMAIN.md §13.2): checked before new work starts
+/// and charged with what the work used.
+#[async_trait]
+pub trait BudgetPort: Send + Sync {
+    /// The first exhausted budget governing `run`, if any: no new model call or tool dispatch may
+    /// start while one is.
+    async fn exhausted(&self, run: &Run) -> Result<Option<String>, RuntimeError>;
+
+    /// Charge what `run` just used to every budget governing it.
+    async fn charge(
+        &self,
+        run: &Run,
+        usage: &crate::runtime::budgets::MeterUsage,
+    ) -> Result<(), RuntimeError>;
+}
+
+/// No budgets: a composition that grants none enforces none.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct NoBudgets;
+
+#[async_trait]
+impl BudgetPort for NoBudgets {
+    async fn exhausted(&self, _run: &Run) -> Result<Option<String>, RuntimeError> {
+        Ok(None)
+    }
+
+    async fn charge(
+        &self,
+        _run: &Run,
+        _usage: &crate::runtime::budgets::MeterUsage,
+    ) -> Result<(), RuntimeError> {
+        Ok(())
+    }
 }
 
 /// What a tool dispatch produced (DOMAIN.md §7.4).
