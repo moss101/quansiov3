@@ -19,8 +19,8 @@ use axum::extract::{Query, State};
 use axum::http::HeaderMap;
 use axum::Json;
 use quansio_indexer::{
-    Channel, IndexResult, ObjectTextProvider, PostgresArtifactSource, SearchBudget, SearchIndex,
-    SearchProgram, SearchScope, SourceScope,
+    AuthoritativeSource, Channel, IndexResult, ObjectTextProvider, PostgresArtifactSource,
+    SearchBudget, SearchIndex, SearchProgram, SearchScope, SourceChange, SourceScope,
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -85,7 +85,7 @@ impl SearchChannel {
 /// The index plus what the service remembers about each tenant's corpus.
 pub struct SearchService {
     index: Arc<SearchIndex>,
-    fingerprints: Mutex<HashMap<String, String>>,
+    fingerprints: Mutex<HashMap<String, CorpusState>>,
 }
 
 impl SearchService {
@@ -104,14 +104,15 @@ impl SearchService {
         &self.index
     }
 
-    /// Make sure the tenant's index reflects the canonical artifact corpus: rebuild when
-    /// the corpus fingerprint (version count and newest version) changed since the last
-    /// look, or when the tenant has never been indexed.
+    /// Make sure the tenant's index reflects the canonical artifact corpus. When only new versions
+    /// arrived since the last look, only they are indexed; the whole corpus is re-read when the
+    /// tenant has never been indexed here, when an artifact was deleted, or when the new versions
+    /// do not account for the change (so nothing is ever missed).
     async fn refresh(&self, state: &ApiState, tenant_id: &str) -> Result<(), ApiError> {
         let Some(objects) = state.objects().cloned() else {
             return Ok(());
         };
-        let fingerprint = corpus_fingerprint(state, tenant_id).await?;
+        let current = corpus_state(state, tenant_id).await?;
         let known = self
             .fingerprints
             .lock()
@@ -123,18 +124,45 @@ impl SearchService {
             .snapshot(tenant_id)
             .map_err(index_error)?
             .is_some();
-        if known.as_deref() == Some(fingerprint.as_str()) && has_snapshot {
+        if known.as_ref() == Some(&current) && has_snapshot {
             return Ok(());
         }
         let source = PostgresArtifactSource::new(state.pool().clone(), ObjectText { objects });
-        self.index
-            .rebuild_from(&source, &SourceScope::tenant(tenant_id))
-            .await
-            .map_err(index_error)?;
+        let caught_up = match known {
+            Some(known)
+                if has_snapshot
+                    && current.deleted == known.deleted
+                    && current.versions > known.versions =>
+            {
+                let fresh = source
+                    .load(&SourceScope::tenant(tenant_id).after(known.newest.clone()))
+                    .await
+                    .map_err(index_error)?;
+                if i64::try_from(fresh.len()).unwrap_or(i64::MAX)
+                    == current.versions - known.versions
+                {
+                    for document in fresh {
+                        self.index
+                            .apply(SourceChange::upsert(document))
+                            .map_err(index_error)?;
+                    }
+                    true
+                } else {
+                    false
+                }
+            }
+            _ => false,
+        };
+        if !caught_up {
+            self.index
+                .rebuild_from(&source, &SourceScope::tenant(tenant_id))
+                .await
+                .map_err(index_error)?;
+        }
         self.fingerprints
             .lock()
             .unwrap_or_else(|error| error.into_inner())
-            .insert(tenant_id.to_string(), fingerprint);
+            .insert(tenant_id.to_string(), current);
         Ok(())
     }
 }
@@ -164,7 +192,15 @@ impl ObjectTextProvider for ObjectText {
     }
 }
 
-async fn corpus_fingerprint(state: &ApiState, tenant_id: &str) -> Result<String, ApiError> {
+/// What the index last saw of a tenant's artifact corpus.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct CorpusState {
+    versions: i64,
+    newest: String,
+    deleted: i64,
+}
+
+async fn corpus_state(state: &ApiState, tenant_id: &str) -> Result<CorpusState, ApiError> {
     let mut tx = state.pool().begin().await.map_err(projection_error)?;
     schema::set_tenant_context(&mut tx, tenant_id)
         .await
@@ -179,12 +215,11 @@ async fn corpus_fingerprint(state: &ApiState, tenant_id: &str) -> Result<String,
     .await
     .map_err(projection_error)?;
     tx.commit().await.map_err(projection_error)?;
-    Ok(format!(
-        "{}:{}:{}",
-        row.get::<i64, _>("versions"),
-        row.get::<String, _>("newest"),
-        row.get::<i64, _>("deleted")
-    ))
+    Ok(CorpusState {
+        versions: row.get::<i64, _>("versions"),
+        newest: row.get::<String, _>("newest"),
+        deleted: row.get::<i64, _>("deleted"),
+    })
 }
 
 fn projection_error(error: impl std::fmt::Display) -> ApiError {

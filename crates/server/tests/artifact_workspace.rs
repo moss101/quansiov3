@@ -704,3 +704,115 @@ async fn search_is_one_typed_program_across_artifacts_threads_knowledge_and_evid
 
     common::drop_pool(&h.pool, &h.name).await;
 }
+
+/// The object store, counting reads: how much of the corpus a search had to read back.
+struct CountingStore {
+    inner: Arc<dyn ObjectStore>,
+    reads: std::sync::atomic::AtomicUsize,
+}
+
+#[async_trait::async_trait]
+impl ObjectStore for CountingStore {
+    async fn put(
+        &self,
+        key: &quansio_server::artifacts::ObjectKey,
+        bytes: &[u8],
+        content_type: &str,
+    ) -> Result<(), quansio_server::artifacts::ObjectStoreError> {
+        self.inner.put(key, bytes, content_type).await
+    }
+    async fn get(
+        &self,
+        key: &quansio_server::artifacts::ObjectKey,
+    ) -> Result<Vec<u8>, quansio_server::artifacts::ObjectStoreError> {
+        self.reads.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        self.inner.get(key).await
+    }
+    async fn exists(
+        &self,
+        key: &quansio_server::artifacts::ObjectKey,
+    ) -> Result<bool, quansio_server::artifacts::ObjectStoreError> {
+        self.inner.exists(key).await
+    }
+    async fn delete(
+        &self,
+        key: &quansio_server::artifacts::ObjectKey,
+    ) -> Result<(), quansio_server::artifacts::ObjectStoreError> {
+        self.inner.delete(key).await
+    }
+}
+
+#[tokio::test]
+async fn search_indexes_only_what_arrived_since_it_last_looked() {
+    let name = common::scratch_name("aw_incremental");
+    let Some(pool) = common::fresh_database(&name).await else {
+        common::blocked_marker();
+        return;
+    };
+    schema::migrate(&pool).await.expect("migrate");
+    common::seed_tenant(&pool, TENANT, USER, WORKSPACE, NODE).await;
+    seed_policy(&pool).await;
+    let counting = Arc::new(CountingStore {
+        inner: Arc::new(S3ObjectStore::from_env().expect("QUANSIO_TEST_MINIO_* configuration")),
+        reads: std::sync::atomic::AtomicUsize::new(0),
+    });
+    let index_root = tempfile::tempdir().expect("index root");
+    let index = quansio_indexer::SearchIndex::open(index_root.path()).expect("index");
+    let state = ApiState::new(pool.clone())
+        .expect("api")
+        .with_object_store(counting.clone() as Arc<dyn ObjectStore>)
+        .with_search_index(Arc::new(index));
+    let router = quansio_server::api::router(state);
+    let reads = || counting.reads.load(std::sync::atomic::Ordering::SeqCst);
+
+    for id in 0..6u32 {
+        upload(
+            &router,
+            100 + id,
+            &format!("note-{id}.md"),
+            "text/markdown",
+            format!("wombat note {id}").as_bytes(),
+            None,
+        )
+        .await;
+    }
+    // The first search builds the tenant's index from the whole corpus.
+    let before = reads();
+    let found = get(
+        &router,
+        &format!("/v1/search?workspace_id={WORKSPACE}&q=wombat&channels=artifacts"),
+    )
+    .await;
+    assert!(found.to_string().contains("note-5.md"), "{found}");
+    assert!(reads() - before >= 6, "the first look reads the corpus");
+
+    // One more artifact: the next search reads that one version, not the corpus again.
+    upload(
+        &router,
+        200,
+        "fresh.md",
+        "text/markdown",
+        b"wombat freshly written",
+        None,
+    )
+    .await;
+    let before = reads();
+    let found = get(
+        &router,
+        &format!("/v1/search?workspace_id={WORKSPACE}&q=freshly&channels=artifacts"),
+    )
+    .await;
+    assert!(found.to_string().contains("fresh.md"), "{found}");
+    assert_eq!(reads() - before, 1, "only the new version is read");
+
+    // Nothing new: nothing is read at all.
+    let before = reads();
+    get(
+        &router,
+        &format!("/v1/search?workspace_id={WORKSPACE}&q=wombat&channels=artifacts"),
+    )
+    .await;
+    assert_eq!(reads() - before, 0);
+
+    common::drop_pool(&pool, &name).await;
+}
