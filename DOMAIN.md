@@ -441,7 +441,7 @@ Written in the same PostgreSQL transaction as the mutation, plus an outbox row; 
 ### 9.3 Client stream (CORE-009, APP-001)
 - Transport: WebSocket `GET /v1/stream`; Server-Sent Events `GET /v1/stream/events?channel=…&cursor=…` for read-only consumers (web fallback, integrators — APP-015): `id:` carries the cursor and `Last-Event-ID` resumes.
 - Subscribe: `{subscribe: [{channel: "workspace:ws_…" | "thread:thr_…" | "run:run_…" | "target:tgt_…"}], cursor?}`.
-- Frames: `{kind: "event", cursor, event}` (durable, replayable) and `{kind: "live", channel, frame}` (transient: `model.delta`, `terminal.bytes`, `browser.frame`, `progress`). Live frames are never persisted and clients must tolerate their absence.
+- Frames: `{kind: "event", cursor, event}` (durable, replayable) and `{kind: "live", channel, frame}` (transient: `model.delta`, `terminal.bytes`, `browser.frame`, `progress`). Live frames are never persisted and clients must tolerate their absence. A `model.delta` with `final: false` carries the next piece of a model's text as the model writes it; the one with `final: true` carries the whole text, which replaces what streamed.
 - Reconnect with last `cursor` replays missed events in order; slow consumers are disconnected with `STREAM_BACKPRESSURE` rather than buffered unboundedly.
 
 ---
