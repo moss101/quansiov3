@@ -584,9 +584,31 @@ def live_blocked_reason() -> str | None:
     return None
 
 
+#: The dev stack's deterministic OpenAI-compatible stub provider: it answers at once, so the time a
+#: first token takes through Quansio over the stub's own is Quansio's own overhead.
+STUB_PROVIDER_URL = (
+    os.environ.get("QUANSIO_TEST_STUB_PROVIDER_URL", "").strip() or "http://127.0.0.1:59020"
+).rstrip("/")
+
+
+def stub_blocked_reason() -> str | None:
+    blocked = blocked_reason()
+    if blocked:
+        return blocked
+    parts = urlsplit(STUB_PROVIDER_URL)
+    try:
+        with socket.create_connection((parts.hostname, parts.port or 80), timeout=2):
+            return None
+    except OSError:
+        return f"BLOCKED_EXTERNAL: the dev stub provider at {STUB_PROVIDER_URL} is not reachable (scripts/dev/up)"
+
+
 @contextmanager
-def gateway() -> Iterator[str]:
-    """The Python intelligence service (`python -m intelligence.server`) routed to the live provider.
+def gateway(
+    base_url: str = LIVE_BASE_URL, model_id: str = LIVE_MODEL_ID, api_key: str = LIVE_API_KEY
+) -> Iterator[str]:
+    """The Python intelligence service (`python -m intelligence.server`) routed to one provider
+    (the live one by default).
 
     The credential reaches the process only through its environment, under the handle the catalog
     names; it is never written to a file or a log.
@@ -596,10 +618,10 @@ def gateway() -> Iterator[str]:
     catalog.write_text(
         "version: 1\n"
         "providers:\n  openai-compatible:\n    kind: openai_compatible\n"
-        f"    base_url: {LIVE_BASE_URL}\n    credential_handle: provider/qa009-live\n"
+        f"    base_url: {base_url}\n    credential_handle: provider/qa009-live\n"
         "routing:\n  strategy: deterministic\n  primary: qa009-live\n  fallback_order: []\n"
         "models:\n  - id: qa009-live\n    provider: openai-compatible\n"
-        f"    model_id: {LIVE_MODEL_ID}\n    capabilities: [tools, streaming]\n"
+        f"    model_id: {model_id}\n    capabilities: [tools, streaming]\n"
         "    context_window: 128000\n    cost_class: low\n    dlp_eligible: false\n",
         encoding="utf-8",
     )
@@ -624,7 +646,7 @@ def gateway() -> Iterator[str]:
         env={
             **os.environ,
             "QUANSIO_INTELLIGENCE_MODEL_CATALOG": str(catalog),
-            "QUANSIO_SECRET_PROVIDER_QA009_LIVE": LIVE_API_KEY,
+            "QUANSIO_SECRET_PROVIDER_QA009_LIVE": api_key,
         },
         stdout=log,
         stderr=log,
@@ -653,24 +675,35 @@ def gateway() -> Iterator[str]:
         shutil.rmtree(workdir, ignore_errors=True)
 
 
-def provider_first_token_ms(prompt: str) -> float:
-    """Time to the first content delta straight from the provider (the §21.2 baseline)."""
+def provider_first_token_ms(
+    prompt: str,
+    max_tokens: int = 4096,
+    base_url: str = LIVE_BASE_URL,
+    model_id: str = LIVE_MODEL_ID,
+    api_key: str = LIVE_API_KEY,
+) -> float:
+    """Time to the first content delta straight from the provider (the §21.2 baseline).
+
+    A reasoning model streams its reasoning before its answer; the first *content* token is what a
+    person sees, through Quansio or directly, so that is what both sides time. `max_tokens` matches
+    `config/intelligence.yaml` (`max_output_tokens`), so both calls may reason as far.
+    """
     import ssl
     import urllib.request
 
     body = json.dumps(
         {
-            "model": LIVE_MODEL_ID,
+            "model": model_id,
             "stream": True,
-            "max_tokens": 64,
+            "max_tokens": max_tokens,
             "messages": [{"role": "user", "content": prompt}],
         }
     ).encode()
     request = urllib.request.Request(
-        f"{LIVE_BASE_URL}/chat/completions",
+        f"{base_url}/chat/completions",
         data=body,
         headers={
-            "authorization": f"Bearer {LIVE_API_KEY}",
+            "authorization": f"Bearer {api_key}",
             "content-type": "application/json",
             "accept": "text/event-stream",
         },
@@ -678,7 +711,7 @@ def provider_first_token_ms(prompt: str) -> float:
     )
     started = time.perf_counter()
     with urllib.request.urlopen(
-        request, timeout=60, context=ssl.create_default_context()
+        request, timeout=120, context=ssl.create_default_context()
     ) as response:
         for raw in response:
             line = raw.decode("utf-8", errors="replace").strip()
