@@ -5,7 +5,7 @@ clients against `quansio-server` on PostgreSQL, the object store and the search 
 least-privileged role. Each test records its measurement (`QUANSIO_PERF_OUT/<metric>.json` when set)
 and fails when the §21.2 target is missed.
 
-Environment: `QUANSIO_TEST_POSTGRES_URL`, `QUANSIO_TEST_SERVER_BIN`, `QUANSIO_TEST_SEED_BIN`,
+Environment: `QUANSIO_TEST_PERF=1`, `QUANSIO_TEST_POSTGRES_URL`, `QUANSIO_TEST_SERVER_BIN`, `QUANSIO_TEST_SEED_BIN`,
 `QUANSIO_TEST_MINIO_*` (see `qa009_harness`); `QUANSIO_TEST_PERF_SOAK_SECONDS` (default 600) sets the
 soak length. Absent → the suite reports `BLOCKED_EXTERNAL` and skips.
 """
@@ -42,7 +42,7 @@ SLOS: dict[str, Any] = yaml.safe_load(
     (Path(__file__).parent / "slos.yaml").read_text()
 )["slos"]
 BLOCKED = harness.blocked_reason()
-# BLOCKED_EXTERNAL without QUANSIO_TEST_POSTGRES_URL and the QUANSIO_TEST_SERVER_BIN / _SEED_BIN builds.
+# BLOCKED_EXTERNAL without QUANSIO_TEST_PERF=1, QUANSIO_TEST_POSTGRES_URL and the server builds.
 pytestmark = pytest.mark.skipif(BLOCKED is not None, reason=BLOCKED or "")
 
 #: Clients held open at once in the latency phases: a busy team's desktops and the web app.

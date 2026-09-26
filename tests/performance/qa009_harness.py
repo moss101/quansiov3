@@ -9,6 +9,8 @@ client, so they include HTTP, the server and PostgreSQL — what a person waits 
 
 Environment (absent → `BLOCKED_EXTERNAL`):
 
+* `QUANSIO_TEST_PERF=1` — the host is reserved for the measurement (they run for half an hour and
+  a busy host measures its neighbours);
 * `QUANSIO_TEST_POSTGRES_URL` — superuser DSN for scratch databases (the dev stack);
 * `QUANSIO_TEST_SERVER_BIN` / `QUANSIO_TEST_SEED_BIN` — the builds under test (a release build
   for SLO numbers; the run records which binary it measured);
@@ -82,6 +84,11 @@ def meter(usage: Mapping[str, Any], name: str) -> float:
 
 
 def blocked_reason() -> str | None:
+    if os.environ.get("QUANSIO_TEST_PERF", "").strip() != "1":
+        return (
+            "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host "
+            "reserved for them; a busy host measures its neighbours)"
+        )
     if not ADMIN_URL:
         return "BLOCKED_EXTERNAL: QUANSIO_TEST_POSTGRES_URL is not set (start the dev stack: scripts/dev/up)"
     for binary in (SERVER_BIN, SEED_BIN):
@@ -587,7 +594,8 @@ def live_blocked_reason() -> str | None:
 #: The dev stack's deterministic OpenAI-compatible stub provider: it answers at once, so the time a
 #: first token takes through Quansio over the stub's own is Quansio's own overhead.
 STUB_PROVIDER_URL = (
-    os.environ.get("QUANSIO_TEST_STUB_PROVIDER_URL", "").strip() or "http://127.0.0.1:59020"
+    os.environ.get("QUANSIO_TEST_STUB_PROVIDER_URL", "").strip()
+    or "http://127.0.0.1:59020"
 ).rstrip("/")
 
 
@@ -605,7 +613,9 @@ def stub_blocked_reason() -> str | None:
 
 @contextmanager
 def gateway(
-    base_url: str = LIVE_BASE_URL, model_id: str = LIVE_MODEL_ID, api_key: str = LIVE_API_KEY
+    base_url: str = LIVE_BASE_URL,
+    model_id: str = LIVE_MODEL_ID,
+    api_key: str = LIVE_API_KEY,
 ) -> Iterator[str]:
     """The Python intelligence service (`python -m intelligence.server`) routed to one provider
     (the live one by default).

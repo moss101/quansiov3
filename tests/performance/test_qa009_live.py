@@ -108,7 +108,7 @@ def _first_tokens(
         stream.close()
 
 
-# BLOCKED_EXTERNAL without QUANSIO_TEST_POSTGRES_URL, the server builds, and the dev stub provider
+# BLOCKED_EXTERNAL without QUANSIO_TEST_PERF=1, QUANSIO_TEST_POSTGRES_URL, the server builds and the stub provider
 # (QUANSIO_TEST_STUB_PROVIDER_URL).
 @pytest.mark.skipif(
     harness.stub_blocked_reason() is not None,
