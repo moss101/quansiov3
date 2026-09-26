@@ -286,6 +286,66 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
         recorded[0].3, recorded[1].3,
         "each call has its own projection"
     );
+
+    // Each recorded call is metered: one `model.usage_recorded` per call, and the served usage
+    // projection totals exactly the tokens the ledger holds.
+    let (ledger_input, ledger_output): (i64, i64) = {
+        let mut tx = pool.begin().await.expect("begin");
+        schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .expect("tenant");
+        let totals = sqlx::query_as(
+            "SELECT COALESCE(SUM((usage->>'input')::bigint), 0)::bigint, \
+                    COALESCE(SUM((usage->>'output')::bigint), 0)::bigint \
+             FROM model_calls WHERE run_id = $1",
+        )
+        .bind(&run_id)
+        .fetch_one(&mut *tx)
+        .await
+        .expect("ledger totals");
+        tx.commit().await.expect("commit");
+        totals
+    };
+    assert!(
+        ledger_input > 0 && ledger_output > 0,
+        "the stub provider reports usage"
+    );
+    let usage: Value = http
+        .get(format!("http://{addr}/v1/usage?workspace_id={WORKSPACE}"))
+        .header("x-quansio-tenant", TENANT)
+        .header("x-quansio-user", USER)
+        .send()
+        .await
+        .expect("usage")
+        .json()
+        .await
+        .expect("json");
+    let meter = |name: &str| {
+        usage["meters"]
+            .as_array()
+            .and_then(|meters| meters.iter().find(|meter| meter["meter"] == name))
+            .and_then(|meter| meter["total"].as_f64())
+            .unwrap_or_default()
+    };
+    assert_eq!(meter("model_input_tokens"), ledger_input as f64, "{usage}");
+    assert_eq!(
+        meter("model_output_tokens"),
+        ledger_output as f64,
+        "{usage}"
+    );
+    let usage_events = usage["records"]
+        .as_array()
+        .map(|records| {
+            records
+                .iter()
+                .filter(|record| record["meter"] == "model_input_tokens")
+                .count()
+        })
+        .unwrap_or_default();
+    assert_eq!(
+        usage_events, 2,
+        "one metered record per model call: {usage}"
+    );
     let messages: Value = http
         .get(format!("http://{addr}/v1/messages?thread_id={thread_id}"))
         .header("x-quansio-tenant", TENANT)
