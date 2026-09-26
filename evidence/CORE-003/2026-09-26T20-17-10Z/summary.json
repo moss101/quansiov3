@@ -1,0 +1,85 @@
+{
+  "task_id": "CORE-003",
+  "git_commit": "d45b200f9062ea85be4d8d75a76af79794828b73",
+  "recorded_at": "2026-09-26T20:25:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-events",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-26T20-17-10Z/tests.log"
+    },
+    {
+      "command": "cargo fmt -p quansio-events --check; cargo clippy -p quansio-events --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-26T20-17-10Z/lint.log"
+    },
+    {
+      "command": "mutant: a full buffer disconnects at once (no stall window); cargo test --test stream_backpressure a_consumer_that_keeps (must fail)",
+      "exit_code": 101,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-26T20-17-10Z/mutation.log"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release builds of main and of this branch> python served_replay_check.py 300 # a WebSocket subscriber on a 300-thread workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-26T20-17-10Z/served-replay.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-events",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt -p quansio-events --check; cargo clippy -p quansio-events --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutant: a full buffer disconnects at once (no stall window); cargo test --test stream_backpressure a_consumer_that_keeps (must fail)",
+      "exit_code": 101,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release builds of main and of this branch> python served_replay_check.py 300 # a WebSocket subscriber on a 300-thread workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CORE-003/2026-09-26T20-17-10Z/NOTES.md",
+      "sha256": "195e0d5afbc2f087f89d70fd5a6684c533360d2392834eeeab47c25232f68a0d",
+      "bytes": 1877
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-26T20-17-10Z/lint.log",
+      "sha256": "5273f5d186207c4b82c201508212bc976bd6223fd8f218e7c2a52d64d8915fc6",
+      "bytes": 105
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-26T20-17-10Z/mutation.log",
+      "sha256": "637fce992514d90faea27a3f50c0c6a4e9c3ca5a84c5142d3db94c8fb3c07153",
+      "bytes": 564
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-26T20-17-10Z/served-replay.log",
+      "sha256": "af46b58ffaf09a658719dc40593084462b046a72d0cc75dd744077b6bf964cc8",
+      "bytes": 247
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-26T20-17-10Z/served_replay_check.py",
+      "sha256": "be09f9c5176f10827ec3de1258242978d4643599090f8720e0add7beadf35e24",
+      "bytes": 1057
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-26T20-17-10Z/tests.log",
+      "sha256": "24f05162030a1908e4defe05ff86d4f0b40a88c9fe18bacd8b751548ef5b76f0",
+      "bytes": 2531
+    }
+  ]
+}
