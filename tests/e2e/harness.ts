@@ -292,18 +292,21 @@ export async function signInDesktop(page: Page, stack: Stack, email: string, onb
   }
 }
 
-/** The signed-in shell is on screen: its sidebar offers Chats and Workspace. */
+/** The signed-in shell is on screen: its sidebar footer carries the person's account menu. */
 export async function shellReady(page: Page): Promise<void> {
-  await page.getByRole("group", { name: "Show in the sidebar" }).waitFor({ state: "visible", timeout: 30_000 });
+  await page.getByRole("button", { name: "Account", exact: true }).waitFor({ state: "visible", timeout: 30_000 });
 }
 
-/** Open a surface the way a person does: switch the sidebar to Workspace, then pick the surface. */
+/**
+ * Open a surface the way a person does: switch the sidebar from Chats to Workspace (the footer
+ * pill) unless it already lists the surfaces, then pick the surface.
+ */
 export async function openSurface(page: Page, name: string): Promise<void> {
-  const workspace = page.getByRole("group", { name: "Show in the sidebar" }).getByRole("button", { name: "Workspace", exact: true });
-  if ((await workspace.getAttribute("aria-pressed")) !== "true") {
-    await workspace.click();
+  const surfaces = page.getByRole("navigation", { name: "Surfaces" });
+  if ((await surfaces.count()) === 0) {
+    await page.getByRole("button", { name: "Workspace", exact: true }).click();
   }
-  await page.getByRole("navigation", { name: "Surfaces" }).getByRole("button", { name, exact: true }).click();
+  await surfaces.getByRole("button", { name, exact: true }).click();
 }
 
 /** Choose an item from the account menu (Settings, Sign out). */
