@@ -231,6 +231,53 @@ describe("stream client", () => {
   });
 });
 
+describe("stream handshake refusals (QA-008)", () => {
+  const refusedClient = (status: number) => {
+    const timers: (() => void)[] = [];
+    const errors: { code: string; retryable: boolean }[] = [];
+    const sockets: FakeSocket[] = [];
+    const client = new StreamClient({
+      url: "ws://127.0.0.1:1/v1/stream",
+      headers: {},
+      channels: [`workspace:${WORKSPACE}`],
+      consumer: "desktop:test",
+      openSocket: () => {
+        const socket = new FakeSocket();
+        sockets.push(socket);
+        return socket;
+      },
+      onError: (error) => errors.push(error),
+      setTimer: (callback) => {
+        timers.push(callback);
+        return 0;
+      },
+    });
+    client.connect();
+    const socket = must(sockets.at(-1), "a socket");
+    // How the `ws` client reports a handshake the server answered with an HTTP status.
+    socket.emit("error", { message: `Unexpected server response: ${String(status)}` });
+    socket.close();
+    return { client, timers, errors, sockets };
+  };
+
+  it("reports a refused credential instead of retrying it", () => {
+    const unauthorized = refusedClient(401);
+    expect(unauthorized.errors).toEqual([expect.objectContaining({ code: "AUTH_INVALID_TOKEN", retryable: false })]);
+    expect(unauthorized.timers).toHaveLength(0);
+    expect(unauthorized.client.state).toBe("closed");
+    const forbidden = refusedClient(403);
+    expect(forbidden.errors).toEqual([expect.objectContaining({ code: "SCOPE_FORBIDDEN" })]);
+    expect(forbidden.timers).toHaveLength(0);
+  });
+
+  it("still retries a server that failed for another reason", () => {
+    const unavailable = refusedClient(502);
+    expect(unavailable.errors).toEqual([]);
+    expect(unavailable.timers).toHaveLength(1);
+    expect(unavailable.client.state).toBe("reconnecting");
+  });
+});
+
 describe("deep links", () => {
   it("parses only exact quansio://<kind>/<id> links into typed intents", () => {
     expect(parseDeepLink(`quansio://thread/${THREAD}`)).toEqual({ kind: "open-thread", threadId: THREAD });

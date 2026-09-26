@@ -61,6 +61,13 @@ export function parseStreamFrame(text: string): StreamFrame | StreamErrorFrame {
   throw new Error(`unrecognized stream frame: ${text.slice(0, 120)}`);
 }
 
+/** The HTTP status of a refused WebSocket handshake, from the socket's error event, if any. */
+export function handshakeStatus(event: unknown): number | null {
+  const message = event && typeof event === "object" && "message" in event ? String(event.message) : "";
+  const found = /Unexpected server response: (\d{3})/.exec(message);
+  return found?.[1] ? Number(found[1]) : null;
+}
+
 export function isErrorFrame(frame: StreamFrame | StreamErrorFrame): frame is StreamErrorFrame {
   return "code" in frame;
 }
@@ -172,13 +179,28 @@ export class StreamClient {
     socket.addEventListener("message", (event) => {
       this.#onMessage(typeof event.data === "string" ? event.data : String(event.data));
     });
-    socket.addEventListener("error", () => {
-      /* the close event that follows carries the retry decision */
+    let refusedStatus: number | null = null;
+    socket.addEventListener("error", (event) => {
+      // The close event that follows carries the retry decision. A handshake the server refused
+      // outright (the `ws` client reports "Unexpected server response: <status>") is recorded:
+      // a 401 or 403 is the credential, and retrying it with the same one cannot succeed.
+      refusedStatus = handshakeStatus(event);
     });
     socket.addEventListener("close", () => {
       this.#socket = null;
       if (this.#closed) {
         this.#setState("closed");
+        return;
+      }
+      if (refusedStatus === 401 || refusedStatus === 403) {
+        this.#closed = true;
+        this.#setState("closed");
+        this.#options.onError?.({
+          code: refusedStatus === 401 ? "AUTH_INVALID_TOKEN" : "SCOPE_FORBIDDEN",
+          message: `the server refused the stream's credential (HTTP ${String(refusedStatus)})`,
+          correlation_id: "stream",
+          retryable: false,
+        });
         return;
       }
       this.#scheduleReconnect();
