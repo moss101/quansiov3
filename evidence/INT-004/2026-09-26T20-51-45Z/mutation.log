@@ -1,0 +1,9 @@
+CONTROL:
+test search_indexes_only_what_arrived_since_it_last_looked ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 1.41s
+MUTANT: every change rebuilds the whole index
+COMPILES
+test search_indexes_only_what_arrived_since_it_last_looked ... FAILED
+thread 'search_indexes_only_what_arrived_since_it_last_looked' (39254936) panicked at crates/server/tests/artifact_workspace.rs:806:5:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 1.49s
+exit=101

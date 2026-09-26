@@ -1,0 +1,85 @@
+{
+  "task_id": "INT-004",
+  "git_commit": "4b053260d054110f77b2d2b4e8d1b585d92f2e1b",
+  "recorded_at": "2026-09-26T21:02:18Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-indexer; cargo test -p quansio-server --test artifact_workspace --test knowledge_surface",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-004/2026-09-26T20-51-45Z/tests.log"
+    },
+    {
+      "command": "cargo fmt --all --check; cargo clippy -p quansio-indexer -p quansio-server --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-004/2026-09-26T20-51-45Z/lint.log"
+    },
+    {
+      "command": "mutant: every change rebuilds the whole index; cargo test --test artifact_workspace search_indexes_only (must fail)",
+      "exit_code": 101,
+      "result": "PASS",
+      "log": "evidence/INT-004/2026-09-26T20-51-45Z/mutation.log"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release builds of main and of this branch> python served_search_check.py # 120 notes, a search after each of 20 writes",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-004/2026-09-26T20-51-45Z/served-search.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-indexer; cargo test -p quansio-server --test artifact_workspace --test knowledge_surface",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check; cargo clippy -p quansio-indexer -p quansio-server --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutant: every change rebuilds the whole index; cargo test --test artifact_workspace search_indexes_only (must fail)",
+      "exit_code": 101,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release builds of main and of this branch> python served_search_check.py # 120 notes, a search after each of 20 writes",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-004/2026-09-26T20-51-45Z/NOTES.md",
+      "sha256": "b8b4963880d11ec1a527163f32ddb892c19af3add220c66260e7f2acdf7cbd2b",
+      "bytes": 1791
+    },
+    {
+      "path": "evidence/INT-004/2026-09-26T20-51-45Z/lint.log",
+      "sha256": "37231c7294001e9bcf1e36d11c9b6cc9868ba24428a775d86b97d4072a15c4bb",
+      "bytes": 105
+    },
+    {
+      "path": "evidence/INT-004/2026-09-26T20-51-45Z/mutation.log",
+      "sha256": "a9d90a96dcc31bd9ac60256b8efd6236a98930738daff09d4ce5c6295713fb33",
+      "bytes": 536
+    },
+    {
+      "path": "evidence/INT-004/2026-09-26T20-51-45Z/served-search.log",
+      "sha256": "0024f0876fb84ae5e0c78768d168559faef4be4c34dd19b5a70b184e68eb70fc",
+      "bytes": 391
+    },
+    {
+      "path": "evidence/INT-004/2026-09-26T20-51-45Z/served_search_check.py",
+      "sha256": "e22141bd42fcb7527a1bc51df4af709632d6b8e1b609351a5764ff8cc6eb3da4",
+      "bytes": 1054
+    },
+    {
+      "path": "evidence/INT-004/2026-09-26T20-51-45Z/tests.log",
+      "sha256": "873eb4e8939eed9137525158cfc6c407d96a4c4dcf0c7fcdb205333db58aba29",
+      "bytes": 2269
+    }
+  ]
+}
