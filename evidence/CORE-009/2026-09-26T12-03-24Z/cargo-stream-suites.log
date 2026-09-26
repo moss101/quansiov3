@@ -1,0 +1,65 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.67s
+     Running tests/conversation_surface.rs (target/debug/deps/conversation_surface-a237c7a11d3ea421)
+
+running 5 tests
+test without_an_object_store_uploads_fail_closed ... ok
+test live_frames_reach_a_workspace_subscriber_while_the_turn_runs ... ok
+test an_upload_becomes_an_attachment_the_message_and_the_inspector_carry ... ok
+test a_question_parks_the_run_and_the_answer_in_thread_resumes_it ... ok
+test cancel_turn_stops_a_parked_run_and_withdraws_its_question ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.44s
+
+     Running tests/identity.rs (target/debug/deps/identity-c8defe272db45a9a)
+
+running 11 tests
+test security_settings_merge_is_deterministic_and_most_restrictive ... ok
+test access_tokens_are_es256_and_expire ... ok
+test a_fresh_user_is_onboarded_without_a_config_file ... ok
+test a_fresh_user_signs_up_by_magic_link_and_gets_a_governed_workspace ... ok
+test oauth_signs_in_with_pkce_and_single_use_state ... ok
+test onboarding_refuses_a_raw_secret ... ok
+test refresh_rotates_and_a_replayed_token_revokes_the_family ... ok
+test the_whole_sign_in_flow_works_as_the_application_role_under_rls ... ok
+test identity_commands_manage_workspaces_and_settings_with_secrets_as_handles ... ok
+test sign_out_revokes_and_session_only_refuses_trusted_headers ... ok
+test an_open_stream_closes_when_its_session_is_revoked ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.50s
+
+     Running tests/ops_kill_switches.rs (target/debug/deps/ops_kill_switches-597dff7875d7a173)
+
+running 8 tests
+test the_runbook_is_generated_from_the_switch_catalog ... ok
+test connector_revoke_goes_through_the_connector_owner ... ok
+test stream_shed_disconnects_live_sessions_with_backpressure ... ok
+test worker_quarantine_fences_the_target_and_release_restores_dispatch ... ok
+test drain_and_undrain_move_the_target_lifecycle_and_are_audited ... ok
+test provider_outage_drill_fails_over_refuses_and_restores ... ok
+test emergency_deny_refuses_matching_classes_before_policy_and_scoped_freezes_stay_scoped ... ok
+test effect_freeze_stops_new_consequential_actions_without_touching_reads_or_evidence ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.01s
+
+     Running tests/walking_skeleton.rs (target/debug/deps/walking_skeleton-57f4e19f1bdab84f)
+
+running 3 tests
+test walking_skeleton_posts_a_message_through_the_stub_and_the_ledger ... ok
+test websocket_delivers_events_committed_after_subscribe ... ok
+test websocket_replays_from_cursor_after_reconnect ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.14s
+
+     Running tests/webhooks.rs (target/debug/deps/webhooks-4b4b116352873e08)
+
+running 6 tests
+test a_deployment_without_a_key_provider_refuses_to_create_a_webhook ... ok
+test delivery_is_signed_at_least_once_and_retried_until_dead_lettered ... ok
+test destinations_obey_egress_policy_and_the_kill_switches ... ok
+test the_event_stream_is_also_served_as_server_sent_events ... ok
+test payloads_never_carry_secrets_or_protected_data ... ok
+test deliveries_stay_in_their_tenant_and_workspace ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.76s
+
+exit=0

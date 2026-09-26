@@ -1,0 +1,48 @@
+{
+  "task_id": "CORE-009",
+  "git_commit": "795bd73754f70fb899907c15d9181f1d2c18b0d4",
+  "recorded_at": "2026-09-26T12:03:38Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test identity --test conversation_surface --test walking_skeleton --test webhooks --test ops_kill_switches # the revocation regression test and every stream-using suite",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-26T12-03-24Z/cargo-stream-suites.log"
+    },
+    {
+      "command": "mutation: disable the re-check -> the regression test fails",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-26T12-03-24Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test identity --test conversation_surface --test walking_skeleton --test webhooks --test ops_kill_switches # the revocation regression test and every stream-using suite",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation: disable the re-check -> the regression test fails",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CORE-009/2026-09-26T12-03-24Z/NOTES.md",
+      "sha256": "144639683edf2c4a45dbf9cb426f67dcfb0a2e820ce908455c123975edadf356",
+      "bytes": 1281
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-26T12-03-24Z/cargo-stream-suites.log",
+      "sha256": "77aeffb891d35382bcf621c6fe6583f38cf4defba75c48f3bd82b99051518b09",
+      "bytes": 3361
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-26T12-03-24Z/mutation-checks.log",
+      "sha256": "75aff86b58f5db8ebb4d1c1505b438caf1a768e665fa7b9fece70450f269a245",
+      "bytes": 158
+    }
+  ]
+}
