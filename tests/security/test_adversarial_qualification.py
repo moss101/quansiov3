@@ -111,25 +111,37 @@ def test_deleted_and_quarantined_knowledge_never_answers() -> None:
 
 
 def test_tenant_poisoning_does_not_cross_isolation() -> None:
-    """The real EmbeddingIndex keeps tenant B's poisoned rows out of tenant A's answers."""
-    from tests.evaluation.test_qa004_campaign import CORPUS, QUERIES, _index  # shipped campaign fixtures
+    """Tenant B's poisoned memory never answers tenant A (QA-004's adversarial case, real PostgreSQL).
 
-    index_a, _store_a = _index("tn_01J8Z3K6F1N8VQ2X5W9Y0QAA04")
-    index_b, _store_b = _index("tn_01J8Z3K6F1N8VQ2X5W9Y0QAB04")
-    for _ref, document in CORPUS:
-        index_a.index_source(document)
-        index_b.index_source(
-            type(document)(
-                source_kind=document.source_kind,
-                source_ref=f"poisoned-{document.source_ref}",
-                text=document.text + " " + " ".join(QUERIES[0][0].split() * 8),
-                snapshot=document.snapshot,
-            )
+    Runs the `cross_tenant_poisoned` case of `tests/evaluation/campaign/memory_adversarial.v1.json`
+    through the product's memory fabric and derived index as `quansio_app`, so forced row-level security
+    applies; the case's positive controls prove each tenant's own memory still answers it.
+    Environment: ``QUANSIO_TEST_POSTGRES_URL`` (absent → ``BLOCKED_EXTERNAL``).
+    """
+    import os
+
+    from intelligence.evaluation.datasets import Dataset
+
+    from tests.evaluation import qa004_harness as harness
+
+    admin_url = os.environ.get("QUANSIO_TEST_POSTGRES_URL", "").strip()
+    if not admin_url:
+        pytest.skip("BLOCKED_EXTERNAL: QUANSIO_TEST_POSTGRES_URL is not set; the dev stack is not running")
+    sets = harness.campaign_sets()
+    adversarial = sets["memory_adversarial"]
+    poisoned = Dataset(
+        dataset_id=adversarial.dataset_id,
+        version=adversarial.version,
+        kind=adversarial.kind,
+        cases=(adversarial.case("cross_tenant_poisoned"),),
+    )
+    with harness.scratch_database(admin_url, "security") as url:
+        memory = harness.MemoryHarness(
+            url=url, embedder=harness.HashedEmbedder(), model_id=harness.HASHED_EMBEDDING_ROUTE
         )
-    query, expected = QUERIES[0]
-    hits = index_a.query(query, limit=10)
-    assert expected in {hit.source_ref for hit in hits}
-    assert all(not hit.source_ref.startswith("poisoned-") for hit in hits)
+        cross, _deleted = harness.run_memory_adversarial(memory, poisoned, sets["retrieval_corpus"])
+    assert cross.measurement.value == 0, cross.measurement.notes
+    assert [outcome.passed for outcome in cross.outcomes] == [True]
 
 
 # ------------------------------------------------------------------ capability escalation
