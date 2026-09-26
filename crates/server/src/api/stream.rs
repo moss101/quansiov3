@@ -57,15 +57,66 @@ pub async fn stream(
         .get("x-quansio-consumer")
         .and_then(|value| value.to_str().ok())
         .map(str::to_string);
-    Ok(ws.on_upgrade(move |socket| handle_socket(socket, state, scope, consumer)))
+    Ok(ws.on_upgrade(move |socket| handle_socket(socket, state, scope, headers, consumer)))
+}
+
+/// How often an open stream re-checks the credential it was opened with.
+///
+/// A stream is authenticated when it opens; without a re-check, a session revoked afterwards
+/// (`RevokeUserSessions`, a removed or suspended member, an expired access token) would keep
+/// receiving the tenant's events for as long as the connection stayed open.
+pub const REVALIDATE_EVERY: Duration = Duration::from_secs(2);
+
+/// The credential an open stream re-checks, and when it next does.
+struct Standing {
+    state: ApiState,
+    headers: HeaderMap,
+    tenant_id: String,
+    next: tokio::time::Instant,
+}
+
+impl Standing {
+    fn new(state: &ApiState, headers: HeaderMap, tenant_id: &str) -> Self {
+        Self {
+            state: state.clone(),
+            headers,
+            tenant_id: tenant_id.to_string(),
+            next: tokio::time::Instant::now() + REVALIDATE_EVERY,
+        }
+    }
+
+    /// `Some(error frame)` when the credential no longer admits this stream.
+    async fn lapsed(&mut self) -> Option<serde_json::Value> {
+        if tokio::time::Instant::now() < self.next {
+            return None;
+        }
+        self.next = tokio::time::Instant::now() + REVALIDATE_EVERY;
+        match TenantScope::resolve(&self.state, &self.headers).await {
+            Ok(scope) if scope.tenant_id == self.tenant_id => None,
+            Ok(_) => Some(json!({
+                "code": ApiErrorCode::TenantMismatch.as_str(),
+                "message": "the session now resolves to another tenant",
+                "correlation_id": "stream",
+                "retryable": false,
+            })),
+            Err(error) => Some(json!({
+                "code": error.code,
+                "message": error.message,
+                "correlation_id": "stream",
+                "retryable": false,
+            })),
+        }
+    }
 }
 
 async fn handle_socket(
     mut socket: WebSocket,
     state: ApiState,
     scope: TenantScope,
+    headers: HeaderMap,
     consumer: Option<String>,
 ) {
+    let mut standing = Standing::new(&state, headers, &scope.tenant_id);
     let Some(text) = next_text(&mut socket).await else {
         return;
     };
@@ -223,6 +274,7 @@ async fn handle_socket(
             signal: shed,
             engaged,
         },
+        &mut standing,
     )
     .await;
 }
@@ -238,6 +290,7 @@ async fn tail_events(
     mut live: tokio::sync::broadcast::Receiver<quansio_events::LiveFrame>,
     gate: &mut ThreadGate,
     mut shedding: Shedding,
+    standing: &mut Standing,
 ) {
     let subscribed: Vec<String> = subscription
         .channels()
@@ -288,6 +341,11 @@ async fn tail_events(
                 }
             },
             () = tokio::time::sleep(Duration::from_millis(50)) => {
+                if let Some(refusal) = standing.lapsed().await {
+                    let _ = socket.send(Message::Text(refusal.to_string())).await;
+                    let _ = socket.send(Message::Close(None)).await;
+                    return;
+                }
                 let batch = match store
                     .resume(
                         subscription.tenant_id(),
@@ -456,6 +514,7 @@ struct SseTail {
     pending: std::collections::VecDeque<SseEvent>,
     failed: bool,
     shed: tokio::sync::watch::Receiver<crate::api::live::ShedState>,
+    standing: Standing,
 }
 
 /// `GET /v1/stream/events?channel=…&cursor=…&consumer=…`: the stream as Server-Sent Events.
@@ -530,6 +589,7 @@ pub async fn stream_events(
             signal.mark_unchanged();
             signal
         },
+        standing: Standing::new(&state, headers.clone(), &scope.tenant_id),
     };
     let stream = futures_util::stream::unfold(tail, |mut tail| async move {
         loop {
@@ -547,6 +607,14 @@ pub async fn stream_events(
                         .event("error")
                         .data(shed_error_json().to_string()),
                 );
+                continue;
+            }
+            // The credential the stream was opened with still admits it (revocation, removal,
+            // expiry end an open stream too).
+            if let Some(refusal) = tail.standing.lapsed().await {
+                tail.failed = true;
+                tail.pending
+                    .push_back(SseEvent::default().event("error").data(refusal.to_string()));
                 continue;
             }
             match tail
