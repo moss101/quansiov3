@@ -116,6 +116,14 @@ describe.skipIf(blocked !== null)("web journeys (Chrome, real server)", () => {
       for (const admin of ["Users", "Policies", "Audit & privacy", "Connectors"]) {
         expect(await nav(page, admin).count(), admin).toBe(0);
       }
+      // The palette offers only what the navigation offers.
+      await page.getByRole("button", { name: "Search", exact: true }).click();
+      const palette = page.getByRole("dialog", { name: "Go to" });
+      await palette.getByRole("combobox", { name: "Go to" }).fill("users");
+      expect(await palette.getByRole("option").count()).toBe(0);
+      await palette.getByRole("combobox", { name: "Go to" }).fill("approvals");
+      expect(await palette.getByRole("option").count()).toBe(1);
+      await page.keyboard.press("Escape");
       const viewer = await stack.session(emailOf(VIEWER));
       const members = await fetch(`${stack.origin}/v1/members`, { headers: { authorization: `Bearer ${viewer.access_token}` } });
       expect(members.status).toBe(403);
@@ -164,6 +172,30 @@ describe.skipIf(blocked !== null)("web journeys (Chrome, real server)", () => {
       await page.close();
     }
   }, 300_000);
+
+  it("jumps to a page from the command palette and closes it with Escape", async () => {
+    const page = await signIn(emailOf(OWNER));
+    try {
+      await nav(page, "Users").waitFor();
+      await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
+      const palette = page.getByRole("dialog", { name: "Go to" });
+      await palette.waitFor();
+      await palette.getByRole("combobox", { name: "Go to" }).fill("audit");
+      expect(await palette.getByRole("option", { selected: true }).textContent()).toContain("Audit & privacy");
+      await page.keyboard.press("Enter");
+      await page.getByRole("region", { name: "Audit & privacy" }).waitFor({ timeout: 15_000 });
+      expect(await palette.count()).toBe(0);
+      expect(new URL(page.url()).pathname).toBe("/app/audit-and-privacy");
+      // The search button opens the same palette; Escape leaves the page where it was.
+      await page.getByRole("button", { name: "Search", exact: true }).click();
+      await palette.waitFor();
+      await page.keyboard.press("Escape");
+      await waitFor(async () => (await palette.count()) === 0, "the palette to close");
+      expect(await page.getByRole("region", { name: "Audit & privacy" }).count()).toBe(1);
+    } finally {
+      await page.close();
+    }
+  }, 120_000);
 
   it("signs out", async () => {
     const page = await signIn(emailOf(OWNER));
