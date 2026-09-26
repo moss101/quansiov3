@@ -1,0 +1,120 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3
+
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > chats with a teammate
+- region "Conversation":
+  - list:
+    - listitem:
+      - time: Today 10:43 PM
+    - listitem:
+      - text: user
+      - paragraph: Summarize the launch checklist
+    - listitem:
+      - text: Teammate
+      - paragraph: done
+      - button "Inspect"
+  - textbox "Message your teammates…"
+  - button "Attach"
+  - button "Send" [disabled]
+
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > reviews an artifact's versions and preview
+- region "Artifacts":
+  - complementary:
+    - heading "Artifacts" [level=2]
+    - searchbox "Search threads, artifacts, knowledge and evidence…"
+    - checkbox "artifacts" [checked]
+    - text: artifacts
+    - checkbox "threads" [checked]
+    - text: threads
+    - checkbox "knowledge" [checked]
+    - text: knowledge
+    - checkbox "evidence" [checked]
+    - text: evidence
+    - button "Search" [disabled]
+    - text: Kind
+    - combobox "Kind":
+      - option "All kinds" [selected]
+      - option "document"
+      - option "spreadsheet"
+      - option "presentation"
+      - option "code"
+      - option "data"
+      - option "image"
+      - option "audio"
+      - option "video"
+      - option "archive"
+      - option "other"
+    - list:
+      - listitem:
+        - button "document Launch plan.md v1"
+  - heading "Launch plan.md" [level=2]
+  - text: "document Source: upload usr_01J8Z3K6F1N8VQ2X5W9Y0QA8AA"
+  - heading "Versions" [level=3]
+  - list:
+    - listitem:
+      - button "v1 · text/markdown · 34 B"
+      - text: uploaded by usr_01J8Z3K6F1N8VQ2X5W9Y0QA8AAvalid source
+  - button "Save…"
+  - button "Open"
+  - button "Edit"
+  - code: b169a11ddb663ab5f339c53c26aa58a905db041d040dd1c1ccafcb064193f9d2
+  - text: "# Launch plan - ship the desktop"
+
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > reports the server going away and recovers when it returns
+offline: - complementary:
+  - heading "Quansio" [level=1]
+  - button "Search conversations"
+  - button "New thread"
+  - navigation "Surfaces":
+    - list:
+      - listitem:
+        - button "Chat"
+      - listitem:
+        - button "Objectives and plan"
+      - listitem:
+        - button "Teammates"
+      - listitem:
+        - button "Plan and agents"
+      - listitem:
+        - button "Run status"
+      - listitem:
+        - button "Approvals"
+      - listitem:
+        - button "Evidence and effects"
+      - listitem:
+        - button "Live browser and terminal"
+      - listitem:
+        - button "Files and artifacts"
+      - listitem:
+        - button "Knowledge, memory and skills"
+      - listitem:
+        - button "Group threads"
+      - listitem:
+        - button "Routines and notifications"
+      - listitem: Connectors (web admin)
+      - listitem:
+        - button "Capabilities"
+      - listitem:
+        - button "Models and tools used"
+  - button "Account"
+  - button "Chats"
+
+ ✓ |qa-e2e| tests/e2e/desktop.e2e.spec.ts (12 tests) 77821ms
+   ✓ desktop journeys (real Electron, real server) > onboards a new person with nothing but an email address 1490ms
+   ✓ desktop journeys (real Electron, real server) > chats with a teammate 709ms
+   ✓ desktop journeys (real Electron, real server) > approves an effect from the preview it was asked about 819ms
+   ✓ desktop journeys (real Electron, real server) > steers the plan: adds a task under the objective and moves it to ready 523ms
+   ✓ desktop journeys (real Electron, real server) > takes over the live browser and hands it back 528ms
+   ✓ desktop journeys (real Electron, real server) > reviews an artifact's versions and preview 324ms
+   ✓ desktop journeys (real Electron, real server) > starts a group thread with a colleague 363ms
+   ✓ desktop journeys (real Electron, real server) > creates a routine 497ms
+   ✓ desktop journeys (real Electron, real server) > changes settings and sees what the change sets in motion 319ms
+   ✓ desktop journeys (real Electron, real server) > returns a person whose sessions were revoked to sign-in 23156ms
+   ✓ desktop journeys (real Electron, real server) > has no accessibility blockers on any surface and every control is keyboard reachable 5671ms
+   ✓ desktop journeys (real Electron, real server) > reports the server going away and recovers when it returns 3781ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  22:42:23
+   Duration  78.52s (transform 62ms, setup 0ms, collect 230ms, tests 77.82s, environment 0ms, prepare 85ms)
+
