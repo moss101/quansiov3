@@ -17,7 +17,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use chrono::{DateTime, Duration as ChronoDuration, SubsecRound, Utc};
+use chrono::{DateTime, Duration as ChronoDuration, DurationRound, SubsecRound, Utc};
 use quansio_core::{CanonicalId, Prefix, UlidGenerator};
 use quansio_server::control::schema;
 use quansio_server::runtime::protocol_state::{Wait, WaitKind};
@@ -571,6 +571,88 @@ async fn absence_policy_applies_skip_queue_and_catch_up_once() {
     assert_eq!(event_count(&fixture.pool, "routine.skipped").await, 1);
     assert_eq!(event_count(&fixture.pool, "routine.fired").await, 3);
 
+    finish(fixture).await;
+}
+
+/// A window of the seeded every-minute trigger that has just come due (at most a second ago), so
+/// the next window is still in the future.
+fn window_just_due(now: DateTime<Utc>) -> DateTime<Utc> {
+    let minute = now
+        .duration_trunc(ChronoDuration::minutes(1))
+        .expect("minute");
+    let window = if now - minute <= ChronoDuration::seconds(1) {
+        minute
+    } else {
+        now - ChronoDuration::seconds(1)
+    };
+    window.trunc_subsecs(6)
+}
+
+#[tokio::test]
+async fn an_on_time_window_fires_under_every_absence_policy() {
+    let Some(fixture) = prepare("sched_on_time").await else {
+        blocked_marker();
+        return;
+    };
+    // The window a person scheduled, reached by the next pass of the loop: it is not "missed",
+    // whatever the routine's absence policy says about missed windows.
+    let now = Utc::now();
+    let window = window_just_due(now);
+    let routines = [
+        seed_routine(&fixture.pool, AbsencePolicy::Skip, window).await,
+        seed_routine(&fixture.pool, AbsencePolicy::Queue, window).await,
+        seed_routine(&fixture.pool, AbsencePolicy::CatchUpOnce, window).await,
+    ];
+    let dispatch = Arc::new(RecordingDispatch::new(1));
+    let report = scheduler(fixture.pool.clone(), "inst-on-time", Arc::clone(&dispatch))
+        .tick()
+        .await
+        .expect("tick");
+    assert_eq!(report.routines_fired, 3);
+    assert_eq!(report.routines_skipped, 0);
+    assert_eq!(report.routines_queued, 0);
+    let fired = dispatch.routines();
+    assert_eq!(fired.len(), 3);
+    assert!(fired.iter().all(|request| request.fire_window == window));
+    for routine in &routines {
+        assert!(
+            routine_next_due(&fixture.pool, routine)
+                .await
+                .expect("next")
+                > now
+        );
+    }
+    assert_eq!(event_count(&fixture.pool, "routine.skipped").await, 0);
+    finish(fixture).await;
+}
+
+#[tokio::test]
+async fn the_misfire_threshold_decides_when_a_window_was_missed() {
+    let Some(fixture) = prepare("sched_misfire").await else {
+        blocked_marker();
+        return;
+    };
+    let now = Utc::now();
+    let window = window_just_due(now) - ChronoDuration::milliseconds(1);
+    let skip = seed_routine(&fixture.pool, AbsencePolicy::Skip, window).await;
+    let dispatch = Arc::new(RecordingDispatch::new(1));
+    let mut config = SchedulerConfig::new("inst-misfire");
+    config.misfire_threshold = ChronoDuration::zero();
+    let report = Scheduler::new(
+        fixture.pool.clone(),
+        TENANT,
+        config,
+        Arc::clone(&dispatch) as Arc<dyn RunDispatch>,
+    )
+    .expect("scheduler")
+    .tick()
+    .await
+    .expect("tick");
+    // With no tolerance, the same just-due window counts as missed and `skip` drops it.
+    assert_eq!(report.routines_fired, 0);
+    assert_eq!(report.routines_skipped, 1);
+    assert!(dispatch.routines().is_empty());
+    assert!(routine_next_due(&fixture.pool, &skip).await.expect("next") > now);
     finish(fixture).await;
 }
 

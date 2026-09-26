@@ -50,6 +50,8 @@ pub struct SchedulerConfig {
     pub max_runs_per_tick: i64,
     /// Due backlog above this returns [`SchedulerError::QueueSaturated`].
     pub due_queue_capacity: i64,
+    /// How late a routine window may be reached and still fire as on time.
+    pub misfire_threshold: chrono::Duration,
 }
 
 impl SchedulerConfig {
@@ -63,6 +65,9 @@ impl SchedulerConfig {
             max_routines_per_tick: DEFAULT_MAX_ROUTINES_PER_TICK,
             max_runs_per_tick: DEFAULT_MAX_RUNS_PER_TICK,
             due_queue_capacity: DEFAULT_DUE_QUEUE_CAPACITY,
+            misfire_threshold: chrono::Duration::seconds(
+                super::routine::DEFAULT_MISFIRE_THRESHOLD_SECONDS,
+            ),
         }
     }
 }
@@ -153,7 +158,8 @@ impl Scheduler {
     pub async fn tick(&self) -> Result<TickReport, SchedulerError> {
         let now = Utc::now();
         let timers = TimerStore::new(self.events.pool().clone(), self.tenant_id.clone())?;
-        let routines = RoutineScheduler::new(self.events.pool().clone(), self.tenant_id.clone())?;
+        let routines = RoutineScheduler::new(self.events.pool().clone(), self.tenant_id.clone())?
+            .with_misfire_threshold(self.config.misfire_threshold);
 
         let due_timers = timers.due_count().await?;
         if due_timers > self.config.due_queue_capacity {

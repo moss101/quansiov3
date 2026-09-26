@@ -1,0 +1,117 @@
+{
+  "task_id": "CORE-008",
+  "git_commit": "6945664c7581e3fcdd6477c67a409488ddd23859",
+  "recorded_at": "2026-09-26T17:39:08Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test scheduler --test routines --test graph_scheduler_dispatch",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-26T17-03-06Z/scheduler-tests.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib scheduler",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-26T17-03-06Z/unit.log"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check && cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-26T17-03-06Z/lint.log"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release build of this commit> python served_routine_check.py # a default-policy 5 s routine fires on schedule",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-26T17-03-06Z/served-routine.log"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release build of main dc84014> python served_routine_check.py # the defect: must fail before the fix",
+      "exit_code": 1,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-26T17-03-06Z/served-routine-before.log"
+    },
+    {
+      "command": "mutant: on-time branch disabled; cargo test -p quansio-server --test scheduler an_on_time_window (must fail)",
+      "exit_code": 101,
+      "result": "PASS",
+      "log": "evidence/CORE-008/2026-09-26T17-03-06Z/mutation.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test scheduler --test routines --test graph_scheduler_dispatch",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib scheduler",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check && cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release build of this commit> python served_routine_check.py # a default-policy 5 s routine fires on schedule",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release build of main dc84014> python served_routine_check.py # the defect: must fail before the fix",
+      "exit_code": 1,
+      "result": "PASS"
+    },
+    {
+      "command": "mutant: on-time branch disabled; cargo test -p quansio-server --test scheduler an_on_time_window (must fail)",
+      "exit_code": 101,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CORE-008/2026-09-26T17-03-06Z/NOTES.md",
+      "sha256": "7f8651c6a55a3d51bdd5bb4afece682c34802edf73a08d036925c35678631ad6",
+      "bytes": 1708
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T17-03-06Z/lint.log",
+      "sha256": "7de53cb4df5a96aedb6eee740b0c90485089e26388d7b5d9266f067db1f62e62",
+      "bytes": 81
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T17-03-06Z/mutation.log",
+      "sha256": "4694b361a525e60164225e245f9d0576720590a606a82a05dd7c64d2085d7076",
+      "bytes": 506
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T17-03-06Z/scheduler-tests.log",
+      "sha256": "24d02abc2ef915a277e6c57e7be37f671eadb2153029c07839dc78387470dd1c",
+      "bytes": 1568
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T17-03-06Z/served-routine-before.log",
+      "sha256": "49113937ed428a88e20c222e555d08ebafe6d9588c0b7df116d5ecc3c4550b8a",
+      "bytes": 210
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T17-03-06Z/served-routine.log",
+      "sha256": "ed5657ef9ceaf8eeaf82a96bf77a8ad1ae50597101c950b8906462820e99ee24",
+      "bytes": 507
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T17-03-06Z/served_routine_check.py",
+      "sha256": "3a884d7a27176cf65f56c12b3bc8a123b6116519d082733ffa599f55b61692a9",
+      "bytes": 1049
+    },
+    {
+      "path": "evidence/CORE-008/2026-09-26T17-03-06Z/unit.log",
+      "sha256": "12ce6afe47e16569bac5e36d6315ecb9724dd9b8cf6c8191ce744920e9051667",
+      "bytes": 551
+    }
+  ]
+}
