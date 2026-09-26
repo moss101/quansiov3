@@ -1,0 +1,80 @@
+{
+  "task_id": "RUN-001",
+  "git_commit": "d67bc345c48d639d2faa5d5825d1b027732a2a02",
+  "recorded_at": "2026-09-26T18:36:15Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test walking_skeleton_gateway --test conversation_surface --test runtime_state_machine --test agents --test collaboration # the gateway skeleton runs the Python intelligence service against the dev stub provider",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-001/2026-09-26T18-17-34Z/tests.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-001/2026-09-26T18-17-34Z/unit.log"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check && cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-001/2026-09-26T18-17-34Z/lint.log"
+    },
+    {
+      "command": "mutant: text deltas not forwarded; cargo test --test walking_skeleton_gateway a_chat_turn (must fail)",
+      "exit_code": 101,
+      "result": "PASS",
+      "log": "evidence/RUN-001/2026-09-26T18-17-34Z/mutation.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test walking_skeleton_gateway --test conversation_surface --test runtime_state_machine --test agents --test collaboration # the gateway skeleton runs the Python intelligence service against the dev stub provider",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt -p quansio-server --check && cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutant: text deltas not forwarded; cargo test --test walking_skeleton_gateway a_chat_turn (must fail)",
+      "exit_code": 101,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/RUN-001/2026-09-26T18-17-34Z/NOTES.md",
+      "sha256": "d98b705ea58e3c398a400b466f7444d059f658122abfd5db2f482331de20711c",
+      "bytes": 1927
+    },
+    {
+      "path": "evidence/RUN-001/2026-09-26T18-17-34Z/lint.log",
+      "sha256": "d958f448f6b9a62f30b143cd7977cc0ea43e5b19f3d146e91fe314ef6fca1a98",
+      "bytes": 80
+    },
+    {
+      "path": "evidence/RUN-001/2026-09-26T18-17-34Z/mutation.log",
+      "sha256": "b6e61adf9b2e4b7ab5f0c6db394172a0266ad8cc9ede59f21ed8ae0698f3b732",
+      "bytes": 582
+    },
+    {
+      "path": "evidence/RUN-001/2026-09-26T18-17-34Z/tests.log",
+      "sha256": "5887fe0547860af74cbda73c76696aec52e6d6945658a6db8bbc5842b68ead9f",
+      "bytes": 3042
+    },
+    {
+      "path": "evidence/RUN-001/2026-09-26T18-17-34Z/unit.log",
+      "sha256": "14f00549c494098c0ce13da22564a0907e20425a35a2338f856eac56ee971530",
+      "bytes": 103
+    }
+  ]
+}

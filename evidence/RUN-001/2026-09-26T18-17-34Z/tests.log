@@ -1,0 +1,43 @@
+test generation_fencing_and_tenant_isolation_for_agent_mutations ... ok
+test mailbox_cursor_resumes_exactly_once_and_isolates_tenants_and_threads ... ok
+test capability_narrowing_accepts_only_narrowing_and_writes_nothing_on_widening ... ok
+test fanout_join_out_of_order_parks_parent_until_the_last_child_and_is_idempotent ... ok
+test handoff_is_recoverable_across_a_pool_drop_and_idempotent ... ok
+test ensure_active_accepts_a_thread_another_caller_already_activated ... ok
+test lifecycle_transitions_for_teammate_and_worker_with_policy_negatives ... ok
+test delegating_proposal_creates_a_real_child_and_parks_the_run ... ok
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.57s
+test membership_rules_protect_a_thread_for_its_participants ... ok
+test concurrent_posts_from_two_people_keep_one_stable_order ... ok
+test a_removed_participant_receives_no_new_protected_event ... ok
+test reactions_mentions_and_attention ... ok
+test a_handoff_moves_the_thread_to_the_next_teammate ... ok
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.94s
+test without_an_object_store_uploads_fail_closed ... ok
+test a_question_parks_the_run_and_the_answer_in_thread_resumes_it ... ok
+test live_frames_reach_a_workspace_subscriber_while_the_turn_runs ... ok
+test an_upload_becomes_an_attachment_the_message_and_the_inspector_carry ... ok
+test cancel_turn_stops_a_parked_run_and_withdraws_its_question ... ok
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.32s
+test protocol_state_round_trips_for_recovery ... ok
+test parked_run_is_not_released_by_a_mismatched_wait_state ... ok
+test attempts_are_appended_never_overwritten ... ok
+test recovery_honours_a_cancellation_requested_before_the_crash_once ... ok
+test canonical_ownership_and_tenant_isolation_hold ... ok
+test stale_generation_is_fenced_before_any_write ... ok
+test cancellation_during_waiting_ends_cancelled_with_one_event ... ok
+test recovery_never_retries_an_unsettled_effect ... ok
+test cancellation_during_running_ends_cancelled_with_one_event ... ok
+test happy_path_emits_every_event_in_order_with_contiguous_sequences ... ok
+test illegal_transitions_of_each_family_leave_state_and_events_untouched ... ok
+test recovery_waits_for_the_matching_approval_and_is_idempotent ... ok
+test unavailable_seams_name_the_task_that_owns_them ... ok
+test budget_exhaustion_stops_the_loop_without_further_model_calls ... ok
+test suspended_run_resumes_only_with_the_current_generation ... ok
+test only_the_cancellation_that_did_the_work_reports_that_it_cancelled_the_run ... ok
+test unknown_tool_outcome_suspends_for_reconciliation_never_retry ... ok
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.43s
+test a_provider_failure_fails_the_turn_with_its_code ... ok
+test a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger ... ok
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.02s
+exit=0
