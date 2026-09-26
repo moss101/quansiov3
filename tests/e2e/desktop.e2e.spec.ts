@@ -32,6 +32,8 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
   beforeAll(async () => {
     stack = await Stack.start("desktop");
     desktop = await launchDesktop(stack.origin);
+    // Every journey below starts from the seeded owner signed in, so each stands on its own.
+    await signInDesktop(desktop.page, stack, emailOf(OWNER));
   }, 180_000);
 
   afterAll(async () => {
@@ -63,9 +65,9 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
     }
   }, 120_000);
 
-  it("signs the seeded owner in and chats with a teammate", async () => {
-    await signInDesktop(desktop.page, stack, emailOf(OWNER));
+  it("chats with a teammate", async () => {
     const page = desktop.page;
+    await nav("Chat").click();
     const composer = page.getByRole("textbox", { name: "Message your teammates…" });
     await composer.fill("Summarize the launch checklist");
     await page.getByRole("button", { name: "Send" }).click();
