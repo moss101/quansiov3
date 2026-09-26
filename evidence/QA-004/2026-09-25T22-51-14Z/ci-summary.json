@@ -1,0 +1,112 @@
+{
+  "commit": "2e3a806d3275cb322631e5481cd8c8546950e8ae",
+  "recorded_at": "2026-09-26T00:15:58Z",
+  "results": [
+    {
+      "gate": "authority",
+      "command": "python3.12 scripts/validate_v81.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.033,
+      "tail": "V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 65 PASS, 4 ready)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/2e3a806d3275/authority.log"
+    },
+    {
+      "gate": "dossier-consistency",
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 4.569,
+      "tail": "dossier consistency: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/2e3a806d3275/dossier-consistency.log"
+    },
+    {
+      "gate": "architecture",
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.687,
+      "tail": "architecture check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/2e3a806d3275/architecture.log"
+    },
+    {
+      "gate": "authority-pointers",
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.026,
+      "tail": "authority check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/2e3a806d3275/authority-pointers.log"
+    },
+    {
+      "gate": "workspace",
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.036,
+      "tail": "workspace check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/2e3a806d3275/workspace.log"
+    },
+    {
+      "gate": "supply-chain",
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 29.146,
+      "tail": "      \u2502   \u2502   \u2502       \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 quansio-events v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-capability v0.1.0 (*)\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 (dev) quansio-graph v0.1.0 (*)\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 quansio-graph v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 (dev) quansio-indexer v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 quansio-machine v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-native-windows v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-qworkerd v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros-core v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx-macros v0.8.6 (*)\n      \u2502   \u2514\u2500\u2500 sqlx-postgres v0.8.6\n      \u2502       \u251c\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502       \u2514\u2500\u2500 sqlx-macros-core v0.8.6 (*)\n      \u2514\u2500\u2500 tokio-rustls v0.26.5\n          \u251c\u2500\u2500 hyper-rustls v0.27.9 (*)\n          \u2514\u2500\u2500 reqwest v0.12.28 (*)\n\nsupply-chain: CLEAN (1 informational)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/2e3a806d3275/supply-chain.log"
+    },
+    {
+      "gate": "legacy-map",
+      "command": "python3.12 scripts/ci/legacy_map_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.365,
+      "tail": "legacy map check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/2e3a806d3275/legacy-map.log"
+    },
+    {
+      "gate": "contract-drift",
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 1.312,
+      "tail": "contract regeneration check: CLEAN (catalog,openapi,rust,python,ts,sdk)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/2e3a806d3275/contract-drift.log"
+    },
+    {
+      "gate": "contract-lint-compat",
+      "command": "uv run --project python python scripts/ci/contract_compat.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.118,
+      "tail": "contract check: CLEAN (lint + compatibility)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/2e3a806d3275/contract-lint-compat.log"
+    },
+    {
+      "gate": "toolchains",
+      "command": "bash scripts/dev/bootstrap.sh",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 635.008,
+      "tail": "     Running unittests src/lib.rs (target/debug/deps/quansio_tools-2aa8ea1ad5a9904e)\n     Running unittests src/bin/quansio-tool-check.rs (target/debug/deps/quansio_tool_check-4dd521388812a080)\n     Running tests/builtin_packs.rs (target/debug/deps/builtin_packs-810c5f51f7e49838)\n     Running tests/source_trust_parity.rs (target/debug/deps/source_trust_parity-9e3bb2a5339f1d02)\n     Running tests/tool_check_binary.rs (target/debug/deps/tool_check_binary-2ae2ca59db904fa9)\n     Running tests/tool_contract.rs (target/debug/deps/tool_contract-eba8769b758b68e7)\n   Doc-tests quansio_capability\n   Doc-tests quansio_cli\n   Doc-tests quansio_contracts\n   Doc-tests quansio_core\n   Doc-tests quansio_events\n   Doc-tests quansio_graph\n   Doc-tests quansio_indexer\n   Doc-tests quansio_machine\n   Doc-tests quansio_native_windows\n   Doc-tests quansio_qworkerd\n   Doc-tests quansio_server\n   Doc-tests quansio_tools\n$ pnpm -r --if-present build\n$ pnpm -r --if-present typecheck\n$ pnpm -r --if-present test\n$ eslint .\nBuilding for debugging...\n[0/2] Write swift-version--58304C5D6DBC2206.txt\nBuild complete! (0.11s)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/2e3a806d3275/toolchains.log"
+    },
+    {
+      "gate": "tests",
+      "command": "uv run --project python pytest tests -q",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 223.088,
+      "tail": "........................................................................ [ 23%]\n........................................................................ [ 47%]\n........................................................................ [ 70%]\n................ssss.................................................... [ 94%]\n.................                                                        [100%]\n301 passed, 4 skipped in 222.85s (0:03:42)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/logs/2e3a806d3275/tests.log"
+    }
+  ],
+  "artifacts": {
+    "registries/progress.json": "80e7adbcd2a9334a43572f0688da62644e35cb36f70fe32bb951cf3c90d37625",
+    "TASKS.md": "84e42eac1a62f7239211c4378dfb2c6c56e601aab8cbb40b8509f5ebe3324544",
+    "MANIFEST.json": "ab62a5f872844b229847546c42b2ceddec9bddaead61019743010896ef824012"
+  },
+  "status": "PASS",
+  "database_backed_tests": true
+}

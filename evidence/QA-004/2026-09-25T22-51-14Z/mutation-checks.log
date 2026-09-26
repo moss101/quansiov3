@@ -1,0 +1,18 @@
+COMPILES retrieve-serves-stale-rows
+KILLED retrieve-serves-stale-rows
+COMPILES indexer-indexes-unretrievable
+KILLED indexer-indexes-unretrievable
+COMPILES context-window-overpacks
+KILLED context-window-overpacks
+COMPILES context-untrusted-unbounded
+KILLED context-untrusted-unbounded
+COMPILES resolver-admits-inactive
+KILLED resolver-admits-inactive
+COMPILES route-tools-classed-as-chat
+KILLED route-tools-classed-as-chat
+COMPILES registry-accepts-undeclared-fields
+KILLED registry-accepts-undeclared-fields
+COMPILES derived-rls-disabled (SQL applies in the scratch database)
+KILLED derived-rls-disabled
+DONE
+exit=0

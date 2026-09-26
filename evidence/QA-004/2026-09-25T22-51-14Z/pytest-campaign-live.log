@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3
+collecting ... collected 16 items
+
+tests/evaluation/test_qa004_campaign.py::test_protected_rows_are_measured_hold_and_do_not_block_promotion PASSED [  6%]
+tests/evaluation/test_qa004_campaign.py::test_adversarial_memory_retrieval_is_zero_under_row_level_security PASSED [ 12%]
+tests/evaluation/test_qa004_campaign.py::test_the_campaign_checks_hold PASSED [ 18%]
+tests/evaluation/test_qa004_campaign.py::test_every_threshold_holds_when_every_boundary_is_present SKIPPED [ 25%]
+tests/evaluation/test_qa004_campaign.py::test_live_grounding_is_measured_by_a_calibrated_judge PASSED [ 31%]
+tests/evaluation/test_qa004_campaign.py::test_live_tool_proposals_are_judged_by_the_registry PASSED [ 37%]
+tests/evaluation/test_qa004_campaign.py::test_live_recall_uses_the_configured_embedding_route SKIPPED [ 43%]
+tests/evaluation/test_qa004_campaign.py::test_the_run_pins_what_it_measured PASSED [ 50%]
+tests/evaluation/test_qa004_campaign.py::test_an_uncalibrated_judge_leaves_grounding_unmeasured PASSED [ 56%]
+tests/evaluation/test_qa004_campaign.py::test_a_registry_check_that_disagrees_with_its_labels_is_not_trusted PASSED [ 62%]
+tests/evaluation/test_qa004_campaign.py::test_the_registry_check_agrees_with_every_label PASSED [ 68%]
+tests/evaluation/test_qa004_campaign.py::test_invalid_live_shaped_proposals_lower_validity PASSED [ 75%]
+tests/evaluation/test_qa004_campaign.py::test_unsupported_and_missing_answers_count_against_grounding PASSED [ 81%]
+tests/evaluation/test_qa004_campaign.py::test_a_regressed_protected_case_blocks_promotion PASSED [ 87%]
+tests/evaluation/test_qa004_campaign.py::test_context_violations_are_detected PASSED [ 93%]
+tests/evaluation/test_qa004_campaign.py::test_a_leaking_memory_path_is_counted PASSED [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] tests/evaluation/test_qa004_campaign.py:142: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY (retrieval recall@10 with the configured embedding route) — unmeasured (fail closed): ['retrieval_recall_at_10']
+SKIPPED [1] tests/evaluation/test_qa004_campaign.py:183: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY (retrieval recall@10 with the configured embedding route)
+================== 14 passed, 2 skipped in 600.71s (0:10:00) ===================
+exit=0

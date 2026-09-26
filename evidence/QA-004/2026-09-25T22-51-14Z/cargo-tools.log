@@ -1,0 +1,167 @@
+   Compiling futures-util v0.3.34
+   Compiling tokio v1.53.1
+   Compiling smallvec v1.16.1
+   Compiling either v1.18.0
+   Compiling sync_wrapper v1.0.2
+   Compiling tower v0.5.3
+   Compiling axum-core v0.4.5
+   Compiling itertools v0.14.0
+   Compiling icu_normalizer v2.3.0
+   Compiling parking_lot_core v0.9.12
+   Compiling tokio-stream v0.1.19
+   Compiling tokio-util v0.7.19
+   Compiling prost-derive v0.13.5
+   Compiling parking_lot v0.12.5
+   Compiling h2 v0.4.19
+   Compiling tower v0.4.13
+   Compiling prost v0.13.5
+   Compiling futures-intrusive v0.5.0
+   Compiling axum v0.7.9
+   Compiling hyper v1.11.1
+   Compiling hyper-util v0.1.20
+   Compiling hyper-timeout v0.5.2
+   Compiling prost-types v0.13.5
+   Compiling tonic v0.12.3
+   Compiling idna_adapter v1.2.2
+   Compiling idna v1.1.0
+   Compiling quansio-contracts v0.1.0 (/Users/mohsin/projects/quansiov3/crates/contracts)
+   Compiling url v2.5.8
+   Compiling sqlx-core v0.8.6
+   Compiling sqlx-postgres v0.8.6
+   Compiling sqlx-macros-core v0.8.6
+   Compiling sqlx-macros v0.8.6
+   Compiling sqlx v0.8.6
+   Compiling quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/crates/events)
+   Compiling quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/crates/capability)
+   Compiling quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/crates/tools)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 11s
+     Running unittests src/lib.rs (target/debug/deps/quansio_tools-738afddca4ec4a2d)
+
+running 3 tests
+test registry::tests::families_match_only_their_own_shape ... ok
+test call::tests::urls_reduce_to_their_host ... ok
+test call::tests::paths_inside_the_root_are_recognised ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/quansio-tool-check.rs (target/debug/deps/quansio_tool_check-42ae8ca15955efb3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/builtin_packs.rs (target/debug/deps/builtin_packs-af314eb650098041)
+
+running 2 tests
+test a_skills_capability_needs_are_exactly_what_its_tools_require ... ok
+test every_tool_a_builtin_pack_names_is_callable_in_the_registry ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/source_trust_parity.rs (target/debug/deps/source_trust_parity-d1a3da6635fb90dd)
+
+running 2 tests
+test only_untrusted_external_is_data_only ... ok
+test source_trust_matches_the_generated_contract ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/tool_check_binary.rs (target/debug/deps/tool_check_binary-d53758f5f28e982f)
+
+running 2 tests
+test verdicts_follow_the_registry_schema_check ... ok
+test blank_lines_are_skipped_and_order_is_kept ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.33s
+
+     Running tests/tool_contract.rs (target/debug/deps/tool_contract-33cec0d5dd6f98b1)
+
+running 12 tests
+test open_object_schemas_are_refused ... ok
+test schemas_reject_unsupported_vocabulary_at_load_time ... ok
+test unknown_tool_is_rejected_before_dispatch ... ok
+test unknown_argument_field_is_rejected ... ok
+test reserved_family_names_are_not_callable ... ok
+test missing_and_ill_typed_arguments_are_rejected ... ok
+test declared_hosts_and_output_bounds_come_from_the_declaration ... ok
+test exposure_is_capability_filtered ... ok
+test parameter_digest_is_canonical_and_key_order_independent ... ok
+test derived_effect_class_follows_the_target_root ... ok
+test native_computer_tools_are_machine_hosted_and_app_scoped ... ok
+test builtin_registry_covers_the_generated_tool_catalog ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_tools
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Checking stable_deref_trait v1.2.1
+    Checking futures-util v0.3.34
+    Checking serde v1.0.229
+    Checking tokio v1.53.1
+    Checking crypto-common v0.1.7
+   Compiling ring v0.17.14
+   Compiling zerovec v0.11.8
+   Compiling zerotrie v0.2.5
+   Compiling crossbeam-utils v0.8.23
+   Compiling thiserror v2.0.20
+    Checking form_urlencoded v1.2.2
+    Checking bitflags v2.13.2
+    Checking byteorder v1.5.0
+    Checking sync_wrapper v1.0.2
+    Checking smallvec v1.16.1
+    Checking either v1.18.0
+    Checking chrono v0.4.45
+    Checking serde_yaml v0.9.34+deprecated
+    Checking digest v0.10.7
+    Checking yoke v0.8.3
+    Checking crossbeam-queue v0.3.14
+   Compiling tinystr v0.8.4
+   Compiling potential_utf v0.1.6
+    Checking rustls-webpki v0.103.15
+    Checking tower v0.5.3
+    Checking axum-core v0.4.5
+    Checking tokio-stream v0.1.19
+    Checking tokio-util v0.7.19
+    Checking parking_lot_core v0.9.12
+    Checking sha2 v0.10.9
+    Checking hmac v0.12.1
+   Compiling icu_locale_core v2.3.0
+   Compiling icu_collections v2.3.0
+    Checking md-5 v0.10.6
+   Compiling itertools v0.14.0
+    Checking rustls v0.23.44
+    Checking h2 v0.4.19
+    Checking tower v0.4.13
+    Checking axum v0.7.9
+    Checking hkdf v0.12.4
+    Checking quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/crates/core)
+    Checking parking_lot v0.12.5
+   Compiling icu_provider v2.3.1
+   Compiling prost-derive v0.13.5
+    Checking hyper v1.11.1
+    Checking futures-intrusive v0.5.0
+   Compiling icu_normalizer v2.3.0
+   Compiling icu_properties v2.3.0
+    Checking prost v0.13.5
+    Checking hyper-util v0.1.20
+   Compiling idna_adapter v1.2.2
+    Checking hyper-timeout v0.5.2
+   Compiling idna v1.1.0
+   Compiling url v2.5.8
+   Compiling sqlx-core v0.8.6
+   Compiling sqlx-postgres v0.8.6
+    Checking prost-types v0.13.5
+    Checking tonic v0.12.3
+    Checking quansio-contracts v0.1.0 (/Users/mohsin/projects/quansiov3/crates/contracts)
+   Compiling sqlx-macros-core v0.8.6
+   Compiling sqlx-macros v0.8.6
+    Checking sqlx v0.8.6
+    Checking quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/crates/events)
+    Checking quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/crates/capability)
+    Checking quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/crates/tools)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3m 18s
+exit=0
