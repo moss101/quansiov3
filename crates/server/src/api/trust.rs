@@ -432,30 +432,67 @@ pub async fn approve_effect(
         "granted_at": receipt.granted_at,
         "expires_at": receipt.expires_at,
     });
-    // The released run continues in this request: the resumed turn consumes the receipt.
+    // The released run continues: the resumed turn consumes the receipt (after the command is
+    // accepted, when served — `commands::continue_run`).
     let engine = next_turn(state, identity.clone())
         .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
-    let outcome = engine
-        .run_turn(
-            &run_id,
-            run.generation,
-            TurnInput::new(RunTriggerKind::Wake).with_reference(request_id.to_string()),
-        )
-        .await
-        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
-    result["turn"] = super::commands::turn_json(&outcome);
-    result["reply_message_id"] = json!(
-        reply_for(
-            state,
-            identity,
-            &request.run_id,
-            &run.agent_thread_id.to_string(),
-            &outcome,
-            correlation
-        )
-        .await?
+    let turn = resumed_turn(
+        state,
+        identity,
+        engine,
+        run_id,
+        run.generation,
+        request_id.to_string(),
+        request.run_id.clone(),
+        run.agent_thread_id.to_string(),
+        correlation,
     );
+    if let Some((outcome, reply)) = super::commands::continue_run(state, turn).await? {
+        result["turn"] = super::commands::turn_json(&outcome);
+        result["reply_message_id"] = json!(reply);
+    }
     Ok(result)
+}
+
+/// The turn a decided approval resumes, and the reply it posts.
+#[allow(clippy::too_many_arguments)]
+fn resumed_turn(
+    state: &ApiState,
+    identity: &RuntimeIdentity,
+    engine: crate::runtime::state_machine::RuntimeEngine,
+    run_id: CanonicalId,
+    generation: Generation,
+    reference: String,
+    run_key: String,
+    agent_id: String,
+    correlation: &str,
+) -> impl std::future::Future<
+    Output = Result<(crate::runtime::state_machine::TurnOutcome, Option<String>), ApiError>,
+> + Send
+       + 'static {
+    let (state, identity, correlation) = (state.clone(), identity.clone(), correlation.to_string());
+    async move {
+        let outcome = engine
+            .run_turn(
+                &run_id,
+                generation,
+                TurnInput::new(RunTriggerKind::Wake).with_reference(reference),
+            )
+            .await
+            .map_err(|error| {
+                ApiError::new(ApiErrorCode::Internal, error.to_string(), &correlation)
+            })?;
+        let reply = reply_for(
+            &state,
+            &identity,
+            &run_key,
+            &agent_id,
+            &outcome,
+            &correlation,
+        )
+        .await?;
+        Ok((outcome, reply))
+    }
 }
 
 /// Refuse a decision by a user who is not an approver (or admin) of the workspace.
@@ -585,29 +622,26 @@ pub async fn deny_effect(
         })?;
     let engine = next_turn(state, identity.clone())
         .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
-    let outcome = engine
-        .run_turn(
-            &run_id,
-            generation,
-            TurnInput::new(RunTriggerKind::Wake).with_reference(request_id.to_string()),
-        )
-        .await
-        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
-    let reply = reply_for(
+    let turn = resumed_turn(
         state,
         identity,
-        &request.run_id,
-        &run.agent_thread_id.to_string(),
-        &outcome,
+        engine,
+        run_id,
+        generation,
+        request_id.to_string(),
+        request.run_id.clone(),
+        run.agent_thread_id.to_string(),
         correlation,
-    )
-    .await?;
-    Ok(json!({
+    );
+    let mut result = json!({
         "approval_request_id": request_id,
         "effect_id": effect.id,
         "effect_status": effect.status.as_str(),
         "run_id": request.run_id,
-        "turn": super::commands::turn_json(&outcome),
-        "reply_message_id": reply,
-    }))
+    });
+    if let Some((outcome, reply)) = super::commands::continue_run(state, turn).await? {
+        result["turn"] = super::commands::turn_json(&outcome);
+        result["reply_message_id"] = json!(reply);
+    }
+    Ok(result)
 }

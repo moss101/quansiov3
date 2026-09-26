@@ -534,3 +534,79 @@ async fn live_frames_reach_a_workspace_subscriber_while_the_turn_runs() {
     );
     common::drop_pool(&pool, &name).await;
 }
+
+/// A model that takes its time: the turn outlasts the command that started it.
+struct SlowModel;
+
+#[async_trait::async_trait]
+impl quansio_server::runtime::state_machine::ModelProposalSource for SlowModel {
+    async fn propose(
+        &self,
+        _request: quansio_server::runtime::state_machine::ModelCallRequest,
+    ) -> Result<
+        quansio_server::runtime::state_machine::ModelProposal,
+        quansio_server::runtime::state_machine::RuntimeError,
+    > {
+        tokio::time::sleep(Duration::from_millis(800)).await;
+        Ok(quansio_server::runtime::state_machine::ModelProposal {
+            assistant_text: Some("all done".to_string()),
+            ..Default::default()
+        })
+    }
+}
+
+#[tokio::test]
+async fn served_a_message_is_accepted_before_its_turn_and_the_reply_follows() {
+    let name = common::scratch_name("conv_accepted");
+    let Some(pool) = common::fresh_database(&name).await else {
+        common::blocked_marker();
+        return;
+    };
+    schema::migrate(&pool).await.expect("migrate");
+    common::seed_tenant(&pool, TENANT, USER, WORKSPACE, NODE).await;
+    seed_policy(&pool).await;
+    // The served composition: commands answer once accepted, turns run after them.
+    let router = quansio_server::api::router(
+        ApiState::new(pool.clone())
+            .expect("api")
+            .with_model_source(Arc::new(SlowModel))
+            .with_background_turns(),
+    );
+    let params = json!({ "workspace_id": WORKSPACE, "content": "Summarize the week" });
+    let started = std::time::Instant::now();
+    let (status, posted) = command(&router, "PostMessage", 1, params.clone()).await;
+    let took = started.elapsed();
+    assert_eq!(status, 200, "{posted}");
+    assert!(
+        took < Duration::from_millis(600),
+        "the command waited {took:?} for an 800 ms turn instead of answering once accepted"
+    );
+    assert!(posted["accepted_at"].is_string(), "{posted}");
+    assert_eq!(posted["result"]["run_status"], "RUNNING", "{posted}");
+    assert!(
+        posted["result"].get("reply_message_id").is_none(),
+        "{posted}"
+    );
+    let thread = posted["result"]["thread_id"]
+        .as_str()
+        .expect("thread")
+        .to_string();
+
+    // The reply follows the command, as the turn finishes.
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    loop {
+        let messages = get(&router, &format!("/v1/messages?thread_id={thread}")).await;
+        if messages.to_string().contains("all done") {
+            break;
+        }
+        assert!(std::time::Instant::now() < deadline, "no reply: {messages}");
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+
+    // A resend is the same accepted command.
+    let (status, replay) = command(&router, "PostMessage", 1, params).await;
+    assert!(status == 200 || status == 201, "{replay}");
+    assert_eq!(replay["replayed"], true, "{replay}");
+    assert_eq!(replay["accepted_at"], posted["accepted_at"], "{replay}");
+    common::drop_pool(&pool, &name).await;
+}

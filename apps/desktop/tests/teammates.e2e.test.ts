@@ -8,6 +8,7 @@
  * teammate takes no message.
  */
 
+import { settled } from "./settle.js";
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -198,7 +199,7 @@ describe.skipIf(blocked !== null)("desktop roster E2E against quansio-server", (
     expect(narrowed?.grants.map((grant) => grant.effectClass)).toEqual(["read.internal"]);
     expect(narrowed?.inputs.find((input) => input.layer === "agent_definition")?.ref).toBe(`${teammateId}@v2`);
     // The turn's route record names the definition it read: version 2 and the preference.
-    const timeline = JSON.stringify(await handlers["runs.timeline"]({ runId: again.run_id }));
+    const timeline = JSON.stringify(await settled(handlers, again.run_id));
     expect(timeline).toContain(`teammate:${teammateId}@v2;prefers:fast`);
     // A need that is not an effect class is refused on the page and by the server alike.
     expect(updateTeammate(engineer, { defaultCapabilityNeeds: ["anything at all"] })).toMatchObject({ ok: false, code: "VALIDATION_SCHEMA" });

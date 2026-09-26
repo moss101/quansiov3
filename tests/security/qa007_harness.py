@@ -248,7 +248,9 @@ class ServerUnderAttack:
 
     def serving_roles(self) -> set[str]:
         rows = self.sql(
-            "SELECT DISTINCT usename FROM pg_stat_activity WHERE datname = %s AND pid <> pg_backend_pid()",
+            # Backends still authenticating have no user yet; they are not serving connections.
+            "SELECT DISTINCT usename FROM pg_stat_activity "
+            "WHERE datname = %s AND pid <> pg_backend_pid() AND usename IS NOT NULL",
             (self.database,),
         )
         return {str(row[0]) for row in rows}
