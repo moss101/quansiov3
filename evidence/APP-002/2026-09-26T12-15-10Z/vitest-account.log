@@ -1,0 +1,15 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/apps/desktop
+
+ ✓ tests/session.e2e.test.ts (4 tests) 6364ms
+   ✓ desktop account (real Electron, real server) > returns to sign-in when the person signs out 1214ms
+   ✓ desktop account (real Electron, real server) > returns to sign-in when an administrator revokes the session 2952ms
+   ✓ desktop account (real Electron, real server) > changes workspace and personal settings and shows the effective result 941ms
+   ✓ desktop account (real Electron, real server) > shows a viewer the workspace settings without letting them change them 610ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  15:15:11
+   Duration  6.73s (transform 33ms, setup 0ms, collect 144ms, tests 6.36s, environment 0ms, prepare 47ms)
+
+exit=0
