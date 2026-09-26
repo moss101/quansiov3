@@ -142,6 +142,13 @@ describe.skipIf(blocked !== null)("web journeys (Chrome, real server)", () => {
         failures.push(...keyboard.unreachable.map((control) => `${name}: not reachable by keyboard: ${control}`));
         failures.push(...keyboard.invisibleFocus.map((control) => `${name}: focus not visible on ${control}`));
       }
+      // On a tablet the navigation is an icon rail: each page is still reachable by its own name.
+      await page.setViewportSize({ width: 900, height: 800 });
+      for (const name of pages) {
+        if ((await nav(page, name).count()) !== 1) {
+          failures.push(`rail: no page button named exactly "${name}"`);
+        }
+      }
       await page.setViewportSize({ width: 375, height: 812 });
       for (const url of urls) {
         await page.goto(url);
