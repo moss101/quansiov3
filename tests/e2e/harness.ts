@@ -171,7 +171,7 @@ export class Stack {
     delete env["QUANSIO_TRUST_SCOPE_HEADERS"];
     delete env["QUANSIO_INTELLIGENCE_ENDPOINT"];
     const child = spawn(SERVER_BIN, [], { env, stdio: ["ignore", "ignore", "pipe"] });
-    child.stderr?.on("data", (chunk: Buffer) => this.log.push(chunk.toString()));
+    child.stderr.on("data", (chunk: Buffer) => this.log.push(chunk.toString()));
     this.#child = child;
     await waitFor(async () => {
       if (child.exitCode !== null) {
@@ -241,7 +241,7 @@ export class Stack {
   }
 
   async command(bearer: string, name: string, params: Record<string, unknown>): Promise<Record<string, unknown>> {
-    const id = `cmd_${"01J8Z3K6F1N8VQ2X5W9Y0"}${Math.random().toString(36).slice(2, 7).toUpperCase().replace(/[ILOU]/g, "X").padEnd(5, "X")}`;
+    const id = `cmd_01J8Z3K6F1N8VQ2X5W9Y0${Math.random().toString(36).slice(2, 7).toUpperCase().replace(/[ILOU]/g, "X").padEnd(5, "X")}`;
     const envelope = (await this.post(`/v1/commands/${name}`, { command_id: id, params }, bearer)) as { result: Record<string, unknown> };
     return envelope.result;
   }
@@ -377,7 +377,7 @@ export async function walkKeyboard(page: Page, maxSteps = 200): Promise<Keyboard
       })
       .map((element, index) => {
         element.dataset["qa008Key"] = String(index);
-        return `${element.tagName.toLowerCase()}:${(element.getAttribute("aria-label") ?? element.textContent ?? element.getAttribute("placeholder") ?? "").trim().slice(0, 40)}#${String(index)}`;
+        return `${element.tagName.toLowerCase()}:${(element.getAttribute("aria-label") ?? (element.textContent || element.getAttribute("placeholder")) ?? "").trim().slice(0, 40)}#${String(index)}`;
       });
   });
   await page.evaluate(() => {

@@ -35,8 +35,8 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
   }, 180_000);
 
   afterAll(async () => {
-    await desktop?.close();
-    await stack?.drop();
+    await desktop.close();
+    await stack.drop();
   }, 60_000);
 
   const nav = (name: string) => desktop.page.getByRole("navigation", { name: "Surfaces" }).getByRole("button", { name, exact: true });

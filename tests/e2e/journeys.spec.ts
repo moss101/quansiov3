@@ -1,17 +1,14 @@
 /**
- * QA-008 critical-journey qualification (desktop/web UX).
- *
- * Playwright against a served build is the release boundary (`QUANSIO_TEST_E2E=1`);
- * without it this suite drives the shipped journey modules in-process — the same
- * code the renderer runs — and asserts the journeys, keyboard/accessibility and
- * degraded/offline states.
+ * QA-008 journey modules in-process: the same code the renderer runs, driven without a
+ * window. The release boundary is the real apps — `desktop.e2e.spec.ts` (Electron) and
+ * `web.e2e.spec.ts` (Chrome) drive the rendered UI against the real server, and audit
+ * accessibility and keyboard reachability from the browser's own accessibility tree.
  */
 import { describe, expect, it } from "vitest";
 
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { onboardingPlan } from "../../apps/desktop/src/onboarding/flow.js";
 import { answerParams, postParams } from "../../apps/desktop/src/conversation/composer.js";
@@ -22,17 +19,11 @@ import { bindApproval, decodeApprovals } from "../../apps/desktop/src/trust/appr
 import { decodeHistory, diffLines } from "../../apps/desktop/src/artifacts/workspace.js";
 import { openAllowed, previewIsSafe, previewPlan } from "../../apps/desktop/src/artifacts/preview.js";
 import { agentInputAllowed, applyEvent, decodeLiveSession, handbackAllowed, takeoverAllowed } from "../../apps/desktop/src/live/session.js";
-import { archiveInRoster, visibleRoster } from "../../apps/desktop/src/teammates/roster.js";
+import { archiveInRoster, visibleRoster, type TeammateView } from "../../apps/desktop/src/teammates/roster.js";
 import { applyThreadEvent, decodeThreadView } from "../../apps/desktop/src/collaboration/thread.js";
 import { STRINGS } from "../../apps/desktop/src/i18n/strings.js";
 import { SessionFile } from "../../apps/desktop/src/main/session-file.js";
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const E2E_FLAG = process.env.QUANSIO_TEST_E2E === "1";
-
-function a11yReport(): string {
-  return fs.readFileSync(path.join(HERE, "a11y-baseline.json"), "utf8");
-}
 
 describe("critical journeys", () => {
   it("walks onboarding to artifact review without a config file", () => {
@@ -127,18 +118,36 @@ describe("critical journeys", () => {
   });
 
   it("archives a teammate keeping lineage, and stops protected delivery when removed", () => {
-    // APP-014: archiving keeps lineage — the entry stays visible with no active run.
-    const roster = visibleRoster([
-      { id: "agt_1", name: "Scout", status: "active", activeRunId: "run_1" },
-      { id: "agt_2", name: "Archived", status: "archived", activeRunId: null },
-    ]);
+    // APP-014: archiving keeps lineage — the entry stays visible with no active run, and its
+    // thread is suspended with the reason rather than deleted.
+    const teammate = (id: string, name: string, status: "active" | "archived", run: string | null): TeammateView => ({
+      id,
+      workspaceId: "ws_1",
+      name,
+      persona: "",
+      standingInstructions: "",
+      defaultCapabilityNeeds: [],
+      memoryScope: "workspace",
+      status,
+      templateId: null,
+      modelRoutePreference: null,
+      defaultExecutionTargetId: null,
+      availability: "available",
+      version: 1,
+      definitionDigest: "d",
+      thread: { id: `ath_${id}`, status: "ACTIVE", generation: 1, suspendedReason: null, runs: run ? 1 : 0 },
+      activeRun: run ? { id: run, status: "RUNNING" } : null,
+      attention: { openQuestions: 0, pendingApprovals: 0, needsHuman: false },
+      effectiveCapability: { grants: [], narrowedBy: [], needs: [] } as unknown as TeammateView["effectiveCapability"],
+      updatedAt: "2026-09-26T00:00:00Z",
+    });
+    const roster = visibleRoster([teammate("agt_2", "Archived", "archived", null), teammate("agt_1", "Scout", "active", "run_1")]);
     expect(roster.map((entry) => entry.status)).toEqual(["active", "archived"]);
-    const afterArchive = archiveInRoster(
-      [{ id: "agt_1", name: "Scout", status: "active", activeRunId: "run_1" }],
-      "agt_1",
-    );
+    const afterArchive = archiveInRoster([teammate("agt_1", "Scout", "active", "run_1")], "agt_1");
     expect(afterArchive[0]?.status).toBe("archived");
-    expect(afterArchive[0]?.activeRunId).toBeNull();
+    expect(afterArchive[0]?.activeRun).toBeNull();
+    expect(afterArchive[0]?.thread?.status).toBe("SUSPENDED");
+    expect(afterArchive[0]?.thread?.suspendedReason).toBe("teammate archived");
     // APP-009: a person removed from a protected thread stops seeing it at once.
     const threadState = {
       view: decodeThreadView({ id: "thr_1", kind: "group", protected: true, participants: [{ kind: "user", id: "usr_1", role: "member", active: true }], attention: [] }),
@@ -180,49 +189,5 @@ describe("critical journeys", () => {
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
-  });
-});
-
-describe("accessibility baseline", () => {
-  it("has no open accessibility blockers on the shipped surfaces", () => {
-    const report = JSON.parse(a11yReport()) as {
-      surfaces: { id: string; violations: unknown[] }[];
-    };
-    const open = report.surfaces.filter((surface) => surface.violations.length > 0);
-    expect(open).toEqual([]);
-  });
-
-  it("keeps a keyboard-only path for every interactive journey step", () => {
-    const report = JSON.parse(a11yReport()) as {
-      surfaces: { id: string; keyboardReachable: boolean }[];
-    };
-    const unreachable = report.surfaces.filter((surface) => !surface.keyboardReachable);
-    expect(unreachable).toEqual([]);
-  });
-});
-
-describe("playwright boundary", () => {
-  // `playwright` is a real-boundary dependency, deliberately not a package.json
-  // dependency of this workspace (QA-008's served-build tier only runs under
-  // QUANSIO_TEST_E2E=1, on a host that installs it separately) -- see
-  // playwright.d.ts for the minimal ambient types that stand in for it here.
-  it.skipIf(!E2E_FLAG)("runs the served build on the support matrix", async () => {
-    const { chromium, firefox, webkit } = await import("playwright");
-    for (const browserType of [chromium, firefox, webkit]) {
-      const browser = await browserType.launch();
-      const page = await browser.newPage();
-      await page.goto(process.env.QUANSIO_E2E_URL ?? "http://127.0.0.1:4173");
-      expect(await page.title()).toContain("Quansio");
-      await browser.close();
-    }
-  });
-
-  it("reports BLOCKED_EXTERNAL when the served E2E boundary is absent", () => {
-    if (!E2E_FLAG) {
-      console.log(
-        "BLOCKED_EXTERNAL: QUANSIO_TEST_E2E=1 is not set; served Playwright matrix not running",
-      );
-    }
-    expect(true).toBe(true);
   });
 });
