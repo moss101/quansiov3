@@ -29,6 +29,8 @@ use quansio_server::control::skills::{
 use quansio_server::intelligence::model_source::{GatewayModelSource, ModelCallSettings};
 use quansio_server::intelligence::IntelligenceClient;
 use quansio_server::runtime::context_bridge::GatewayContextBridge;
+use quansio_server::runtime::state_machine::{ModelCallRequest, RunTriggerKind};
+use quansio_server::runtime::turn_loop::{ModelCallLedger, RecordedCall};
 use serde_json::{json, Value};
 use sqlx::Row;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
@@ -285,6 +287,120 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
     assert_ne!(
         recorded[0].3, recorded[1].3,
         "each call has its own projection"
+    );
+
+    // Each recorded call is metered: one `model.usage_recorded` per call, and the served usage
+    // projection totals exactly the tokens the ledger holds.
+    let (ledger_input, ledger_output): (i64, i64) = {
+        let mut tx = pool.begin().await.expect("begin");
+        schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .expect("tenant");
+        let totals = sqlx::query_as(
+            "SELECT COALESCE(SUM((usage->>'input')::bigint), 0)::bigint, \
+                    COALESCE(SUM((usage->>'output')::bigint), 0)::bigint \
+             FROM model_calls WHERE run_id = $1",
+        )
+        .bind(&run_id)
+        .fetch_one(&mut *tx)
+        .await
+        .expect("ledger totals");
+        tx.commit().await.expect("commit");
+        totals
+    };
+    assert!(
+        ledger_input > 0 && ledger_output > 0,
+        "the stub provider reports usage"
+    );
+    let usage: Value = http
+        .get(format!("http://{addr}/v1/usage?workspace_id={WORKSPACE}"))
+        .header("x-quansio-tenant", TENANT)
+        .header("x-quansio-user", USER)
+        .send()
+        .await
+        .expect("usage")
+        .json()
+        .await
+        .expect("json");
+    let meter = |name: &str| {
+        usage["meters"]
+            .as_array()
+            .and_then(|meters| meters.iter().find(|meter| meter["meter"] == name))
+            .and_then(|meter| meter["total"].as_f64())
+            .unwrap_or_default()
+    };
+    assert_eq!(meter("model_input_tokens"), ledger_input as f64, "{usage}");
+    assert_eq!(
+        meter("model_output_tokens"),
+        ledger_output as f64,
+        "{usage}"
+    );
+    let usage_events = usage["records"]
+        .as_array()
+        .map(|records| {
+            records
+                .iter()
+                .filter(|record| record["meter"] == "model_input_tokens")
+                .count()
+        })
+        .unwrap_or_default();
+    assert_eq!(
+        usage_events, 2,
+        "one metered record per model call: {usage}"
+    );
+
+    // Recording the same call again (a retried boundary) meters nothing new.
+    let (turn_id, step_id): (String, String) = {
+        let mut tx = pool.begin().await.expect("begin");
+        schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .expect("tenant");
+        let row =
+            sqlx::query_as("SELECT turn_id, step_id FROM model_calls WHERE run_id = $1 LIMIT 1")
+                .bind(&run_id)
+                .fetch_one(&mut *tx)
+                .await
+                .expect("a recorded call");
+        tx.commit().await.expect("commit");
+        row
+    };
+    ModelCallLedger::new(pool.clone())
+        .record(
+            &ModelCallRequest {
+                tenant_id: TENANT.to_string(),
+                run_id: run_id.clone(),
+                turn_id,
+                step_id,
+                input_kind: RunTriggerKind::Message,
+                step_seq: 1,
+            },
+            &RecordedCall {
+                provider: "openai-compatible".to_string(),
+                model_id: common::intelligence::STUB_MODEL.to_string(),
+                request_class: "chat".to_string(),
+                chosen_by: "replay".to_string(),
+                stop_reason: "end_turn".to_string(),
+                latency_ms: 1,
+                usage: json!({ "input": 1000, "output": 1000 }),
+                route_id: None,
+                context_projection_id: None,
+            },
+        )
+        .await
+        .expect("a repeated record is not an error");
+    let replayed: Value = http
+        .get(format!("http://{addr}/v1/usage?workspace_id={WORKSPACE}"))
+        .header("x-quansio-tenant", TENANT)
+        .header("x-quansio-user", USER)
+        .send()
+        .await
+        .expect("usage")
+        .json()
+        .await
+        .expect("json");
+    assert_eq!(
+        replayed["meters"], usage["meters"],
+        "a replay meters nothing new"
     );
     let messages: Value = http
         .get(format!("http://{addr}/v1/messages?thread_id={thread_id}"))
