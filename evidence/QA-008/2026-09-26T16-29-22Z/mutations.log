@@ -1,0 +1,23 @@
+CONTROL-PASSED desktop-approve-does-nothing
+COMPILES desktop-approve-does-nothing
+KILLED desktop-approve-does-nothing
+CONTROL-PASSED desktop-propose-does-nothing
+COMPILES desktop-propose-does-nothing
+KILLED desktop-propose-does-nothing
+CONTROL-PASSED desktop-send-unnamed
+COMPILES desktop-send-unnamed
+KILLED desktop-send-unnamed
+CONTROL-PASSED web-approve-does-nothing
+COMPILES web-approve-does-nothing
+KILLED web-approve-does-nothing
+CONTROL-PASSED desktop-settings-not-saved
+COMPILES desktop-settings-not-saved
+KILLED desktop-settings-not-saved
+CONTROL-PASSED desktop-focus-hidden
+COMPILES desktop-focus-hidden
+KILLED desktop-focus-hidden
+CONTROL-PASSED desktop-composer-ring-removed
+COMPILES desktop-composer-ring-removed
+KILLED desktop-composer-ring-removed
+DONE
+exit=0
