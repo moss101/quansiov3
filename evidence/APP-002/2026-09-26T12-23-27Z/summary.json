@@ -1,0 +1,48 @@
+{
+  "task_id": "APP-002",
+  "git_commit": "d9c2fd3a312267148a98ecef584e7df5589736ad",
+  "recorded_at": "2026-09-26T12:23:37Z",
+  "commands": [
+    {
+      "command": "cd apps/desktop && npx vitest run tests/shell-modules.test.ts tests/identity.test.ts && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run tests/session.e2e.test.ts # handshake refusals, revoked sessions, the real app",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-26T12-23-27Z/vitest-stream-auth.log"
+    },
+    {
+      "command": "mutation: handshake refusal handling disabled -> the unit test fails",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-002/2026-09-26T12-23-27Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cd apps/desktop && npx vitest run tests/shell-modules.test.ts tests/identity.test.ts && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run tests/session.e2e.test.ts # handshake refusals, revoked sessions, the real app",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation: handshake refusal handling disabled -> the unit test fails",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-002/2026-09-26T12-23-27Z/NOTES.md",
+      "sha256": "c3336b3053ad12f7e3fb2f3aebfdeeaae2bffa88c6856cffe016b2b580eb3365",
+      "bytes": 1102
+    },
+    {
+      "path": "evidence/APP-002/2026-09-26T12-23-27Z/vitest-stream-auth.log",
+      "sha256": "b451379b15ea1068b7e56711f50a7930d40535fc4af9bfd54d1e26c5f348bea9",
+      "bytes": 1257
+    },
+    {
+      "path": "evidence/APP-002/2026-09-26T12-23-27Z/mutation-checks.log",
+      "sha256": "964bfc0354bb4fd96d2dc08b107c1fea03acfa029f466581ee5e94c1f05bb09c",
+      "bytes": 218
+    }
+  ]
+}
