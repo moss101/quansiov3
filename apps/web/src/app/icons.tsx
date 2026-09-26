@@ -26,6 +26,20 @@ export const MenuIcon = ({ size }: IconProps): ReactElement => (
   </Icon>
 );
 
+export const SearchIcon = ({ size }: IconProps): ReactElement => (
+  <Icon size={size}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m20 20-4.2-4.2" />
+  </Icon>
+);
+
+export const StackIcon = ({ size }: IconProps): ReactElement => (
+  <Icon size={size}>
+    <path d="m12 4 8 4-8 4-8-4z" />
+    <path d="m4 12 8 4 8-4M4 16l8 4 8-4" />
+  </Icon>
+);
+
 export const CloseIcon = ({ size }: IconProps): ReactElement => (
   <Icon size={size}>
     <path d="M6 6l12 12M18 6 6 18" />

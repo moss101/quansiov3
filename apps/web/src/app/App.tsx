@@ -15,8 +15,9 @@ import { rolesFromMe, type Roles } from "../rbac.js";
 import { type WebSession } from "../session.js";
 import { WEB_SURFACES, offered, type WebSurfaceId } from "../surfaces.js";
 import { Face, initials } from "./faces.js";
-import { CloseIcon, LeaveIcon, MenuIcon, SURFACE_ICONS } from "./icons.js";
+import { CloseIcon, LeaveIcon, MenuIcon, SearchIcon, StackIcon, SURFACE_ICONS } from "./icons.js";
 import { Approvals, Artifacts, Audit, Capabilities, Connectors, Policies, Refusal, Usage, Users, WorkReview } from "./pages.js";
+import { Palette, type PaletteItem } from "./Palette.js";
 import { pathFor, routeFor, type Route } from "./router.js";
 import { t, type StringKey } from "./strings.js";
 
@@ -43,6 +44,7 @@ export function App({ session, width }: { readonly session: WebSession; readonly
   const [meError, setMeError] = useState<unknown>(null);
   const [workspaceId, setWorkspaceId] = useState<string | null>(session.current?.workspace_id ?? null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const layout: Layout = layoutFor(width);
   const client: WebClient | null = useMemo(() => (session.signedIn ? session.client() : null), [session, session.signedIn]);
 
@@ -85,6 +87,22 @@ export function App({ session, width }: { readonly session: WebSession; readonly
       setMenuOpen(false);
     }
   }, [layout.navigation]);
+
+  // Cmd/Ctrl+K opens the palette from anywhere once signed in.
+  useEffect(() => {
+    if (!client) {
+      return;
+    }
+    const onKey = (event: KeyboardEvent): void => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setMenuOpen(false);
+        setPaletteOpen(true);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("keydown", onKey); };
+  }, [client]);
 
   const navigate = useCallback((next: Route) => {
     window.history.pushState({}, "", pathFor(next));
@@ -132,6 +150,33 @@ export function App({ session, width }: { readonly session: WebSession; readonly
   const drawer = layout.navigation === "drawer";
   const name = me?.user?.display_name ?? me?.user?.primary_email ?? "";
   const signOut = (): void => { void session.signOut().then(() => { window.location.assign("/app/"); }); };
+  const openPalette = (): void => {
+    setMenuOpen(false);
+    setPaletteOpen(true);
+  };
+  // What the palette offers is what the shell offers: the pages the roles allow, the person's
+  // workspaces, and signing out.
+  const paletteItems: readonly PaletteItem[] = [
+    ...surfaces.map((descriptor): PaletteItem => {
+      const Icon = SURFACE_ICONS[descriptor.id];
+      return {
+        key: `page-${descriptor.id}`,
+        group: t("pages"),
+        label: descriptor.id === "sign-in" ? t("signIn") : t(TITLES[descriptor.id]),
+        icon: <Icon />,
+        run: () => { navigate({ surface: descriptor.id, id: null }); },
+      };
+    }),
+    ...(me?.workspaces ?? []).map((workspace): PaletteItem => ({
+      key: `workspace-${workspace.id}`,
+      group: t("workspaces"),
+      label: workspace.name,
+      detail: workspace.role,
+      icon: <StackIcon />,
+      run: () => { setWorkspaceId(workspace.id); },
+    })),
+    { key: "action-sign-out", group: t("actions"), label: t("signOut"), icon: <LeaveIcon />, run: signOut },
+  ];
   return (
     <div className={`shell layout-${layout.mode} nav-${layout.navigation}${menuOpen ? " menu-open" : ""}`} data-layout={layout.mode} data-columns={String(layout.columns)}>
       {drawer ? (
@@ -141,6 +186,9 @@ export function App({ session, width }: { readonly session: WebSession; readonly
           </button>
           <span className="brand-name" aria-hidden="true">{t("appName")}</span>
           <span className="topbar-end">
+            <button type="button" className="icon-button" aria-label={t("search")} onClick={openPalette}>
+              <SearchIcon size={18} />
+            </button>
             <Face id={me?.user?.id ?? "me"} text={initials(me?.user?.display_name, me?.user?.primary_email)} size="sm" neutral />
           </span>
         </header>
@@ -150,6 +198,11 @@ export function App({ session, width }: { readonly session: WebSession; readonly
         <div className="brand">
           <span className="brand-mark" aria-hidden="true" />
           <h1>{t("appName")}</h1>
+          {drawer ? null : (
+            <button type="button" className="icon-button search-button" aria-label={t("search")} data-tip={t("search")} onClick={openPalette}>
+              <SearchIcon />
+            </button>
+          )}
           {drawer ? (
             <button type="button" className="icon-button" aria-label={t("closeMenu")} onClick={() => { setMenuOpen(false); }}>
               <CloseIcon size={16} />
@@ -191,6 +244,7 @@ export function App({ session, width }: { readonly session: WebSession; readonly
         </div>
       </aside>
       <main>{page()}</main>
+      {paletteOpen ? <Palette items={paletteItems} onClose={() => { setPaletteOpen(false); }} /> : null}
     </div>
   );
 }

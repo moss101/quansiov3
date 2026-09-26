@@ -1,0 +1,68 @@
+{
+  "task_id": "APP-012",
+  "git_commit": "ed0a63ee3a929e7365b45f05165e55e00ee63c91",
+  "recorded_at": "2026-09-26T17:32:46Z",
+  "commands": [
+    {
+      "command": "cd apps/web && npm run build && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run # web package suite incl. palette matching",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-012/2026-09-26T17-32-46Z/vitest-web.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run --config tests/e2e/vitest.config.ts tests/e2e/web.e2e.spec.ts # web journeys incl. the palette and the viewer's palette",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-012/2026-09-26T17-32-46Z/web-journeys.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cd apps/web && npm run build && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run # web package suite incl. palette matching",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run --config tests/e2e/vitest.config.ts tests/e2e/web.e2e.spec.ts # web journeys incl. the palette and the viewer's palette",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-012/2026-09-26T17-32-46Z/NOTES.md",
+      "sha256": "968c90fa1ec6265b068a90f6faf448bf12fafba8c62f8323eec638864aa091bc",
+      "bytes": 1395
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-32-46Z/vitest-web.log",
+      "sha256": "db8e4da436af1c16accb80107303c072d38762ae2e1cc8d8534e577070427743",
+      "bytes": 807
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-32-46Z/w-audit.png",
+      "sha256": "380a37174b281eee364f3e54f4720c7d8c5346d90111c02b28e118c23a5fdeaa",
+      "bytes": 35954
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-32-46Z/w-palette-all.png",
+      "sha256": "002dedb1dd6c7676391fc1f1324e0be678931bbc4b996c46c3b243ccde2564d4",
+      "bytes": 50388
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-32-46Z/w-palette.png",
+      "sha256": "20b0df2340d959b96438d561f4f3643a4b189f09158e15ac92a7f88418febedc",
+      "bytes": 33637
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-32-46Z/w-phone-palette.png",
+      "sha256": "7381690d7489d0089fe2a315ca928271ad4e2881ca2e29b89cf2e5b73228447f",
+      "bytes": 28282
+    },
+    {
+      "path": "evidence/APP-012/2026-09-26T17-32-46Z/web-journeys.log",
+      "sha256": "eeee1aafdfeb77143ff794aae15f9c1ff0cf9a492234d658f7bcaff9cb4721a6",
+      "bytes": 1155
+    }
+  ]
+}
