@@ -3,8 +3,9 @@
 Each case attacks a shipped defense through its real entry point — the INT-012
 injection corpus through the shipped detectors, tenant isolation through the real
 EmbeddingIndex/Knowledge lifecycle, capability escalation through the INT-009
-resolver, unsafe preview through the CAP-003 format validators, secret canaries
-through the OPS-003 redactors, and stale-lease reuse through generation fencing.
+resolver, unsafe preview through the CAP-003 format validators, and secret canaries
+through the OPS-003 redactors. Stale-lease reuse is attacked by the owners'
+Rust suites (lease generations, fencing), which `tests/security/threats.yaml` names.
 Ambiguity fails closed: every case asserts a typed refusal or a zero, never a
 warning.
 """
@@ -17,9 +18,13 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from intelligence.artifacts import ArtifactError, parse_document, parse_presentation
-from intelligence.knowledge.models import KnowledgeEntry, KnowledgeScope, KnowledgeStatus, Provenance
+from intelligence.knowledge.models import (
+    KnowledgeEntry,
+    KnowledgeScope,
+    KnowledgeStatus,
+    Provenance,
+)
 from intelligence.skills import CapabilitySnapshot, SkillVersionRef, resolve
 from intelligence.trust.injection import assess_segment
 from intelligence.trust.labelling import LabelledSegment
@@ -255,18 +260,3 @@ def test_tampered_retrieval_program_is_refused_on_replay() -> None:
     mutated["channels"][0]["channel"] = "not-a-channel"
     with pytest.raises(SearchProgramError):
         SearchProgram.parse(mutated)
-
-
-def test_stale_generation_fence_is_wired_into_the_runtime() -> None:
-    """Structural: stale-lease reuse is fenced by the Rust runtime (QA-003's durable matrix)."""
-    qualification = (ROOT / "crates" / "server" / "tests" / "qualification.rs").read_text()
-    assert "FencedStaleGeneration" in qualification
-    assert "fence_decision" in qualification
-    # And the shipped decision refuses a behind generation here, in-process.
-    from intelligence.knowledge.models import KnowledgeError  # noqa: F401
-
-    sys.path.insert(0, str(ROOT))
-    # The pure rule the runtime runs: observed >= current acts, observed < current is stale.
-    from scripts.ci import inventory  # noqa: F401  (repo importable; guards the structural path)
-
-    assert (ROOT / "crates" / "server" / "src" / "runtime" / "recovery" / "plan.rs").is_file()

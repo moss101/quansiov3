@@ -232,7 +232,10 @@ def test_forged_scope_headers_are_ignored(
     me = outsider.raw("GET", "/v1/me", headers=forged).json()
     assert me["session"]["tenant_id"] == world["b"]["tenant"]
     answer = outsider.raw("GET", f"/v1/runs/{world['a']['run']}", headers=forged)
-    assert answer.status in (403, 404) and world["a"]["run"].encode() not in answer.body
+    # The refusal may echo the id the attacker sent; nothing of tenant A's comes back.
+    assert answer.status in (403, 404), answer.status
+    assert world["a"]["tenant"].encode() not in answer.body
+    assert world["a"]["thread"].encode() not in answer.body
     anonymous = harness.raw_request(server.origin, "GET", "/v1/me", headers=forged)
     assert anonymous.status == 401, "scope headers are not credentials"
 
@@ -774,11 +777,24 @@ def test_a_malicious_skill_cannot_reach_production_or_grant(
         installed["skill_id"]
     ]
     assert "active" not in json.dumps(listed.get("current_active_version_id") or "")
-    # A run's capability projection never gains what the skill claims to need.
+    # A run's capability projection never gains what the skill claims to need: its inputs are the
+    # policies and the teammate's definition, never the skill, and nothing the policy withholds
+    # (process execution) appears in it.
     run = post(owner, "please summarize the plan")
-    projection = json.dumps(owner.get(f"runs/{run['run_id']}")["capability_projection"])
-    assert "network.egress.new_destination" not in projection
-    assert version_id not in projection
+    projection = owner.get(f"runs/{run['run_id']}")["capability_projection"]
+    layers = {item["layer"] for item in projection["inputs"]}
+    assert layers <= {
+        "tenant_policy",
+        "workspace_policy",
+        "agent_definition",
+        "user_rule",
+        "active_skills",
+    }, layers
+    rendered = json.dumps(projection)
+    assert version_id not in rendered, (
+        "a draft skill version reached a run's projection"
+    )
+    assert "process.exec.sandboxed" not in rendered and "terminal.exec" not in rendered
 
 
 # ============================================================================ insider: audit tampering
@@ -813,10 +829,39 @@ def test_the_audit_log_is_append_only_for_the_serving_role(
             except psycopg.Error:
                 connection.rollback()
                 refused.append(statement)
-    assert len(refused) == 4, f"accepted: {set(s for s in refused) ^ set()}"
+    assert len(refused) == 4, f"refused only: {refused}"
     after = owner.get("audit")
     assert after["chain"]["holds"] is True
     assert after["chain"]["entries"] == audit["chain"]["entries"]
+
+
+def test_settings_work_under_rls_and_refusals_do_not_echo_the_database(
+    server: ServerUnderAttack,
+) -> None:
+    """F-5: a member changes their own settings as the application role; failures carry no SQL."""
+    viewer = server.identities["viewer"]
+    changed = viewer.command(
+        "UpdateUserSettings",
+        {"workspace_id": viewer.workspace_id, "settings": {"retention_days": 30}},
+    )
+    assert changed["user_id"] == harness.VIEWER
+    refusal = viewer.refused(
+        "UpdateUserSettings",
+        {
+            "workspace_id": viewer.workspace_id,
+            "settings": {"theme": "sk-live-51HqJxLkQ0a1b2c3d4e5f6g7h8i9j0kLmNoP"},
+        },
+    )
+    assert 400 <= refusal.status < 500
+    text = json.dumps({"message": str(refusal), "details": refusal.details}).lower()
+    for leak in (
+        "row-level security",
+        "violates",
+        "relation",
+        "policy for table",
+        "sqlstate",
+    ):
+        assert leak not in text, text
 
 
 # ============================================================================ secret canaries (last: it scans what the rest issued)

@@ -1,0 +1,181 @@
+# QA-007 threat manifest: every DOSSIER.md §16 threat and every QA-007 build item, with the attacks
+# that cover it. `tests/security/test_threat_manifest.py` parses the §16 table out of DOSSIER.md and
+# the build items out of registries/tasks.json and fails if a row is missing here, if an attack
+# names a test that does not exist, or if a P0/P1 finding is open.
+#
+# An attack is `<path>::<test function>`: Python tests under tests/ (the QA-007 campaign attacks the
+# running server over HTTP as the least-privileged role), Rust tests under crates/*/tests/ (the
+# owners' in-process suites, for surfaces the HTTP API does not reach — lease fencing, the qworkerd
+# sandbox, DNS rebinding under a fixed resolver).
+
+version: 1
+
+threats:
+  - threat: Model acts beyond intent
+    attacks:
+      - crates/server/tests/turn_loop.rs::a_call_outside_the_capability_projection_is_rejected_before_dispatch
+      - crates/server/tests/turn_loop.rs::unknown_tools_and_unknown_fields_are_rejected_before_dispatch
+      - crates/server/tests/policy.rs::approval_substitution_fails_closed_and_writes_nothing
+      - tests/security/test_qa007_campaign.py::test_approval_substitution_and_replay_fail_closed
+  - threat: Prompt injection via web/email/docs/tool output
+    attacks:
+      - tests/security/test_adversarial_qualification.py::test_injection_corpus_produces_zero_unauthorized_effects
+      - tests/security/test_adversarial_qualification.py::test_injected_instructions_are_data_even_when_detection_misses
+      - crates/server/tests/trust_policy.rs::untrusted_derived_tier_two_escalates_one_tier_and_cannot_use_always
+      - crates/server/tests/trust_policy.rs::an_instruction_from_a_fetched_page_cannot_redirect_output
+      - crates/server/tests/turn_loop.rs::an_escalated_call_shows_its_untrusted_origin_and_completes_through_approval
+  - threat: Credential exfiltration
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_secret_canaries_never_leave_custody
+      - tests/security/test_adversarial_qualification.py::test_secret_canaries_never_reach_logs_or_bundles
+      - crates/server/tests/observability.rs::a_run_is_traced_end_to_end_and_no_canary_leaves_any_signal
+      - crates/machine/tests/secrets.rs::the_value_is_stored_sealed_and_appears_in_nothing_that_is_logged_or_sent
+      - crates/machine/tests/secrets.rs::a_materialization_cannot_be_presented_for_another_scope
+      - crates/server/tests/trust_policy.rs::protected_content_cannot_leave_the_egress_grant_set
+  - threat: Tenant breakout
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_tenant_isolation_campaign
+      - tests/security/test_qa007_campaign.py::test_cross_tenant_commands_are_refused_and_change_nothing
+      - tests/security/test_qa007_campaign.py::test_forged_scope_headers_are_ignored
+      - tests/security/test_qa007_campaign.py::test_the_server_serves_as_the_least_privileged_role
+      - tests/security/test_adversarial_qualification.py::test_tenant_poisoning_does_not_cross_isolation
+      - crates/server/tests/api.rs::the_public_surface_works_as_the_application_role_under_rls
+      - crates/server/tests/api.rs::a_command_scoped_to_another_tenant_does_not_touch_this_one
+      - crates/machine/tests/secrets.rs::a_handle_is_reachable_only_from_its_own_tenant_and_workspace
+  - threat: Stale/duplicate execution
+    attacks:
+      - crates/machine/tests/control.rs::a_stale_generation_cannot_steer_the_target_it_lost
+      - crates/machine/tests/control.rs::two_racing_acquirers_cannot_both_hold_a_lease
+      - crates/machine/tests/control.rs::a_lease_expiring_fences_the_controller_that_held_it
+      - crates/server/tests/qualification.rs::stale_generation_cannot_mutate_but_current_may
+      - crates/server/tests/turn_loop.rs::a_crash_between_dispatch_and_settlement_reconciles_instead_of_redispatching
+      - tests/security/test_qa007_campaign.py::test_approval_substitution_and_replay_fail_closed
+  - threat: Sandbox escape / host access
+    attacks:
+      - crates/qworkerd/tests/tools.rs::a_path_that_leaves_its_root_is_refused_before_any_io
+      - crates/machine/tests/windows_capsule.rs::wsl_verbs_are_allowlisted_and_exec_is_absent
+      - crates/machine/tests/macos_capsule.rs::stale_generation_is_refused_before_native_execution
+      - crates/machine/tests/egress.rs::a_granted_name_that_resolves_inside_is_refused
+      - tests/security/test_qa007_campaign.py::test_ssrf_destinations_are_refused_at_creation_and_at_delivery
+  - threat: Approval substitution/replay
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_approval_substitution_and_replay_fail_closed
+      - crates/server/tests/policy.rs::approval_substitution_fails_closed_and_writes_nothing
+      - crates/server/tests/policy.rs::a_tampered_receipt_fails_verification_and_writes_nothing
+      - crates/server/tests/policy.rs::expired_and_superseded_requests_cannot_be_granted_and_changes_supersede
+      - crates/server/tests/policy.rs::a_run_parks_in_waiting_approval_and_resumes_only_on_its_matching_receipt
+  - threat: Malicious skill/pack/content
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_a_malicious_skill_cannot_reach_production_or_grant
+      - tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable
+      - tests/security/test_adversarial_qualification.py::test_capability_escalation_is_excluded_never_granted
+      - tests/security/test_adversarial_qualification.py::test_malicious_artifact_content_is_refused_before_preview
+      - crates/server/tests/skills.rs::an_unapproved_version_cannot_enter_production_context
+  - threat: Insider/admin abuse
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_the_audit_log_is_append_only_for_the_serving_role
+      - tests/security/test_qa007_campaign.py::test_role_escalation_is_refused
+      - tests/security/test_qa007_campaign.py::test_a_service_principal_is_confined_to_its_scopes
+      - crates/server/tests/web_admin_surface.rs::admin_pages_and_commands_are_decided_by_the_servers_rbac_for_every_role
+      - crates/server/tests/ops_kill_switches.rs::drain_and_undrain_move_the_target_lifecycle_and_are_audited
+  - threat: Supply chain
+    attacks:
+      - tests/ci/test_supply_chain.py::test_real_repository_passes_the_gate
+      - tests/ci/test_supply_chain.py::test_unpinned_rust_dependency_is_flagged
+      - tests/ci/test_supply_chain.py::test_real_tree_has_no_vulnerable_dependency
+
+# QA-007's build list, beyond the §16 rows. Names are the task's own words.
+build_items:
+  - item: tenant breakout
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_tenant_isolation_campaign
+      - tests/security/test_qa007_campaign.py::test_cross_tenant_commands_are_refused_and_change_nothing
+  - item: capability escalation
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_role_escalation_is_refused
+      - tests/security/test_qa007_campaign.py::test_a_service_principal_is_confined_to_its_scopes
+      - crates/server/tests/turn_loop.rs::a_call_outside_the_capability_projection_is_rejected_before_dispatch
+  - item: approval substitution
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_approval_substitution_and_replay_fail_closed
+  - item: secret exfiltration
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_secret_canaries_never_leave_custody
+  - item: SSRF/DNS rebinding
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_ssrf_destinations_are_refused_at_creation_and_at_delivery
+      - crates/machine/tests/egress.rs::a_granted_name_that_resolves_inside_is_refused
+      - crates/server/tests/webhooks.rs::destinations_obey_egress_policy_and_the_kill_switches
+  - item: path traversal
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_path_traversal_never_leaves_its_root
+      - crates/qworkerd/tests/tools.rs::a_path_that_leaves_its_root_is_refused_before_any_io
+      - crates/server/tests/web_admin_surface.rs::the_web_app_is_served_under_app_with_a_locked_policy_and_no_way_out_of_its_root
+  - item: malicious skill/content
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_a_malicious_skill_cannot_reach_production_or_grant
+  - item: unsafe preview
+    attacks:
+      - tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable
+      - tests/security/test_qa007_campaign.py::test_the_web_app_carries_its_content_security_policy
+      - crates/server/tests/artifact_workspace.rs::bytes_are_served_as_an_attachment_never_as_a_document_and_only_to_a_reader
+  - item: stale lease reuse
+    attacks:
+      - crates/machine/tests/control.rs::a_stale_generation_cannot_steer_the_target_it_lost
+      - crates/machine/tests/control.rs::a_lease_that_is_not_live_does_not_permit_the_action
+      - crates/server/tests/qualification.rs::stale_generation_cannot_mutate_but_current_may
+  - item: INT-012 injection corpus
+    attacks:
+      - tests/security/test_adversarial_qualification.py::test_injection_corpus_produces_zero_unauthorized_effects
+
+# Findings of the campaign. Severity: P0 (exploitable breach), P1 (a stated control absent or
+# bypassable), P2 (defence in depth weakened), P3 (hygiene). No P0/P1 may be open.
+findings:
+  - id: F-1
+    severity: P1
+    status: fixed
+    summary: The deployable migrated over its serving DSN, so it had to run as the schema owner or a superuser; no HTTP path ever ran under row-level security.
+    fix: QUANSIO_MIGRATION_DATABASE_URL (crates/server/src/composition.rs); the campaign serves as a quansio_app login.
+    regression: tests/security/test_qa007_campaign.py::test_the_server_serves_as_the_least_privileged_role
+  - id: F-2
+    severity: P1
+    status: fixed
+    summary: InstallSkill and DisableSkill had no authorization; a viewer could install under another owner's name and irreversibly deprecate production skills.
+    fix: ManageTenant on both (crates/server/src/api/commands.rs; DOMAIN.md 11.5).
+    regression: tests/security/test_qa007_campaign.py::test_role_escalation_is_refused
+  - id: F-3
+    severity: P1
+    status: fixed
+    summary: audit_entries was writable (UPDATE/DELETE) by the application role, and the unkeyed chain could be recomputed after a rewrite.
+    fix: migrations/0022_audit_append_only.sql (grants revoked, triggers refuse UPDATE/DELETE/TRUNCATE).
+    regression: tests/security/test_qa007_campaign.py::test_the_audit_log_is_append_only_for_the_serving_role
+  - id: F-4
+    severity: P3
+    status: open
+    summary: 26 catalog commands without a handler answer INTERNAL instead of a typed refusal; they fail closed.
+    fix: none yet (recorded).
+    regression: null
+  - id: F-5
+    severity: P2
+    status: fixed
+    summary: UpdateUserSettings failed for every caller under the application role (no user context under RLS) and echoed the database's message.
+    fix: user context in the settings transaction; identity failures map to their own codes, database failures to INTERNAL without the message.
+    regression: tests/security/test_qa007_campaign.py::test_settings_work_under_rls_and_refusals_do_not_echo_the_database
+  - id: F-6
+    severity: P2
+    status: fixed
+    summary: Artifact content relabelling compared exact lower-case spellings; TEXT/HTML, IMAGE/SVG+XML, text/xsl and *+xml were served as themselves.
+    fix: case-insensitive, family-based relabelling (crates/server/src/api/artifacts.rs).
+    regression: tests/security/test_qa007_campaign.py::test_active_content_is_never_served_renderable
+  - id: F-7
+    severity: P2
+    status: fixed
+    summary: A command could name another tenant's workspace_id; rows were written in the caller's tenant against the foreign workspace (invisible to its owner, an existence oracle, a contradictory pair).
+    fix: the command surface refuses a workspace outside the caller's tenant (NOT_FOUND); migrations/0023 adds composite (tenant_id, workspace_id) keys.
+    regression: tests/security/test_qa007_campaign.py::test_cross_tenant_commands_are_refused_and_change_nothing
+  - id: F-8
+    severity: P3
+    status: open
+    summary: Webhook creation accepts numeric IPv4 shorthands and names that resolve to loopback (2130706433, 127.1, localtest.me); every delivery attempt resolves them and the broker refuses (no connection made).
+    fix: none needed for safety; creation-time normalization would give earlier feedback (recorded).
+    regression: tests/security/test_qa007_campaign.py::test_ssrf_destinations_are_refused_at_creation_and_at_delivery

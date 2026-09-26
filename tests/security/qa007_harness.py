@@ -42,7 +42,7 @@ from urllib.parse import urlsplit, urlunsplit
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "sdk" / "python"))
 
-from quansio_sdk import ApiError, Client, Credential, new_command_id  # noqa: E402
+from quansio_sdk import ApiError, Client, Credential, new_command_id
 
 SERVER_BIN = Path(
     os.environ.get("QUANSIO_TEST_SERVER_BIN")
@@ -448,8 +448,8 @@ def pump(stream: Any, sink: list[str]) -> threading.Thread:
 __all__ = [
     "APPROVER",
     "CANARY",
-    "OUTSIDE_SECRET",
     "NODE",
+    "OUTSIDE_SECRET",
     "OWNER",
     "TENANT",
     "VIEWER",

@@ -21,6 +21,8 @@ Usage (from the repository root):
         --tenant tn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA \
         --workspace ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA
 
+A workspace belongs to the first tenant unless it is written `ws_…@tn_…`, which names its tenant.
+
 Prints one JSON object on stdout with the database URL and the identities it created, so a suite can
 consume exactly what was seeded rather than restating it.
 """
@@ -47,14 +49,25 @@ DATABASE_NAME_RE = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="seed_test_database", description=__doc__)
-    parser.add_argument("--admin-url", required=True, help="DSN of a database that can CREATE DATABASE")
-    parser.add_argument("--database", required=True, help="scratch database to (re)create")
-    parser.add_argument("--tenant", required=True, action="append", help="tenant id to seed")
     parser.add_argument(
-        "--workspace", action="append", default=[], help="workspace id to seed in the first tenant"
+        "--admin-url", required=True, help="DSN of a database that can CREATE DATABASE"
     )
     parser.add_argument(
-        "--keep", action="store_true", help="refuse to drop an existing database instead of replacing it"
+        "--database", required=True, help="scratch database to (re)create"
+    )
+    parser.add_argument(
+        "--tenant", required=True, action="append", help="tenant id to seed"
+    )
+    parser.add_argument(
+        "--workspace",
+        action="append",
+        default=[],
+        help="workspace id to seed in the first tenant",
+    )
+    parser.add_argument(
+        "--keep",
+        action="store_true",
+        help="refuse to drop an existing database instead of replacing it",
     )
     return parser.parse_args(argv)
 
@@ -66,13 +79,17 @@ def _scratch_url(admin_url: str, database: str) -> str:
 
 def _create_database(admin_url: str, database: str, *, keep: bool) -> str:
     if not DATABASE_NAME_RE.match(database):
-        raise SystemExit(f"refusing to create database {database!r}: not a scratch database name")
+        raise SystemExit(
+            f"refusing to create database {database!r}: not a scratch database name"
+        )
     with psycopg.connect(admin_url, autocommit=True) as connection:
         exists = connection.execute(
             "SELECT 1 FROM pg_database WHERE datname = %s", (database,)
         ).fetchone()
         if exists and keep:
-            raise SystemExit(f"database {database!r} already exists and --keep was given")
+            raise SystemExit(
+                f"database {database!r} already exists and --keep was given"
+            )
         connection.execute(f'DROP DATABASE IF EXISTS "{database}" WITH (FORCE)')
         connection.execute(f'CREATE DATABASE "{database}"')
     return _scratch_url(admin_url, database)
@@ -87,31 +104,47 @@ def _migrate(url: str) -> list[str]:
     return applied
 
 
-def _seed(url: str, tenants: list[str], workspaces: list[str]) -> tuple[list[str], list[str]]:
+def _seed(
+    url: str, tenants: list[str], workspaces: list[str]
+) -> tuple[list[str], list[str]]:
     """Seed the identities, in the tenant's own row-security context as the schema requires."""
     with psycopg.connect(url, autocommit=True) as connection:
         for tenant in tenants:
             if not TENANT_ID_RE.match(tenant):
-                raise SystemExit(f"refusing to seed tenant {tenant!r}: not a canonical tenant id")
-            connection.execute("SELECT set_config('quansio.tenant_id', %s, false)", (tenant,))
+                raise SystemExit(
+                    f"refusing to seed tenant {tenant!r}: not a canonical tenant id"
+                )
+            connection.execute(
+                "SELECT set_config('quansio.tenant_id', %s, false)", (tenant,)
+            )
             connection.execute(
                 "INSERT INTO tenants (id, name, personal) VALUES (%s, %s, true) "
                 "ON CONFLICT (id) DO NOTHING",
                 (tenant, f"test tenant {tenant}"),
             )
-        connection.execute("SELECT set_config('quansio.tenant_id', %s, false)", (tenants[0],))
-        for workspace in workspaces:
+        for entry in workspaces:
+            # `ws_…` belongs to the first tenant; `ws_…@tn_…` names its tenant explicitly. A
+            # workspace row and every row scoped to it carry the same tenant (migration 0023).
+            workspace, _, owner = entry.partition("@")
+            owner = owner or tenants[0]
             if not WORKSPACE_ID_RE.match(workspace):
                 raise SystemExit(
                     f"refusing to seed workspace {workspace!r}: not a canonical workspace id"
                 )
+            if owner not in tenants:
+                raise SystemExit(
+                    f"refusing to seed workspace {workspace!r}: tenant {owner!r} is not seeded"
+                )
+            connection.execute(
+                "SELECT set_config('quansio.tenant_id', %s, false)", (owner,)
+            )
             connection.execute(
                 "INSERT INTO workspaces (id, tenant_id, name) VALUES (%s, %s, %s) "
                 "ON CONFLICT (id) DO NOTHING",
-                (workspace, tenants[0], f"test workspace {workspace}"),
+                (workspace, owner, f"test workspace {workspace}"),
             )
         connection.execute("SELECT set_config('quansio.tenant_id', '', false)")
-    return tenants, workspaces
+    return tenants, [entry.partition("@")[0] for entry in workspaces]
 
 
 def main(argv: list[str] | None = None) -> int:
