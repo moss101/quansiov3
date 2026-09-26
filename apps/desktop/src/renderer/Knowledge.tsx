@@ -259,9 +259,9 @@ export function Knowledge({ workspaceId, runId = null }: KnowledgeProps): ReactE
           }}
         >
           <h3>{t("installSkill")}</h3>
-          <input aria-label={t("skillName")} value={draft.name} onChange={(event) => { setDraft({ ...draft, name: event.target.value }); }} />
-          <input aria-label={t("skillVersion")} value={draft.semver} onChange={(event) => { setDraft({ ...draft, semver: event.target.value }); }} />
-          <textarea aria-label={t("instructions")} value={draft.instructions} onChange={(event) => { setDraft({ ...draft, instructions: event.target.value }); }} />
+          <input aria-label={t("skillName")} placeholder={t("skillName")} value={draft.name} onChange={(event) => { setDraft({ ...draft, name: event.target.value }); }} />
+          <input aria-label={t("skillVersion")} placeholder={t("skillVersion")} value={draft.semver} onChange={(event) => { setDraft({ ...draft, semver: event.target.value }); }} />
+          <textarea aria-label={t("instructions")} placeholder={t("instructions")} value={draft.instructions} onChange={(event) => { setDraft({ ...draft, instructions: event.target.value }); }} />
           <button type="submit">{t("installSkill")}</button>
         </form>
       </div>

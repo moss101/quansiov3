@@ -1,0 +1,92 @@
+{
+  "task_id": "APP-003",
+  "git_commit": "eadaff074a4eb787d3837b61453b443bde50954c",
+  "recorded_at": "2026-09-26T14:20:11Z",
+  "commands": [
+    {
+      "command": "cd apps/desktop && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run tests/session.e2e.test.ts tests/launch.e2e.test.ts tests/shell-modules.test.ts && cd ../web && npx vitest run tests/layout.test.ts # the restyled apps: navigation, session, settings, launch, breakpoints",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-003/2026-09-26T14-17-49Z/vitest-design.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cd apps/desktop && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> npx vitest run tests/session.e2e.test.ts tests/launch.e2e.test.ts tests/shell-modules.test.ts && cd ../web && npx vitest run tests/layout.test.ts # the restyled apps: navigation, session, settings, launch, breakpoints",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/NOTES.md",
+      "sha256": "1b3e8d7b3a5a51f7d85ac56b1f1cb9aa27765255b50d861adf1fb25c99d1b425",
+      "bytes": 1832
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/before-d-0.png",
+      "sha256": "fc295c0643090bfa47c28d8ad04080e5fb4409036f7a479ceb4c07bb5f2d5f84",
+      "bytes": 141200
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/before-w-approvals.png",
+      "sha256": "e4b5fd662dc9188d15ec9d98afb19ffea93734a428028ee0c04591f54b8325aa",
+      "bytes": 26575
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/d-0.png",
+      "sha256": "2559248e77c345fff73bd989299cfb569d27f0b4ac3a94f8540440a5147bf046",
+      "bytes": 63528
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/d-1.png",
+      "sha256": "c1fb3cba6de9a03d55d063c0ca6108e3ad111b447c7b88825ec88ad7732296ad",
+      "bytes": 66780
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/d-3.png",
+      "sha256": "468abcbdf73f0d52301c9ba630f699dee10744a1f68fdcbed214e635fdc4c5c4",
+      "bytes": 59015
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/d-4.png",
+      "sha256": "99d75215f945999c099c9c9be8a4758ef367ba1d6f793262cff71b7fc1ba5780",
+      "bytes": 61888
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/d-approval-dialog-dark.png",
+      "sha256": "d363ba8262e0bebaab4e21ff6880c9d69fb46ac41935ca137e2fb9bab1b90010",
+      "bytes": 113312
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/d-approval-dialog.png",
+      "sha256": "1f3f4b70f30dbfde6b6ed3483937f3844da25f7cd3be7a28e3888e6fcdd9f3da",
+      "bytes": 113642
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/d-chat-dark.png",
+      "sha256": "bf976dfafe757a59cb6e1e108604550582670d3912d00460930a27c9f5079f7e",
+      "bytes": 67630
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/d-signin.png",
+      "sha256": "396c01935ed9a7a8a2b44faa2369c987dbe714c0413951c2e8a917bc00ed4322",
+      "bytes": 51050
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/vitest-design.log",
+      "sha256": "b2cf73493d926b1acee5eb1e128a5e7f797b03f71324d674698ec821efaebd5e",
+      "bytes": 1395
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/w-Users.png",
+      "sha256": "8cbda06f3d796b9de9278b85c5cf7675f996d28ae140a22f7fb377ce14984f89",
+      "bytes": 67481
+    },
+    {
+      "path": "evidence/APP-003/2026-09-26T14-17-49Z/w-signin.png",
+      "sha256": "7ddb91614836899ab300196e86de8084636548c8cc49dbf3288c8ec76a59f3af",
+      "bytes": 40394
+    }
+  ]
+}
