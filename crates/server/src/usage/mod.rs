@@ -8,10 +8,15 @@
 mod meters;
 mod project;
 mod quota;
+mod store;
 
 pub use meters::UsageMeter;
 pub use project::{project_event, UsageDelta, UsageProjection, UsageRecord};
 pub use quota::{admit_effect, evaluate, BudgetAlert, QuotaDecision, QuotaLimit, QuotaPolicy};
+pub use store::{
+    MeterTotal, UsageStore, UsageSummary, MATERIALIZE_BATCH, MAX_TAIL_EVENTS, USAGE_CONSUMER,
+    USAGE_STREAM,
+};
 
 /// Repository path of this module's canonical owner.
 pub const USAGE_OWNER: &str = "crates/server/src/usage";

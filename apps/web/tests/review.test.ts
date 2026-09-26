@@ -80,5 +80,7 @@ describe("administration", () => {
     expect(audit.entries).toHaveLength(1);
     expect(audit.entries[0]?.actor).toBe("user:usr_1");
     expect(decodeUsage({ events_read: 10, meters: [{ meter: "model_input_tokens", total: 12, unit: "tokens" }], records: [{}, {}] })).toEqual({ eventsRead: 10, meters: [{ meter: "model_input_tokens", total: 12, unit: "tokens" }], records: 2 });
+    // The server lists only the newest records; the count covers them all.
+    expect(decodeUsage({ events_read: 30_000, meters: [], record_count: 12_345, records: [{}, {}] }).records).toBe(12_345);
   });
 });
