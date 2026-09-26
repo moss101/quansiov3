@@ -132,6 +132,19 @@ const OPENS: Partial<Record<SurfaceId, Page>> = {
   "model-usage": "conversation",
 };
 
+/** The navigation entry that is a page's own (the others open it as their host). */
+const PAGE_ENTRY: Partial<Record<Page, SurfaceId>> = {
+  "conversation": "conversation",
+  "objectives": "objectives",
+  "teammates": "teammates",
+  "approvals": "approvals",
+  "live-browser-terminal": "live-browser-terminal",
+  "artifacts": "artifacts",
+  "knowledge-controls": "knowledge-controls",
+  "collaboration": "collaboration",
+  "automations": "automations",
+};
+
 function Shell(): ReactElement {
   const [projection, setProjection] = useState<RunProjection | null>(null);
   const [log, setLog] = useState<readonly LogLine[]>([]);
@@ -162,35 +175,58 @@ function Shell(): ReactElement {
     };
   }, [refresh]);
 
+  const connection = projection?.streamState ?? "closed";
+  const page = projection?.workspaceId ? (
+    surface === "artifacts" ? (
+      <Artifacts key={`artifacts-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+    ) : surface === "objectives" ? (
+      <Work key={`work-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+    ) : surface === "approvals" ? (
+      <Trust key={`trust-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+    ) : surface === "knowledge-controls" ? (
+      <Knowledge key={`knowledge-${projection.workspaceId}`} workspaceId={projection.workspaceId} runId={projection.activeRun?.runId ?? null} />
+    ) : surface === "teammates" ? (
+      <Teammates key={`teammates-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+    ) : surface === "live-browser-terminal" ? (
+      <Live key={`live-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+    ) : surface === "collaboration" ? (
+      <Collaboration key={`collaboration-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+    ) : surface === "automations" ? (
+      <Automations key={`automations-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+    ) : surface === "settings" ? (
+      <Settings key={`settings-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
+    ) : (
+      <Conversation key={projection.workspaceId} workspaceId={projection.workspaceId} initialThreadId={projection.activeRun?.threadId ?? null} />
+    )
+  ) : (
+    <p className="empty">{t("connecting")}</p>
+  );
+
   return (
     <main className="shell">
-      <header>
-        <h1>{t("appName")}</h1>
-        <span className={`status status-${projection?.streamState ?? "closed"}`}>
-          {connectionLabel(projection?.streamState ?? "closed")}
-        </span>
-        <button type="button" aria-pressed={surface === "settings"} onClick={() => { setSurface("settings"); }}>
-          {t("settings")}
-        </button>
-        <button type="button" onClick={() => { void window.quansio.signOut(); }}>
-          {t("signOut")}
-        </button>
-      </header>
-      <nav aria-label={t("surfaces")}>
-        <ul>
-          {DESKTOP_SURFACES.map((entry) => {
-            const opens = OPENS[entry.id];
-            return (
-              <li key={entry.id} className={opens === surface ? "selected" : undefined}>
-                {opens ? (
-                  <button type="button" aria-current={opens === surface ? "page" : undefined} onClick={() => { setSurface(opens); }}>{t(SURFACE_LABELS[entry.id])}</button>
-                ) : (
-                  <span>{t(SURFACE_LABELS[entry.id])}</span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+      <aside className="sidebar">
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">Q</span>
+          <h1>{t("appName")}</h1>
+        </div>
+        <nav aria-label={t("surfaces")}>
+          <ul>
+            {DESKTOP_SURFACES.map((entry) => {
+              const opens = OPENS[entry.id];
+              // Several entries open the same page; only the page's own entry is marked current.
+              const current = opens === surface && entry.id === PAGE_ENTRY[surface];
+              return (
+                <li key={entry.id} className={current ? "selected" : undefined}>
+                  {opens ? (
+                    <button type="button" aria-current={current ? "page" : undefined} onClick={() => { setSurface(opens); }}>{t(SURFACE_LABELS[entry.id])}</button>
+                  ) : (
+                    <span className="nav-note">{t(SURFACE_LABELS[entry.id])}</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
         <section className="run">
           <h2>{t("activeRun")}</h2>
           {projection?.activeRun ? (
@@ -207,48 +243,38 @@ function Shell(): ReactElement {
           )}
           {notice ? <p className="notice">{notice}</p> : null}
         </section>
-      </nav>
-      {projection?.workspaceId ? (
-        surface === "artifacts" ? (
-          <Artifacts key={`artifacts-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
-        ) : surface === "objectives" ? (
-          <Work key={`work-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
-        ) : surface === "approvals" ? (
-          <Trust key={`trust-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
-        ) : surface === "knowledge-controls" ? (
-          <Knowledge key={`knowledge-${projection.workspaceId}`} workspaceId={projection.workspaceId} runId={projection.activeRun?.runId ?? null} />
-        ) : surface === "teammates" ? (
-          <Teammates key={`teammates-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
-        ) : surface === "live-browser-terminal" ? (
-          <Live key={`live-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
-        ) : surface === "collaboration" ? (
-          <Collaboration key={`collaboration-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
-        ) : surface === "automations" ? (
-          <Automations key={`automations-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
-        ) : surface === "settings" ? (
-          <Settings key={`settings-${projection.workspaceId}`} workspaceId={projection.workspaceId} />
-        ) : (
-          <Conversation
-            key={projection.workspaceId}
-            workspaceId={projection.workspaceId}
-            initialThreadId={projection.activeRun?.threadId ?? null}
-          />
-        )
-      ) : (
-        <p>{t("connecting")}</p>
-      )}
-      <section className="stream">
-        <h2>{t("streamTitle")}</h2>
-        {log.length === 0 ? (
-          <p>{t("streamEmpty")}</p>
-        ) : (
-          <ol>
-            {log.map((line) => (
-              <li key={line.key}>{line.text}</li>
-            ))}
-          </ol>
-        )}
-      </section>
+      </aside>
+      <div className="workarea">
+        <header className="topbar">
+          <span className={`status status-${connection}`}>
+            <span className="dot" aria-hidden="true" />
+            {connectionLabel(connection)}
+          </span>
+          <span className="spacer" />
+          <button type="button" className={surface === "settings" ? "quiet selected" : "quiet"} aria-pressed={surface === "settings"} onClick={() => { setSurface("settings"); }}>
+            {t("settings")}
+          </button>
+          <button type="button" className="quiet" onClick={() => { void window.quansio.signOut(); }}>
+            {t("signOut")}
+          </button>
+        </header>
+        <div className="surface">{page}</div>
+        <details className="stream">
+          <summary>
+            <h2>{t("streamTitle")}</h2>
+            <span className="count">{log.length}</span>
+          </summary>
+          {log.length === 0 ? (
+            <p>{t("streamEmpty")}</p>
+          ) : (
+            <ol>
+              {log.map((line) => (
+                <li key={line.key}>{line.text}</li>
+              ))}
+            </ol>
+          )}
+        </details>
+      </div>
     </main>
   );
 }

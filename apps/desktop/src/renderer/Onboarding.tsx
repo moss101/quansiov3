@@ -17,6 +17,9 @@ import {
 } from "../onboarding/flow.js";
 import { t } from "../i18n/strings.js";
 
+/** How each sign-in provider is written for a person. */
+const PROVIDER_NAMES = { google: "Google", microsoft: "Microsoft", github: "GitHub" } as const;
+
 export function Onboarding({ onReady }: { readonly onReady: () => void }): ReactElement {
   const [state, dispatch] = useReducer(reduceOnboarding, INITIAL_ONBOARDING);
   const [email, setEmail] = useState("");
@@ -97,7 +100,7 @@ export function Onboarding({ onReady }: { readonly onReady: () => void }): React
           <div className="oauth">
             {(["google", "microsoft", "github"] as const).map((provider) => (
               <button key={provider} type="button" disabled={oauth.length > 0 && !oauth.includes(provider)} onClick={() => { window.quansio.startOAuth(provider).then(undefined, fail); }}>
-                {t("continueWith")} {provider}
+                {t("continueWith")} {PROVIDER_NAMES[provider]}
               </button>
             ))}
           </div>
