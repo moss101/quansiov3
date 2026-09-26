@@ -267,7 +267,8 @@ describe.skipIf(blocked !== null)("desktop automation E2E against quansio-server
     expect(notice.title).toBe("You were mentioned in launch");
     const mail = await waitFor(() => mails[0], "an email through the mail API");
     expect(mail.authorization).toBe(`Bearer ${MAIL_TOKEN}`);
-    expect(mail.body.to).toBe(`${EDITOR}@example.com`);
+    // The seed stores addresses the way sign-in normalizes them (lower case).
+    expect(mail.body.to).toBe(`${EDITOR}@example.com`.toLowerCase());
     expect(mail.body.subject).toBe("You were mentioned in launch");
     const second = await waitFor(async () => {
       const items = (await list()).items.filter((item) => item.kind === "mention");
