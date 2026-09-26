@@ -17,6 +17,7 @@
  * explicit `BLOCKED_EXTERNAL` marker (AGENTS.md "Real boundaries").
  */
 
+import { settled } from "./settle.js";
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -206,10 +207,12 @@ describe.skipIf(blocked !== null)("desktop collaboration E2E against quansio-ser
     // Both people post at once.
     const posts = await Promise.all(
       Array.from({ length: 6 }, (_, n) =>
-        (n % 2 === 0 ? owner : editor).handlers["messages.post"]({ threadId: thread, content: `message ${String(n)}` }) as Promise<{ message_id: string }>,
+        (n % 2 === 0 ? owner : editor).handlers["messages.post"]({ threadId: thread, content: `message ${String(n)}` }) as Promise<{ message_id: string; run_id: string }>,
       ),
     );
     expect(new Set(posts.map((post) => post.message_id)).size).toBe(6);
+    // Every post's turn answers after the post is accepted; the thread is read once they have.
+    await Promise.all(posts.map((post) => settled(owner.handlers, post.run_id)));
     const viewOwner = decodeThreadMessages(await owner.handlers["threads.messages"]({ threadId: thread }));
     const viewEditor = decodeThreadMessages(await editor.handlers["threads.messages"]({ threadId: thread }));
     expect(viewOwner.map((m) => m.id)).toEqual(viewEditor.map((m) => m.id));
@@ -252,8 +255,10 @@ describe.skipIf(blocked !== null)("desktop collaboration E2E against quansio-ser
     const atlasId = atlas.result?.["id"] as string;
     const novaId = nova.result?.["id"] as string;
 
-    const first = (await owner.handlers["messages.post"]({ content: "draft the plan", teammateId: atlasId })) as { thread_id: string; teammate: { id: string } };
+    const first = (await owner.handlers["messages.post"]({ content: "draft the plan", teammateId: atlasId })) as { thread_id: string; run_id: string; teammate: { id: string } };
     expect(first.teammate.id).toBe(atlasId);
+    // A handoff waits for the teammate's run to finish; its turn runs after the post is accepted.
+    await settled(owner.handlers, first.run_id);
     const thread = first.thread_id;
     const before = (await owner.handlers["threads.view"]({ threadId: thread })) as SettledPayload;
     expect(decodeThreadView(before.result).responsibleTeammateId).toBe(atlasId);

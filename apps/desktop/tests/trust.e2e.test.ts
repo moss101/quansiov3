@@ -8,6 +8,7 @@
  * error, never as content.
  */
 
+import { eventually } from "./settle.js";
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -115,21 +116,6 @@ async function minioReachable(): Promise<boolean> {
 }
 
 const openSocket = (url: string, headers: Record<string, string>): SocketLike => new WebSocket(url, { headers });
-
-/** Poll an asynchronous read until it answers (the server runs a turn after accepting its command). */
-async function eventually<T>(read: () => Promise<T | undefined>, what: string, timeoutMs = 15_000): Promise<T> {
-  const deadline = Date.now() + timeoutMs;
-  for (;;) {
-    const value = await read();
-    if (value !== undefined) {
-      return value;
-    }
-    if (Date.now() > deadline) {
-      throw new Error(`timed out waiting for ${what}`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
-}
 
 function waitFor<T>(poll: () => T | undefined, what: string, timeoutMs = 15_000): Promise<T> {
   return new Promise((resolve, reject) => {

@@ -948,7 +948,7 @@ async fn post_message(
     let turn = {
         let (state, identity, correlation) =
             (state.clone(), identity.clone(), correlation.to_string());
-        let (run_id, generation) = (run.id.clone(), run.generation);
+        let (run_id, generation) = (run.id, run.generation);
         let (message_id, thread_id) = (posted.message.id.clone(), posted.thread.id.clone());
         let agent = agent_thread.to_string();
         async move {

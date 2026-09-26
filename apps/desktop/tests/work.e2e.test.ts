@@ -7,6 +7,7 @@
  * draft the renderer uses.
  */
 
+import { eventually } from "./settle.js";
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -292,11 +293,12 @@ describe.skipIf(blocked !== null)("desktop work graph E2E against quansio-server
 
     // Agent handoff UI: a delegation makes a worker and a handoff edge; the run parks.
     const posted = (await alice.handlers["messages.post"]({ threadId: null, content: `split this ${DELEGATE_SCENARIO}` })) as { run_id: string };
-    await waitFor(() => {
+    // The delegating turn runs after the post is accepted: wait for the worker it makes.
+    const withHandoff = await eventually(async () => {
       alice.feed();
-      return alice.state.stale ? true : undefined;
-    }, "agent events");
-    const withHandoff = await alice.load();
+      const view = await alice.load();
+      return view.agents.some((agent) => agent.kind === "worker") ? view : undefined;
+    }, "the delegated worker");
     const worker = withHandoff.agents.find((agent) => agent.kind === "worker");
     const teammate = withHandoff.agents.find((agent) => agent.kind === "teammate");
     expect(worker?.parentId).toBe(teammate?.id);
