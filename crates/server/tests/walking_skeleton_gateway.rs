@@ -437,6 +437,37 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
     assert!(tool_calls(&pool, &run_id).await.is_empty(), "{body}");
     assert_eq!(model_calls(&pool, &run_id).await.len(), 1, "{body}");
 
+    // The reply streamed to the subscriber as the model wrote it: non-final `model.delta` frames
+    // in order, then the final frame whose whole text is exactly what streamed.
+    let mut streamed = String::new();
+    let mut partial_frames = 0;
+    let mut final_text = None;
+    while final_text.is_none() {
+        let Ok(Some(Ok(Message::Text(text)))) =
+            tokio::time::timeout(Duration::from_secs(5), ws.next()).await
+        else {
+            break;
+        };
+        let frame: Value = serde_json::from_str(&text).expect("frame");
+        let live = &frame["frame"];
+        if frame["kind"] != "live" || live["kind"] != "model.delta" || live["run_id"] != run_id.as_str() {
+            continue;
+        }
+        let text = live["text"].as_str().unwrap_or_default();
+        if live["final"] == true {
+            final_text = Some(text.to_string());
+        } else {
+            partial_frames += 1;
+            streamed.push_str(text);
+        }
+    }
+    let final_text = final_text.expect("a final model.delta for the reply");
+    assert!(
+        partial_frames >= 2,
+        "the stub streams its reply in two content deltas; {partial_frames} arrived before the final"
+    );
+    assert_eq!(streamed, final_text, "the deltas add up to the final text");
+
     common::drop_pool(&pool, &name).await;
     drop(service);
 }

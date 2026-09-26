@@ -300,6 +300,20 @@ impl IntelligenceClient {
         scope: &CallScope,
         call: ModelCallRequest,
     ) -> Result<Vec<ModelEvent>, IntelligenceError> {
+        self.fulfill_model_observed(scope, call, &mut |_| {}).await
+    }
+
+    /// [`Self::fulfill_model`], handing each event to `observe` as it arrives (so text can be
+    /// shown while the model is still writing), then returning the whole stream.
+    ///
+    /// # Errors
+    /// As [`Self::fulfill_model`].
+    pub async fn fulfill_model_observed(
+        &mut self,
+        scope: &CallScope,
+        call: ModelCallRequest,
+        observe: &mut (dyn FnMut(&ModelEvent) + Send),
+    ) -> Result<Vec<ModelEvent>, IntelligenceError> {
         let span = rpc_span("FulfillModel", scope);
         let request = Self::request(scope, call, &span);
         let collect = async {
@@ -311,6 +325,7 @@ impl IntelligenceClient {
                 .into_inner();
             let mut events = Vec::new();
             while let Some(event) = stream.message().await.map_err(|status| refused(&status))? {
+                observe(&event);
                 events.push(event);
             }
             Ok(events)

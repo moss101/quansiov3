@@ -30,7 +30,7 @@ use super::store::{
 use super::turn_loop::{
     CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort, LiveFramePort,
     ModelCallRequest, ModelProposalSource, NoLiveFrames, ProposedToolCall, QuestionContext,
-    QuestionOutcome, QuestionPort, ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest,
+    QuestionOutcome, QuestionPort, TextSink, ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest,
     TurnOutcome, UnavailableDelegation, UnavailableModelProposalSource, UnavailableQuestions,
     UnavailableToolDispatch, UnavailableVerification, VerificationContext, VerificationOutcome,
     VerificationPort, MEMORY_OWNER, PLAN_VALIDATION_OWNER,
@@ -138,6 +138,30 @@ impl RuntimeEngine {
     }
 
     /// Publish a transient frame on the run's and the workspace's channels.
+    /// Where a streaming model call's text goes: one non-final `model.delta` live frame per
+    /// delta, on the run and workspace channels (DOMAIN.md §9.3).
+    fn text_sink(&self, run: &Run, turn_id: &str, step_id: &str) -> TextSink {
+        let live = Arc::clone(&self.live);
+        let tenant_id = self.store.identity().tenant_id.clone();
+        let run_channel = format!("run:{}", run.id);
+        let workspace_channel = format!("workspace:{}", run.workspace_id);
+        let run_id = run.id.to_string();
+        let turn_id = turn_id.to_string();
+        let step_id = step_id.to_string();
+        Arc::new(move |text: &str| {
+            let frame = serde_json::json!({
+                "kind": "model.delta",
+                "step_id": step_id,
+                "text": text,
+                "final": false,
+                "run_id": run_id,
+                "turn_id": turn_id,
+            });
+            live.publish(&tenant_id, &run_channel, frame.clone());
+            live.publish(&tenant_id, &workspace_channel, frame);
+        })
+    }
+
     fn live(&self, run: &Run, turn_id: &str, frame: serde_json::Value) {
         let tenant_id = self.store.identity().tenant_id.clone();
         let mut frame = frame;
@@ -523,7 +547,16 @@ impl RuntimeEngine {
                 input_kind: input.kind,
                 step_seq: model_step.seq,
             };
-            let proposal = match self.model.propose(request).await {
+            // Text reaches the conversation as the model writes it; the final frame below
+            // still carries the whole text, which replaces what streamed.
+            let proposal = match self
+                .model
+                .propose_streaming(
+                    request,
+                    self.text_sink(&run, &turn.id.to_string(), &model_step.id.to_string()),
+                )
+                .await
+            {
                 Ok(proposal) => {
                     self.store
                         .complete_step(
