@@ -3,6 +3,8 @@ packages:
   - "sdk/typescript"
 
 # esbuild (used by vitest) downloads its platform binary in an install script;
-# pnpm 11 requires explicit approval for dependency build scripts.
+# pnpm 11 requires explicit approval for dependency build scripts. electron's script
+# fetches the pinned Electron binary the desktop app and QA-008's desktop journeys run.
 allowBuilds:
   esbuild: true
+  electron: true

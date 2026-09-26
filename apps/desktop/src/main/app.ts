@@ -15,7 +15,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { app, autoUpdater, BrowserWindow, dialog, ipcMain, Notification, protocol, safeStorage, session, shell } from "electron";
+import { app, autoUpdater, BrowserWindow, dialog, ipcMain, net, Notification, protocol, safeStorage, session, shell } from "electron";
 import WebSocket from "ws";
 
 import type { SocketFactory, SocketLike } from "../client/stream.js";
@@ -83,7 +83,9 @@ function serveRenderer(): void {
     if (relative.includes("..")) {
       return new Response("not found", { status: 404 });
     }
-    return fetch(pathToFileURL(join(rendererRoot, relative)).href);
+    // Electron's `net.fetch` reads `file:` URLs; Node's global `fetch` does not ("not
+    // implemented"), which left the window blank on every launch.
+    return net.fetch(pathToFileURL(join(rendererRoot, relative)).href);
   });
 }
 
