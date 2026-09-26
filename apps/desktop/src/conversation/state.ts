@@ -25,6 +25,8 @@ export interface ConversationMessage {
   readonly turnId: string | null;
   readonly text: string;
   readonly attachments: readonly string[];
+  /** When the message was written (RFC 3339), when the projection says. */
+  readonly createdAt: string | null;
 }
 
 export type QuestionStatus = "open" | "answered" | "expired" | "cancelled";
@@ -317,6 +319,7 @@ export function decodeMessages(payload: unknown): ConversationMessage[] {
       turnId: text(record["turn_id"]),
       text: parts.join("\n"),
       attachments: Array.isArray(record["attachments"]) ? (record["attachments"] as unknown[]).filter((item): item is string => typeof item === "string") : [],
+      createdAt: text(record["created_at"]),
     });
   }
   return messages;
@@ -360,6 +363,11 @@ function asRecord(value: unknown): Record<string, unknown> {
 /** The questions still waiting for the user in this thread. */
 export function openQuestions(state: ConversationState): readonly ConversationQuestion[] {
   return state.questions.filter((question) => question.status === "open");
+}
+
+/** Whether a run is still going (not succeeded, failed or cancelled). */
+export function runIsLive(run: RunActivity): boolean {
+  return !TERMINAL_RUN_STATES.has(run.status);
 }
 
 /** The run whose turn can be cancelled right now, if any. */

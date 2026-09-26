@@ -243,15 +243,49 @@ describe.skipIf(blocked !== null)("desktop account (real Electron, real server)"
       await composer.press("Enter");
       const conversation = page.getByRole("region", { name: "Conversation" });
       await until(async () => (await conversation.getByText("Plan the chat-first shell review").count()) > 0, "the message in the thread");
-      // The thread the message created is listed and is the one marked open.
+      // The thread the message created is listed and is the one marked open, previewing its
+      // latest message.
       await until(async () => (await chats.getByRole("listitem").count()) === before + 1, "the new conversation in the sidebar");
       await until(async () => (await chats.locator('[aria-current="page"]').count()) === 1, "the new conversation marked open");
+      const open = chats.locator('[aria-current="page"]');
+      const flat = (text: string | null): string => (text ?? "").replace(/\s+/g, " ").trim();
+      await until(async () => {
+        const latest = flat(await conversation.locator(".row .bubble").last().textContent());
+        return latest.length > 0 && flat(await open.locator(".chat-preview").textContent()).startsWith(latest.slice(0, 20));
+      }, "the sidebar to preview the thread's latest message");
+      // Once the teammate has answered, nothing says it is still working and nothing offers to
+      // cancel it, although the conversation's run stays open for the next turn.
+      await until(async () => (await conversation.locator(".working").count()) === 0 && (await page.getByRole("button", { name: "Cancel" }).count()) === 0, "the finished run to leave the thread");
       // + leaves it for an empty conversation; picking it again brings its messages back.
       await page.getByRole("button", { name: "New thread" }).click();
       await until(async () => (await conversation.getByText("Plan the chat-first shell review").count()) === 0, "an empty conversation");
       await expect(chats.locator('[aria-current="page"]').count()).resolves.toBe(0);
       await chats.getByRole("button").first().click();
       await until(async () => (await chats.locator('[aria-current="page"]').count()) === 1, "a conversation reopened from the sidebar");
+    } finally {
+      await desktop.done();
+    }
+  }, 120_000);
+
+  it("jumps to a page from the command palette (APP-003)", async () => {
+    const desktop = await launch();
+    try {
+      const page = desktop.page;
+      await signIn(page, email(OWNER));
+      await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
+      const palette = page.getByRole("dialog", { name: "Go to" });
+      await palette.waitFor();
+      await palette.getByRole("combobox", { name: "Go to" }).fill("approvals");
+      await expect(palette.getByRole("option", { selected: true }).textContent()).resolves.toContain("Approvals");
+      await page.keyboard.press("Enter");
+      await page.getByRole("region", { name: "Trust" }).waitFor({ timeout: 15_000 });
+      expect(await palette.count()).toBe(0);
+      // Escape closes it without going anywhere.
+      await page.getByRole("button", { name: "Search conversations" }).click();
+      await palette.waitFor();
+      await page.keyboard.press("Escape");
+      await until(async () => (await palette.count()) === 0, "the palette to close");
+      await expect(page.getByRole("region", { name: "Trust" }).count()).resolves.toBe(1);
     } finally {
       await desktop.done();
     }

@@ -1,6 +1,6 @@
 # APP-003 — a chat-first desktop shell (raised during QA-008)
 
-The owner compared the desktop with the macOS assistants running beside it (Grok Bot): "frontend
+The owner compared the desktop with the macOS assistant apps running beside it: "frontend
 design does not match with peer applications". The 14:17 design (`before-d-chat.png`) read as an
 admin console: a 15-link sidebar, a top bar, three bordered columns, raw thread ids, a purple accent.
 The owner chose the full chat-first layout.

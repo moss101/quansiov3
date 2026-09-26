@@ -61,6 +61,7 @@ export {
   cancelParams,
   postParams,
   postedIdentities,
+  postedRunStatus,
   uploadParams,
 } from "./conversation/composer.js";
 export type { UploadInput } from "./conversation/composer.js";
