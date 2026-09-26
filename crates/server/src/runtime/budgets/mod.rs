@@ -23,8 +23,8 @@ pub mod service;
 
 use thiserror::Error;
 
-pub use limits::{BudgetConsumed, BudgetLimits, Meter, MeterUsage, EXHAUSTED_METERS};
 pub use enforce::RuntimeBudgets;
+pub use limits::{BudgetConsumed, BudgetLimits, Meter, MeterUsage, EXHAUSTED_METERS};
 pub use service::{BudgetRecord, BudgetService, BudgetSpec, ChargeOutcome};
 
 /// Repository path of this module's canonical owner.

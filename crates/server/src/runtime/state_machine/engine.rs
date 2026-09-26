@@ -28,12 +28,13 @@ use super::store::{
     Attempt, Budget, NewRun, NewStep, Run, RuntimeStore, Step, Turn, TurnInput, WaitResolution,
 };
 use super::turn_loop::{
-    BudgetPort, CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort, LiveFramePort,
-    ModelCallRequest, ModelProposalSource, NoBudgets, NoLiveFrames, ProposedToolCall, QuestionContext,
-    QuestionOutcome, QuestionPort, TextSink, ToolDispatchOutcome, ToolDispatchPort,
-    ToolDispatchRequest, TurnOutcome, UnavailableDelegation, UnavailableModelProposalSource,
-    UnavailableQuestions, UnavailableToolDispatch, UnavailableVerification, VerificationContext,
-    VerificationOutcome, VerificationPort, MEMORY_OWNER, PLAN_VALIDATION_OWNER,
+    BudgetPort, CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort,
+    LiveFramePort, ModelCallRequest, ModelProposalSource, NoBudgets, NoLiveFrames,
+    ProposedToolCall, QuestionContext, QuestionOutcome, QuestionPort, TextSink,
+    ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest, TurnOutcome, UnavailableDelegation,
+    UnavailableModelProposalSource, UnavailableQuestions, UnavailableToolDispatch,
+    UnavailableVerification, VerificationContext, VerificationOutcome, VerificationPort,
+    MEMORY_OWNER, PLAN_VALIDATION_OWNER,
 };
 use super::{fence, RuntimeError, RuntimeIdentity};
 use crate::runtime::budgets::{Meter, MeterUsage};
@@ -846,7 +847,10 @@ impl RuntimeEngine {
                 .collect();
             let results = parallel::join_all(futures).await;
             let mut dispatched = MeterUsage::new();
-            dispatched.set(Meter::ToolCalls, u64::try_from(results.len()).unwrap_or(u64::MAX));
+            dispatched.set(
+                Meter::ToolCalls,
+                u64::try_from(results.len()).unwrap_or(u64::MAX),
+            );
             self.budgets.charge(run, &dispatched).await?;
 
             for ((tool_step, attempt, call, _), result) in pending.into_iter().zip(results) {

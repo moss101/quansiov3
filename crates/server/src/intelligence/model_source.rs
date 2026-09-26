@@ -451,7 +451,13 @@ impl GatewayModelSource {
                 format!("the model call {call_id} failed"),
             ));
         }
-        let tokens = |field: &str| outcome.usage.get(field).and_then(Value::as_u64).unwrap_or(0);
+        let tokens = |field: &str| {
+            outcome
+                .usage
+                .get(field)
+                .and_then(Value::as_u64)
+                .unwrap_or(0)
+        };
         Ok(ModelProposal {
             usage: Some(ModelUsage {
                 input_tokens: tokens("input"),

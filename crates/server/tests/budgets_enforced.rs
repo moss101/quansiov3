@@ -13,8 +13,7 @@ use quansio_server::api::ApiState;
 use quansio_server::control::schema;
 use quansio_server::runtime::budgets::{BudgetService, BudgetSpec, Meter, MeterUsage};
 use quansio_server::runtime::state_machine::{
-    ModelCallRequest, ModelProposal, ModelProposalSource, ModelUsage, RuntimeError,
-    RuntimeIdentity,
+    ModelCallRequest, ModelProposal, ModelProposalSource, ModelUsage, RuntimeError, RuntimeIdentity,
 };
 use serde_json::{json, Value};
 use tower::ServiceExt;
@@ -67,7 +66,9 @@ async fn prepare(prefix: &str) -> Option<Harness> {
         .execute(&mut *tx)
         .await
         .expect("user");
-    schema::set_tenant_context(&mut tx, TENANT).await.expect("tenant");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant");
     sqlx::query("INSERT INTO tenant_memberships (id, tenant_id, user_id, role, status) VALUES ('tm_01J8Z3K6F1N8VQ2X5W9Y0BDGT2', $1, $2, 'member', 'active')")
         .bind(TENANT)
         .bind(VIEWER)
@@ -103,7 +104,13 @@ async fn prepare(prefix: &str) -> Option<Harness> {
     })
 }
 
-async fn call(router: &axum::Router, user: &str, method: &str, path: &str, body: Option<Value>) -> (u16, Value) {
+async fn call(
+    router: &axum::Router,
+    user: &str,
+    method: &str,
+    path: &str,
+    body: Option<Value>,
+) -> (u16, Value) {
     let builder = Request::builder()
         .method(method)
         .uri(path)
@@ -118,8 +125,13 @@ async fn call(router: &axum::Router, user: &str, method: &str, path: &str, body:
     };
     let response = router.clone().oneshot(request).await.expect("response");
     let status = response.status().as_u16();
-    let bytes = axum::body::to_bytes(response.into_body(), 1 << 20).await.expect("body");
-    (status, serde_json::from_slice(&bytes).unwrap_or(Value::Null))
+    let bytes = axum::body::to_bytes(response.into_body(), 1 << 20)
+        .await
+        .expect("body");
+    (
+        status,
+        serde_json::from_slice(&bytes).unwrap_or(Value::Null),
+    )
 }
 
 fn command_id() -> String {
@@ -139,7 +151,9 @@ async fn command(router: &axum::Router, user: &str, name: &str, params: Value) -
 
 async fn events_of(pool: &sqlx::PgPool, event_type: &str) -> Vec<Value> {
     let mut tx = pool.begin().await.expect("begin");
-    schema::set_tenant_context(&mut tx, TENANT).await.expect("tenant");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant");
     let rows: Vec<(Value,)> = sqlx::query_as(
         "SELECT payload FROM runtime_events WHERE tenant_id = $1 AND type = $2 ORDER BY sequence",
     )
@@ -158,34 +172,82 @@ async fn set_budget_grants_and_relimits_within_the_tenant_budget() {
         common::blocked_marker();
         return;
     };
-    let (status, tenant) = command(&h.router, OWNER, "SetBudget", json!({ "scope": "tenant", "limits": { "tokens": 100 } })).await;
+    let (status, tenant) = command(
+        &h.router,
+        OWNER,
+        "SetBudget",
+        json!({ "scope": "tenant", "limits": { "tokens": 100 } }),
+    )
+    .await;
     assert_eq!(status, 200, "{tenant}");
     let tenant_id = tenant["result"]["id"].as_str().expect("id").to_string();
     assert!(tenant_id.starts_with("bdg_"), "{tenant}");
 
     // A workspace budget nests under the tenant's and may not ask for more than it has left.
-    let (status, workspace) = command(&h.router, OWNER, "SetBudget", json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 60 } })).await;
+    let (status, workspace) = command(
+        &h.router,
+        OWNER,
+        "SetBudget",
+        json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 60 } }),
+    )
+    .await;
     assert_eq!(status, 200, "{workspace}");
     assert_eq!(workspace["result"]["parent_budget_id"], tenant_id.as_str());
-    let (status, refused) = command(&h.router, OWNER, "SetBudget", json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 500 } })).await;
+    let (status, refused) = command(
+        &h.router,
+        OWNER,
+        "SetBudget",
+        json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 500 } }),
+    )
+    .await;
     assert_eq!(refused["code"], "VALIDATION_BOUNDS", "{status} {refused}");
 
     // Re-limiting keeps the same budget.
-    let (status, relimited) = command(&h.router, OWNER, "SetBudget", json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 40 } })).await;
+    let (status, relimited) = command(
+        &h.router,
+        OWNER,
+        "SetBudget",
+        json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 40 } }),
+    )
+    .await;
     assert_eq!(status, 200, "{relimited}");
     assert_eq!(relimited["result"]["id"], workspace["result"]["id"]);
     assert_eq!(relimited["result"]["limits"]["tokens"], 40);
 
     // Only an administrator grants budgets; a scope is tenant or workspace.
-    let (status, denied) = command(&h.router, VIEWER, "SetBudget", json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 10 } })).await;
+    let (status, denied) = command(
+        &h.router,
+        VIEWER,
+        "SetBudget",
+        json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 10 } }),
+    )
+    .await;
     assert_eq!(denied["code"], "SCOPE_FORBIDDEN", "{status} {denied}");
-    let (_, unknown) = command(&h.router, OWNER, "SetBudget", json!({ "scope": "galaxy", "limits": {} })).await;
+    let (_, unknown) = command(
+        &h.router,
+        OWNER,
+        "SetBudget",
+        json!({ "scope": "galaxy", "limits": {} }),
+    )
+    .await;
     assert_eq!(unknown["code"], "VALIDATION_SCHEMA", "{unknown}");
 
     // The usage read shows both.
-    let (status, usage) = call(&h.router, OWNER, "GET", &format!("/v1/usage?workspace_id={WORKSPACE}"), None).await;
+    let (status, usage) = call(
+        &h.router,
+        OWNER,
+        "GET",
+        &format!("/v1/usage?workspace_id={WORKSPACE}"),
+        None,
+    )
+    .await;
     assert_eq!(status, 200, "{usage}");
-    let scopes: Vec<&str> = usage["budgets"].as_array().expect("budgets").iter().filter_map(|budget| budget["scope"].as_str()).collect();
+    let scopes: Vec<&str> = usage["budgets"]
+        .as_array()
+        .expect("budgets")
+        .iter()
+        .filter_map(|budget| budget["scope"].as_str())
+        .collect();
     assert_eq!(scopes, ["workspace", "tenant"], "{usage}");
     common::drop_pool(&h.pool, &h.name).await;
 }
@@ -197,24 +259,62 @@ async fn a_spent_budget_starts_no_new_model_call() {
         return;
     };
     // 50 tokens for the workspace; each model call uses 20.
-    let (status, granted) = command(&h.router, OWNER, "SetBudget", json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 50 } })).await;
+    let (status, granted) = command(
+        &h.router,
+        OWNER,
+        "SetBudget",
+        json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 50 } }),
+    )
+    .await;
     assert_eq!(status, 200, "{granted}");
     for turn in 1..=3 {
-        let (status, posted) = command(&h.router, OWNER, "PostMessage", json!({ "workspace_id": WORKSPACE, "content": format!("note {turn}") })).await;
+        let (status, posted) = command(
+            &h.router,
+            OWNER,
+            "PostMessage",
+            json!({ "workspace_id": WORKSPACE, "content": format!("note {turn}") }),
+        )
+        .await;
         assert_eq!(status, 200, "{posted}");
-        assert_eq!(posted["result"]["turn"]["kind"], "completed", "turn {turn}: {posted}");
+        assert_eq!(
+            posted["result"]["turn"]["kind"], "completed",
+            "turn {turn}: {posted}"
+        );
     }
     assert_eq!(h.model.calls.load(Ordering::SeqCst), 3);
-    let (_, usage) = call(&h.router, OWNER, "GET", &format!("/v1/usage?workspace_id={WORKSPACE}"), None).await;
+    let (_, usage) = call(
+        &h.router,
+        OWNER,
+        "GET",
+        &format!("/v1/usage?workspace_id={WORKSPACE}"),
+        None,
+    )
+    .await;
     let budget = &usage["budgets"][0];
-    assert_eq!(budget["consumed"]["tokens"], 60, "every call was charged: {usage}");
+    assert_eq!(
+        budget["consumed"]["tokens"], 60,
+        "every call was charged: {usage}"
+    );
     assert_eq!(budget["status"], "exhausted", "{usage}");
 
     // The next message is accepted, but its turn starts no model call: the run is suspended.
-    let (status, posted) = command(&h.router, OWNER, "PostMessage", json!({ "workspace_id": WORKSPACE, "content": "one more" })).await;
+    let (status, posted) = command(
+        &h.router,
+        OWNER,
+        "PostMessage",
+        json!({ "workspace_id": WORKSPACE, "content": "one more" }),
+    )
+    .await;
     assert_eq!(status, 200, "{posted}");
-    assert_eq!(posted["result"]["turn"]["kind"], "budget_exhausted", "{posted}");
-    assert_eq!(h.model.calls.load(Ordering::SeqCst), 3, "no model call against a spent budget");
+    assert_eq!(
+        posted["result"]["turn"]["kind"], "budget_exhausted",
+        "{posted}"
+    );
+    assert_eq!(
+        h.model.calls.load(Ordering::SeqCst),
+        3,
+        "no model call against a spent budget"
+    );
     let run_id = posted["result"]["run_id"].as_str().expect("run");
     let (_, run) = call(&h.router, OWNER, "GET", &format!("/v1/runs/{run_id}"), None).await;
     assert_eq!(run["status"], "SUSPENDED", "{run}");
@@ -227,9 +327,21 @@ async fn a_spent_budget_starts_no_new_model_call() {
     assert_eq!(events_of(&h.pool, "usage.exhausted").await.len(), 1);
 
     // Raising the limit lets work start again.
-    let (status, _) = command(&h.router, OWNER, "SetBudget", json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 1000 } })).await;
+    let (status, _) = command(
+        &h.router,
+        OWNER,
+        "SetBudget",
+        json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tokens": 1000 } }),
+    )
+    .await;
     assert_eq!(status, 200);
-    let (_, posted) = command(&h.router, OWNER, "PostMessage", json!({ "workspace_id": WORKSPACE, "content": "and now" })).await;
+    let (_, posted) = command(
+        &h.router,
+        OWNER,
+        "PostMessage",
+        json!({ "workspace_id": WORKSPACE, "content": "and now" }),
+    )
+    .await;
     assert_eq!(posted["result"]["turn"]["kind"], "completed", "{posted}");
     common::drop_pool(&h.pool, &h.name).await;
 }
@@ -240,7 +352,11 @@ async fn concurrent_charges_add_up() {
         common::blocked_marker();
         return;
     };
-    let identity = RuntimeIdentity::system(TENANT, "test", CorrelationId::generate(&mut UlidGenerator::new()));
+    let identity = RuntimeIdentity::system(
+        TENANT,
+        "test",
+        CorrelationId::generate(&mut UlidGenerator::new()),
+    );
     let service = BudgetService::new(h.pool.clone(), identity).expect("service");
     let mut limits = MeterUsage::new();
     limits.set(Meter::Tokens, 1_000);
@@ -267,6 +383,10 @@ async fn concurrent_charges_add_up() {
         charge.await.expect("task").expect("record");
     }
     let after = service.load(&budget.id).await.expect("load");
-    assert_eq!(after.consumed.get(Meter::Tokens), 140, "twenty concurrent charges of 7, none lost");
+    assert_eq!(
+        after.consumed.get(Meter::Tokens),
+        140,
+        "twenty concurrent charges of 7, none lost"
+    );
     common::drop_pool(&h.pool, &h.name).await;
 }

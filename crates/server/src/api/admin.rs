@@ -252,7 +252,9 @@ pub async fn set_budget(
     Authorization::check(state.pool(), scope, workspace_id, action, correlation).await?;
     let limits = BudgetLimits::parse(
         "(request)",
-        params.get("limits").unwrap_or(&Value::Object(serde_json::Map::new())),
+        params
+            .get("limits")
+            .unwrap_or(&Value::Object(serde_json::Map::new())),
     )
     .map_err(|error| budget_error(&error, correlation))?;
     let mut acting = identity.clone();

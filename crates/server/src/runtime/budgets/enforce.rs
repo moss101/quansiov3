@@ -55,8 +55,9 @@ impl RuntimeBudgets {
 impl BudgetPort for RuntimeBudgets {
     async fn exhausted(&self, run: &Run) -> Result<Option<String>, RuntimeError> {
         Ok(self.chain(run).await?.into_iter().find_map(|budget| {
-            (budget.status == "exhausted" || !exhausted_meters(&budget.limits, &budget.consumed).is_empty())
-                .then_some(budget.id)
+            (budget.status == "exhausted"
+                || !exhausted_meters(&budget.limits, &budget.consumed).is_empty())
+            .then_some(budget.id)
         }))
     }
 
