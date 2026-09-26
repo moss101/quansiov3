@@ -1,0 +1,9 @@
+CONTROL:
+test artifact_writes_are_runtime_events_committed_with_them ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.52s
+MUTANT: a new version is recorded under another event
+COMPILES
+test artifact_writes_are_runtime_events_committed_with_them ... FAILED
+thread 'artifact_writes_are_runtime_events_committed_with_them' (39189972) panicked at crates/server/tests/artifacts.rs:889:5:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.36s
+exit=101

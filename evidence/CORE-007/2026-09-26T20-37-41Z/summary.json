@@ -1,0 +1,85 @@
+{
+  "task_id": "CORE-007",
+  "git_commit": "081ddec0c12544558b4381055102223b8e07c9f0",
+  "recorded_at": "2026-09-26T20:51:29Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-events; cargo test -p quansio-server --test artifacts --test artifact_workspace --test artifact_workflows --test api --test usage_store --test routines --test webhooks",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-26T20-37-41Z/tests.log"
+    },
+    {
+      "command": "cargo fmt --all --check; cargo clippy -p quansio-events -p quansio-server --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-26T20-37-41Z/lint.log"
+    },
+    {
+      "command": "mutant: a new version recorded under another event type; cargo test --test artifacts artifact_writes_are (must fail)",
+      "exit_code": 101,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-26T20-37-41Z/mutation.log"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release builds of main and of this branch> python served_storage_check.py # main must fail, this branch must pass",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-007/2026-09-26T20-37-41Z/served-storage.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-events; cargo test -p quansio-server --test artifacts --test artifact_workspace --test artifact_workflows --test api --test usage_store --test routines --test webhooks",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check; cargo clippy -p quansio-events -p quansio-server --all-targets -- -D warnings (statuses captured before filtering)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutant: a new version recorded under another event type; cargo test --test artifacts artifact_writes_are (must fail)",
+      "exit_code": 101,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_SERVER_BIN=<release builds of main and of this branch> python served_storage_check.py # main must fail, this branch must pass",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CORE-007/2026-09-26T20-37-41Z/NOTES.md",
+      "sha256": "00775baea9668612b27020ca1222848487d18a8923626d443129e5ea1a2c1f08",
+      "bytes": 2186
+    },
+    {
+      "path": "evidence/CORE-007/2026-09-26T20-37-41Z/lint.log",
+      "sha256": "1d8aef133f5f6527527cfde981429a1af96d96503faa477daae8adfae3d43dde",
+      "bytes": 105
+    },
+    {
+      "path": "evidence/CORE-007/2026-09-26T20-37-41Z/mutation.log",
+      "sha256": "e3c182ba2ee1912707a87aa0cc68a4528a5c8acc42d249cf8c1e1a517767eb72",
+      "bytes": 538
+    },
+    {
+      "path": "evidence/CORE-007/2026-09-26T20-37-41Z/served-storage.log",
+      "sha256": "0e3729cd915ff0e4c8e3e2a727454291c9d05c78444142bc17d74eb148241ea3",
+      "bytes": 338
+    },
+    {
+      "path": "evidence/CORE-007/2026-09-26T20-37-41Z/served_storage_check.py",
+      "sha256": "7e9873aedae8d2a6f45b2bdf71a5eeb266877c2b01d088af6d683846ae40151e",
+      "bytes": 842
+    },
+    {
+      "path": "evidence/CORE-007/2026-09-26T20-37-41Z/tests.log",
+      "sha256": "d3d69a99dd2e031df9f68cf14361b2d63ad9dd2977d135fccc3cc4bca6475c00",
+      "bytes": 6905
+    }
+  ]
+}

@@ -178,35 +178,10 @@ impl EventStore {
             return Err(EventError::NoEventStaged);
         }
         for draft in batch.staged {
-            let sequence = self.next_sequence(&mut tx, tenant_id).await?;
-            let event = RuntimeEvent::from_draft(draft, tenant_id, sequence);
-            insert_event(&mut tx, &event).await?;
+            append_in(&mut tx, tenant_id, draft).await?;
         }
         tx.commit().await?;
         Ok(())
-    }
-
-    /// Assign the next tenant sequence inside the caller's transaction.
-    ///
-    /// `tenant_event_sequences` holds one counter row per tenant. The upsert takes an
-    /// exclusive row lock held until commit, so concurrent writers serialize and each
-    /// sees the previous committed value; a rollback rolls the increment back, keeping
-    /// the stream gap-free.
-    async fn next_sequence(
-        &self,
-        tx: &mut Transaction<'_, Postgres>,
-        tenant_id: &str,
-    ) -> Result<Sequence, EventError> {
-        let value: i64 = sqlx::query_scalar(
-            "INSERT INTO tenant_event_sequences (tenant_id, next_sequence) VALUES ($1, 1) \
-             ON CONFLICT (tenant_id) DO UPDATE \
-             SET next_sequence = tenant_event_sequences.next_sequence + 1, updated_at = now() \
-             RETURNING next_sequence",
-        )
-        .bind(tenant_id)
-        .fetch_one(&mut **tx)
-        .await?;
-        Sequence::new(value).map_err(|error| EventError::MalformedEventRow(error.to_string()))
     }
 
     /// Read events for a tenant with `sequence` strictly after `after`, in order.
@@ -277,9 +252,45 @@ pub(crate) fn validate_tenant_id(tenant_id: &str) -> Result<(), EventError> {
         .map_err(|_| EventError::InvalidTenantId(tenant_id.to_string()))
 }
 
+/// Append one event inside the caller's open transaction — for a store composed into a larger
+/// transaction (the artifact store, for one) whose mutation and event must commit together. The
+/// tenant sequence is assigned here; nothing is committed: the caller's commit publishes the event
+/// with its mutation, and a rollback removes both.
+///
+/// # Errors
+/// Returns a database error, or an envelope error for a draft that does not make a valid event.
+pub async fn append_in(
+    conn: &mut PgConnection,
+    tenant_id: &str,
+    draft: EventDraft,
+) -> Result<RuntimeEvent, EventError> {
+    let sequence = next_sequence(conn, tenant_id).await?;
+    let event = RuntimeEvent::from_draft(draft, tenant_id, sequence);
+    insert_event(conn, &event).await?;
+    Ok(event)
+}
+
+/// Assign the next tenant sequence inside the caller's transaction.
+///
+/// `tenant_event_sequences` holds one counter row per tenant. The upsert takes an exclusive row
+/// lock held until commit, so concurrent writers serialize and each sees the previous committed
+/// value; a rollback rolls the increment back, keeping the stream gap-free.
+async fn next_sequence(conn: &mut PgConnection, tenant_id: &str) -> Result<Sequence, EventError> {
+    let value: i64 = sqlx::query_scalar(
+        "INSERT INTO tenant_event_sequences (tenant_id, next_sequence) VALUES ($1, 1) \
+         ON CONFLICT (tenant_id) DO UPDATE \
+         SET next_sequence = tenant_event_sequences.next_sequence + 1, updated_at = now() \
+         RETURNING next_sequence",
+    )
+    .bind(tenant_id)
+    .fetch_one(&mut *conn)
+    .await?;
+    Sequence::new(value).map_err(|error| EventError::MalformedEventRow(error.to_string()))
+}
+
 /// Insert one RuntimeEvent plus its outbox row inside an open transaction.
 pub(crate) async fn insert_event(
-    tx: &mut Transaction<'_, Postgres>,
+    conn: &mut PgConnection,
     event: &RuntimeEvent,
 ) -> Result<(), EventError> {
     let actor = serde_json::to_value(&event.actor)?;
@@ -305,7 +316,7 @@ pub(crate) async fn insert_event(
     .bind(actor)
     .bind(event.generation.map(|generation| generation.get() as i64))
     .bind(&event.payload)
-    .execute(&mut **tx)
+    .execute(&mut *conn)
     .await?;
 
     let subject = event.subject();
@@ -317,7 +328,7 @@ pub(crate) async fn insert_event(
     .bind(&event.tenant_id)
     .bind(subject)
     .bind(envelope)
-    .execute(&mut **tx)
+    .execute(&mut *conn)
     .await?;
     Ok(())
 }

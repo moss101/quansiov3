@@ -14,8 +14,9 @@
 //! * deletion honours legal hold and retention and records the decision it made.
 
 use chrono::{DateTime, Utc};
-use quansio_core::{Digest, UlidGenerator};
-use serde_json::Value;
+use quansio_core::{CorrelationId, Digest, UlidGenerator};
+use quansio_events::{Actor, EventDraft, EventType};
+use serde_json::{json, Value};
 use sqlx::postgres::{PgConnection, PgRow};
 use sqlx::Row;
 
@@ -91,6 +92,9 @@ pub enum ArtifactError {
     /// The evidence row carries no object bytes.
     #[error("evidence {0} has no object bytes")]
     NoBytes(String),
+    /// The artifact's RuntimeEvent could not be written.
+    #[error("artifact event: {0}")]
+    Event(#[from] quansio_events::EventError),
 }
 
 impl ArtifactError {
@@ -389,6 +393,22 @@ impl<'a> ArtifactStore<'a> {
         for grant in &input.grants {
             insert_grant(&mut *conn, tenant_id, &id, grant).await?;
         }
+        emit(
+            &mut *conn,
+            tenant_id,
+            &input.workspace_id,
+            &id.to_canonical(),
+            principal,
+            "artifact.created",
+            json!({
+                "artifact_id": id.to_canonical(),
+                "workspace_id": input.workspace_id,
+                "kind": input.kind.as_str(),
+                "title": input.title,
+                "role": input.role,
+            }),
+        )
+        .await?;
         fetch_artifact(&mut *conn, tenant_id, &id).await
     }
 
@@ -504,6 +524,24 @@ impl<'a> ArtifactStore<'a> {
         .execute(&mut *conn)
         .await?;
 
+        emit(
+            &mut *conn,
+            tenant_id,
+            &artifact.workspace_id,
+            &artifact_id.to_canonical(),
+            principal,
+            "artifact.version_added",
+            json!({
+                "artifact_id": artifact_id.to_canonical(),
+                "version_id": version_id.to_canonical(),
+                "seq": seq,
+                "size_bytes": input.bytes.len(),
+                "media_type": input.media_type,
+                "content_digest": digest.as_str(),
+                "run_id": input.produced_by.run_id,
+            }),
+        )
+        .await?;
         let version = fetch_version(&mut *conn, tenant_id, &version_id).await?;
         Ok(StoredVersion {
             version,
@@ -572,7 +610,21 @@ impl<'a> ArtifactStore<'a> {
         set_tenant_context_conn(conn, tenant_id).await?;
         let artifact = fetch_artifact(&mut *conn, tenant_id, artifact_id).await?;
         authorize(&artifact, principal, GrantLevel::Write)?;
-        insert_grant(&mut *conn, tenant_id, artifact_id, grant).await
+        insert_grant(&mut *conn, tenant_id, artifact_id, grant).await?;
+        emit(
+            &mut *conn,
+            tenant_id,
+            &artifact.workspace_id,
+            &artifact_id.to_canonical(),
+            principal,
+            "artifact.grant_changed",
+            json!({
+                "artifact_id": artifact_id.to_canonical(),
+                "principal": grant.principal,
+                "level": grant.level.as_str(),
+            }),
+        )
+        .await
     }
 
     /// Request deletion, honouring legal hold and retention.
@@ -1316,4 +1368,44 @@ fn decode_evidence_kind(value: &str) -> Result<EvidenceKind, ArtifactError> {
         }
     };
     Ok(kind)
+}
+
+/// Write one `artifact.*` RuntimeEvent in the caller's transaction (DOMAIN.md §9.2), so the artifact
+/// row and its event commit or roll back together.
+async fn emit(
+    conn: &mut PgConnection,
+    tenant_id: &str,
+    workspace_id: &str,
+    artifact_id: &str,
+    principal: &str,
+    event_type: &str,
+    payload: Value,
+) -> Result<(), ArtifactError> {
+    let version: i64 = sqlx::query_scalar(
+        "SELECT COALESCE(MAX(aggregate_version), 0) + 1 FROM runtime_events \
+         WHERE tenant_id = $1 AND aggregate_type = 'artifact' AND aggregate_id = $2",
+    )
+    .bind(tenant_id)
+    .bind(artifact_id)
+    .fetch_one(&mut *conn)
+    .await?;
+    let actor = if principal.starts_with("usr_") {
+        Actor::user(principal)
+    } else if principal.starts_with("agt_") {
+        Actor::agent(principal)
+    } else {
+        Actor::system(principal)
+    };
+    let draft = EventDraft::new(
+        "artifact",
+        artifact_id.to_string(),
+        u64::try_from(version).unwrap_or(1),
+        EventType::parse(event_type)?,
+        CorrelationId::generate(&mut UlidGenerator::new()),
+        actor,
+    )
+    .with_workspace(workspace_id.to_string())
+    .with_payload(payload);
+    quansio_events::append_in(conn, tenant_id, draft).await?;
+    Ok(())
 }
