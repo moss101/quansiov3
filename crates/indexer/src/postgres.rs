@@ -28,6 +28,7 @@ SELECT a.id            AS artifact_id, \
    AND v.tenant_id = $1 \
    AND a.deleted_at IS NULL \
    AND ($2::text IS NULL OR a.workspace_id = $2::text) \
+   AND ($3::text IS NULL OR v.id > $3::text) \
  ORDER BY a.id, v.seq";
 
 /// Reads artifact-version projections for a tenant, with text from stored bytes.
@@ -58,6 +59,7 @@ impl<P: ObjectTextProvider> AuthoritativeSource for PostgresArtifactSource<P> {
         let rows = sqlx::query(LOAD_SQL)
             .bind(&scope.tenant_id)
             .bind(scope.workspace_id.as_deref())
+            .bind(scope.after_version_id.as_deref())
             .fetch_all(&mut *transaction)
             .await
             .map_err(source_error)?;

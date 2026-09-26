@@ -1,0 +1,6 @@
+host:  0:01  up 4 days, 11:22, 2 users, load averages: 8.21 7.81 6.99
+== bin-core007 (main before the fix)
+first query after a write {'n': 20, 'p50_ms': 235.81, 'p95_ms': 261.63, 'p99_ms': 266.45, 'max_ms': 266.45, 'mean_ms': 239.67}
+== bin-int004 (this branch)
+first query after a write {'n': 20, 'p50_ms': 11.95, 'p95_ms': 15.49, 'p99_ms': 15.99, 'max_ms': 15.99, 'mean_ms': 12.47}
+exit=0
