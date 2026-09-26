@@ -44,6 +44,7 @@ const WORKSPACE: &str = "ws_01J8Z3K6F1N8VQ2X5W9YAPP001";
 const NODE: &str = "wn_01J8Z3K6F1N8VQ2X5W9YAPP001";
 const COMMAND: &str = "cmd_01J8Z3K6F1N8VQ2X5W9YAPP001";
 const COMMAND_UNOFFERED: &str = "cmd_01J8Z3K6F1N8VQ2X5W9YAPP002";
+const COMMAND_STREAMED: &str = "cmd_01J8Z3K6F1N8VQ2X5W9YAPP003";
 
 async fn seed_policy(pool: &sqlx::PgPool) {
     let rules = json!([
@@ -514,6 +515,10 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
     request
         .headers_mut()
         .insert("x-quansio-tenant", TENANT.parse().expect("header"));
+    // The person in the conversation: a direct thread's live frames reach only its participants.
+    request
+        .headers_mut()
+        .insert("x-quansio-user", USER.parse().expect("header"));
     request.headers_mut().insert(
         "x-quansio-consumer",
         "skeleton-gateway".parse().expect("header"),
@@ -553,8 +558,14 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
     assert!(tool_calls(&pool, &run_id).await.is_empty(), "{body}");
     assert_eq!(model_calls(&pool, &run_id).await.len(), 1, "{body}");
 
-    // The reply streamed to the subscriber as the model wrote it: non-final `model.delta` frames
-    // in order, then the final frame whose whole text is exactly what streamed.
+    // A plain reply streams to the subscriber as the model writes it: non-final `model.delta`
+    // frames in order, then the final frame whose whole text is exactly what streamed.
+    let response = post(COMMAND_STREAMED, "Summarize the notes in a sentence.")
+        .await
+        .expect("post");
+    let body: Value = response.json().await.expect("json");
+    let run_id = body["result"]["run_id"].as_str().expect("run").to_string();
+    let mut seen = Vec::new();
     let mut streamed = String::new();
     let mut partial_frames = 0;
     let mut final_text = None;
@@ -566,6 +577,7 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
         };
         let frame: Value = serde_json::from_str(&text).expect("frame");
         let live = &frame["frame"];
+        seen.push(format!("{}:{}", frame["kind"], live["kind"]));
         if frame["kind"] != "live"
             || live["kind"] != "model.delta"
             || live["run_id"] != run_id.as_str()
@@ -580,7 +592,8 @@ async fn a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger()
             streamed.push_str(text);
         }
     }
-    let final_text = final_text.expect("a final model.delta for the reply");
+    let final_text = final_text
+        .unwrap_or_else(|| panic!("no final model.delta for {run_id}; frames seen: {seen:?}"));
     assert!(
         partial_frames >= 2,
         "the stub streams its reply in two content deltas; {partial_frames} arrived before the final"
