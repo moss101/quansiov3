@@ -15,8 +15,11 @@ import {
   desktopBlocked,
   emailOf,
   launchDesktop,
+  openAccountItem,
+  openSurface,
   OWNER,
   settle,
+  shellReady,
   signInDesktop,
   Stack,
   waitFor,
@@ -42,7 +45,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
     await stack.drop();
   }, 60_000);
 
-  const nav = (name: string) => desktop.page.getByRole("navigation", { name: "Surfaces" }).getByRole("button", { name, exact: true });
+  const nav = (name: string) => openSurface(desktop.page, name);
 
   it("onboards a new person with nothing but an email address", async () => {
     const fresh = await launchDesktop(stack.origin);
@@ -55,7 +58,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
       await page.getByRole("button", { name: "cloud" }).click();
       await page.getByRole("heading", { name: "Security defaults" }).waitFor({ timeout: 30_000 });
       await page.getByRole("button", { name: "Confirm" }).click();
-      await page.getByRole("navigation", { name: "Surfaces" }).waitFor({ state: "visible", timeout: 30_000 });
+      await shellReady(page);
       await waitFor(async () => (await page.getByText("Connected.").count()) > 0, "the live connection");
       const session = await stack.session("qa008-newcomer@example.com");
       const me = await stack.get(session.access_token, "/v1/me");
@@ -68,7 +71,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("chats with a teammate", async () => {
     const page = desktop.page;
-    await nav("Chat").click();
+    await nav("Chat");
     const composer = page.getByRole("textbox", { name: "Message your teammates…" });
     await composer.fill("Summarize the launch checklist");
     await page.getByRole("button", { name: "Send" }).click();
@@ -80,10 +83,10 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("approves an effect from the preview it was asked about", async () => {
     const page = desktop.page;
-    await nav("Chat").click();
+    await nav("Chat");
     await page.getByRole("textbox", { name: "Message your teammates…" }).fill("write the summary [[scenario:approval]]");
     await page.getByRole("button", { name: "Send" }).click();
-    await nav("Approvals").click();
+    await nav("Approvals");
     const trust = page.getByRole("region", { name: "Trust" });
     await waitFor(async () => (await trust.getByRole("heading", { name: "Approvals (1)" }).count()) > 0, "the approval request", 30_000);
     await trust.getByRole("button", { name: /^Approve fs\.write/ }).click();
@@ -106,7 +109,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("steers the plan: adds a task under the objective and moves it to ready", async () => {
     const page = desktop.page;
-    await nav("Objectives and plan").click();
+    await nav("Objectives and plan");
     const work = page.getByRole("region", { name: "Work" });
     await work.getByRole("button", { name: /objective e2e seed/ }).click();
     await work.getByRole("textbox", { name: "New node title…" }).fill("Draft the release notes");
@@ -123,7 +126,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("takes over the live browser and hands it back", async () => {
     const page = desktop.page;
-    await nav("Live browser and terminal").click();
+    await nav("Live browser and terminal");
     const live = page.getByRole("region", { name: "Live browser and terminal" });
     await live.getByRole("button", { name: "https://example.com/" }).click();
     await live.getByRole("button", { name: "Take over" }).first().click();
@@ -144,7 +147,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
       media_type: "text/markdown",
       bytes_base64: Buffer.from("# Launch plan\n\n- ship the desktop\n").toString("base64"),
     });
-    await nav("Files and artifacts").click();
+    await nav("Files and artifacts");
     const artifacts = page.getByRole("region", { name: "Artifacts" });
     await waitFor(async () => (await artifacts.getByRole("button", { name: /Launch plan\.md/ }).count()) > 0, "the artifact in the list", 30_000);
     await artifacts.getByRole("button", { name: /Launch plan\.md/ }).click();
@@ -154,7 +157,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("starts a group thread with a colleague", async () => {
     const page = desktop.page;
-    await nav("Group threads").click();
+    await nav("Group threads");
     const collaboration = page.getByRole("region", { name: "Collaboration" });
     await collaboration.getByRole("textbox", { name: "Title" }).fill("Launch war room");
     await collaboration.getByRole("textbox", { name: "People (usr_… ids, comma separated)" }).fill(APPROVER);
@@ -167,7 +170,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("creates a routine", async () => {
     const page = desktop.page;
-    await nav("Routines and notifications").click();
+    await nav("Routines and notifications");
     const automations = page.getByRole("region", { name: "Automations" });
     await automations.getByRole("textbox", { name: "Title" }).fill("Morning digest");
     await automations.getByRole("textbox", { name: "What should the teammate do?" }).fill("Summarize yesterday's runs");
@@ -179,7 +182,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
 
   it("changes settings and sees what the change sets in motion", async () => {
     const page = desktop.page;
-    await page.getByRole("button", { name: "Settings" }).click();
+    await openAccountItem(page, "Settings");
     const settings = page.getByRole("region", { name: "Settings" });
     await settings.getByLabel("Where work runs").selectOption("private_worker");
     await settings.getByRole("button", { name: "Save workspace settings" }).click();
@@ -213,7 +216,7 @@ describe.skipIf(blocked !== null)("desktop journeys (real Electron, real server)
     const surfaces = ["Chat", "Objectives and plan", "Teammates", "Approvals", "Live browser and terminal", "Files and artifacts", "Knowledge, memory and skills", "Group threads", "Routines and notifications"];
     const failures: string[] = [];
     for (const surface of [...surfaces, "Settings"]) {
-      await (surface === "Settings" ? page.getByRole("button", { name: "Settings" }) : nav(surface)).click();
+      await (surface === "Settings" ? openAccountItem(page, "Settings") : nav(surface));
       await settle(page);
       const audit = await auditAccessibility(page);
       failures.push(...audit.violations.map((violation) => `${surface}: ${violation}`));

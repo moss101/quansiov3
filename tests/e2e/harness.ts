@@ -288,8 +288,28 @@ export async function signInDesktop(page: Page, stack: Stack, email: string, onb
   await page.getByRole("textbox", { name: "Paste the sign-in token" }).fill(token);
   await page.getByRole("button", { name: "Continue" }).click();
   if (onboarding === "returning") {
-    await page.getByRole("navigation", { name: "Surfaces" }).waitFor({ state: "visible", timeout: 30_000 });
+    await shellReady(page);
   }
+}
+
+/** The signed-in shell is on screen: its sidebar offers Chats and Workspace. */
+export async function shellReady(page: Page): Promise<void> {
+  await page.getByRole("group", { name: "Show in the sidebar" }).waitFor({ state: "visible", timeout: 30_000 });
+}
+
+/** Open a surface the way a person does: switch the sidebar to Workspace, then pick the surface. */
+export async function openSurface(page: Page, name: string): Promise<void> {
+  const workspace = page.getByRole("group", { name: "Show in the sidebar" }).getByRole("button", { name: "Workspace", exact: true });
+  if ((await workspace.getAttribute("aria-pressed")) !== "true") {
+    await workspace.click();
+  }
+  await page.getByRole("navigation", { name: "Surfaces" }).getByRole("button", { name, exact: true }).click();
+}
+
+/** Choose an item from the account menu (Settings, Sign out). */
+export async function openAccountItem(page: Page, name: string): Promise<void> {
+  await page.getByRole("button", { name: "Account", exact: true }).click();
+  await page.getByRole("menuitem", { name, exact: true }).click();
 }
 
 export async function launchChrome(): Promise<Browser> {
@@ -392,7 +412,10 @@ export async function settle(page: Page, quietMs = 400, timeoutMs = 10_000): Pro
   );
 }
 
-/** Tab through the page: every enabled, visible control must take focus, and focus must show. */
+/**
+ * Tab through the page: every enabled, visible control must take focus, and focus must show — on the
+ * control, or on a container within three levels that changes when the control takes focus.
+ */
 export async function walkKeyboard(page: Page, maxSteps = 200): Promise<KeyboardReport> {
   const expected = await page.evaluate(() => {
     const selector = "a[href], button, input, select, textarea, [tabindex]";
@@ -410,10 +433,19 @@ export async function walkKeyboard(page: Page, maxSteps = 200): Promise<Keyboard
   await page.evaluate(() => {
     (document.activeElement as HTMLElement | null)?.blur();
     window.scrollTo(0, 0);
-    // A control's resting shadow (a raised button) is not a focus indicator: remember it, so only
-    // a shadow that appears or changes on focus counts as showing focus.
+    // A control's resting shadow (a raised button) is not a focus indicator: remember how the control
+    // and its nearest ancestors look at rest, so only an outline or shadow that appears on focus counts.
+    const look = (element: Element): string => {
+      const style = window.getComputedStyle(element);
+      return `${style.outlineStyle} ${style.outlineWidth} ${style.outlineColor}|${style.boxShadow}`;
+    };
     for (const element of document.querySelectorAll<HTMLElement>("[data-qa008-key]")) {
       element.dataset["qa008Shadow"] = window.getComputedStyle(element).boxShadow;
+      const rest: string[] = [];
+      for (let parent = element.parentElement, depth = 0; parent && depth < 3; parent = parent.parentElement, depth += 1) {
+        rest.push(look(parent));
+      }
+      element.dataset["qa008Around"] = JSON.stringify(rest);
     }
   });
   await page.locator("body").focus();
@@ -430,7 +462,18 @@ export async function walkKeyboard(page: Page, maxSteps = 200): Promise<Keyboard
       const style = window.getComputedStyle(element);
       const outline = style.outlineStyle !== "none" && style.outlineWidth !== "0px";
       const ring = style.boxShadow !== "none" && style.boxShadow !== (element.dataset["qa008Shadow"] ?? "none");
-      const visible = outline || ring;
+      // A field without a frame of its own may show focus on its container (a composer pill): an
+      // ancestor within three levels whose outline or shadow changes when the field takes focus.
+      const rest = JSON.parse(element.dataset["qa008Around"] ?? "[]") as string[];
+      let around = false;
+      for (let parent = element.parentElement, depth = 0; parent && depth < rest.length; parent = parent.parentElement, depth += 1) {
+        const style = window.getComputedStyle(parent);
+        const drawn = style.outlineStyle !== "none" && style.outlineWidth !== "0px";
+        if ((drawn || style.boxShadow !== "none") && `${style.outlineStyle} ${style.outlineWidth} ${style.outlineColor}|${style.boxShadow}` !== rest[depth]) {
+          around = true;
+        }
+      }
+      const visible = outline || ring || around;
       return { key: element.dataset["qa008Key"] ?? null, visible };
     });
     if (!focused || focused.key === null) {
