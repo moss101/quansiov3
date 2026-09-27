@@ -301,14 +301,10 @@ async fn durable_timer_survives_a_pool_drop_and_still_fires_at_its_due_time() {
         return;
     };
     let run = seed_run(&fixture.pool, "WAITING_TIMER", 1).await;
-    let timer = schedule_timer(
-        &fixture.pool,
-        &run,
-        "timer:restart",
-        Utc::now() + ChronoDuration::milliseconds(400),
-        1,
-    )
-    .await;
+    // Far enough out that closing the pool and reconnecting finish before it on a loaded
+    // host (400 ms did not, 2026-09-27); the early tick is checked to have run before it.
+    let due = Utc::now() + ChronoDuration::seconds(3);
+    let timer = schedule_timer(&fixture.pool, &run, "timer:restart", due, 1).await;
 
     // Simulate a process restart: drop the pool and reconnect to the same database.
     fixture.pool.close().await;
@@ -316,12 +312,17 @@ async fn durable_timer_survives_a_pool_drop_and_still_fires_at_its_due_time() {
     let dispatch = Arc::new(RecordingDispatch::new(1));
     let restarted = scheduler(pool.clone(), "inst-restart", Arc::clone(&dispatch));
     let early = restarted.tick().await.expect("early tick");
+    assert!(
+        Utc::now() < due,
+        "the early tick ran after the timer was due; the host is too slow for this check"
+    );
     assert_eq!(
         early.timers_fired, 0,
         "the due time must come from PostgreSQL"
     );
 
-    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    let remaining = (due - Utc::now()).to_std().unwrap_or_default();
+    tokio::time::sleep(remaining + std::time::Duration::from_millis(200)).await;
     let report = restarted.tick().await.expect("due tick");
     assert_eq!(report.timers_fired, 1);
     assert_eq!(event_count(&pool, "run.resumed").await, 1);
