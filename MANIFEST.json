@@ -39,8 +39,8 @@
     },
     {
       "path": "registries/progress.json",
-      "bytes": 340238,
-      "sha256": "3bc4c26a6aa89166071cf670bfebdc62ccf6479a3461517623e93dddf703b390"
+      "bytes": 341663,
+      "sha256": "89985b585315073d55c12baf93234a09c3743d741bd66ed835cf1517bb5503c1"
     },
     {
       "path": "scripts/validate_v81.py",
