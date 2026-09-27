@@ -261,7 +261,7 @@ loop while turn.step_count < budget.max_steps and budget not exhausted:
 The model never sees raw credentials, other tenants' data, or unbounded tool output. Tool results enter context with `trust_level = UNTRUSTED_EXTERNAL` unless the Tool declares a higher source trust (§12).
 
 ### 5.7 ProtocolState (CORE-006)
-Per Run: `run_id, generation, pending_model_call?, pending_tool_calls[] (with dispatch tokens), pending_approvals[], open_questions[], waits[] ({kind, key, expires_at}), browser_control {session_id, holder: agent|user, since}, terminal_sessions[] ({id, cursor}), child_agent_threads[], cancellation {requested: bool, at}, last_compaction_epoch_id, updated_at`. Recovery reads this, RuntimeEvents, Checkpoints, Evidence and the Effect Ledger — never MemoryEntries.
+Per Run: `run_id, generation, pending_model_call?, pending_tool_calls[] (with dispatch tokens), pending_approvals[], open_questions[], waits[] ({kind, key, expires_at}), browser_control {session_id, holder: agent|user, since}, terminal_sessions[] ({id, cursor}), child_agent_threads[], cancellation {requested: bool, at}, last_compaction_epoch_id, updated_at`. Recovery reads this, RuntimeEvents, Checkpoints, Evidence and the Effect Ledger — never MemoryEntries. A starting runtime recovers every tenant's non-terminal runs, oldest first, before it accepts a request: it honours a cancellation requested before the stop and reports each run holding an uncertain effect, which resumes only once that effect is reconciled.
 
 ### 5.8 Checkpoint
 `id, execution_target_id, run_id?, kind (workspace_files|browser_session|terminal|full), storage_ref (object key + digest), generation, size_bytes, created_at, expires_at, restore_policy`.
