@@ -1,0 +1,23 @@
+{
+  "metric": "index_query_p95_ms",
+  "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server",
+  "corpus": "120 markdown artifacts (~2 KB) plus seeded knowledge and threads",
+  "steady": {
+    "n": 800,
+    "p50_ms": 12.53,
+    "p95_ms": 18.53,
+    "p99_ms": 22.43,
+    "max_ms": 26.27,
+    "mean_ms": 13.04
+  },
+  "first_query_after_a_write": {
+    "n": 20,
+    "p50_ms": 11.62,
+    "p95_ms": 16.23,
+    "p99_ms": 20.03,
+    "max_ms": 20.03,
+    "mean_ms": 12.52
+  },
+  "failures": [],
+  "target_ms": 300
+}

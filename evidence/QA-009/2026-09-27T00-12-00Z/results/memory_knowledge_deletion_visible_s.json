@@ -1,0 +1,7 @@
+{
+  "metric": "memory_knowledge_deletion_visible_s",
+  "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server",
+  "knowledge_s": 0.027,
+  "memory_s": 0.02,
+  "target_s": 60
+}

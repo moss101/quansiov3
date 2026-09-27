@@ -1,0 +1,155 @@
+{
+  "task_id": "QA-009",
+  "git_commit": "8e9fd2e691ef9397e71fcfe15cec9f780400e9b2",
+  "recorded_at": "2026-09-27T10:49:22Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_PERF=1 QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_SERVER_BIN/SEED_BIN=<release builds of the branch merged with every fix> QUANSIO_TEST_OPENAI_COMPATIBLE_*=<live provider> uv run --project python pytest tests/performance -v -s # served SLO campaign: 13 pass; the scheduling SLO fails on this shared host (564 ms p95 at load 5.6)",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/QA-009/2026-09-27T00-12-00Z/pytest-performance.log"
+    },
+    {
+      "command": "QUANSIO_TEST_PERF=1 ... pytest tests/performance/test_qa009_campaign.py -k scheduler # the scheduling SLO at host load 3.5: 447 ms p95",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-009/2026-09-27T00-12-00Z/scheduler-lower-load.log"
+    },
+    {
+      "command": "cargo test -p qworkerd --test browser a_dom_action_round_trip_stays_inside_the_budget # real Chrome over CDP (BLOCKED_EXTERNAL when no Chrome is installed)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-009/2026-09-27T00-12-00Z/browser-dom.log"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh --out ci-summary.json",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-009/2026-09-27T00-12-00Z/ci.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_PERF=1 QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_SERVER_BIN/SEED_BIN=<release builds of the branch merged with every fix> QUANSIO_TEST_OPENAI_COMPATIBLE_*=<live provider> uv run --project python pytest tests/performance -v -s # served SLO campaign: 13 pass; the scheduling SLO fails on this shared host (564 ms p95 at load 5.6)",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "QUANSIO_TEST_PERF=1 ... pytest tests/performance/test_qa009_campaign.py -k scheduler # the scheduling SLO at host load 3.5: 447 ms p95",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p qworkerd --test browser a_dom_action_round_trip_stays_inside_the_budget # real Chrome over CDP (BLOCKED_EXTERNAL when no Chrome is installed)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "bash scripts/ci/ci.sh --out ci-summary.json",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/NOTES.md",
+      "sha256": "f003341d96a1e0764908d63e6a1acbd6f93f65fa9f7b29a8c40f564af9189d88",
+      "bytes": 7579
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/browser-dom.log",
+      "sha256": "70b2ce80f85b3055f3302265b2a1ab421e6751c88314e2bf46154699fcca99bc",
+      "bytes": 279
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/ci.log",
+      "sha256": "7d0a5a03939e9ee20bf4354c7b6b0992cc17d9eaa5fa68abcbe0152e352a1eeb",
+      "bytes": 1108
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/host-load.txt",
+      "sha256": "30069d41b04ae62c009d483cd02175140a3447ba24da1f2144e0c2bbf1adcb41",
+      "bytes": 792
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/pytest-performance.log",
+      "sha256": "3bcc095d2cc22476cf7d9aa459f7df74c28839abcc921305b6fab40c48cd9b1e",
+      "bytes": 14695
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/api_command_accepted_p95_ms.json",
+      "sha256": "0913850bb05f6cff1b88e1247b5b01bdfeb44cf8c694f984f3b0e4bfb836ac41",
+      "bytes": 1937
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/api_read_p95_ms.json",
+      "sha256": "2096294cb3426ef2022dc636c0b894bfdab6bfc4b84fa728eb69597a48e03ff7",
+      "bytes": 3220
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/event_delivery_lag_p95_ms.json",
+      "sha256": "a156b6fe80586afbf45d05afdaf6640d41327d1fb806a26c5c11a31107f3c0f0",
+      "bytes": 653
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/index_query_p95_ms.json",
+      "sha256": "69718506e141ab14977b868210a27df99844552dae06660ae8484e21c660bfc7",
+      "bytes": 594
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/memory_knowledge_deletion_visible_s.json",
+      "sha256": "73ca16afc42043c90200de1a9a90d987988cd5a057dc75ea80d5cc309763e541",
+      "bytes": 261
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/model_first_token_live_provider_ms.json",
+      "sha256": "0036325705fc92a56e39cee6888ea631fda7054fc1c43faca4378747ca4f3ad9",
+      "bytes": 887
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/model_stream_first_token_over_baseline_ms.json",
+      "sha256": "22e30fa2db43dffdaf9eb649037f460f06801c82a391c962781562973d9e7999",
+      "bytes": 726
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/overload_refusal_and_memory.json",
+      "sha256": "feae8c03a84ca95748606701172b221673b0708dc9d1ce6fba2526f83d2228fe",
+      "bytes": 666
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/overload_slow_consumers.json",
+      "sha256": "307b3baad811b7bd1ad299f33d57f08fd88f2be5c884cefcdd5324c5b6db49ad",
+      "bytes": 483
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/runtime_scheduling_latency_p95_ms.json",
+      "sha256": "2f2185ed7f9e58c029f926452ebd56b7cb4a7c5b22affbd02fa6afde77527c3c",
+      "bytes": 520
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/soak.json",
+      "sha256": "98496a2e1f41e75a67e7293e73c3e8b15b18d6cc5df56fbf4ab51e832d7090cf",
+      "bytes": 1930
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/usage_accuracy_model_tokens.json",
+      "sha256": "cdd9bb7315e547ca2f41789703db23aa7ed5e9ad45fb7ebfd296ccd47bf0c119",
+      "bytes": 342
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/results/usage_accuracy_storage.json",
+      "sha256": "4d8f8aa20b71d53751f4338673bc93fae58c6984e64f0304b1e87aabaa739ba9",
+      "bytes": 370
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/scheduler-lower-load.log",
+      "sha256": "354ab0c655566475aacd241349440fa2297bf9faeee83c6e7ecb08d21d081dd2",
+      "bytes": 963
+    },
+    {
+      "path": "evidence/QA-009/2026-09-27T00-12-00Z/scheduler-lower-load/runtime_scheduling_latency_p95_ms.json",
+      "sha256": "94011d88fbf41de283dd180580d9456e090cb6c9add0d57c725821d03eb4e105",
+      "bytes": 521
+    }
+  ]
+}

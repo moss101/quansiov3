@@ -1,0 +1,10 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001
+collected 10 items / 9 deselected / 1 selected
+
+tests/performance/test_qa009_campaign.py QA-009 runtime_scheduling_latency_p95_ms: {"metric": "runtime_scheduling_latency_p95_ms", "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server", "measured_from": "a routine fire's due window to its run's start (runs.started_at)", "routines": 20, "interval": "5s", "settings": "shipped defaults", "dispatch": {"n": 161, "p50_ms": 232.65, "p95_ms": 447.38, "p99_ms": 501.69, "max_ms": 508.44, "mean_ms": 253.38}, "target_ms": 500}
+.
+
+======================= 1 passed, 9 deselected in 45.72s =======================
+exit=0
