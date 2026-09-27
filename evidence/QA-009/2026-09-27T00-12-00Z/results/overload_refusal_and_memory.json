@@ -1,0 +1,29 @@
+{
+  "metric": "overload_refusal_and_memory",
+  "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server",
+  "command_burst": {
+    "sent": 200,
+    "accepted": 120,
+    "refused_rate_limited": 80
+  },
+  "read_flood": {
+    "clients": 64,
+    "seconds": 30,
+    "latency": {
+      "n": 18067,
+      "p50_ms": 103.71,
+      "p95_ms": 134.16,
+      "p99_ms": 158.36,
+      "max_ms": 190.17,
+      "mean_ms": 107.35
+    },
+    "errors": [],
+    "error_count": 0
+  },
+  "rss_mb": {
+    "before": 17.8,
+    "first_10s_max": 35.4,
+    "last_10s_max": 35.6
+  },
+  "health_after": "ready"
+}

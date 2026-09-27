@@ -1,0 +1,9 @@
+{
+  "metric": "usage_accuracy_model_tokens",
+  "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server",
+  "model_calls": 12,
+  "ledger_input_tokens": 5620,
+  "ledger_output_tokens": 812,
+  "metered_input_tokens": 5620.0,
+  "metered_output_tokens": 812.0
+}

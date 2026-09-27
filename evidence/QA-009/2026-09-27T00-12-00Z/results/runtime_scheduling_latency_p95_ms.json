@@ -1,0 +1,17 @@
+{
+  "metric": "runtime_scheduling_latency_p95_ms",
+  "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server",
+  "measured_from": "a routine fire's due window to its run's start (runs.started_at)",
+  "routines": 20,
+  "interval": "5s",
+  "settings": "shipped defaults",
+  "dispatch": {
+    "n": 161,
+    "p50_ms": 249.62,
+    "p95_ms": 563.51,
+    "p99_ms": 625.46,
+    "max_ms": 626.09,
+    "mean_ms": 284.3
+  },
+  "target_ms": 500
+}

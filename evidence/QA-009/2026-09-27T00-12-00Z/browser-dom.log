@@ -1,0 +1,3 @@
+QA-009 browser_action_round_trip_ms: {"path": "click, then DOM observation, over CDP on a real Chrome", "n": 60, "p50_ms": 1.1, "p95_ms": 3.6, "max_ms": 35.6, "target_ms": 1500}
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 6.25s
+exit=0

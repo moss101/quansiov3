@@ -1,0 +1,161 @@
+{
+  "metric": "api_read_p95_ms",
+  "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server",
+  "clients": 8,
+  "overall": {
+    "n": 3600,
+    "p50_ms": 7.18,
+    "p95_ms": 13.78,
+    "p99_ms": 20.57,
+    "max_ms": 29.94,
+    "mean_ms": 7.89
+  },
+  "by_resource": {
+    "/v1/me": {
+      "n": 200,
+      "p50_ms": 7.78,
+      "p95_ms": 13.07,
+      "p99_ms": 21.54,
+      "max_ms": 22.16,
+      "mean_ms": 8.72
+    },
+    "/v1/threads": {
+      "n": 200,
+      "p50_ms": 11.83,
+      "p95_ms": 20.72,
+      "p99_ms": 23.38,
+      "max_ms": 23.93,
+      "mean_ms": 12.72
+    },
+    "/v1/messages": {
+      "n": 200,
+      "p50_ms": 8.87,
+      "p95_ms": 13.36,
+      "p99_ms": 19.92,
+      "max_ms": 21.4,
+      "mean_ms": 9.46
+    },
+    "/v1/questions": {
+      "n": 200,
+      "p50_ms": 10.43,
+      "p95_ms": 14.95,
+      "p99_ms": 21.61,
+      "max_ms": 23.67,
+      "mean_ms": 11.08
+    },
+    "/v1/artifacts": {
+      "n": 200,
+      "p50_ms": 6.3,
+      "p95_ms": 9.72,
+      "p99_ms": 16.99,
+      "max_ms": 17.83,
+      "mean_ms": 6.75
+    },
+    "/v1/approvals": {
+      "n": 200,
+      "p50_ms": 4.87,
+      "p95_ms": 8.09,
+      "p99_ms": 11.19,
+      "max_ms": 13.61,
+      "mean_ms": 5.25
+    },
+    "/v1/workgraph": {
+      "n": 200,
+      "p50_ms": 7.29,
+      "p95_ms": 11.63,
+      "p99_ms": 17.28,
+      "max_ms": 23.71,
+      "mean_ms": 7.84
+    },
+    "/v1/effects": {
+      "n": 200,
+      "p50_ms": 5.75,
+      "p95_ms": 7.11,
+      "p99_ms": 11.68,
+      "max_ms": 16.49,
+      "mean_ms": 5.87
+    },
+    "/v1/knowledge": {
+      "n": 200,
+      "p50_ms": 4.73,
+      "p95_ms": 6.71,
+      "p99_ms": 8.64,
+      "max_ms": 12.53,
+      "mean_ms": 4.94
+    },
+    "/v1/memory": {
+      "n": 200,
+      "p50_ms": 4.61,
+      "p95_ms": 6.91,
+      "p99_ms": 8.32,
+      "max_ms": 10.6,
+      "mean_ms": 4.81
+    },
+    "/v1/skills": {
+      "n": 200,
+      "p50_ms": 4.77,
+      "p95_ms": 6.97,
+      "p99_ms": 9.07,
+      "max_ms": 10.67,
+      "mean_ms": 5.0
+    },
+    "/v1/members": {
+      "n": 200,
+      "p50_ms": 6.68,
+      "p95_ms": 10.08,
+      "p99_ms": 14.24,
+      "max_ms": 19.67,
+      "mean_ms": 7.18
+    },
+    "/v1/teammates": {
+      "n": 200,
+      "p50_ms": 7.83,
+      "p95_ms": 12.32,
+      "p99_ms": 17.33,
+      "max_ms": 21.63,
+      "mean_ms": 8.47
+    },
+    "/v1/routines": {
+      "n": 200,
+      "p50_ms": 6.02,
+      "p95_ms": 9.45,
+      "p99_ms": 14.26,
+      "max_ms": 20.01,
+      "mean_ms": 6.54
+    },
+    "/v1/notifications": {
+      "n": 200,
+      "p50_ms": 7.95,
+      "p95_ms": 13.18,
+      "p99_ms": 20.57,
+      "max_ms": 22.76,
+      "mean_ms": 8.69
+    },
+    "/v1/audit": {
+      "n": 200,
+      "p50_ms": 7.79,
+      "p95_ms": 11.88,
+      "p99_ms": 19.83,
+      "max_ms": 23.45,
+      "mean_ms": 8.55
+    },
+    "/v1/usage": {
+      "n": 200,
+      "p50_ms": 12.62,
+      "p95_ms": 18.35,
+      "p99_ms": 25.89,
+      "max_ms": 29.94,
+      "mean_ms": 13.53
+    },
+    "/v1/targets": {
+      "n": 200,
+      "p50_ms": 6.26,
+      "p95_ms": 9.44,
+      "p99_ms": 18.45,
+      "max_ms": 20.15,
+      "mean_ms": 6.68
+    }
+  },
+  "failures": [],
+  "target_ms": 200
+}
