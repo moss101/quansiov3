@@ -82,7 +82,9 @@ def coverage_env(target: Path, branch: bool) -> Dict[str, str]:
         flags += " -Z coverage-options=branch"
     env["RUSTFLAGS"] = flags
     env["CARGO_TARGET_DIR"] = str(target)
-    env["LLVM_PROFILE_FILE"] = str(target / "profraw" / "%p-%8m.profraw")
+    # `%8m`: a pool of eight files per instrumented binary, merged in place, so the hundreds of
+    # processes the suites spawn (servers, CLIs) do not each leave a profile behind.
+    env["LLVM_PROFILE_FILE"] = str(target / "profraw" / "%8m.profraw")
     return env
 
 
