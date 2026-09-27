@@ -141,6 +141,19 @@ def test_a_missing_test_log_fails_closed(tmp_path: Path) -> None:
     assert "tests.log" in report["findings"][0]["reason"]
 
 
+def test_a_gate_time_limit_can_be_raised_but_never_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("QUANSIO_CI_GATE_TIMEOUT", raising=False)
+    assert ci_summary.gate_timeout() == 3600
+    monkeypatch.setenv("QUANSIO_CI_GATE_TIMEOUT", "7200")
+    assert ci_summary.gate_timeout() == 7200
+    monkeypatch.setenv("QUANSIO_CI_GATE_TIMEOUT", "0")
+    assert ci_summary.gate_timeout() == 1
+    monkeypatch.setenv("QUANSIO_CI_GATE_TIMEOUT", "soon")
+    assert ci_summary.gate_timeout() == 3600
+    timed_out = ci_summary.run_gate("slow", "sleep 5", ci_summary.ROOT, timeout=1)
+    assert timed_out["status"] == "TIMEOUT"
+
+
 def test_the_pipeline_reports_skip_reasons_and_audits_last() -> None:
     names = [name for name, _ in ci_summary.GATES]
     assert names[-1] == "test-audit"

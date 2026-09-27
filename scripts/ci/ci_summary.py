@@ -105,14 +105,27 @@ def git_commit(root: Path) -> Optional[str]:
         return None
 
 
+#: A gate's time limit in seconds; `QUANSIO_CI_GATE_TIMEOUT` raises it on a slow or shared host
+#: (a clean checkout builds the whole workspace inside the toolchains gate).
+DEFAULT_GATE_TIMEOUT = 3600
+
+
+def gate_timeout() -> int:
+    try:
+        return max(1, int(os.environ.get("QUANSIO_CI_GATE_TIMEOUT", DEFAULT_GATE_TIMEOUT)))
+    except ValueError:
+        return DEFAULT_GATE_TIMEOUT
+
+
 def run_gate(
     name: str,
     command: str,
     root: Path,
-    timeout: int = 3600,
+    timeout: Optional[int] = None,
     env: Optional[Dict[str, str]] = None,
     log_dir: Optional[Path] = None,
 ) -> Dict[str, object]:
+    timeout = timeout if timeout is not None else gate_timeout()
     started = time.monotonic()
     full_output: Optional[str] = None
     try:
