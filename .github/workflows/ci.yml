@@ -93,7 +93,7 @@ jobs:
   # doubles the baseline's compile time and never gates it.
   coverage:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
 
@@ -122,8 +122,11 @@ jobs:
       - name: Measure and check coverage
         run: |
           python3 scripts/ci/coverage.py rust --out artifacts/coverage/rust.json
+          python3 scripts/ci/coverage.py rust --branch --target-dir target/coverage-branch \
+            --out artifacts/coverage/rust-branches.json
           uv run --project python python scripts/ci/coverage.py python --out artifacts/coverage/python.json
           python3 scripts/ci/coverage.py check --rust artifacts/coverage/rust.json \
+            --rust-branches artifacts/coverage/rust-branches.json \
             --python artifacts/coverage/python.json --out artifacts/coverage/report.json
 
       - name: Upload the coverage report

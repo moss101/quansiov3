@@ -220,7 +220,7 @@ def test_coverage_at_its_floors_passes_and_reports_branches() -> None:
             "cargo test exited 101",
         ),
         (
-            {**rust_measurement(**{"crates/server/src/effects/ledger.rs": row(10, 10)}), "unmapped": ["crates/server/src/effects/new.rs"]},
+            {**rust_measurement(**{"crates/server/src/effects/ledger.rs": row(10, 10)}), "unmapped": ["crates/server/src/effects/ledger.rs"]},
             PYTHON_OK,
             "no test binary maps",
         ),
@@ -235,6 +235,35 @@ def test_coverage_fails_closed(rust: dict, python: dict | None, finding: str) ->
     report = coverage.check(rust, python, EXPECTATIONS)
     assert report["status"] == "FAIL"
     assert any(finding in text for text in report["findings"]), report["findings"]
+
+
+def test_a_declaration_only_module_is_not_a_coverage_gap(tmp_path: Path) -> None:
+    declarations = tmp_path / "mod.rs"
+    declarations.write_text("//! The owner.\npub mod ledger;\npub use ledger::Ledger; // fn in a comment\n")
+    code = tmp_path / "ledger.rs"
+    code.write_text("pub fn settle() -> u8 {\n    1\n}\n")
+    closure = tmp_path / "closure.rs"
+    closure.write_text("pub static F: fn(u8) -> u8 = |x| { x + 1 };\n")
+    assert not coverage.has_code(declarations)
+    assert coverage.has_code(code)
+    assert coverage.has_code(closure)
+    rust = {**rust_measurement(**{"crates/server/src/effects/ledger.rs": row(10, 10)}), "unmapped": ["crates/server/src/effects/mod.rs"]}
+    assert coverage.check(rust, PYTHON_OK, EXPECTATIONS)["status"] == "PASS"
+
+
+def test_branch_counts_come_from_the_branch_run_and_lines_from_the_line_run() -> None:
+    lines = rust_measurement(**{"crates/server/src/effects/ledger.rs": row(100, 95, 0, 0), "crates/core/src/lib.rs": row(10, 9)})
+    branch_run = {
+        **rust_measurement(**{"crates/server/src/effects/ledger.rs": row(100, 60, 20, 5)}),
+        "tool": "rustc -C instrument-coverage -Z coverage-options=branch",
+        "unreportable": ["crates/server/src/effects/odd.rs"],
+    }
+    report = coverage.check(lines, PYTHON_OK, EXPECTATIONS, branch_run)
+    assert report["status"] == "PASS", report["findings"]
+    assert report["groups"]["effects"]["line_percent"] == 95.0
+    assert report["groups"]["effects"]["branch_percent"] == 25.0
+    # A file the branch run could not export is listed, not a finding: lines are complete.
+    assert report["branch_run"]["unreportable"] == ["crates/server/src/effects/odd.rs"]
 
 
 def test_the_longest_matching_area_owns_a_file() -> None:

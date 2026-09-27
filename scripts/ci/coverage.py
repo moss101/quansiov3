@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 """Measure line and branch coverage and hold it to DOSSIER.md §21.4 (QA-001).
 
-  python3.12 scripts/ci/coverage.py rust --out <rust.json>
-      Build and run the Rust workspace's tests with `-C instrument-coverage` (branch regions
-      too) in a separate target directory, merge the profiles and export a per-file summary
-      with the toolchain's own `llvm-cov` (the `llvm-tools` rustup component).
+  python3.12 scripts/ci/coverage.py rust --out <rust.json> [--branch] [--export-only]
+      Build and run the Rust workspace's tests with `-C instrument-coverage` in a separate
+      target directory, merge the profiles and export a per-file summary with the `llvm-tools`
+      matching the compiler's LLVM. `--export-only` reuses the last test phase in that directory.
   uv run --project python python scripts/ci/coverage.py python --out <python.json>
       Run the `python/` package's tests under the standard-library line tracer
       (`scripts/ci/pycoverage.py`).
-  python3.12 scripts/ci/coverage.py check --rust <rust.json> --python <python.json> [--out <report.json>]
+  python3.12 scripts/ci/coverage.py check --rust <rust.json> --python <python.json>
+          [--rust-branches <branch-run.json>] [--out <report.json>]
       Group the measurements by `scripts/ci/coverage-expectations.json` and fail when a group
       is under its floor or a required measurement is missing.
 
-Branch coverage uses rustc's unstable `-Z coverage-options=branch`, enabled on the pinned
-stable compiler with `RUSTC_BOOTSTRAP=1` for this measurement build only (nothing it builds
-ships). `llvm-cov` 22 crashes exporting some branch-instrumented files; the exporter then
-bisects the file set so one such file costs only its own row, which the report names.
+Lines are held to the floors from a line-only run, which `llvm-cov` exports in full. Branch
+coverage needs rustc's unstable `-Z coverage-options=branch` (enabled on the pinned stable
+compiler with `RUSTC_BOOTSTRAP=1`, for a measurement build only) and `llvm-cov` 22 crashes on
+some files built that way, so a `--branch` run is reported beside the lines, per area, over the
+files it could export; the exporter bisects the file set so a crash costs only that file's row.
 
 Python 3.11+ ; standard library only (the `python` subcommand needs the project's pytest).
 """
@@ -24,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -42,24 +45,47 @@ def load_expectations(path: Path = EXPECTATIONS) -> dict:
 # --------------------------------------------------------------------------- rust
 
 
+def _host_and_llvm(rustc: Sequence[str]) -> Tuple[str, str]:
+    info = subprocess.run([*rustc, "-vV"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    fields = dict(line.split(": ", 1) for line in info.splitlines() if ": " in line)
+    return fields["host"], fields.get("LLVM version", "")
+
+
 def llvm_tool(name: str) -> Path:
-    """The `llvm-tools` binary matching the active rustc (never a system LLVM)."""
-    sysroot = subprocess.run(
-        ["rustc", "--print", "sysroot"], cwd=ROOT, capture_output=True, text=True, check=True
-    ).stdout.strip()
-    host = next(
-        line.split(":", 1)[1].strip()
-        for line in subprocess.run(
-            ["rustc", "-vV"], cwd=ROOT, capture_output=True, text=True, check=True
-        ).stdout.splitlines()
-        if line.startswith("host:")
-    )
-    tool = Path(sysroot) / "lib" / "rustlib" / host / "bin" / name
-    if not tool.is_file():
-        raise SystemExit(
-            f"coverage: {tool} is missing; install it with `rustup component add llvm-tools`"
-        )
-    return tool
+    """The `llvm-tools` binary for the LLVM the building rustc uses (never a system LLVM).
+
+    The active `rustc` may be a distribution build without the component (Homebrew's, on this
+    project's development hosts); the rustup toolchain `rust-toolchain.toml` pins is tried next.
+    Either way the tool must share the compiler's LLVM major version, or its profiles would be
+    misread.
+    """
+    host, llvm = _host_and_llvm(["rustc"])
+    candidates: List[Tuple[Sequence[str], str]] = [(["rustc"], "active rustc")]
+    if shutil.which("rustup"):
+        candidates.append((["rustup", "run", pinned_toolchain(), "rustc"], "rustup toolchain"))
+    for rustc, label in candidates:
+        try:
+            sysroot = subprocess.run(
+                [*rustc, "--print", "sysroot"], cwd=ROOT, capture_output=True, text=True, check=True
+            ).stdout.strip()
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            continue
+        tool = Path(sysroot) / "lib" / "rustlib" / host / "bin" / name
+        if not tool.is_file():
+            continue
+        version = subprocess.run([str(tool), "--version"], capture_output=True, text=True).stdout
+        major = llvm.split(".")[0]
+        if major and f"LLVM version {major}." not in version:
+            raise SystemExit(f"coverage: {tool} ({label}) is not LLVM {llvm}, the compiler's")
+        return tool
+    raise SystemExit(f"coverage: no {name}; install it with `rustup component add llvm-tools`")
+
+
+def pinned_toolchain() -> str:
+    for line in (ROOT / "rust-toolchain.toml").read_text().splitlines():
+        if line.strip().startswith("channel"):
+            return line.split("=", 1)[1].strip().strip('"')
+    return "stable"
 
 
 def rust_sources(expectations: dict) -> List[str]:
@@ -154,14 +180,24 @@ def summarize_files(files: List[dict]) -> Dict[str, dict]:
     return rows
 
 
-def measure_rust(out: Path, target: Path, branch: bool, keep: bool) -> int:
+def measure_rust(out: Path, target: Path, branch: bool, keep: bool, export_only: bool = False) -> int:
     expectations = load_expectations()
     env = coverage_env(target, branch)
     profraw = target / "profraw"
-    if profraw.exists():
-        shutil.rmtree(profraw)
-    profraw.mkdir(parents=True)
-    tests = subprocess.run(["cargo", "test", "--workspace", "--no-fail-fast"], cwd=ROOT, env=env)
+    exit_file = target / "cargo-test-exit"
+    if export_only:
+        # Reuse a finished test phase: its profiles and the exit code it recorded.
+        if not exit_file.is_file() or not profraw.is_dir():
+            raise SystemExit(f"coverage: --export-only needs {profraw} and {exit_file} from a test phase")
+        tests_exit = int(exit_file.read_text().strip())
+    else:
+        if profraw.exists():
+            shutil.rmtree(profraw)
+        profraw.mkdir(parents=True)
+        tests_exit = subprocess.run(
+            ["cargo", "test", "--workspace", "--no-fail-fast"], cwd=ROOT, env=env
+        ).returncode
+        exit_file.write_text(f"{tests_exit}\n")
     objects = test_executables(env)
     profdata = target / "merged.profdata"
     raw = sorted(str(path) for path in profraw.glob("*.profraw"))
@@ -178,7 +214,7 @@ def measure_rust(out: Path, target: Path, branch: bool, keep: bool) -> int:
     unmapped = [source for source in sources if source not in measured and source not in unreportable]
     summary = {
         "tool": "rustc -C instrument-coverage" + (" -Z coverage-options=branch" if branch else ""),
-        "cargo_test_exit": tests.returncode,
+        "cargo_test_exit": tests_exit,
         "objects": len(objects),
         "profiles": len(raw),
         "files": measured,
@@ -191,9 +227,9 @@ def measure_rust(out: Path, target: Path, branch: bool, keep: bool) -> int:
         shutil.rmtree(profraw, ignore_errors=True)
     print(
         f"rust coverage: {len(measured)} files measured, {len(unreportable)} unreportable, "
-        f"{len(unmapped)} unmapped; cargo test exit {tests.returncode}"
+        f"{len(unmapped)} unmapped; cargo test exit {tests_exit}"
     )
-    return tests.returncode
+    return tests_exit
 
 
 # --------------------------------------------------------------------------- check
@@ -201,6 +237,20 @@ def measure_rust(out: Path, target: Path, branch: bool, keep: bool) -> int:
 
 def percent(covered: int, total: int) -> Optional[float]:
     return round(100.0 * covered / total, 2) if total else None
+
+
+def has_code(path: Path) -> bool:
+    """Whether a Rust file holds anything that executes (a function or closure body).
+
+    A `lib.rs`/`mod.rs` of declarations and re-exports compiles to no coverage region, so no
+    test binary maps it; that is not a gap.
+    """
+    try:
+        text = path.read_text()
+    except OSError:
+        return True
+    code = "\n".join(line.split("//", 1)[0] for line in text.splitlines())
+    return re.search(r"\bfn\s+\w+|\|[^|]*\|\s*\{", code) is not None
 
 
 def group_of(path: str, areas: Dict[str, List[str]]) -> Optional[str]:
@@ -213,7 +263,15 @@ def group_of(path: str, areas: Dict[str, List[str]]) -> Optional[str]:
     return best[1] if best else None
 
 
-def check(rust: dict, python: Optional[dict], expectations: dict) -> dict:
+def check(
+    rust: dict, python: Optional[dict], expectations: dict, branches: Optional[dict] = None
+) -> dict:
+    """Group the line run's files against the floors; take branch counts from the branch run.
+
+    Lines come from a line-only instrumented run, which `llvm-cov` exports in full. Branch
+    counts come from a separate run with branch regions (`--branch`), reported per area over the
+    files `llvm-cov` could export from it; §21.4 asks for them reported, not held to a floor.
+    """
     rust_rules = expectations["rust"]
     areas: Dict[str, List[str]] = rust_rules["safety_critical"]["areas"]
     groups: Dict[str, dict] = {
@@ -223,9 +281,14 @@ def check(rust: dict, python: Optional[dict], expectations: dict) -> dict:
     other = {"lines": 0, "lines_covered": 0, "branches": 0, "branches_covered": 0, "files": 0}
     for path, row in rust["files"].items():
         bucket = groups[area] if (area := group_of(path, areas)) else other
-        for key in ("lines", "lines_covered", "branches", "branches_covered"):
+        for key in ("lines", "lines_covered"):
             bucket[key] += row[key]
         bucket["files"] += 1
+    branch_source = branches if branches is not None else rust
+    for path, row in branch_source["files"].items():
+        bucket = groups[area] if (area := group_of(path, areas)) else other
+        for key in ("branches", "branches_covered"):
+            bucket[key] += row[key]
 
     findings: List[str] = []
     floor = rust_rules["safety_critical"]["line_min"]
@@ -249,7 +312,7 @@ def check(rust: dict, python: Optional[dict], expectations: dict) -> dict:
         if group_of(path, areas):
             findings.append(f"{path}: llvm-cov could not export this safety-critical file")
     for path in rust.get("unmapped", []):
-        if group_of(path, areas):
+        if group_of(path, areas) and has_code(ROOT / path):
             findings.append(f"{path}: no test binary maps this safety-critical file")
 
     python_rules = expectations["python"]
@@ -276,6 +339,10 @@ def check(rust: dict, python: Optional[dict], expectations: dict) -> dict:
         "groups": results,
         "unreportable": rust.get("unreportable", []),
         "unmapped": rust.get("unmapped", []),
+        "branch_run": {
+            "tool": branch_source.get("tool"),
+            "unreportable": branch_source.get("unreportable", []),
+        },
     }
 
 
@@ -288,18 +355,26 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     rust = commands.add_parser("rust")
     rust.add_argument("--out", type=Path, required=True)
     rust.add_argument("--target-dir", type=Path, default=DEFAULT_TARGET)
-    rust.add_argument("--no-branch", action="store_true")
+    rust.add_argument(
+        "--branch",
+        action="store_true",
+        help="add branch regions (unstable rustc option; llvm-cov 22 cannot export some such files)",
+    )
     rust.add_argument("--keep-profiles", action="store_true")
+    rust.add_argument("--export-only", action="store_true", help="reuse the last test phase in --target-dir")
     python = commands.add_parser("python")
     python.add_argument("--out", type=Path, required=True)
     verdict = commands.add_parser("check")
     verdict.add_argument("--rust", type=Path, required=True)
     verdict.add_argument("--python", type=Path)
+    verdict.add_argument("--rust-branches", type=Path, help="a --branch run, for branch counts")
     verdict.add_argument("--out", type=Path)
     args = parser.parse_args(argv)
 
     if args.command == "rust":
-        return measure_rust(args.out, args.target_dir, not args.no_branch, args.keep_profiles)
+        return measure_rust(
+            args.out, args.target_dir, args.branch, args.keep_profiles, args.export_only
+        )
     if args.command == "python":
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import pycoverage
@@ -309,6 +384,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         json.loads(args.rust.read_text()),
         json.loads(args.python.read_text()) if args.python else None,
         load_expectations(),
+        json.loads(args.rust_branches.read_text()) if args.rust_branches else None,
     )
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
