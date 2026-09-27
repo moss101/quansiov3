@@ -266,6 +266,19 @@ def test_branch_counts_come_from_the_branch_run_and_lines_from_the_line_run() ->
     assert report["branch_run"]["unreportable"] == ["crates/server/src/effects/odd.rs"]
 
 
+def test_profiles_survive_a_killed_server() -> None:
+    """Served tests stop quansio-server with SIGKILL: only continuous-mode profiles survive that."""
+    env = coverage.coverage_env(Path("/target"), branch=False)
+    assert env["LLVM_PROFILE_FILE"].endswith("%c%p.profraw")
+    assert "-C instrument-coverage" in env["RUSTFLAGS"]
+    assert "RUSTC_BOOTSTRAP" not in env or env["RUSTC_BOOTSTRAP"] == __import__("os").environ.get("RUSTC_BOOTSTRAP")
+    darwin = coverage.continuous_mode_flags("darwin")
+    assert {flag.split(",")[2] for flag in darwin} == {"__llvm_prf_cnts", "__llvm_prf_data", "__llvm_prf_bits"}
+    assert coverage.continuous_mode_flags("linux") == ["-C llvm-args=-runtime-counter-relocation"]
+    branch = coverage.coverage_env(Path("/target"), branch=True)
+    assert branch["RUSTC_BOOTSTRAP"] == "1" and "-Z coverage-options=branch" in branch["RUSTFLAGS"]
+
+
 def test_the_longest_matching_area_owns_a_file() -> None:
     areas = {"runtime": ["crates/server/src/runtime/"], "recovery": ["crates/server/src/runtime/recovery/"]}
     assert coverage.group_of("crates/server/src/runtime/recovery/point.rs", areas) == "recovery"

@@ -100,17 +100,33 @@ def rust_sources(expectations: dict) -> List[str]:
     return files
 
 
+#: Continuous mode (`%c`): counters are mapped into the profile file as they change, so a
+#: process the suites stop with SIGKILL (every served `quansio-server`) still leaves its profile;
+#: without it, everything reached over HTTP would count as uncovered. One file per process
+#: (`%p`): continuous mode cannot share pooled files between live processes.
+PROFILE_PATTERN = "%c%p.profraw"
+
+
+def continuous_mode_flags(platform: str = sys.platform) -> List[str]:
+    """What continuous mode needs from the build on this platform."""
+    if platform == "darwin":
+        # The runtime maps the counter, data and bitmap sections page by page (16 KiB pages).
+        return [
+            f"-C link-arg=-Wl,-sectalign,__DATA,{section},0x4000"
+            for section in ("__llvm_prf_cnts", "__llvm_prf_data", "__llvm_prf_bits")
+        ]
+    return ["-C llvm-args=-runtime-counter-relocation"]
+
+
 def coverage_env(target: Path, branch: bool) -> Dict[str, str]:
     env = os.environ.copy()
-    flags = "-C instrument-coverage"
+    flags = ["-C instrument-coverage", *continuous_mode_flags()]
     if branch:
         env["RUSTC_BOOTSTRAP"] = "1"
-        flags += " -Z coverage-options=branch"
-    env["RUSTFLAGS"] = flags
+        flags.append("-Z coverage-options=branch")
+    env["RUSTFLAGS"] = " ".join(flags)
     env["CARGO_TARGET_DIR"] = str(target)
-    # `%8m`: a pool of eight files per instrumented binary, merged in place, so the hundreds of
-    # processes the suites spawn (servers, CLIs) do not each leave a profile behind.
-    env["LLVM_PROFILE_FILE"] = str(target / "profraw" / "%8m.profraw")
+    env["LLVM_PROFILE_FILE"] = str(target / "profraw" / PROFILE_PATTERN)
     return env
 
 
@@ -213,7 +229,8 @@ def measure_rust(out: Path, target: Path, branch: bool, keep: bool, export_only:
     # code, which `llvm-cov` cannot tell us here, so it is listed rather than guessed.
     unmapped = [source for source in sources if source not in measured and source not in unreportable]
     summary = {
-        "tool": "rustc -C instrument-coverage" + (" -Z coverage-options=branch" if branch else ""),
+        "tool": "rustc -C instrument-coverage (continuous profiles)"
+        + (" -Z coverage-options=branch" if branch else ""),
         "cargo_test_exit": tests_exit,
         "objects": len(objects),
         "profiles": len(raw),
