@@ -636,6 +636,19 @@ impl Background {
                 fires.notify_one();
             }
         }
+        // A question past its TTL expires and fails the run waiting on it (DOMAIN.md §3.4).
+        crate::runtime::turn_loop::QuestionService::new(
+            self.pool.clone(),
+            crate::runtime::state_machine::RuntimeIdentity::system(
+                tenant,
+                "questions",
+                quansio_core::CorrelationId::generate(&mut quansio_core::UlidGenerator::new()),
+            ),
+        )
+        .map_err(|error| format!("questions: {error}"))?
+        .expire_due(chrono::Utc::now())
+        .await
+        .map_err(|error| format!("question expiry: {error}"))?;
         crate::notify::Notifier::new(self.pool.clone(), tenant)
             .scan(512)
             .await

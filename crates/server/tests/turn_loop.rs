@@ -1389,6 +1389,84 @@ async fn a_user_ask_call_parks_the_run_and_the_question_is_durable() {
 }
 
 #[tokio::test]
+async fn a_question_past_its_ttl_cannot_be_answered_and_the_background_pass_fails_its_run() {
+    let Some(fixture) = prepare("run011_expiry").await else {
+        blocked_marker();
+        return;
+    };
+    seed_policy(&fixture).await;
+    let model = StubModel::with(vec![ModelProposal {
+        tool_calls: vec![ProposedToolCall::new(
+            "call_ask",
+            "user.ask",
+            json!({ "kind": "confirm", "prompt": "Ship it?" }),
+        )],
+        ..ModelProposal::default()
+    }]);
+    let seams = build_seams(&fixture, model, ConformanceHost::default());
+    let run = start_run(&fixture, &seams.engine, 8).await;
+    seed_projection(&fixture, &run.id.to_string()).await;
+    let TurnOutcome::Parked { wait_key, .. } = seams
+        .engine
+        .run_turn(
+            &run.id,
+            run.generation,
+            TurnInput::new(RunTriggerKind::Manual),
+        )
+        .await
+        .expect("turn")
+    else {
+        panic!("user.ask parks the run");
+    };
+    let question = seams.questions.load(&wait_key).await.expect("question");
+    assert!(
+        question.expires_at.is_some(),
+        "a question carries the policy TTL"
+    );
+
+    // Its TTL passes (the default is a day; the clock is moved rather than waited on).
+    let mut tx = fixture.pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant context");
+    sqlx::query("UPDATE questions SET expires_at = now() - interval '1 second' WHERE id = $1")
+        .bind(&wait_key)
+        .execute(&mut *tx)
+        .await
+        .expect("age the question");
+    tx.commit().await.expect("commit");
+
+    // Before the expiry pass runs, a late answer is already refused and releases nothing.
+    let late = seams
+        .questions
+        .answer(
+            &wait_key,
+            quansio_server::runtime::turn_loop::QuestionAnswer {
+                user_id: USER.to_string(),
+                value: json!(true),
+            },
+        )
+        .await
+        .expect_err("a question past its TTL is closed");
+    assert_eq!(late.code(), "CONFLICT_STATE");
+    let waiting = seams.engine.store().load_run(&run.id).await.expect("run");
+    assert_eq!(waiting.status, RunStatus::WaitingQuestion);
+
+    // The served background pass expires it and fails the run waiting on it.
+    let api = quansio_server::api::ApiState::new(fixture.pool.clone()).expect("api state");
+    quansio_server::composition::Background::new(fixture.pool.clone(), api)
+        .pass()
+        .await
+        .expect("background pass");
+    let expired = seams.questions.load(&wait_key).await.expect("question");
+    assert!(!expired.is_open(), "{:?}", expired.status);
+    assert_eq!(expired.status.as_str(), "expired");
+    let failed = seams.engine.store().load_run(&run.id).await.expect("run");
+    assert_eq!(failed.status, RunStatus::Failed);
+    finish(fixture).await;
+}
+
+#[tokio::test]
 async fn every_declared_effect_class_has_a_catalog_tier() {
     let taxonomy = quansio_server::effects::EffectTaxonomy::builtin();
     for declaration in quansio_tools::ToolRegistry::builtin().declarations() {

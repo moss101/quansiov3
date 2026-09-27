@@ -378,7 +378,11 @@ impl QuestionService {
         answer: QuestionAnswer,
     ) -> Result<AnsweredQuestion, RuntimeError> {
         let question = self.load(question_id).await?;
-        if !question.is_open() {
+        // A question past its expiry is closed even before the expiry pass records it.
+        let expired = question
+            .expires_at
+            .is_some_and(|expires_at| expires_at <= Utc::now());
+        if !question.is_open() || expired {
             return Err(RuntimeError::StateConflict {
                 entity: "question",
                 id: question_id.to_string(),
@@ -395,7 +399,8 @@ impl QuestionService {
         let mut tx = self.tenant_transaction().await?;
         let updated = sqlx::query(
             "UPDATE questions SET status = 'answered', answer = $3, updated_at = now() \
-             WHERE id = $1 AND tenant_id = $2 AND status = 'open' RETURNING id",
+             WHERE id = $1 AND tenant_id = $2 AND status = 'open' \
+             AND (expires_at IS NULL OR expires_at > now()) RETURNING id",
         )
         .bind(question_id)
         .bind(&self.identity.tenant_id)
