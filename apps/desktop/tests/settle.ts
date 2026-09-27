@@ -7,7 +7,7 @@ type Handlers = Record<string, (payload: unknown) => Promise<unknown>>;
 
 interface TimelineView {
   readonly run?: { readonly status?: string };
-  readonly turns?: readonly { readonly status?: string }[];
+  readonly turns?: readonly { readonly status?: string; readonly input?: { readonly kind?: string; readonly ref?: string } }[];
 }
 
 /** Poll an asynchronous read until it answers. */
@@ -38,4 +38,21 @@ export function settled(handlers: Handlers, runId: string, timeoutMs = 20_000): 
     const last = turns[turns.length - 1];
     return last && (last.status !== "active" || status.startsWith("WAITING")) ? view : undefined;
   }, `the turn of ${runId}`, timeoutMs);
+}
+
+/**
+ * Wait until the run has answered one message: a conversation's run takes its messages as turns
+ * one after another, so "the latest turn ended" can hold between two of them while a later
+ * message still waits its turn.
+ */
+export function answered(handlers: Handlers, runId: string, messageId: string, timeoutMs = 20_000): Promise<TimelineView> {
+  const timeline = handlers["runs.timeline"];
+  if (!timeline) {
+    throw new Error("the bridge has no runs.timeline handler");
+  }
+  return eventually(async () => {
+    const view = (await timeline({ runId })) as TimelineView;
+    const turn = (view.turns ?? []).find((candidate) => candidate.input?.ref === messageId);
+    return turn && turn.status !== "active" ? view : undefined;
+  }, `the answer to ${messageId}`, timeoutMs);
 }
