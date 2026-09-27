@@ -386,6 +386,80 @@ async fn a_restarted_server_recovers_every_non_terminal_run_before_it_serves() {
 }
 
 #[tokio::test]
+async fn recovery_refuses_unknown_runs_and_records_every_fence() {
+    use quansio_server::runtime::recovery::service::{awaits_reconciliation, RecoveryPort};
+    let Some(fixture) = prepare("run009_surface").await else {
+        blocked_marker();
+        return;
+    };
+    let recoverer = recoverer(&fixture);
+    assert_eq!(recoverer.identity().tenant_id, TENANT);
+
+    // A run this tenant does not hold is refused as not found, never guessed at.
+    let unknown = CanonicalId::generate(Prefix::Run, &mut UlidGenerator::new());
+    let missing = recoverer
+        .recover_run(&unknown)
+        .await
+        .expect_err("unknown run");
+    assert_eq!(missing.code(), "NOT_FOUND");
+    assert!(
+        missing.to_string().contains(&unknown.to_string()),
+        "{missing}"
+    );
+    let fenced = recoverer
+        .fence_worker(&unknown, 1)
+        .await
+        .expect_err("unknown run");
+    assert_eq!(fenced.code(), "NOT_FOUND");
+
+    // The recovery port a composition root drives is the same recovery.
+    let (run_id, generation) = started_run(&fixture).await;
+    let port: &dyn RecoveryPort = &recoverer;
+    let through_port = port.recover(&run_id).await.expect("recover");
+    assert_eq!(
+        through_port,
+        recoverer.recover_run(&run_id).await.expect("recover")
+    );
+    assert_eq!(through_port.resolution, RecoveryResolution::Resumable);
+    assert!(!through_port.requires_reconciliation());
+
+    // A fence decision is recorded, so discarded work is visible in the run's trail.
+    recoverer
+        .record_fence(&run_id, generation, generation + 1)
+        .await
+        .expect("record");
+    let fences: Vec<serde_json::Value> = quansio_events::EventStore::new(fixture.pool.clone())
+        .read_events_after(TENANT, None, 500)
+        .await
+        .expect("events")
+        .into_iter()
+        .filter(|event| event.event_type.to_string() == "run.stale_worker_fenced")
+        .map(|event| event.payload)
+        .collect();
+    assert_eq!(
+        fences,
+        vec![json!({
+            "run_id": run_id.to_string(),
+            "observed_generation": generation,
+            "current_generation": generation + 1,
+        })]
+    );
+
+    // Only an unknown outcome awaits reconciliation.
+    let unknown_outcome = unsettled_effect(&fixture, &run_id, "OUTCOME_UNKNOWN").await;
+    let dispatched = unsettled_effect(&fixture, &run_id, "DISPATCHED").await;
+    let record = recoverer
+        .ledger()
+        .load(&unknown_outcome)
+        .await
+        .expect("load");
+    assert!(awaits_reconciliation(&record));
+    let record = recoverer.ledger().load(&dispatched).await.expect("load");
+    assert!(!awaits_reconciliation(&record));
+    finish(fixture).await;
+}
+
+#[tokio::test]
 async fn an_uncertain_effect_is_reconciled_before_the_run_resumes() {
     let Some(fixture) = prepare("run009_uncertain").await else {
         blocked_marker();
