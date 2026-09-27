@@ -1,0 +1,85 @@
+{
+  "metric": "api_command_accepted_p95_ms",
+  "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server",
+  "clients": 8,
+  "settings": {
+    "QUANSIO_API_RATE_LIMIT": "100000000"
+  },
+  "paced": {
+    "pause_s": 0.25,
+    "overall": {
+      "n": 900,
+      "p50_ms": 65.64,
+      "p95_ms": 131.35,
+      "p99_ms": 181.69,
+      "max_ms": 309.01,
+      "mean_ms": 62.8
+    },
+    "by_command": {
+      "CreateThread": {
+        "n": 300,
+        "p50_ms": 12.93,
+        "p95_ms": 77.06,
+        "p99_ms": 119.92,
+        "max_ms": 168.88,
+        "mean_ms": 22.55
+      },
+      "CreateArtifact": {
+        "n": 300,
+        "p50_ms": 74.12,
+        "p95_ms": 123.17,
+        "p99_ms": 154.06,
+        "max_ms": 205.85,
+        "mean_ms": 79.0
+      },
+      "PostMessage": {
+        "n": 300,
+        "p50_ms": 81.72,
+        "p95_ms": 165.75,
+        "p99_ms": 229.95,
+        "max_ms": 309.01,
+        "mean_ms": 86.85
+      }
+    }
+  },
+  "saturating_burst": {
+    "pause_s": 0.0,
+    "overall": {
+      "n": 900,
+      "p50_ms": 177.44,
+      "p95_ms": 573.88,
+      "p99_ms": 639.12,
+      "max_ms": 719.97,
+      "mean_ms": 268.31
+    },
+    "by_command": {
+      "CreateThread": {
+        "n": 300,
+        "p50_ms": 124.63,
+        "p95_ms": 202.45,
+        "p99_ms": 230.63,
+        "max_ms": 247.84,
+        "mean_ms": 132.18
+      },
+      "CreateArtifact": {
+        "n": 300,
+        "p50_ms": 164.31,
+        "p95_ms": 239.66,
+        "p99_ms": 294.6,
+        "max_ms": 658.06,
+        "mean_ms": 168.99
+      },
+      "PostMessage": {
+        "n": 300,
+        "p50_ms": 510.37,
+        "p95_ms": 623.78,
+        "p99_ms": 667.89,
+        "max_ms": 719.97,
+        "mean_ms": 503.77
+      }
+    }
+  },
+  "note": "PostMessage answers once accepted and its turn (the in-server stub) runs after it",
+  "failures": [],
+  "target_ms": 500
+}

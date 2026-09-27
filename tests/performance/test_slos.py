@@ -1,10 +1,8 @@
-"""QA-009: SLO configuration, in-process performance floors, bounded-queue wiring.
+"""QA-009: the SLO configuration and the in-process retrieval floor.
 
-The served load/soak runs are the release boundary (`QUANSIO_TEST_PERF=1` with a
-running stack). Without it this suite still pins the SLO configuration to
-DOSSIER.md §21.2, measures what the shipped planes can measure in-process
-against those budgets, and asserts the bounded-queue wiring exists where the
-document demands it.
+The served measurements — load, soak, overload, backpressure and usage accuracy against the
+deployable — are `test_qa009_campaign.py` and `test_qa009_live.py`. This suite pins
+`slos.yaml` to DOSSIER.md §21.2 and times the in-process wiki retrieval and deletion.
 """
 
 from __future__ import annotations
@@ -19,9 +17,6 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 DOSSIER = ROOT / "DOSSIER.md"
 SLOS = ROOT / "tests" / "performance" / "slos.yaml"
-STREAM_RS = ROOT / "crates" / "events" / "src" / "stream.rs"
-BACKPRESSURE_TEST = ROOT / "crates" / "events" / "tests" / "stream_backpressure.rs"
-USAGE_TEST = ROOT / "crates" / "server" / "tests" / "usage.rs"
 
 
 def _load_wiki():
@@ -109,37 +104,3 @@ def test_in_process_latencies_hold_the_index_and_deletion_budgets() -> None:
     visible_ms = (time.perf_counter() - started) * 1000.0
     assert "kn_wiki_artifacts" not in after.hit_ids, "a deleted page answered retrieval"
     assert visible_ms < 60_000.0, f"deletion visibility took {visible_ms:.1f} ms (§21.2: ≤ 60 s)"
-
-
-def test_overload_degrades_through_bounded_queues_not_memory() -> None:
-    """Named test: backpressure. The stream bounds exist and the typed disconnect is tested."""
-    source = STREAM_RS.read_text()
-    assert "buffer_capacity" in source and "STREAM_BACKPRESSURE" in source
-    test_text = BACKPRESSURE_TEST.read_text()
-    assert "StreamError::Backpressure" in test_text
-    assert "STREAM_BACKPRESSURE" in test_text
-    assert "hung instead of reporting backpressure" in test_text
-    # The default bounds are finite: an unbounded queue would have no capacity.
-    assert "buffer_capacity: 64" in source
-    assert "live_capacity: 64" in source
-
-
-def test_usage_accuracy_suite_is_wired() -> None:
-    """Named test: usage accuracy. The OPS-004 rebuild/quota suites exist and drive the owners."""
-    text = USAGE_TEST.read_text()
-    assert "usage_rebuild_from_source_events_is_deterministic" in text
-    assert "quota_failure_does_not_partially_commit_a_new_effect" in text
-    assert "UsageProjection::rebuild" in text
-
-
-def test_load_and_soak_boundaries_reported_when_absent() -> None:
-    """The served load/soak boundary prints BLOCKED_EXTERNAL when it is not running."""
-    import os
-
-    if os.environ.get("QUANSIO_TEST_PERF") != "1":
-        print(
-            "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set; served load/soak runs against "
-            "the dev stack are not running (crates/events/tests/stream_backpressure.rs and "
-            "crates/server/tests/usage.rs remain the standing gates)"
-        )
-    assert True

@@ -1,0 +1,23 @@
+{
+  "metric": "event_delivery_lag_p95_ms",
+  "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server",
+  "transport": "WebSocket /v1/stream, channel workspace:<id>",
+  "measured_from": "the HTTP response of the command (after its commit) to the frame's arrival",
+  "quiet": {
+    "n": 150,
+    "p50_ms": 18.77,
+    "p95_ms": 25.35,
+    "p99_ms": 27.1,
+    "max_ms": 32.66,
+    "mean_ms": 19.08
+  },
+  "under_read_load": {
+    "n": 150,
+    "p50_ms": 13.23,
+    "p95_ms": 22.66,
+    "p99_ms": 40.76,
+    "max_ms": 62.53,
+    "mean_ms": 13.51
+  },
+  "target_ms": 1000
+}

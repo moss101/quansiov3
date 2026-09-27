@@ -1,0 +1,25 @@
+{
+  "metric": "model_first_token_live_provider_ms",
+  "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server",
+  "provider": "OpenAI-compatible (QUANSIO_TEST_OPENAI_COMPATIBLE_*)",
+  "model": "GLM-5.3-Flash",
+  "provider_first_token_bare_prompt": {
+    "n": 12,
+    "p50_ms": 3409.96,
+    "p95_ms": 5418.15,
+    "p99_ms": 5418.15,
+    "max_ms": 5418.15,
+    "mean_ms": 3738.12
+  },
+  "through_quansio_first_token": {
+    "n": 12,
+    "p50_ms": 6270.58,
+    "p95_ms": 8171.65,
+    "p99_ms": 8171.65,
+    "max_ms": 8171.65,
+    "mean_ms": 6286.19
+  },
+  "first_frame_was_a_partial_delta": "12/12",
+  "difference_p50_ms": 2860.6,
+  "note": "the direct call sends the bare prompt; through Quansio the model also receives the teammate's instructions, skills and tool schemas and reasons over them first"
+}

@@ -1,0 +1,20 @@
+{
+  "metric": "overload_slow_consumers",
+  "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server",
+  "stalled_consumers": 16,
+  "events_written": 6000,
+  "rss_mb": {
+    "before": 83.0,
+    "peak": 89.5,
+    "after": 89.4
+  },
+  "reading_consumer_lag": {
+    "n": 30,
+    "p50_ms": 17.24,
+    "p95_ms": 26.1,
+    "p99_ms": 52.13,
+    "max_ms": 52.13,
+    "mean_ms": 19.09
+  },
+  "failures": []
+}

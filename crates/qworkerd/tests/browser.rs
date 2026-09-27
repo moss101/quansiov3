@@ -551,3 +551,46 @@ async fn a_takeover_fences_agent_input_without_creating_a_second_session() {
         Err(BrowserError::SessionNotUsable { .. })
     ));
 }
+
+/// QA-009: the DOM path's action round trip — act on a page, then read back what changed — measured
+/// on a real browser against DOSSIER §21.2's 1.5 s budget (p95).
+#[tokio::test]
+async fn a_dom_action_round_trip_stays_inside_the_budget() {
+    let Some(browser) = Browser::launch() else {
+        blocked_marker();
+        return;
+    };
+    let counter = r#"<html><body><button id="b">Add one</button><div id="n">0</div>
+    <script>let n = 0; document.getElementById('b').addEventListener('click', () => {
+      document.getElementById('n').textContent = String(++n);
+    });</script></body></html>"#;
+    let (connection, _) = page(&browser, counter).await;
+    let mut samples = Vec::new();
+    for round in 1..=60 {
+        let started = std::time::Instant::now();
+        browser::click(&connection, "#b").await.expect("click");
+        let seen = browser::observe(
+            &connection,
+            browser::DEFAULT_MAX_TEXT_BYTES,
+            DEFAULT_MAX_LINKS,
+            false,
+        )
+        .await
+        .expect("observe");
+        samples.push(started.elapsed().as_secs_f64() * 1000.0);
+        assert!(
+            seen.text.contains(&round.to_string()),
+            "round {round}: the click's effect is not in the DOM: {:?}",
+            seen.text
+        );
+    }
+    samples.sort_by(f64::total_cmp);
+    let rank =
+        |fraction: f64| samples[((fraction * samples.len() as f64).ceil() as usize).max(1) - 1];
+    let (p50, p95, max) = (rank(0.5), rank(0.95), samples[samples.len() - 1]);
+    println!(
+        "QA-009 browser_action_round_trip_ms: {{\"path\": \"click, then DOM observation, over CDP on a real Chrome\", \"n\": {}, \"p50_ms\": {p50:.1}, \"p95_ms\": {p95:.1}, \"max_ms\": {max:.1}, \"target_ms\": 1500}}",
+        samples.len()
+    );
+    assert!(p95 <= 1500.0, "p95 {p95:.1} ms over the 1.5 s budget");
+}

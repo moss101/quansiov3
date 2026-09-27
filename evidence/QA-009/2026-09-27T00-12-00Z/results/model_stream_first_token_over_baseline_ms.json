@@ -1,0 +1,25 @@
+{
+  "metric": "model_stream_first_token_over_baseline_ms",
+  "binary": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/bin-final/quansio-server",
+  "provider": "the dev stack's stub provider (answers at once: the difference is Quansio's)",
+  "provider_first_token": {
+    "n": 12,
+    "p50_ms": 5.04,
+    "p95_ms": 10.15,
+    "p99_ms": 10.15,
+    "max_ms": 10.15,
+    "mean_ms": 5.49
+  },
+  "through_quansio_first_token": {
+    "n": 12,
+    "p50_ms": 60.36,
+    "p95_ms": 90.42,
+    "p99_ms": 90.42,
+    "max_ms": 90.42,
+    "mean_ms": 66.01
+  },
+  "first_frame_was_a_partial_delta": "12/12",
+  "overhead_p50_ms": 55.3,
+  "overhead_p95_ms": 80.3,
+  "target_ms": 300
+}
