@@ -271,9 +271,9 @@ def test_profiles_survive_a_killed_server() -> None:
     env = coverage.coverage_env(Path("/target"), branch=False)
     assert env["LLVM_PROFILE_FILE"].endswith("%c%p.profraw")
     assert "-C instrument-coverage" in env["RUSTFLAGS"]
-    assert "RUSTC_BOOTSTRAP" not in env or env["RUSTC_BOOTSTRAP"] == __import__("os").environ.get("RUSTC_BOOTSTRAP")
+    assert "-Z coverage-options=branch" not in env["RUSTFLAGS"]
     darwin = coverage.continuous_mode_flags("darwin")
-    assert {flag.split(",")[2] for flag in darwin} == {"__llvm_prf_cnts", "__llvm_prf_data", "__llvm_prf_bits"}
+    assert {flag.split(",")[3] for flag in darwin} == {"__llvm_prf_cnts", "__llvm_prf_data", "__llvm_prf_bits"}
     assert coverage.continuous_mode_flags("linux") == ["-C llvm-args=-runtime-counter-relocation"]
     branch = coverage.coverage_env(Path("/target"), branch=True)
     assert branch["RUSTC_BOOTSTRAP"] == "1" and "-Z coverage-options=branch" in branch["RUSTFLAGS"]
