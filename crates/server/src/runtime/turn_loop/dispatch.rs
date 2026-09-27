@@ -1069,10 +1069,12 @@ impl ToolDispatchService {
                 })
             }
             Err(failure) => {
-                // Nothing external happened, so no outcome is unknown: the reservation is
-                // released and the call reports the refusal.
+                // The host refused before acting, so the outcome is known, not unknown: the
+                // record (already DISPATCHED, which nothing cancels) settles as a failure —
+                // retryable when only the host was missing — and the call reports the refusal.
+                let retryable = matches!(failure, HostFailure::Unavailable { .. });
                 self.ledger
-                    .cancel(effect_id)
+                    .settle_failure(effect_id, retryable, None, Vec::new())
                     .await
                     .map_err(effect_refusal)?;
                 self.update_tool_call(
@@ -1282,8 +1284,10 @@ impl ToolDispatchService {
         effect_id: &str,
         error: RuntimeError,
     ) -> Result<ToolDispatchOutcome, RuntimeError> {
+        // The port refused, so nothing happened and the outcome is known: the DISPATCHED
+        // record settles as a permanent failure rather than being left looking unknown.
         self.ledger
-            .cancel(effect_id)
+            .settle_failure(effect_id, false, None, Vec::new())
             .await
             .map_err(effect_refusal)?;
         self.update_tool_call(

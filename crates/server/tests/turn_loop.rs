@@ -94,6 +94,7 @@ struct ConformanceHost {
     timeline: Arc<Mutex<Vec<String>>>,
     unknown: Arc<Mutex<HashSet<String>>>,
     failing: Arc<Mutex<HashSet<String>>>,
+    refusing: Arc<Mutex<HashSet<String>>>,
     barrier: Arc<Mutex<Option<Arc<tokio::sync::Barrier>>>>,
 }
 
@@ -110,6 +111,16 @@ impl ConformanceHost {
 #[async_trait]
 impl ToolHostPort for ConformanceHost {
     async fn execute(&self, dispatch: HostDispatch) -> Result<HostOutcome, HostFailure> {
+        if self
+            .refusing
+            .lock()
+            .expect("refusing")
+            .contains(&dispatch.tool)
+        {
+            return Err(HostFailure::Refused {
+                detail: "the sandbox refuses this path".to_string(),
+            });
+        }
         self.timeline
             .lock()
             .expect("timeline")
@@ -577,6 +588,124 @@ async fn a_turn_executes_tool_proposals_through_capability_policy_and_the_effect
     assert_eq!(usage.tools[0].status, "completed");
     assert_eq!(usage.tools[0].declaration_version, 1);
     assert_eq!(usage.step_count, 4);
+    finish(fixture).await;
+}
+
+#[tokio::test]
+async fn a_host_refusal_after_dispatch_settles_as_a_known_failure_not_an_unknown_outcome() {
+    let Some(fixture) = prepare("run011_refused").await else {
+        blocked_marker();
+        return;
+    };
+    seed_policy(&fixture).await;
+    let model = StubModel::with(vec![
+        ModelProposal {
+            tool_calls: vec![read_tool("call_read", "/work/root/notes.md")],
+            ..ModelProposal::default()
+        },
+        ModelProposal {
+            assistant_text: Some("the read was refused".to_string()),
+            ..ModelProposal::default()
+        },
+    ]);
+    let host = ConformanceHost::default();
+    host.refusing
+        .lock()
+        .expect("refusing")
+        .insert("fs.read".to_string());
+    let seams = build_seams(&fixture, model, host.clone());
+    let run = start_run(&fixture, &seams.engine, 8).await;
+    seed_projection(&fixture, &run.id.to_string()).await;
+
+    // The refusal reaches the model as the call's result; the turn itself does not fail.
+    let outcome = seams
+        .engine
+        .run_turn(
+            &run.id,
+            run.generation,
+            TurnInput::new(RunTriggerKind::Manual),
+        )
+        .await
+        .expect("a refused call is a result, not a failed turn");
+    assert!(
+        matches!(outcome, TurnOutcome::Completed { .. }),
+        "{outcome:?}"
+    );
+    let rows = tool_call_rows(&fixture).await;
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0].1, "rejected", "{rows:?}");
+
+    // The host refused before acting: the outcome is known, so nothing awaits reconciliation.
+    let ledger = EffectLedger::new(fixture.pool.clone(), fixture.identity.clone()).expect("ledger");
+    let effects = ledger
+        .list_for_run(&run.id.to_string(), None)
+        .await
+        .expect("effects");
+    assert_eq!(effects.len(), 1);
+    assert_eq!(effects[0].status, EffectStatus::SettledFailed);
+    assert!(!effects[0].status.is_unsettled());
+    let outcome = effects[0].outcome.as_ref().expect("outcome");
+    assert!(!outcome.is_retryable(), "a refusal is not retried");
+    let recovery = seams.engine.recover(&run.id).await.expect("recover");
+    assert!(
+        !matches!(
+            recovery,
+            quansio_server::runtime::state_machine::RecoveryOutcome::ReconcileEffect { .. }
+        ),
+        "a refused call never needs reconciliation: {recovery:?}"
+    );
+    finish(fixture).await;
+}
+
+#[tokio::test]
+async fn an_internal_tool_refused_by_its_port_settles_as_a_known_failure() {
+    let Some(fixture) = prepare("run011_internal_refused").await else {
+        blocked_marker();
+        return;
+    };
+    seed_policy(&fixture).await;
+    let model = StubModel::with(vec![
+        ModelProposal {
+            tool_calls: vec![ProposedToolCall::new(
+                "call_plan",
+                "work.propose_plan",
+                json!({ "proposal_id": "prp_refused", "proposal_json": "{}" }),
+            )],
+            ..ModelProposal::default()
+        },
+        ModelProposal {
+            assistant_text: Some("the plan was refused".to_string()),
+            ..ModelProposal::default()
+        },
+    ]);
+    // No plan port is installed, so the port refuses the proposal.
+    let seams = build_seams(&fixture, model, ConformanceHost::default());
+    let run = start_run(&fixture, &seams.engine, 8).await;
+    seed_projection(&fixture, &run.id.to_string()).await;
+
+    let outcome = seams
+        .engine
+        .run_turn(
+            &run.id,
+            run.generation,
+            TurnInput::new(RunTriggerKind::Manual),
+        )
+        .await
+        .expect("a refused internal call is a result, not a failed turn");
+    assert!(
+        matches!(outcome, TurnOutcome::Completed { .. }),
+        "{outcome:?}"
+    );
+    let rows = tool_call_rows(&fixture).await;
+    assert_eq!(rows.len(), 1, "{rows:?}");
+    assert_eq!(rows[0].1, "rejected", "{rows:?}");
+    let ledger = EffectLedger::new(fixture.pool.clone(), fixture.identity.clone()).expect("ledger");
+    let effects = ledger
+        .list_for_run(&run.id.to_string(), None)
+        .await
+        .expect("effects");
+    assert_eq!(effects.len(), 1);
+    assert_eq!(effects[0].status, EffectStatus::SettledFailed);
     finish(fixture).await;
 }
 
