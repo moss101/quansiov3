@@ -8,7 +8,7 @@
  * teammate takes no message.
  */
 
-import { settled } from "./settle.js";
+import { answered } from "./settle.js";
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -193,13 +193,13 @@ describe.skipIf(blocked !== null)("desktop roster E2E against quansio-server", (
     const updated = (await handlers["teammates.update"](change.params)) as Settled<{ version: number; model_route_preference: string }>;
     expect(updated.ok && updated.result.version).toBe(2);
     expect(updated.ok && updated.result.model_route_preference).toBe("fast");
-    const again = (await handlers["messages.post"]({ threadId: posted.thread_id, content: "and now?", teammateId })) as { run_id: string; teammate: { version: number } };
+    const again = (await handlers["messages.post"]({ threadId: posted.thread_id, content: "and now?", teammateId })) as { message_id: string; run_id: string; teammate: { version: number } };
     expect(again.teammate.version).toBe(2);
     const narrowed = decodeCapabilityResolution(await handlers["runs.capabilities"]({ runId: again.run_id }));
     expect(narrowed?.grants.map((grant) => grant.effectClass)).toEqual(["read.internal"]);
     expect(narrowed?.inputs.find((input) => input.layer === "agent_definition")?.ref).toBe(`${teammateId}@v2`);
     // The turn's route record names the definition it read: version 2 and the preference.
-    const timeline = JSON.stringify(await settled(handlers, again.run_id));
+    const timeline = JSON.stringify(await answered(handlers, again.run_id, again.message_id));
     expect(timeline).toContain(`teammate:${teammateId}@v2;prefers:fast`);
     // A need that is not an effect class is refused on the page and by the server alike.
     expect(updateTeammate(engineer, { defaultCapabilityNeeds: ["anything at all"] })).toMatchObject({ ok: false, code: "VALIDATION_SCHEMA" });

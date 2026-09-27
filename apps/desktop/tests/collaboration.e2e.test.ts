@@ -17,7 +17,7 @@
  * explicit `BLOCKED_EXTERNAL` marker (AGENTS.md "Real boundaries").
  */
 
-import { settled } from "./settle.js";
+import { answered, settled } from "./settle.js";
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -211,8 +211,8 @@ describe.skipIf(blocked !== null)("desktop collaboration E2E against quansio-ser
       ),
     );
     expect(new Set(posts.map((post) => post.message_id)).size).toBe(6);
-    // Every post's turn answers after the post is accepted; the thread is read once they have.
-    await Promise.all(posts.map((post) => settled(owner.handlers, post.run_id)));
+    // Every post's turn answers after the post is accepted; the thread is read once each has.
+    await Promise.all(posts.map((post) => answered(owner.handlers, post.run_id, post.message_id)));
     const viewOwner = decodeThreadMessages(await owner.handlers["threads.messages"]({ threadId: thread }));
     const viewEditor = decodeThreadMessages(await editor.handlers["threads.messages"]({ threadId: thread }));
     expect(viewOwner.map((m) => m.id)).toEqual(viewEditor.map((m) => m.id));
