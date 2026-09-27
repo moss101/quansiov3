@@ -80,13 +80,13 @@ fn start_server(with_minio: bool) -> Option<Server> {
             "--database",
             &database,
             "--tenant",
-            "tn_01J8Z3K6F1N8VQ2X5W9Y0CLICL",
+            "tn_01J8Z3K6F1N8VQ2X5W9Y0CR1CR",
             "--user",
-            "usr_01J8Z3K6F1N8VQ2X5W9Y0CLICL",
+            "usr_01J8Z3K6F1N8VQ2X5W9Y0CR1CR",
             "--workspace",
-            "ws_01J8Z3K6F1N8VQ2X5W9Y0CLICL",
+            "ws_01J8Z3K6F1N8VQ2X5W9Y0CR1CR",
             "--node",
-            "wn_01J8Z3K6F1N8VQ2X5W9Y0CLICL",
+            "wn_01J8Z3K6F1N8VQ2X5W9Y0CR1CR",
         ])
         .env("QUANSIO_DATABASE_URL", &admin_url)
         .output()
@@ -213,6 +213,42 @@ impl Cli {
             outcome.stdout
         );
         outcome
+    }
+
+    /// Wait for a run to reach `status`: a message or a decision is answered once accepted,
+    /// and its turn continues in the background (APP-001), so a caller reads the outcome from
+    /// the run rather than from the command's response.
+    fn run_reaches(&self, run_id: &str, status: &str) -> Value {
+        let deadline = Instant::now() + Duration::from_secs(30);
+        loop {
+            let run = self.ok(&["--json", "runs", "get", run_id]).json();
+            if run["status"] == status {
+                return run;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "run {run_id} never reached {status}: {run}"
+            );
+            std::thread::sleep(Duration::from_millis(100));
+        }
+    }
+
+    /// Wait for the run's `count`th turn to complete: the run itself stays `RUNNING` between
+    /// the turns of a conversation.
+    fn turn_completes(&self, run_id: &str, count: usize) -> Value {
+        let deadline = Instant::now() + Duration::from_secs(30);
+        loop {
+            let timeline = self.ok(&["--json", "runs", "timeline", run_id]).json();
+            let turns = timeline["turns"].as_array().cloned().unwrap_or_default();
+            if turns.len() >= count && turns[count - 1]["status"] == "completed" {
+                return turns[count - 1].clone();
+            }
+            assert!(
+                Instant::now() < deadline,
+                "turn {count} of {run_id} never completed: {timeline}"
+            );
+            std::thread::sleep(Duration::from_millis(100));
+        }
     }
 
     /// Sign in with a magic link the server printed on its console.
@@ -388,10 +424,9 @@ fn the_cli_is_a_scoped_client_of_the_public_api_and_nothing_else() {
             &format!("write the summary {APPROVAL_SCENARIO}"),
         ])
         .json();
-    assert_eq!(posted["turn"]["kind"], "parked", "{posted}");
     let run_id = posted["run_id"].as_str().expect("run").to_string();
     let thread_id = posted["thread_id"].as_str().expect("thread").to_string();
-    let run = owner.ok(&["--json", "runs", "get", &run_id]).json();
+    let run = owner.run_reaches(&run_id, "WAITING_APPROVAL");
     assert_eq!(run["id"], run_id);
     assert!(run["capability_projection"]["grants"].is_array(), "{run}");
     let threads = owner.ok(&["--json", "threads", "list"]).json();
@@ -472,7 +507,8 @@ fn the_cli_is_a_scoped_client_of_the_public_api_and_nothing_else() {
         ])
         .json();
     assert_eq!(granted["params_digest"], digest, "{granted}");
-    assert_eq!(granted["turn"]["kind"], "completed", "{granted}");
+    let resumed = owner.turn_completes(&run_id, 2);
+    assert_eq!(resumed["input"]["kind"], "wake", "{resumed}");
     let again = owner.run(&[
         "--json",
         "approvals",
@@ -591,6 +627,7 @@ fn the_cli_is_a_scoped_client_of_the_public_api_and_nothing_else() {
         ])
         .json();
     let run_id = posted["run_id"].as_str().expect("run").to_string();
+    viewer.run_reaches(&run_id, "WAITING_APPROVAL");
     let approvals = viewer
         .ok(&["--json", "approvals", "list", "--run", &run_id])
         .json();
