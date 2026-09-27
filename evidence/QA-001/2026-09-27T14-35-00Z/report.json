@@ -1,0 +1,161 @@
+{
+  "source": "DOSSIER.md \u00a721.4 (provisional numbers; the owner ratifies them before REL-001, OD-011)",
+  "status": "FAIL",
+  "findings": [
+    "safety-critical area capability: 77.16% lines < 90%",
+    "safety-critical area effects: 85.85% lines < 90%",
+    "safety-critical area runtime: 85.62% lines < 90%",
+    "safety-critical area recovery: 70.69% lines < 90%"
+  ],
+  "groups": {
+    "capability": {
+      "lines": 1392,
+      "lines_covered": 1074,
+      "branches": 192,
+      "branches_covered": 101,
+      "files": 10,
+      "line_percent": 77.16,
+      "branch_percent": 52.6,
+      "line_min": 90
+    },
+    "policy": {
+      "lines": 2865,
+      "lines_covered": 2640,
+      "branches": 210,
+      "branches_covered": 159,
+      "files": 8,
+      "line_percent": 92.15,
+      "branch_percent": 75.71,
+      "line_min": 90
+    },
+    "effects": {
+      "lines": 1519,
+      "lines_covered": 1304,
+      "branches": 80,
+      "branches_covered": 57,
+      "files": 4,
+      "line_percent": 85.85,
+      "branch_percent": 71.25,
+      "line_min": 90
+    },
+    "runtime": {
+      "lines": 11011,
+      "lines_covered": 9428,
+      "branches": 658,
+      "branches_covered": 463,
+      "files": 42,
+      "line_percent": 85.62,
+      "branch_percent": 70.36,
+      "line_min": 90
+    },
+    "recovery": {
+      "lines": 389,
+      "lines_covered": 275,
+      "branches": 14,
+      "branches_covered": 12,
+      "files": 3,
+      "line_percent": 70.69,
+      "branch_percent": 85.71,
+      "line_min": 90
+    },
+    "secrets": {
+      "lines": 731,
+      "lines_covered": 678,
+      "branches": 56,
+      "branches_covered": 47,
+      "files": 2,
+      "line_percent": 92.75,
+      "branch_percent": 83.93,
+      "line_min": 90
+    },
+    "egress": {
+      "lines": 1207,
+      "lines_covered": 1146,
+      "branches": 130,
+      "branches_covered": 106,
+      "files": 2,
+      "line_percent": 94.95,
+      "branch_percent": 81.54,
+      "line_min": 90
+    },
+    "qworkerd-protocol": {
+      "lines": 380,
+      "lines_covered": 342,
+      "branches": 44,
+      "branches_covered": 40,
+      "files": 2,
+      "line_percent": 90.0,
+      "branch_percent": 90.91,
+      "line_min": 90
+    },
+    "rust-other": {
+      "lines": 44464,
+      "lines_covered": 38342,
+      "branches": 3432,
+      "branches_covered": 2416,
+      "files": 154,
+      "line_percent": 86.23,
+      "line_min": 75
+    },
+    "python": {
+      "lines": 12572,
+      "lines_covered": 11001,
+      "line_percent": 87.5,
+      "line_min": 80
+    },
+    "typescript": {
+      "line_min": 70,
+      "status": "BLOCKED_EXTERNAL",
+      "reason": "no TypeScript coverage provider is installed: @vitest/coverage-v8 was not approved for download (2026-09-27); the critical journeys run in Playwright (QA-008)"
+    }
+  },
+  "unreportable": [],
+  "unmapped": [
+    "crates/capability/src/lib.rs",
+    "crates/contracts/src/lib.rs",
+    "crates/core/src/error.rs",
+    "crates/core/src/lib.rs",
+    "crates/events/src/error.rs",
+    "crates/events/src/lib.rs",
+    "crates/graph/src/lib.rs",
+    "crates/indexer/src/engine.rs",
+    "crates/indexer/src/lib.rs",
+    "crates/machine/src/lib.rs",
+    "crates/machine/src/substrates/mod.rs",
+    "crates/qworkerd/src/lib.rs",
+    "crates/server/src/artifacts/mod.rs",
+    "crates/server/src/control/collaboration/mod.rs",
+    "crates/server/src/control/mod.rs",
+    "crates/server/src/control/routines/mod.rs",
+    "crates/server/src/control/schema/mod.rs",
+    "crates/server/src/effects/mod.rs",
+    "crates/server/src/lib.rs",
+    "crates/server/src/notify/mod.rs",
+    "crates/server/src/observability/mod.rs",
+    "crates/server/src/policy/mod.rs",
+    "crates/server/src/runtime/mod.rs",
+    "crates/server/src/runtime/turn_loop/mod.rs",
+    "crates/server/src/scheduler/dispatch.rs",
+    "crates/server/src/scheduler/mod.rs",
+    "crates/server/src/usage/mod.rs",
+    "crates/tools/src/lib.rs"
+  ],
+  "branch_run": {
+    "tool": "rustc -C instrument-coverage -Z coverage-options=branch",
+    "unreportable": [
+      "crates/events/src/projection.rs",
+      "crates/server/src/api/seams.rs",
+      "crates/server/src/api/search.rs",
+      "crates/server/src/artifacts/object_store.rs",
+      "crates/server/src/notify/email.rs",
+      "crates/server/src/notify/mod.rs",
+      "crates/server/src/runtime/agents/port.rs",
+      "crates/server/src/runtime/budgets/enforce.rs",
+      "crates/server/src/runtime/turn_loop/dispatch.rs",
+      "crates/server/src/runtime/verification/service.rs",
+      "crates/server/src/scheduler/dispatch.rs",
+      "crates/server/src/scheduler/graph_dispatch.rs",
+      "crates/server/src/scheduler/mod.rs"
+    ]
+  }
+}

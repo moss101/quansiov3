@@ -1,0 +1,1352 @@
+{
+  "tool": "rustc -C instrument-coverage (continuous profiles) -Z coverage-options=branch",
+  "cargo_test_exit": 0,
+  "objects": 130,
+  "profiles": 468,
+  "files": {
+    "crates/capability/src/algebra.rs": {
+      "lines": 57,
+      "lines_covered": 51,
+      "branches": 8,
+      "branches_covered": 7
+    },
+    "crates/capability/src/authorize.rs": {
+      "lines": 142,
+      "lines_covered": 141,
+      "branches": 20,
+      "branches_covered": 19
+    },
+    "crates/capability/src/delegation.rs": {
+      "lines": 50,
+      "lines_covered": 41,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/capability/src/error.rs": {
+      "lines": 6,
+      "lines_covered": 5,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/capability/src/grant.rs": {
+      "lines": 216,
+      "lines_covered": 216,
+      "branches": 40,
+      "branches_covered": 39
+    },
+    "crates/capability/src/layer.rs": {
+      "lines": 136,
+      "lines_covered": 135,
+      "branches": 2,
+      "branches_covered": 2
+    },
+    "crates/capability/src/persistence.rs": {
+      "lines": 141,
+      "lines_covered": 136,
+      "branches": 6,
+      "branches_covered": 4
+    },
+    "crates/capability/src/policy.rs": {
+      "lines": 26,
+      "lines_covered": 26,
+      "branches": 8,
+      "branches_covered": 8
+    },
+    "crates/capability/src/projection.rs": {
+      "lines": 399,
+      "lines_covered": 371,
+      "branches": 34,
+      "branches_covered": 31
+    },
+    "crates/capability/src/selector.rs": {
+      "lines": 219,
+      "lines_covered": 217,
+      "branches": 74,
+      "branches_covered": 66
+    },
+    "crates/cli/src/lib.rs": {
+      "lines": 543,
+      "lines_covered": 518,
+      "branches": 72,
+      "branches_covered": 59
+    },
+    "crates/cli/src/main.rs": {
+      "lines": 851,
+      "lines_covered": 703,
+      "branches": 46,
+      "branches_covered": 27
+    },
+    "crates/core/src/cursor.rs": {
+      "lines": 38,
+      "lines_covered": 29,
+      "branches": 2,
+      "branches_covered": 1
+    },
+    "crates/core/src/generation.rs": {
+      "lines": 104,
+      "lines_covered": 94,
+      "branches": 12,
+      "branches_covered": 12
+    },
+    "crates/core/src/id.rs": {
+      "lines": 303,
+      "lines_covered": 221,
+      "branches": 2,
+      "branches_covered": 2
+    },
+    "crates/core/src/idempotency.rs": {
+      "lines": 64,
+      "lines_covered": 51,
+      "branches": 8,
+      "branches_covered": 5
+    },
+    "crates/core/src/ulid.rs": {
+      "lines": 114,
+      "lines_covered": 94,
+      "branches": 10,
+      "branches_covered": 10
+    },
+    "crates/events/src/cursor.rs": {
+      "lines": 154,
+      "lines_covered": 148,
+      "branches": 6,
+      "branches_covered": 5
+    },
+    "crates/events/src/envelope.rs": {
+      "lines": 153,
+      "lines_covered": 143,
+      "branches": 8,
+      "branches_covered": 8
+    },
+    "crates/events/src/event_type.rs": {
+      "lines": 125,
+      "lines_covered": 115,
+      "branches": 10,
+      "branches_covered": 9
+    },
+    "crates/events/src/outbox.rs": {
+      "lines": 60,
+      "lines_covered": 53,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/events/src/schema.rs": {
+      "lines": 64,
+      "lines_covered": 57,
+      "branches": 8,
+      "branches_covered": 8
+    },
+    "crates/events/src/store.rs": {
+      "lines": 274,
+      "lines_covered": 261,
+      "branches": 6,
+      "branches_covered": 4
+    },
+    "crates/events/src/stream.rs": {
+      "lines": 355,
+      "lines_covered": 332,
+      "branches": 52,
+      "branches_covered": 39
+    },
+    "crates/graph/src/agent.rs": {
+      "lines": 441,
+      "lines_covered": 374,
+      "branches": 28,
+      "branches_covered": 19
+    },
+    "crates/graph/src/batch.rs": {
+      "lines": 197,
+      "lines_covered": 141,
+      "branches": 2,
+      "branches_covered": 2
+    },
+    "crates/graph/src/error.rs": {
+      "lines": 35,
+      "lines_covered": 25,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/graph/src/runtime.rs": {
+      "lines": 844,
+      "lines_covered": 736,
+      "branches": 26,
+      "branches_covered": 20
+    },
+    "crates/graph/src/state.rs": {
+      "lines": 412,
+      "lines_covered": 380,
+      "branches": 2,
+      "branches_covered": 2
+    },
+    "crates/graph/src/store.rs": {
+      "lines": 145,
+      "lines_covered": 136,
+      "branches": 4,
+      "branches_covered": 3
+    },
+    "crates/graph/src/transaction/event.rs": {
+      "lines": 445,
+      "lines_covered": 372,
+      "branches": 12,
+      "branches_covered": 10
+    },
+    "crates/graph/src/transaction/mod.rs": {
+      "lines": 188,
+      "lines_covered": 162,
+      "branches": 6,
+      "branches_covered": 4
+    },
+    "crates/graph/src/transaction/plan.rs": {
+      "lines": 384,
+      "lines_covered": 329,
+      "branches": 46,
+      "branches_covered": 39
+    },
+    "crates/graph/src/work.rs": {
+      "lines": 499,
+      "lines_covered": 459,
+      "branches": 28,
+      "branches_covered": 21
+    },
+    "crates/indexer/src/document.rs": {
+      "lines": 135,
+      "lines_covered": 122,
+      "branches": 30,
+      "branches_covered": 27
+    },
+    "crates/indexer/src/error.rs": {
+      "lines": 6,
+      "lines_covered": 0,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/indexer/src/index.rs": {
+      "lines": 302,
+      "lines_covered": 285,
+      "branches": 32,
+      "branches_covered": 25
+    },
+    "crates/indexer/src/postgres.rs": {
+      "lines": 16,
+      "lines_covered": 12,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/indexer/src/program.rs": {
+      "lines": 140,
+      "lines_covered": 125,
+      "branches": 22,
+      "branches_covered": 17
+    },
+    "crates/indexer/src/snapshot.rs": {
+      "lines": 42,
+      "lines_covered": 36,
+      "branches": 4,
+      "branches_covered": 4
+    },
+    "crates/indexer/src/source.rs": {
+      "lines": 18,
+      "lines_covered": 11,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/indexer/src/tantivy_engine.rs": {
+      "lines": 378,
+      "lines_covered": 310,
+      "branches": 24,
+      "branches_covered": 16
+    },
+    "crates/machine/src/computer_use/bridge.rs": {
+      "lines": 78,
+      "lines_covered": 62,
+      "branches": 6,
+      "branches_covered": 5
+    },
+    "crates/machine/src/computer_use/mod.rs": {
+      "lines": 102,
+      "lines_covered": 99,
+      "branches": 4,
+      "branches_covered": 4
+    },
+    "crates/machine/src/computer_use/store.rs": {
+      "lines": 280,
+      "lines_covered": 266,
+      "branches": 32,
+      "branches_covered": 25
+    },
+    "crates/machine/src/control/browser.rs": {
+      "lines": 343,
+      "lines_covered": 327,
+      "branches": 14,
+      "branches_covered": 12
+    },
+    "crates/machine/src/control/mod.rs": {
+      "lines": 672,
+      "lines_covered": 577,
+      "branches": 38,
+      "branches_covered": 30
+    },
+    "crates/machine/src/control/terminal.rs": {
+      "lines": 209,
+      "lines_covered": 201,
+      "branches": 12,
+      "branches_covered": 12
+    },
+    "crates/machine/src/egress/mod.rs": {
+      "lines": 975,
+      "lines_covered": 933,
+      "branches": 114,
+      "branches_covered": 96
+    },
+    "crates/machine/src/egress/store.rs": {
+      "lines": 232,
+      "lines_covered": 213,
+      "branches": 16,
+      "branches_covered": 10
+    },
+    "crates/machine/src/gateway/mod.rs": {
+      "lines": 238,
+      "lines_covered": 222,
+      "branches": 36,
+      "branches_covered": 32
+    },
+    "crates/machine/src/secrets/key_provider.rs": {
+      "lines": 164,
+      "lines_covered": 131,
+      "branches": 10,
+      "branches_covered": 8
+    },
+    "crates/machine/src/secrets/mod.rs": {
+      "lines": 567,
+      "lines_covered": 547,
+      "branches": 46,
+      "branches_covered": 39
+    },
+    "crates/machine/src/substrates/macos_capsule/catalog.rs": {
+      "lines": 105,
+      "lines_covered": 86,
+      "branches": 12,
+      "branches_covered": 6
+    },
+    "crates/machine/src/substrates/macos_capsule/mod.rs": {
+      "lines": 208,
+      "lines_covered": 171,
+      "branches": 50,
+      "branches_covered": 35
+    },
+    "crates/machine/src/substrates/windows/mod.rs": {
+      "lines": 129,
+      "lines_covered": 107,
+      "branches": 28,
+      "branches_covered": 14
+    },
+    "crates/qworkerd/src/browser/cdp.rs": {
+      "lines": 273,
+      "lines_covered": 164,
+      "branches": 34,
+      "branches_covered": 19
+    },
+    "crates/qworkerd/src/browser/mod.rs": {
+      "lines": 673,
+      "lines_covered": 579,
+      "branches": 64,
+      "branches_covered": 47
+    },
+    "crates/qworkerd/src/host.rs": {
+      "lines": 142,
+      "lines_covered": 120,
+      "branches": 8,
+      "branches_covered": 8
+    },
+    "crates/qworkerd/src/tools/files.rs": {
+      "lines": 344,
+      "lines_covered": 231,
+      "branches": 48,
+      "branches_covered": 30
+    },
+    "crates/qworkerd/src/tools/mod.rs": {
+      "lines": 49,
+      "lines_covered": 0,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/qworkerd/src/tools/process.rs": {
+      "lines": 226,
+      "lines_covered": 165,
+      "branches": 40,
+      "branches_covered": 28
+    },
+    "crates/qworkerd/src/tools/sandbox.rs": {
+      "lines": 148,
+      "lines_covered": 113,
+      "branches": 26,
+      "branches_covered": 17
+    },
+    "crates/qworkerd/src/tools/scm/mod.rs": {
+      "lines": 105,
+      "lines_covered": 84,
+      "branches": 8,
+      "branches_covered": 6
+    },
+    "crates/qworkerd/src/tools/terminal.rs": {
+      "lines": 82,
+      "lines_covered": 60,
+      "branches": 10,
+      "branches_covered": 9
+    },
+    "crates/server/src/api/admin.rs": {
+      "lines": 592,
+      "lines_covered": 500,
+      "branches": 16,
+      "branches_covered": 12
+    },
+    "crates/server/src/api/artifacts.rs": {
+      "lines": 609,
+      "lines_covered": 508,
+      "branches": 76,
+      "branches_covered": 55
+    },
+    "crates/server/src/api/auth.rs": {
+      "lines": 225,
+      "lines_covered": 198,
+      "branches": 8,
+      "branches_covered": 5
+    },
+    "crates/server/src/api/collaboration.rs": {
+      "lines": 711,
+      "lines_covered": 586,
+      "branches": 50,
+      "branches_covered": 37
+    },
+    "crates/server/src/api/commands.rs": {
+      "lines": 1594,
+      "lines_covered": 1371,
+      "branches": 74,
+      "branches_covered": 57
+    },
+    "crates/server/src/api/diagnostics.rs": {
+      "lines": 83,
+      "lines_covered": 79,
+      "branches": 8,
+      "branches_covered": 6
+    },
+    "crates/server/src/api/enterprise.rs": {
+      "lines": 313,
+      "lines_covered": 270,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/api/error.rs": {
+      "lines": 106,
+      "lines_covered": 106,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/api/flags.rs": {
+      "lines": 36,
+      "lines_covered": 29,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/api/knowledge.rs": {
+      "lines": 501,
+      "lines_covered": 450,
+      "branches": 10,
+      "branches_covered": 9
+    },
+    "crates/server/src/api/limits.rs": {
+      "lines": 33,
+      "lines_covered": 29,
+      "branches": 4,
+      "branches_covered": 3
+    },
+    "crates/server/src/api/live.rs": {
+      "lines": 46,
+      "lines_covered": 44,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/api/live_sessions.rs": {
+      "lines": 846,
+      "lines_covered": 765,
+      "branches": 14,
+      "branches_covered": 11
+    },
+    "crates/server/src/api/mod.rs": {
+      "lines": 494,
+      "lines_covered": 447,
+      "branches": 10,
+      "branches_covered": 7
+    },
+    "crates/server/src/api/ops.rs": {
+      "lines": 136,
+      "lines_covered": 124,
+      "branches": 6,
+      "branches_covered": 6
+    },
+    "crates/server/src/api/projections.rs": {
+      "lines": 100,
+      "lines_covered": 61,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/api/rbac.rs": {
+      "lines": 119,
+      "lines_covered": 111,
+      "branches": 4,
+      "branches_covered": 3
+    },
+    "crates/server/src/api/routines.rs": {
+      "lines": 770,
+      "lines_covered": 601,
+      "branches": 22,
+      "branches_covered": 15
+    },
+    "crates/server/src/api/scim.rs": {
+      "lines": 246,
+      "lines_covered": 155,
+      "branches": 4,
+      "branches_covered": 4
+    },
+    "crates/server/src/api/stream.rs": {
+      "lines": 512,
+      "lines_covered": 402,
+      "branches": 72,
+      "branches_covered": 49
+    },
+    "crates/server/src/api/teammates.rs": {
+      "lines": 337,
+      "lines_covered": 291,
+      "branches": 6,
+      "branches_covered": 4
+    },
+    "crates/server/src/api/threads/mod.rs": {
+      "lines": 317,
+      "lines_covered": 296,
+      "branches": 8,
+      "branches_covered": 5
+    },
+    "crates/server/src/api/trust.rs": {
+      "lines": 560,
+      "lines_covered": 448,
+      "branches": 26,
+      "branches_covered": 18
+    },
+    "crates/server/src/api/web.rs": {
+      "lines": 148,
+      "lines_covered": 137,
+      "branches": 12,
+      "branches_covered": 9
+    },
+    "crates/server/src/api/webhooks.rs": {
+      "lines": 248,
+      "lines_covered": 226,
+      "branches": 10,
+      "branches_covered": 9
+    },
+    "crates/server/src/api/workgraph.rs": {
+      "lines": 477,
+      "lines_covered": 411,
+      "branches": 26,
+      "branches_covered": 13
+    },
+    "crates/server/src/artifacts/formats.rs": {
+      "lines": 453,
+      "lines_covered": 405,
+      "branches": 100,
+      "branches_covered": 66
+    },
+    "crates/server/src/artifacts/metadata.rs": {
+      "lines": 979,
+      "lines_covered": 850,
+      "branches": 34,
+      "branches_covered": 26
+    },
+    "crates/server/src/artifacts/model.rs": {
+      "lines": 98,
+      "lines_covered": 66,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/artifacts/sigv4.rs": {
+      "lines": 131,
+      "lines_covered": 130,
+      "branches": 4,
+      "branches_covered": 3
+    },
+    "crates/server/src/artifacts/tool_host.rs": {
+      "lines": 329,
+      "lines_covered": 249,
+      "branches": 18,
+      "branches_covered": 11
+    },
+    "crates/server/src/audit/mod.rs": {
+      "lines": 48,
+      "lines_covered": 45,
+      "branches": 6,
+      "branches_covered": 3
+    },
+    "crates/server/src/audit/store.rs": {
+      "lines": 152,
+      "lines_covered": 150,
+      "branches": 6,
+      "branches_covered": 5
+    },
+    "crates/server/src/bin/quansio-dev-seed.rs": {
+      "lines": 473,
+      "lines_covered": 202,
+      "branches": 42,
+      "branches_covered": 25
+    },
+    "crates/server/src/bin/quansio-server.rs": {
+      "lines": 51,
+      "lines_covered": 36,
+      "branches": 4,
+      "branches_covered": 1
+    },
+    "crates/server/src/composition.rs": {
+      "lines": 508,
+      "lines_covered": 354,
+      "branches": 46,
+      "branches_covered": 26
+    },
+    "crates/server/src/control/collaboration/access.rs": {
+      "lines": 227,
+      "lines_covered": 196,
+      "branches": 56,
+      "branches_covered": 49
+    },
+    "crates/server/src/control/collaboration/attention.rs": {
+      "lines": 134,
+      "lines_covered": 131,
+      "branches": 12,
+      "branches_covered": 8
+    },
+    "crates/server/src/control/collaboration/store.rs": {
+      "lines": 643,
+      "lines_covered": 589,
+      "branches": 30,
+      "branches_covered": 25
+    },
+    "crates/server/src/control/connectors/mod.rs": {
+      "lines": 266,
+      "lines_covered": 227,
+      "branches": 18,
+      "branches_covered": 15
+    },
+    "crates/server/src/control/conversation.rs": {
+      "lines": 703,
+      "lines_covered": 631,
+      "branches": 28,
+      "branches_covered": 25
+    },
+    "crates/server/src/control/data_lifecycle/intelligence.rs": {
+      "lines": 437,
+      "lines_covered": 428,
+      "branches": 16,
+      "branches_covered": 13
+    },
+    "crates/server/src/control/data_lifecycle/mod.rs": {
+      "lines": 39,
+      "lines_covered": 39,
+      "branches": 6,
+      "branches_covered": 6
+    },
+    "crates/server/src/control/identity/auth.rs": {
+      "lines": 663,
+      "lines_covered": 596,
+      "branches": 66,
+      "branches_covered": 49
+    },
+    "crates/server/src/control/identity/enterprise/jwt.rs": {
+      "lines": 313,
+      "lines_covered": 287,
+      "branches": 34,
+      "branches_covered": 28
+    },
+    "crates/server/src/control/identity/enterprise/mapping.rs": {
+      "lines": 290,
+      "lines_covered": 284,
+      "branches": 42,
+      "branches_covered": 33
+    },
+    "crates/server/src/control/identity/enterprise/mod.rs": {
+      "lines": 269,
+      "lines_covered": 226,
+      "branches": 32,
+      "branches_covered": 15
+    },
+    "crates/server/src/control/identity/enterprise/oidc.rs": {
+      "lines": 1027,
+      "lines_covered": 910,
+      "branches": 132,
+      "branches_covered": 91
+    },
+    "crates/server/src/control/identity/enterprise/principals.rs": {
+      "lines": 365,
+      "lines_covered": 348,
+      "branches": 38,
+      "branches_covered": 31
+    },
+    "crates/server/src/control/identity/enterprise/scim.rs": {
+      "lines": 1341,
+      "lines_covered": 1019,
+      "branches": 110,
+      "branches_covered": 57
+    },
+    "crates/server/src/control/identity/enterprise/sessions.rs": {
+      "lines": 135,
+      "lines_covered": 132,
+      "branches": 4,
+      "branches_covered": 3
+    },
+    "crates/server/src/control/identity/members.rs": {
+      "lines": 538,
+      "lines_covered": 475,
+      "branches": 68,
+      "branches_covered": 46
+    },
+    "crates/server/src/control/identity/mod.rs": {
+      "lines": 388,
+      "lines_covered": 352,
+      "branches": 24,
+      "branches_covered": 12
+    },
+    "crates/server/src/control/identity/oauth.rs": {
+      "lines": 273,
+      "lines_covered": 172,
+      "branches": 36,
+      "branches_covered": 17
+    },
+    "crates/server/src/control/identity/settings.rs": {
+      "lines": 136,
+      "lines_covered": 110,
+      "branches": 62,
+      "branches_covered": 41
+    },
+    "crates/server/src/control/ops/mod.rs": {
+      "lines": 589,
+      "lines_covered": 542,
+      "branches": 86,
+      "branches_covered": 54
+    },
+    "crates/server/src/control/recovery_point/mod.rs": {
+      "lines": 132,
+      "lines_covered": 119,
+      "branches": 20,
+      "branches_covered": 13
+    },
+    "crates/server/src/control/routines/ledger.rs": {
+      "lines": 388,
+      "lines_covered": 329,
+      "branches": 6,
+      "branches_covered": 4
+    },
+    "crates/server/src/control/routines/store.rs": {
+      "lines": 504,
+      "lines_covered": 472,
+      "branches": 28,
+      "branches_covered": 20
+    },
+    "crates/server/src/control/routines/triggers.rs": {
+      "lines": 237,
+      "lines_covered": 232,
+      "branches": 44,
+      "branches_covered": 35
+    },
+    "crates/server/src/control/skills/evolution.rs": {
+      "lines": 202,
+      "lines_covered": 177,
+      "branches": 8,
+      "branches_covered": 4
+    },
+    "crates/server/src/control/skills/mod.rs": {
+      "lines": 11,
+      "lines_covered": 7,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/control/skills/state.rs": {
+      "lines": 112,
+      "lines_covered": 112,
+      "branches": 10,
+      "branches_covered": 8
+    },
+    "crates/server/src/control/skills/store.rs": {
+      "lines": 437,
+      "lines_covered": 428,
+      "branches": 22,
+      "branches_covered": 20
+    },
+    "crates/server/src/control/teammates/mod.rs": {
+      "lines": 82,
+      "lines_covered": 80,
+      "branches": 8,
+      "branches_covered": 8
+    },
+    "crates/server/src/control/teammates/store.rs": {
+      "lines": 625,
+      "lines_covered": 595,
+      "branches": 50,
+      "branches_covered": 39
+    },
+    "crates/server/src/control/teammates/templates.rs": {
+      "lines": 32,
+      "lines_covered": 19,
+      "branches": 4,
+      "branches_covered": 2
+    },
+    "crates/server/src/effects/error.rs": {
+      "lines": 12,
+      "lines_covered": 10,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/effects/ledger.rs": {
+      "lines": 1159,
+      "lines_covered": 1019,
+      "branches": 56,
+      "branches_covered": 40
+    },
+    "crates/server/src/effects/model.rs": {
+      "lines": 213,
+      "lines_covered": 207,
+      "branches": 10,
+      "branches_covered": 10
+    },
+    "crates/server/src/effects/taxonomy.rs": {
+      "lines": 135,
+      "lines_covered": 133,
+      "branches": 14,
+      "branches_covered": 13
+    },
+    "crates/server/src/intelligence/mod.rs": {
+      "lines": 236,
+      "lines_covered": 191,
+      "branches": 18,
+      "branches_covered": 10
+    },
+    "crates/server/src/intelligence/model_source.rs": {
+      "lines": 608,
+      "lines_covered": 557,
+      "branches": 42,
+      "branches_covered": 28
+    },
+    "crates/server/src/notify/notifier.rs": {
+      "lines": 247,
+      "lines_covered": 173,
+      "branches": 22,
+      "branches_covered": 10
+    },
+    "crates/server/src/notify/store.rs": {
+      "lines": 361,
+      "lines_covered": 359,
+      "branches": 16,
+      "branches_covered": 14
+    },
+    "crates/server/src/notify/webhooks/deliverer.rs": {
+      "lines": 448,
+      "lines_covered": 396,
+      "branches": 30,
+      "branches_covered": 22
+    },
+    "crates/server/src/notify/webhooks/fanout.rs": {
+      "lines": 114,
+      "lines_covered": 114,
+      "branches": 12,
+      "branches_covered": 12
+    },
+    "crates/server/src/notify/webhooks/mod.rs": {
+      "lines": 147,
+      "lines_covered": 130,
+      "branches": 26,
+      "branches_covered": 22
+    },
+    "crates/server/src/notify/webhooks/redact.rs": {
+      "lines": 96,
+      "lines_covered": 96,
+      "branches": 14,
+      "branches_covered": 12
+    },
+    "crates/server/src/notify/webhooks/signature.rs": {
+      "lines": 74,
+      "lines_covered": 70,
+      "branches": 8,
+      "branches_covered": 6
+    },
+    "crates/server/src/notify/webhooks/store.rs": {
+      "lines": 644,
+      "lines_covered": 622,
+      "branches": 38,
+      "branches_covered": 30
+    },
+    "crates/server/src/observability/bundle.rs": {
+      "lines": 24,
+      "lines_covered": 19,
+      "branches": 4,
+      "branches_covered": 1
+    },
+    "crates/server/src/observability/context.rs": {
+      "lines": 100,
+      "lines_covered": 92,
+      "branches": 20,
+      "branches_covered": 16
+    },
+    "crates/server/src/observability/log.rs": {
+      "lines": 143,
+      "lines_covered": 138,
+      "branches": 20,
+      "branches_covered": 16
+    },
+    "crates/server/src/observability/metrics.rs": {
+      "lines": 113,
+      "lines_covered": 112,
+      "branches": 10,
+      "branches_covered": 9
+    },
+    "crates/server/src/observability/otlp.rs": {
+      "lines": 90,
+      "lines_covered": 76,
+      "branches": 16,
+      "branches_covered": 7
+    },
+    "crates/server/src/observability/redact.rs": {
+      "lines": 75,
+      "lines_covered": 74,
+      "branches": 42,
+      "branches_covered": 30
+    },
+    "crates/server/src/policy/approval.rs": {
+      "lines": 286,
+      "lines_covered": 278,
+      "branches": 16,
+      "branches_covered": 13
+    },
+    "crates/server/src/policy/error.rs": {
+      "lines": 31,
+      "lines_covered": 16,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/policy/escalation.rs": {
+      "lines": 122,
+      "lines_covered": 111,
+      "branches": 10,
+      "branches_covered": 10
+    },
+    "crates/server/src/policy/evaluation.rs": {
+      "lines": 583,
+      "lines_covered": 558,
+      "branches": 40,
+      "branches_covered": 33
+    },
+    "crates/server/src/policy/guards.rs": {
+      "lines": 202,
+      "lines_covered": 189,
+      "branches": 24,
+      "branches_covered": 19
+    },
+    "crates/server/src/policy/rbac.rs": {
+      "lines": 136,
+      "lines_covered": 126,
+      "branches": 10,
+      "branches_covered": 8
+    },
+    "crates/server/src/policy/rules.rs": {
+      "lines": 363,
+      "lines_covered": 349,
+      "branches": 48,
+      "branches_covered": 38
+    },
+    "crates/server/src/policy/store.rs": {
+      "lines": 1142,
+      "lines_covered": 1013,
+      "branches": 62,
+      "branches_covered": 38
+    },
+    "crates/server/src/runtime/agents/mod.rs": {
+      "lines": 85,
+      "lines_covered": 80,
+      "branches": 8,
+      "branches_covered": 8
+    },
+    "crates/server/src/runtime/agents/store.rs": {
+      "lines": 1917,
+      "lines_covered": 1801,
+      "branches": 114,
+      "branches_covered": 90
+    },
+    "crates/server/src/runtime/budgets/limits.rs": {
+      "lines": 247,
+      "lines_covered": 245,
+      "branches": 18,
+      "branches_covered": 16
+    },
+    "crates/server/src/runtime/budgets/mod.rs": {
+      "lines": 8,
+      "lines_covered": 6,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/budgets/service.rs": {
+      "lines": 446,
+      "lines_covered": 445,
+      "branches": 30,
+      "branches_covered": 28
+    },
+    "crates/server/src/runtime/checkpoints/mod.rs": {
+      "lines": 115,
+      "lines_covered": 107,
+      "branches": 6,
+      "branches_covered": 5
+    },
+    "crates/server/src/runtime/compaction/mod.rs": {
+      "lines": 205,
+      "lines_covered": 193,
+      "branches": 12,
+      "branches_covered": 11
+    },
+    "crates/server/src/runtime/context_bridge/gateway.rs": {
+      "lines": 14,
+      "lines_covered": 11,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/context_bridge/mod.rs": {
+      "lines": 7,
+      "lines_covered": 6,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/context_bridge/port.rs": {
+      "lines": 277,
+      "lines_covered": 268,
+      "branches": 24,
+      "branches_covered": 20
+    },
+    "crates/server/src/runtime/context_bridge/store.rs": {
+      "lines": 52,
+      "lines_covered": 51,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/orchestration/cancel.rs": {
+      "lines": 207,
+      "lines_covered": 205,
+      "branches": 28,
+      "branches_covered": 24
+    },
+    "crates/server/src/runtime/orchestration/capacity.rs": {
+      "lines": 81,
+      "lines_covered": 75,
+      "branches": 4,
+      "branches_covered": 3
+    },
+    "crates/server/src/runtime/orchestration/graph.rs": {
+      "lines": 83,
+      "lines_covered": 83,
+      "branches": 12,
+      "branches_covered": 9
+    },
+    "crates/server/src/runtime/orchestration/graph_port.rs": {
+      "lines": 33,
+      "lines_covered": 33,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/orchestration/mod.rs": {
+      "lines": 25,
+      "lines_covered": 23,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/orchestration/queue.rs": {
+      "lines": 360,
+      "lines_covered": 357,
+      "branches": 58,
+      "branches_covered": 48
+    },
+    "crates/server/src/runtime/orchestration/service.rs": {
+      "lines": 216,
+      "lines_covered": 194,
+      "branches": 22,
+      "branches_covered": 15
+    },
+    "crates/server/src/runtime/planning/compile.rs": {
+      "lines": 462,
+      "lines_covered": 458,
+      "branches": 76,
+      "branches_covered": 75
+    },
+    "crates/server/src/runtime/planning/graph_port.rs": {
+      "lines": 191,
+      "lines_covered": 180,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/planning/mod.rs": {
+      "lines": 16,
+      "lines_covered": 16,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/planning/policy.rs": {
+      "lines": 30,
+      "lines_covered": 25,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/planning/port.rs": {
+      "lines": 4,
+      "lines_covered": 0,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/planning/service.rs": {
+      "lines": 148,
+      "lines_covered": 141,
+      "branches": 8,
+      "branches_covered": 6
+    },
+    "crates/server/src/runtime/planning/wire.rs": {
+      "lines": 101,
+      "lines_covered": 100,
+      "branches": 16,
+      "branches_covered": 16
+    },
+    "crates/server/src/runtime/protocol_state/mod.rs": {
+      "lines": 230,
+      "lines_covered": 222,
+      "branches": 18,
+      "branches_covered": 18
+    },
+    "crates/server/src/runtime/recovery/mod.rs": {
+      "lines": 11,
+      "lines_covered": 5,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/recovery/plan.rs": {
+      "lines": 136,
+      "lines_covered": 132,
+      "branches": 12,
+      "branches_covered": 11
+    },
+    "crates/server/src/runtime/recovery/service.rs": {
+      "lines": 242,
+      "lines_covered": 231,
+      "branches": 2,
+      "branches_covered": 1
+    },
+    "crates/server/src/runtime/state_machine/engine.rs": {
+      "lines": 1072,
+      "lines_covered": 1052,
+      "branches": 74,
+      "branches_covered": 67
+    },
+    "crates/server/src/runtime/state_machine/mod.rs": {
+      "lines": 81,
+      "lines_covered": 80,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/state_machine/state.rs": {
+      "lines": 227,
+      "lines_covered": 226,
+      "branches": 2,
+      "branches_covered": 2
+    },
+    "crates/server/src/runtime/state_machine/store.rs": {
+      "lines": 1614,
+      "lines_covered": 1532,
+      "branches": 74,
+      "branches_covered": 67
+    },
+    "crates/server/src/runtime/state_machine/turn_loop.rs": {
+      "lines": 26,
+      "lines_covered": 22,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/turn_loop/model_calls.rs": {
+      "lines": 101,
+      "lines_covered": 100,
+      "branches": 4,
+      "branches_covered": 3
+    },
+    "crates/server/src/runtime/turn_loop/parallel.rs": {
+      "lines": 124,
+      "lines_covered": 124,
+      "branches": 10,
+      "branches_covered": 10
+    },
+    "crates/server/src/runtime/turn_loop/questions.rs": {
+      "lines": 454,
+      "lines_covered": 439,
+      "branches": 28,
+      "branches_covered": 22
+    },
+    "crates/server/src/runtime/turn_loop/usage.rs": {
+      "lines": 50,
+      "lines_covered": 46,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/runtime/verification/checks.rs": {
+      "lines": 259,
+      "lines_covered": 256,
+      "branches": 16,
+      "branches_covered": 16
+    },
+    "crates/server/src/runtime/verification/contract.rs": {
+      "lines": 218,
+      "lines_covered": 207,
+      "branches": 10,
+      "branches_covered": 9
+    },
+    "crates/server/src/runtime/verification/mod.rs": {
+      "lines": 6,
+      "lines_covered": 5,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/scheduler/engine.rs": {
+      "lines": 155,
+      "lines_covered": 125,
+      "branches": 10,
+      "branches_covered": 7
+    },
+    "crates/server/src/scheduler/executor.rs": {
+      "lines": 68,
+      "lines_covered": 54,
+      "branches": 8,
+      "branches_covered": 4
+    },
+    "crates/server/src/scheduler/routine.rs": {
+      "lines": 682,
+      "lines_covered": 631,
+      "branches": 82,
+      "branches_covered": 62
+    },
+    "crates/server/src/scheduler/timer.rs": {
+      "lines": 330,
+      "lines_covered": 297,
+      "branches": 16,
+      "branches_covered": 10
+    },
+    "crates/server/src/scheduler/wait.rs": {
+      "lines": 87,
+      "lines_covered": 71,
+      "branches": 6,
+      "branches_covered": 2
+    },
+    "crates/server/src/usage/meters.rs": {
+      "lines": 31,
+      "lines_covered": 26,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/server/src/usage/project.rs": {
+      "lines": 183,
+      "lines_covered": 162,
+      "branches": 14,
+      "branches_covered": 9
+    },
+    "crates/server/src/usage/quota.rs": {
+      "lines": 70,
+      "lines_covered": 61,
+      "branches": 12,
+      "branches_covered": 8
+    },
+    "crates/server/src/usage/store.rs": {
+      "lines": 191,
+      "lines_covered": 186,
+      "branches": 16,
+      "branches_covered": 10
+    },
+    "crates/tools/src/bin/quansio-tool-check.rs": {
+      "lines": 37,
+      "lines_covered": 37,
+      "branches": 6,
+      "branches_covered": 6
+    },
+    "crates/tools/src/call.rs": {
+      "lines": 193,
+      "lines_covered": 149,
+      "branches": 10,
+      "branches_covered": 9
+    },
+    "crates/tools/src/canonical.rs": {
+      "lines": 35,
+      "lines_covered": 35,
+      "branches": 4,
+      "branches_covered": 4
+    },
+    "crates/tools/src/declaration.rs": {
+      "lines": 276,
+      "lines_covered": 206,
+      "branches": 46,
+      "branches_covered": 26
+    },
+    "crates/tools/src/error.rs": {
+      "lines": 6,
+      "lines_covered": 4,
+      "branches": 0,
+      "branches_covered": 0
+    },
+    "crates/tools/src/registry.rs": {
+      "lines": 181,
+      "lines_covered": 153,
+      "branches": 20,
+      "branches_covered": 14
+    },
+    "crates/tools/src/schema.rs": {
+      "lines": 256,
+      "lines_covered": 192,
+      "branches": 86,
+      "branches_covered": 56
+    }
+  },
+  "unreportable": [
+    "crates/events/src/projection.rs",
+    "crates/server/src/api/seams.rs",
+    "crates/server/src/api/search.rs",
+    "crates/server/src/artifacts/object_store.rs",
+    "crates/server/src/notify/email.rs",
+    "crates/server/src/notify/mod.rs",
+    "crates/server/src/runtime/agents/port.rs",
+    "crates/server/src/runtime/budgets/enforce.rs",
+    "crates/server/src/runtime/turn_loop/dispatch.rs",
+    "crates/server/src/runtime/verification/service.rs",
+    "crates/server/src/scheduler/dispatch.rs",
+    "crates/server/src/scheduler/graph_dispatch.rs",
+    "crates/server/src/scheduler/mod.rs"
+  ],
+  "unmapped": [
+    "crates/capability/src/lib.rs",
+    "crates/contracts/src/lib.rs",
+    "crates/core/src/error.rs",
+    "crates/core/src/lib.rs",
+    "crates/events/src/error.rs",
+    "crates/events/src/lib.rs",
+    "crates/graph/src/lib.rs",
+    "crates/indexer/src/engine.rs",
+    "crates/indexer/src/lib.rs",
+    "crates/machine/src/lib.rs",
+    "crates/machine/src/substrates/mod.rs",
+    "crates/qworkerd/src/lib.rs",
+    "crates/server/src/artifacts/mod.rs",
+    "crates/server/src/control/collaboration/mod.rs",
+    "crates/server/src/control/mod.rs",
+    "crates/server/src/control/routines/mod.rs",
+    "crates/server/src/control/schema/mod.rs",
+    "crates/server/src/effects/mod.rs",
+    "crates/server/src/lib.rs",
+    "crates/server/src/observability/mod.rs",
+    "crates/server/src/policy/mod.rs",
+    "crates/server/src/runtime/mod.rs",
+    "crates/server/src/runtime/turn_loop/mod.rs",
+    "crates/server/src/usage/mod.rs",
+    "crates/tools/src/lib.rs"
+  ]
+}

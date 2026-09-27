@@ -1,0 +1,2001 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.24
+   Compiling libc v0.2.189
+   Compiling serde_core v1.0.229
+   Compiling cfg-if v1.0.4
+   Compiling serde v1.0.229
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling subtle v2.6.1
+   Compiling pin-project-lite v0.2.17
+   Compiling futures-core v0.3.34
+   Compiling bytes v1.12.1
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling once_cell v1.21.4
+   Compiling log v0.4.34
+   Compiling find-msvc-tools v0.1.12
+   Compiling futures-io v0.3.34
+   Compiling shlex v2.0.1
+   Compiling futures-task v0.3.34
+   Compiling futures-sink v0.3.34
+   Compiling equivalent v1.0.2
+   Compiling stable_deref_trait v1.2.1
+   Compiling autocfg v1.5.1
+   Compiling slab v0.4.12
+   Compiling tracing-core v0.1.36
+   Compiling litemap v0.8.3
+   Compiling generic-array v0.14.7
+   Compiling writeable v0.6.4
+   Compiling percent-encoding v2.3.2
+   Compiling utf8_iter v1.0.4
+   Compiling zmij v1.0.23
+   Compiling serde_json v1.0.151
+   Compiling hashbrown v0.17.1
+   Compiling icu_properties_data v2.3.0
+   Compiling icu_normalizer_data v2.3.0
+   Compiling zeroize v1.9.0
+   Compiling base64 v0.22.1
+   Compiling zerocopy v0.8.57
+   Compiling untrusted v0.9.0
+   Compiling num-traits v0.2.19
+   Compiling form_urlencoded v1.2.2
+   Compiling rustls-pki-types v1.15.1
+   Compiling futures-channel v0.3.34
+   Compiling rustls v0.23.44
+   Compiling core-foundation-sys v0.8.7
+   Compiling indexmap v2.14.2
+   Compiling thiserror v2.0.20
+   Compiling byteorder v1.5.0
+   Compiling bitflags v2.13.2
+   Compiling webpki-roots v1.0.9
+   Compiling iana-time-zone v0.1.65
+   Compiling parking_lot_core v0.9.12
+   Compiling getrandom v0.4.3
+   Compiling allocator-api2 v0.2.21
+   Compiling scopeguard v1.2.0
+   Compiling crossbeam-utils v0.8.23
+   Compiling lock_api v0.4.14
+   Compiling foldhash v0.1.5
+   Compiling parking v2.2.1
+   Compiling crc-catalog v2.5.0
+   Compiling hashbrown v0.15.5
+   Compiling tinyvec_macros v0.1.1
+   Compiling tinyvec v1.13.2
+   Compiling event-listener v5.4.2
+   Compiling crc v3.4.0
+   Compiling webpki-roots v0.26.11
+   Compiling hashlink v0.10.0
+   Compiling unicode-normalization v0.1.25
+   Compiling unicode-properties v0.1.4
+   Compiling unicode-bidi v0.3.18
+   Compiling home v0.5.12
+   Compiling hex v0.4.3
+   Compiling futures-util v0.3.34
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling stringprep v0.1.5
+   Compiling digest v0.10.7
+   Compiling dotenvy v0.15.7
+   Compiling hmac v0.12.1
+   Compiling uuid v1.26.1
+   Compiling whoami v1.6.1
+   Compiling hkdf v0.12.4
+   Compiling md-5 v0.10.6
+   Compiling heck v0.5.0
+   Compiling quansio-events v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/crates/events)
+   Compiling ryu v1.0.23
+   Compiling http v1.5.0
+   Compiling httparse v1.10.1
+   Compiling fnv v1.0.7
+   Compiling unsafe-libyaml v0.2.11
+   Compiling syn v3.0.5
+   Compiling syn v2.0.119
+   Compiling http-body v1.1.0
+   Compiling tower-service v0.3.3
+   Compiling atomic-waker v1.1.2
+   Compiling try-lock v0.2.5
+   Compiling inout v0.1.4
+   Compiling want v0.3.1
+   Compiling httpdate v1.0.3
+   Compiling tower-layer v0.3.3
+   Compiling sync_wrapper v1.0.2
+   Compiling getrandom v0.2.17
+   Compiling mio v1.2.3
+   Compiling socket2 v0.6.5
+   Compiling errno v0.3.14
+   Compiling rand_core v0.6.4
+   Compiling jobserver v0.1.35
+   Compiling signal-hook-registry v1.4.8
+   Compiling cc v1.4.5
+   Compiling cpufeatures v0.2.17
+   Compiling tokio v1.53.1
+   Compiling sha2 v0.10.9
+   Compiling sha1 v0.10.7
+   Compiling cipher v0.4.4
+   Compiling universal-hash v0.5.1
+   Compiling ipnet v2.12.2
+   Compiling utf-8 v0.7.6
+   Compiling opaque-debug v0.3.1
+   Compiling data-encoding v2.11.1
+   Compiling poly1305 v0.8.0
+   Compiling chacha20 v0.9.1
+   Compiling aead v0.5.2
+   Compiling rustversion v1.0.23
+   Compiling http-body-util v0.1.5
+   Compiling chacha20poly1305 v0.10.1
+   Compiling rustix v1.1.4
+   Compiling ring v0.17.14
+   Compiling fastrand v2.5.0
+   Compiling anyhow v1.0.104
+   Compiling thiserror v1.0.69
+   Compiling indexmap v1.9.3
+   Compiling synstructure v0.13.2
+   Compiling chrono v0.4.45
+   Compiling atoi v2.0.0
+   Compiling pkg-config v0.3.34
+   Compiling serde_derive v1.0.229
+   Compiling zerovec-derive v0.11.6
+   Compiling displaydoc v0.2.7
+   Compiling zerofrom-derive v0.1.7
+   Compiling yoke-derive v0.8.2
+   Compiling tracing-attributes v0.1.31
+   Compiling tokio-macros v2.7.2
+   Compiling zerofrom v0.1.8
+   Compiling futures-macro v0.3.34
+   Compiling thiserror-impl v2.0.20
+   Compiling tracing v0.1.44
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.3.1
+   Compiling rand v0.8.8
+   Compiling async-trait v0.1.92
+   Compiling tokio-stream v0.1.19
+   Compiling thiserror-impl v1.0.69
+   Compiling pin-project-internal v1.1.13
+   Compiling zstd-sys v2.1.0+zstd.1.5.7
+   Compiling hashbrown v0.12.3
+   Compiling mime v0.3.17
+   Compiling pin-project v1.1.13
+   Compiling crossbeam-queue v0.3.14
+   Compiling async-stream-impl v0.3.6
+   Compiling serde_path_to_error v0.1.20
+   Compiling matchit v0.7.3
+   Compiling crunchy v0.2.4
+   Compiling async-stream v0.3.6
+   Compiling socket2 v0.5.10
+   Compiling deranged v0.5.8
+   Compiling crossbeam-epoch v0.9.21
+   Compiling regex-syntax v0.8.11
+   Compiling num-conv v0.2.2
+   Compiling ident_case v1.0.1
+   Compiling powerfmt v0.2.0
+   Compiling time-core v0.1.9
+   Compiling strsim v0.11.1
+   Compiling zstd-safe v7.3.0
+   Compiling darling_core v0.24.1
+   Compiling time v0.3.55
+   Compiling tempfile v3.27.0
+   Compiling ownedbytes v0.9.0
+   Compiling typeid v1.0.3
+   Compiling prettyplease v0.3.0
+   Compiling crossbeam-deque v0.8.8
+   Compiling yoke v0.8.3
+   Compiling darling_macro v0.24.1
+   Compiling erased-serde v0.4.10
+   Compiling rayon-core v1.13.0
+   Compiling utf8-ranges v1.0.5
+   Compiling tantivy-fst v0.5.0
+   Compiling smallvec v1.16.1
+   Compiling either v1.18.0
+   Compiling rustls-webpki v0.103.15
+   Compiling parking_lot v0.12.5
+   Compiling futures-intrusive v0.5.0
+   Compiling quansio-core v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/crates/core)
+   Compiling serde_yaml v0.9.34+deprecated
+   Compiling tokio-util v0.7.19
+   Compiling itertools v0.14.0
+   Compiling tower v0.5.3
+   Compiling serde_urlencoded v0.7.1
+   Compiling h2 v0.4.19
+   Compiling axum-core v0.4.5
+   Compiling tower v0.4.13
+   Compiling tantivy-common v0.11.0
+   Compiling bitpacking v0.9.3
+   Compiling tantivy-bitpacker v0.10.0
+   Compiling darling v0.24.1
+   Compiling prost-derive v0.13.5
+   Compiling crc32fast v1.5.1
+   Compiling typetag v0.2.23
+   Compiling foldhash v0.2.0
+   Compiling murmurhash32 v0.3.1
+   Compiling minimal-lexical v0.2.1
+   Compiling hashbrown v0.16.1
+   Compiling nom v7.1.3
+   Compiling prost v0.13.5
+   Compiling tungstenite v0.24.0
+   Compiling hyper v1.11.1
+   Compiling tokio-tungstenite v0.24.0
+   Compiling regex-automata v0.4.18
+   Compiling typetag-impl v0.2.23
+   Compiling hyper-util v0.1.20
+   Compiling ordered-float v5.5.0
+   Compiling downcast-rs v2.0.2
+   Compiling fastdivide v0.4.2
+   Compiling inventory v0.3.24
+   Compiling tantivy-query-grammar v0.26.0
+   Compiling lru v0.16.4
+   Compiling tantivy-tokenizer-api v0.7.0
+   Compiling sketches-ddsketch v0.4.1
+   Compiling rust-stemmers v1.2.0
+   Compiling zerovec v0.11.8
+   Compiling zerotrie v0.2.5
+   Compiling hyper-timeout v0.5.2
+   Compiling regex v1.13.1
+   Compiling fs4 v0.13.1
+   Compiling arc-swap v1.9.2
+   Compiling crossbeam-channel v0.5.17
+   Compiling memmap2 v0.9.11
+   Compiling rayon v1.12.0
+   Compiling aho-corasick v1.1.5
+   Compiling measure_time v0.9.0
+   Compiling lz4_flex v0.13.1
+   Compiling census v0.4.2
+   Compiling datasketches v0.2.0
+   Compiling htmlescape v0.3.1
+   Compiling oneshot v0.1.13
+   Compiling rustc-hash v2.1.3
+   Compiling tantivy-stacker v0.7.0
+   Compiling levenshtein_automata v0.2.1
+   Compiling base64ct v1.8.3
+   Compiling password-hash v0.5.0
+   Compiling blake2 v0.10.6
+   Compiling quansio-server v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/crates/server)
+   Compiling getrandom v0.3.4
+   Compiling argon2 v0.5.3
+   Compiling bon-macros v3.10.1
+   Compiling tokio-rustls v0.26.5
+   Compiling hyper-rustls v0.27.9
+   Compiling prost-types v0.13.5
+   Compiling bon v3.10.1
+   Compiling tinystr v0.8.4
+   Compiling potential_utf v0.1.6
+   Compiling icu_collections v2.3.0
+   Compiling icu_locale_core v2.3.0
+   Compiling icu_provider v2.3.1
+   Compiling icu_properties v2.3.0
+   Compiling icu_normalizer v2.3.0
+   Compiling rand_core v0.9.5
+   Compiling rand_chacha v0.9.0
+   Compiling rand v0.9.5
+   Compiling axum v0.7.9
+   Compiling tungstenite v0.26.2
+   Compiling idna_adapter v1.2.2
+   Compiling idna v1.1.0
+   Compiling url v2.5.8
+   Compiling tokio-tungstenite v0.26.2
+   Compiling sqlx-core v0.8.6
+   Compiling tower-http v0.6.11
+   Compiling zstd v0.13.3
+   Compiling tantivy-sstable v0.7.0
+   Compiling reqwest v0.12.28
+   Compiling tantivy-columnar v0.7.0
+   Compiling quansio-cli v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/crates/cli)
+   Compiling tantivy v0.26.2
+   Compiling sqlx-postgres v0.8.6
+   Compiling tonic v0.12.3
+   Compiling quansio-contracts v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/crates/contracts)
+   Compiling sqlx-macros-core v0.8.6
+   Compiling sqlx-macros v0.8.6
+   Compiling sqlx v0.8.6
+   Compiling quansio-machine v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/crates/machine)
+   Compiling quansio-capability v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/crates/capability)
+   Compiling quansio-graph v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/crates/graph)
+   Compiling quansio-qworkerd v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/crates/qworkerd)
+   Compiling quansio-native-windows v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/native/windows)
+   Compiling quansio-tools v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/crates/tools)
+   Compiling quansio-indexer v0.1.0 (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/wt-qa001v/crates/indexer)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 26s
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_capability-c9028fc5571369c0)
+
+running 4 tests
+test layer::tests::layer_ordinals_are_dense_and_ordered ... ok
+test layer::tests::layer_order_and_names_match_the_generated_contract ... ok
+test layer::tests::canonical_order_rejects_disorder_and_duplicates ... ok
+test layer::tests::inputs_digest_changes_with_order_and_content ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/authorization_decisions.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/authorization_decisions-86ec0bfff16cc87a)
+
+running 7 tests
+test decisions_and_reasons_have_their_wire_names ... ok
+test a_resource_outside_every_grant_is_denied ... ok
+test an_expired_grant_never_authorizes_even_if_the_projection_did_not_expire ... ok
+test the_most_permissive_matching_grant_decides ... ok
+test a_tier_above_every_ceiling_is_denied ... ok
+test a_tier_four_effect_needs_a_receipt_even_under_always ... ok
+test each_approval_decides_as_documented ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/delegation_narrowing.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/delegation_narrowing-4bca6fb3318ffa29)
+
+running 3 tests
+test narrowing_predicate_is_reused_for_skills_and_tools ... ok
+test widening_child_is_rejected_with_nothing_written ... ok
+test narrower_child_is_accepted_and_its_projection_is_staged ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/fail_closed.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/fail_closed-33b8d48d6028690d)
+
+running 6 tests
+test unparseable_grant_is_rejected ... ok
+test unparseable_layer_payload_fails_closed ... ok
+test unknown_catalogue_tier_fails_closed ... ok
+test unresolvable_layer_yields_empty_projection_and_typed_error ... ok
+test policy_gap_at_tier_one_or_above_fails_closed ... ok
+test tier_zero_without_a_policy_rule_keeps_the_default_allow ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/grant_values.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/grant_values-6637e26f2e5a1863)
+
+running 6 tests
+test approvals_combine_to_the_most_restrictive_and_default_to_ask ... ok
+test budget_references_keep_the_smaller_allowance_deterministically ... ok
+test effect_classes_are_dotted_lowercase_words ... ok
+test tiers_run_zero_to_four_and_an_absent_tier_is_unbounded ... ok
+test a_policy_document_parses_strictly_and_only_an_allow_permits ... ok
+test budget_references_read_both_wire_forms_and_write_the_reference ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/narrowing_properties.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/narrowing_properties-2fc3b26c9dae2ac8)
+
+running 8 tests
+test approval_only_narrows_toward_ask_or_never ... ok
+test narrow_is_exactly_idempotent_for_disjoint_regions ... ok
+test selector_containment_is_conservative ... ok
+test grant_intersection_is_commutative_and_monotone ... ok
+test constraints_combine_most_restrictively ... ok
+test narrow_never_produces_a_grant_outside_its_held_input ... ok
+test narrow_rejects_candidates_absent_from_the_input ... ok
+test composed_grants_are_narrowings_of_both_inputs ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/policy_and_user_rules.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/policy_and_user_rules-a3c6a1cb338fb089)
+
+running 13 tests
+test always_on_an_effect_with_no_catalogue_tier_fails_closed ... ok
+test a_user_rule_for_another_region_leaves_the_grant_alone ... ok
+test always_without_a_policy_allow_is_refused_and_recorded ... ok
+test a_user_never_drops_the_grant_even_beside_an_always ... ok
+test an_expired_user_rule_governs_nothing ... ok
+test a_user_ask_narrows_an_always_from_the_platform ... ok
+test a_deny_wins_over_an_allow_on_the_same_grant ... ok
+test a_tier_ceiling_applies_to_a_grant_with_no_ceiling_of_its_own ... ok
+test always_moves_ask_to_always_only_where_policy_allows ... ok
+test always_is_never_accepted_at_tier_four ... ok
+test a_policy_deny_drops_the_grant_it_matches_and_nothing_else ... ok
+test a_policy_ask_and_a_tier_ceiling_narrow_the_grant ... ok
+test always_cannot_lift_a_grant_that_is_never ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/projection_persistence.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/projection_persistence-9fb44a7d8bb51521)
+
+running 1 test
+test stored_projection_round_trips_and_event_carries_the_inputs_digest ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.54s
+
+     Running tests/selector_containment.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/selector_containment-f75d05a127db2e2b)
+
+running 8 tests
+test apps_and_secrets_are_exact_or_everything ... ok
+test different_kinds_never_contain_each_other ... ok
+test every_kind_round_trips_its_wire_form ... ok
+test artifacts_and_models_contain_by_glob ... ok
+test malformed_selectors_are_refused ... ok
+test domain_ports_an_empty_set_means_every_port ... ok
+test work_and_target_selectors_contain_subtrees ... ok
+test wildcard_segments_nest_only_when_provable ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/stale_projection.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/stale_projection-3add30a8b35ef1e8)
+
+running 4 tests
+test layer_expiry_narrows_the_projection_expiry ... ok
+test expired_projection_cannot_authorize ... ok
+test current_inputs_match_only_while_the_layer_digests_are_unchanged ... ok
+test fresh_projection_authorizes_and_a_changed_digest_forces_recomputation ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/widening_rejection.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/widening_rejection-23534b556ff6ef20)
+
+running 3 tests
+test lower_layer_narrowing_is_accepted ... ok
+test lower_layer_trying_a_wider_selector_never_widens ... ok
+test lower_layer_adding_a_grant_is_ignored_and_recorded_once ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_cli-78d1149798e2200a)
+
+running 4 tests
+test tests::digests_are_checked_the_way_the_server_labels_them ... ok
+test tests::the_generic_verbs_are_constrained_to_the_public_api ... ok
+test tests::every_verb_parses_to_a_public_call_and_nothing_bypasses_policy ... ok
+test tests::credentials_are_scoped_to_server_and_tenant_and_stored_for_the_owner_only ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio-1dbee9533029de94)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli_e2e.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/cli_e2e-9c616ef7f8f567c9)
+
+running 1 test
+test the_cli_is_a_scoped_client_of_the_public_api_and_nothing_else has been running for over 60 seconds
+test the_cli_is_a_scoped_client_of_the_public_api_and_nothing_else ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 112.19s
+
+     Running tests/client_only.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/client_only-6f76c4468ba62a16)
+
+running 2 tests
+test every_path_the_crate_spells_is_public_api_v1 ... ok
+test nothing_but_the_public_api_is_compiled_in ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_contracts-5d08390dfd837cce)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_core-d5b5cd4bb9408d7b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/identity.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/identity-43d344f69d86a7c1)
+
+running 18 tests
+test generation_accepts_current_or_newer_and_rejects_stale ... ok
+test duplicate_commands_replay_or_conflict ... ok
+test generator_advances_with_the_clock ... ok
+test sequence_must_be_positive ... ok
+test cursors_round_trip_and_stay_opaque ... ok
+test correlation_and_causation_ids_carry_the_right_shape ... ok
+test canonical_ids_round_trip_with_their_prefix ... ok
+test unknown_prefix_is_rejected ... ok
+test revision_check_and_bump_is_compare_and_set ... ok
+test ulid_ordering_follows_time_then_randomness ... ok
+test ulid_matches_the_published_spec_vector ... ok
+test ulid_rejects_malformed_input ... ok
+test ids_serialize_as_their_canonical_string ... ok
+test typed_ids_reject_the_wrong_prefix ... ok
+test fence_tokens_round_trip_and_reject_stale_leases ... ok
+test idempotency_keys_are_stable_and_sensitive ... ok
+test ulid_round_trips_through_base32 ... ok
+test generator_is_monotonic_within_one_millisecond ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_events-46e52349ef7487f4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/event_families.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/event_families-69e3f51857ca5c0e)
+
+running 4 tests
+test malformed_types_are_rejected ... ok
+test unknown_family_is_rejected_with_a_typed_error ... ok
+test known_types_parse_and_subjects_follow_domain_naming ... ok
+test canonical_families_match_the_generated_catalog ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/outbox_publisher.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/outbox_publisher-7182105f946297b9)
+
+running 2 tests
+test unavailable_transport_fails_closed_instead_of_dropping ... ok
+test crash_between_send_and_mark_cannot_duplicate_and_loses_no_event ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.64s
+
+     Running tests/projection_determinism.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/projection_determinism-3436e9ef8f2c7d74)
+
+running 3 tests
+test projections_do_not_write_rows_for_unrelated_events ... ok
+test rebuild_is_byte_identical_to_incremental_application ... ok
+test reapplying_an_applied_event_neither_double_counts_nor_regresses ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.93s
+
+     Running tests/projection_resume.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/projection_resume-a410bf1d842532dc)
+
+running 1 test
+test checkpoint_resumes_after_a_crash_without_gaps_or_duplicates ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s
+
+     Running tests/runtime_event_store.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/runtime_event_store-afb317b47b7b69d1)
+
+running 6 tests
+test committed_mutation_writes_state_event_and_outbox_together ... ok
+test a_rolled_back_commit_releases_its_sequence_instead_of_burning_it ... ok
+test committing_without_an_event_is_refused ... ok
+test concurrent_writers_get_distinct_gap_free_sequences ... ok
+test failing_mutation_rolls_back_state_event_and_outbox ... ok
+test consumer_resumes_exactly_after_the_stored_sequence ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.45s
+
+     Running tests/stream_backpressure.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/stream_backpressure-dc1b1c48325033ea)
+
+running 2 tests
+test a_slow_consumer_is_disconnected_without_blocking_the_publisher ... ok
+test a_consumer_that_keeps_reading_replays_far_past_the_buffer ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.05s
+
+     Running tests/stream_channels.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/stream_channels-ef4ef9b2f4804d68)
+
+running 3 tests
+test channel_and_subscription_validation_fails_closed ... ok
+test a_subscriber_receives_only_its_own_channel_and_tenant ... ok
+test live_frames_are_transient_droppable_and_never_persisted ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.83s
+
+     Running tests/stream_resume.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/stream_resume-5800df04d818509d)
+
+running 3 tests
+test a_cursor_from_another_stream_is_rejected ... ok
+test reconnecting_with_the_last_cursor_replays_exactly_the_missed_events ... ok
+test a_client_without_a_cursor_resumes_from_the_persisted_consumer_position ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.91s
+
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_graph-9c3d5f9b26307112)
+
+running 15 tests
+test state::tests::only_depends_on_and_parent_of_relations_must_be_acyclic ... ok
+test state::tests::kinds_and_origins_round_trip_through_their_db_strings ... ok
+test state::tests::every_status_declares_a_round_tripping_db_string ... ok
+test state::tests::run_reaches_success_only_through_verifying ... ok
+test state::tests::run_terminals_are_immutable ... ok
+test state::tests::step_and_attempt_transitions_fail_closed ... ok
+test state::tests::terminal_work_node_states_never_transition ... ok
+test transaction::event::tests::agent_thread_targets_use_domain_names_and_refuse_the_un_named_states ... ok
+test transaction::event::tests::run_targets_use_domain_names ... ok
+test transaction::event::tests::unmapped_change_kinds_are_refused ... ok
+test state::tests::unknown_state_strings_fail_closed ... ok
+test transaction::event::tests::every_named_event_type_is_a_canonical_family_member ... ok
+test transaction::event::tests::mapped_change_kinds_are_accepted ... ok
+test transaction::plan::tests::an_empty_contract_is_absent_and_a_populated_one_is_present ... ok
+test transaction::plan::tests::structural_narrowing_accepts_equal_and_rejects_wider_templates ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/agent_graph.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/agent_graph-764c004dbcef8991)
+
+running 3 tests
+test the_narrowing_hook_is_invoked_and_rejection_writes_nothing ... ok
+test delegation_records_the_parent_capability_and_requires_the_parent ... ok
+test teammates_never_join_and_workers_do ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.80s
+
+     Running tests/atomic_batch.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/atomic_batch-529cf89e35a3c861)
+
+running 3 tests
+test stale_batch_revision_applies_nothing ... ok
+test one_invalid_item_rolls_back_the_whole_batch ... ok
+test one_batch_mutates_work_agent_and_state_graphs_together ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.85s
+
+     Running tests/attempts_append_only.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/attempts_append_only-5e6efb530801354e)
+
+running 1 test
+test retries_append_attempts_and_never_overwrite_earlier_ones ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+
+     Running tests/cycle_rejection.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/cycle_rejection-a1a2ba533d3fe439)
+
+running 1 test
+test graph_rejects_self_two_node_and_longer_cycles ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
+
+     Running tests/graph_transaction.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/graph_transaction-4f42c72e709ea84c)
+
+running 5 tests
+test events_carry_aggregate_identity_and_causal_metadata ... ok
+test a_committed_transaction_writes_state_and_events_with_contiguous_sequences ... ok
+test a_stale_base_revision_rejects_the_whole_transaction ... ok
+test a_rejected_transaction_emits_no_event ... ok
+test an_invalid_last_change_rolls_back_every_row_and_event ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.06s
+
+     Running tests/illegal_transitions.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/illegal_transitions-3d1bb73c1622249c)
+
+running 4 tests
+test turn_transitions_fail_closed ... ok
+test step_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+test run_transitions_fail_closed_and_leave_the_row_unchanged ... ok
+test work_node_transitions_fail_closed ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.93s
+
+     Running tests/plan_proposal.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/plan_proposal-bded86590a231d4c)
+
+running 6 tests
+test an_accepted_plan_is_one_transaction_with_its_own_event ... ok
+test a_plan_that_would_close_a_cycle_is_rejected ... ok
+test a_plan_node_without_a_contract_or_an_inheriting_parent_is_rejected ... ok
+test a_plan_above_the_policy_bound_is_rejected_and_writes_nothing ... ok
+test replaying_an_applied_plan_conflicts_instead_of_duplicating_work ... ok
+test a_plan_whose_needs_exceed_the_proposer_is_rejected ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.41s
+
+     Running tests/revision_cas.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/revision_cas-357802294e221b7e)
+
+running 1 test
+test stale_revision_conflicts_and_writes_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running tests/tenant_isolation.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/tenant_isolation-4c3c6e296351ec89)
+
+running 1 test
+test cross_tenant_reads_and_writes_return_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_indexer-a33d129f6f322bb2)
+
+running 2 tests
+test snapshot::tests::round_trips_canonical_form ... ok
+test snapshot::tests::rejects_malformed_snapshot ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/postgres_rebuild.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/postgres_rebuild-a049ff4160e4510b)
+
+running 3 tests
+test rebuild_from_authoritative_rows_is_deterministic_and_tenant_isolated ... ok
+test rebuild_propagates_authoritative_new_versions_and_deletions ... ok
+test maintenance_reflects_updates_deletes_and_idempotent_replay ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.32s
+
+     Running tests/search_api.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/search_api-19e944d1a5b4093e)
+
+running 10 tests
+test searching_an_unrebuilt_tenant_returns_an_empty_set ... ok
+test provenance_carries_source_locator_and_snapshot ... ok
+test semantic_and_unowned_channels_are_rejected_with_a_typed_error ... ok
+test exact_lexical_and_symbol_channels_round_trip_real_content ... ok
+test typed_filters_and_workspace_scope_narrow_results ... ok
+test budget_truncation_is_reported_and_oversized_requests_fail_closed ... ok
+test stale_snapshot_is_detected ... ok
+test tenant_isolation_never_returns_another_tenants_documents ... ok
+test incremental_add_update_delete_is_idempotent ... ok
+test rebuild_is_deterministic_for_a_fixed_corpus ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.42s
+
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_machine-0d1686c51808e421)
+
+running 35 tests
+test egress::tests::a_request_that_is_not_a_destination_is_refused ... ok
+test egress::tests::a_destination_carries_its_port_and_scheme ... ok
+test egress::tests::hosts_the_broker_never_reaches_are_named ... ok
+test egress::tests::a_policy_that_denies_stops_the_destination_before_any_grant_is_consulted ... ok
+test egress::tests::a_name_that_did_not_resolve_is_refused_rather_than_assumed_fine ... ok
+test egress::tests::a_rule_the_domain_does_not_define_is_refused_rather_than_defaulted ... ok
+test egress::tests::no_grant_from_another_tenant_or_target_is_ever_considered ... ok
+test egress::tests::an_unknown_destination_is_denied_by_default ... ok
+test egress::tests::addresses_are_classified_by_what_they_reach ... ok
+test egress::tests::a_destination_is_canonicalized_so_one_name_has_one_answer ... ok
+test egress::tests::a_policy_with_no_network_rule_permits_nothing ... ok
+test egress::tests::a_granted_destination_with_an_allowed_address_is_reached ... ok
+test egress::tests::an_address_the_policy_names_is_reachable_when_the_caller_asked_for_it ... ok
+test egress::tests::a_policy_change_fences_every_grant_at_the_previous_revision ... ok
+test egress::tests::an_expired_or_revoked_grant_is_refused_with_its_own_reason ... ok
+test egress::tests::a_grant_belongs_to_one_target_generation_and_one_capability ... ok
+test egress::tests::a_granted_name_is_still_refused_when_it_resolves_inside ... ok
+test egress::tests::a_grant_for_another_port_or_host_does_not_cover_the_destination ... ok
+test egress::tests::the_decision_log_records_the_destination_and_never_a_header_value ... ok
+test egress::tests::the_longest_lived_live_grant_is_the_one_reported ... ok
+test egress::tests::the_same_destination_reaches_the_same_answer_from_every_caller ... ok
+test gateway::tests::a_kind_needs_what_it_runs ... ok
+test gateway::tests::a_live_envelope_validates ... ok
+test gateway::tests::issuing_computes_the_argument_digest ... ok
+test gateway::tests::shape_is_checked_before_anything_else ... ok
+test gateway::tests::the_dial_rule_is_the_substrate_s_decision ... ok
+test secrets::tests::a_handle_is_usable_only_while_it_is_active_and_unexpired ... ok
+test secrets::tests::a_frame_that_was_changed_does_not_open ... ok
+test secrets::tests::a_lifetime_is_added_in_the_canonical_shape ... ok
+test secrets::tests::a_kms_provider_wraps_through_the_kms_and_not_locally ... ok
+test secrets::tests::a_master_key_file_that_is_not_a_key_is_refused ... ok
+test secrets::tests::a_scope_renders_as_a_kind_and_a_value ... ok
+test secrets::tests::material_cannot_be_rendered_into_a_log ... ok
+test secrets::tests::a_sealed_secret_opens_under_its_own_provider_and_under_no_other ... ok
+test secrets::tests::sealing_twice_produces_different_frames_for_the_same_secret ... ok
+
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/browser.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/browser-4e51d9483f888013)
+
+running 4 tests
+test a_session_is_scoped_to_its_tenant_and_checked_against_its_target ... ok
+test a_policy_pause_cannot_be_resumed_by_a_handback ... ok
+test a_session_survives_its_worker_and_a_takeover_hands_over_the_same_row ... ok
+test a_closed_session_is_terminal_and_keeps_its_checkpoint ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.10s
+
+     Running tests/computer_use.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/computer_use-6bdae74ce74b3622)
+
+running 6 tests
+test a_tier_is_a_grant_and_a_run_cannot_reach_past_it ... ok
+test an_application_the_runtime_does_not_recognise_is_refused_at_every_tier ... ok
+test a_takeover_racing_an_action_has_only_safe_outcomes ... ok
+test rust_dispatch_rechecks_identity_and_keeps_unknown_input_for_reconciliation ... ok
+test exact_tool_call_and_tenant_scope_fail_closed ... ok
+test takeover_fences_input_survives_restart_and_requires_explicit_handback ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.98s
+
+     Running tests/control.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/control-57e4f1655d306c37)
+
+running 12 tests
+test health_is_classified_from_what_the_platform_observes ... ok
+test only_machine_control_writes_the_target_and_lease_tables ... ok
+test a_stale_generation_cannot_steer_the_target_it_lost ... ok
+test destroyed_is_terminal ... ok
+test a_target_reports_what_it_observes_and_the_platform_classifies_it ... ok
+test only_a_ready_target_can_be_leased ... ok
+test a_target_walks_the_lifecycle_domain_8_2_draws ... ok
+test a_lease_that_is_not_live_does_not_permit_the_action ... ok
+test two_racing_acquirers_cannot_both_hold_a_lease ... ok
+test a_tenant_cannot_see_another_tenants_target ... ok
+test a_lease_expiring_fences_the_controller_that_held_it ... ok
+test an_edge_the_lifecycle_does_not_draw_is_refused_with_both_ends ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.22s
+
+     Running tests/egress.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/egress-19b0cc5c5a62e9a6)
+
+running 10 tests
+test a_target_with_no_network_policy_reaches_nothing ... ok
+test a_blocked_domain_is_refused_even_with_a_grant ... ok
+test another_tenant_cannot_reach_or_change_this_tenants_grants ... ok
+test a_grant_is_keyed_by_the_effect_that_authorized_it ... ok
+test a_granted_name_that_resolves_inside_is_refused ... ok
+test an_unknown_destination_is_denied_until_an_effect_grants_it ... ok
+test a_grant_is_fenced_by_the_target_generation_and_narrowed_by_capability ... ok
+test revocation_is_recorded_rather_than_deleted ... ok
+test a_policy_change_fences_the_grants_issued_under_it ... ok
+test a_grant_stops_being_usable_when_it_expires ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.04s
+
+     Running tests/macos_capsule.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/macos_capsule-d339153324d45fda)
+
+running 5 tests
+test guest_channel_has_a_closed_service_vocabulary ... ok
+test unpublished_catalog_cannot_boot_and_has_no_path_to_host_secrets_or_metadata ... ok
+test image_bytes_are_verified_and_mismatch_fails_closed ... ok
+test stale_generation_is_refused_before_native_execution ... ok
+test lifecycle_is_repeatable_and_reset_discards_only_the_overlay ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/secrets.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/secrets-26b8098ffbaac793)
+
+running 8 tests
+test the_value_is_stored_sealed_and_appears_in_nothing_that_is_logged_or_sent ... ok
+test a_materialization_cannot_be_presented_for_another_scope ... ok
+test a_handle_sealed_under_one_key_does_not_open_under_another ... ok
+test revoking_fences_the_materialization_a_worker_already_holds ... ok
+test a_handle_is_reachable_only_from_its_own_tenant_and_workspace ... ok
+test rotating_replaces_the_material_and_fences_the_materializations_before_it ... ok
+test a_handle_with_no_material_and_a_malformed_id_are_typed_refusals ... ok
+test a_scheduled_expiry_sweeps_the_handle_and_fences_it ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.89s
+
+     Running tests/terminal.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/terminal-8b7b7ae5b0c6bae1)
+
+running 5 tests
+test the_cursor_only_moves_forward_and_a_session_that_is_not_open_refuses ... ok
+test a_session_is_scoped_to_its_tenant_and_target ... ok
+test a_session_cannot_be_opened_on_a_target_that_does_not_exist_or_a_bad_id ... ok
+test a_reconnect_replays_from_the_durable_cursor_instead_of_running_the_command_again ... ok
+test two_reconnects_with_the_same_command_cannot_both_be_told_to_run_it ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.30s
+
+     Running tests/windows_capsule.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/windows_capsule-682fee2117f0627c)
+
+running 4 tests
+test wsl_guest_channel_is_the_typed_qworkerd_vocabulary ... ok
+test stale_generation_is_refused_before_wsl ... ok
+test wsl_verbs_are_allowlisted_and_exec_is_absent ... ok
+test prepare_stop_checkpoint_are_fenced_and_repeatable ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_native_windows-72020b5efff3b55d)
+
+running 5 tests
+test wsl::tests::exec_and_cmd_are_refused_before_spawn ... ok
+test wsl::tests::missing_windows_host_is_blocked_external ... ok
+test computer_use::tests::non_windows_boundary_reports_blocked_external ... ok
+test computer_use::tests::caller_text_is_encoded_not_made_executable ... ok
+test computer_use::tests::chord_and_operation_values_are_allowlisted_before_the_platform ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_qworkerd-16a9e282f6a683de)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/browser.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/browser-df772bef2aea4622)
+
+running 5 tests
+test a_dom_action_round_trip_stays_inside_the_budget ... ok
+test a_click_is_classified_from_the_page_s_own_semantics_before_it_happens ... ok
+test the_dom_is_read_first_and_a_screenshot_only_when_it_says_nothing ... ok
+test a_takeover_fences_agent_input_without_creating_a_second_session ... ok
+test web_fetch_is_bounded_labelled_and_digested ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.17s
+
+     Running tests/host.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/host-c360f4e0fe5477b6)
+
+running 13 tests
+test a_private_worker_is_never_dialled ... ok
+test an_unknown_kind_is_refused_rather_than_guessed ... ok
+test a_worker_reports_the_state_it_observes_and_only_its_own_generation ... ok
+test the_sink_bounds_each_chunk_as_it_arrives ... ok
+test a_checkpoint_hook_records_the_target ... ok
+test a_cancelled_effect_is_recorded_and_not_re_dispatched ... ok
+test a_failing_tool_is_recorded_as_a_failure ... ok
+test qworkerd_evaluates_no_policy_or_capability ... ok
+test a_replayed_dispatch_is_answered_from_the_record_not_run_again ... ok
+test output_is_bounded_while_the_tool_streams_and_evidence_is_uploaded ... ok
+test a_replay_after_the_lease_lapsed_is_fenced_rather_than_served ... ok
+test a_stale_envelope_fails_before_any_tool_runs ... ok
+test qworkerd_reaches_no_control_plane_database ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/scm_tools.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/scm_tools-acf927fde9c7a2e7)
+
+running 3 tests
+test remote_writes_are_classified_and_keyed_not_executed ... ok
+test local_read_operations_work_offline ... ok
+test commit_is_a_local_write_settling_the_callers_effect ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running tests/tools.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/tools-394cd2768eedea5d)
+
+running 7 tests
+test a_reconnect_resumes_from_the_durable_cursor_without_running_the_command_again ... ok
+test a_root_must_be_absolute_existing_and_a_directory ... ok
+test a_path_that_leaves_its_root_is_refused_before_any_io ... ok
+test a_patch_applies_all_or_nothing ... ok
+test a_write_checks_its_declared_digest_and_reads_back_with_provenance ... ok
+test output_is_bounded_while_a_command_runs ... ok
+kill: 87317: No such process
+test a_command_is_cancelled_while_it_runs_and_stopped_when_it_is ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_server-2b34a80d38a86c95)
+
+running 179 tests
+test api::artifacts::tests::a_store_failure_is_internal_and_keeps_its_detail_out_of_the_response ... ok
+test artifacts::object_store::tests::endpoint_split_preserves_port_and_rejects_bad_schemes ... ok
+test artifacts::formats::tests::media_needs_its_media_type_and_real_bytes ... ok
+test api::artifacts::tests::active_types_are_relabelled_whatever_their_spelling ... ok
+test api::artifacts::tests::inert_types_pass_lowercased_and_nonsense_is_opaque ... ok
+test artifacts::object_store::tests::object_keys_reject_traversal_and_non_tenant_prefixes ... ok
+test artifacts::object_store::tests::object_keys_are_tenant_prefixed_and_content_addressed ... ok
+test api::rbac::tests::a_missing_role_is_a_denial_and_the_refusal_is_typed ... ok
+test api::artifacts::tests::a_callers_mistake_stays_a_validation_refusal ... ok
+test api::live_sessions::tests::automation_reports_the_fence_from_row_and_state ... ok
+test api::live_sessions::tests::a_takeover_names_exactly_one_subject ... ok
+test api::knowledge::tests::the_memory_projection_reads_only_memory_entries ... ok
+test api::stream::sse_tests::the_query_names_channels_a_cursor_and_last_event_id_wins ... ok
+test api::webhooks::tests::the_command_log_never_keeps_a_one_time_secret ... ok
+test artifacts::formats::tests::spreadsheets_are_rectangular_csv_with_unique_headers ... ok
+test artifacts::formats::tests::documents_need_a_title_a_body_and_no_active_content ... ok
+test artifacts::formats::tests::slides_code_and_data_are_closed_json_shapes ... ok
+test control::conversation::tests::a_reaction_is_one_short_printable_token ... ok
+test artifacts::sigv4::tests::query_encoding_is_rfc3986_and_sorted ... ok
+test artifacts::tool_host::tests::a_source_is_bound_to_its_digest_and_carried_one_way ... ok
+test control::conversation::tests::reactions_are_idempotent_per_user_and_emoji ... ok
+test control::data_lifecycle::intelligence::tests::the_tombstone_edges_are_the_ladders_terminal_edges ... ok
+test control::data_lifecycle::intelligence::tests::a_refused_edge_names_both_ends ... ok
+test composition::tests::work_that_fell_due_during_a_pass_runs_at_once ... ok
+test composition::tests::work_already_due_before_the_pass_waits_the_whole_interval ... ok
+test composition::tests::the_loop_wakes_when_work_falls_due_within_its_interval ... ok
+test control::identity::enterprise::oidc::tests::custody_handles_materialize_like_the_model_gateway ... ok
+test control::identity::enterprise::oidc::tests::groups_come_from_the_configured_claim_only ... ok
+test control::identity::enterprise::principals::tests::only_a_key_shaped_value_names_a_principal ... ok
+test control::identity::enterprise::mapping::tests::owner_is_never_mapped_and_unmanaged_scopes_are_left_alone ... ok
+test control::identity::enterprise::scim::tests::errors_have_the_scim_shape ... ok
+test artifacts::sigv4::tests::matches_the_aws_documented_signing_example ... ok
+test control::identity::enterprise::scim::tests::filters_are_equality_only ... ok
+test control::identity::enterprise::mapping::tests::the_highest_mapped_role_wins_and_unmatched_scopes_lose_access ... ok
+test control::ops::tests::targets_are_checked_per_switch ... ok
+test control::identity::enterprise::scim::tests::patch_reads_entra_and_okta_shapes ... ok
+test control::ops::tests::every_switch_has_a_runbook_entry ... ok
+test control::ops::tests::the_gate_reads_each_switch_as_its_owner_needs_it ... ok
+test control::routines::ledger::tests::backoff_doubles_from_five_seconds_and_is_capped ... ok
+test control::routines::store::tests::a_template_needs_a_title_and_a_prompt ... ok
+test control::routines::triggers::tests::a_spec_names_an_event_or_a_family ... ok
+test control::identity::enterprise::oidc::tests::redirects_must_be_https_loopback_or_the_desktop_scheme ... ok
+test control::skills::state::tests::an_illegal_promotion_is_refused_and_named ... ok
+test control::skills::state::tests::an_unknown_state_is_refused ... ok
+test control::skills::state::tests::only_active_resolves ... ok
+test control::skills::state::tests::the_ladder_is_domain_11_5 ... ok
+test api::web::tests::a_path_never_leaves_the_root_and_routes_fall_back_to_the_page ... ok
+test control::teammates::tests::a_definition_narrows_and_never_widens ... ok
+test intelligence::model_source::tests::a_stream_becomes_text_tool_calls_and_a_record ... ok
+test intelligence::model_source::tests::a_tool_calls_recorded_trust_rank_becomes_its_hint ... ok
+test intelligence::model_source::tests::an_error_event_or_a_stream_without_a_stop_fails_the_call ... ok
+test notify::email::tests::email_backoff_doubles_from_thirty_seconds ... ok
+test notify::store::tests::a_preference_names_a_kind_and_channels ... ok
+test notify::webhooks::signature::tests::a_secret_is_prefixed_and_random ... ok
+test notify::webhooks::redact::tests::secret_keys_match_by_segment ... ok
+test effects::taxonomy::tests::a_missing_class_fails_closed ... ok
+test effects::taxonomy::tests::an_out_of_range_tier_fails_closed ... ok
+test notify::webhooks::redact::tests::a_payload_loses_secrets_protected_fields_and_credential_shaped_text ... ok
+test control::identity::enterprise::jwt::tests::algorithm_key_and_signature_substitutions_are_refused ... ok
+test notify::webhooks::tests::backoff_doubles_from_thirty_seconds_to_an_hour ... ok
+test notify::webhooks::signature::tests::the_cross_language_vector_is_what_the_server_signs ... ok
+test notify::webhooks::tests::filters_are_family_wildcards_or_exact_types ... ok
+test effects::taxonomy::tests::an_unknown_class_fails_closed ... ok
+test observability::context::tests::a_malformed_traceparent_is_not_continued ... ok
+test observability::context::tests::a_traceparent_round_trips_and_continues_as_a_child ... ok
+test notify::webhooks::signature::tests::a_signature_verifies_and_anything_else_does_not ... ok
+test observability::metrics::tests::a_label_value_cannot_carry_a_secret ... ok
+test observability::metrics::tests::counters_and_histograms_render_as_prometheus_text ... ok
+test observability::redact::tests::canary_and_secrets_are_stripped ... ok
+test policy::approval::tests::an_empty_key_is_refused ... ok
+test intelligence::model_source::tests::a_zero_bound_or_missing_instructions_is_refused ... ok
+test policy::escalation::tests::escalation_forbids_always_and_requires_receipt ... ok
+test policy::escalation::tests::derived_trust_is_the_most_untrusted_label ... ok
+test policy::escalation::tests::every_trust_level_round_trips ... ok
+test policy::escalation::tests::trusted_derivations_never_escalate ... ok
+test policy::escalation::tests::untrusted_external_escalates_tier_two_and_above_by_one ... ok
+test policy::approval::tests::request_status_round_trips_and_supersession_detects_changed_params ... ok
+test observability::context::tests::the_current_span_is_the_scope_the_task_runs_in ... ok
+test policy::escalation::tests::unavailable_labelling_fails_closed ... ok
+test policy::approval::tests::a_signature_from_another_key_never_verifies ... ok
+test control::identity::enterprise::jwt::tests::a_well_formed_es256_token_verifies_and_every_claim_rule_refuses ... ok
+test policy::approval::tests::a_valid_receipt_verifies_for_its_exact_binding ... ok
+test intelligence::model_source::tests::the_committed_settings_load ... ok
+test policy::evaluation::tests::a_failed_sequence_guard_denies ... ok
+test policy::evaluation::tests::a_missing_rule_at_tier_three_denies ... ok
+test policy::guards::tests::approval_cannot_be_used_before_it_is_granted ... ok
+test policy::guards::tests::protected_data_class_names_are_protected ... ok
+test policy::approval::tests::a_tampered_receipt_never_verifies ... ok
+test policy::approval::tests::an_expired_receipt_is_refused ... ok
+test policy::guards::tests::settlement_cannot_precede_its_reservation ... ok
+test policy::guards::tests::protected_movement_without_egress_grant_is_denied ... ok
+test policy::guards::tests::untrusted_origin_without_egress_grant_is_denied ... ok
+test policy::rbac::tests::approver_approves_but_does_not_author_work ... ok
+test policy::rbac::tests::missing_role_denies_every_workspace_action ... ok
+test policy::evaluation::tests::a_user_never_denies ... ok
+test policy::rbac::tests::role_names_round_trip ... ok
+test policy::evaluation::tests::absent_trust_fails_closed_to_untrusted ... ok
+test policy::rbac::tests::tenant_owner_and_admin_inherit_workspace_admin ... ok
+test policy::rbac::tests::viewer_only_reads_and_billing_only_views_usage ... ok
+test policy::evaluation::tests::tier_zero_without_a_rule_is_allowed ... ok
+test policy::rules::tests::a_network_rule_names_its_address_classes_and_an_unknown_class_is_refused ... ok
+test policy::rules::tests::always_on_tier_four_is_rejected ... ok
+test policy::evaluation::tests::user_always_is_rejected_on_tier_four ... ok
+test policy::evaluation::tests::protected_egress_without_a_grant_denies ... ok
+test control::teammates::tests::the_shipped_templates_parse_and_are_configuration ... ok
+test policy::rules::tests::conditions_fail_closed_on_unlisted_data_class ... ok
+test policy::rules::tests::canonical_rule_json_parses_and_unknown_fields_fail_closed ... ok
+test policy::evaluation::tests::user_always_moves_ask_to_allow_only_where_policy_allows ... ok
+test policy::evaluation::tests::untrusted_derivation_escalates_and_forbids_always ... ok
+test policy::rules::tests::rule_conditions_deny_above_tier_and_trust_ceilings ... ok
+test policy::evaluation::tests::an_explicit_deny_beats_a_user_always ... ok
+test policy::approval::tests::binding_mismatches_are_typed_failures ... ok
+test policy::rules::tests::scope_round_trips ... ok
+test policy::evaluation::tests::missing_projection_and_rbac_deny_before_any_rule ... ok
+test policy::rules::tests::workspace_policy_can_only_narrow_tenant_policy ... ok
+test policy::rules::tests::time_window_handles_wrap_and_rejects_garbage ... ok
+test runtime::budgets::limits::tests::a_charge_accumulates_per_meter ... ok
+test runtime::budgets::limits::tests::a_child_may_not_exceed_its_parent_remaining ... ok
+test runtime::budgets::limits::tests::a_meter_set_round_trips_through_json ... ok
+test runtime::budgets::limits::tests::an_absent_limit_is_unbounded_and_a_reached_one_is_exhausted ... ok
+test policy::evaluation::tests::digest_is_stable_for_identical_inputs_and_changes_with_params ... ok
+test runtime::budgets::limits::tests::narrowing_reports_what_it_shrank ... ok
+test runtime::budgets::limits::tests::the_first_exhausted_meter_is_reported_deterministically ... ok
+test runtime::context_bridge::port::tests::a_projection_without_identity_or_snapshot_is_refused ... ok
+test runtime::context_bridge::port::tests::a_stale_snapshot_is_refused ... ok
+test runtime::context_bridge::port::tests::a_segment_request_serializes_to_the_contract_shape ... ok
+test runtime::context_bridge::port::tests::a_well_formed_projection_is_accepted_with_parsed_labels ... ok
+test runtime::context_bridge::port::tests::an_unknown_trust_level_is_refused ... ok
+test runtime::context_bridge::port::tests::an_unlabelled_segment_is_refused ... ok
+test runtime::context_bridge::port::tests::every_message_is_its_segments_at_its_segments_trust ... ok
+test effects::taxonomy::tests::builtin_covers_every_domain_class_exactly ... ok
+test runtime::orchestration::cancel::tests::a_queued_run_is_reported_as_unstarted_not_cancelled ... ok
+test runtime::context_bridge::port::tests::the_default_port_fails_closed ... ok
+test runtime::orchestration::cancel::tests::a_settled_effect_inside_the_subtree_is_not_retouched ... ok
+test runtime::orchestration::cancel::tests::an_already_cancelled_subtree_plans_nothing ... ok
+test runtime::orchestration::cancel::tests::cancellation_covers_the_subtree_its_runs_and_its_dependents ... ok
+test runtime::orchestration::capacity::tests::a_saturated_gate_refuses_with_a_typed_error ... ok
+test runtime::orchestration::capacity::tests::a_zero_limit_freezes_rather_than_unbounding ... ok
+test runtime::orchestration::capacity::tests::slots_are_counted_from_durable_run_state ... ok
+test runtime::orchestration::queue::tests::a_cycle_is_refused ... ok
+test runtime::orchestration::queue::tests::a_dependent_never_starts_before_its_prerequisite ... ok
+test runtime::orchestration::queue::tests::capacity_defers_the_tail_deterministically ... ok
+test runtime::orchestration::queue::tests::joins_release_once_and_block_on_a_broken_child ... ok
+test runtime::orchestration::queue::tests::ordering_is_priority_then_id ... ok
+test runtime::orchestration::queue::tests::parked_runs_are_waiting_not_dispatchable ... ok
+test runtime::orchestration::queue::tests::release_is_idempotent_over_the_same_snapshot ... ok
+test runtime::orchestration::queue::tests::release_makes_satisfied_work_ready_and_blocks_work_that_can_never_run ... ok
+test runtime::recovery::plan::tests::a_behind_generation_is_stale_and_a_newer_one_supersedes ... ok
+test runtime::recovery::plan::tests::an_uncertain_effect_is_reconciled_before_work_resumes ... ok
+test runtime::recovery::plan::tests::cancellation_outranks_reconciliation_and_waits ... ok
+test runtime::recovery::plan::tests::the_kill_restart_matrix_decides_the_same_safe_point ... ok
+test runtime::state_machine::state::tests::every_state_round_trips_through_its_stored_value ... ok
+test effects::taxonomy::tests::builtin_matches_the_generated_catalog ... ok
+test runtime::state_machine::state::tests::run_lifecycle_states_match_domain_5_2 ... ok
+test runtime::state_machine::state::tests::terminal_run_states_never_transition ... ok
+test runtime::state_machine::state::tests::unknown_state_strings_fail_closed ... ok
+test runtime::state_machine::state::tests::waiting_states_resume_cancel_fail_or_suspend_only ... ok
+test runtime::turn_loop::dispatch::tests::hosts_name_their_owning_task ... ok
+test runtime::turn_loop::dispatch::tests::output_is_bounded_to_the_declared_size ... ok
+test runtime::turn_loop::dispatch::tests::the_preview_shows_an_untrusted_origin_only_when_policy_escalated ... ok
+test runtime::turn_loop::parallel::tests::control_tools_run_alone_and_last ... ok
+test runtime::turn_loop::parallel::tests::identical_calls_are_serialised ... ok
+test runtime::turn_loop::parallel::tests::independent_calls_share_a_round_and_keep_proposal_order ... ok
+test runtime::turn_loop::parallel::tests::no_calls_means_no_rounds ... ok
+test runtime::verification::checks::tests::a_named_class_must_be_settled_itself ... ok
+test runtime::verification::checks::tests::a_run_with_no_effects_is_settled ... ok
+test runtime::verification::checks::tests::a_status_is_reported_as_unsettled_even_when_terminal_in_another_class ... ok
+test runtime::turn_loop::parallel::tests::join_all_preserves_result_order_not_completion_order ... ok
+test runtime::turn_loop::parallel::tests::join_all_runs_yielding_futures_concurrently ... ok
+test runtime::verification::checks::tests::an_unsettled_effect_keeps_work_incomplete ... ok
+test runtime::verification::contract::tests::a_contract_that_binds_nothing_is_recognised ... ok
+test runtime::verification::contract::tests::a_malformed_bound_is_refused ... ok
+test runtime::verification::contract::tests::an_unknown_check_kind_is_refused_not_skipped ... ok
+test runtime::verification::contract::tests::every_documented_check_kind_parses ... ok
+test scheduler::routine::tests::absence_policies_round_trip_through_the_stored_form ... ok
+test scheduler::routine::tests::event_triggers_have_no_due_time_and_intervals_advance ... ok
+test scheduler::routine::tests::interval_specs_parse_to_positive_durations ... ok
+test scheduler::routine::tests::timezones_are_utc_or_fixed_offsets_and_fail_closed_otherwise ... ok
+test scheduler::routine::tests::cron_next_due_respects_fields_and_timezone ... ok
+
+test result: ok. 179 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/bin/quansio-dev-seed.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_dev_seed-1426d1baf69767d8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/quansio-server.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_server-babe6b759d830ec8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/agent_graph_store.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/agent_graph_store-9f6b7d3db7509e6f)
+
+running 11 tests
+test handoff_status_round_trips_its_stored_form_and_refuses_an_unknown_value ... ok
+test mailbox_cursor_parses_empty_as_initial_and_refuses_a_non_decimal_cursor ... ok
+test join_worker_refuses_orphans_and_workers_without_a_delegation_edge ... ok
+test join_worker_fences_the_parent_run_and_leaves_a_running_parent_alone ... ok
+test completing_a_runless_handoff_moves_the_work_node_to_an_already_active_target ... ok
+test transition_refuses_states_owned_by_other_operations_and_cancel_thread_terminates ... ok
+test agent_events_carry_the_causation_of_the_identity_that_caused_them ... ok
+test delegation_refuses_foreign_workspaces_mistyped_ids_and_capabilities_the_parent_never_held ... ok
+test rollback_handoff_restores_the_source_once_and_blocks_later_completion ... ok
+test begin_handoff_refuses_invalid_targets_and_foreign_runs_and_writes_nothing ... ok
+test complete_handoff_refuses_a_moved_source_a_terminated_target_and_a_moved_run ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.03s
+
+     Running tests/agents.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/agents-3f3be9012fae2121)
+
+running 8 tests
+test capability_narrowing_accepts_only_narrowing_and_writes_nothing_on_widening ... ok
+test lifecycle_transitions_for_teammate_and_worker_with_policy_negatives ... ok
+test mailbox_cursor_resumes_exactly_once_and_isolates_tenants_and_threads ... ok
+test generation_fencing_and_tenant_isolation_for_agent_mutations ... ok
+test fanout_join_out_of_order_parks_parent_until_the_last_child_and_is_idempotent ... ok
+test handoff_is_recoverable_across_a_pool_drop_and_idempotent ... ok
+test delegating_proposal_creates_a_real_child_and_parks_the_run ... ok
+test ensure_active_accepts_a_thread_another_caller_already_activated ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.93s
+
+     Running tests/api.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/api-35c3c1fd52dcf08f)
+
+running 17 tests
+test feature_flags_load_from_config_and_cannot_disable_escalation ... ok
+test every_code_maps_to_a_status_and_says_whether_a_retry_could_help ... ok
+test the_error_vocabulary_is_the_one_the_catalog_generates ... ok
+test the_command_catalog_is_the_one_the_gate_checks ... ok
+test an_api_handler_reads_and_writes_only_its_own_table ... ok
+test every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction ... ok
+test generated_openapi_lists_every_catalog_command ... ok
+test the_public_surface_works_as_the_application_role_under_rls ... ok
+test health_reports_readiness_and_the_catalogues_it_serves ... ok
+test a_tenant_over_the_rate_limit_is_rate_limited ... ok
+test a_command_scoped_to_another_tenant_does_not_touch_this_one ... ok
+test two_tenants_may_send_the_same_command_id_and_each_replays_its_own ... ok
+test a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal ... ok
+test a_resend_while_the_first_is_still_being_applied_is_told_to_come_back ... ok
+test a_call_without_a_usable_tenant_is_refused_with_the_right_code ... ok
+test the_deployable_composes_from_the_environment ... ok
+test a_mutating_call_calls_the_owner_and_a_resend_returns_its_result_once ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.17s
+
+     Running tests/artifact_workflows.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/artifact_workflows-a4b017a2123592aa)
+
+running 4 tests
+test the_source_corpus_verdicts_are_the_same_as_the_intelligence_planes ... ok
+test a_malformed_deliverable_blocks_completion_until_a_valid_version_is_added ... ok
+test a_run_creates_and_edits_a_versioned_artifact_through_the_governed_tools ... ok
+test every_editable_kind_is_made_through_the_tool_from_its_fixture ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.27s
+
+     Running tests/artifact_workspace.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/artifact_workspace-4742fc9310177d4b)
+
+running 4 tests
+test bytes_are_served_as_an_attachment_never_as_a_document_and_only_to_a_reader ... ok
+test search_is_one_typed_program_across_artifacts_threads_knowledge_and_evidence ... ok
+test search_indexes_only_what_arrived_since_it_last_looked ... ok
+test artifacts_outlive_the_run_and_keep_their_version_history_with_links ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.99s
+
+     Running tests/artifacts.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/artifacts-56bfcb187de23bc7)
+
+running 9 tests
+test artifact_round_trip_verifies_the_recorded_digest_against_minio ... ok
+test digest_corruption_is_rejected_against_minio ... ok
+test legal_hold_and_retention_are_recorded_not_silently_deleted ... ok
+test new_bytes_get_a_new_version_identity ... ok
+test evidence_is_insert_only_and_never_overwritten ... ok
+test evidence_bundle_records_claims_sources_and_verification ... ok
+test grant_scope_denies_ungranted_callers_and_read_cannot_write ... ok
+test artifact_writes_are_runtime_events_committed_with_them ... ok
+test multipart_attachment_round_trips_against_minio ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.55s
+
+     Running tests/audit_lifecycle.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/audit_lifecycle-8d721e90746861f3)
+
+running 3 tests
+test derived_deletion_clears_index_memory_and_cache ... ok
+test export_and_delete_e2e_respects_legal_hold ... ok
+test audit_entries_cannot_be_edited_in_place ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/budget_service_paths.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/budget_service_paths-81bce0126d05a137)
+
+running 3 tests
+test recording_a_meter_the_budget_does_not_limit_counts_it_without_a_threshold ... ok
+test lowering_limits_below_consumption_exhausts_the_budget_and_the_port_then_refuses ... ok
+test recording_against_an_unknown_budget_or_for_a_malformed_tenant_is_refused ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.83s
+
+     Running tests/budgets.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/budgets-a72691539f494ad0)
+
+running 3 tests
+test a_budget_capacity_limit_bounds_admission_and_exhaustion_stops_it ... ok
+test child_budgets_cannot_exceed_parent_remaining ... ok
+test budget_exhaustion_stops_new_work_without_corrupting_active_effects ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.88s
+
+     Running tests/budgets_enforced.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/budgets_enforced-390c0f8efd759c97)
+
+running 3 tests
+test set_budget_grants_and_relimits_within_the_tenant_budget ... ok
+test concurrent_charges_add_up ... ok
+test a_spent_budget_starts_no_new_model_call ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.26s
+
+     Running tests/collaboration.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/collaboration-5dceaa2d76245572)
+
+running 6 tests
+test membership_rules_protect_a_thread_for_its_participants ... ok
+test a_thread_list_decides_access_exactly_as_one_thread_does ... ok
+test a_handoff_moves_the_thread_to_the_next_teammate ... ok
+test a_removed_participant_receives_no_new_protected_event ... ok
+test concurrent_posts_from_two_people_keep_one_stable_order ... ok
+test reactions_mentions_and_attention ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.36s
+
+     Running tests/command_idempotency.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/command_idempotency-b3e0a6eb2e932a96)
+
+running 2 tests
+test stale_generations_are_rejected_before_mutation ... ok
+test duplicate_commands_replay_and_param_changes_conflict ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.63s
+
+     Running tests/compaction.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/compaction-5829c4cd0d2f09be)
+
+running 8 tests
+test the_replay_path_does_not_read_compaction ... ok
+test an_installed_epoch_is_not_installed_twice ... ok
+test an_epoch_installs_when_the_caller_still_holds_its_range ... ok
+test an_unordered_range_is_refused_before_the_write ... ok
+test a_fork_refuses_an_epoch_from_another_run ... ok
+test a_revert_refuses_an_epoch_covering_abandoned_history ... ok
+test a_stale_controller_cannot_install_after_the_generation_moved ... ok
+test epochs_are_listed_per_thread_and_are_tenant_scoped ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.71s
+
+     Running tests/compaction_unowned_epochs.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/compaction_unowned_epochs-c311af5d55b19bad)
+
+running 2 tests
+test epoch_statuses_round_trip_and_an_unknown_spelling_is_not_a_status ... ok
+test an_epoch_outside_any_run_is_refused_against_a_run_that_does_not_exist ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s
+
+     Running tests/connector_broker.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/connector_broker-3914053295603d9c)
+
+running 5 tests
+test sandbox_boundary_is_reported_when_absent ... ok
+test raw_token_material_and_foreign_state_are_refused ... ok
+test begin_and_complete_auth_stores_a_handle_and_never_token_material ... ok
+test the_connector_lifecycle_works_as_the_application_role_under_rls ... ok
+test lifecycle_degrades_and_revocation_clears_the_handle ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.03s
+
+     Running tests/context_bridge.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/context_bridge-cc57cf7d6d37faa2)
+
+running 3 tests
+test an_unwired_bridge_fails_closed_rather_than_fabricating_context ... ok
+test a_projection_the_plane_could_not_label_is_refused_before_the_run_sees_it ... ok
+test a_labelled_projection_is_accepted_and_its_id_is_recorded_on_the_turn ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.71s
+
+     Running tests/conversation_surface.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/conversation_surface-5719d981042967e6)
+
+running 6 tests
+test without_an_object_store_uploads_fail_closed ... ok
+test cancel_turn_stops_a_parked_run_and_withdraws_its_question ... ok
+test live_frames_reach_a_workspace_subscriber_while_the_turn_runs ... ok
+test an_upload_becomes_an_attachment_the_message_and_the_inspector_carry ... ok
+test a_question_parks_the_run_and_the_answer_in_thread_resumes_it ... ok
+test served_a_message_is_accepted_before_its_turn_and_the_reply_follows ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.40s
+
+     Running tests/effects.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/effects-16e3515cf56dc7f9)
+
+running 9 tests
+test retry_creates_a_new_identity_with_the_same_key ... ok
+test settlement_is_terminal_with_one_event_per_transition ... ok
+test effect_events_are_one_per_transition_in_order ... ok
+test a_reservation_that_disagrees_with_the_taxonomy_is_refused_and_writes_nothing ... ok
+test racing_dispatchers_reserve_exactly_one_action ... ok
+test unknown_outcomes_are_reconciled_by_strategy_and_never_retried ... ok
+test protocol_state_keeps_reconcile_effect_until_settled ... ok
+test approval_required_actions_cannot_bypass_the_receipt ... ok
+test effect_reads_are_tenant_scoped ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.04s
+
+     Running tests/effects_taxonomy_and_model.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/effects_taxonomy_and_model-abb17d839bcfdb16)
+
+running 6 tests
+test target_kinds_outcomes_and_strategies_have_wire_names ... ok
+test every_status_round_trips_and_names_its_event ... ok
+test an_unreadable_taxonomy_file_is_refused_with_its_path ... ok
+test a_taxonomy_with_an_unknown_strategy_or_tier_is_refused ... ok
+test the_shipped_taxonomy_registers_every_domain_class_once ... ok
+test a_malformed_taxonomy_is_refused_whole ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/enterprise_identity.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/enterprise_identity-c1d91752824d1994)
+
+running 7 tests
+test a_real_idp_issues_id_tokens_the_verifier_accepts ... ok
+test existing_accounts_link_only_with_consent_and_enforcement_admits_only_sso ... ok
+test sso_sign_in_maps_groups_server_side_and_ignores_client_claims ... ok
+test token_and_session_revocation_take_effect_on_the_next_request ... ok
+test service_principal_scopes_are_explicit_and_auditable ... ok
+test scim_deprovision_revokes_access_promptly ... ok
+test id_tokens_that_do_not_verify_are_refused_and_issue_no_session ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.20s
+
+     Running tests/graph_orchestration.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/graph_orchestration-ed77449ca7a83c99)
+
+running 1 test
+test a_dependent_is_not_releasable_until_every_prerequisite_is_done ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.50s
+
+     Running tests/graph_planning.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/graph_planning-fc6da2f460a76aa8)
+
+running 4 tests
+test the_seed_node_id_is_visible_to_the_compiler_snapshot ... ok
+test a_compiled_plan_commits_through_graph_transaction_with_one_revision_bump ... ok
+test replaying_a_compiled_plan_conflicts_instead_of_duplicating_nodes ... ok
+test the_same_plan_over_the_same_state_is_deterministic_across_runs_and_restart ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.50s
+
+     Running tests/graph_scheduler_dispatch.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/graph_scheduler_dispatch-f326d6cae713679d)
+
+running 4 tests
+test an_idle_tenant_tick_commits_no_event ... ok
+test routine_firing_creates_its_objective_through_the_command_path ... ok
+test queued_run_is_dispatched_through_the_graph_state_machine ... ok
+test timer_fire_resumes_the_run_through_the_graph_state_machine ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+
+     Running tests/identity.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/identity-01a8ed75d200d0a9)
+
+running 11 tests
+test security_settings_merge_is_deterministic_and_most_restrictive ... ok
+test access_tokens_are_es256_and_expire ... ok
+test the_whole_sign_in_flow_works_as_the_application_role_under_rls ... ok
+test a_fresh_user_signs_up_by_magic_link_and_gets_a_governed_workspace ... ok
+test onboarding_refuses_a_raw_secret ... ok
+test oauth_signs_in_with_pkce_and_single_use_state ... ok
+test refresh_rotates_and_a_replayed_token_revokes_the_family ... ok
+test sign_out_revokes_and_session_only_refuses_trusted_headers ... ok
+test identity_commands_manage_workspaces_and_settings_with_secrets_as_handles ... ok
+test a_fresh_user_is_onboarded_without_a_config_file ... ok
+test an_open_stream_closes_when_its_session_is_revoked ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.88s
+
+     Running tests/intelligence_gateway.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/intelligence_gateway-1abbd9e6bbcbfce7)
+
+running 4 tests
+test the_gateway_refuses_with_its_typed_errors ... ok
+test the_plane_refuses_a_turn_it_cannot_render ... ok
+test the_runtime_builds_its_turn_context_through_the_plane_and_calls_the_model_with_it ... ok
+test the_rust_runtime_calls_the_python_gateway_across_the_process_boundary ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.54s
+
+     Running tests/knowledge_surface.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/knowledge_surface-258346f06e082a1c)
+
+running 2 tests
+test a_deleted_or_superseded_entry_leaves_every_retrieval_path_and_stays_as_a_tombstone ... ok
+test a_skill_version_climbs_the_ladder_one_rung_at_a_time_and_grants_nothing ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.99s
+
+     Running tests/live_sessions.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/live_sessions-fd92bd02246df991)
+
+running 3 tests
+test a_policy_pause_is_shown_and_no_handback_undoes_it ... ok
+test a_takeover_fences_the_same_session_and_parks_the_run ... ok
+test a_native_computer_takeover_drives_the_control_row_with_its_fence ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.84s
+
+     Running tests/observability.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/observability-03e2e706b96e219d)
+
+running 1 test
+test a_run_is_traced_end_to_end_and_no_canary_leaves_any_signal ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.47s
+
+     Running tests/ops_kill_switches.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/ops_kill_switches-5190c568b8e7b771)
+
+running 8 tests
+test the_runbook_is_generated_from_the_switch_catalog ... ok
+test worker_quarantine_fences_the_target_and_release_restores_dispatch ... ok
+test drain_and_undrain_move_the_target_lifecycle_and_are_audited ... ok
+test provider_outage_drill_fails_over_refuses_and_restores ... ok
+test effect_freeze_stops_new_consequential_actions_without_touching_reads_or_evidence ... ok
+test connector_revoke_goes_through_the_connector_owner ... ok
+test stream_shed_disconnects_live_sessions_with_backpressure ... ok
+test emergency_deny_refuses_matching_classes_before_policy_and_scoped_freezes_stay_scoped ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.30s
+
+     Running tests/orchestration.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/orchestration-2a62a65f7f0c8a4b)
+
+running 7 tests
+test a_waiting_parent_joins_once_its_last_child_completes ... ok
+test a_parallel_dag_releases_and_dispatches_in_dependency_order ... ok
+test a_cancel_storm_cancels_each_run_once_and_blocks_dependents ... ok
+test a_lost_graph_race_is_recomputed_against_the_new_revision ... ok
+test capacity_bounds_concurrency_and_frees_slots_as_runs_finish ... ok
+test a_cycle_in_the_graph_is_refused_before_anything_is_dispatched ... ok
+test a_dependent_with_a_failed_prerequisite_is_blocked_never_dispatched ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.83s
+
+     Running tests/orchestration_paths.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/orchestration_paths-5a96749041de9b2a)
+
+running 12 tests
+test run_status_predicates_split_terminal_from_active_runs ... ok
+test orchestration_errors_map_to_their_domain_codes ... ok
+test join_plan_ignores_a_waiting_node_without_children_and_the_cycle_check_accepts_any_order ... ok
+test prerequisites_are_satisfied_only_when_every_one_exists_and_is_done ... ok
+test a_cancel_plan_refuses_an_unknown_root_and_blocks_each_outside_dependent_once ... ok
+test the_unwired_work_graph_fails_closed_naming_its_owner ... ok
+test a_cancellation_that_loses_the_graph_race_to_another_canceller_still_reports_its_runs ... ok
+test a_live_run_the_runtime_cannot_find_stops_the_cancellation_before_the_graph_moves ... ok
+test a_tick_counts_fenced_and_undispatchable_runs_apart_from_dispatched_ones ... ok
+test the_graph_port_refuses_an_unknown_status_and_a_malformed_tenant ... ok
+test a_tick_gives_up_after_losing_every_revision_race_and_surfaces_other_refusals ... ok
+test cancellation_out_of_retries_is_a_conflict_only_while_work_is_still_pending ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.52s
+
+     Running tests/planning.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/planning-60e6a977d9d736fb)
+
+running 12 tests
+test an_over_authorized_plan_is_rejected_and_writes_nothing ... ok
+test a_missing_base_revision_is_a_revision_conflict ... ok
+test a_cycle_through_proposed_parent_ids_is_rejected ... ok
+test completion_contract_inheritance_is_recorded_and_missing_contracts_are_rejected ... ok
+test duplicate_ids_and_unknown_endpoints_are_rejected ... ok
+test a_two_node_cycle_is_rejected ... ok
+test a_cycle_against_the_existing_graph_is_rejected ... ok
+test a_plan_above_the_policy_bound_is_rejected_with_validation_bounds ... ok
+test malformed_proposals_are_rejected_and_write_nothing ... ok
+test replaying_an_applied_plan_conflicts_and_never_duplicates_nodes ... ok
+test a_self_edge_cycle_is_rejected ... ok
+test the_same_proposal_over_the_same_starting_state_is_deterministic ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.39s
+
+     Running tests/planning_compile.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/planning_compile-8c76d9892ab5844d)
+
+running 9 tests
+test a_proposal_for_another_workspace_or_with_no_change_is_refused ... ok
+test a_parent_must_exist_and_a_planned_parent_must_carry_the_contract_it_would_hand_down ... ok
+test node_and_edge_identities_must_be_unique_and_new ... ok
+test updates_and_removals_must_name_existing_rows_at_the_observed_revision ... ok
+test a_created_node_starts_draft_and_may_not_hang_under_a_node_created_in_the_same_plan ... ok
+test a_proposal_without_identity_or_with_malformed_nodes_is_a_schema_refusal ... ok
+test removing_an_edge_lets_the_same_plan_add_its_reverse_and_the_summary_is_deterministic ... ok
+test capability_needs_must_be_canonical_grants_that_narrow_the_proposer ... ok
+test any_non_empty_contract_value_is_the_nodes_own_and_an_empty_one_is_not ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/planning_graph_port.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/planning_graph_port-0f41357f3f3d979d)
+
+running 5 tests
+test the_graph_transaction_refuses_a_cycle_and_a_plan_above_the_policy_bound ... ok
+test a_writer_racing_the_planner_between_compile_and_commit_is_recorded_as_a_revision_conflict ... ok
+test a_port_for_a_malformed_tenant_reads_nothing ... ok
+test a_user_edit_transitions_nodes_and_adds_and_removes_every_edge_kind_in_one_transaction ... ok
+test the_graph_transaction_refuses_a_compiled_plan_that_breaks_a_rule_and_writes_nothing ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.15s
+
+     Running tests/policy.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/policy-aa78a2d9d4f7bf42)
+
+running 12 tests
+test default_policy_evaluation_is_fail_closed_for_missing_inputs ... ok
+test protected_egress_without_a_grant_is_denied_and_settlement_before_reservation_is_refused ... ok
+test policy_deny_wins_over_user_always_and_a_missing_rule_denies ... ok
+test a_receipt_granted_with_sub_microsecond_precision_still_verifies_after_reload ... ok
+test a_tampered_receipt_fails_verification_and_writes_nothing ... ok
+test a_policy_decision_is_recorded_with_exactly_one_policy_event ... ok
+test expired_and_superseded_requests_cannot_be_granted_and_changes_supersede ... ok
+test a_tier_four_always_user_rule_is_rejected_and_never_stored ... ok
+test escalation_forbids_always_and_the_preview_carries_the_untrusted_origin ... ok
+test a_run_parks_in_waiting_approval_and_resumes_only_on_its_matching_receipt ... ok
+test approval_substitution_fails_closed_and_writes_nothing ... ok
+test exactly_one_approval_event_per_transition_and_denial_changes_no_effect_state ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.22s
+
+     Running tests/protocol_state.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/protocol_state-154a1daf68289e5b)
+
+running 8 tests
+test checkpoints_are_generation_and_retention_fenced ... ok
+test approval_and_question_waits_survive_restart ... ok
+test protocol_state_is_tenant_scoped ... ok
+test partial_tool_call_recovery_reconciles_and_never_retries ... ok
+test lock_and_store_fail_closed_for_foreign_and_unknown_runs ... ok
+test crash_restart_reconstructs_the_next_safe_action ... ok
+test concurrent_cycles_keep_every_writers_change ... ok
+test concurrent_first_writes_for_one_run_never_raise_and_keep_one_row ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.85s
+
+     Running tests/qualification.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/qualification-5b9446549c54110d)
+
+running 4 tests
+test replay_matrix_is_stable_across_injected_faults ... ok
+test crash_recovery_resumes_without_duplicating_a_run ... ok
+test stale_generation_cannot_mutate_but_current_may ... ok
+test concurrent_cancel_and_suspend_race_is_typed_and_single ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.98s
+
+     Running tests/questions_lifecycle.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/questions_lifecycle-66fcfbe16176ec10)
+
+running 4 tests
+test question_statuses_round_trip_and_unknown_spellings_are_refused ... ok
+test a_malformed_question_is_refused_and_writes_nothing ... ok
+test each_question_kind_accepts_only_answers_of_its_own_shape ... ok
+test an_expired_question_fails_the_run_waiting_on_it_and_cannot_then_be_answered ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s
+
+     Running tests/recovery.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/recovery-b2b6850bcdc8f862)
+
+running 7 tests
+test recovery_decisions_read_only_durable_state ... ok
+test the_recovery_module_never_reads_a_memory_table ... ok
+test stale_worker_output_cannot_mutate_the_current_run ... ok
+test killed_runtime_resumes_to_the_same_safe_logical_point ... ok
+test an_uncertain_effect_is_reconciled_before_the_run_resumes ... ok
+test a_restarted_server_recovers_every_non_terminal_run_before_it_serves ... ok
+test recovery_refuses_unknown_runs_and_records_every_fence ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.13s
+
+     Running tests/recovery_point.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/recovery_point-12bca60c63f478d1)
+
+running 4 tests
+test captured_point_names_every_required_surface ... ok
+test automated_restore_drill_measures_rpo_rto ... ok
+test effect_settlement_audit_rejects_pending_or_repeat ... ok
+test consistency_point_validation_survives_restore ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/routines.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/routines-879e599faeaf6f08)
+
+running 4 tests
+test routine_commands_validate_and_transition ... ok
+test an_event_fires_its_routine_once_however_it_is_consumed ... ok
+test a_scheduled_window_fires_once_across_restarts ... ok
+test notifications_follow_preferences_and_deliver_email ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.01s
+
+     Running tests/runtime_state_machine.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/runtime_state_machine-98e562c8c7345bb4)
+
+running 17 tests
+test recovery_never_retries_an_unsettled_effect ... ok
+test protocol_state_round_trips_for_recovery ... ok
+test budget_exhaustion_stops_the_loop_without_further_model_calls ... ok
+test cancellation_during_running_ends_cancelled_with_one_event ... ok
+test suspended_run_resumes_only_with_the_current_generation ... ok
+test stale_generation_is_fenced_before_any_write ... ok
+test cancellation_during_waiting_ends_cancelled_with_one_event ... ok
+test recovery_waits_for_the_matching_approval_and_is_idempotent ... ok
+test illegal_transitions_of_each_family_leave_state_and_events_untouched ... ok
+test happy_path_emits_every_event_in_order_with_contiguous_sequences ... ok
+test attempts_are_appended_never_overwritten ... ok
+test parked_run_is_not_released_by_a_mismatched_wait_state ... ok
+test only_the_cancellation_that_did_the_work_reports_that_it_cancelled_the_run ... ok
+test canonical_ownership_and_tenant_isolation_hold ... ok
+test unavailable_seams_name_the_task_that_owns_them ... ok
+test unknown_tool_outcome_suspends_for_reconciliation_never_retry ... ok
+test recovery_honours_a_cancellation_requested_before_the_crash_once ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.72s
+
+     Running tests/scheduler.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/scheduler-3af64837e6e4221d)
+
+running 15 tests
+test stale_generation_timer_is_fenced_and_never_wakes_the_run ... ok
+test absence_policy_applies_skip_queue_and_catch_up_once ... ok
+test fire_reports_a_lost_claim_without_emitting ... ok
+test resolving_wait_a_cannot_resume_run_b ... ok
+test queued_run_is_offered_to_the_graph_dispatch_port ... ok
+test scheduled_timer_registers_a_wait_and_emits_run_waiting ... ok
+test the_misfire_threshold_decides_when_a_window_was_missed ... ok
+test the_background_loop_learns_when_the_next_work_falls_due ... ok
+test saturated_due_queue_returns_a_typed_error_and_drops_nothing ... ok
+test due_timer_fires_once_clears_the_wait_and_emits_one_event ... ok
+test an_on_time_window_fires_under_every_absence_policy ... ok
+test two_concurrent_loops_fire_a_timer_exactly_once ... ok
+test routines_due_together_fire_side_by_side ... ok
+test a_pass_only_claims_and_the_executor_runs_the_fires_beside_it ... ok
+test durable_timer_survives_a_pool_drop_and_still_fires_at_its_due_time ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.58s
+
+     Running tests/schema_bootstrap.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/schema_bootstrap-9217e65e3fa1779d)
+
+running 5 tests
+test tenant_context_validation_rejects_non_canonical_ids ... ok
+test bootstrap_from_zero_creates_the_authoritative_schema ... ok
+test unset_context_fails_closed_on_a_plain_connection ... ok
+test migrations_are_reapplied_safely_over_existing_data ... ok
+test tenant_isolation_returns_zero_rows_without_context ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.94s
+
+     Running tests/skill_evolution.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/skill_evolution-9cf5dddb16d34166)
+
+running 3 tests
+test no_tool_a_run_can_call_writes_a_skill ... ok
+test an_evolution_candidate_without_a_passing_evaluation_cannot_be_approved ... ok
+test verified_experience_becomes_an_evaluated_candidate_and_never_production ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.84s
+
+     Running tests/skills.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/skills-f8f45fa5562677ac)
+
+running 6 tests
+test a_skill_and_its_first_version_start_in_draft ... ok
+test an_unknown_skill_or_version_is_refused_without_writing ... ok
+test the_active_view_is_tenant_scoped_and_ordered ... ok
+test promotion_follows_the_ladder_and_only_active_resolves ... ok
+test an_unapproved_version_cannot_enter_production_context ... ok
+test a_skill_has_at_most_one_active_version ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.47s
+
+     Running tests/state_machine_engine.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/state_machine_engine-0828fc8c71fbc226)
+
+running 10 tests
+test a_budget_the_model_call_spent_dispatches_no_tool_call ... ok
+test an_unknown_outcome_without_an_effect_suspends_without_inventing_a_pending_call ... ok
+test plan_and_memory_proposals_abort_the_turn_and_name_their_owner ... ok
+test a_delegation_that_joins_inline_completes_its_step_and_the_turn_continues ... ok
+test every_proposal_family_stops_at_the_step_budget_without_reaching_its_port ... ok
+test a_question_the_protocol_cannot_ask_fails_its_step_and_aborts_the_turn ... ok
+test recovery_reports_takeover_and_typed_waits_and_never_releases_an_unnamed_park ... ok
+test run_turn_refuses_a_run_that_is_not_running_before_opening_a_turn ... ok
+test a_resumed_run_settles_its_recorded_call_before_the_model_is_asked_again ... ok
+test parked_tool_outcomes_record_the_approval_or_child_they_wait_for ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.13s
+
+     Running tests/state_machine_store.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/state_machine_store-f29c16649ac16fc6)
+
+running 8 tests
+test state_enums_refuse_unknown_stored_values_and_follow_the_domain_tables ... ok
+test every_wait_resolution_names_its_waiting_state_and_key ... ok
+test budget_snapshot_defaults_a_missing_or_null_max_steps_and_refuses_malformed_ones ... ok
+test protocol_state_writes_refuse_a_run_this_tenant_cannot_see ... ok
+test run_events_carry_causation_and_an_unrecoverable_block_is_run_blocked ... ok
+test takeover_park_and_release_never_move_a_run_that_is_not_theirs_to_move ... ok
+test resolve_wait_releases_event_timer_child_and_takeover_waits_only_on_their_key ... ok
+test resume_begin_turn_and_the_step_writes_refuse_rows_in_the_wrong_state ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.35s
+
+     Running tests/teammates.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/teammates-413bdcec6ec1c180)
+
+running 3 tests
+test archiving_suspends_the_thread_and_keeps_every_identity ... ok
+test a_definition_narrows_a_runs_capability_and_its_text_never_widens_it ... ok
+test a_configuration_change_is_audited_versioned_and_read_by_the_next_turn ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.49s
+
+     Running tests/trust_policy.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/trust_policy-6a6b949f85916c4f)
+
+running 6 tests
+test a_trusted_proposal_is_not_escalated ... ok
+test an_instruction_from_a_fetched_page_cannot_redirect_output ... ok
+test movement_within_the_grant_set_is_permitted_and_no_movement_is_not_guarded ... ok
+test protected_content_cannot_leave_the_egress_grant_set ... ok
+test tier_zero_and_one_are_not_escalated_but_tier_four_is_capped ... ok
+test untrusted_derived_tier_two_escalates_one_tier_and_cannot_use_always ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/trust_surface.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/trust_surface-715b6963bb39d026)
+
+running 4 tests
+test evidence_bytes_that_do_not_hash_to_their_digest_are_a_typed_error_not_bytes ... ok
+test a_denied_approval_records_the_effect_as_denied_and_the_run_moves_on ... ok
+test unsettled_effects_stay_visibly_unresolved ... ok
+test an_approval_is_bound_to_the_previewed_digest_and_a_grant_dispatches_the_call ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.30s
+
+     Running tests/turn_loop.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/turn_loop-c6519633650b3e4c)
+
+running 15 tests
+test every_declared_effect_class_has_a_catalog_tier ... ok
+test an_internal_tool_refused_by_its_port_settles_as_a_known_failure ... ok
+test a_tier_three_call_parks_for_approval_and_resumes_without_a_duplicate_dispatch ... ok
+test a_question_past_its_ttl_cannot_be_answered_and_the_background_pass_fails_its_run ... ok
+test a_call_outside_the_capability_projection_is_rejected_before_dispatch ... ok
+test independent_tool_calls_run_together_and_settle_in_proposal_order ... ok
+test an_unprovable_proposal_chain_escalates_a_tier_two_call_to_approval ... ok
+test a_crash_between_dispatch_and_settlement_reconciles_instead_of_redispatching ... ok
+test a_question_wait_survives_a_restart_and_resumes_on_the_answer ... ok
+test an_escalated_call_shows_its_untrusted_origin_and_completes_through_approval ... ok
+test a_host_refusal_after_dispatch_settles_as_a_known_failure_not_an_unknown_outcome ... ok
+test a_delegation_wait_survives_a_restart ... ok
+test a_user_ask_call_parks_the_run_and_the_question_is_durable ... ok
+test unknown_tools_and_unknown_fields_are_rejected_before_dispatch ... ok
+test a_turn_executes_tool_proposals_through_capability_policy_and_the_effect_ledger ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.19s
+
+     Running tests/turn_loop_internal_tools.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/turn_loop_internal_tools-5d3fdb70a8b6e715)
+
+running 13 tests
+test a_bounded_output_never_splits_a_multibyte_character ... ok
+test resume_reports_an_unsettled_effect_and_refuses_a_call_it_has_no_record_of ... ok
+test a_work_propose_plan_call_is_applied_through_the_plan_port_as_the_proposing_run ... ok
+test a_work_delegate_call_spawns_a_child_thread_and_parks_the_run_on_it ... ok
+test the_tools_exposed_to_a_run_follow_its_stored_projection ... ok
+test a_resumed_call_whose_outcome_is_lost_is_reported_for_reconciliation_on_every_later_resume ... ok
+test a_user_ask_call_records_its_choices_and_optional_flag_on_the_question ... ok
+test a_memory_propose_call_offers_the_candidate_to_the_gated_memory_port ... ok
+test a_parked_call_is_not_resumed_without_a_signing_key_a_granted_receipt_or_valid_arguments ... ok
+test a_reservation_that_survived_a_crash_before_dispatch_resumes_exactly_once ... ok
+test an_unresolved_acting_actor_denies_the_call_and_names_the_role_owner ... ok
+test a_work_delegate_call_that_joins_inline_completes_with_the_child_result ... ok
+test an_operator_switch_engaged_while_a_call_waits_stops_its_resume_until_released ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.76s
+
+     Running tests/usage.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/usage-6fb253763911727e)
+
+running 4 tests
+test quota_failure_does_not_partially_commit_a_new_effect ... ok
+test budget_alert_on_soft_quota_still_admits ... ok
+test quota_race_admits_at_most_one_winner ... ok
+test usage_rebuild_from_source_events_is_deterministic ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/usage_store.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/usage_store-17f4e4507673f6ec)
+
+running 1 test
+test a_usage_read_is_the_whole_history_wherever_the_projection_stands ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.76s
+
+     Running tests/verification.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/verification-33a66cc5180caca2)
+
+running 6 tests
+test an_unimplemented_check_kind_fails_closed_and_names_its_owner ... ok
+test a_model_claim_alone_cannot_succeed_a_run_without_its_artifact ... ok
+test the_same_claim_verifies_once_the_contract_is_satisfied ... ok
+test an_unsettled_effect_keeps_the_run_incomplete ... ok
+test a_contract_that_binds_nothing_cannot_certify_completion ... ok
+test a_semantic_verifier_disagreement_keeps_work_incomplete ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.17s
+
+     Running tests/verification_contract_checks.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/verification_contract_checks-01631909540b673a)
+
+running 5 tests
+test a_contract_with_mistyped_sections_is_malformed_rather_than_empty ... ok
+test every_check_kind_parses_and_the_unimplemented_ones_name_their_owners_in_order ... ok
+test an_effects_check_for_a_malformed_run_id_fails_closed_instead_of_passing_vacuously ... ok
+test a_contract_requiring_a_semantic_verdict_is_refused_when_no_verifier_is_installed ... ok
+test unrunnable_checks_fail_closed_with_their_owners_alongside_a_missing_deliverable ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.92s
+
+     Running tests/walking_skeleton.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/walking_skeleton-c8dcf52db7a9de03)
+
+running 3 tests
+test walking_skeleton_posts_a_message_through_the_stub_and_the_ledger ... ok
+test websocket_delivers_events_committed_after_subscribe ... ok
+test websocket_replays_from_cursor_after_reconnect ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.30s
+
+     Running tests/walking_skeleton_gateway.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/walking_skeleton_gateway-f34a6592cda8f03c)
+
+running 2 tests
+test a_provider_failure_fails_the_turn_with_its_code ... ok
+test a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.49s
+
+     Running tests/web_admin_surface.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/web_admin_surface-d75ecfcfc90a8ef5)
+
+running 2 tests
+test the_web_app_is_served_under_app_with_a_locked_policy_and_no_way_out_of_its_root ... ok
+test admin_pages_and_commands_are_decided_by_the_servers_rbac_for_every_role ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.36s
+
+     Running tests/webhooks.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/webhooks-7e1e954dfe3707e9)
+
+running 6 tests
+test a_deployment_without_a_key_provider_refuses_to_create_a_webhook ... ok
+test destinations_obey_egress_policy_and_the_kill_switches ... ok
+test deliveries_stay_in_their_tenant_and_workspace ... ok
+test delivery_is_signed_at_least_once_and_retried_until_dead_lettered ... ok
+test payloads_never_carry_secrets_or_protected_data ... ok
+test the_event_stream_is_also_served_as_server_sent_events ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.74s
+
+     Running tests/workgraph_surface.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/workgraph_surface-e15746ec258a7d45)
+
+running 2 tests
+test a_delegation_is_a_handoff_edge_and_a_parked_run_in_the_view ... ok
+test the_projection_is_the_canonical_revision_and_edits_are_validated_commands ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.86s
+
+     Running unittests src/lib.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_tools-b23b97c834bd7234)
+
+running 3 tests
+test registry::tests::families_match_only_their_own_shape ... ok
+test call::tests::urls_reduce_to_their_host ... ok
+test call::tests::paths_inside_the_root_are_recognised ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/quansio-tool-check.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/quansio_tool_check-9c79cad03f977fc3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/builtin_packs.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/builtin_packs-c826ccd0f9e28759)
+
+running 2 tests
+test a_skills_capability_needs_are_exactly_what_its_tools_require ... ok
+test every_tool_a_builtin_pack_names_is_callable_in_the_registry ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/source_trust_parity.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/source_trust_parity-1e6b221b4eabff1f)
+
+running 2 tests
+test only_untrusted_external_is_data_only ... ok
+test source_trust_matches_the_generated_contract ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/tool_check_binary.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/tool_check_binary-05d84e7f161cc133)
+
+running 2 tests
+test blank_lines_are_skipped_and_order_is_kept ... ok
+test verdicts_follow_the_registry_schema_check ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s
+
+     Running tests/tool_contract.rs (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/target-cov/debug/deps/tool_contract-7201ea081228e67b)
+
+running 12 tests
+test schemas_reject_unsupported_vocabulary_at_load_time ... ok
+test open_object_schemas_are_refused ... ok
+test unknown_tool_is_rejected_before_dispatch ... ok
+test reserved_family_names_are_not_callable ... ok
+test unknown_argument_field_is_rejected ... ok
+test missing_and_ill_typed_arguments_are_rejected ... ok
+test declared_hosts_and_output_bounds_come_from_the_declaration ... ok
+test parameter_digest_is_canonical_and_key_order_independent ... ok
+test exposure_is_capability_filtered ... ok
+test derived_effect_class_follows_the_target_root ... ok
+test native_computer_tools_are_machine_hosted_and_app_scoped ... ok
+test builtin_registry_covers_the_generated_tool_catalog ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests quansio_capability
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_cli
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_contracts
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_events
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_graph
+
+running 1 test
+test crates/graph/src/transaction/mod.rs - transaction (line 21) - compile ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+
+   Doc-tests quansio_indexer
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_machine
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_native_windows
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_qworkerd
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_server
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests quansio_tools
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+rust coverage: 217 files measured, 13 unreportable, 25 unmapped; cargo test exit 0
+exit=0

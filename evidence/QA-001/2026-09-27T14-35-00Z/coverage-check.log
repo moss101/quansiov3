@@ -1,0 +1,13 @@
+capability           96.19% lines (floor 90%), 91.67% branches
+policy               92.15% lines (floor 90%), 75.71% branches
+effects              90.13% lines (floor 90%), 78.75% branches
+runtime              96.05% lines (floor 90%), 87.5% branches
+recovery             94.6% lines (floor 90%), 85.71% branches
+secrets              92.75% lines (floor 90%), 83.93% branches
+egress               94.95% lines (floor 90%), 81.54% branches
+qworkerd-protocol    90.0% lines (floor 90%), 90.91% branches
+rust-other           86.34% lines (floor 75%)
+python               87.5% lines (floor 80%)
+typescript           BLOCKED_EXTERNAL (floor 70%): no TypeScript coverage provider is installed: @vitest/coverage-v8 was not approved for download (2026-09-27); the critical journeys run in Playwright (QA-008)
+coverage: PASS
+exit=0

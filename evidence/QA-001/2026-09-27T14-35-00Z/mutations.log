@@ -1,0 +1,45 @@
+# Mutation and control runs for the regressions QA-001 found (each fix's new test against the pre-fix source)
+
+### run009-mutation.log
+== CONTROL (unmutated f8fe8b5)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.73s
+== MUTANT: serve() skips recover_on_start
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+0
+COMPILES
+no startup recovery before serving: quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; u
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.65s
+== RESTORED
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.47s
+
+### f1-mutation.log
+== MUTANT: restore the pre-fix cancel()
+ 1 file changed, 4 insertions(+), 8 deletions(-)
+test a_host_refusal_after_dispatch_settles_as_a_known_failure_not_an_unknown_outcome ... FAILED
+test an_internal_tool_refused_by_its_port_settles_as_a_known_failure ... FAILED
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.51s
+error: test failed, to rerun pass `-p quansio-server --test turn_loop`
+== RESTORED
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.72s
+
+### b1-mutation.log
+== CONTROL
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.46s
+== MUTANT: pre-fix engine.rs
+test a_delegation_that_joins_inline_completes_its_step_and_the_turn_continues ... FAILED
+test every_proposal_family_stops_at_the_step_budget_without_reaching_its_port ... FAILED
+test result: FAILED. 8 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.85s
+== RESTORED
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.60s
+
+### f4-mutation.log
+== MUTANT: pre-fix crates/server/src/runtime/turn_loop/questions.rs
+thread 'a_question_past_its_ttl_cannot_be_answered_and_the_background_pass_fails_its_run' (43382113) panicked at crates/server/tests/turn_lo
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.44s
+== MUTANT: pre-fix crates/server/src/composition.rs
+thread 'a_question_past_its_ttl_cannot_be_answered_and_the_background_pass_fails_its_run' (43383284) panicked at crates/server/tests/turn_lo
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.42s
+== RESTORED
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.50s
+
+exit=0

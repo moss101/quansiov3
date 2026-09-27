@@ -1,0 +1,241 @@
+{
+  "status": "PASS",
+  "findings": [],
+  "blocked_external": [
+    {
+      "runner": "pytest",
+      "log": "toolchains.log",
+      "test": "tests/intelligence/test_model_gateway_live.py:160",
+      "count": 4,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_ANTHROPIC_API_KEY is not set; live anthropic conformance requires it"
+    },
+    {
+      "runner": "pytest",
+      "log": "toolchains.log",
+      "test": "tests/intelligence/test_model_gateway_live.py:160",
+      "count": 4,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY is not set; live openai conformance requires it"
+    },
+    {
+      "runner": "pytest",
+      "log": "toolchains.log",
+      "test": "tests/intelligence/test_model_gateway_live.py:160",
+      "count": 4,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID is not set; live openai_compatible conformance requires it"
+    },
+    {
+      "runner": "pytest",
+      "log": "toolchains.log",
+      "test": "tests/intelligence/test_model_gateway_live.py:195",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: 0 of 3 live providers configured; at least 2 are required. Unconfigured: anthropic (QUANSIO_TEST_ANTHROPIC_API_KEY); openai (QUANSIO_TEST_OPENAI_API_KEY); openai_compatible (QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID)"
+    },
+    {
+      "runner": "pytest",
+      "log": "toolchains.log",
+      "test": "tests/intelligence/test_model_routing_live.py:66",
+      "count": 3,
+      "reason": "BLOCKED_EXTERNAL: no live provider is configured; set the QUANSIO_TEST_* variables of any one provider (see test_model_gateway_live.py)"
+    },
+    {
+      "runner": "xctest",
+      "log": "toolchains.log",
+      "test": "QuansioMacBridgeTests.ComputerUseTests.testATreeWalkIsBounded",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary"
+    },
+    {
+      "runner": "xctest",
+      "log": "toolchains.log",
+      "test": "QuansioMacBridgeTests.ComputerUseTests.testBoundsThatAreNotUsableAreRefused",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary"
+    },
+    {
+      "runner": "xctest",
+      "log": "toolchains.log",
+      "test": "QuansioMacBridgeTests.ComputerUseTests.testExactForegroundIdentityFailsClosed",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary"
+    },
+    {
+      "runner": "xctest",
+      "log": "toolchains.log",
+      "test": "QuansioMacBridgeTests.ComputerUseTests.testFrontmostAppResolvesWithoutAccessibility",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary"
+    },
+    {
+      "runner": "xctest",
+      "log": "toolchains.log",
+      "test": "QuansioMacBridgeTests.ComputerUseTests.testScreenCaptureAvailabilityAgreesWithReadableWindowTitles",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary"
+    },
+    {
+      "runner": "xctest",
+      "log": "toolchains.log",
+      "test": "QuansioMacBridgeTests.ComputerUseTests.testScreenshotOutputIsHardBounded",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary"
+    },
+    {
+      "runner": "xctest",
+      "log": "toolchains.log",
+      "test": "QuansioMacBridgeTests.ComputerUseTests.testSystemKeyVocabularyFailsBeforePostingUnknownInput",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary"
+    },
+    {
+      "runner": "xctest",
+      "log": "toolchains.log",
+      "test": "QuansioMacBridgeTests.ComputerUseTests.testTheClipboardRoundTripsAndIsPutBack",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary"
+    },
+    {
+      "runner": "xctest",
+      "log": "toolchains.log",
+      "test": "QuansioMacBridgeTests.MacOSCapsuleTests.testRealVMStartStopResetCheckpointAndPrivateQworkerdChannel",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_VM=1 is required for the real macOS VM boundary"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/evaluation/test_qa004_campaign.py:142",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY (retrieval recall@10 with the configured embedding route); QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID (live answers, tool proposals, context accepted by a provider) \u2014 unmeasured (fail closed): ['retrieval_recall_at_10', 'tool_proposal_schema_validity', 'unsupported_claim_rate']"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/evaluation/test_qa004_campaign.py:156",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID (live answers, tool proposals, context accepted by a provider)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/evaluation/test_qa004_campaign.py:171",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID (live answers, tool proposals, context accepted by a provider)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/evaluation/test_qa004_campaign.py:183",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY (retrieval recall@10 with the configured embedding route)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_campaign.py:126",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_campaign.py:230",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_campaign.py:310",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_campaign.py:350",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_campaign.py:409",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_campaign.py:465",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_campaign.py:520",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_campaign.py:598",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_campaign.py:638",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_campaign.py:724",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_live.py:113",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "pytest",
+      "log": "tests.log",
+      "test": "tests/performance/test_qa009_live.py:153",
+      "count": 1,
+      "reason": "BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)"
+    },
+    {
+      "runner": "vitest",
+      "log": "vitest-desktop.json",
+      "test": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001-clean/apps/desktop/tests/launch.e2e.test.ts",
+      "count": 2,
+      "reason": "BLOCKED_EXTERNAL: /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001-clean/apps/desktop/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron is missing; install dependencies with electron's build script allowed"
+    },
+    {
+      "runner": "vitest",
+      "log": "vitest-desktop.json",
+      "test": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001-clean/apps/desktop/tests/session.e2e.test.ts",
+      "count": 10,
+      "reason": "BLOCKED_EXTERNAL: /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001-clean/apps/desktop/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron and /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001-clean/apps/desktop/dist/app/main.cjs are needed (install with electron's build script allowed; build the app)"
+    }
+  ],
+  "blocked_by_variable": {
+    "(unnamed)": 15,
+    "QUANSIO_TEST_ANTHROPIC_API_KEY": 5,
+    "QUANSIO_TEST_MACOS_COMPUTER_USE": 8,
+    "QUANSIO_TEST_MACOS_VM": 1,
+    "QUANSIO_TEST_OPENAI_API_KEY": 7,
+    "QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY": 8,
+    "QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL": 8,
+    "QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID": 8,
+    "QUANSIO_TEST_PERF": 12
+  }
+}
