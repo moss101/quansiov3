@@ -47,9 +47,9 @@ def test_release_blocking_suites_have_no_unexplained_skips() -> None:
 
 
 def test_rust_release_suites_have_no_ignore_annotations() -> None:
-    """The same ban for the Rust integration suites (`#[ignore]`)."""
+    """The same ban for Rust tests (`#[ignore]`), integration suites and inline modules alike."""
     offenders: list[str] = []
-    for path in sorted((ROOT / "crates").rglob("tests/**/*.rs")):
+    for path in sorted((ROOT / "crates").rglob("*.rs")):
         text = path.read_text()
         for lineno, line in enumerate(text.splitlines(), start=1):
             if "#[ignore" in line:
@@ -63,3 +63,30 @@ def test_contract_suite_itself_is_strict() -> None:
 
     assert (ROOT / "schemas" / "openapi" / "public-api-v1.yaml").is_file()
     assert (ROOT / "schemas" / "json" / "evidence-summary.schema.json").is_file()
+
+
+TS_MODIFIER = re.compile(r"\b(?:it|test|describe|suite)\.(skip|skipIf|runIf|only|todo|fails)\b|\bx(?:it|describe)\(")
+TS_SUITES = ("apps", "sdk", "tests")
+
+
+def test_typescript_suites_skip_only_as_a_named_block() -> None:
+    """`.only`, `.todo` and `.fails` are banned; `.skip`/`.skipIf` only in a file that names its block.
+
+    The convention is a file-level `blocked` message (`BLOCKED_EXTERNAL: <QUANSIO_TEST_* or
+    host requirement>`) passed to `describe.skipIf` and reported as the title of an `it.skip`,
+    which the pipeline's test audit then reads from the vitest report.
+    """
+    offenders: list[str] = []
+    for top in TS_SUITES:
+        for path in sorted((ROOT / top).rglob("*.ts")):
+            if "node_modules" in path.parts or not path.name.endswith((".test.ts", ".spec.ts")):
+                continue
+            text = path.read_text()
+            names_block = "BLOCKED_EXTERNAL" in text
+            for lineno, line in enumerate(text.splitlines(), start=1):
+                for match in TS_MODIFIER.finditer(line):
+                    modifier = match.group(1)
+                    if modifier in ("skip", "skipIf", "runIf") and names_block:
+                        continue
+                    offenders.append(f"{path.relative_to(ROOT)}:{lineno}: {line.strip()[:100]}")
+    assert offenders == [], f"TypeScript tests that do not run: {offenders}"

@@ -52,6 +52,9 @@ GATES: List[tuple] = [
     ("contract-lint-compat", "uv run --project python python scripts/ci/contract_compat.py"),
     ("toolchains", "bash scripts/dev/bootstrap.sh"),
     ("tests", "uv run --project python pytest tests -q"),
+    # Last: reads the logs the test gates above wrote and fails on any test that did not
+    # run except as a named BLOCKED_EXTERNAL (QA-001).
+    ("test-audit", "python3.12 scripts/ci/test_audit.py"),
 ]
 # `arch_check.py` is created by GOV-008; until it exists the gate is skipped explicitly
 # (never silently passed) and reported as `SKIPPED_PENDING` in the summary.
@@ -102,14 +105,27 @@ def git_commit(root: Path) -> Optional[str]:
         return None
 
 
+#: A gate's time limit in seconds; `QUANSIO_CI_GATE_TIMEOUT` raises it on a slow or shared host
+#: (a clean checkout builds the whole workspace inside the toolchains gate).
+DEFAULT_GATE_TIMEOUT = 3600
+
+
+def gate_timeout() -> int:
+    try:
+        return max(1, int(os.environ.get("QUANSIO_CI_GATE_TIMEOUT", DEFAULT_GATE_TIMEOUT)))
+    except ValueError:
+        return DEFAULT_GATE_TIMEOUT
+
+
 def run_gate(
     name: str,
     command: str,
     root: Path,
-    timeout: int = 3600,
+    timeout: Optional[int] = None,
     env: Optional[Dict[str, str]] = None,
     log_dir: Optional[Path] = None,
 ) -> Dict[str, object]:
+    timeout = timeout if timeout is not None else gate_timeout()
     started = time.monotonic()
     full_output: Optional[str] = None
     try:
@@ -172,6 +188,10 @@ def run(
         env["QUANSIO_TEST_POSTGRES_URL"] = database_url
     commit = git_commit(root) or "nogit"
     log_dir = (out.parent if out else DEFAULT_OUT_DIR) / "logs" / commit[:12]
+    # Every pytest run reports why each skipped test did not run (and any xfail/xpass), so
+    # the test-audit gate can hold the reasons to the BLOCKED_EXTERNAL convention.
+    env["PYTEST_ADDOPTS"] = " ".join(filter(None, [env.get("PYTEST_ADDOPTS", ""), "-rsxX"]))
+    env["QUANSIO_CI_LOG_DIR"] = str(log_dir)
 
     results: List[Dict[str, object]] = []
     for name, command in gates:

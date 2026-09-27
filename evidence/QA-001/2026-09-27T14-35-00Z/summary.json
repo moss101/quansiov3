@@ -1,0 +1,152 @@
+{
+  "task_id": "QA-001",
+  "git_commit": "edf72d2aa55b077e165a719743a2ee849f046713",
+  "recorded_at": "2026-09-27T14:30:54Z",
+  "commands": [
+    {
+      "command": "git clone --branch task/QA-001-coverage-and-skip-audit <repo> <empty dir> && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_CI_GATE_TIMEOUT=7200 bash scripts/ci/ci.sh # clean checkout at edf72d2, fresh target: 12 gates incl. contract-drift and the new test-audit",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-09-27T14-35-00Z/clean-ci.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> python3.12 scripts/ci/coverage.py rust --out rust-lines-2.json # line-only instrumented workspace run (continuous profiles), 138 test binaries",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-09-27T14-35-00Z/coverage-rust-lines.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> python3.12 scripts/ci/coverage.py rust --branch --out rust-branches-2.json # branch regions, reported",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-09-27T14-35-00Z/coverage-rust-branches.log"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/coverage.py python --out python.json # stdlib sys.monitoring tracer over the python/ suite",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-09-27T14-35-00Z/coverage-python.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/coverage.py check --rust rust-lines-2.json --rust-branches rust-branches-2.json --python python.json --out report-final.json # DOSSIER \u00a721.4 floors",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-09-27T14-35-00Z/coverage-check.log"
+    },
+    {
+      "command": "mutation/control runs: each regression's new test against its pre-fix source (RUN-009 startup recovery, RUN-011 refusal after dispatch, RUN-001 joined result and step budget, RUN-011 question expiry)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-09-27T14-35-00Z/mutations.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "git clone --branch task/QA-001-coverage-and-skip-audit <repo> <empty dir> && QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_CI_GATE_TIMEOUT=7200 bash scripts/ci/ci.sh # clean checkout at edf72d2, fresh target: 12 gates incl. contract-drift and the new test-audit",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> python3.12 scripts/ci/coverage.py rust --out rust-lines-2.json # line-only instrumented workspace run (continuous profiles), 138 test binaries",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> python3.12 scripts/ci/coverage.py rust --branch --out rust-branches-2.json # branch regions, reported",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python python scripts/ci/coverage.py python --out python.json # stdlib sys.monitoring tracer over the python/ suite",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/coverage.py check --rust rust-lines-2.json --rust-branches rust-branches-2.json --python python.json --out report-final.json # DOSSIER \u00a721.4 floors",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation/control runs: each regression's new test against its pre-fix source (RUN-009 startup recovery, RUN-011 refusal after dispatch, RUN-001 joined result and step budget, RUN-011 question expiry)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/NOTES.md",
+      "sha256": "3351060ebda88f9975b9587c5fbe5940e5719119ec5d1835e6e721f4b9bbc94a",
+      "bytes": 8774
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/clean-ci-summary.json",
+      "sha256": "83a929dc67de3e5ee82fa8b6835f9f7cfafe533230194ed8a1e6c5f6a04cb763",
+      "bytes": 13054
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/clean-ci.log",
+      "sha256": "f7cc6f99a91bcc76821ceb2c999d89b7dd2dc2255f595d40de32e870700f9a7a",
+      "bytes": 1190
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/coverage-check.log",
+      "sha256": "a8818222fdcf626ae011c1a9068674a9e2bfe0044a8f41168fce609b2a83114c",
+      "bytes": 824
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/coverage-python.log",
+      "sha256": "8fee21988074ccf71b33b29355df8580c5ef936179ca80f432edec466b93a894",
+      "bytes": 825
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/coverage-rust-branches.log",
+      "sha256": "dd6cb1ff16374298f88cd9594d19e2fb1d73f3a874895e087c38584cd424f685",
+      "bytes": 115562
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/coverage-rust-lines.log",
+      "sha256": "c803fa3813e2ed1e6e41f723bf54e188383feec9c674d00281fff5f9589eb09a",
+      "bytes": 105766
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/mutations.log",
+      "sha256": "66b2ffb2a6c9fcdee5aa6e62274c1cf783547427049d331b899a5d2d74084f59",
+      "bytes": 2505
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/python.json",
+      "sha256": "2473521091f8193f40b63d8ffb9b26d94708fa9950a674bdeb395395f5cb8058",
+      "bytes": 13969
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/report-final.json",
+      "sha256": "6721cdfb08e17745f93b2badf0d9ff9d336bba99d9c458f332dc8134f8d5c10c",
+      "bytes": 4470
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/report.json",
+      "sha256": "47a9ee384c4e685432d15bed9d347b72babf2407a0ae254afbdbfb084f2cb28d",
+      "bytes": 4678
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/rust-branches-2.json",
+      "sha256": "8a15883401a39781eb33ffc19537b8fd843b9e454efefaf983082efc333de3e4",
+      "bytes": 34839
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/rust-lines-2.json",
+      "sha256": "5d62dd1b7f4e2c1bcc868b756328b6906876d0f7c959edabb214ee4789f95e75",
+      "bytes": 35614
+    },
+    {
+      "path": "evidence/QA-001/2026-09-27T14-35-00Z/test-audit.json",
+      "sha256": "809a9a283d158dcd7bd39fe1a0f94b100443e25a6cf0b08b29114af98f9038b7",
+      "bytes": 11460
+    },
+    {
+      "path": "evidence/QA-001/RECONCILIATION-2026-09-27.md",
+      "sha256": "bdd2b3f31749a21016ba863e7fd49f504f4d74eec6c60ec95a3b7dfe8b2ee9be",
+      "bytes": 2463
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "source": "DOSSIER.md §21.4 (provisional numbers; the owner ratifies them before REL-001, OD-011)",
+  "rust": {
+    "exclude": ["crates/contracts/src/generated/"],
+    "safety_critical": {
+      "line_min": 90,
+      "branch": "reported",
+      "areas": {
+        "capability": ["crates/capability/src/"],
+        "policy": ["crates/server/src/policy/"],
+        "effects": ["crates/server/src/effects/"],
+        "runtime": ["crates/server/src/runtime/"],
+        "recovery": ["crates/server/src/runtime/recovery/"],
+        "secrets": ["crates/machine/src/secrets/"],
+        "egress": ["crates/machine/src/egress/"],
+        "qworkerd-protocol": ["crates/qworkerd/src/host.rs", "crates/machine/src/gateway/"]
+      }
+    },
+    "other": {"line_min": 75}
+  },
+  "python": {"line_min": 80, "scope": "python/intelligence"},
+  "typescript": {
+    "line_min": 70,
+    "status": "BLOCKED_EXTERNAL",
+    "reason": "no TypeScript coverage provider is installed: @vitest/coverage-v8 was not approved for download (2026-09-27); the critical journeys run in Playwright (QA-008)"
+  }
+}

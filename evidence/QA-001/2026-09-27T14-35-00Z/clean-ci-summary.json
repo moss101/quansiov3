@@ -1,0 +1,121 @@
+{
+  "commit": "edf72d2aa55b077e165a719743a2ee849f046713",
+  "recorded_at": "2026-09-27T14:29:39Z",
+  "results": [
+    {
+      "gate": "authority",
+      "command": "python3.12 scripts/validate_v81.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.031,
+      "tail": "V8.1 VALIDATION: PASS (99 tasks, 10 milestones, 65 PASS, 0 ready)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/authority.log"
+    },
+    {
+      "gate": "dossier-consistency",
+      "command": "python3.12 scripts/ci/dossier_consistency.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 3.328,
+      "tail": "dossier consistency: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/dossier-consistency.log"
+    },
+    {
+      "gate": "architecture",
+      "command": "python3.12 scripts/ci/arch_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.588,
+      "tail": "architecture check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/architecture.log"
+    },
+    {
+      "gate": "authority-pointers",
+      "command": "python3.12 scripts/ci/check_authority.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.027,
+      "tail": "authority check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/authority-pointers.log"
+    },
+    {
+      "gate": "workspace",
+      "command": "python3.12 scripts/ci/workspace_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.038,
+      "tail": "workspace check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/workspace.log"
+    },
+    {
+      "gate": "supply-chain",
+      "command": "uv run --project python python scripts/ci/supply_chain/check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 2.957,
+      "tail": "      \u2502   \u2502   \u251c\u2500\u2500 quansio-graph v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 (dev) quansio-indexer v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u251c\u2500\u2500 quansio-machine v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-native-windows v0.1.0\n      \u2502   \u2502   \u2502   \u251c\u2500\u2500 quansio-qworkerd v0.1.0\n      \u2502   \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u2502   \u2514\u2500\u2500 quansio-server v0.1.0 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502   \u251c\u2500\u2500 sqlx-macros-core v0.8.6\n      \u2502   \u2502   \u2514\u2500\u2500 sqlx-macros v0.8.6 (*)\n      \u2502   \u2514\u2500\u2500 sqlx-postgres v0.8.6\n      \u2502       \u251c\u2500\u2500 sqlx v0.8.6 (*)\n      \u2502       \u2514\u2500\u2500 sqlx-macros-core v0.8.6 (*)\n      \u2514\u2500\u2500 tokio-rustls v0.26.5\n          \u251c\u2500\u2500 hyper-rustls v0.27.9 (*)\n          \u2514\u2500\u2500 reqwest v0.12.28 (*)\n\nsupply-chain: CLEAN (1 informational)\nUsing CPython 3.12.13 interpreter at: /opt/homebrew/opt/python@3.12/bin/python3.12\nCreating virtual environment at: python/.venv\n   Building quansio-intelligence @ file:///private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001-clean/python\n      Built quansio-intelligence @ file:///private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001-clean/python\nInstalled 26 packages in 64ms",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/supply-chain.log"
+    },
+    {
+      "gate": "legacy-map",
+      "command": "python3.12 scripts/ci/legacy_map_check.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.249,
+      "tail": "legacy map check: CLEAN (0 findings)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/legacy-map.log"
+    },
+    {
+      "gate": "contract-drift",
+      "command": "uv run --project python python scripts/ci/gen_contracts.py --check",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 6.126,
+      "tail": "contract regeneration check: CLEAN (catalog,openapi,rust,python,ts,sdk)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/contract-drift.log"
+    },
+    {
+      "gate": "contract-lint-compat",
+      "command": "uv run --project python python scripts/ci/contract_compat.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.483,
+      "tail": "contract check: CLEAN (lint + compatibility)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/contract-lint-compat.log"
+    },
+    {
+      "gate": "toolchains",
+      "command": "bash scripts/dev/bootstrap.sh",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 423.645,
+      "tail": "   Doc-tests quansio_native_windows\n   Doc-tests quansio_qworkerd\n   Doc-tests quansio_server\n   Doc-tests quansio_tools\n$ pnpm -r --if-present build\n$ pnpm -r --if-present typecheck\n$ pnpm -r --if-present test\n$ eslint .\nBuilding for debugging...\n[0/7] /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001-clean/native/macos/.build/arm64-apple-macosx/debug/QuansioMacBridgePackageTests.derived/runner.swift\n[1/7] Write sources\n[4/7] Write swift-version--58304C5D6DBC2206.txt\n[6/11] Compiling QuansioMacBridge MacBridge.swift\n[7/11] Emitting module QuansioMacBridge\n[8/11] Compiling QuansioMacBridge MacOSCapsule.swift\n[9/11] Compiling QuansioMacBridge ComputerUse.swift\n[10/15] Emitting module QuansioMacBridgeTests\n[11/15] Compiling QuansioMacBridgeTests MacBridgeTests.swift\n[12/15] Compiling QuansioMacBridgeTests MacOSCapsuleTests.swift\n[13/15] Compiling QuansioMacBridgeTests ComputerUseTests.swift\n[14/17] Emitting module QuansioMacBridgePackageTests\n[15/17] Compiling QuansioMacBridgePackageTests runner.swift\n[15/17] Write Objects.LinkFileList\n[16/17] Linking QuansioMacBridgePackageTests\nBuild complete! (9.87s)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/toolchains.log"
+    },
+    {
+      "gate": "tests",
+      "command": "uv run --project python pytest tests -q",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 178.412,
+      "tail": "........................................................................ [ 19%]\n........................................................................ [ 38%]\n........................................................................ [ 58%]\n...............................................ssss..................... [ 77%]\n..............ssssssssssss.............................................. [ 96%]\n............                                                             [100%]\n=========================== short test summary info ============================\nSKIPPED [1] tests/evaluation/test_qa004_campaign.py:142: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY (retrieval recall@10 with the configured embedding route); QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID (live answers, tool proposals, context accepted by a provider) \u2014 unmeasured (fail closed): ['retrieval_recall_at_10', 'tool_proposal_schema_validity', 'unsupported_claim_rate']\nSKIPPED [1] tests/evaluation/test_qa004_campaign.py:156: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID (live answers, tool proposals, context accepted by a provider)\nSKIPPED [1] tests/evaluation/test_qa004_campaign.py:171: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID (live answers, tool proposals, context accepted by a provider)\nSKIPPED [1] tests/evaluation/test_qa004_campaign.py:183: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY (retrieval recall@10 with the configured embedding route)\nSKIPPED [1] tests/performance/test_qa009_campaign.py:126: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\nSKIPPED [1] tests/performance/test_qa009_campaign.py:230: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\nSKIPPED [1] tests/performance/test_qa009_campaign.py:310: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\nSKIPPED [1] tests/performance/test_qa009_campaign.py:350: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\nSKIPPED [1] tests/performance/test_qa009_campaign.py:409: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\nSKIPPED [1] tests/performance/test_qa009_campaign.py:465: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\nSKIPPED [1] tests/performance/test_qa009_campaign.py:520: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\nSKIPPED [1] tests/performance/test_qa009_campaign.py:598: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\nSKIPPED [1] tests/performance/test_qa009_campaign.py:638: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\nSKIPPED [1] tests/performance/test_qa009_campaign.py:724: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\nSKIPPED [1] tests/performance/test_qa009_live.py:113: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\nSKIPPED [1] tests/performance/test_qa009_live.py:153: BLOCKED_EXTERNAL: QUANSIO_TEST_PERF=1 is not set (the served measurements run on a host reserved for them; a busy host measures its neighbours)\n356 passed, 16 skipped in 178.08s (0:02:58)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/tests.log"
+    },
+    {
+      "gate": "test-audit",
+      "command": "python3.12 scripts/ci/test_audit.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "duration_s": 0.037,
+      "tail": "BLOCKED_EXTERNAL (unnamed): 15 test(s) did not run\nBLOCKED_EXTERNAL QUANSIO_TEST_ANTHROPIC_API_KEY: 5 test(s) did not run\nBLOCKED_EXTERNAL QUANSIO_TEST_MACOS_COMPUTER_USE: 8 test(s) did not run\nBLOCKED_EXTERNAL QUANSIO_TEST_MACOS_VM: 1 test(s) did not run\nBLOCKED_EXTERNAL QUANSIO_TEST_OPENAI_API_KEY: 7 test(s) did not run\nBLOCKED_EXTERNAL QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY: 8 test(s) did not run\nBLOCKED_EXTERNAL QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL: 8 test(s) did not run\nBLOCKED_EXTERNAL QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID: 8 test(s) did not run\nBLOCKED_EXTERNAL QUANSIO_TEST_PERF: 12 test(s) did not run\ntest audit: PASS (/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/test-audit.json)",
+      "log": "/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/29d61da7-f686-4e9f-86ca-513fa50ded70/scratchpad/qa001/logs/edf72d2aa55b/test-audit.log"
+    }
+  ],
+  "artifacts": {
+    "registries/progress.json": "3bc4c26a6aa89166071cf670bfebdc62ccf6479a3461517623e93dddf703b390",
+    "TASKS.md": "84e42eac1a62f7239211c4378dfb2c6c56e601aab8cbb40b8509f5ebe3324544",
+    "MANIFEST.json": "f56ac6a6ad1fe04b5d8288bfde2c132205180623e2ccebe1dfacb1d5340bca60"
+  },
+  "status": "PASS",
+  "database_backed_tests": true
+}

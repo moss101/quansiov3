@@ -916,3 +916,75 @@ fn pending_status<'a>(
         .find(|call| call.effect_id == effect_id)
         .map(|call| call.effect_status.as_str())
 }
+
+#[tokio::test]
+async fn a_reservation_that_disagrees_with_the_taxonomy_is_refused_and_writes_nothing() {
+    let Some(f) = prepare("effects_taxonomy").await else {
+        blocked_marker();
+        return;
+    };
+    assert_eq!(f.ledger.tenant_id(), TENANT);
+    assert!(f.ledger.taxonomy().get("message.send").is_some());
+
+    // A declared tier below the taxonomy's would let a consequential effect pass as a lesser one.
+    let mut understated = new_effect(&f.ledger, WORKSPACE, "message.send", "mail/outbox/2");
+    let registered = understated.tier.get();
+    understated.tier = quansio_capability::Tier::new(0).expect("tier");
+    let refused = f
+        .ledger
+        .reserve(understated)
+        .await
+        .expect_err("a tier that disagrees with the taxonomy is refused");
+    match &refused {
+        EffectError::TierMismatch {
+            effect_class,
+            declared,
+            expected,
+        } => {
+            assert_eq!(effect_class, "message.send");
+            assert_eq!((*declared, *expected), (0, registered));
+        }
+        other => panic!("expected a tier mismatch, got {other:?}"),
+    }
+    assert_eq!(refused.code(), "RUNTIME_ILLEGAL_TRANSITION");
+
+    // A class the taxonomy does not register has no tier to check against.
+    let mut unregistered = new_effect(&f.ledger, WORKSPACE, "message.send", "mail/outbox/3");
+    unregistered.effect_class = EffectClass::parse("mystery.effect").expect("well-formed");
+    let refused = f
+        .ledger
+        .reserve(unregistered)
+        .await
+        .expect_err("unregistered");
+    assert!(
+        matches!(refused, EffectError::UnknownEffectClass(ref class) if class == "mystery.effect"),
+        "{refused:?}"
+    );
+
+    // Counted in the tenant's own context, where its records are visible.
+    let reserved = f
+        .ledger
+        .reserve(new_effect(
+            &f.ledger,
+            WORKSPACE,
+            "message.send",
+            "mail/outbox/4",
+        ))
+        .await
+        .expect("a consistent reservation");
+    let mut tx = f.ledger.pool().begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant context");
+    let written: Vec<String> = sqlx::query_scalar("SELECT id FROM effect_records")
+        .fetch_all(&mut *tx)
+        .await
+        .expect("records");
+    tx.commit().await.expect("commit");
+    assert_eq!(
+        written,
+        vec![reserved.id],
+        "the refused reservations recorded nothing"
+    );
+    drop_pool(&f.pool, &f.name).await;
+}

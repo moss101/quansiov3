@@ -2628,27 +2628,35 @@
       "notes": "Durable kill switches (ops_switches, ksw_): engage/release are runtime.control (tier 3, tenant admins), each with an ops.kill_switch_* event and an AuditEntry, reversible. Enforcement by the owners: dispatch and approval resume (effect.freeze EFFECTS_FROZEN for tier>=2, policy.emergency_deny, worker.quarantine TARGET_UNAVAILABLE), the model gateway (disabled_providers: fail over, else PROVIDER_UNAVAILABLE), machine control (target.drain DRAINING and the new DRAINING->READY release; quarantine revokes the lease), the connector owner (connector.revoke), the live hub (stream.shed). Runbook generated from the switch catalog with a drift test. Kill switches are audited and reversible. Effect freeze blocks new tier \u2265 2 actions without corrupting reads or evidence. 2026-09-19 correction: was BLOCKED_EXTERNAL at 85ca3934ed0d5afd979e016adeb64fb52a71aeb9 claimed by agent:principal-1 (started 2026-09-15T08:55:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['OPS-003'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md."
     },
     "QA-001": {
-      "coverage": "GENUINE_GAP",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
-      "git_commit": null,
+      "coverage": "PARTIAL",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-27T05:20:00Z",
+      "updated_at": "2026-09-27T14:50:00Z",
+      "git_commit": "edf72d2aa55b077e165a719743a2ee849f046713",
       "tests": [
-        "uv run --project python pytest tests/contract (23 passed: catalog/OpenAPI/proto parity, refs resolve, schema suite validates real evidence summaries, proto compat baseline, and the new QA-001 gate banning unexplained skips/xfails in release-blocking suites)",
-        "uv run --project python pytest tests (407 passed, 78 skipped live/absent-env)",
-        "uv run --project python mypy intelligence (clean, 83 files)",
-        "uv run --project python python ../scripts/ci/gen_contracts.py --check (contract regeneration CLEAN across catalog/openapi/rust/python/ts)"
+        "clean checkout (git clone at edf72d2, fresh target, no .env) bash scripts/ci/ci.sh: 12 gates PASS incl. contract-drift (zero drift) and the new test-audit (no unexplained skip; blocked tests inventoried by variable)",
+        "uv run --project python pytest tests/ci/test_qa001_tools.py tests/contract (test audit on runner-shaped fixtures with every failure path, coverage check fail-closed paths, bisecting export, continuous-mode flags, gate time limit, stdlib tracer; static bans on #[ignore] anywhere in crates/ and TS .only/.todo/.fails/unnamed .skip)",
+        "scripts/ci/coverage.py rust (line-only, 138 test binaries) + rust --branch + python + check: DOSSIER 21.4 PASS - capability 96.19%, policy 92.15%, effects 90.13%, runtime 96.05%, recovery 94.60%, secrets 92.75%, egress 94.95%, qworkerd protocol 90.00% (floor 90), other Rust 86.34% (75), Python 87.50% (80); TypeScript BLOCKED_EXTERNAL",
+        "125 new tests closing measured gaps (capability 34, recovery 2, effects 7, runtime 82 in 11 new server suites) plus the regression tests of the four fixes they exposed, each killed on its pre-fix source (mutations.log)"
       ],
       "artifacts": [
-        "evidence/QA-001/2026-09-15T11-05-00Z/summary.json",
+        "evidence/QA-001/2026-09-27T14-35-00Z/summary.json",
+        "evidence/QA-001/2026-09-27T14-35-00Z/NOTES.md",
+        "evidence/QA-001/RECONCILIATION-2026-09-27.md",
+        "scripts/ci/test_audit.py",
+        "scripts/ci/coverage.py",
+        "scripts/ci/pycoverage.py",
+        "scripts/ci/coverage-expectations.json",
+        "scripts/ci/ci_summary.py",
+        "tests/ci/test_qa001_tools.py",
         "tests/contract/test_qa001_gate.py",
-        "evidence/EXEC-010/2026-09-14T07-20-49Z/summary.json"
+        ".github/workflows/ci.yml"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": "Fixed a real schema finding: EXEC-010 evidence summary carried string commands and status/detail results outside the evidence schema; normalized to the canonical shape without changing any recorded fact. Added the QA-001 gate: release-blocking suites may skip only for absent QUANSIO_TEST_* variables. 2026-09-19 correction: was BLOCKED_EXTERNAL at d30a8246021682afe6850e8d8437f25705b78e85 claimed by agent:principal-1 (started 2026-09-15T10:55:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['APP-013'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md."
+      "implementation_complete": true,
+      "blocker": "Implementation complete and both acceptance statements hold (every required suite passes from a clean checkout; contract drift is zero), and every DOSSIER 21.4 Rust and Python floor passes with branch coverage reported. Not PASS: the TypeScript floor (70%) is unmeasured because no TypeScript coverage provider is installed (@vitest/coverage-v8 was not approved for download, 2026-09-27). Unblock: approve and add @vitest/coverage-v8 (matching vitest 2.1.x), then extend scripts/ci/coverage.py with a typescript measurement. The 21.4 numbers are provisional until the owner ratifies them (OD-011).",
+      "notes": "Found and fixed through the regression protocol while closing coverage gaps: RUN-009 startup recovery was never composed (merge 99f5893); RUN-011 refusals after dispatch left phantom unknown outcomes (af30017); RUN-001 joined-delegation result recorded as an error and orphan budget steps (e0be8c1); RUN-011 questions never expired (14e07a7). Open and handed to follow-up tasks: model-driven plans, memory proposals and completion claims are not composed in the served product (C-8), plus the delegate digest config and plan-refusal typing (C-9). Rust tests that return early with a BLOCKED_EXTERNAL marker pass in libtest and cannot be inventoried by the audit."
     },
     "QA-002": {
       "coverage": "GENUINE_GAP",
