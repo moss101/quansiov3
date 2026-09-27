@@ -150,6 +150,22 @@ fn start_server(with_minio: bool) -> Option<Server> {
         );
         std::thread::sleep(Duration::from_millis(200));
     }
+    // The server recovers every non-terminal run before it accepts a request (RUN-009), so a
+    // healthy server has already reported its startup recovery.
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while !stderr
+        .lock()
+        .expect("stderr")
+        .iter()
+        .any(|line| line.contains("startup recovery: 0 non-terminal runs"))
+    {
+        assert!(
+            Instant::now() < deadline,
+            "no startup recovery before serving: {}",
+            stderr.lock().expect("stderr").join("\n")
+        );
+        std::thread::sleep(Duration::from_millis(50));
+    }
     Some(Server {
         child,
         origin,
