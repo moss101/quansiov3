@@ -337,6 +337,55 @@ async fn stale_worker_output_cannot_mutate_the_current_run() {
 }
 
 #[tokio::test]
+async fn a_restarted_server_recovers_every_non_terminal_run_before_it_serves() {
+    let Some(fixture) = prepare("run009_startup").await else {
+        blocked_marker();
+        return;
+    };
+    let (plain, _) = started_run(&fixture).await;
+    let (cancelling, _) = started_run(&fixture).await;
+    write_protocol_state(&fixture, &cancelling, |state| {
+        state.cancellation_requested = true;
+    })
+    .await;
+    let (uncertain, _) = started_run(&fixture).await;
+    let effect_id = unsettled_effect(&fixture, &uncertain, "OUTCOME_UNKNOWN").await;
+
+    // The pass `serve` runs before it accepts a request.
+    let recovered = quansio_server::composition::recover_on_start(&fixture.pool, 100).await;
+    assert!(recovered.failures.is_empty(), "{recovered:?}");
+    assert_eq!(recovered.tenants, 1, "{recovered:?}");
+    assert_eq!(recovered.runs, 3, "{recovered:?}");
+    assert_eq!(
+        recovered.cancelled, 1,
+        "the requested cancellation is honoured"
+    );
+    assert_eq!(
+        recovered.awaiting_reconciliation,
+        vec![(uncertain.to_string(), effect_id.clone())],
+        "the uncertain effect is reported, not retried"
+    );
+    assert!(recovered.truncated.is_empty());
+    assert_eq!(
+        run_status(&fixture, &cancelling).await,
+        RunStatus::Cancelled
+    );
+    assert_eq!(run_status(&fixture, &plain).await, RunStatus::Running);
+    assert_eq!(run_status(&fixture, &uncertain).await, RunStatus::Running);
+
+    // A second start finds the cancelled run terminal and cancels nothing again.
+    let again = quansio_server::composition::recover_on_start(&fixture.pool, 100).await;
+    assert_eq!((again.runs, again.cancelled), (2, 0), "{again:?}");
+    assert_eq!(events_of_type(&fixture.pool, "run.cancelled").await, 1);
+
+    // A tenant with more non-terminal runs than the limit says so rather than passing silently.
+    let bounded = quansio_server::composition::recover_on_start(&fixture.pool, 1).await;
+    assert_eq!(bounded.runs, 1);
+    assert_eq!(bounded.truncated, vec![TENANT.to_string()]);
+    finish(fixture).await;
+}
+
+#[tokio::test]
 async fn an_uncertain_effect_is_reconciled_before_the_run_resumes() {
     let Some(fixture) = prepare("run009_uncertain").await else {
         blocked_marker();
