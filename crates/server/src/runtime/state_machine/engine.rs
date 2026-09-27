@@ -684,7 +684,9 @@ impl RuntimeEngine {
                             .park_child(&run, &turn, generation, &child_agent_thread_id)
                             .await;
                     }
-                    Ok(DelegationOutcome::Joined { result }) => {
+                    Ok(DelegationOutcome::Joined { .. }) => {
+                        // A join is a success: the child's result belongs to the AgentGraph's
+                        // join, and the attempt carries no error.
                         self.store
                             .complete_step(
                                 &delegate_step.id,
@@ -692,7 +694,7 @@ impl RuntimeEngine {
                                 &attempt.id,
                                 StepStatus::Completed,
                                 AttemptStatus::Succeeded,
-                                Some(result),
+                                None,
                                 Vec::new(),
                             )
                             .await?;
@@ -804,12 +806,14 @@ impl RuntimeEngine {
                 return Ok(Some(outcome));
             }
             let mut pending = Vec::with_capacity(round.len());
+            // A call the step budget cannot pay for is never recorded, so no Step is left
+            // dispatched for a call no tool received; the calls already recorded in this
+            // round are dispatched and settled before the turn ends on the budget.
+            let mut budget_spent = false;
             for index in round {
                 if *steps_used >= budget.max_steps {
-                    let outcome = self
-                        .exhaust_budget(run, turn, generation, *steps_used, budget)
-                        .await?;
-                    return Ok(Some(outcome));
+                    budget_spent = true;
+                    break;
                 }
                 let call = &calls[index];
                 let tool_step = self
@@ -869,6 +873,12 @@ impl RuntimeEngine {
                 {
                     return Ok(Some(turn_outcome));
                 }
+            }
+            if budget_spent {
+                let outcome = self
+                    .exhaust_budget(run, turn, generation, *steps_used, budget)
+                    .await?;
+                return Ok(Some(outcome));
             }
         }
         Ok(None)

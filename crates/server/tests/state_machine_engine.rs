@@ -550,6 +550,26 @@ async fn a_delegation_that_joins_inline_completes_its_step_and_the_turn_continue
         ]
     );
     assert_eq!(run_status(&f, &run).await, RunStatus::Running);
+    // A join is a success: its result is not recorded as the attempt's error.
+    let turns = f.engine.store().list_turns(&run.id).await.expect("turns");
+    let delegate = f
+        .engine
+        .store()
+        .list_steps(&turns[0].id)
+        .await
+        .expect("steps")
+        .into_iter()
+        .find(|step| step.kind == StepKind::Delegate)
+        .expect("delegate step");
+    let attempts = f
+        .engine
+        .store()
+        .list_attempts(&delegate.id)
+        .await
+        .expect("attempts");
+    assert_eq!(attempts.len(), 1);
+    assert_eq!(attempts[0].status, AttemptStatus::Succeeded);
+    assert_eq!(attempts[0].error, None, "{:?}", attempts[0].error);
 
     drop_pool(&f.pool, &f.name).await;
 }
@@ -601,7 +621,8 @@ async fn every_proposal_family_stops_at_the_step_budget_without_reaching_its_por
         assert_eq!(run_status(&f, &run).await, RunStatus::Suspended);
     }
 
-    // Two independent tool calls with room for one: the second is never dispatched.
+    // Two independent tool calls with room for one: the first is dispatched and settled, the
+    // second is never recorded, so no step is left dispatched for a call no tool received.
     let run = running_run(&f, 2).await;
     let tools = ScriptedTools::dispatching(Vec::new());
     let engine = f
@@ -624,9 +645,19 @@ async fn every_proposal_family_stops_at_the_step_budget_without_reaching_its_por
         ),
         "{outcome:?}"
     );
-    assert!(
-        tools.dispatched().is_empty(),
-        "no call of a round that does not fit the step budget reaches the tool port"
+    assert_eq!(
+        tools.dispatched(),
+        vec!["tc_a".to_string()],
+        "only the call the budget pays for reaches the tool port"
+    );
+    let (_, steps) = only_turn(&f, &run).await;
+    assert_eq!(
+        steps,
+        vec![
+            (StepKind::ModelCall, StepStatus::Completed),
+            (StepKind::ToolCall, StepStatus::Completed),
+        ],
+        "the unpaid call has no step"
     );
     assert_eq!(run_status(&f, &run).await, RunStatus::Suspended);
 
