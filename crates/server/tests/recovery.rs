@@ -354,6 +354,7 @@ async fn a_restarted_server_recovers_every_non_terminal_run_before_it_serves() {
     // The pass `serve` runs before it accepts a request.
     let recovered = quansio_server::composition::recover_on_start(&fixture.pool, 100).await;
     assert!(recovered.failures.is_empty(), "{recovered:?}");
+    assert_eq!(recovered.tenants, 1, "{recovered:?}");
     assert_eq!(recovered.runs, 3, "{recovered:?}");
     assert_eq!(
         recovered.cancelled, 1,

@@ -326,6 +326,8 @@ pub const STARTUP_RECOVERY_LIMIT: i64 = 10_000;
 /// What the startup recovery pass found and did (RUN-009).
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct StartupRecovery {
+    /// Tenants recovery visited.
+    pub tenants: usize,
     /// Non-terminal runs recovery examined.
     pub runs: usize,
     /// Runs whose cancellation, requested before the stop, recovery honoured.
@@ -362,6 +364,7 @@ pub async fn recover_on_start(pool: &PgPool, per_tenant: i64) -> StartupRecovery
         }
     };
     let mut generator = UlidGenerator::new();
+    summary.tenants = tenants.len();
     for tenant in tenants {
         let identity = RuntimeIdentity::system(
             tenant.as_str(),
@@ -406,7 +409,8 @@ fn report_startup_recovery(recovered: &StartupRecovery) {
     notice(
         Level::Info,
         &format!(
-            "startup recovery: {} non-terminal runs, {} cancelled as requested before the stop, {} awaiting reconciliation",
+            "startup recovery: {} tenants, {} non-terminal runs, {} cancelled as requested before the stop, {} awaiting reconciliation",
+            recovered.tenants,
             recovered.runs,
             recovered.cancelled,
             recovered.awaiting_reconciliation.len()

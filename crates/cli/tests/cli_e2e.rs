@@ -157,7 +157,7 @@ fn start_server(with_minio: bool) -> Option<Server> {
         .lock()
         .expect("stderr")
         .iter()
-        .any(|line| line.contains("startup recovery: 0 non-terminal runs"))
+        .any(|line| line.contains("startup recovery: 1 tenants, 0 non-terminal runs"))
     {
         assert!(
             Instant::now() < deadline,
