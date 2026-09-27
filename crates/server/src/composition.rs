@@ -294,6 +294,11 @@ impl Composition {
         let listener = tokio::net::TcpListener::bind(&self.config.bind)
             .await
             .map_err(|error| format!("cannot bind {}: {error}", self.config.bind))?;
+        // A restarted runtime first rebuilds every non-terminal run from durable state (RUN-009):
+        // a cancellation requested before the stop is honoured, and a run holding an uncertain
+        // effect is reported for reconciliation instead of resuming blind.
+        let recovered = recover_on_start(&self.pool, STARTUP_RECOVERY_LIMIT).await;
+        report_startup_recovery(&recovered);
         if let Some(interval) = self.config.background_interval {
             let mut background = Background::new(self.pool.clone(), self.api.clone());
             tokio::spawn(background.fire_executor().run(interval));
@@ -312,6 +317,118 @@ impl Composition {
         axum::serve(listener, self.router())
             .await
             .map_err(|error| format!("the server stopped: {error}"))
+    }
+}
+
+/// The most non-terminal runs the startup pass recovers per tenant.
+pub const STARTUP_RECOVERY_LIMIT: i64 = 10_000;
+
+/// What the startup recovery pass found and did (RUN-009).
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct StartupRecovery {
+    /// Non-terminal runs recovery examined.
+    pub runs: usize,
+    /// Runs whose cancellation, requested before the stop, recovery honoured.
+    pub cancelled: usize,
+    /// `(run, effect)` pairs that must be reconciled before their run may continue.
+    pub awaiting_reconciliation: Vec<(String, String)>,
+    /// Tenants recovery could not complete, with the reason; serving continues regardless.
+    pub failures: Vec<(String, String)>,
+    /// Tenants that held more non-terminal runs than [`STARTUP_RECOVERY_LIMIT`].
+    pub truncated: Vec<String>,
+}
+
+/// Recover every tenant's non-terminal runs, oldest first, before the runtime serves (RUN-009).
+///
+/// Recovery reads only durable state and performs no external effect; see
+/// [`crate::runtime::recovery::Recoverer`]. A tenant whose pass fails is recorded and the next is
+/// recovered, so one tenant's damage never keeps the others from starting.
+pub async fn recover_on_start(pool: &PgPool, per_tenant: i64) -> StartupRecovery {
+    use crate::runtime::recovery::{Recoverer, RecoveryResolution};
+    use crate::runtime::state_machine::RuntimeIdentity;
+    use quansio_core::{CorrelationId, UlidGenerator};
+
+    let mut summary = StartupRecovery::default();
+    let tenants: Vec<String> = match sqlx::query_scalar("SELECT background_tenants()")
+        .fetch_all(pool)
+        .await
+    {
+        Ok(tenants) => tenants,
+        Err(error) => {
+            summary
+                .failures
+                .push(("*".to_string(), format!("listing tenants: {error}")));
+            return summary;
+        }
+    };
+    let mut generator = UlidGenerator::new();
+    for tenant in tenants {
+        let identity = RuntimeIdentity::system(
+            tenant.as_str(),
+            "recovery",
+            CorrelationId::generate(&mut generator),
+        );
+        let reports = match Recoverer::new(pool.clone(), identity) {
+            Ok(recoverer) => recoverer
+                .scan(per_tenant)
+                .await
+                .map_err(|error| error.to_string()),
+            Err(error) => Err(error.to_string()),
+        };
+        match reports {
+            Ok(reports) => {
+                if i64::try_from(reports.len()).unwrap_or(i64::MAX) >= per_tenant {
+                    summary.truncated.push(tenant.clone());
+                }
+                summary.runs += reports.len();
+                for report in reports {
+                    match report.resolution {
+                        RecoveryResolution::Cancelled => summary.cancelled += 1,
+                        RecoveryResolution::ReconciliationRequired { effect_id, .. } => {
+                            summary
+                                .awaiting_reconciliation
+                                .push((report.run_id, effect_id));
+                        }
+                        RecoveryResolution::Terminal
+                        | RecoveryResolution::Waiting { .. }
+                        | RecoveryResolution::Resumable => {}
+                    }
+                }
+            }
+            Err(reason) => summary.failures.push((tenant, reason)),
+        }
+    }
+    summary
+}
+
+fn report_startup_recovery(recovered: &StartupRecovery) {
+    use crate::observability::{notice, Level};
+    notice(
+        Level::Info,
+        &format!(
+            "startup recovery: {} non-terminal runs, {} cancelled as requested before the stop, {} awaiting reconciliation",
+            recovered.runs,
+            recovered.cancelled,
+            recovered.awaiting_reconciliation.len()
+        ),
+    );
+    for (run, effect) in &recovered.awaiting_reconciliation {
+        notice(
+            Level::Warn,
+            &format!("startup recovery: {run} holds uncertain effect {effect}; it resumes only once reconciled"),
+        );
+    }
+    for tenant in &recovered.truncated {
+        notice(
+            Level::Warn,
+            &format!("startup recovery: {tenant} holds more than {STARTUP_RECOVERY_LIMIT} non-terminal runs; the oldest were recovered"),
+        );
+    }
+    for (tenant, reason) in &recovered.failures {
+        notice(
+            Level::Warn,
+            &format!("startup recovery for {tenant} failed: {reason}"),
+        );
     }
 }
 
