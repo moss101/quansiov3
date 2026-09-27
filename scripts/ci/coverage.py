@@ -407,6 +407,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(report, indent=2) + "\n")
     for name, group in report["groups"].items():
+        if "status" in group:
+            print(f"{name:<20} {group['status']} (floor {group['line_min']}%): {group['reason']}")
+            continue
         print(f"{name:<20} {group.get('line_percent')}% lines (floor {group['line_min']}%)"
               + (f", {group['branch_percent']}% branches" if group.get("branch_percent") is not None else ""))
     for finding in report["findings"]:
