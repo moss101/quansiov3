@@ -2660,10 +2660,10 @@
     },
     "QA-002": {
       "coverage": "GENUINE_GAP",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-27T15:00:00Z",
+      "updated_at": "2026-09-27T15:00:00Z",
       "git_commit": null,
       "tests": [
         "uv run --project python pytest tests/architecture (117 passed: composed QA-002 consistency suite plus the per-rule negative corpus; forbidden wiring, owner/dependency map, authority writes, manifest/DAG, and the V8.1 validator all clean)",
