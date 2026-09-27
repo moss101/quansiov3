@@ -2664,7 +2664,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-27T15:00:00Z",
       "updated_at": "2026-09-27T14:44:10Z",
-      "git_commit": "fa920d2236c251437183e531b98b85f97101b5b2",
+      "git_commit": "3e5842038be0ed12fe5f7fc71a6575f3d3bc7387",
       "tests": [
         "uv run --project python pytest tests/architecture (129 passed: the composed consistency suite, every per-rule negative fixture caught, and the composition-reachability gate - findings equal the 16 named gaps exactly; its negative corpus covers test-only, use-only, comment-only, string-only and default-only composition, self-construction, renamed obligations)",
         "scripts/ci/arch_check.py, workspace_check.py, validate_v81.py: CLEAN / PASS (zero consistency errors)",
