@@ -2624,10 +2624,10 @@
     },
     "QA-001": {
       "coverage": "GENUINE_GAP",
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": "2026-09-19T18:14:46Z",
+      "status": "RECONCILING",
+      "claimed_by": "agent:principal-1",
+      "started_at": "2026-09-27T05:20:00Z",
+      "updated_at": "2026-09-27T05:20:00Z",
       "git_commit": null,
       "tests": [
         "uv run --project python pytest tests/contract (23 passed: catalog/OpenAPI/proto parity, refs resolve, schema suite validates real evidence summaries, proto compat baseline, and the new QA-001 gate banning unexplained skips/xfails in release-blocking suites)",
