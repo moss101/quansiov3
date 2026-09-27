@@ -2868,7 +2868,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-26T16:31:06Z",
       "updated_at": "2026-09-27T10:49:22Z",
-      "git_commit": "8e9fd2e691ef9397e71fcfe15cec9f780400e9b2",
+      "git_commit": "f998243471c881fa64bce53827965f752594107a",
       "tests": [
         "QUANSIO_TEST_PERF=1 pytest tests/performance (release quansio-server as a quansio_app login, PostgreSQL 17, MinIO, real HTTP and WebSocket clients): 13 pass - API read p95 13.8 ms, commands p95 131 ms paced (574 ms saturating burst recorded), event lag p95 25 ms, index p95 18.5 ms, deletion visible 0.027 s, overload refused and bounded (120/200 accepted, 64 readers 0 errors, RSS flat; 16 stalled stream consumers RSS 83->89.5 MB), 10-minute soak 0 errors RSS 27.7->36 MB, storage usage exact after 22,060 events, Quansio first-token overhead p95 +80 ms over the stub provider, a live model streams 12/12 with tokens metered exactly (5,620 in / 812 out); 1 fails - scheduling p95 564 ms at load 5.6 (447 ms at load 3.5)",
         "cargo test -p quansio-qworkerd --test browser a_dom_action_round_trip_stays_inside_the_budget (real Chrome over CDP: p95 3.6 ms)",
