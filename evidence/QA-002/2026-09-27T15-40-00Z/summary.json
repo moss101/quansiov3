@@ -1,0 +1,90 @@
+{
+  "task_id": "QA-002",
+  "git_commit": "fa920d2236c251437183e531b98b85f97101b5b2",
+  "recorded_at": "2026-09-27T14:44:10Z",
+  "commands": [
+    {
+      "command": "uv run --project python pytest tests/architecture -v # consistency suite, per-rule negative corpus and the new composition-reachability gate",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-002/2026-09-27T15-40-00Z/architecture.log"
+    },
+    {
+      "command": "python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/workspace_check.py && python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-002/2026-09-27T15-40-00Z/gates.log"
+    },
+    {
+      "command": "mutation runs: unwire startup recovery, unwire question expiry, forget a known gap - each must fail tests/architecture/test_qa002_composition.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-002/2026-09-27T15-40-00Z/mutations.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> uv run --project python pytest tests -q -rsxX # repository suite (every skip a named BLOCKED_EXTERNAL)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-002/2026-09-27T15-40-00Z/tests.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --project python pytest tests/architecture -v # consistency suite, per-rule negative corpus and the new composition-reachability gate",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3.12 scripts/ci/arch_check.py && python3.12 scripts/ci/workspace_check.py && python3.12 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation runs: unwire startup recovery, unwire question expiry, forget a known gap - each must fail tests/architecture/test_qa002_composition.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> uv run --project python pytest tests -q -rsxX # repository suite (every skip a named BLOCKED_EXTERNAL)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-002/2026-09-27T15-40-00Z/NOTES.md",
+      "sha256": "60885410979982eda8d5e43f7b8b9bad8b53939ca247c62b0a4a1b0040b9cb90",
+      "bytes": 4589
+    },
+    {
+      "path": "evidence/QA-002/2026-09-27T15-40-00Z/architecture.log",
+      "sha256": "c43cd7b4c48702ffd1ce85f53149ae65020e108601dc05d0fb808a9f161721bc",
+      "bytes": 14356
+    },
+    {
+      "path": "evidence/QA-002/2026-09-27T15-40-00Z/gates.log",
+      "sha256": "5a062b065af927a0c82b62d6a8fc6da16613032531f25ca67d1d73d6244006ce",
+      "bytes": 162
+    },
+    {
+      "path": "evidence/QA-002/2026-09-27T15-40-00Z/mutations.log",
+      "sha256": "2eee9a0de9202d282d0b17f4e38287bc3f570c9432b9c84fcc712f9cc5c1e28d",
+      "bytes": 865
+    },
+    {
+      "path": "evidence/QA-002/2026-09-27T15-40-00Z/tests.log",
+      "sha256": "579a1cd1e3c59d6ccff92b88ea6e772063f89d5d98011fb5f561a9a6ef3fb60b",
+      "bytes": 11015
+    },
+    {
+      "path": "tests/architecture/composition_scan.py",
+      "sha256": "cc0bde3fd536335416fd2b5bd6e3844b8e980f373c50f5836c57b3f553d12a01",
+      "bytes": 13541
+    },
+    {
+      "path": "tests/architecture/test_qa002_composition.py",
+      "sha256": "d3992fa8e1884ca9b69aefc00e53151304381455c4d390f5fa2b0b1755883bff",
+      "bytes": 8975
+    }
+  ]
+}
