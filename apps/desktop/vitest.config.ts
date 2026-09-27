@@ -7,7 +7,16 @@ const resolve = {
   extensionAlias: { ".js": [".ts", ".js"] },
 } as unknown as NonNullable<ViteUserConfig["resolve"]>;
 
+// Under the baseline pipeline each test's outcome is also written as JSON, so its test audit
+// can hold every skip to the BLOCKED_EXTERNAL convention (QA-001).
+const ciLogs = process.env["QUANSIO_CI_LOG_DIR"];
+
 export default defineConfig({
   resolve,
-  test: { include: ["tests/**/*.test.ts"] },
+  test: {
+    include: ["tests/**/*.test.ts"],
+    ...(ciLogs
+      ? { reporters: ["default", "json"], outputFile: { json: `${ciLogs}/vitest-desktop.json` } }
+      : {}),
+  },
 });

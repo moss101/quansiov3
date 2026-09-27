@@ -86,3 +86,50 @@ jobs:
           name: ci-gate-logs
           path: artifacts/ci/logs/
           if-no-files-found: warn
+
+  # DOSSIER.md §21.4 (QA-001): the workspace's tests instrumented in their own target
+  # directory, and the Python service modules under the standard-library tracer, held to the
+  # floors in scripts/ci/coverage-expectations.json. A separate job: the instrumented build
+  # doubles the baseline's compile time and never gates it.
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # Into the toolchain rust-toolchain.toml pins: coverage.py uses the llvm-cov and
+      # llvm-profdata of the rustc that built the instrumented tests.
+      - name: Install llvm-tools
+        run: rustup component add llvm-tools-preview
+
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install Python dependencies
+        run: (cd python && uv sync --python 3.12 --frozen)
+
+      - name: Start the deterministic dev stack
+        env:
+          QUANSIO_DEV_HEALTH_TIMEOUT: "180"
+        run: bash scripts/dev/up
+
+      - name: Measure and check coverage
+        run: |
+          python3 scripts/ci/coverage.py rust --out artifacts/coverage/rust.json
+          uv run --project python python scripts/ci/coverage.py python --out artifacts/coverage/python.json
+          python3 scripts/ci/coverage.py check --rust artifacts/coverage/rust.json \
+            --python artifacts/coverage/python.json --out artifacts/coverage/report.json
+
+      - name: Upload the coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: artifacts/coverage/
+          if-no-files-found: warn
