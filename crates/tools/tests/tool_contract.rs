@@ -406,3 +406,66 @@ tools:
     let error = ToolRegistry::from_yaml(source).expect_err("open object");
     assert!(matches!(error, ToolError::MalformedDeclaration { .. }));
 }
+
+#[test]
+fn an_absent_optional_digest_argument_still_plans_and_stays_distinct() {
+    let registry = ToolRegistry::builtin();
+    let without = plan_call(
+        registry,
+        "work.delegate",
+        None,
+        &json!({ "instruction": "summarise the report" }),
+        &tier_of,
+        &context(),
+    )
+    .expect("an optional digest argument may be absent");
+    let with = plan_call(
+        registry,
+        "work.delegate",
+        None,
+        &json!({ "instruction": "summarise the report", "work_node_id": "wn_1" }),
+        &tier_of,
+        &context(),
+    )
+    .expect("plan");
+    assert_ne!(without.params_digest, with.params_digest);
+
+    let explicit_null = plan_call(
+        registry,
+        "work.delegate",
+        None,
+        &json!({ "instruction": "summarise the report", "work_node_id": null }),
+        &tier_of,
+        &context(),
+    )
+    .expect_err("null is not a string");
+    assert!(matches!(explicit_null, ToolError::InvalidArguments { .. }));
+}
+
+#[test]
+fn a_digest_argument_must_be_a_declared_property() {
+    let source = r#"
+version: 1
+tools:
+  - name: fs.read
+    version: 1
+    description: test
+    host: qworkerd
+    source_trust: untrusted_external
+    effect_class: read.internal
+    resource: { kind: fs, arg: path }
+    idempotency: { digest_args: [path, pth] }
+    max_output_bytes: 10
+    timeout_ms: 10
+    grant_templates:
+      - effect_class: read.internal
+        resource: { kind: fs, selector: "**" }
+    input_schema: { type: object, additionalProperties: false, required: [path], properties: { path: { type: string } } }
+    output_schema: { type: object, additionalProperties: false, properties: {} }
+"#;
+    let error = ToolRegistry::from_yaml(source).expect_err("undeclared digest argument");
+    assert!(
+        matches!(&error, ToolError::MalformedDeclaration { detail, .. } if detail.contains("pth")),
+        "{error:?}"
+    );
+}
