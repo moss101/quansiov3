@@ -24,9 +24,6 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: (kind, name) -> (owning task, what is missing). Found by QA-001/QA-002, 2026-09-27.
 KNOWN_GAPS: Dict[Tuple[str, str], Tuple[str, str]] = {
-    ("NOT_COMPOSED", "VerificationPort"): ("RUN-008", "ContractVerifier is never installed; a completion claim cannot be verified"),
-    ("UNCOMPOSED", "ContractVerifier"): ("RUN-008", "as above"),
-    ("DEFAULT_ONLY", "SemanticVerifierPort"): ("RUN-008", "the Python semantic verifier has no RPC or Rust port"),
     ("UNCOMPOSED", "KmsKeyProvider"): ("EXEC-007", "only the local master key provider is composed"),
     ("UNCOMPOSED", "ComputerDispatcher"): ("EXEC-010", "computer use has no composed dispatcher"),
     ("UNCOMPOSED", "WorkerHost"): ("EXEC-002", "qworkerd has no daemon that runs its host"),
@@ -58,7 +55,8 @@ def test_the_runtime_lifecycle_the_build_runs_is_composed() -> None:
     """The composed authorities stay composed (the ones this campaign wired, among others)."""
     actual = findings()
     for name in ("recover_on_start", "expire_due", "RuntimeBudgets", "ToolDispatchService",
-                 "Scheduler", "FireExecutor", "catch_up", "TenantMemberRoles", "RuntimeEngine"):
+                 "Scheduler", "FireExecutor", "catch_up", "TenantMemberRoles", "RuntimeEngine",
+                 "ContractVerifier", "GatewaySemanticVerifier"):
         assert ("UNCOMPOSED", name) not in actual, name
 
 

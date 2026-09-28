@@ -1,0 +1,170 @@
+{
+  "task_id": "RUN-008",
+  "git_commit": "010570f8ae6f45e0ca171cc40e5ad9b5d0947677",
+  "recorded_at": "2026-09-28T17:02:10Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-28T17-02-10Z/command-1.log"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-28T17-02-10Z/command-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test --workspace --no-fail-fast # 141 suites, 906 passed, 0 failed (summary lines)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-28T17-02-10Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test completion_claims # 5 served + 3 engine-level",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-28T17-02-10Z/command-4.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test verification --test verification_contract_checks --test turn_loop --test turn_loop_internal_tools",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-28T17-02-10Z/command-5.log"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q) # includes tests/intelligence/test_verify_completion_rpc.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-28T17-02-10Z/command-6.log"
+    },
+    {
+      "command": "python3 mutation_checks.py # 7 mutants compile and are killed; unmutated controls pass",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-28T17-02-10Z/command-7.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture/test_qa002_composition.py -q",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-28T17-02-10Z/command-8.log"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-008/2026-09-28T17-02-10Z/command-9.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test --workspace --no-fail-fast # 141 suites, 906 passed, 0 failed (summary lines)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test completion_claims # 5 served + 3 engine-level",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test verification --test verification_contract_checks --test turn_loop --test turn_loop_internal_tools",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd python && uv run --frozen pytest -q) # includes tests/intelligence/test_verify_completion_rpc.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 mutation_checks.py # 7 mutants compile and are killed; unmutated controls pass",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture/test_qa002_composition.py -q",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/runtime/verification/service.rs",
+      "sha256": "93999352718ed19f510c16c56421a198e566bfeb542edb6239641e3c6c7ec6cc",
+      "bytes": 12275
+    },
+    {
+      "path": "crates/server/src/runtime/verification/semantic.rs",
+      "sha256": "36b52d0802e3de8d6a260d2dd9024a78eb04e465626abe4e298710bfe879f130",
+      "bytes": 8023
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/engine.rs",
+      "sha256": "42dd40d3b2e98b41dab8270cd2c8c04815a592a6a855aead6696f5c944da0532",
+      "bytes": 58143
+    },
+    {
+      "path": "crates/server/src/api/commands.rs",
+      "sha256": "ea97a07412c705b0b68e02a0186f7e6c2e9dd647fa5e4730e64442e9d230ecbb",
+      "bytes": 66146
+    },
+    {
+      "path": "crates/server/tests/completion_claims.rs",
+      "sha256": "5bec6a0f6a6e30372eabc47a43f1925011d51a553a6c4d557e06a28bca3ea50d",
+      "bytes": 31637
+    },
+    {
+      "path": "python/intelligence/evaluation/semantic_verifier/verifier.py",
+      "sha256": "ae9bbc41590314d27d245670605f1f8bf905252a8b596bcbaa3a5aa38e00fe2e",
+      "bytes": 11158
+    },
+    {
+      "path": "python/intelligence/server/servicer.py",
+      "sha256": "ab6bf9a52072decc3cc349eb1e127d5bbef4e16ad00561d26c182b1558053db6",
+      "bytes": 35660
+    },
+    {
+      "path": "python/tests/intelligence/test_verify_completion_rpc.py",
+      "sha256": "39e15f28ab4f91103a308037fe0ae84fb9a4b6c555d474184c96506c72c7b2f4",
+      "bytes": 7757
+    },
+    {
+      "path": "schemas/proto/quansio/v1/intelligence/service.proto",
+      "sha256": "7a1314851855584d9d0eecdc7f1cca3c1eb0d9c2689a44d79a265bf0b62e555e",
+      "bytes": 5187
+    },
+    {
+      "path": "DOMAIN.md",
+      "sha256": "0fcdf70bc7443c6315396e363820c9a10c64fe7754cf4295da6241aa569b813e",
+      "bytes": 75896
+    },
+    {
+      "path": "evidence/RUN-008/2026-09-28T17-02-10Z/NOTES.md",
+      "sha256": "f59f7ad3155d81d955ae4f77e0b432ace83a42fe63c0a2f00e6096f15fe6fbd4",
+      "bytes": 6088
+    },
+    {
+      "path": "evidence/RUN-008/2026-09-28T17-02-10Z/mutation_checks.py",
+      "sha256": "71572813d66bd66b909eb2c83eb82818ff8de9854da152c5bda18e6857f59e4e",
+      "bytes": 3814
+    }
+  ]
+}

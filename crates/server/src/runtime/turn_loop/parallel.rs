@@ -20,12 +20,16 @@ use crate::runtime::state_machine::ProposedToolCall;
 /// Tools that mutate runtime state or park the run. They are dispatched one per round, in
 /// proposal order, after the independent batch, because their result decides the run's
 /// next state.
-pub const CONTROL_TOOLS: [&str; 4] = [
+pub const CONTROL_TOOLS: [&str; 5] = [
     "user.ask",
     "work.delegate",
     "work.propose_plan",
+    "work.complete",
     "memory.propose",
 ];
+
+/// The control tool that claims completion (DOMAIN.md §5.6); it is dispatched last.
+pub const COMPLETION_TOOL: &str = "work.complete";
 
 /// Whether a proposed call is control-plane rather than a side-effecting tool call.
 #[must_use]
@@ -74,7 +78,8 @@ pub async fn join_all<'a, T>(futures: Vec<Pin<Box<dyn Future<Output = T> + Send 
 ///
 /// A call runs concurrently with the others in its round; rounds are applied in order.
 /// Two calls are separated into different rounds when one of them is a [`CONTROL_TOOLS`]
-/// member (which gets a round of its own, after the independent batch) or when another
+/// member (which gets a round of its own, after the independent batch, with a
+/// [`COMPLETION_TOOL`] claim after every other control call) or when another
 /// call in the round proposes the identical tool with identical arguments — the second
 /// occurrence goes to the next round so the pair cannot race for one idempotency key.
 ///
@@ -99,9 +104,12 @@ pub fn plan_rounds(calls: &[ProposedToolCall]) -> Vec<Vec<usize>> {
         rounds[occurrence].push(index);
     }
 
-    for (index, call) in calls.iter().enumerate() {
-        if is_control_tool(&call.tool) {
-            rounds.push(vec![index]);
+    // A completion claim is judged on everything else the proposal did, so it comes last.
+    for claims in [false, true] {
+        for (index, call) in calls.iter().enumerate() {
+            if is_control_tool(&call.tool) && (call.tool == COMPLETION_TOOL) == claims {
+                rounds.push(vec![index]);
+            }
         }
     }
 
@@ -189,6 +197,17 @@ mod tests {
         assert_eq!(plan_rounds(&calls), vec![vec![1], vec![0]]);
         assert!(is_control_tool("work.delegate"));
         assert!(!is_control_tool("fs.read"));
+    }
+
+    #[test]
+    fn a_completion_claim_is_dispatched_after_every_other_call() {
+        let calls = vec![
+            call("c1", "work.complete", json!({ "summary": "done" })),
+            call("c2", "user.ask", json!({ "prompt": "?" })),
+            call("c3", "fs.write", json!({ "path": "/a" })),
+        ];
+        assert_eq!(plan_rounds(&calls), vec![vec![2], vec![1], vec![0]]);
+        assert!(is_control_tool("work.complete"));
     }
 
     #[test]

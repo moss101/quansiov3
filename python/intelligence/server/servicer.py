@@ -30,6 +30,11 @@ Implemented today:
     model call carries (`intelligence.context.turn`). It reads and writes no canonical store; the
     runtime validates the projection and records it.
 
+  * `VerifyCompletion` — the independent semantic verdict on a completion claim (RUN-008) from
+    `intelligence.evaluation.semantic_verifier`, routed to the catalog's `routing.verification`
+    model through the same gateway. A refusal (malformed verdict, unavailable model, unprovable
+    independence) aborts with a typed error; the runtime rejects the claim either way.
+
 Not implemented here; each returns a typed UNIMPLEMENTED failure naming the owning task that
 will implement the behaviour (never a success-shaped empty response):
   * `Search`        → INT-005 (typed SearchProgram execution)
@@ -58,6 +63,15 @@ from intelligence.embeddings.provider import (
     RULE_EMPTY_INPUT,
     EmbeddingError,
     EmbeddingProvider,
+)
+from intelligence.evaluation.semantic_verifier import (
+    INDEPENDENCE_UNPROVABLE,
+    REQUEST_INVALID,
+    VERDICT_MALFORMED,
+    VERIFIER_UNAVAILABLE,
+    GatewaySemanticVerifier,
+    SemanticVerificationError,
+    VerificationRequest,
 )
 from intelligence.memory.candidates import (
     MemoryCandidate,
@@ -92,7 +106,15 @@ _UNIMPLEMENTED_OWNERS: Mapping[str, str] = {
 }
 
 IMPLEMENTED_METHODS: frozenset[str] = frozenset(
-    {"ClassifyTrust", "FulfillModel", "Embed", "ProposeMemory", "BuildContext", "ProposeSkillCandidates"}
+    {
+        "ClassifyTrust",
+        "FulfillModel",
+        "Embed",
+        "ProposeMemory",
+        "BuildContext",
+        "ProposeSkillCandidates",
+        "VerifyCompletion",
+    }
 )
 
 TrustClassifier = Callable[[str, str], TrustClassification]
@@ -670,6 +692,85 @@ class IntelligenceGatewayServicer:
             dimensions=width,
         )
 
+    def VerifyCompletion(
+        self, request: service_pb2.CompletionVerificationRequest, context: grpc.ServicerContext
+    ) -> service_pb2.CompletionVerdict:
+        """An independent model's verdict on a completion claim (RUN-008); a proposal only.
+
+        The verdict comes from the catalog's verification model, never from the claimant's when
+        the contract requires independence. Nothing here marks work complete: the runtime's
+        contract verifier decides what a verdict — or a refusal — means.
+        """
+        span = self._begin_call(context, "VerifyCompletion")
+        try:
+            scope = self._validated_scope("VerifyCompletion", request, context)
+            self._ensure_live("VerifyCompletion", context)
+            gateway = self._gateway
+            if gateway is None:
+                abort_with(
+                    context,
+                    ErrorEnvelope(
+                        code=ErrorCode.PROVIDER_UNAVAILABLE,
+                        message="no model gateway is configured for this intelligence process",
+                        correlation_id=scope.correlation_id,
+                        details=(ErrorDetail("owner_task", "RUN-008"),),
+                    ),
+                )
+            try:
+                model = gateway.catalog.verifier()
+            except GatewayError as failure:
+                abort_with(
+                    context,
+                    ErrorEnvelope(
+                        code=_error_code(failure.code),
+                        message=failure.message,
+                        correlation_id=scope.correlation_id,
+                        details=(ErrorDetail("owner_task", "RUN-008"),),
+                    ),
+                )
+            remaining_ms = max(1, int(scope.deadline_ms - self._clock() * 1000))
+            verifier = GatewaySemanticVerifier(
+                _ScopedGateway(gateway, scope.deadline_ms, lambda: not context.is_active()),
+                model_catalog_id=model.id,
+                model_aliases=frozenset({model.model_id}),
+                timeout_ms=remaining_ms,
+                max_output_tokens=request.max_output_tokens or 512,
+            )
+            try:
+                verdict = verifier.verify(
+                    VerificationRequest(
+                        run_id=request.run_id,
+                        work_node_id=request.work_node_id,
+                        claim_summary=request.claim_summary,
+                        rubric_id=request.rubric_id or None,
+                        evidence_ids=tuple(request.evidence_ids),
+                        independent_model=request.independent_model,
+                        claimant_model=request.claimant_model or None,
+                    )
+                )
+            except SemanticVerificationError as refusal:
+                abort_with(
+                    context,
+                    ErrorEnvelope(
+                        code=_VERIFIER_REFUSAL_CODES.get(refusal.code, ErrorCode.INTERNAL),
+                        message=refusal.detail,
+                        correlation_id=scope.correlation_id,
+                        details=(
+                            ErrorDetail("refusal", refusal.code),
+                            ErrorDetail("owner_task", "RUN-008"),
+                        ),
+                    ),
+                )
+            self._ensure_live("VerifyCompletion", context)
+            return service_pb2.CompletionVerdict(
+                schema_version=SCHEMA_VERSION,
+                agrees=verdict.agrees,
+                critique=verdict.critique,
+                model=verdict.model,
+            )
+        finally:
+            self._end_call(span)
+
     def Evaluate(
         self, request: service_pb2.EvaluationRequest, context: grpc.ServicerContext
     ) -> service_pb2.EvaluationReport:
@@ -678,6 +779,29 @@ class IntelligenceGatewayServicer:
             self._reject_unimplemented("Evaluate", request, context)
         finally:
             self._end_call(span)
+
+
+#: How a semantic verifier refusal is reported at the boundary (DOMAIN.md §15).
+_VERIFIER_REFUSAL_CODES: Mapping[str, ErrorCode] = {
+    INDEPENDENCE_UNPROVABLE: ErrorCode.POLICY_DENIED,
+    VERDICT_MALFORMED: ErrorCode.VALIDATION_SCHEMA,
+    REQUEST_INVALID: ErrorCode.VALIDATION_SCHEMA,
+    VERIFIER_UNAVAILABLE: ErrorCode.PROVIDER_UNAVAILABLE,
+}
+
+
+class _ScopedGateway:
+    """The gateway as the semantic verifier sees it: one fulfilment bounded by the call's scope."""
+
+    __slots__ = ("_deadline_ms", "_gateway", "_is_cancelled")
+
+    def __init__(self, gateway: ModelGateway, deadline_ms: int, is_cancelled: Callable[[], bool]) -> None:
+        self._gateway = gateway
+        self._deadline_ms = deadline_ms
+        self._is_cancelled = is_cancelled
+
+    def fulfill(self, request: intelligence_pb2.ModelCallRequest) -> Fulfillment:
+        return self._gateway.fulfill(request, deadline_ms=self._deadline_ms, is_cancelled=self._is_cancelled)
 
 
 def _error_code(code: str) -> ErrorCode:

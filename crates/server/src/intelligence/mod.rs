@@ -25,8 +25,9 @@ use serde_json::json;
 use crate::observability::{metrics, Span, TRACEPARENT};
 use quansio_contracts::generated::intelligence::intelligence_gateway_client::IntelligenceGatewayClient;
 use quansio_contracts::generated::intelligence::{
-    ContextBuildRequest, ContextProjection, MemoryCandidate, ModelCallRequest, ModelEvent,
-    ProposalAck, ScopeContext, SkillCandidatesRequest, TrustClassifyRequest, TrustClassifyResponse,
+    CompletionVerdict, CompletionVerificationRequest, ContextBuildRequest, ContextProjection,
+    MemoryCandidate, ModelCallRequest, ModelEvent, ProposalAck, ScopeContext,
+    SkillCandidatesRequest, TrustClassifyRequest, TrustClassifyResponse,
 };
 use tonic::metadata::MetadataValue;
 use tonic::transport::{Channel, Endpoint, Uri};
@@ -314,6 +315,32 @@ impl IntelligenceClient {
             Ok(Ok(response)) => Ok(response.into_inner().candidates_json),
         };
         finish(span, "ProposeSkillCandidates", &result);
+        result
+    }
+
+    /// `VerifyCompletion` (RUN-008): an independent model's verdict on a completion claim. The
+    /// verdict is a proposal; the runtime's verifier decides what a disagreement means.
+    ///
+    /// # Errors
+    /// The typed refusal (malformed verdict, unavailable model, unprovable independence), or an
+    /// unreachable or late gateway.
+    pub async fn verify_completion(
+        &mut self,
+        scope: &CallScope,
+        mut request: CompletionVerificationRequest,
+    ) -> Result<CompletionVerdict, IntelligenceError> {
+        request.schema_version = SCHEMA_VERSION.to_string();
+        request.scope = Some(scope.context());
+        let span = rpc_span("VerifyCompletion", scope);
+        let call = self
+            .inner
+            .verify_completion(Self::request(scope, request, &span));
+        let result = match tokio::time::timeout(scope.deadline, call).await {
+            Err(_) => Err(IntelligenceError::DeadlineExceeded),
+            Ok(Err(status)) => Err(refused(&status)),
+            Ok(Ok(response)) => Ok(response.into_inner()),
+        };
+        finish(span, "VerifyCompletion", &result);
         result
     }
 

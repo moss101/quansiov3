@@ -23,7 +23,7 @@ pub use dispatch::{
     UnavailableRoles, UnavailableToolHost, INTERNAL_TOOLS,
 };
 pub use model_calls::{ModelCallLedger, RecordedCall};
-pub use parallel::{is_control_tool, join_all, plan_rounds, CONTROL_TOOLS};
+pub use parallel::{is_control_tool, join_all, plan_rounds, COMPLETION_TOOL, CONTROL_TOOLS};
 pub use questions::{
     AnsweredQuestion, NewQuestion, QuestionAnswer, QuestionRecord, QuestionService, QuestionStatus,
 };

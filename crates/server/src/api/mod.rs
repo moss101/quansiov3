@@ -495,6 +495,23 @@ impl ApiState {
         self.intelligence.as_ref()
     }
 
+    /// The independent semantic verifier completion claims are judged by (RUN-008): the plane's
+    /// `VerifyCompletion` when the deployment has the intelligence plane, and otherwise one that
+    /// refuses, so a contract requiring semantic verification never passes without it.
+    #[must_use]
+    pub fn semantic_verifier(&self) -> Arc<dyn crate::runtime::verification::SemanticVerifierPort> {
+        let settings = crate::runtime::verification::SemanticVerificationSettings::load();
+        match (&self.intelligence, settings) {
+            (Some(client), Ok(settings)) => {
+                Arc::new(crate::runtime::verification::GatewaySemanticVerifier::new(
+                    client.clone(),
+                    settings,
+                ))
+            }
+            _ => Arc::new(crate::runtime::verification::UnavailableSemanticVerifier),
+        }
+    }
+
     /// Replace the walking-skeleton model with a real proposal source — the intelligence
     /// gateway (`intelligence::model_source::GatewayModelSource`) in the deployable (APP-001).
     #[must_use]

@@ -229,6 +229,25 @@ pub enum ToolDispatchOutcome {
         /// EffectRecord awaiting reconciliation.
         effect_id: Option<String>,
     },
+    /// The call was `work.complete`: validated, authorized and recorded, and now a completion
+    /// claim only verification may accept (DOMAIN.md §5.6). The engine verifies it and records
+    /// the verdict as the call's result through [`ToolDispatchPort::record_claim_verdict`].
+    CompletionClaimed {
+        /// The claim; its id is the `tool_call` id.
+        claim: CompletionClaim,
+    },
+}
+
+/// What verification concluded about a `work.complete` call, recorded as the call's result so
+/// the next model call reads it (DOMAIN.md §5.6).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ClaimVerdict {
+    /// Whether the claim was verified.
+    pub verified: bool,
+    /// Why not, when it was not.
+    pub feedback: Option<String>,
+    /// The run's status after verification.
+    pub run_status: RunStatus,
 }
 
 /// What a delegation produced (DOMAIN.md §5.1).
@@ -306,6 +325,18 @@ pub trait ToolDispatchPort: Send + Sync {
             "tool resume",
             TOOL_DISPATCH_OWNER,
         ))
+    }
+
+    /// Record the verdict on a `work.complete` call as that call's result.
+    ///
+    /// The default records nothing: a port that holds no durable call has nowhere to put it,
+    /// and the `verify` Step still carries the verdict.
+    async fn record_claim_verdict(
+        &self,
+        _tool_call_id: &str,
+        _verdict: &ClaimVerdict,
+    ) -> Result<(), RuntimeError> {
+        Ok(())
     }
 }
 
@@ -510,6 +541,8 @@ pub enum TurnOutcome {
         turn_id: String,
         /// Evidence that supported the accepted claim.
         evidence_ids: Vec<String>,
+        /// What the model said alongside the claim; still the turn's reply.
+        assistant_text: Option<String>,
     },
     /// The turn finished without a completion claim.
     Completed {

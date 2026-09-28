@@ -28,6 +28,10 @@ class ModelEventLike(Protocol):
     text_delta: str
 
 
+#: The `ModelEvent` kind a provider failure arrives as once the stream has started.
+_KIND_ERROR = intelligence_pb2.ModelEvent.KIND_ERROR
+
+
 class GatewayFulfiller(Protocol):
     """The part of the model gateway the verifier uses.
 
@@ -167,6 +171,7 @@ class GatewaySemanticVerifier:
         gateway: GatewayFulfiller,
         *,
         model_catalog_id: str,
+        model_aliases: frozenset[str] = frozenset(),
         timeout_ms: int = 30_000,
         max_output_tokens: int = 512,
     ) -> None:
@@ -176,6 +181,9 @@ class GatewaySemanticVerifier:
             )
         self._gateway: GatewayFulfiller = gateway
         self._model_catalog_id = model_catalog_id
+        # The names this verifier's model also goes by (the provider's wire model id): the
+        # runtime names the claimant by the model its ledger recorded, which is that wire id.
+        self._own_names = frozenset({model_catalog_id, *model_aliases})
         self._timeout_ms = timeout_ms
         self._max_output_tokens = max_output_tokens
 
@@ -193,7 +201,7 @@ class GatewaySemanticVerifier:
                 INDEPENDENCE_UNPROVABLE,
                 "the contract requires an independent model but the claimant's model was not named",
             )
-        if request.claimant_model == self._model_catalog_id:
+        if request.claimant_model in self._own_names:
             raise SemanticVerificationError(
                 INDEPENDENCE_UNPROVABLE,
                 f"{self._model_catalog_id} cannot verify its own work",
@@ -202,7 +210,7 @@ class GatewaySemanticVerifier:
     def _call_request(self, request: VerificationRequest) -> intelligence_pb2.ModelCallRequest:
         return intelligence_pb2.ModelCallRequest(
             schema_version="v1",
-            call_id=f"sem_{request.run_id}_{request.work_node_id}",
+            call_id=f"sem_{request.run_id}_{request.work_node_id}_{_digest(request.claim_summary)}",
             run_id=request.run_id,
             route_hint=self._model_catalog_id,
             messages=[
@@ -240,13 +248,27 @@ class GatewaySemanticVerifier:
         self._check_independence(request)
         call = self._call_request(request)
         try:
-            fulfillment = self._gateway.fulfill(call)
-            text = "".join(event.text_delta for event in fulfillment)
+            parts: list[str] = []
+            for event in self._gateway.fulfill(call):
+                if getattr(event, "kind", None) == _KIND_ERROR:
+                    raise SemanticVerificationError(
+                        VERIFIER_UNAVAILABLE, "the verifier's model call failed mid-stream"
+                    )
+                parts.append(event.text_delta)
+            text = "".join(parts)
+        except SemanticVerificationError:
+            raise
         except Exception as error:
             raise SemanticVerificationError(
                 VERIFIER_UNAVAILABLE, f"the model gateway could not answer: {error}"
             ) from error
         return parse_verdict(text, model=self._model_catalog_id)
+
+
+def _digest(value: str) -> str:
+    import hashlib
+
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
 
 
 def _json_string(value: str) -> str:

@@ -25,6 +25,7 @@ tools:
 - artifact.update
 - work.propose_plan
 - work.delegate
+- work.complete
 - user.ask
 - memory.propose
 - knowledge.cite
