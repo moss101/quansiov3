@@ -301,6 +301,18 @@ fn map_transaction_error(error: GraphTransactionError) -> PlanError {
         GraphTransactionError::Graph(GraphError::RevisionConflict {
             expected, current, ..
         }) => PlanError::StaleBaseRevision { expected, current },
+        GraphTransactionError::Graph(GraphError::Cycle { from, to, .. }) => {
+            PlanError::Cycle { from, to }
+        }
+        GraphTransactionError::Graph(
+            error @ (GraphError::Database(_) | GraphError::TenantScope(_)),
+        ) => PlanError::Workspace {
+            detail: error.to_string(),
+        },
+        GraphTransactionError::Graph(error) => PlanError::Graph {
+            code: error.code(),
+            detail: error.to_string(),
+        },
         other => PlanError::Workspace {
             detail: other.to_string(),
         },
