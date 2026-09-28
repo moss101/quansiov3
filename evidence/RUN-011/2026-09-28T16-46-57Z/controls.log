@@ -1,0 +1,5 @@
+[RUN-011] absent optional digest argument refused again
+  file: crates/tools/src/call.rs
+  command: cargo test -p quansio-tools --test tool_contract an_absent_optional_digest_argument
+  COMPILES; exit 101; KILLED
+    thread 'an_absent_optional_digest_argument_still_plans_and_stays_distinct' (48712336) panicked at crates/tools/tests/tool_contract.rs:421:6:

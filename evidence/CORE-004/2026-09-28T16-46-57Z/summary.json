@@ -1,0 +1,74 @@
+{
+  "task_id": "CORE-004",
+  "git_commit": "68dbcd7",
+  "recorded_at": "2026-09-28T16:46:57Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, port 55440> cargo test -p quansio-graph # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-004/2026-09-28T16-46-57Z/graph.log"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy -p quansio-tools -p quansio-graph -p quansio-server -p quansio-contracts --all-targets -- -D warnings && (cd python && uv run ruff check . && uv run ruff format --check . && uv run mypy intelligence) # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-004/2026-09-28T16-46-57Z/lint.log"
+    },
+    {
+      "command": "python3 controls.py # revert one fix at a time on the evidence commit; each build COMPILES and the named test must FAIL (KILLED); file restored after each # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-004/2026-09-28T16-46-57Z/controls.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, port 55440> cargo test -p quansio-graph # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy -p quansio-tools -p quansio-graph -p quansio-server -p quansio-contracts --all-targets -- -D warnings && (cd python && uv run ruff check . && uv run ruff format --check . && uv run mypy intelligence) # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 controls.py # revert one fix at a time on the evidence commit; each build COMPILES and the named test must FAIL (KILLED); file restored after each # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CORE-004/2026-09-28T16-46-57Z/graph.log",
+      "sha256": "4628ec5fe88e675f861593bfde73ec83cda0499ed66ba6d18ccc1cebd369f62c",
+      "bytes": 5552
+    },
+    {
+      "path": "evidence/CORE-004/2026-09-28T16-46-57Z/lint.log",
+      "sha256": "b219c0f0de274428a8f9175abb0edcdd9182b20cc70176966752ffe98c7227f4",
+      "bytes": 769
+    },
+    {
+      "path": "evidence/CORE-004/2026-09-28T16-46-57Z/controls.log",
+      "sha256": "5782efafe6b9236e3603d17b6e1f241e50efb6a91c054f892179b60fcb66a73b",
+      "bytes": 323
+    },
+    {
+      "path": "evidence/CORE-004/2026-09-28T16-46-57Z/NOTES.md",
+      "sha256": "92a4eef2e1653a8db4966502d3837b24535b7cdb48288c5ac736335d7f6f34a0",
+      "bytes": 1037
+    },
+    {
+      "path": "crates/graph/src/work.rs",
+      "sha256": "0720704936d73d3d12f1afb2bdbb35b1f1cabd61d6df11b57c5291162eaefbc2",
+      "bytes": 26349
+    },
+    {
+      "path": "crates/graph/tests/cycle_rejection.rs",
+      "sha256": "45bfacd2e35b8fc55218fb40c2aec163894c3591a39ff853cc11849b95f02aa9",
+      "bytes": 5731
+    }
+  ]
+}

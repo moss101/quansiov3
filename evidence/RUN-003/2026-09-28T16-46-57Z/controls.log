@@ -1,0 +1,17 @@
+[RUN-003] compiler walks parent_id child -> parent
+  file: crates/server/src/runtime/planning/compile.rs
+  command: cargo test -p quansio-server --test planning_compile parent_of_and_parent_id
+  COMPILES; exit 101; KILLED
+    thread 'parent_of_and_parent_id_share_one_direction' (48714683) panicked at crates/server/tests/planning_compile.rs:418:25:
+[RUN-003] typed graph verdicts flattened to INTERNAL
+  file: crates/server/src/runtime/planning/graph_port.rs
+  command: cargo test -p quansio-server --test planning_graph_port the_graph_transaction_refuses_a_compiled_plan
+  COMPILES; exit 101; KILLED
+    thread 'the_graph_transaction_refuses_a_compiled_plan_that_breaks_a_rule_and_writes_nothing' (48715839) panicked at crates/server/tests/planning_graph_port.rs:427:5:
+    assertion `left == right` failed: plan workspace error: work node wn_01J8Z3K6F1N8VQ2X5W9Y0QA0G1 can only reach done through mark_verification_passed
+[RUN-003] served plan port not composed
+  file: crates/server/src/api/commands.rs
+  command: cargo test -p quansio-server --test served_plan_and_memory a_served_run_observes
+  COMPILES; exit 101; KILLED
+    thread 'a_served_run_observes_the_workgraph_and_its_plan_is_committed_or_refused_with_its_code' (48717294) panicked at crates/server/tests/served_plan_and_memory.rs:272:5:
+    assertion `left == right` failed: [("work.propose_plan", "rejected", Object {"code": String("INTERNAL"), "detail": String("seam plan application is not available yet; owned by CORE-005")})]

@@ -1,0 +1,9 @@
+    Checking quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/epic-payne-002dca/crates/events)
+    Checking quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/epic-payne-002dca/crates/capability)
+    Checking quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/epic-payne-002dca/crates/graph)
+    Checking quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/epic-payne-002dca/crates/tools)
+    Checking quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/epic-payne-002dca/crates/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 12.14s
+All checks passed!
+171 files already formatted
+Success: no issues found in 105 source files

@@ -1,0 +1,65 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/epic-payne-002dca/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.77s
+     Running tests/graph_planning.rs (target/debug/deps/graph_planning-be5bbf7faa539c0e)
+
+running 4 tests
+test replaying_a_compiled_plan_conflicts_instead_of_duplicating_nodes ... ok
+test a_compiled_plan_commits_through_graph_transaction_with_one_revision_bump ... ok
+test the_seed_node_id_is_visible_to_the_compiler_snapshot ... ok
+test the_same_plan_over_the_same_state_is_deterministic_across_runs_and_restart ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.84s
+
+     Running tests/planning.rs (target/debug/deps/planning-c4282a3971550141)
+
+running 12 tests
+test a_two_node_cycle_is_rejected ... ok
+test duplicate_ids_and_unknown_endpoints_are_rejected ... ok
+test completion_contract_inheritance_is_recorded_and_missing_contracts_are_rejected ... ok
+test a_missing_base_revision_is_a_revision_conflict ... ok
+test a_cycle_through_proposed_parent_ids_is_rejected ... ok
+test replaying_an_applied_plan_conflicts_and_never_duplicates_nodes ... ok
+test a_cycle_against_the_existing_graph_is_rejected ... ok
+test a_plan_above_the_policy_bound_is_rejected_with_validation_bounds ... ok
+test a_self_edge_cycle_is_rejected ... ok
+test an_over_authorized_plan_is_rejected_and_writes_nothing ... ok
+test malformed_proposals_are_rejected_and_write_nothing ... ok
+test the_same_proposal_over_the_same_starting_state_is_deterministic ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.71s
+
+     Running tests/planning_compile.rs (target/debug/deps/planning_compile-2ac55dc0a5fb309a)
+
+running 10 tests
+test a_proposal_for_another_workspace_or_with_no_change_is_refused ... ok
+test a_parent_must_exist_and_a_planned_parent_must_carry_the_contract_it_would_hand_down ... ok
+test node_and_edge_identities_must_be_unique_and_new ... ok
+test a_created_node_starts_draft_and_may_not_hang_under_a_node_created_in_the_same_plan ... ok
+test updates_and_removals_must_name_existing_rows_at_the_observed_revision ... ok
+test parent_of_and_parent_id_share_one_direction ... ok
+test removing_an_edge_lets_the_same_plan_add_its_reverse_and_the_summary_is_deterministic ... ok
+test a_proposal_without_identity_or_with_malformed_nodes_is_a_schema_refusal ... ok
+test capability_needs_must_be_canonical_grants_that_narrow_the_proposer ... ok
+test any_non_empty_contract_value_is_the_nodes_own_and_an_empty_one_is_not ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/planning_graph_port.rs (target/debug/deps/planning_graph_port-3e50f83d127874fc)
+
+running 5 tests
+test a_user_edit_transitions_nodes_and_adds_and_removes_every_edge_kind_in_one_transaction ... ok
+test the_graph_transaction_refuses_a_cycle_and_a_plan_above_the_policy_bound ... ok
+test a_writer_racing_the_planner_between_compile_and_commit_is_recorded_as_a_revision_conflict ... ok
+test the_graph_transaction_refuses_a_compiled_plan_that_breaks_a_rule_and_writes_nothing ... ok
+test a_port_for_a_malformed_tenant_reads_nothing ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.37s
+
+     Running tests/workgraph_surface.rs (target/debug/deps/workgraph_surface-fa3655745b086326)
+
+running 2 tests
+test a_delegation_is_a_handoff_edge_and_a_parked_run_in_the_view ... ok
+test the_projection_is_the_canonical_revision_and_edits_are_validated_commands ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.81s
+

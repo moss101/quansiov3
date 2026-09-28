@@ -49,6 +49,9 @@ message MemoryCandidate {
   string provenance_kind = 4;
   string provenance_ref = 5;
   double confidence = 6;
+  // Where the proposer asks the memory to live (user|workspace|teammate); the owner resolves
+  // it against the call's workspace and refuses a hint it cannot satisfy.
+  string scope_hint = 7;
 }
 
 message ProposalAck {

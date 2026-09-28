@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.39s
+     Running tests/served_plan_and_memory.rs (target/debug/deps/served_plan_and_memory-aa062446c0e163e5)
+
+running 3 tests
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+quansio-server: QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64 is not set; using an ephemeral signing key, sessions will not survive a restart
+test a_served_memory_proposal_without_a_memory_store_is_refused_and_writes_nothing ... ok
+test a_served_memory_proposal_lands_only_as_a_gated_candidate_of_the_triggering_message ... ok
+test a_served_run_observes_the_workgraph_and_its_plan_is_committed_or_refused_with_its_code ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.57s
+

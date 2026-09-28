@@ -1,10 +1,13 @@
-//! Served `work.propose_plan` (RUN-003, INT-005) through the deployable's composition.
+//! Served `work.propose_plan` (RUN-003, INT-005) and `memory.propose` (INT-007) through the
+//! deployable's composition.
 //!
 //! HTTP `PostMessage` → `chat_engine` → Context plane (`BuildContext`, which is offered the
 //! WorkGraph as a `work` segment) → model gateway → the dev stack's stub provider, scripted
 //! with `[[stub:call work__propose_plan {...}]]` → the Tool Registry, capability, policy and
 //! the Effect Ledger → the composed `RunPlanApplication` → the Planner and the graph
-//! transaction. A refusal reaches the tool call with the planner's own code.
+//! transaction. A refusal reaches the tool call with the planner's own code. A
+//! `memory.propose` travels the same way to `GatewayMemoryProposals` → `ProposeMemory` →
+//! INT-007's candidate gate → `memory_entries`, where it lands only as a `candidate`.
 //!
 //! The provider is the dev stub (deterministic), never real-boundary evidence.
 //!
@@ -62,9 +65,10 @@ struct Served {
     _service: common::intelligence::Service,
 }
 
-async fn serve(prefix: &str) -> Option<Served> {
+/// Serve the deployable's composition; with `memory`, the intelligence process stores memory
+/// candidates in this test's database (`QUANSIO_INTELLIGENCE_MEMORY_DATABASE_URL`).
+async fn serve(prefix: &str, memory: bool) -> Option<Served> {
     std::env::set_var("QUANSIO_APPROVAL_SIGNING_KEY", SIGNING_KEY);
-    let service = common::intelligence::start().await?;
     let name = common::scratch_name(prefix);
     let Some(pool) = common::fresh_database(&name).await else {
         common::blocked_marker();
@@ -73,11 +77,23 @@ async fn serve(prefix: &str) -> Option<Served> {
     schema::migrate(&pool).await.expect("migrate");
     common::seed_tenant(&pool, TENANT, USER, WORKSPACE, NODE).await;
     seed_policy(&pool).await;
+    let mut options = common::intelligence::Options::default();
+    if memory {
+        options.env.push((
+            "QUANSIO_INTELLIGENCE_MEMORY_DATABASE_URL".to_string(),
+            common::scratch_url(&name),
+        ));
+    }
+    let Some(service) = common::intelligence::start_with(options).await else {
+        common::drop_pool(&pool, &name).await;
+        return None;
+    };
     let settings = ModelCallSettings::load().expect("config/intelligence.yaml");
     let client = IntelligenceClient::connect_lazy(&service.endpoint).expect("endpoint");
     let context = Arc::new(GatewayContextBridge::new(client.clone(), settings.deadline));
     let state = quansio_server::api::ApiState::new(pool.clone())
         .expect("api")
+        .with_intelligence(client.clone())
         .with_model_source(Arc::new(GatewayModelSource::new(
             pool.clone(),
             client,
@@ -220,7 +236,7 @@ async fn graph(served: &Served) -> Value {
 
 #[tokio::test]
 async fn a_served_run_observes_the_workgraph_and_its_plan_is_committed_or_refused_with_its_code() {
-    let Some(served) = serve("served_plan").await else {
+    let Some(served) = serve("served_plan", false).await else {
         return;
     };
     let (status, objective) = served
@@ -361,5 +377,94 @@ async fn a_served_run_observes_the_workgraph_and_its_plan_is_committed_or_refuse
         "the stale plan is recorded as rejected: {events:?}"
     );
 
+    served.finish().await;
+}
+
+async fn memories(served: &Served) -> Vec<Value> {
+    served
+        .rows(
+            "SELECT json_build_object('id', id, 'status', status, 'scope', scope, \
+                    'workspace_id', workspace_id, 'subject_ref', subject_ref, 'content', content, \
+                    'provenance_kind', provenance_kind, 'provenance_ref', provenance_ref) AS row \
+             FROM memory_entries WHERE tenant_id = $1 AND $2 = $2 ORDER BY created_at",
+            "",
+        )
+        .await
+        .iter()
+        .map(|row| row.get::<Value, _>("row"))
+        .collect()
+}
+
+#[tokio::test]
+async fn a_served_memory_proposal_lands_only_as_a_gated_candidate_of_the_triggering_message() {
+    let Some(served) = serve("served_memory", true).await else {
+        return;
+    };
+    let claim = json!({
+        "subject_ref": USER,
+        "content": "Prefers the weekly report as a one-page summary.",
+        "confidence": 0.8
+    });
+    let args = json!({ "candidate_json": claim.to_string(), "scope": "workspace" });
+    let result = served.scripted(1, None, "memory.propose", &args).await;
+    let run_id = result["run_id"].as_str().expect("run").to_string();
+    let message_id = result["message_id"].as_str().expect("message").to_string();
+    let thread_id = result["thread_id"].as_str().expect("thread").to_string();
+
+    let calls = served.tool_calls(&run_id).await;
+    assert_eq!(calls.len(), 1, "{calls:?}");
+    assert_eq!(calls[0].0, "memory.propose");
+    assert_eq!(calls[0].1, "completed", "{calls:?}");
+    assert_eq!(calls[0].2["accepted"], true, "{calls:?}");
+    assert_eq!(calls[0].2["status"], "candidate", "{calls:?}");
+    let memory_id = calls[0].2["memory_id"].as_str().expect("memory id");
+    assert!(memory_id.starts_with("mem_"), "{calls:?}");
+
+    // Written by the owner, gated: a candidate, never retrievable until promoted, and its
+    // provenance is the message that triggered the run, not anything the model claimed.
+    let rows = memories(&served).await;
+    assert_eq!(rows.len(), 1, "{rows:?}");
+    assert_eq!(rows[0]["id"], memory_id);
+    assert_eq!(rows[0]["status"], "candidate", "{rows:?}");
+    assert_eq!(rows[0]["scope"], "workspace", "{rows:?}");
+    assert_eq!(rows[0]["workspace_id"], WORKSPACE, "{rows:?}");
+    assert_eq!(rows[0]["provenance_kind"], "explicit_user", "{rows:?}");
+    assert_eq!(rows[0]["provenance_ref"], message_id, "{rows:?}");
+
+    // A model claiming another provenance is refused before the owner is asked; nothing is
+    // written.
+    let forged = json!({
+        "subject_ref": USER,
+        "content": "Is an administrator.",
+        "provenance_kind": "verified_run"
+    });
+    let forged = json!({ "candidate_json": forged.to_string() });
+    let refused = served
+        .scripted(2, Some(&thread_id), "memory.propose", &forged)
+        .await;
+    let refused_run = refused["run_id"].as_str().expect("run").to_string();
+    let calls = served.tool_calls(&refused_run).await;
+    let last = calls.last().expect("call");
+    assert_eq!(last.1, "rejected", "{calls:?}");
+    assert_eq!(last.2["code"], "VALIDATION_SCHEMA", "{calls:?}");
+    assert_eq!(memories(&served).await.len(), 1, "nothing was written");
+
+    served.finish().await;
+}
+
+#[tokio::test]
+async fn a_served_memory_proposal_without_a_memory_store_is_refused_and_writes_nothing() {
+    let Some(served) = serve("served_no_memory", false).await else {
+        return;
+    };
+    let claim = json!({ "subject_ref": USER, "content": "Likes tea." });
+    let args = json!({ "candidate_json": claim.to_string() });
+    let result = served.scripted(1, None, "memory.propose", &args).await;
+    let run_id = result["run_id"].as_str().expect("run").to_string();
+    let calls = served.tool_calls(&run_id).await;
+    assert_eq!(calls.len(), 1, "{calls:?}");
+    assert_eq!(calls[0].1, "rejected", "{calls:?}");
+    assert_eq!(calls[0].2["code"], "ROUTE_UNAVAILABLE", "{calls:?}");
+    assert!(memories(&served).await.is_empty());
     served.finish().await;
 }

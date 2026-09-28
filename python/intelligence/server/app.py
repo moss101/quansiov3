@@ -32,6 +32,7 @@ from quansio.v1.intelligence import service_pb2, service_pb2_grpc
 from intelligence.embeddings import INDEX_DIMENSIONS
 from intelligence.embeddings.gateway_provider import gateway_embedder
 from intelligence.embeddings.provider import EmbeddingError, EmbeddingProvider
+from intelligence.memory.sink import memory_sink
 from intelligence.model_gateway import ModelGateway
 from intelligence.server.servicer import (
     IMPLEMENTED_METHODS,
@@ -88,7 +89,7 @@ def _default_servicer() -> IntelligenceGatewayServicer:
                 sort_keys=True,
             )
         )
-    return IntelligenceGatewayServicer(gateway=gateway, embedder=embedder)
+    return IntelligenceGatewayServicer(gateway=gateway, embedder=embedder, memories=memory_sink())
 
 
 class Transport(StrEnum):
