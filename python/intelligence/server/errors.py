@@ -36,6 +36,8 @@ class ErrorCode(StrEnum):
     PROVIDER_UNAVAILABLE = "PROVIDER_UNAVAILABLE"
     PROVIDER_RATE_LIMITED = "PROVIDER_RATE_LIMITED"
     PROVIDER_REFUSAL = "PROVIDER_REFUSAL"
+    # Authority family: the semantic verifier refuses to judge when independence is unprovable.
+    POLICY_DENIED = "POLICY_DENIED"
 
 
 _GRPC_STATUS_BY_CODE: dict[ErrorCode, grpc.StatusCode] = {
@@ -51,6 +53,7 @@ _GRPC_STATUS_BY_CODE: dict[ErrorCode, grpc.StatusCode] = {
     ErrorCode.PROVIDER_UNAVAILABLE: grpc.StatusCode.UNAVAILABLE,
     ErrorCode.PROVIDER_RATE_LIMITED: grpc.StatusCode.UNAVAILABLE,
     ErrorCode.PROVIDER_REFUSAL: grpc.StatusCode.FAILED_PRECONDITION,
+    ErrorCode.POLICY_DENIED: grpc.StatusCode.PERMISSION_DENIED,
 }
 
 

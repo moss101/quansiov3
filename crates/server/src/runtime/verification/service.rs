@@ -25,6 +25,10 @@ use crate::runtime::state_machine::{
 /// What an independent semantic verifier is asked to judge.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SemanticVerificationRequest {
+    /// Tenant the run belongs to.
+    pub tenant_id: String,
+    /// Workspace the run executes in.
+    pub workspace_id: String,
     /// Run the claim belongs to.
     pub run_id: String,
     /// WorkNode the completion is claimed for.
@@ -37,12 +41,10 @@ pub struct SemanticVerificationRequest {
     pub independent_model: bool,
     /// Evidence the claimant cites.
     pub evidence_ids: Vec<String>,
-    /// The model that produced the claim, when the runtime knows its route.
+    /// The model that produced the claim: the model of the run's latest recorded model call.
     ///
-    /// The route belongs to the gateway (INT-002/INT-003). Until the run records it, a contract
-    /// that requires `independent_model` is refused rather than verified by the claimant's own
-    /// model; the verifier treats an unnamed claimant as unprovable independence, never as
-    /// agreement.
+    /// A run with no recorded call (a conformance source) names none; the verifier treats an
+    /// unnamed claimant as unprovable independence, never as agreement.
     pub claimant_model: Option<String>,
 }
 
@@ -71,8 +73,8 @@ pub trait SemanticVerifierPort: Send + Sync {
     ) -> Result<SemanticVerdict, VerificationError>;
 }
 
-/// The default verifier: the gateway-backed one belongs to [`super::SEMANTIC_VERIFIER_OWNER`],
-/// so a contract that requires it fails closed instead of self-certifying.
+/// The verifier of a deployment without the intelligence plane: a contract that requires
+/// semantic verification fails closed instead of self-certifying.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct UnavailableSemanticVerifier;
 
@@ -82,9 +84,11 @@ impl SemanticVerifierPort for UnavailableSemanticVerifier {
         &self,
         _request: SemanticVerificationRequest,
     ) -> Result<SemanticVerdict, VerificationError> {
-        Err(VerificationError::UnknownPredicate {
-            expr: format!(
-                "semantic verification (owned by {})",
+        Err(VerificationError::SemanticRefused {
+            code: "PROVIDER_UNAVAILABLE",
+            detail: format!(
+                "semantic verification ({}) is unavailable: no intelligence plane is composed \
+                 (QUANSIO_INTELLIGENCE_ENDPOINT)",
                 super::SEMANTIC_VERIFIER_OWNER
             ),
         })
@@ -150,6 +154,33 @@ impl ContractVerifier {
         tx.commit().await?;
         Ok(contract)
     }
+}
+
+/// Whether a run executing `work_node_id` may be offered `work.complete` (DOMAIN.md §5.6): only
+/// when the WorkNode's CompletionContract is readable and certifies something. A plain
+/// conversation's WorkNode binds nothing, so its runs are never offered the claim.
+///
+/// # Errors
+/// Returns a database error.
+pub async fn offers_completion(
+    pool: &sqlx::PgPool,
+    tenant_id: &str,
+    work_node_id: &str,
+) -> Result<bool, RuntimeError> {
+    let mut tx = pool.begin().await?;
+    schema::set_tenant_context(&mut tx, tenant_id).await?;
+    let contract: Option<Value> = sqlx::query_scalar(
+        "SELECT completion_contract FROM work_nodes WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(work_node_id)
+    .bind(tenant_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    Ok(contract
+        .as_ref()
+        .and_then(|raw| CompletionContract::parse(raw).ok())
+        .is_some_and(|contract| !contract.binds_nothing()))
 }
 
 /// Render check failures as actionable feedback.
@@ -244,16 +275,19 @@ impl VerificationPort for ContractVerifier {
         // Optional independent semantic verification: a disagreement, or a verifier that cannot
         // answer, keeps the work incomplete.
         if contract.semantic_verification.required {
+            let claimant_model = crate::runtime::turn_loop::ModelCallLedger::new(self.pool.clone())
+                .claimant_model(&tenant_id, &run.id.to_string())
+                .await?;
             let request = SemanticVerificationRequest {
+                tenant_id: tenant_id.clone(),
+                workspace_id: run.workspace_id.clone(),
                 run_id: run.id.to_string(),
                 work_node_id: run.work_node_id.to_string(),
                 claim_summary: claim.summary.clone(),
                 rubric_id: contract.semantic_verification.rubric_id.clone(),
                 independent_model: contract.semantic_verification.independent_model,
                 evidence_ids: claim.evidence_ids.clone(),
-                // The run does not record its model route yet (INT-002/INT-003 own it), so a
-                // contract demanding an independent model is refused rather than self-certified.
-                claimant_model: None,
+                claimant_model,
             };
             match self.semantic.verify(request).await {
                 Ok(verdict) if verdict.agrees => {}
@@ -268,8 +302,8 @@ impl VerificationPort for ContractVerifier {
                 Err(error) => {
                     return Ok(VerificationOutcome::Rejected {
                         feedback: format!(
-                            "the contract requires independent semantic verification, which is \
-                             unavailable ({}): {error}",
+                            "the contract requires independent semantic verification, which gave \
+                             no verdict ({}): {error}",
                             error.code()
                         ),
                     })

@@ -31,17 +31,18 @@ pub use engine::{RecoveryOutcome, RuntimeEngine};
 pub use state::{AttemptStatus, RunStatus, RunTriggerKind, StepKind, StepStatus, TurnStatus};
 pub use store::{
     Attempt, Budget, CancellationWon, NewRun, NewStep, Run, RuntimeStore, Step, Turn, TurnInput,
-    WaitResolution, DEFAULT_MAX_STEPS,
+    WaitResolution, DEFAULT_MAX_STEPS, DEFAULT_MAX_VERIFICATION_ROUNDS,
 };
 pub use turn_loop::{
-    BudgetPort, CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort,
-    DelegationRequest, LiveFramePort, ModelCallRequest, ModelProposal, ModelProposalSource,
-    ModelUsage, NoBudgets, ProposedQuestion, ProposedToolCall, QuestionContext, QuestionOutcome,
-    QuestionPort, TextSink, ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest,
-    TurnOutcome, UnavailableDelegation, UnavailableModelProposalSource, UnavailableQuestions,
-    UnavailableToolDispatch, UnavailableVerification, VerificationContext, VerificationOutcome,
-    VerificationPort, DELEGATION_OWNER, MEMORY_OWNER, MODEL_GATEWAY_OWNER, PLAN_VALIDATION_OWNER,
-    QUESTION_OWNER, TOOL_DISPATCH_OWNER, VERIFICATION_OWNER,
+    BudgetPort, ClaimVerdict, CompletionClaim, DelegationContext, DelegationOutcome,
+    DelegationPort, DelegationRequest, LiveFramePort, ModelCallRequest, ModelProposal,
+    ModelProposalSource, ModelUsage, NoBudgets, ProposedQuestion, ProposedToolCall,
+    QuestionContext, QuestionOutcome, QuestionPort, TextSink, ToolDispatchOutcome,
+    ToolDispatchPort, ToolDispatchRequest, TurnOutcome, UnavailableDelegation,
+    UnavailableModelProposalSource, UnavailableQuestions, UnavailableToolDispatch,
+    UnavailableVerification, VerificationContext, VerificationOutcome, VerificationPort,
+    DELEGATION_OWNER, MEMORY_OWNER, MODEL_GATEWAY_OWNER, PLAN_VALIDATION_OWNER, QUESTION_OWNER,
+    TOOL_DISPATCH_OWNER, VERIFICATION_OWNER,
 };
 
 /// Identity and replay-safety metadata stamped on every RuntimeEvent a runtime mutation

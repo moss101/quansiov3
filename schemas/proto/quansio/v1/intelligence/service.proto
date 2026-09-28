@@ -124,6 +124,30 @@ message SkillCandidatesResponse {
   repeated string candidates_json = 1;
 }
 
+// Served by python/intelligence. Rust is the only caller.
+// Independent semantic verification of a completion claim (RUN-008, DOMAIN.md §4.4): the plane
+// asks a model that is not the claimant and returns its verdict. A refusal (malformed verdict,
+// unavailable model, unprovable independence) is a typed error, never a verdict.
+message CompletionVerificationRequest {
+  string schema_version = 100;
+  ScopeContext scope = 1;
+  string run_id = 2;
+  string work_node_id = 3;
+  string claim_summary = 4;
+  string rubric_id = 5;  // empty when the contract names none
+  repeated string evidence_ids = 6;
+  bool independent_model = 7;
+  string claimant_model = 8;  // the model of the run's latest call; empty when unknown
+  uint32 max_output_tokens = 9;
+}
+
+message CompletionVerdict {
+  string schema_version = 100;
+  bool agrees = 1;
+  string critique = 2;
+  string model = 3;  // the catalog model id that judged
+}
+
 service IntelligenceGateway {
   rpc FulfillModel(ModelCallRequest) returns (stream ModelEvent);
   rpc BuildContext(ContextBuildRequest) returns (ContextProjection);
@@ -133,4 +157,5 @@ service IntelligenceGateway {
   rpc ClassifyTrust(TrustClassifyRequest) returns (TrustClassifyResponse);
   rpc Evaluate(EvaluationRequest) returns (EvaluationReport);
   rpc ProposeSkillCandidates(SkillCandidatesRequest) returns (SkillCandidatesResponse);
+  rpc VerifyCompletion(CompletionVerificationRequest) returns (CompletionVerdict);
 }

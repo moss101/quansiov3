@@ -34,7 +34,8 @@
       "properties": {
         "strategy": { "const": "deterministic" },
         "primary": { "type": "string" },
-        "fallback_order": { "type": "array", "items": { "type": "string" } }
+        "fallback_order": { "type": "array", "items": { "type": "string" } },
+        "verification": { "type": "string", "description": "The model that judges completion claims (RUN-008); routing.primary when absent." }
       }
     },
     "models": {

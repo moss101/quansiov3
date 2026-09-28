@@ -42,8 +42,9 @@ use crate::runtime::state_machine::{
     RuntimeError, RuntimeIdentity, TextSink,
 };
 use crate::runtime::turn_loop::{
-    ModelCallLedger, ProjectionProvider, RecordedCall, StoredProjectionProvider,
+    ModelCallLedger, ProjectionProvider, RecordedCall, StoredProjectionProvider, COMPLETION_TOOL,
 };
+use crate::runtime::verification::offers_completion;
 
 const INTELLIGENCE_YAML: &str = include_str!("../../../../config/intelligence.yaml");
 
@@ -178,6 +179,7 @@ async fn skill_candidates(pool: &PgPool, tenant_id: &str) -> Result<Vec<Value>, 
 /// The run facts one call needs.
 struct RunFacts {
     workspace_id: String,
+    work_node_id: String,
     agent_thread_id: String,
     trigger_ref: Option<String>,
 }
@@ -304,7 +306,7 @@ impl GatewayModelSource {
             .as_ref()
             .map(|projection| projection.id.to_string())
             .unwrap_or_default();
-        let tools: Vec<String> = projection
+        let mut tools: Vec<String> = projection
             .as_ref()
             .map(|projection| {
                 ToolRegistry::builtin()
@@ -314,6 +316,13 @@ impl GatewayModelSource {
                     .collect()
             })
             .unwrap_or_default();
+        // The runtime narrows further: a run whose WorkNode certifies nothing (a plain
+        // conversation) is never offered a completion claim (DOMAIN.md §5.6).
+        if tools.iter().any(|tool| tool == COMPLETION_TOOL)
+            && !offers_completion(&self.pool, &request.tenant_id, &run.work_node_id).await?
+        {
+            tools.retain(|tool| tool != COMPLETION_TOOL);
+        }
         let mut granted_effect_classes: Vec<String> = projection
             .as_ref()
             .map(|projection| {
@@ -475,7 +484,7 @@ impl GatewayModelSource {
         let mut tx = self.pool.begin().await?;
         schema::set_tenant_context(&mut tx, &request.tenant_id).await?;
         let row = sqlx::query(
-            "SELECT workspace_id, agent_thread_id, trigger_ref FROM runs \
+            "SELECT workspace_id, work_node_id, agent_thread_id, trigger_ref FROM runs \
              WHERE tenant_id = $1 AND id = $2",
         )
         .bind(&request.tenant_id)
@@ -490,6 +499,7 @@ impl GatewayModelSource {
         })?;
         Ok(RunFacts {
             workspace_id: row.try_get("workspace_id")?,
+            work_node_id: row.try_get("work_node_id")?,
             agent_thread_id: row.try_get("agent_thread_id")?,
             trigger_ref: row.try_get("trigger_ref")?,
         })

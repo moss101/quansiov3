@@ -53,8 +53,18 @@ SCENARIOS: frozenset[str] = frozenset(
         # Embedding scenarios (INT-011): the request class the index embeds through.
         "embedding_width_mismatch",
         "embedding_malformed",
+        # Semantic verifier verdicts (RUN-008): the text is a strict verdict.
+        "verdict_agree",
+        "verdict_disagree",
     }
 )
+
+#: The two text deltas a text answer streams, by scenario; every other scenario says hello.
+_TEXT_CHUNKS: dict[str, tuple[str, str]] = {
+    "verdict_agree": ('{"agrees": true, ', '"critique": "the cited evidence shows the work done"}'),
+    "verdict_disagree": ('{"agrees": false, ', '"critique": "the evidence does not show the report"}'),
+}
+_HELLO = ("Hello ", "world")
 
 _ANTHROPIC_PATH = "/v1/messages"
 _OPENAI_PATH = "/v1/chat/completions"
@@ -402,7 +412,7 @@ class _StubHandler(BaseHTTPRequestHandler):
                     {
                         "type": "content_block_delta",
                         "index": index,
-                        "delta": {"type": "text_delta", "text": "Hello "},
+                        "delta": {"type": "text_delta", "text": _TEXT_CHUNKS.get(scenario, _HELLO)[0]},
                     },
                 ),
                 _event(
@@ -410,7 +420,7 @@ class _StubHandler(BaseHTTPRequestHandler):
                     {
                         "type": "content_block_delta",
                         "index": index,
-                        "delta": {"type": "text_delta", "text": "world"},
+                        "delta": {"type": "text_delta", "text": _TEXT_CHUNKS.get(scenario, _HELLO)[1]},
                     },
                 ),
                 _event("content_block_stop", {"type": "content_block_stop", "index": index}),
@@ -519,7 +529,7 @@ class _StubHandler(BaseHTTPRequestHandler):
         elif scenario == "refusal":
             events.append(_data(_openai_chunk(model, {"refusal": "I cannot help with that."})))
         else:
-            events += _openai_head(model)
+            events += _openai_head(model, scenario)
         if scenario == "no_stop":
             events.append(_data(_openai_chunk(model, {})))
             events.append("data: [DONE]\n\n")
@@ -617,10 +627,11 @@ def _anthropic_tail(stop_reason: str, *, repeat_usage: bool = False) -> list[str
     return events
 
 
-def _openai_head(model: str) -> list[str]:
+def _openai_head(model: str, scenario: str = "text") -> list[str]:
+    first, second = _TEXT_CHUNKS.get(scenario, _HELLO)
     return [
-        _data(_openai_chunk(model, {"role": "assistant", "content": "Hello "})),
-        _data(_openai_chunk(model, {"content": "world"})),
+        _data(_openai_chunk(model, {"role": "assistant", "content": first})),
+        _data(_openai_chunk(model, {"content": second})),
     ]
 
 

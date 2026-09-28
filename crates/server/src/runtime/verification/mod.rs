@@ -19,15 +19,17 @@
 
 pub mod checks;
 pub mod contract;
+pub mod semantic;
 pub mod service;
 
 use thiserror::Error;
 
 pub use checks::{effects_settled_verdict, run_check, CheckResult, CheckScope};
 pub use contract::{CompletionContract, DeterministicCheck, SemanticVerification};
+pub use semantic::{GatewaySemanticVerifier, SemanticVerificationSettings};
 pub use service::{
-    ContractVerifier, SemanticVerdict, SemanticVerificationRequest, SemanticVerifierPort,
-    UnavailableSemanticVerifier,
+    offers_completion, ContractVerifier, SemanticVerdict, SemanticVerificationRequest,
+    SemanticVerifierPort, UnavailableSemanticVerifier,
 };
 
 /// Repository path of this module's canonical owner.
@@ -39,8 +41,9 @@ pub const COMMAND_CHECK_OWNER: &str = "EXEC-006";
 pub const CITATION_CHECK_OWNER: &str = "CAP-002";
 /// The task that owns the typed predicate registry `assertion` names.
 pub const PREDICATE_OWNER: &str = "RUN-008";
-/// The task that owns the gateway-backed independent semantic verifier.
-pub const SEMANTIC_VERIFIER_OWNER: &str = "INT-002";
+/// The task that owns the gateway-backed independent semantic verifier: its seam and its RPC
+/// are RUN-008's; a deployment without the intelligence plane runs without it.
+pub const SEMANTIC_VERIFIER_OWNER: &str = "RUN-008";
 
 /// A verification refusal.
 #[derive(Debug, Error)]
@@ -71,6 +74,15 @@ pub enum VerificationError {
         /// Predicate id from the contract.
         expr: String,
     },
+    /// The independent semantic verifier refused to produce a verdict (the plane's typed
+    /// refusal: a malformed verdict, an unavailable model, unprovable independence).
+    #[error("the semantic verifier refused ({code}): {detail}")]
+    SemanticRefused {
+        /// The DOMAIN.md §15 code the plane answered with.
+        code: &'static str,
+        /// What the plane said.
+        detail: String,
+    },
     /// A database failure.
     #[error(transparent)]
     Database(#[from] sqlx::Error),
@@ -85,6 +97,7 @@ impl VerificationError {
             | Self::UnknownCheck { .. }
             | Self::UnknownPredicate { .. } => "VALIDATION_SCHEMA",
             Self::NotFound { .. } => "NOT_FOUND",
+            Self::SemanticRefused { code, .. } => code,
             Self::Database(_) => "INTERNAL",
         }
     }

@@ -15,6 +15,10 @@ A deterministic tool round for the walking skeleton (APP-001), on the streaming 
     with that tool call (finish_reason `tool_calls`);
   * a conversation that ends in tool results is answered with text that counts them.
 
+A deterministic semantic verdict (RUN-008): a conversation whose last user turn carries
+`[[stub:verdict agree]]` or `[[stub:verdict disagree]]` (and scripts no tool call) is answered
+with that strict verdict JSON, so the plane's independent verifier can be driven offline.
+
 Responses are a pure function of the request body (no clock, no randomness, no
 network), so repeated calls are byte-identical. This is dev infrastructure, not
 a model gateway: the real provider path is python/intelligence/model_gateway.
@@ -29,6 +33,11 @@ from typing import Any
 
 STUB_MODEL = "local-stub-instruct"
 STUB_CALL = re.compile(r"\[\[stub:call ([A-Za-z0-9_-]+) (\{.*?\})\]\]", re.DOTALL)
+STUB_VERDICT = re.compile(r"\[\[stub:verdict (agree|disagree)\]\]")
+VERDICTS = {
+    "agree": '{"agrees": true, "critique": "stub verdict: the claim is supported"}',
+    "disagree": '{"agrees": false, "critique": "stub verdict: the claim is not supported"}',
+}
 
 
 def completion(body: dict[str, Any]) -> dict[str, Any]:
@@ -83,6 +92,15 @@ def scripted_call(body: dict[str, Any]) -> tuple[str, str] | None:
     return match.group(1), match.group(2)
 
 
+def scripted_verdict(body: dict[str, Any]) -> str | None:
+    """The verdict a `[[stub:verdict ...]]` last user turn scripts."""
+    messages = [m for m in body.get("messages") or [] if isinstance(m, dict)]
+    if not messages or messages[-1].get("role") != "user":
+        return None
+    match = STUB_VERDICT.search(_text(messages[-1].get("content")))
+    return VERDICTS[match.group(1)] if match else None
+
+
 def trailing_tool_results(body: dict[str, Any]) -> int:
     count = 0
     for message in reversed([m for m in body.get("messages") or [] if isinstance(m, dict)]):
@@ -96,8 +114,11 @@ def completion_stream(body: dict[str, Any]) -> bytes:
     """The completion as the OpenAI streaming wire: role, content deltas, stop, usage, done."""
     whole = completion(body)
     results = trailing_tool_results(body)
+    verdict = scripted_verdict(body)
     if results:
         whole["choices"][0]["message"]["content"] = f"stub completion: {results} tool result(s) received"
+    elif verdict is not None:
+        whole["choices"][0]["message"]["content"] = verdict
     text = whole["choices"][0]["message"]["content"]
     head, _, tail = text.partition(": ")
     frame = {"id": whole["id"], "object": "chat.completion.chunk", "model": whole["model"]}
@@ -175,7 +196,8 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> None:
     port = int(os.environ.get("QUANSIO_STUB_PROVIDER_PORT", "59020"))
-    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    host = os.environ.get("QUANSIO_STUB_PROVIDER_HOST", "0.0.0.0")
+    server = ThreadingHTTPServer((host, port), Handler)
     print(f"stub-provider: listening on :{port}", flush=True)
     server.serve_forever()
 
