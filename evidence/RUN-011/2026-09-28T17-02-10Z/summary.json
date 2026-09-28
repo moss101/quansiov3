@@ -1,0 +1,69 @@
+{
+  "task_id": "RUN-011",
+  "git_commit": "010570f8ae6f45e0ca171cc40e5ad9b5d0947677",
+  "recorded_at": "2026-09-28T17:02:10Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test completion_claims",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-28T17-02-10Z/command-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test verification --test verification_contract_checks --test turn_loop --test turn_loop_internal_tools",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-28T17-02-10Z/command-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test --workspace --no-fail-fast # 906 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-28T17-02-10Z/command-3.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test completion_claims",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test verification --test verification_contract_checks --test turn_loop --test turn_loop_internal_tools",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test --workspace --no-fail-fast # 906 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "config/tools.yaml",
+      "sha256": "df87a509bf683cc1ce8317a5166a4f89551559a8f09c72bcaf553241cd71885b",
+      "bytes": 28563
+    },
+    {
+      "path": "crates/server/src/runtime/turn_loop/dispatch.rs",
+      "sha256": "947a0301833ffda0270664180f8d7e8f8e74f1766109388c3827c55292003a2b",
+      "bytes": 74095
+    },
+    {
+      "path": "crates/server/src/runtime/turn_loop/parallel.rs",
+      "sha256": "b53a0e0dfcb90b0ff25e14fc48f772f13933c6b5c0921404dbb896dcc3fc0129",
+      "bytes": 8153
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/engine.rs",
+      "sha256": "42dd40d3b2e98b41dab8270cd2c8c04815a592a6a855aead6696f5c944da0532",
+      "bytes": 58143
+    },
+    {
+      "path": "evidence/RUN-011/2026-09-28T17-02-10Z/NOTES.md",
+      "sha256": "6b91281b32581c17d658c41f337071a73b5619dbf0944c2bd06476f73ce6a54f",
+      "bytes": 896
+    }
+  ]
+}
