@@ -1213,7 +1213,11 @@ pub(super) fn chat_engine(
         state.roles(),
         state.host(),
         Arc::clone(&delegation),
-    )?;
+    )?
+    .with_plan_port(Arc::new(crate::runtime::planning::RunPlanApplication::new(
+        state.pool().clone(),
+        identity.clone(),
+    )?));
     let questions = QuestionService::new(state.pool().clone(), identity.clone())?;
     let live: Arc<dyn crate::runtime::state_machine::LiveFramePort> = state.live().clone();
     let budgets =

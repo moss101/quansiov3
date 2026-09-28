@@ -19,6 +19,7 @@
 pub mod gateway;
 pub mod port;
 pub mod store;
+pub mod work;
 
 use thiserror::Error;
 
