@@ -11,6 +11,7 @@ way the runtime reaches the intelligence plane: a separate process, over gRPC.
 With `QUANSIO_INTELLIGENCE_ENDPOINT` set, turns are answered through it
 (`GatewayModelSource`); unset, by the conformance stub, and startup says so.
 With `QUANSIO_NATS_URL` set, `OutboxRelay` publishes the outbox to NATS JetStream.
+`QUANSIO_SECRETS_KMS_KEY_ID` seals secret handles under AWS KMS (`src/kms.rs`).
 
 Build: `cargo test -p quansio-server`
 

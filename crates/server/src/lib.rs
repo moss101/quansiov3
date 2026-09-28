@@ -21,6 +21,7 @@ pub mod composition;
 pub mod control;
 pub mod effects;
 pub mod intelligence;
+pub mod kms;
 pub mod notify;
 pub mod observability;
 pub mod policy;
