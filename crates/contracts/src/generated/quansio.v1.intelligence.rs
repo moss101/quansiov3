@@ -1112,6 +1112,10 @@ pub struct MemoryCandidate {
     pub provenance_ref: ::prost::alloc::string::String,
     #[prost(double, tag = "6")]
     pub confidence: f64,
+    /// Where the proposer asks the memory to live (user|workspace|teammate); the owner resolves
+    /// it against the call's workspace and refuses a hint it cannot satisfy.
+    #[prost(string, tag = "7")]
+    pub scope_hint: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProposalAck {

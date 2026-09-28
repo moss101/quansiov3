@@ -14,6 +14,7 @@
 //! Python only proposes: every method here returns a proposal or a classification for the Rust
 //! runtime to act on; none commits state.
 
+pub mod memory;
 pub mod model_source;
 
 use std::time::Duration;
@@ -24,8 +25,8 @@ use serde_json::json;
 use crate::observability::{metrics, Span, TRACEPARENT};
 use quansio_contracts::generated::intelligence::intelligence_gateway_client::IntelligenceGatewayClient;
 use quansio_contracts::generated::intelligence::{
-    ContextBuildRequest, ContextProjection, ModelCallRequest, ModelEvent, ScopeContext,
-    SkillCandidatesRequest, TrustClassifyRequest, TrustClassifyResponse,
+    ContextBuildRequest, ContextProjection, MemoryCandidate, ModelCallRequest, ModelEvent,
+    ProposalAck, ScopeContext, SkillCandidatesRequest, TrustClassifyRequest, TrustClassifyResponse,
 };
 use tonic::metadata::MetadataValue;
 use tonic::transport::{Channel, Endpoint, Uri};
@@ -257,6 +258,32 @@ impl IntelligenceClient {
             Ok(Ok(response)) => Ok(response.into_inner()),
         };
         finish(span, "BuildContext", &result);
+        result
+    }
+
+    /// `ProposeMemory` (INT-007): offer one candidate to the gated memory owner, which
+    /// decides its identity, scope and whether anything is stored (always as a `candidate`).
+    ///
+    /// # Errors
+    /// The owner's typed refusal (`ROUTE_UNAVAILABLE` when the process has no memory store),
+    /// or an unreachable or late gateway.
+    pub async fn propose_memory(
+        &mut self,
+        scope: &CallScope,
+        mut candidate: MemoryCandidate,
+    ) -> Result<ProposalAck, IntelligenceError> {
+        candidate.schema_version = SCHEMA_VERSION.to_string();
+        candidate.scope = Some(scope.context());
+        let span = rpc_span("ProposeMemory", scope);
+        let call = self
+            .inner
+            .propose_memory(Self::request(scope, candidate, &span));
+        let result = match tokio::time::timeout(scope.deadline, call).await {
+            Err(_) => Err(IntelligenceError::DeadlineExceeded),
+            Ok(Err(status)) => Err(refused(&status)),
+            Ok(Ok(response)) => Ok(response.into_inner()),
+        };
+        finish(span, "ProposeMemory", &result);
         result
     }
 
