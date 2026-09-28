@@ -27,7 +27,6 @@ KNOWN_GAPS: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("NOT_COMPOSED", "VerificationPort"): ("RUN-008", "ContractVerifier is never installed; a completion claim cannot be verified"),
     ("UNCOMPOSED", "ContractVerifier"): ("RUN-008", "as above"),
     ("DEFAULT_ONLY", "SemanticVerifierPort"): ("RUN-008", "the Python semantic verifier has no RPC or Rust port"),
-    ("DEFAULT_ONLY", "PlanApplicationPort"): ("RUN-003", "work.propose_plan reaches only the unavailable port"),
     ("DEFAULT_ONLY", "MemoryProposalPort"): ("INT-007", "memory.propose reaches only the unavailable port"),
     ("NOT_COMPOSED", "WorkGraphPort"): ("RUN-004", "GraphWorkGraph is never constructed"),
     ("UNCOMPOSED", "GraphWorkGraph"): ("RUN-004", "as above"),
