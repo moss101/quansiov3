@@ -1,0 +1,101 @@
+{
+  "task_id": "CORE-009",
+  "git_commit": "3f203f596ad0e6895714a52af4fbe886ea969b51",
+  "recorded_at": "2026-09-28T16:36:17Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-28T16-36-17Z/command-1.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-events -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-28T16-36-17Z/command-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-events",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-28T16-36-17Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test background_composition   # served Background pass as quansio_app",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-28T16-36-17Z/command-4.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-28T16-36-17Z/command-5.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-events -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-events",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test background_composition   # served Background pass as quansio_app",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/events/src/projection.rs",
+      "sha256": "0c8662da6b31770aba78a4131f675460e2ab94e63f61549dc1403c6793ea7b0f",
+      "bytes": 23798
+    },
+    {
+      "path": "crates/server/tests/background_composition.rs",
+      "sha256": "5537199eddf98ee179d1b17ca72fa00fa335c55afeab510c97a5e01a5ff15802",
+      "bytes": 11549
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-28T16-36-17Z/command-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-28T16-36-17Z/command-2.log",
+      "sha256": "df1ae643a19188935c9f316ab62b3ce86038edd470f14e75509446a8b9e99dfa",
+      "bytes": 712
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-28T16-36-17Z/command-3.log",
+      "sha256": "2c6b9a37989001268bc9aaee09cd75d104e1574641dd6c7d1c205b0ff05f8851",
+      "bytes": 3785
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-28T16-36-17Z/command-4.log",
+      "sha256": "50e49051ecc51af8c88192e9fdbb23892c602b7e8adbcc30892e754bd6890a5a",
+      "bytes": 1059
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-28T16-36-17Z/command-5.log",
+      "sha256": "d69d27eaa15c6032e7c0387b420b0098cf81ca62c2c8d528a3b3973148dc1006",
+      "bytes": 181
+    }
+  ]
+}
