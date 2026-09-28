@@ -1,0 +1,132 @@
+{
+  "task_id": "OPS-004",
+  "git_commit": "da3f2d377c14d6f8c7351ee51653602857c92e6e",
+  "recorded_at": "2026-09-28T16:09:35Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-28T16-09-35Z/command-1.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-28T16-09-35Z/command-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test budgets_enforced --test usage --test usage_store --test budgets --test budget_service_paths",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-28T16-09-35Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test turn_loop --test turn_loop_internal_tools --test runtime_state_machine --test state_machine_engine",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-28T16-09-35Z/command-4.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test api --test walking_skeleton --test walking_skeleton_gateway   # the served composition",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-28T16-09-35Z/command-5.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-004/2026-09-28T16-09-35Z/command-6.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test budgets_enforced --test usage --test usage_store --test budgets --test budget_service_paths",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test turn_loop --test turn_loop_internal_tools --test runtime_state_machine --test state_machine_engine",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test api --test walking_skeleton --test walking_skeleton_gateway   # the served composition",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/usage/quota.rs",
+      "sha256": "5f5d080d92378ea75c5d7d7334ff03c1e89ef221f95c27a85a67c3191cfca8af",
+      "bytes": 6137
+    },
+    {
+      "path": "crates/server/src/runtime/budgets/enforce.rs",
+      "sha256": "18251235824b2d65210a32741abf841d4dcec4fa42a00ff73ec656bc9c731298",
+      "bytes": 5471
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/engine.rs",
+      "sha256": "b79f3b898de301b40c2cb1daefd80b807b32c6a24180fa3e48e504fff08ed4e9",
+      "bytes": 52452
+    },
+    {
+      "path": "crates/server/tests/budgets_enforced.rs",
+      "sha256": "f7dbf8bdc6ab833fc41593e11ec4f38098b825ffdb1e2129bede8d43b07a99ba",
+      "bytes": 16327
+    },
+    {
+      "path": "tests/architecture/test_qa002_composition.py",
+      "sha256": "7cdbeeea4d8295c69b01c83980a1e14112154e174a963fc618c5f8a19f44bf0d",
+      "bytes": 8743
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-28T16-09-35Z/command-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-28T16-09-35Z/command-2.log",
+      "sha256": "a16685927daa0790a2b357e2b56df170e7bad259186d3c802d6d441422dfd0cf",
+      "bytes": 72
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-28T16-09-35Z/command-3.log",
+      "sha256": "23bf3e469740caee79abc2e8cf98398bc07328ab1c44e047e966091a1b7d0c78",
+      "bytes": 2204
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-28T16-09-35Z/command-4.log",
+      "sha256": "8023715a38dccfd6ccfc3def42a30c07ae729df3394ac7acc84516f7463d13d8",
+      "bytes": 5480
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-28T16-09-35Z/command-5.log",
+      "sha256": "a3cc076621480314c7f3727aa9900a046874f4a6a1d0944e1557fe6cb643c6bd",
+      "bytes": 2339
+    },
+    {
+      "path": "evidence/OPS-004/2026-09-28T16-09-35Z/command-6.log",
+      "sha256": "1c02605cbd06464366a64ec99ee036b1d3925882c002e4566a06c7b940740e2d",
+      "bytes": 181
+    }
+  ]
+}

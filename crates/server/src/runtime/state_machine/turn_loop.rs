@@ -156,6 +156,17 @@ pub trait BudgetPort: Send + Sync {
         run: &Run,
         usage: &crate::runtime::budgets::MeterUsage,
     ) -> Result<(), RuntimeError>;
+
+    /// How many of `requested` units of `meter` the hard quota admits for `run` now (OPS-004):
+    /// the runtime reserves no effect for a unit beyond it. Without a limit on `meter`, all.
+    async fn admit(
+        &self,
+        _run: &Run,
+        _meter: crate::runtime::budgets::Meter,
+        requested: u64,
+    ) -> Result<u64, RuntimeError> {
+        Ok(requested)
+    }
 }
 
 /// No budgets: a composition that grants none enforces none.

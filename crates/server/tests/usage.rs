@@ -190,7 +190,7 @@ fn quota_race_admits_at_most_one_winner() {
                 occurred_at: Utc.with_ymd_and_hms(2026, 9, 15, 8, 35, 0).unwrap(),
             };
             let mut guard = projection.lock().expect("lock");
-            admit_effect(&mut guard, &policy, delta, || {
+            admit_effect(&mut *guard, &policy, delta, || {
                 committed.lock().expect("c").push(worker);
                 Ok::<(), String>(())
             })
