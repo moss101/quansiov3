@@ -24,7 +24,6 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: (kind, name) -> (owning task, what is missing). Found by QA-001/QA-002, 2026-09-27.
 KNOWN_GAPS: Dict[Tuple[str, str], Tuple[str, str]] = {
-    ("UNCOMPOSED", "KmsKeyProvider"): ("EXEC-007", "only the local master key provider is composed"),
     ("UNCOMPOSED", "ComputerDispatcher"): ("EXEC-010", "computer use has no composed dispatcher"),
     ("UNCOMPOSED", "WorkerHost"): ("EXEC-002", "qworkerd has no daemon that runs its host"),
 }

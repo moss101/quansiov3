@@ -1,0 +1,143 @@
+{
+  "task_id": "EXEC-007",
+  "git_commit": "2ca74ef87b5305a6fc924b80338a7859a3b4f55f",
+  "recorded_at": "2026-09-28T17:05:29Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-1.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server -p quansio-machine --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-2.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib kms",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-3.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test kms_key_provider -- --nocapture   # selection, KMS protocol conformance (local endpoint, not release evidence); the AWS KMS round trip reports BLOCKED_EXTERNAL without QUANSIO_TEST_AWS_KMS_*",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-4.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-machine secrets",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-5.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test api --test webhooks --test connector_broker   # the composed deployable and the key file path",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-6.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-7.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server -p quansio-machine --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib kms",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test kms_key_provider -- --nocapture   # selection, KMS protocol conformance (local endpoint, not release evidence); the AWS KMS round trip reports BLOCKED_EXTERNAL without QUANSIO_TEST_AWS_KMS_*",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-machine secrets",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test api --test webhooks --test connector_broker   # the composed deployable and the key file path",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/kms.rs",
+      "sha256": "b858e80568ea0e7dc9a38cbe19040787c6ed6335de1f0540695cf098797713a9",
+      "bytes": 11538
+    },
+    {
+      "path": "crates/server/src/composition.rs",
+      "sha256": "dd0e821078a339d60ae52e1b7e3e38ee3ea64f3def2514bfe5df16dd9ac19e00",
+      "bytes": 42116
+    },
+    {
+      "path": "crates/server/tests/kms_key_provider.rs",
+      "sha256": "cdcb672b1a7a4aa921d9bb1fa8af19d94ac8043954d580bd90d2490bf47a0ff7",
+      "bytes": 10932
+    },
+    {
+      "path": "tests/architecture/test_qa002_composition.py",
+      "sha256": "05c25ca6d6f95f7aa436f9050c33de6a5a9708901a9dd0f9410b3773195bb3a0",
+      "bytes": 7848
+    },
+    {
+      "path": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-2.log",
+      "sha256": "98c8e75b5fc5bfc057a393b2b2df6a0c6b3788c3dd7961b6c7e0d13ed19d78d7",
+      "bytes": 328
+    },
+    {
+      "path": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-3.log",
+      "sha256": "680fa11804f3ed528d0b73934a147a1cc833589b984c837c9ca0c9a03d7ff3bc",
+      "bytes": 478
+    },
+    {
+      "path": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-4.log",
+      "sha256": "c467315cf9bf1e1471fecf3c84ccb0b4337875918fba5c7de019047db70487e5",
+      "bytes": 757
+    },
+    {
+      "path": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-5.log",
+      "sha256": "bb613c9b5723bdb5c262245b413ae7bcf72f2ed16c2d464c12416ce0e934cc89",
+      "bytes": 3078
+    },
+    {
+      "path": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-6.log",
+      "sha256": "7752df9f215dfcce4937ea6fabd378c80b0621a72c59b41dfd0770299b541d55",
+      "bytes": 2698
+    },
+    {
+      "path": "evidence/EXEC-007/2026-09-28T17-05-29Z/command-7.log",
+      "sha256": "de00910b0580247e65c98d2591472652f11fe7a07b3ab969a06a1cbd4854f925",
+      "bytes": 181
+    }
+  ]
+}

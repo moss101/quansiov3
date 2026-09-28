@@ -44,6 +44,10 @@ pub struct ServerConfig {
     pub secrets_key_file: Option<String>,
     /// The key reference recorded on sealed secrets.
     pub secrets_key_ref: String,
+    /// `QUANSIO_SECRETS_KMS_KEY_ID` (with `QUANSIO_SECRETS_KMS_REGION` and the caller's AWS
+    /// credentials): seal secret handles under a cloud KMS key instead (DOSSIER.md §16, the
+    /// managed and private-cloud path). Exclusive with `QUANSIO_SECRETS_KEY_FILE`.
+    pub secrets_kms: Option<crate::kms::KmsConfig>,
     /// `QUANSIO_NATS_URL` (`nats://[user:password@]host:port`): the NATS JetStream server the
     /// transactional outbox publishes to (DOSSIER.md §4, D-005). Unset, events stay in the
     /// outbox unpublished — nothing is dropped — and startup says so.
@@ -113,6 +117,7 @@ impl ServerConfig {
         let nats_url = env::var("QUANSIO_NATS_URL")
             .ok()
             .filter(|value| !value.is_empty());
+        let secrets_kms = crate::kms::KmsConfig::from_env()?;
         let intelligence_endpoint = env::var("QUANSIO_INTELLIGENCE_ENDPOINT")
             .ok()
             .filter(|value| !value.is_empty());
@@ -121,6 +126,7 @@ impl ServerConfig {
             intelligence_endpoint,
             secrets_key_file,
             secrets_key_ref,
+            secrets_kms,
             database_url,
             migration_database_url,
             bind,
@@ -211,20 +217,12 @@ impl Composition {
             );
             api = api.with_search_index(Arc::new(index));
         }
-        if let Some(path) = config.secrets_key_file.as_deref() {
-            let keys = quansio_machine::secrets::LocalMasterKeyProvider::from_file(
-                std::path::Path::new(path),
-                config.secrets_key_ref.clone(),
-            )
-            .map_err(|error| format!("secret key provider: {error}"))?;
+        if let Some(keys) = key_provider(&config)? {
             crate::observability::notice(
                 crate::observability::Level::Info,
-                &format!(
-                    "QUANSIO_SECRETS_KEY_FILE: secret handles are sealed under {}",
-                    config.secrets_key_ref
-                ),
+                &format!("secret handles are sealed under {}", keys.key_ref()),
             );
-            api = api.with_key_provider(Arc::new(keys));
+            api = api.with_key_provider(keys);
         }
         if let Ok(token) = env::var("QUANSIO_METRICS_TOKEN") {
             if !token.is_empty() {
@@ -348,6 +346,38 @@ impl Composition {
         axum::serve(listener, self.router())
             .await
             .map_err(|error| format!("the server stopped: {error}"))
+    }
+}
+
+/// The key-encryption key provider secret handles are sealed under (EXEC-007, DOSSIER.md §16):
+/// a cloud KMS key when `QUANSIO_SECRETS_KMS_KEY_ID` is configured (managed and private
+/// cloud), the local master key file when `QUANSIO_SECRETS_KEY_FILE` is (dev and self-host),
+/// none otherwise — and never both, because secrets sealed under one would not open under the
+/// other.
+///
+/// # Errors
+/// Returns a message when both are configured or the key file cannot be read.
+pub fn key_provider(
+    config: &ServerConfig,
+) -> Result<Option<Arc<dyn quansio_machine::secrets::KeyProvider>>, String> {
+    match (&config.secrets_kms, config.secrets_key_file.as_deref()) {
+        (Some(_), Some(_)) => Err(
+            "QUANSIO_SECRETS_KMS_KEY_ID and QUANSIO_SECRETS_KEY_FILE are both set; choose one key provider"
+                .to_string(),
+        ),
+        (Some(kms), None) => Ok(Some(Arc::new(quansio_machine::secrets::KmsKeyProvider::new(
+            crate::kms::AwsKmsClient::new(kms.clone()),
+            kms.key_id.clone(),
+        )))),
+        (None, Some(path)) => {
+            let keys = quansio_machine::secrets::LocalMasterKeyProvider::from_file(
+                std::path::Path::new(path),
+                config.secrets_key_ref.clone(),
+            )
+            .map_err(|error| format!("secret key provider: {error}"))?;
+            Ok(Some(Arc::new(keys)))
+        }
+        (None, None) => Ok(None),
     }
 }
 

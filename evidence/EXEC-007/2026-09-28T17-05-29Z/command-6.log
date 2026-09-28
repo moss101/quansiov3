@@ -1,0 +1,48 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/competent-perlman-e724dc/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.56s
+     Running tests/api.rs (target/debug/deps/api-325a3e1ceeb9b10d)
+
+running 17 tests
+test the_error_vocabulary_is_the_one_the_catalog_generates ... ok
+test feature_flags_load_from_config_and_cannot_disable_escalation ... ok
+test every_code_maps_to_a_status_and_says_whether_a_retry_could_help ... ok
+test the_command_catalog_is_the_one_the_gate_checks ... ok
+test an_api_handler_reads_and_writes_only_its_own_table ... ok
+test generated_openapi_lists_every_catalog_command ... ok
+test every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction ... ok
+test the_deployable_composes_from_the_environment ... ok
+test a_call_without_a_usable_tenant_is_refused_with_the_right_code ... ok
+test a_mutating_call_calls_the_owner_and_a_resend_returns_its_result_once ... ok
+test a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal ... ok
+test a_command_scoped_to_another_tenant_does_not_touch_this_one ... ok
+test health_reports_readiness_and_the_catalogues_it_serves ... ok
+test a_resend_while_the_first_is_still_being_applied_is_told_to_come_back ... ok
+test a_tenant_over_the_rate_limit_is_rate_limited ... ok
+test two_tenants_may_send_the_same_command_id_and_each_replays_its_own ... ok
+test the_public_surface_works_as_the_application_role_under_rls ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.11s
+
+     Running tests/connector_broker.rs (target/debug/deps/connector_broker-270bc06f8298d667)
+
+running 5 tests
+test sandbox_boundary_is_reported_when_absent ... ok
+test raw_token_material_and_foreign_state_are_refused ... ok
+test begin_and_complete_auth_stores_a_handle_and_never_token_material ... ok
+test lifecycle_degrades_and_revocation_clears_the_handle ... ok
+test the_connector_lifecycle_works_as_the_application_role_under_rls ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.83s
+
+     Running tests/webhooks.rs (target/debug/deps/webhooks-4b4b116352873e08)
+
+running 6 tests
+test a_deployment_without_a_key_provider_refuses_to_create_a_webhook ... ok
+test deliveries_stay_in_their_tenant_and_workspace ... ok
+test payloads_never_carry_secrets_or_protected_data ... ok
+test destinations_obey_egress_policy_and_the_kill_switches ... ok
+test the_event_stream_is_also_served_as_server_sent_events ... ok
+test delivery_is_signed_at_least_once_and_retried_until_dead_lettered ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.38s
+
