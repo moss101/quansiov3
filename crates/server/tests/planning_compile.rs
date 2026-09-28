@@ -407,3 +407,32 @@ fn capability_needs_must_be_canonical_grants_that_narrow_the_proposer() {
     assert_eq!(error.code(), "INTERNAL");
     assert!(error.to_string().contains("not canonical"), "{error}");
 }
+
+/// `parent_of` runs parent -> child, the direction `work_nodes.parent_id` means (a parent
+/// waits on its children): restating an existing parent is no cycle, inverting it is.
+#[test]
+fn parent_of_and_parent_id_share_one_direction() {
+    let restated = proposal(json!({
+        "edges_add": [{ "id": "e_par", "from": OBJECTIVE, "to": TASK, "kind": "parent_of" }]
+    }));
+    compiled(&restated).expect("the objective already is the task's parent");
+
+    refused(
+        &proposal(json!({
+            "edges_add": [{ "id": "e_inv", "from": TASK, "to": OBJECTIVE, "kind": "parent_of" }]
+        })),
+        "VALIDATION_SCHEMA",
+        "cycle",
+    );
+    refused(
+        &proposal(json!({
+            "edges_add": [{ "id": "e_up", "from": TASK, "to": OBJECTIVE, "kind": "depends_on" }]
+        })),
+        "VALIDATION_SCHEMA",
+        "cycle",
+    );
+    compiled(&proposal(json!({
+        "edges_add": [{ "id": "e_down", "from": OBJECTIVE, "to": TASK, "kind": "depends_on" }]
+    })))
+    .expect("a parent may depend on its own child");
+}

@@ -681,7 +681,9 @@ impl GraphStore {
     /// Recursive reachability check over the acyclic relation structure.
     ///
     /// Rejects the proposed `from -> to` edge when `to` already reaches `from` through
-    /// existing `depends_on`/`parent_of` edges or through `work_nodes.parent_id`.
+    /// existing `depends_on`/`parent_of` edges or through `work_nodes.parent_id`. Every
+    /// relation runs from the node that waits to the node it waits on: dependent to
+    /// dependency, and parent to child for both `parent_of` and `parent_id`.
     async fn edge_would_cycle_tx(
         &self,
         tx: &mut Transaction<'static, Postgres>,
@@ -699,7 +701,7 @@ impl GraphStore {
                       WHERE e.tenant_id = $2 AND e.workspace_id = $3 \
                         AND e.kind IN ('depends_on', 'parent_of') \
                      UNION ALL \
-                     SELECT n.id AS node_id, n.parent_id AS next_id \
+                     SELECT n.parent_id AS node_id, n.id AS next_id \
                        FROM work_nodes n \
                       WHERE n.tenant_id = $2 AND n.workspace_id = $3 AND n.parent_id IS NOT NULL \
                  ) link JOIN reach r ON link.node_id = r.node_id \
