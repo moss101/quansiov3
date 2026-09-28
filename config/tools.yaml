@@ -633,7 +633,14 @@ tools:
 
   - name: work.propose_plan
     version: 1
-    description: Submit a PlanProposal for compilation; RUN-003 owns the proposal schema and validates it.
+    description: >-
+      Submit a PlanProposal against the WorkGraph shown in context; the runtime compiles,
+      validates and commits it (RUN-003). proposal_json is a JSON object with base_revision
+      (the graph revision you observed), rationale, and any of nodes_add ({id, kind, title,
+      parent_id?, completion_contract?}), nodes_update ({node_id, expected_revision, to}),
+      edges_add ({id, from_node_id, to_node_id, kind}) and edges_remove ({edge_id,
+      expected_revision}); edges name existing node ids. The run and workspace are fixed
+      by the runtime.
     host: server
     source_trust: untrusted_external
     effect_class: record.create
