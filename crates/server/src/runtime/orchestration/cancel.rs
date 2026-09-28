@@ -282,6 +282,45 @@ mod tests {
     }
 
     #[test]
+    fn only_a_top_most_cancellation_with_unsettled_work_is_pending() {
+        let graph = snapshot(
+            vec![
+                node("wn_root", status::CANCELLED, None, None),
+                node("wn_child", status::CANCELLED, Some("wn_root"), None),
+                node(
+                    "wn_leaf",
+                    status::IN_PROGRESS,
+                    Some("wn_child"),
+                    Some("RUNNING"),
+                ),
+                // Settled: its subtree is finished and its run never started.
+                node("wn_done", status::CANCELLED, None, Some("QUEUED")),
+                node("wn_done_child", status::DONE, Some("wn_done"), None),
+                node("wn_open", status::READY, None, None),
+            ],
+            Vec::new(),
+        );
+        assert_eq!(pending_cancellations(&graph), vec!["wn_root".to_string()]);
+        // A dependent not yet blocked is unsettled work too.
+        let graph = snapshot(
+            vec![
+                node("wn_done", status::CANCELLED, None, None),
+                node("wn_next", status::DRAFT, None, None),
+            ],
+            vec![depends_on("wn_next", "wn_done")],
+        );
+        assert_eq!(pending_cancellations(&graph), vec!["wn_done".to_string()]);
+        let graph = snapshot(
+            vec![
+                node("wn_done", status::CANCELLED, None, None),
+                node("wn_next", status::BLOCKED, None, None),
+            ],
+            vec![depends_on("wn_next", "wn_done")],
+        );
+        assert!(pending_cancellations(&graph).is_empty());
+    }
+
+    #[test]
     fn cancellation_covers_the_subtree_its_runs_and_its_dependents() {
         let graph = snapshot(
             vec![

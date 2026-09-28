@@ -250,6 +250,91 @@ async fn the_background_pass_keeps_the_client_projections_current() {
     finish(harness).await;
 }
 
+/// Apply graph changes the way production does: one `GraphTransaction`, which writes the
+/// rows and their `work.*` events together.
+async fn transact(harness: &Harness, changes: Vec<quansio_graph::GraphChange>) {
+    let store = quansio_graph::GraphStore::new(harness.admin.clone(), TENANT).expect("graph");
+    let revision = store.graph_revision(WORKSPACE).await.expect("revision");
+    let mut batch = quansio_graph::GraphBatch::new(WORKSPACE, revision);
+    for change in changes {
+        batch.push(change);
+    }
+    quansio_graph::transaction::GraphTransaction::new(
+        store,
+        quansio_events::EventStore::new(harness.admin.clone()),
+        quansio_graph::transaction::TransactionContext::system(
+            "projection-test",
+            quansio_core::CorrelationId::generate(&mut UlidGenerator::new()),
+        ),
+    )
+    .apply(batch)
+    .await
+    .expect("graph transaction");
+}
+
+/// A node's later status changes reach the work-node projection: CORE-005 states a
+/// transition as `from`/`to` on `work.node_status_changed`, and the projection follows `to`.
+#[tokio::test]
+async fn the_work_node_projection_follows_status_changes() {
+    let Some(harness) = prepare("bg_projection_status").await else {
+        common::blocked_marker();
+        return;
+    };
+    transact(
+        &harness,
+        vec![quansio_graph::GraphChange::create_work_node(
+            quansio_graph::NewWorkNode::new(
+                WORKSPACE,
+                quansio_graph::WorkNodeKind::Task,
+                "draft a plan",
+                json!({ "kind": "system", "id": "projection-test" }),
+            ),
+        )],
+    )
+    .await;
+    let store = quansio_graph::GraphStore::new(harness.admin.clone(), TENANT).expect("graph");
+    let id: String = sqlx::query_scalar("SELECT id FROM work_nodes WHERE title = 'draft a plan'")
+        .fetch_one(&harness.admin)
+        .await
+        .expect("node id");
+    let id = quansio_core::CanonicalId::parse_typed(&id, quansio_core::Prefix::WorkNode)
+        .expect("canonical");
+    for to in [
+        quansio_graph::WorkNodeStatus::Ready,
+        quansio_graph::WorkNodeStatus::Cancelled,
+    ] {
+        let node = store.get_node(&id).await.expect("node");
+        transact(
+            &harness,
+            vec![quansio_graph::GraphChange::TransitionWorkNode {
+                node_id: id,
+                expected: node.revision,
+                to,
+            }],
+        )
+        .await;
+    }
+    background_pass(&harness).await;
+    let projected: (String, String, i64) = sqlx::query_as(
+        "SELECT status, last_event_type, event_count FROM work_node_status_projection \
+         WHERE tenant_id = $1 AND work_node_id = $2",
+    )
+    .bind(TENANT)
+    .bind(id.to_string())
+    .fetch_one(&harness.admin)
+    .await
+    .expect("projected node");
+    assert_eq!(
+        projected,
+        (
+            "cancelled".to_string(),
+            "work.node_status_changed".to_string(),
+            3
+        )
+    );
+    finish(harness).await;
+}
+
 // ---------------------------------------------------------------------------------------
 // RUN-004: the orchestrator the served background pass runs
 // ---------------------------------------------------------------------------------------
