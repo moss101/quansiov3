@@ -611,7 +611,15 @@ fn work_node_status(event: &RuntimeEvent) -> Option<String> {
     ) {
         return None;
     }
-    let explicit = payload_str(event, "status").filter(|value| WORK_NODE_STATUSES.contains(value));
+    // `work.node_created` states the node's `status`; `work.node_status_changed` states the
+    // transition as `from`/`to` (CORE-005's payload).
+    let explicit = payload_str(event, "status")
+        .or_else(|| {
+            (name == "node_status_changed")
+                .then(|| payload_str(event, "to"))
+                .flatten()
+        })
+        .filter(|value| WORK_NODE_STATUSES.contains(value));
     match (name, explicit) {
         (_, Some(status)) => Some(status.to_string()),
         ("node_created", None) => Some("draft".to_string()),
