@@ -2724,7 +2724,7 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-27T15:00:00Z",
-      "updated_at": "2026-09-27T14:44:10Z",
+      "updated_at": "2026-09-28T17:08:31Z",
       "git_commit": "3e5842038be0ed12fe5f7fc71a6575f3d3bc7387",
       "tests": [
         "uv run --project python pytest tests/architecture (129 passed: the composed consistency suite, every per-rule negative fixture caught, and the composition-reachability gate - findings equal the 16 named gaps exactly; its negative corpus covers test-only, use-only, comment-only, string-only and default-only composition, self-construction, renamed obligations)",
@@ -2741,7 +2741,7 @@
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": "Implementation complete and both acceptance statements hold (every known negative fixture is caught; the V8.1 validator reports zero consistency errors). Not PASS: the dependency QA-001 is BLOCKED_EXTERNAL (TypeScript coverage provider not approved), and the composition gate records 16 authorities that are built but not composed into the served build (RUN-008 verifier and semantic verifier, RUN-003 plan port, INT-007 memory port, INT-012 proposal trust, RUN-004 orchestrator and WorkGraph port, CORE-009 projections, CORE-003 outbox publisher, OPS-004 quota admission, EXEC-007 KMS, EXEC-010 computer use, EXEC-002 worker host) - so those concerns have no authority in the final build yet. Three follow-up tasks own them.",
-      "notes": "Adds composition reachability (tests/architecture/composition_scan.py): ports with an uncomposed real implementation or only a fail-closed default, and curated authorities never constructed or called by production. KNOWN_GAPS must equal the findings exactly, so closing a gap requires removing its entry."
+      "notes": "Adds composition reachability (tests/architecture/composition_scan.py): ports with an uncomposed real implementation or only a fail-closed default, and curated authorities never constructed or called by production. KNOWN_GAPS must equal the findings exactly, so closing a gap requires removing its entry. 2026-09-28 follow-ups: KNOWN_GAPS closed by their owners' fix branches - INT-012 ProposalTrustSource (df3e5c8), OPS-004 admit_effect (aff44f6), CORE-009 Projection/ProjectionRunner (75497d1; plus two projection defects composing exposed, 595d285), RUN-004 WorkGraphPort/GraphWorkGraph/Orchestrator (d517c5d), CORE-003 OutboxPublisher (8623979, NATS JetStream real boundary), EXEC-007 KmsKeyProvider (32d046a; the AWS KMS round trip BLOCKED_EXTERNAL); RUN-003, INT-007 and RUN-008 closed theirs. Two gaps remain, both externally blocked: ComputerDispatcher (EXEC-010) and WorkerHost (EXEC-002)."
     },
     "QA-003": {
       "coverage": "GENUINE_GAP",
