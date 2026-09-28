@@ -334,3 +334,259 @@ async fn the_work_node_projection_follows_status_changes() {
     );
     finish(harness).await;
 }
+
+// ---------------------------------------------------------------------------------------
+// RUN-004: the orchestrator the served background pass runs
+// ---------------------------------------------------------------------------------------
+
+use quansio_core::{CanonicalId, CorrelationId, Prefix};
+use quansio_graph::{
+    GraphStore, NewWorkEdge, NewWorkNode, WorkEdgeKind, WorkNodeKind, WorkNodeStatus,
+};
+use quansio_server::runtime::state_machine::{
+    NewRun, RunTriggerKind, RuntimeEngine, RuntimeIdentity,
+};
+
+fn graph(harness: &Harness) -> GraphStore {
+    GraphStore::new(harness.admin.clone(), TENANT).expect("graph store")
+}
+
+async fn node(store: &GraphStore, title: &str, parent: Option<CanonicalId>) -> CanonicalId {
+    let mut new = NewWorkNode::new(
+        WORKSPACE,
+        WorkNodeKind::Task,
+        title,
+        json!({ "kind": "system", "id": "orchestration-test" }),
+    );
+    new.parent_id = parent;
+    store.create_node(new).await.expect("node").id
+}
+
+async fn depends_on(store: &GraphStore, dependent: CanonicalId, prerequisite: CanonicalId) {
+    store
+        .create_edge(NewWorkEdge::new(
+            WORKSPACE,
+            dependent,
+            prerequisite,
+            WorkEdgeKind::DependsOn,
+        ))
+        .await
+        .expect("edge");
+}
+
+async fn agent_thread(harness: &Harness) -> CanonicalId {
+    let id = CanonicalId::generate(Prefix::AgentThread, &mut UlidGenerator::new());
+    let mut tx = harness.admin.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant");
+    sqlx::query(
+        "INSERT INTO agent_threads (id, tenant_id, workspace_id, agent_kind, generation, status) \
+         VALUES ($1, $2, $3, 'worker', 1, 'ACTIVE')",
+    )
+    .bind(id.to_string())
+    .bind(TENANT)
+    .bind(WORKSPACE)
+    .execute(&mut *tx)
+    .await
+    .expect("agent thread");
+    tx.commit().await.expect("commit");
+    id
+}
+
+fn engine(harness: &Harness) -> RuntimeEngine {
+    RuntimeEngine::new(
+        harness.admin.clone(),
+        RuntimeIdentity::system(
+            TENANT,
+            "orchestration-test",
+            CorrelationId::generate(&mut UlidGenerator::new()),
+        ),
+    )
+    .expect("engine")
+}
+
+/// A queued run for `node`, as delegation or a plan would leave it for orchestration.
+async fn queued_run(harness: &Harness, node: CanonicalId, thread: CanonicalId) -> String {
+    let engine = engine(harness);
+    let run = engine
+        .create_run(NewRun::new(WORKSPACE, node, thread, RunTriggerKind::Manual))
+        .await
+        .expect("run");
+    engine
+        .enqueue(&run.id, run.generation)
+        .await
+        .expect("enqueue")
+        .id
+        .to_string()
+}
+
+async fn run_status(harness: &Harness, run_id: &str) -> String {
+    sqlx::query_scalar("SELECT status FROM runs WHERE id = $1")
+        .bind(run_id)
+        .fetch_one(&harness.admin)
+        .await
+        .expect("run")
+}
+
+async fn node_status(harness: &Harness, node: &CanonicalId) -> String {
+    sqlx::query_scalar("SELECT status FROM work_nodes WHERE id = $1")
+        .bind(node.to_string())
+        .fetch_one(&harness.admin)
+        .await
+        .expect("node")
+}
+
+/// Advance a node to `done` through the only legal path.
+async fn complete(store: &GraphStore, node_id: &CanonicalId) {
+    let mut node = store.get_node(node_id).await.expect("node");
+    if node.status == WorkNodeStatus::Draft {
+        node = store
+            .transition_node(node_id, node.revision, WorkNodeStatus::Ready)
+            .await
+            .expect("ready");
+    }
+    if node.status == WorkNodeStatus::Ready {
+        node = store
+            .transition_node(node_id, node.revision, WorkNodeStatus::InProgress)
+            .await
+            .expect("in progress");
+    }
+    let node = store
+        .transition_node(node_id, node.revision, WorkNodeStatus::Verifying)
+        .await
+        .expect("verifying");
+    store
+        .mark_verification_passed(node_id, node.revision)
+        .await
+        .expect("done");
+}
+
+/// RUN-004 composed: the served background pass releases graph work in dependency order —
+/// a dependent's queued run starts only once its prerequisite is `done`, and neither the
+/// orchestrator nor the scheduler beside it starts it earlier.
+#[tokio::test]
+async fn the_background_pass_starts_dependent_work_only_after_its_prerequisite() {
+    let Some(harness) = prepare("bg_orchestration_dag").await else {
+        common::blocked_marker();
+        return;
+    };
+    let store = graph(&harness);
+    let thread = agent_thread(&harness).await;
+    let first = node(&store, "gather", None).await;
+    let second = node(&store, "summarise", None).await;
+    depends_on(&store, second, first).await;
+    let first_run = queued_run(&harness, first, thread).await;
+    let second_run = queued_run(&harness, second, thread).await;
+
+    background_pass(&harness).await;
+    assert_eq!(node_status(&harness, &first).await, "ready", "released");
+    assert_eq!(
+        run_status(&harness, &first_run).await,
+        "RUNNING",
+        "dispatched"
+    );
+    assert_eq!(node_status(&harness, &second).await, "draft");
+    assert_eq!(
+        run_status(&harness, &second_run).await,
+        "QUEUED",
+        "no dependent work starts before its prerequisite"
+    );
+
+    // Another pass changes nothing while the prerequisite is unfinished.
+    background_pass(&harness).await;
+    assert_eq!(run_status(&harness, &second_run).await, "QUEUED");
+
+    complete(&store, &first).await;
+    background_pass(&harness).await;
+    assert_eq!(node_status(&harness, &second).await, "ready");
+    assert_eq!(run_status(&harness, &second_run).await, "RUNNING");
+    finish(harness).await;
+}
+
+/// The workspace's `concurrency` budget bounds how much ready work the pass starts.
+#[tokio::test]
+async fn the_background_pass_admits_ready_work_within_the_concurrency_budget() {
+    let Some(harness) = prepare("bg_orchestration_capacity").await else {
+        common::blocked_marker();
+        return;
+    };
+    command(
+        &harness.api,
+        "SetBudget",
+        json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "concurrency": 1 } }),
+    )
+    .await;
+    let store = graph(&harness);
+    let thread = agent_thread(&harness).await;
+    let mut runs = Vec::new();
+    for title in ["one", "two", "three"] {
+        let id = node(&store, title, None).await;
+        runs.push(queued_run(&harness, id, thread).await);
+    }
+    background_pass(&harness).await;
+    let mut running = 0;
+    for run in &runs {
+        if run_status(&harness, run).await == "RUNNING" {
+            running += 1;
+        }
+    }
+    assert_eq!(
+        running, 1,
+        "one slot, one running run; the rest stay queued"
+    );
+    background_pass(&harness).await;
+    let mut still_running = 0;
+    for run in &runs {
+        if run_status(&harness, run).await == "RUNNING" {
+            still_running += 1;
+        }
+    }
+    assert_eq!(still_running, 1, "the bound holds across passes");
+    finish(harness).await;
+}
+
+/// A node cancelled by any writer reaches its subtree: the child's running run is cancelled
+/// once, the child node is cancelled, and a dependent is blocked; a later pass repeats none
+/// of it.
+#[tokio::test]
+async fn the_background_pass_carries_a_cancellation_to_its_subtree_once() {
+    let Some(harness) = prepare("bg_orchestration_cancel").await else {
+        common::blocked_marker();
+        return;
+    };
+    let store = graph(&harness);
+    let thread = agent_thread(&harness).await;
+    let parent = node(&store, "objective", None).await;
+    let child = node(&store, "step", Some(parent)).await;
+    let dependent = node(&store, "follow-up", None).await;
+    depends_on(&store, dependent, child).await;
+    let child_run = queued_run(&harness, child, thread).await;
+    background_pass(&harness).await;
+    assert_eq!(run_status(&harness, &child_run).await, "RUNNING");
+
+    // Another authority cancels the parent node.
+    let current = store.get_node(&parent).await.expect("parent");
+    store
+        .transition_node(&parent, current.revision, WorkNodeStatus::Cancelled)
+        .await
+        .expect("cancel the parent");
+    background_pass(&harness).await;
+    assert_eq!(run_status(&harness, &child_run).await, "CANCELLED");
+    assert_eq!(node_status(&harness, &child).await, "cancelled");
+    assert_eq!(node_status(&harness, &dependent).await, "blocked");
+
+    let cancellations = || async {
+        sqlx::query_scalar::<_, i64>(
+            "SELECT count(*) FROM runtime_events WHERE tenant_id = $1 AND type = 'run.cancelled'",
+        )
+        .bind(TENANT)
+        .fetch_one(&harness.admin)
+        .await
+        .expect("events")
+    };
+    assert_eq!(cancellations().await, 1);
+    background_pass(&harness).await;
+    assert_eq!(cancellations().await, 1, "propagation is idempotent");
+    finish(harness).await;
+}

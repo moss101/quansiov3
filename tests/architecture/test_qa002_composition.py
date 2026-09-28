@@ -24,10 +24,6 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: (kind, name) -> (owning task, what is missing). Found by QA-001/QA-002, 2026-09-27.
 KNOWN_GAPS: Dict[Tuple[str, str], Tuple[str, str]] = {
-    ("DEFAULT_ONLY", "MemoryProposalPort"): ("INT-007", "memory.propose reaches only the unavailable port"),
-    ("NOT_COMPOSED", "WorkGraphPort"): ("RUN-004", "GraphWorkGraph is never constructed"),
-    ("UNCOMPOSED", "GraphWorkGraph"): ("RUN-004", "as above"),
-    ("UNCOMPOSED", "Orchestrator"): ("RUN-004", "fan-out/fan-in, the ready queue and subtree cancellation never run"),
     ("UNCOMPOSED", "OutboxPublisher"): ("CORE-003", "no event transport; the transactional outbox is never published"),
     ("UNCOMPOSED", "KmsKeyProvider"): ("EXEC-007", "only the local master key provider is composed"),
     ("UNCOMPOSED", "ComputerDispatcher"): ("EXEC-010", "computer use has no composed dispatcher"),
