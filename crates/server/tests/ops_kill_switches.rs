@@ -135,8 +135,9 @@ impl ToolHostPort for RecordingHost {
 #[derive(Clone, Copy)]
 struct AgentTrust;
 
+#[async_trait::async_trait]
 impl ProposalTrustSource for AgentTrust {
-    fn proposal_trust(&self, _run_id: &str) -> Option<TrustLevel> {
+    async fn proposal_trust(&self, _run_id: &str, _turn_id: &str) -> Option<TrustLevel> {
         Some(TrustLevel::AgentGenerated)
     }
 }

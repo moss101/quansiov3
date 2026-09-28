@@ -1240,8 +1240,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T16:19:38Z",
-      "updated_at": "2026-09-27T14:44:10Z",
-      "git_commit": "3914fc53ffa71a847e7f30ca2ac3a965f2468c08",
+      "updated_at": "2026-09-28T15:57:35Z",
+      "git_commit": "df3e5c84bfa469e4c12b53e6cccc7dd7ae6396c5",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test turn_loop (12 tests, including the new end-to-end escalated-approval path and the escalation park)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test trust_policy (6 tests: escalation one tier and no `always`, trusted proposals not escalated, tiers 0/1 and the tier 4 cap, the egress guard, an injected destination denied until a grant covers it, movement within the grant set permitted)",
@@ -1249,7 +1249,8 @@
         "(cd python && uv run --frozen pytest -q) (241 passed, 6 skipped live-provider cases)",
         "uv run --project python pytest tests -q (188 passed)",
         "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && (cd python && ruff check . && ruff format --check . && mypy intelligence)",
-        "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh (11 gates PASS)"
+        "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh (11 gates PASS)",
+        "cargo test -p quansio-server --test turn_loop (18 passed; a_proposal_from_a_trusted/untrusted/unlabelled_context_window_* drive the composed StoredProposalTrust over recorded ContextProjections)"
       ],
       "artifacts": [
         "evidence/INT-012/2026-09-12T21-51-59Z/summary.json",
@@ -1262,12 +1263,13 @@
         "python/intelligence/trust/propagation.py",
         "python/tests/intelligence/test_trust_labelling.py",
         "python/tests/intelligence/test_trust_propagation.py",
-        "tests/security/injection/corpus.json"
+        "tests/security/injection/corpus.json",
+        "evidence/INT-012/2026-09-28T15-55-02Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Content trust and injection defense, complete and exercised end to end now that the database is reachable. python/intelligence/trust labels every context segment by its source (an unrecognised source fails closed to UNTRUSTED_EXTERNAL), renders untrusted content inside a typed boundary carrying the data-only instruction, runs deterministic non-LLM injection heuristics that tag a suspect segment and replace it in context with an evidence reference, and derives an element's trust as the weakest label among the segments it references (an element referencing nothing is refused rather than assumed trusted). The policy side reuses the shipped guards rather than adding a second one: `escalate` raises a tier \u2265 2 proposal one tier when its chain reaches UNTRUSTED_EXTERNAL, forbids `always`, and `requires_receipt` at tier \u2265 3 makes the call park. The new end-to-end test closes the gap the task left open: an unprovable chain escalates a tier 2 egress call, the approval request the operator loads carries the untrusted origin and its refs (present if and only if policy escalated), the effect waits at PROPOSED, and after the receipt the resumed call dispatches exactly once and settles. The pinned corpus (7 malicious shapes, 4 benign) is what QA-007 will consume. 2026-09-27 QA-002 composition gate (tests/architecture/test_qa002_composition.py KNOWN_GAPS): ProposalTrustSource runs only on UnavailableProposalTrust in the served build, so every tier >= 2 call escalates; library-level acceptance still holds; owned by a follow-up composition task."
+      "notes": "Content trust and injection defense, complete and exercised end to end now that the database is reachable. python/intelligence/trust labels every context segment by its source (an unrecognised source fails closed to UNTRUSTED_EXTERNAL), renders untrusted content inside a typed boundary carrying the data-only instruction, runs deterministic non-LLM injection heuristics that tag a suspect segment and replace it in context with an evidence reference, and derives an element's trust as the weakest label among the segments it references (an element referencing nothing is refused rather than assumed trusted). The policy side reuses the shipped guards rather than adding a second one: `escalate` raises a tier \u2265 2 proposal one tier when its chain reaches UNTRUSTED_EXTERNAL, forbids `always`, and `requires_receipt` at tier \u2265 3 makes the call park. The new end-to-end test closes the gap the task left open: an unprovable chain escalates a tier 2 egress call, the approval request the operator loads carries the untrusted origin and its refs (present if and only if policy escalated), the effect waits at PROPOSED, and after the receipt the resumed call dispatches exactly once and settles. The pinned corpus (7 malicious shapes, 4 benign) is what QA-007 will consume. 2026-09-27 QA-002 composition gate (tests/architecture/test_qa002_composition.py KNOWN_GAPS): ProposalTrustSource runs only on UnavailableProposalTrust in the served build, so every tier >= 2 call escalates; library-level acceptance still holds; owned by a follow-up composition task. 2026-09-28 (fix/INT-012-proposal-trust-composed, found by QA-002 composition gate DEFAULT_ONLY ProposalTrustSource, P1): production labelled every proposal with UnavailableProposalTrust, so every tier >= 2 tool call escalated to approval. The served chat_engine now installs policy::StoredProposalTrust: derived_from_trust is the most-untrusted label among the segments the proposing turn's model calls were shown (context_projections recorded by INT-005); no record, an unreadable record or an unknown label fails closed to UNTRUSTED_EXTERNAL. ProposalTrustSource is async and takes the turn. Merge df3e5c8. Evidence evidence/INT-012/2026-09-28T15-55-02Z."
     },
     "EXEC-001": {
       "coverage": "GENUINE_GAP",

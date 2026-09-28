@@ -29,7 +29,6 @@ KNOWN_GAPS: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("DEFAULT_ONLY", "SemanticVerifierPort"): ("RUN-008", "the Python semantic verifier has no RPC or Rust port"),
     ("DEFAULT_ONLY", "PlanApplicationPort"): ("RUN-003", "work.propose_plan reaches only the unavailable port"),
     ("DEFAULT_ONLY", "MemoryProposalPort"): ("INT-007", "memory.propose reaches only the unavailable port"),
-    ("DEFAULT_ONLY", "ProposalTrustSource"): ("INT-012", "proposal trust is never labelled; every tier >= 2 call escalates"),
     ("NOT_COMPOSED", "WorkGraphPort"): ("RUN-004", "GraphWorkGraph is never constructed"),
     ("UNCOMPOSED", "GraphWorkGraph"): ("RUN-004", "as above"),
     ("UNCOMPOSED", "Orchestrator"): ("RUN-004", "fan-out/fan-in, the ready queue and subtree cancellation never run"),

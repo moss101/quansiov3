@@ -1217,7 +1217,12 @@ pub(super) fn chat_engine(
     .with_plan_port(Arc::new(crate::runtime::planning::RunPlanApplication::new(
         state.pool().clone(),
         identity.clone(),
-    )?));
+    )?))
+    // A call's derived trust comes from what its turn's model calls were shown (INT-012).
+    .with_proposal_trust(Arc::new(crate::policy::StoredProposalTrust::new(
+        state.pool().clone(),
+        &identity,
+    )));
     let questions = QuestionService::new(state.pool().clone(), identity.clone())?;
     let live: Arc<dyn crate::runtime::state_machine::LiveFramePort> = state.live().clone();
     let budgets =

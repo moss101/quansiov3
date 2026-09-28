@@ -66,3 +66,53 @@ pub async fn record_projection(
     tx.commit().await?;
     Ok(())
 }
+
+/// The segments the model was shown during one turn, with the trust label each was recorded
+/// under (`None` when the record carries no recognisable label), across every projection the
+/// turn's model calls were given, oldest first.
+///
+/// This is the proposal's causal window (DOMAIN.md §12 rule 2): a tool call a turn proposes
+/// derives from what that turn's model calls saw. The labels are returned as recorded; the
+/// policy module decides what an absent or unknown label means.
+///
+/// # Errors
+/// Returns [`RuntimeError::Database`] when the projections cannot be read.
+pub async fn turn_segment_labels(
+    pool: &PgPool,
+    tenant_id: &str,
+    run_id: &str,
+    turn_id: &str,
+) -> Result<Vec<(String, Option<String>)>, RuntimeError> {
+    let mut tx = pool.begin().await?;
+    schema::set_tenant_context(&mut tx, tenant_id).await?;
+    let rows: Vec<Value> = sqlx::query_scalar(
+        "SELECT segments FROM context_projections \
+         WHERE tenant_id = $1 AND run_id = $2 AND turn_id = $3 ORDER BY created_at, id",
+    )
+    .bind(tenant_id)
+    .bind(run_id)
+    .bind(turn_id)
+    .fetch_all(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    let mut labels = Vec::new();
+    for segments in rows {
+        let Some(segments) = segments.as_array() else {
+            // A record whose segments are not a list proves nothing about what was shown.
+            labels.push((String::new(), None));
+            continue;
+        };
+        for (index, segment) in segments.iter().enumerate() {
+            let id = segment
+                .get("segment_id")
+                .and_then(Value::as_str)
+                .map_or_else(|| format!("#{index}"), str::to_string);
+            let level = segment
+                .get("trust_level")
+                .and_then(Value::as_str)
+                .map(str::to_string);
+            labels.push((id, level));
+        }
+    }
+    Ok(labels)
+}

@@ -29,6 +29,7 @@ pub mod guards;
 pub mod rbac;
 pub mod rules;
 pub mod store;
+pub mod trust;
 
 pub use approval::{
     Amount, ApprovalReceipt, ApprovalRequestRecord, ApprovalRequestStatus, ApprovalSigner,
@@ -56,3 +57,4 @@ pub use rules::{
 pub use store::{
     ApprovalRuntime, DecisionRow, ParkedApproval, PolicyChange, PolicyStore, POLICY_OWNER_EVENTS,
 };
+pub use trust::{derive_from_labels, StoredProposalTrust};
