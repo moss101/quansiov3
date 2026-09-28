@@ -461,9 +461,13 @@ pub fn wait_until(
     }
 }
 
+/// The most events each client projection applies per tenant in one background pass; a
+/// backlog catches up over consecutive passes.
+pub const PROJECTION_BATCH: i64 = 512;
+
 /// The deployable's background loop (APP-010): for every tenant, one CORE-008 scheduler tick
 /// (timers, routine windows and their fires, queued runs), one pass of the routine event
-/// triggers, the notifier, and email delivery. Each pass is bounded; a failing tenant is
+/// triggers, the notifier, the client projections, and email delivery. Each pass is bounded; a failing tenant is
 /// logged and the others go on.
 #[derive(Clone)]
 pub struct Background {
@@ -659,6 +663,23 @@ impl Background {
             .catch_up(8)
             .await
             .map_err(|error| format!("usage projection: {error}"))?;
+        // The client read models follow the tenant's events (CORE-009): derived, rebuildable,
+        // checkpointed with their rows, and never read for recovery.
+        let events = quansio_events::EventStore::new(self.pool.clone());
+        quansio_events::ProjectionRunner::new(
+            events.clone(),
+            quansio_events::RunStatusProjection::new(),
+        )
+        .catch_up(tenant, PROJECTION_BATCH)
+        .await
+        .map_err(|error| format!("run status projection: {error}"))?;
+        quansio_events::ProjectionRunner::new(
+            events,
+            quansio_events::WorkNodeStatusProjection::new(),
+        )
+        .catch_up(tenant, PROJECTION_BATCH)
+        .await
+        .map_err(|error| format!("work node status projection: {error}"))?;
         crate::notify::EmailDeliveries::new(self.pool.clone(), tenant, self.email.clone())
             .deliver_due(chrono::Utc::now(), 64)
             .await
