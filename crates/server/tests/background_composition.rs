@@ -590,3 +590,136 @@ async fn the_background_pass_carries_a_cancellation_to_its_subtree_once() {
     assert_eq!(cancellations().await, 1, "propagation is idempotent");
     finish(harness).await;
 }
+
+// ---------------------------------------------------------------------------------------
+// CORE-003: the outbox relay the served process runs (real boundary: NATS JetStream)
+// ---------------------------------------------------------------------------------------
+
+/// `QUANSIO_TEST_NATS_URL`: the dev stack's JetStream server (`nats://127.0.0.1:54230`).
+fn nats_url() -> Option<String> {
+    std::env::var("QUANSIO_TEST_NATS_URL")
+        .ok()
+        .filter(|value| !value.is_empty())
+}
+
+async fn outbox_rows(harness: &Harness) -> Vec<(String, String, bool, i32)> {
+    sqlx::query_as(
+        "SELECT event_id, subject, published_at IS NOT NULL, attempts FROM event_outbox \
+         WHERE tenant_id = $1 ORDER BY created_at, event_id",
+    )
+    .bind(TENANT)
+    .fetch_all(&harness.admin)
+    .await
+    .expect("outbox")
+}
+
+/// CORE-003 composed: the relay the served process runs publishes the tenant's outbox to
+/// JetStream as the least-privilege role, marks each row only after the stream acknowledged
+/// it, and a row replayed after a crash is stored once.
+#[tokio::test]
+async fn the_outbox_relay_publishes_every_event_to_jetstream_once() {
+    let Some(url) = nats_url() else {
+        eprintln!("BLOCKED_EXTERNAL: QUANSIO_TEST_NATS_URL is not set; no JetStream server");
+        return;
+    };
+    let Some(harness) = prepare("bg_outbox_relay").await else {
+        common::blocked_marker();
+        return;
+    };
+    command(
+        &harness.api,
+        "PostMessage",
+        json!({ "workspace_id": WORKSPACE, "content": "publish me" }),
+    )
+    .await;
+    let pending = outbox_rows(&harness).await;
+    assert!(!pending.is_empty(), "the turn wrote events to the outbox");
+    assert!(pending.iter().all(|(_, _, published, _)| !published));
+
+    let transport = Arc::new(quansio_events::NatsTransport::new(
+        quansio_events::NatsConfig::parse(&url).expect("url"),
+    ));
+    let relay =
+        quansio_server::composition::OutboxRelay::new(harness.app.clone(), Arc::clone(&transport));
+    let published = relay.pass().await.expect("relay pass");
+    assert_eq!(published, pending.len());
+    let rows = outbox_rows(&harness).await;
+    assert!(
+        rows.iter()
+            .all(|(_, _, published, attempts)| *published && *attempts == 1),
+        "{rows:?}"
+    );
+    // The stream holds each event under its id: publishing one again is a duplicate.
+    let (event_id, subject, _, _) = &rows[0];
+    let held = transport
+        .publish_acknowledged(subject, event_id, &json!({}))
+        .await
+        .expect("ack");
+    assert!(held.duplicate, "{subject} {event_id} is in the stream");
+
+    // A crash after the acknowledgement but before the row was marked: the relay publishes
+    // it again and the stream keeps its one copy.
+    sqlx::query("UPDATE event_outbox SET published_at = NULL WHERE event_id = $1")
+        .bind(event_id)
+        .execute(&harness.admin)
+        .await
+        .expect("replay the row");
+    assert_eq!(relay.pass().await.expect("replay pass"), 1);
+    let again = transport
+        .publish_acknowledged(subject, event_id, &json!({}))
+        .await
+        .expect("ack");
+    assert_eq!(again.sequence, held.sequence, "still one stored copy");
+    assert_eq!(
+        relay.pass().await.expect("idle pass"),
+        0,
+        "nothing left to publish"
+    );
+    finish(harness).await;
+}
+
+/// An unreachable broker fails closed: every row stays unpublished, with the failure
+/// recorded, for a later pass.
+#[tokio::test]
+async fn an_unreachable_broker_leaves_the_outbox_for_a_later_pass() {
+    if nats_url().is_none() {
+        eprintln!("BLOCKED_EXTERNAL: QUANSIO_TEST_NATS_URL is not set; no JetStream server");
+        return;
+    }
+    let Some(harness) = prepare("bg_outbox_down").await else {
+        common::blocked_marker();
+        return;
+    };
+    command(
+        &harness.api,
+        "PostMessage",
+        json!({ "workspace_id": WORKSPACE, "content": "hold me" }),
+    )
+    .await;
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("port");
+    let port = listener.local_addr().expect("addr").port();
+    drop(listener);
+    let relay = quansio_server::composition::OutboxRelay::new(
+        harness.app.clone(),
+        Arc::new(quansio_events::NatsTransport::new(
+            quansio_events::NatsConfig::parse(&format!("nats://127.0.0.1:{port}")).expect("url"),
+        )),
+    );
+    assert_eq!(relay.pass().await.expect("pass"), 0);
+    let rows = outbox_rows(&harness).await;
+    assert!(!rows.is_empty());
+    assert!(
+        rows.iter().all(|(_, _, published, _)| !published),
+        "nothing is marked published"
+    );
+    let failed: Option<String> = sqlx::query_scalar(
+        "SELECT last_error FROM event_outbox WHERE tenant_id = $1 AND attempts > 0 LIMIT 1",
+    )
+    .bind(TENANT)
+    .fetch_optional(&harness.admin)
+    .await
+    .expect("row")
+    .flatten();
+    assert!(failed.is_some_and(|error| error.contains("unavailable")));
+    finish(harness).await;
+}

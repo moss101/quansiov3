@@ -27,7 +27,6 @@ KNOWN_GAPS: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("NOT_COMPOSED", "VerificationPort"): ("RUN-008", "ContractVerifier is never installed; a completion claim cannot be verified"),
     ("UNCOMPOSED", "ContractVerifier"): ("RUN-008", "as above"),
     ("DEFAULT_ONLY", "SemanticVerifierPort"): ("RUN-008", "the Python semantic verifier has no RPC or Rust port"),
-    ("UNCOMPOSED", "OutboxPublisher"): ("CORE-003", "no event transport; the transactional outbox is never published"),
     ("UNCOMPOSED", "KmsKeyProvider"): ("EXEC-007", "only the local master key provider is composed"),
     ("UNCOMPOSED", "ComputerDispatcher"): ("EXEC-010", "computer use has no composed dispatcher"),
     ("UNCOMPOSED", "WorkerHost"): ("EXEC-002", "qworkerd has no daemon that runs its host"),

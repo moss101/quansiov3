@@ -44,6 +44,10 @@ pub struct ServerConfig {
     pub secrets_key_file: Option<String>,
     /// The key reference recorded on sealed secrets.
     pub secrets_key_ref: String,
+    /// `QUANSIO_NATS_URL` (`nats://[user:password@]host:port`): the NATS JetStream server the
+    /// transactional outbox publishes to (DOSSIER.md §4, D-005). Unset, events stay in the
+    /// outbox unpublished — nothing is dropped — and startup says so.
+    pub nats_url: Option<String>,
     /// `QUANSIO_INTELLIGENCE_ENDPOINT`: the intelligence process (`http://host:port` or
     /// `unix:///path`) that builds each turn's context and fulfils its model calls (APP-001).
     /// Unset, turns are answered by the conformance stub, and startup says so.
@@ -106,10 +110,14 @@ impl ServerConfig {
             .ok()
             .filter(|value| !value.is_empty())
             .unwrap_or_else(|| "local:master-v1".to_string());
+        let nats_url = env::var("QUANSIO_NATS_URL")
+            .ok()
+            .filter(|value| !value.is_empty());
         let intelligence_endpoint = env::var("QUANSIO_INTELLIGENCE_ENDPOINT")
             .ok()
             .filter(|value| !value.is_empty());
         Ok(Self {
+            nats_url,
             intelligence_endpoint,
             secrets_key_file,
             secrets_key_ref,
@@ -312,6 +320,29 @@ impl Composition {
                 ),
             );
             tokio::spawn(background.clone().run_webhooks(interval));
+            match self.config.nats_url.as_deref() {
+                Some(url) => {
+                    let config = quansio_events::NatsConfig::parse(url)
+                        .map_err(|error| format!("QUANSIO_NATS_URL: {error}"))?;
+                    crate::observability::notice(
+                        crate::observability::Level::Info,
+                        &format!(
+                            "QUANSIO_NATS_URL: the outbox publishes to JetStream stream {} at {}",
+                            quansio_events::EVENT_STREAM,
+                            config.address()
+                        ),
+                    );
+                    let outbox = OutboxRelay::new(
+                        self.pool.clone(),
+                        Arc::new(quansio_events::NatsTransport::new(config)),
+                    );
+                    tokio::spawn(outbox.run(interval));
+                }
+                None => crate::observability::notice(
+                    crate::observability::Level::Info,
+                    "QUANSIO_NATS_URL is not set: events stay in the outbox unpublished",
+                ),
+            }
             tokio::spawn(background.run(interval));
         }
         axum::serve(listener, self.router())
@@ -458,6 +489,79 @@ pub fn wait_until(
             .clamp(MIN_BACKGROUND_WAIT, interval.max(MIN_BACKGROUND_WAIT)),
         Some(at) if at > pass_started => MIN_BACKGROUND_WAIT,
         _ => interval,
+    }
+}
+
+/// The most outbox batches one relay pass publishes per tenant; a backlog drains over passes.
+pub const OUTBOX_BATCHES_PER_PASS: usize = 16;
+
+/// The transactional outbox relay (CORE-003, D-005): every pass publishes each tenant's
+/// unpublished outbox rows to the event transport in commit order, marking a row published
+/// only once the transport acknowledged it. It runs beside the background loop so a slow or
+/// unreachable broker never delays a routine, and a failed publish leaves the row for the
+/// next pass (at-least-once; JetStream discards the duplicate by `Nats-Msg-Id`).
+pub struct OutboxRelay<T: quansio_events::EventTransport> {
+    pool: PgPool,
+    publisher: quansio_events::OutboxPublisher<T>,
+}
+
+impl<T: quansio_events::EventTransport + 'static> OutboxRelay<T> {
+    /// A relay over the pool publishing through `transport`.
+    #[must_use]
+    pub fn new(pool: PgPool, transport: Arc<T>) -> Self {
+        Self {
+            publisher: quansio_events::OutboxPublisher::new(
+                quansio_events::EventStore::new(pool.clone()),
+                transport,
+            ),
+            pool,
+        }
+    }
+
+    /// Relay forever, one pass per `interval`.
+    pub async fn run(self, interval: Duration) {
+        loop {
+            tokio::time::sleep(interval).await;
+            if let Err(message) = self.pass().await {
+                crate::observability::notice(
+                    crate::observability::Level::Warn,
+                    &format!("outbox relay: {message}"),
+                );
+            }
+        }
+    }
+
+    /// One pass over every tenant; returns how many events were published.
+    ///
+    /// # Errors
+    /// Returns a message when the tenants cannot be listed. A tenant whose publish fails is
+    /// logged and the others go on.
+    pub async fn pass(&self) -> Result<usize, String> {
+        let tenants: Vec<String> = sqlx::query_scalar("SELECT background_tenants()")
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|error| format!("cannot list tenants: {error}"))?;
+        let mut published = 0;
+        for tenant in tenants {
+            for _ in 0..OUTBOX_BATCHES_PER_PASS {
+                match self.publisher.publish_pending(&tenant).await {
+                    Ok(report) => {
+                        published += report.published;
+                        if report.attempted == 0 || report.published < report.attempted {
+                            break;
+                        }
+                    }
+                    Err(error) => {
+                        crate::observability::notice(
+                            crate::observability::Level::Warn,
+                            &format!("outbox relay for {tenant}: {error}"),
+                        );
+                        break;
+                    }
+                }
+            }
+        }
+        Ok(published)
     }
 }
 
