@@ -1,0 +1,74 @@
+   Compiling chrono v0.4.45
+   Compiling quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/competent-perlman-e724dc/crates/core)
+   Compiling serde_yaml v0.9.34+deprecated
+   Compiling sqlx-core v0.8.6
+   Compiling sqlx-postgres v0.8.6
+   Compiling sqlx-macros-core v0.8.6
+   Compiling sqlx-macros v0.8.6
+   Compiling sqlx v0.8.6
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/competent-perlman-e724dc/crates/machine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.24s
+     Running unittests src/lib.rs (target/debug/deps/quansio_machine-13cb0c19582da53b)
+
+running 9 tests
+test secrets::tests::a_scope_renders_as_a_kind_and_a_value ... ok
+test secrets::tests::a_master_key_file_that_is_not_a_key_is_refused ... ok
+test secrets::tests::a_lifetime_is_added_in_the_canonical_shape ... ok
+test secrets::tests::material_cannot_be_rendered_into_a_log ... ok
+test secrets::tests::a_frame_that_was_changed_does_not_open ... ok
+test secrets::tests::a_sealed_secret_opens_under_its_own_provider_and_under_no_other ... ok
+test secrets::tests::a_handle_is_usable_only_while_it_is_active_and_unexpired ... ok
+test secrets::tests::a_kms_provider_wraps_through_the_kms_and_not_locally ... ok
+test secrets::tests::sealing_twice_produces_different_frames_for_the_same_secret ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.00s
+
+     Running tests/browser.rs (target/debug/deps/browser-0efb33e4f00d2517)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/computer_use.rs (target/debug/deps/computer_use-23ff2d48b446134c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/control.rs (target/debug/deps/control-8c049a0aa717b2ac)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/egress.rs (target/debug/deps/egress-c219a64a92c4f32e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/macos_capsule.rs (target/debug/deps/macos_capsule-b694aedf19cede8f)
+
+running 1 test
+test unpublished_catalog_cannot_boot_and_has_no_path_to_host_secrets_or_metadata ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/secrets.rs (target/debug/deps/secrets-1e921338ac2ffafd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/terminal.rs (target/debug/deps/terminal-a7eaf01a39198171)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/windows_capsule.rs (target/debug/deps/windows_capsule-a8e7d379e3fdeee5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+

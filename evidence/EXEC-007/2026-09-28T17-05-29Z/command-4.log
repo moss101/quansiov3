@@ -1,0 +1,12 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/competent-perlman-e724dc/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.33s
+     Running tests/kms_key_provider.rs (target/debug/deps/kms_key_provider-23f8af470affca93)
+
+running 3 tests
+BLOCKED_EXTERNAL: QUANSIO_TEST_AWS_KMS_KEY_ID/_REGION/_ACCESS_KEY_ID/_SECRET_ACCESS_KEY are not set; no AWS KMS key to seal under
+test a_secret_is_sealed_and_opened_through_a_real_aws_kms_key ... ok
+test the_configured_kms_key_is_the_provider_and_a_key_file_is_the_alternative ... ok
+test a_secret_is_sealed_and_opened_through_the_kms_protocol ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

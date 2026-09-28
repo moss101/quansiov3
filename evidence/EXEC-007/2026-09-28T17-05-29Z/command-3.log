@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.43s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-ae3e0f5ced695b63)
+
+running 3 tests
+test kms::tests::an_endpoint_override_is_used_as_given ... ok
+test kms::tests::the_configuration_never_prints_its_secret ... ok
+test kms::tests::a_request_names_the_operation_and_is_signed_for_kms ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 185 filtered out; finished in 0.01s
+
