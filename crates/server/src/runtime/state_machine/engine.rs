@@ -28,8 +28,8 @@ use super::store::{
     Attempt, Budget, NewRun, NewStep, Run, RuntimeStore, Step, Turn, TurnInput, WaitResolution,
 };
 use super::turn_loop::{
-    BudgetPort, CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort,
-    LiveFramePort, ModelCallRequest, ModelProposalSource, NoBudgets, NoLiveFrames,
+    BudgetPort, ClaimVerdict, CompletionClaim, DelegationContext, DelegationOutcome,
+    DelegationPort, LiveFramePort, ModelCallRequest, ModelProposalSource, NoBudgets, NoLiveFrames,
     ProposedToolCall, QuestionContext, QuestionOutcome, QuestionPort, TextSink,
     ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest, TurnOutcome, UnavailableDelegation,
     UnavailableModelProposalSource, UnavailableQuestions, UnavailableToolDispatch,
@@ -71,6 +71,30 @@ pub enum RecoveryOutcome {
     Continue {
         /// Run that may continue.
         run_id: String,
+    },
+}
+
+/// What one turn has spent on completion claims (DOMAIN.md §5.6).
+struct ClaimTally {
+    /// The turn's step and verification bounds.
+    budget: Budget,
+    /// Claims verification rejected in this turn.
+    rejected: u32,
+    /// What the model said alongside the claim being handled; still the turn's reply.
+    assistant_text: Option<String>,
+}
+
+/// What verifying one claim concluded.
+enum ClaimResult {
+    /// The run reached `SUCCEEDED` and the turn is finished.
+    Succeeded {
+        /// Evidence that supported the claim.
+        evidence_ids: Vec<String>,
+    },
+    /// The run is `RUNNING` again; the feedback is what is missing.
+    Rejected {
+        /// Actionable feedback.
+        feedback: String,
     },
 }
 
@@ -351,6 +375,20 @@ impl RuntimeEngine {
         if run.status.is_terminal() {
             return Ok(RecoveryOutcome::Terminal { status: run.status });
         }
+        // A verification cut short (crash mid-verify) proved nothing: verification is read-only,
+        // so the run returns to RUNNING and the claim must be made again (DOMAIN.md §5.6).
+        let run = if run.status == RunStatus::Verifying {
+            self.store
+                .transition_run(
+                    run_id,
+                    run.generation,
+                    RunStatus::Running,
+                    Some("verification interrupted".to_string()),
+                )
+                .await?
+        } else {
+            run
+        };
         let state = self.store.load_protocol_state(run_id).await?;
         let action = match &state {
             Some(state) => next_safe_action(state),
@@ -487,6 +525,7 @@ impl RuntimeEngine {
             Ok(ToolDispatchOutcome::Rejected { .. }) => "rejected",
             Ok(ToolDispatchOutcome::Parked { .. }) => "parked",
             Ok(ToolDispatchOutcome::OutcomeUnknown { .. }) => "outcome_unknown",
+            Ok(ToolDispatchOutcome::CompletionClaimed { .. }) => "completion_claimed",
             Err(_) => "error",
         };
         crate::observability::metrics::increment(
@@ -522,11 +561,16 @@ impl RuntimeEngine {
             .begin_turn(run_id, generation, input.clone())
             .await?;
         let mut steps_used: u32 = 0;
+        let mut tally = ClaimTally {
+            budget,
+            rejected: 0,
+            assistant_text: None,
+        };
 
         // A run released from a WAITING_* state continues its recorded call instead of
         // asking the model to propose it again.
         if let Some(outcome) = self
-            .resume_pending_calls(&run, &turn, generation, budget, &mut steps_used)
+            .resume_pending_calls(&run, &turn, generation, &mut steps_used, &mut tally)
             .await?
         {
             return Ok(outcome);
@@ -627,14 +671,15 @@ impl RuntimeEngine {
                 ));
             }
 
+            tally.assistant_text.clone_from(&proposal.assistant_text);
             if let Some(outcome) = self
                 .dispatch_tool_calls(
                     &run,
                     &turn,
                     generation,
                     &proposal.tool_calls,
-                    budget,
                     &mut steps_used,
+                    &mut tally,
                 )
                 .await?
             {
@@ -759,15 +804,24 @@ impl RuntimeEngine {
                 }
             }
 
+            // A claim a conformance source proposes directly takes the same path as a
+            // `work.complete` call, without a call to record the verdict on.
             if let Some(claim) = &proposal.completion_claim {
-                if steps_used >= budget.max_steps {
-                    return self
-                        .exhaust_budget(&run, &turn, generation, steps_used, budget)
-                        .await;
+                if let Some(outcome) = self
+                    .handle_claim(
+                        &run,
+                        &turn,
+                        generation,
+                        claim,
+                        None,
+                        &mut steps_used,
+                        &mut tally,
+                    )
+                    .await?
+                {
+                    return Ok(outcome);
                 }
-                return self
-                    .verify_claim(&run, &turn, generation, claim, &mut steps_used)
-                    .await;
+                continue;
             }
 
             if proposal.tool_calls.is_empty() && proposal.delegate_requests.is_empty() {
@@ -794,9 +848,10 @@ impl RuntimeEngine {
         turn: &Turn,
         generation: Generation,
         calls: &[ProposedToolCall],
-        budget: Budget,
         steps_used: &mut u32,
+        tally: &mut ClaimTally,
     ) -> Result<Option<TurnOutcome>, RuntimeError> {
+        let budget = tally.budget;
         for round in parallel::plan_rounds(calls) {
             // A spent budget governing the run (RUN-010) dispatches nothing new.
             if self.budgets.exhausted(run).await?.is_some() {
@@ -880,7 +935,10 @@ impl RuntimeEngine {
                     }
                 };
                 if let Some(turn_outcome) = self
-                    .apply_tool_outcome(run, turn, generation, &tool_step, &attempt, &call, outcome)
+                    .apply_tool_outcome(
+                        run, turn, generation, &tool_step, &attempt, &call, outcome, steps_used,
+                        tally,
+                    )
                     .await?
                 {
                     return Ok(Some(turn_outcome));
@@ -907,9 +965,10 @@ impl RuntimeEngine {
         run: &Run,
         turn: &Turn,
         generation: Generation,
-        budget: Budget,
         steps_used: &mut u32,
+        tally: &mut ClaimTally,
     ) -> Result<Option<TurnOutcome>, RuntimeError> {
+        let budget = tally.budget;
         let state = self.pending_state(run).await?;
         if state.pending_tool_calls.is_empty() {
             return Ok(None);
@@ -964,7 +1023,9 @@ impl RuntimeEngine {
                 }
             };
             if let Some(turn_outcome) = self
-                .apply_tool_outcome(run, turn, generation, &step, &attempt, &call, outcome)
+                .apply_tool_outcome(
+                    run, turn, generation, &step, &attempt, &call, outcome, steps_used, tally,
+                )
                 .await?
             {
                 return Ok(Some(turn_outcome));
@@ -986,8 +1047,36 @@ impl RuntimeEngine {
         attempt: &Attempt,
         call: &ProposedToolCall,
         outcome: ToolDispatchOutcome,
+        steps_used: &mut u32,
+        tally: &mut ClaimTally,
     ) -> Result<Option<TurnOutcome>, RuntimeError> {
         match outcome {
+            ToolDispatchOutcome::CompletionClaimed { claim } => {
+                // The call itself succeeded: it recorded a claim. Whether the claim holds is
+                // the verify Step's to decide, and its verdict becomes the call's result.
+                self.store
+                    .complete_step(
+                        &step.id,
+                        generation,
+                        &attempt.id,
+                        StepStatus::Completed,
+                        AttemptStatus::Succeeded,
+                        None,
+                        Vec::new(),
+                    )
+                    .await?;
+                let tool_call_id = claim.claim_id.clone();
+                self.handle_claim(
+                    run,
+                    turn,
+                    generation,
+                    &claim,
+                    Some(&tool_call_id),
+                    steps_used,
+                    tally,
+                )
+                .await
+            }
             ToolDispatchOutcome::Completed { evidence_ids, .. } => {
                 self.store
                     .complete_step(
@@ -1149,6 +1238,74 @@ impl RuntimeEngine {
         })
     }
 
+    /// Verify a completion claim and decide what the turn does next (DOMAIN.md §5.6).
+    ///
+    /// Verified: the run is `SUCCEEDED` and the turn ends with the model's text as its reply.
+    /// Rejected: the verdict is recorded on the claiming call (so the next model call reads the
+    /// feedback as its result) and the loop continues — until the turn's rejected claims reach
+    /// `max_verification_rounds`, which ends the turn with the run still `RUNNING`.
+    #[allow(clippy::too_many_arguments)]
+    async fn handle_claim(
+        &self,
+        run: &Run,
+        turn: &Turn,
+        generation: Generation,
+        claim: &CompletionClaim,
+        tool_call_id: Option<&str>,
+        steps_used: &mut u32,
+        tally: &mut ClaimTally,
+    ) -> Result<Option<TurnOutcome>, RuntimeError> {
+        if *steps_used >= tally.budget.max_steps {
+            return self
+                .exhaust_budget(run, turn, generation, *steps_used, tally.budget)
+                .await
+                .map(Some);
+        }
+        let result = self
+            .verify_claim(run, turn, generation, claim, steps_used)
+            .await?;
+        let verdict = match &result {
+            ClaimResult::Succeeded { .. } => ClaimVerdict {
+                verified: true,
+                feedback: None,
+                run_status: RunStatus::Succeeded,
+            },
+            ClaimResult::Rejected { feedback } => ClaimVerdict {
+                verified: false,
+                feedback: Some(feedback.clone()),
+                run_status: RunStatus::Running,
+            },
+        };
+        if let Some(tool_call_id) = tool_call_id {
+            self.tools
+                .record_claim_verdict(tool_call_id, &verdict)
+                .await?;
+        }
+        match result {
+            ClaimResult::Succeeded { evidence_ids } => Ok(Some(TurnOutcome::Succeeded {
+                run_id: run.id.to_string(),
+                turn_id: turn.id.to_string(),
+                evidence_ids,
+                assistant_text: tally.assistant_text.clone(),
+            })),
+            ClaimResult::Rejected { .. } => {
+                tally.rejected += 1;
+                if tally.rejected < tally.budget.max_verification_rounds {
+                    return Ok(None);
+                }
+                // The bound is reached: the work stays incomplete, its feedback recorded, and
+                // the turn ends rather than claiming again.
+                self.store
+                    .finish_turn(&turn.id, generation, TurnStatus::Completed)
+                    .await?;
+                Ok(Some(TurnOutcome::Completed {
+                    turn_id: turn.id.to_string(),
+                    assistant_text: tally.assistant_text.clone(),
+                }))
+            }
+        }
+    }
+
     async fn verify_claim(
         &self,
         run: &Run,
@@ -1156,7 +1313,7 @@ impl RuntimeEngine {
         generation: Generation,
         claim: &CompletionClaim,
         steps_used: &mut u32,
-    ) -> Result<TurnOutcome, RuntimeError> {
+    ) -> Result<ClaimResult, RuntimeError> {
         let verify_step = self
             .store
             .record_step(
@@ -1196,11 +1353,7 @@ impl RuntimeEngine {
                 self.store
                     .finish_turn(&turn.id, generation, TurnStatus::Completed)
                     .await?;
-                Ok(TurnOutcome::Succeeded {
-                    run_id: run.id.to_string(),
-                    turn_id: turn.id.to_string(),
-                    evidence_ids,
-                })
+                Ok(ClaimResult::Succeeded { evidence_ids })
             }
             Ok(VerificationOutcome::Rejected { feedback }) => {
                 self.store
@@ -1214,15 +1367,12 @@ impl RuntimeEngine {
                         Vec::new(),
                     )
                     .await?;
-                // Bounded verification feedback: back to the loop, which the step budget
-                // bounds (DOMAIN.md §5.2 `VERIFYING → RUNNING`).
+                // Bounded verification feedback: back to the loop (DOMAIN.md §5.2
+                // `VERIFYING → RUNNING`).
                 self.store
                     .transition_run(&run.id, generation, RunStatus::Running, None)
                     .await?;
-                Ok(TurnOutcome::Completed {
-                    turn_id: turn.id.to_string(),
-                    assistant_text: None,
-                })
+                Ok(ClaimResult::Rejected { feedback })
             }
             Err(error) => {
                 self.fail_step(&verify_step.id, &attempt.id, generation, &error)

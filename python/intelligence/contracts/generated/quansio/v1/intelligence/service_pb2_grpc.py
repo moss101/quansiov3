@@ -75,6 +75,11 @@ class IntelligenceGatewayStub:
                 request_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesRequest.SerializeToString,
                 response_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesResponse.FromString,
                 _registered_method=True)
+        self.VerifyCompletion = channel.unary_unary(
+                '/quansio.v1.intelligence.IntelligenceGateway/VerifyCompletion',
+                request_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompletionVerificationRequest.SerializeToString,
+                response_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompletionVerdict.FromString,
+                _registered_method=True)
 
 
 class IntelligenceGatewayServicer:
@@ -128,6 +133,12 @@ class IntelligenceGatewayServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def VerifyCompletion(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_IntelligenceGatewayServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -170,6 +181,11 @@ def add_IntelligenceGatewayServicer_to_server(servicer, server):
                     servicer.ProposeSkillCandidates,
                     request_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesRequest.FromString,
                     response_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesResponse.SerializeToString,
+            ),
+            'VerifyCompletion': grpc.unary_unary_rpc_method_handler(
+                    servicer.VerifyCompletion,
+                    request_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompletionVerificationRequest.FromString,
+                    response_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompletionVerdict.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -388,6 +404,33 @@ class IntelligenceGateway:
             '/quansio.v1.intelligence.IntelligenceGateway/ProposeSkillCandidates',
             quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesRequest.SerializeToString,
             quansio_dot_v1_dot_intelligence_dot_service__pb2.SkillCandidatesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def VerifyCompletion(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/quansio.v1.intelligence.IntelligenceGateway/VerifyCompletion',
+            quansio_dot_v1_dot_intelligence_dot_service__pb2.CompletionVerificationRequest.SerializeToString,
+            quansio_dot_v1_dot_intelligence_dot_service__pb2.CompletionVerdict.FromString,
             options,
             channel_credentials,
             insecure,

@@ -48,10 +48,12 @@ use crate::runtime::planning::PLAN_GRAPH_OWNER;
 use crate::runtime::protocol_state::{is_unsettled, PendingToolCall};
 
 use super::super::state_machine::{
-    DelegationContext, DelegationOutcome, DelegationPort, DelegationRequest, ProposedToolCall, Run,
-    RunStatus, RunTriggerKind, RuntimeError, RuntimeIdentity, RuntimeStore, ToolDispatchOutcome,
-    ToolDispatchPort, ToolDispatchRequest, MEMORY_OWNER,
+    ClaimVerdict, CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort,
+    DelegationRequest, ProposedToolCall, Run, RunStatus, RunTriggerKind, RuntimeError,
+    RuntimeIdentity, RuntimeStore, ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest,
+    MEMORY_OWNER,
 };
+use super::parallel::COMPLETION_TOOL;
 use super::questions::{NewQuestion, QuestionService};
 
 /// The task that owns the file, terminal and process tool host.
@@ -507,12 +509,29 @@ impl ToolDispatchService {
         let Some(projection) = self.projections.projection_for_run(run_id).await? else {
             return Ok(Vec::new());
         };
-        Ok(self
+        let mut names: Vec<String> = self
             .registry
             .exposed_names(&projection, now)
             .into_iter()
             .map(str::to_string)
-            .collect())
+            .collect();
+        // A run whose WorkNode certifies nothing is never offered a claim (DOMAIN.md §5.6).
+        if names.iter().any(|name| name == COMPLETION_TOOL) {
+            let run = self
+                .runs
+                .load_run(&CanonicalId::parse_typed(run_id, Prefix::Run)?)
+                .await?;
+            if !crate::runtime::verification::offers_completion(
+                &self.pool,
+                &self.identity.tenant_id,
+                &run.work_node_id.to_string(),
+            )
+            .await?
+            {
+                names.retain(|name| name != COMPLETION_TOOL);
+            }
+        }
+        Ok(names)
     }
 
     /// Resume a call that parked for approval (DOMAIN.md §7.4, §5.6).
@@ -972,6 +991,22 @@ impl ToolDispatchPort for ToolDispatchService {
     ) -> Result<ToolDispatchOutcome, RuntimeError> {
         ToolDispatchService::resume(self, &pending, request).await
     }
+
+    async fn record_claim_verdict(
+        &self,
+        tool_call_id: &str,
+        verdict: &ClaimVerdict,
+    ) -> Result<(), RuntimeError> {
+        let mut result = json!({
+            "verified": verdict.verified,
+            "run_status": verdict.run_status.as_db_str(),
+        });
+        if let Some(feedback) = &verdict.feedback {
+            result["feedback"] = json!(feedback);
+        }
+        self.update_tool_call(tool_call_id, "completed", None, Some(result))
+            .await
+    }
 }
 
 impl ToolDispatchService {
@@ -1250,6 +1285,30 @@ impl ToolDispatchService {
                     }
                     Err(error) => self.refuse_internal(run, stored, effect_id, error).await,
                 }
+            }
+            "work.complete" => {
+                // The call records a claim and changes nothing; the engine verifies it and
+                // replaces this pending result with the verdict (DOMAIN.md §5.6).
+                self.settle_internal(
+                    run,
+                    plan,
+                    stored,
+                    effect_id,
+                    None,
+                    json!({
+                        "verified": false,
+                        "feedback": "verification did not finish; claim again to have it verified",
+                        "run_status": run.status.as_db_str(),
+                    }),
+                )
+                .await?;
+                Ok(ToolDispatchOutcome::CompletionClaimed {
+                    claim: CompletionClaim {
+                        claim_id: stored.id.clone(),
+                        summary: string_arg(&stored.args, "summary").unwrap_or_default(),
+                        evidence_ids: string_array_arg(&stored.args, "evidence_ids"),
+                    },
+                })
             }
             other => Err(RuntimeError::InvalidArgument(format!(
                 "tool {other} is not an internal control tool"
@@ -1795,10 +1854,11 @@ impl CallContextOwned {
 }
 
 /// The control-plane tools the runtime itself handles (DOMAIN.md §7.5).
-pub const INTERNAL_TOOLS: [&str; 4] = [
+pub const INTERNAL_TOOLS: [&str; 5] = [
     "user.ask",
     "work.delegate",
     "work.propose_plan",
+    "work.complete",
     "memory.propose",
 ];
 

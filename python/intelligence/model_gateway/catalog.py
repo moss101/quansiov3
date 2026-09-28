@@ -100,6 +100,8 @@ class ModelCatalog:
     routing_primary: str
     fallback_order: tuple[str, ...]
     source: str
+    #: The model that judges completion claims (RUN-008); the primary when unset.
+    routing_verification: str | None = None
 
     # -- constructors --------------------------------------------------------------
 
@@ -171,6 +173,12 @@ class ModelCatalog:
                 GatewayErrorCode.VALIDATION_SCHEMA,
                 f"{source}: routing.fallback_order names unknown model id(s) {unknown}",
             )
+        verification = raw_routing.get("verification")
+        if verification is not None and (not isinstance(verification, str) or verification not in models):
+            raise GatewayError(
+                GatewayErrorCode.VALIDATION_SCHEMA,
+                f"{source}: routing.verification {verification!r} is not a catalog model id",
+            )
 
         return cls(
             version=version,
@@ -179,6 +187,7 @@ class ModelCatalog:
             routing_primary=primary,
             fallback_order=tuple(fallback),
             source=source,
+            routing_verification=verification,
         )
 
     @classmethod
@@ -222,6 +231,10 @@ class ModelCatalog:
 
     def primary(self) -> ModelSpec:
         return self.model(self.routing_primary)
+
+    def verifier(self) -> ModelSpec:
+        """The model that judges completion claims: `routing.verification`, else the primary."""
+        return self.model(self.routing_verification or self.routing_primary)
 
 
 def default_catalog_path() -> Path:

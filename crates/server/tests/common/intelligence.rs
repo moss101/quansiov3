@@ -172,3 +172,50 @@ pub async fn start_with(options: Options) -> Option<Service> {
     }
     panic!("the intelligence service did not start listening on {port}");
 }
+
+/// The repository's own dev stub provider (`infra/compose/stub-provider/server.py`) on a private
+/// loopback port, stopped when dropped. Tests that need a directive this checkout added run
+/// against it rather than whichever copy the shared dev stack mounted.
+pub struct RepoStub {
+    child: Child,
+    /// `http://127.0.0.1:<port>`.
+    pub url: String,
+}
+
+impl Drop for RepoStub {
+    fn drop(&mut self) {
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+    }
+}
+
+/// Start the repository's stub provider, or report why it cannot run here.
+pub async fn repo_stub() -> Option<RepoStub> {
+    let port = TcpListener::bind("127.0.0.1:0")
+        .expect("port")
+        .local_addr()
+        .expect("addr")
+        .port();
+    let Ok(child) = Command::new("python3")
+        .arg(root().join("infra/compose/stub-provider/server.py"))
+        .env("QUANSIO_STUB_PROVIDER_HOST", "127.0.0.1")
+        .env("QUANSIO_STUB_PROVIDER_PORT", port.to_string())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+    else {
+        println!("BLOCKED_EXTERNAL: python3 is not on PATH; the dev stub provider cannot run");
+        return None;
+    };
+    let stub = RepoStub {
+        child,
+        url: format!("http://127.0.0.1:{port}"),
+    };
+    for _ in 0..80 {
+        if std::net::TcpStream::connect(("127.0.0.1", port)).is_ok() {
+            return Some(stub);
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    panic!("the dev stub provider did not start listening on {port}");
+}

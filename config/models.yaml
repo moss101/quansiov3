@@ -42,6 +42,9 @@ routing:
   strategy: deterministic
   primary: anthropic-sonnet
   fallback_order: [openai-gpt, openai-compatible-local]
+  # The model that judges completion claims (RUN-008). It differs from the primary, so a
+  # contract that requires an independent model can be verified.
+  verification: anthropic-opus
 
 models:
   - id: anthropic-sonnet

@@ -1228,6 +1228,47 @@ pub struct SkillCandidatesResponse {
     #[prost(string, repeated, tag = "1")]
     pub candidates_json: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
+/// Served by python/intelligence. Rust is the only caller.
+/// Independent semantic verification of a completion claim (RUN-008, DOMAIN.md §4.4): the plane
+/// asks a model that is not the claimant and returns its verdict. A refusal (malformed verdict,
+/// unavailable model, unprovable independence) is a typed error, never a verdict.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CompletionVerificationRequest {
+    #[prost(string, tag = "100")]
+    pub schema_version: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "1")]
+    pub scope: ::core::option::Option<ScopeContext>,
+    #[prost(string, tag = "2")]
+    pub run_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub work_node_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub claim_summary: ::prost::alloc::string::String,
+    /// empty when the contract names none
+    #[prost(string, tag = "5")]
+    pub rubric_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "6")]
+    pub evidence_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(bool, tag = "7")]
+    pub independent_model: bool,
+    /// the model of the run's latest call; empty when unknown
+    #[prost(string, tag = "8")]
+    pub claimant_model: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "9")]
+    pub max_output_tokens: u32,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CompletionVerdict {
+    #[prost(string, tag = "100")]
+    pub schema_version: ::prost::alloc::string::String,
+    #[prost(bool, tag = "1")]
+    pub agrees: bool,
+    #[prost(string, tag = "2")]
+    pub critique: ::prost::alloc::string::String,
+    /// the catalog model id that judged
+    #[prost(string, tag = "3")]
+    pub model: ::prost::alloc::string::String,
+}
 /// Generated client implementations.
 pub mod intelligence_gateway_client {
     #![allow(
@@ -1545,6 +1586,35 @@ pub mod intelligence_gateway_client {
                 );
             self.inner.unary(req, path, codec).await
         }
+        pub async fn verify_completion(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CompletionVerificationRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::CompletionVerdict>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/quansio.v1.intelligence.IntelligenceGateway/VerifyCompletion",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "quansio.v1.intelligence.IntelligenceGateway",
+                        "VerifyCompletion",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -1611,6 +1681,13 @@ pub mod intelligence_gateway_server {
             request: tonic::Request<super::SkillCandidatesRequest>,
         ) -> std::result::Result<
             tonic::Response<super::SkillCandidatesResponse>,
+            tonic::Status,
+        >;
+        async fn verify_completion(
+            &self,
+            request: tonic::Request<super::CompletionVerificationRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::CompletionVerdict>,
             tonic::Status,
         >;
     }
@@ -2043,6 +2120,55 @@ pub mod intelligence_gateway_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = ProposeSkillCandidatesSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/quansio.v1.intelligence.IntelligenceGateway/VerifyCompletion" => {
+                    #[allow(non_camel_case_types)]
+                    struct VerifyCompletionSvc<T: IntelligenceGateway>(pub Arc<T>);
+                    impl<
+                        T: IntelligenceGateway,
+                    > tonic::server::UnaryService<super::CompletionVerificationRequest>
+                    for VerifyCompletionSvc<T> {
+                        type Response = super::CompletionVerdict;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CompletionVerificationRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as IntelligenceGateway>::verify_completion(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = VerifyCompletionSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

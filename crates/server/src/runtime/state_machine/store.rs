@@ -61,44 +61,57 @@ const ATTEMPT_COLUMNS: &str = "id, tenant_id, step_id, seq, generation, status, 
 /// Default step budget for a Run whose snapshot does not set `max_steps`.
 pub const DEFAULT_MAX_STEPS: u32 = 16;
 
+/// Default bound on rejected completion claims per Turn, for a Run whose snapshot does not set
+/// `max_verification_rounds` (DOMAIN.md §5.6).
+pub const DEFAULT_MAX_VERIFICATION_ROUNDS: u32 = 3;
+
 /// The step budget the turn loop honours for one Turn (DOMAIN.md §13.2).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Budget {
     /// Maximum steps one Turn may record.
     pub max_steps: u32,
+    /// Rejected completion claims one Turn may make before verification feedback ends it.
+    pub max_verification_rounds: u32,
 }
 
 impl Budget {
-    /// A budget of `max_steps` steps.
+    /// A budget of `max_steps` steps and the default verification bound.
     #[must_use]
     pub const fn new(max_steps: u32) -> Self {
-        Self { max_steps }
+        Self {
+            max_steps,
+            max_verification_rounds: DEFAULT_MAX_VERIFICATION_ROUNDS,
+        }
     }
 
     /// Read the budget from a Run's `budget_snapshot`.
     ///
     /// # Errors
-    /// Returns [`RuntimeError::InvalidArgument`] when `max_steps` is present but not a
-    /// non-negative integer that fits in `u32`.
+    /// Returns [`RuntimeError::InvalidArgument`] when `max_steps` or `max_verification_rounds`
+    /// is present but not a non-negative integer that fits in `u32`.
     pub fn from_snapshot(snapshot: &Value) -> Result<Self, RuntimeError> {
-        let Some(raw) = snapshot.get("max_steps") else {
-            return Ok(Self::new(DEFAULT_MAX_STEPS));
-        };
-        if raw.is_null() {
-            return Ok(Self::new(DEFAULT_MAX_STEPS));
-        }
-        let value = raw.as_u64().ok_or_else(|| {
-            RuntimeError::InvalidArgument(format!(
-                "budget_snapshot.max_steps is not an integer: {raw}"
-            ))
-        })?;
-        let max_steps = u32::try_from(value).map_err(|_| {
-            RuntimeError::InvalidArgument(format!(
-                "budget_snapshot.max_steps is out of range: {value}"
-            ))
-        })?;
-        Ok(Self::new(max_steps))
+        Ok(Self {
+            max_steps: snapshot_bound(snapshot, "max_steps", DEFAULT_MAX_STEPS)?,
+            max_verification_rounds: snapshot_bound(
+                snapshot,
+                "max_verification_rounds",
+                DEFAULT_MAX_VERIFICATION_ROUNDS,
+            )?,
+        })
     }
+}
+
+/// One `u32` bound of a `budget_snapshot`, or `default` when it is absent or null.
+fn snapshot_bound(snapshot: &Value, key: &str, default: u32) -> Result<u32, RuntimeError> {
+    let Some(raw) = snapshot.get(key).filter(|raw| !raw.is_null()) else {
+        return Ok(default);
+    };
+    let value = raw.as_u64().ok_or_else(|| {
+        RuntimeError::InvalidArgument(format!("budget_snapshot.{key} is not an integer: {raw}"))
+    })?;
+    u32::try_from(value).map_err(|_| {
+        RuntimeError::InvalidArgument(format!("budget_snapshot.{key} is out of range: {value}"))
+    })
 }
 
 /// A Run to create (DOMAIN.md §5.2).
@@ -143,7 +156,10 @@ impl NewRun {
     /// Set the budget snapshot.
     #[must_use]
     pub fn with_budget(mut self, budget: Budget) -> Self {
-        self.budget_snapshot = json!({ "max_steps": budget.max_steps });
+        self.budget_snapshot = json!({
+            "max_steps": budget.max_steps,
+            "max_verification_rounds": budget.max_verification_rounds,
+        });
         self
     }
 }

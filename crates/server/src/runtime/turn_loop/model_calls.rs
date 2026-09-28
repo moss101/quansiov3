@@ -146,6 +146,31 @@ impl ModelCallLedger {
             Err(error) => Err(error.into()),
         }
     }
+
+    /// The model that answered `run_id`'s latest recorded call — the model that made a claim
+    /// the run is verifying (RUN-008) — or `None` when the run recorded no call.
+    ///
+    /// # Errors
+    /// Returns a database error.
+    pub async fn claimant_model(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+    ) -> Result<Option<String>, RuntimeError> {
+        let mut tx = self.pool.begin().await?;
+        crate::control::schema::set_tenant_context(&mut tx, tenant_id).await?;
+        let model: Option<String> = sqlx::query_scalar(
+            "SELECT r.model_id FROM model_calls c JOIN model_routes r ON r.id = c.route_id \
+             WHERE c.tenant_id = $1 AND c.run_id = $2 \
+             ORDER BY c.created_at DESC, c.id DESC LIMIT 1",
+        )
+        .bind(tenant_id)
+        .bind(run_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(model.filter(|model| !model.is_empty()))
+    }
 }
 
 /// The metered quantities of one call: the provider's reported tokens under the names the usage

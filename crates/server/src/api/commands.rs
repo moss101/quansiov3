@@ -16,6 +16,7 @@ use crate::runtime::state_machine::{
 use crate::runtime::turn_loop::{
     QuestionAnswer, QuestionService, StoredProjectionProvider, ToolDispatchService,
 };
+use crate::runtime::verification::ContractVerifier;
 use axum::extract::{Path, State};
 use axum::http::HeaderMap;
 use axum::Json;
@@ -1039,12 +1040,18 @@ pub(super) async fn post_agent_reply(
     outcome: &TurnOutcome,
     correlation: &str,
 ) -> Result<Option<String>, ApiError> {
-    let TurnOutcome::Completed {
-        turn_id,
-        assistant_text: Some(text),
-    } = outcome
-    else {
-        return Ok(None);
+    // A verified completion keeps what the model said alongside its claim as the reply.
+    let (turn_id, text) = match outcome {
+        TurnOutcome::Completed {
+            turn_id,
+            assistant_text: Some(text),
+        }
+        | TurnOutcome::Succeeded {
+            turn_id,
+            assistant_text: Some(text),
+            ..
+        } => (turn_id, text),
+        _ => return Ok(None),
     };
     if text.trim().is_empty() {
         return Ok(None);
@@ -1242,8 +1249,13 @@ pub(super) fn chat_engine(
     let live: Arc<dyn crate::runtime::state_machine::LiveFramePort> = state.live().clone();
     let budgets =
         crate::runtime::budgets::RuntimeBudgets::new(state.pool().clone(), identity.clone())?;
+    // A completion claim reaches SUCCEEDED only through the contract verifier (RUN-008), with
+    // the plane's independent semantic verifier when the deployment has one.
+    let verifier = ContractVerifier::new(state.pool().clone(), identity.clone())?
+        .with_semantic_verifier(state.semantic_verifier());
     Ok(RuntimeEngine::new(state.pool().clone(), identity)?
         .with_budgets(Arc::new(budgets))
+        .with_verification(Arc::new(verifier))
         .with_model_source(state.model())
         .with_tool_dispatch(Arc::new(dispatcher))
         .with_delegation(delegation)
@@ -1640,11 +1652,13 @@ pub(super) fn turn_json(outcome: &TurnOutcome) -> Value {
             run_id,
             turn_id,
             evidence_ids,
+            assistant_text,
         } => json!({
             "kind": "succeeded",
             "run_id": run_id,
             "turn_id": turn_id,
             "evidence_ids": evidence_ids,
+            "assistant_text": assistant_text,
         }),
         TurnOutcome::Parked {
             run_id,

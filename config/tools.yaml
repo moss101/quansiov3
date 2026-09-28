@@ -698,6 +698,44 @@ tools:
         child_agent_thread_id: { type: string }
       required: [child_agent_thread_id]
 
+  - name: work.complete
+    version: 1
+    description: >-
+      Claim that the work you were given is complete. The runtime verifies the claim against the
+      work's completion contract; the result says whether it was verified and, when it was not,
+      what is still missing.
+    host: server
+    source_trust: agent_generated
+    effect_class: read.internal
+    resource: { kind: work, selector: "*" }
+    idempotency: { digest_args: [summary] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: false
+    evidence: { kinds: [verification_verdict], redact: [] }
+    grant_templates:
+      - effect_class: read.internal
+        resource: { kind: work, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        summary: { type: string, minLength: 1, maxLength: 4000 }
+        evidence_ids:
+          type: array
+          maxItems: 50
+          items: { type: string, minLength: 1 }
+      required: [summary]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        verified: { type: boolean }
+        feedback: { type: string }
+        run_status: { type: string }
+      required: [verified, run_status]
+
   - name: user.ask
     version: 1
     description: Ask a human a question; the run parks in WAITING_QUESTION until it is answered or expires.

@@ -198,3 +198,39 @@ class SkillCandidatesResponse(_message.Message):
     schema_version: str
     candidates_json: _containers.RepeatedScalarFieldContainer[str]
     def __init__(self, schema_version: _Optional[str] = ..., candidates_json: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class CompletionVerificationRequest(_message.Message):
+    __slots__ = ("schema_version", "scope", "run_id", "work_node_id", "claim_summary", "rubric_id", "evidence_ids", "independent_model", "claimant_model", "max_output_tokens")
+    SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
+    SCOPE_FIELD_NUMBER: _ClassVar[int]
+    RUN_ID_FIELD_NUMBER: _ClassVar[int]
+    WORK_NODE_ID_FIELD_NUMBER: _ClassVar[int]
+    CLAIM_SUMMARY_FIELD_NUMBER: _ClassVar[int]
+    RUBRIC_ID_FIELD_NUMBER: _ClassVar[int]
+    EVIDENCE_IDS_FIELD_NUMBER: _ClassVar[int]
+    INDEPENDENT_MODEL_FIELD_NUMBER: _ClassVar[int]
+    CLAIMANT_MODEL_FIELD_NUMBER: _ClassVar[int]
+    MAX_OUTPUT_TOKENS_FIELD_NUMBER: _ClassVar[int]
+    schema_version: str
+    scope: ScopeContext
+    run_id: str
+    work_node_id: str
+    claim_summary: str
+    rubric_id: str
+    evidence_ids: _containers.RepeatedScalarFieldContainer[str]
+    independent_model: bool
+    claimant_model: str
+    max_output_tokens: int
+    def __init__(self, schema_version: _Optional[str] = ..., scope: _Optional[_Union[ScopeContext, _Mapping]] = ..., run_id: _Optional[str] = ..., work_node_id: _Optional[str] = ..., claim_summary: _Optional[str] = ..., rubric_id: _Optional[str] = ..., evidence_ids: _Optional[_Iterable[str]] = ..., independent_model: _Optional[bool] = ..., claimant_model: _Optional[str] = ..., max_output_tokens: _Optional[int] = ...) -> None: ...
+
+class CompletionVerdict(_message.Message):
+    __slots__ = ("schema_version", "agrees", "critique", "model")
+    SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
+    AGREES_FIELD_NUMBER: _ClassVar[int]
+    CRITIQUE_FIELD_NUMBER: _ClassVar[int]
+    MODEL_FIELD_NUMBER: _ClassVar[int]
+    schema_version: str
+    agrees: bool
+    critique: str
+    model: str
+    def __init__(self, schema_version: _Optional[str] = ..., agrees: _Optional[bool] = ..., critique: _Optional[str] = ..., model: _Optional[str] = ...) -> None: ...
