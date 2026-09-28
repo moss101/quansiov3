@@ -185,7 +185,7 @@ Attachments are Artifacts (§10) with `origin: {kind: message, message_id}`. Upl
 `id, workspace_id, kind (objective|task|subtask|wait|milestone), title, description, parent_id?, status (draft|ready|blocked|in_progress|waiting|verifying|done|failed|cancelled), owner_agent_thread_id?, created_by {kind,id}, completion_contract (§4.4), capability_needs[] (grant templates §6), budget (§13.2), priority (0-3), revision, thread_id?, origin (user|plan_proposal|routine|pack)`.
 
 ### 4.2 WorkEdge
-`id, workspace_id, from_node_id, to_node_id, kind (depends_on|parent_of|produces_artifact|verified_by|blocked_by), revision`. Graph MUST be acyclic for `depends_on`/`parent_of`.
+`id, workspace_id, from_node_id, to_node_id, kind (depends_on|parent_of|produces_artifact|verified_by|blocked_by), revision`. Graph MUST be acyclic for `depends_on`/`parent_of`, taken together with `work_nodes.parent_id`; every such relation runs from the node that waits to the node it waits on: `depends_on` dependent → dependency, `parent_of` parent → child, and `parent_id` likewise parent → child (a parent waits on its children), so restating a node's parent as a `parent_of` edge is no cycle and a child may not depend on its parent.
 
 ### 4.3 AgentGraph edge
 `parent_agent_thread_id → child_agent_thread_id` with `work_node_id, delegation_capability_id (cap_), delegated_at, joined_at?`. Child capability MUST be a narrowing of parent capability (§6).

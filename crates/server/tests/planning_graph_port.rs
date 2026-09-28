@@ -420,10 +420,12 @@ async fn the_graph_transaction_refuses_a_compiled_plan_that_breaks_a_rule_and_wr
         expected_revision: seed_revision,
         to: NodeStatus::Done,
     }];
-    // Completion is never self-certified through a plan: the store refuses the transition.
-    // (Its typed CONFLICT_STATE is flattened by the port; see the QA-001 finding.)
+    // Completion is never self-certified through a plan: the store refuses the transition
+    // with its own typed code, a plan verdict rather than an infrastructure failure.
     let error = apply(illegal).await;
     assert!(error.to_string().contains("done"), "{error}");
+    assert_eq!(error.code(), "CONFLICT_STATE", "{error}");
+    assert!(error.is_rejection(), "{error}");
 
     let mut malformed = plan(base);
     malformed.nodes_update = vec![CompiledNodeUpdate {
@@ -468,11 +470,12 @@ async fn the_graph_transaction_refuses_a_cycle_and_a_plan_above_the_policy_bound
     let child_id = node_id(&fixture, "child").await;
     let base = revision(&fixture).await;
 
-    // The child already hangs under the seed, so the seed depending on the child is a cycle.
+    // The child already hangs under the seed (the seed waits on it), so the child depending
+    // on the seed is a cycle.
     let mut cyclic = plan(base);
     cyclic.edges_add = vec![CompiledEdge {
-        from_node_id: SEED_NODE.to_string(),
-        to_node_id: child_id.clone(),
+        from_node_id: child_id.clone(),
+        to_node_id: SEED_NODE.to_string(),
         kind: EdgeKind::DependsOn,
     }];
     let error = fixture.port.apply(cyclic).await.expect_err("a cycle");

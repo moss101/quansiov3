@@ -320,6 +320,8 @@ fn plan_error(error: PlanError, correlation: &str) -> ApiError {
         "VALIDATION_BOUNDS" => ApiErrorCode::ValidationBounds,
         "CAPABILITY_DENIED" => ApiErrorCode::CapabilityDenied,
         "VALIDATION_SCHEMA" => ApiErrorCode::ValidationSchema,
+        "CONFLICT_STATE" => ApiErrorCode::ConflictState,
+        "NOT_FOUND" => ApiErrorCode::NotFound,
         _ => ApiErrorCode::Internal,
     };
     ApiError::new(code, error.to_string(), correlation)

@@ -355,6 +355,64 @@ async fn the_projection_is_the_canonical_revision_and_edits_are_validated_comman
     assert_eq!(status, 403, "{widening}");
     assert_eq!(widening["code"], "CAPABILITY_DENIED", "{widening}");
 
+    // Completion is never set through a plan: the store's own verdict reaches the client
+    // with its code, and nothing is written.
+    let current = graph(&router).await;
+    let gather_now = current["nodes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|n| n["id"] == gather["id"])
+        .cloned()
+        .unwrap();
+    let (status, done) = command(
+        &router,
+        "ProposeGraphEdit",
+        9,
+        json!({
+            "workspace_id": WORKSPACE,
+            "base_revision": current["revision"],
+            "nodes_update": [{ "node_id": gather["id"], "expected_revision": gather_now["revision"], "to": "done" }],
+            "rationale": "declare it finished"
+        }),
+    )
+    .await;
+    assert_eq!(status, 409, "{done}");
+    assert_eq!(done["code"], "CONFLICT_STATE", "{done}");
+    assert_eq!(graph(&router).await["revision"], current["revision"]);
+
+    // parent_of runs parent -> child like parent_id: restating the objective as gather's
+    // parent applies, while gather depending on its own parent is a cycle.
+    let (status, restated) = command(
+        &router,
+        "ProposeGraphEdit",
+        10,
+        json!({
+            "workspace_id": WORKSPACE,
+            "base_revision": current["revision"],
+            "edges_add": [{ "id": "par", "from_node_id": objective_id, "to_node_id": gather["id"], "kind": "parent_of" }],
+            "rationale": "restate the parent"
+        }),
+    )
+    .await;
+    assert_eq!(status, 200, "{restated}");
+    let current = graph(&router).await;
+    let (status, upward) = command(
+        &router,
+        "ProposeGraphEdit",
+        11,
+        json!({
+            "workspace_id": WORKSPACE,
+            "base_revision": current["revision"],
+            "edges_add": [{ "id": "up", "from_node_id": gather["id"], "to_node_id": objective_id, "kind": "depends_on" }],
+            "rationale": "a child waiting on its parent"
+        }),
+    )
+    .await;
+    assert_eq!(status, 400, "{upward}");
+    assert_eq!(upward["code"], "VALIDATION_SCHEMA", "{upward}");
+    assert!(upward["message"].to_string().contains("cycle"), "{upward}");
+
     // The plan events are on the durable log for every client.
     let mut tx = pool.begin().await.expect("begin");
     schema::set_tenant_context(&mut tx, TENANT)
@@ -372,8 +430,10 @@ async fn the_projection_is_the_canonical_revision_and_edits_are_validated_comman
         events.iter().any(|e| e == "work.plan_applied"),
         "{events:?}"
     );
+    // The cycle, the widening need, the completion and the upward dependency: one
+    // rejection each (the stale and local-edge refusals are recorded too).
     assert!(
-        events.iter().any(|e| e == "work.plan_rejected"),
+        events.iter().filter(|e| *e == "work.plan_rejected").count() >= 4,
         "{events:?}"
     );
 

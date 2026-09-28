@@ -567,6 +567,8 @@ fn resolve_nodes(
 ///
 /// The structure is the workspace's existing `depends_on`/`parent_of` edges plus every
 /// `work_nodes.parent_id`, with the proposal's removals dropped and its additions applied.
+/// Every relation runs from the node that waits to the node it waits on: dependent to
+/// dependency, and parent to child for both `parent_of` and `parent_id`.
 /// Depth-first colouring reports the edge that would close the cycle.
 fn detect_cycle(
     snapshot: &PlanGraphSnapshot,
@@ -581,9 +583,9 @@ fn detect_cycle(
     for node in &snapshot.nodes {
         if let Some(parent) = &node.parent_id {
             adjacency
-                .entry(node.id.clone())
+                .entry(parent.clone())
                 .or_default()
-                .push(parent.clone());
+                .push(node.id.clone());
         }
     }
     for edge in &snapshot.edges {
@@ -605,9 +607,9 @@ fn detect_cycle(
     for node in &raw.nodes_add {
         if let Some(parent) = &node.parent_id {
             adjacency
-                .entry(node.id.clone())
+                .entry(parent.clone())
                 .or_default()
-                .push(parent.clone());
+                .push(node.id.clone());
         }
     }
 
