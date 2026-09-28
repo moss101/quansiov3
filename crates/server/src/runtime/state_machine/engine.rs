@@ -806,12 +806,24 @@ impl RuntimeEngine {
                 return Ok(Some(outcome));
             }
             let mut pending = Vec::with_capacity(round.len());
+            // The hard quota admits calls before any effect is reserved (OPS-004): a call
+            // beyond the `tool_calls` the governing budgets have left is never recorded.
+            let admitted = self
+                .budgets
+                .admit(
+                    run,
+                    Meter::ToolCalls,
+                    u64::try_from(round.len()).unwrap_or(u64::MAX),
+                )
+                .await?;
             // A call the step budget cannot pay for is never recorded, so no Step is left
             // dispatched for a call no tool received; the calls already recorded in this
             // round are dispatched and settled before the turn ends on the budget.
             let mut budget_spent = false;
             for index in round {
-                if *steps_used >= budget.max_steps {
+                if *steps_used >= budget.max_steps
+                    || u64::try_from(pending.len()).unwrap_or(u64::MAX) >= admitted
+                {
                     budget_spent = true;
                     break;
                 }

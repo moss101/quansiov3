@@ -13,7 +13,8 @@ use quansio_server::api::ApiState;
 use quansio_server::control::schema;
 use quansio_server::runtime::budgets::{BudgetService, BudgetSpec, Meter, MeterUsage};
 use quansio_server::runtime::state_machine::{
-    ModelCallRequest, ModelProposal, ModelProposalSource, ModelUsage, RuntimeError, RuntimeIdentity,
+    ModelCallRequest, ModelProposal, ModelProposalSource, ModelUsage, ProposedToolCall,
+    RuntimeError, RuntimeIdentity,
 };
 use serde_json::{json, Value};
 use tower::ServiceExt;
@@ -387,6 +388,109 @@ async fn concurrent_charges_add_up() {
         after.consumed.get(Meter::Tokens),
         140,
         "twenty concurrent charges of 7, none lost"
+    );
+    common::drop_pool(&h.pool, &h.name).await;
+}
+
+/// A model that proposes three independent reads once, then answers.
+#[derive(Default)]
+struct ReadingModel {
+    calls: AtomicUsize,
+}
+
+#[async_trait::async_trait]
+impl ModelProposalSource for ReadingModel {
+    async fn propose(&self, _request: ModelCallRequest) -> Result<ModelProposal, RuntimeError> {
+        if self.calls.fetch_add(1, Ordering::SeqCst) > 0 {
+            return Ok(ModelProposal {
+                assistant_text: Some("done".to_string()),
+                ..ModelProposal::default()
+            });
+        }
+        Ok(ModelProposal {
+            tool_calls: ["a", "b", "c"]
+                .into_iter()
+                .map(|name| {
+                    ProposedToolCall::new(
+                        format!("call_{name}"),
+                        "fs.read",
+                        json!({ "path": format!("notes/{name}.md") }),
+                    )
+                })
+                .collect(),
+            ..ModelProposal::default()
+        })
+    }
+}
+
+async fn tool_call_count(pool: &sqlx::PgPool) -> i64 {
+    let mut tx = pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant");
+    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM tool_calls WHERE tenant_id = $1")
+        .bind(TENANT)
+        .fetch_one(&mut *tx)
+        .await
+        .expect("count");
+    tx.commit().await.expect("commit");
+    count
+}
+
+/// OPS-004 through the served API: the budget's `tool_calls` limit is a hard quota that refuses
+/// a call *before* its effect is reserved. Three reads proposed against two remaining calls:
+/// two are recorded and dispatched, the third never becomes a tool call, and the turn stops
+/// on the budget without over-charging it.
+#[tokio::test]
+async fn the_hard_quota_refuses_a_tool_call_before_its_effect_is_reserved() {
+    let Some(h) = prepare("budget_quota_admit").await else {
+        common::blocked_marker();
+        return;
+    };
+    let model = Arc::new(ReadingModel::default());
+    let router = quansio_server::api::router(
+        ApiState::new(h.pool.clone())
+            .expect("api")
+            .with_model_source(model.clone()),
+    );
+    let (status, granted) = command(
+        &router,
+        OWNER,
+        "SetBudget",
+        json!({ "scope": "workspace", "workspace_id": WORKSPACE, "limits": { "tool_calls": 2 } }),
+    )
+    .await;
+    assert_eq!(status, 200, "{granted}");
+    let (status, posted) = command(
+        &router,
+        OWNER,
+        "PostMessage",
+        json!({ "workspace_id": WORKSPACE, "content": "read my notes" }),
+    )
+    .await;
+    assert_eq!(status, 200, "{posted}");
+    assert_eq!(
+        posted["result"]["turn"]["kind"], "budget_exhausted",
+        "{posted}"
+    );
+    assert_eq!(
+        tool_call_count(&h.pool).await,
+        2,
+        "the call beyond the quota is never recorded, so no effect is reserved for it"
+    );
+    let (_, usage) = call(
+        &router,
+        OWNER,
+        "GET",
+        &format!("/v1/usage?workspace_id={WORKSPACE}"),
+        None,
+    )
+    .await;
+    assert_eq!(usage["budgets"][0]["consumed"]["tool_calls"], 2, "{usage}");
+    assert_eq!(
+        model.calls.load(Ordering::SeqCst),
+        1,
+        "no model call after the quota"
     );
     common::drop_pool(&h.pool, &h.name).await;
 }
