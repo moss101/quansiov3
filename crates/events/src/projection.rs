@@ -464,7 +464,9 @@ impl Projection for WorkNodeStatusProjection {
         conn: &mut PgConnection,
         event: &RuntimeEvent,
     ) -> Result<bool, EventError> {
-        if event.aggregate_type != "work" {
+        // The graph transaction emits `work.*` node events on the `work_node` aggregate
+        // (CORE-005); `work` is the family's short spelling.
+        if !matches!(event.aggregate_type.as_str(), "work_node" | "work") {
             return Ok(false);
         }
         let Some(status) = work_node_status(event) else {

@@ -32,8 +32,6 @@ KNOWN_GAPS: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("NOT_COMPOSED", "WorkGraphPort"): ("RUN-004", "GraphWorkGraph is never constructed"),
     ("UNCOMPOSED", "GraphWorkGraph"): ("RUN-004", "as above"),
     ("UNCOMPOSED", "Orchestrator"): ("RUN-004", "fan-out/fan-in, the ready queue and subtree cancellation never run"),
-    ("NOT_COMPOSED", "Projection"): ("CORE-009", "RunStatusProjection and WorkNodeStatusProjection never run"),
-    ("UNCOMPOSED", "ProjectionRunner"): ("CORE-009", "as above"),
     ("UNCOMPOSED", "OutboxPublisher"): ("CORE-003", "no event transport; the transactional outbox is never published"),
     ("UNCOMPOSED", "KmsKeyProvider"): ("EXEC-007", "only the local master key provider is composed"),
     ("UNCOMPOSED", "ComputerDispatcher"): ("EXEC-010", "computer use has no composed dispatcher"),
