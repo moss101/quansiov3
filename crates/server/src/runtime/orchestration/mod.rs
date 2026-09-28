@@ -35,7 +35,9 @@ pub mod service;
 use quansio_events::EventError;
 use thiserror::Error;
 
-pub use cancel::{CancelPlan, CancelRequest, CancellationOutcome, CancelledNode};
+pub use cancel::{
+    pending_cancellations, CancelPlan, CancelRequest, CancellationOutcome, CancelledNode,
+};
 pub use capacity::{CapacityGate, CapacityRefusal};
 pub use graph::{
     DependencyEdge, GraphSnapshot, NodeTransition, ReleaseBatch, ReleaseOutcome, RunRef,

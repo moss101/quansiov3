@@ -55,6 +55,11 @@ pub struct SchedulerConfig {
     /// Whether a tick executes the fires it claims (`false` when a [`super::FireExecutor`] runs
     /// beside the loop).
     pub execute_routine_fires: bool,
+    /// Whether RUN-004's orchestrator runs beside the scheduler. When it does, the queued
+    /// runs of graph work the orchestrator governs — a node that is `draft`, `ready`,
+    /// `blocked` or `cancelled`, or that still waits on a `depends_on` prerequisite — are
+    /// left to it, so dependency order and the concurrency budget have one enforcer.
+    pub orchestrated: bool,
 }
 
 impl SchedulerConfig {
@@ -72,6 +77,7 @@ impl SchedulerConfig {
                 super::routine::DEFAULT_MISFIRE_THRESHOLD_SECONDS,
             ),
             execute_routine_fires: true,
+            orchestrated: false,
         }
     }
 }
@@ -270,11 +276,18 @@ impl Scheduler {
             .begin_tenant_transaction(&self.tenant_id)
             .await?;
         let rows = sqlx::query(
-            "SELECT id, generation FROM runs WHERE tenant_id = $1 AND status = 'QUEUED' \
-             ORDER BY created_at ASC, id LIMIT $2",
+            "SELECT r.id, r.generation FROM runs r WHERE r.tenant_id = $1 AND r.status = 'QUEUED' \
+             AND (NOT $3 OR NOT EXISTS (SELECT 1 FROM work_nodes n WHERE n.tenant_id = r.tenant_id \
+               AND n.id = r.work_node_id AND n.status IN ('draft', 'ready', 'blocked', 'cancelled'))) \
+             AND (NOT $3 OR NOT EXISTS (SELECT 1 FROM work_edges e \
+               JOIN work_nodes p ON p.tenant_id = e.tenant_id AND p.id = e.to_node_id \
+               WHERE e.tenant_id = r.tenant_id AND e.from_node_id = r.work_node_id \
+               AND e.kind = 'depends_on' AND p.status <> 'done')) \
+             ORDER BY r.created_at ASC, r.id LIMIT $2",
         )
         .bind(&self.tenant_id)
         .bind(limit)
+        .bind(self.config.orchestrated)
         .fetch_all(&mut *tx)
         .await?;
         let runs = rows

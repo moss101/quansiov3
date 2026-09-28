@@ -1,0 +1,23 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-ae3e0f5ced695b63)
+
+running 16 tests
+test runtime::orchestration::capacity::tests::a_saturated_gate_refuses_with_a_typed_error ... ok
+test runtime::orchestration::capacity::tests::a_zero_limit_freezes_rather_than_unbounding ... ok
+test runtime::orchestration::queue::tests::parked_runs_are_waiting_not_dispatchable ... ok
+test runtime::orchestration::capacity::tests::slots_are_counted_from_durable_run_state ... ok
+test runtime::orchestration::queue::tests::a_dependent_never_starts_before_its_prerequisite ... ok
+test runtime::orchestration::queue::tests::capacity_defers_the_tail_deterministically ... ok
+test runtime::orchestration::cancel::tests::a_settled_effect_inside_the_subtree_is_not_retouched ... ok
+test runtime::orchestration::cancel::tests::an_already_cancelled_subtree_plans_nothing ... ok
+test runtime::orchestration::queue::tests::joins_release_once_and_block_on_a_broken_child ... ok
+test runtime::orchestration::cancel::tests::a_queued_run_is_reported_as_unstarted_not_cancelled ... ok
+test runtime::orchestration::cancel::tests::only_a_top_most_cancellation_with_unsettled_work_is_pending ... ok
+test runtime::orchestration::queue::tests::ordering_is_priority_then_id ... ok
+test runtime::orchestration::cancel::tests::cancellation_covers_the_subtree_its_runs_and_its_dependents ... ok
+test runtime::orchestration::queue::tests::a_cycle_is_refused ... ok
+test runtime::orchestration::queue::tests::release_is_idempotent_over_the_same_snapshot ... ok
+test runtime::orchestration::queue::tests::release_makes_satisfied_work_ready_and_blocks_work_that_can_never_run ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 168 filtered out; finished in 0.01s
+

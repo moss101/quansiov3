@@ -46,6 +46,33 @@ impl GraphWorkGraph {
     fn store(&self) -> Result<GraphStore, OrchestrationError> {
         GraphStore::new(self.pool.clone(), self.tenant_id.clone()).map_err(Self::unavailable)
     }
+
+    /// The workspaces whose graph has orchestration work now, at most `limit`, in id order:
+    /// a node a release would make `ready` or `blocked`, a waiting parent whose children all
+    /// finished, a `ready` node with a queued run, or a cancelled node whose subtree, run or
+    /// dependents are not settled yet. A workspace with none of these is not read at all, so
+    /// an idle graph costs the background pass one query.
+    ///
+    /// # Errors
+    /// Returns [`OrchestrationError::Database`] when the graph cannot be read.
+    pub async fn workspaces_with_work(
+        &self,
+        limit: i64,
+    ) -> Result<Vec<String>, OrchestrationError> {
+        let mut tx = self.pool.begin().await?;
+        schema::set_tenant_context(&mut tx, &self.tenant_id)
+            .await
+            .map_err(Self::unavailable)?;
+        let workspaces = sqlx::query_scalar(
+            "SELECT DISTINCT n.workspace_id FROM work_nodes n WHERE n.tenant_id = $1 AND (                (n.status = 'draft' AND NOT EXISTS (SELECT 1 FROM work_edges e                   JOIN work_nodes p ON p.tenant_id = e.tenant_id AND p.id = e.to_node_id                   WHERE e.tenant_id = n.tenant_id AND e.from_node_id = n.id                   AND e.kind = 'depends_on' AND p.status <> 'done'))                OR (n.status = 'blocked' AND EXISTS (SELECT 1 FROM work_edges e                   WHERE e.tenant_id = n.tenant_id AND e.from_node_id = n.id AND e.kind = 'depends_on')                   AND NOT EXISTS (SELECT 1 FROM work_edges e                   JOIN work_nodes p ON p.tenant_id = e.tenant_id AND p.id = e.to_node_id                   WHERE e.tenant_id = n.tenant_id AND e.from_node_id = n.id                   AND e.kind = 'depends_on' AND p.status <> 'done'))                OR (n.status = 'draft' AND EXISTS (SELECT 1 FROM work_edges e                   JOIN work_nodes p ON p.tenant_id = e.tenant_id AND p.id = e.to_node_id                   WHERE e.tenant_id = n.tenant_id AND e.from_node_id = n.id                   AND e.kind = 'depends_on' AND p.status IN ('failed', 'cancelled')))                OR (n.status = 'waiting'                   AND EXISTS (SELECT 1 FROM work_nodes c WHERE c.tenant_id = n.tenant_id AND c.parent_id = n.id)                   AND NOT EXISTS (SELECT 1 FROM work_nodes c WHERE c.tenant_id = n.tenant_id                   AND c.parent_id = n.id AND c.status NOT IN ('done', 'failed', 'cancelled')))                OR (n.status = 'ready' AND EXISTS (SELECT 1 FROM runs r                   WHERE r.tenant_id = n.tenant_id AND r.work_node_id = n.id AND r.status = 'QUEUED'))                OR (n.status = 'cancelled' AND (                   EXISTS (SELECT 1 FROM work_nodes c WHERE c.tenant_id = n.tenant_id                     AND c.parent_id = n.id AND c.status NOT IN ('done', 'failed', 'cancelled'))                   OR EXISTS (SELECT 1 FROM work_edges e                     JOIN work_nodes d ON d.tenant_id = e.tenant_id AND d.id = e.from_node_id                     WHERE e.tenant_id = n.tenant_id AND e.to_node_id = n.id AND e.kind = 'depends_on'                     AND d.status NOT IN ('done', 'failed', 'cancelled', 'blocked'))                   OR EXISTS (SELECT 1 FROM runs r WHERE r.tenant_id = n.tenant_id                     AND r.work_node_id = n.id                     AND (r.status IN ('RUNNING', 'VERIFYING', 'SUSPENDED') OR r.status LIKE 'WAITING%'))))              ) ORDER BY n.workspace_id LIMIT $2",
+        )
+        .bind(&self.tenant_id)
+        .bind(limit)
+        .fetch_all(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(workspaces)
+    }
 }
 
 #[async_trait]

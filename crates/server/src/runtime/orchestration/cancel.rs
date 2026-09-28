@@ -189,6 +189,47 @@ pub fn cancel_plan(
     })
 }
 
+/// Cancelled nodes whose cancellation has not reached everything it governs yet: a subtree
+/// node still open, a live run, or a dependent not yet blocked (a run that never started is
+/// not pending: it stays unstarted, and orchestration never dispatches a cancelled node).
+///
+/// Only the top-most such node of a cancelled subtree is returned, in id order, because its
+/// propagation covers the nodes beneath it. This is how a cancellation written by any
+/// authority (a graph edit, a plan revision) reaches its subtree.
+#[must_use]
+pub fn pending_cancellations(snapshot: &GraphSnapshot) -> Vec<String> {
+    let mut pending: Vec<String> = Vec::new();
+    for node in &snapshot.nodes {
+        if node.status != status::CANCELLED {
+            continue;
+        }
+        let under_cancelled_parent = node
+            .parent_id
+            .as_deref()
+            .and_then(|parent| snapshot.node(parent))
+            .is_some_and(|parent| parent.status == status::CANCELLED);
+        if under_cancelled_parent {
+            continue;
+        }
+        let request = CancelRequest {
+            workspace_id: snapshot.workspace_id.clone(),
+            node_id: node.id.clone(),
+            reason: String::new(),
+        };
+        let Ok(plan) = cancel_plan(snapshot, &request) else {
+            continue;
+        };
+        if !plan.cancelled_nodes.is_empty()
+            || !plan.blocked_dependents.is_empty()
+            || !plan.runs.is_empty()
+        {
+            pending.push(node.id.clone());
+        }
+    }
+    pending.sort();
+    pending
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::graph::{DependencyEdge, GraphSnapshot, RunRef, WorkNodeView};
@@ -238,6 +279,45 @@ mod tests {
             to_node_id: to.to_string(),
             kind: "depends_on".to_string(),
         }
+    }
+
+    #[test]
+    fn only_a_top_most_cancellation_with_unsettled_work_is_pending() {
+        let graph = snapshot(
+            vec![
+                node("wn_root", status::CANCELLED, None, None),
+                node("wn_child", status::CANCELLED, Some("wn_root"), None),
+                node(
+                    "wn_leaf",
+                    status::IN_PROGRESS,
+                    Some("wn_child"),
+                    Some("RUNNING"),
+                ),
+                // Settled: its subtree is finished and its run never started.
+                node("wn_done", status::CANCELLED, None, Some("QUEUED")),
+                node("wn_done_child", status::DONE, Some("wn_done"), None),
+                node("wn_open", status::READY, None, None),
+            ],
+            Vec::new(),
+        );
+        assert_eq!(pending_cancellations(&graph), vec!["wn_root".to_string()]);
+        // A dependent not yet blocked is unsettled work too.
+        let graph = snapshot(
+            vec![
+                node("wn_done", status::CANCELLED, None, None),
+                node("wn_next", status::DRAFT, None, None),
+            ],
+            vec![depends_on("wn_next", "wn_done")],
+        );
+        assert_eq!(pending_cancellations(&graph), vec!["wn_done".to_string()]);
+        let graph = snapshot(
+            vec![
+                node("wn_done", status::CANCELLED, None, None),
+                node("wn_next", status::BLOCKED, None, None),
+            ],
+            vec![depends_on("wn_next", "wn_done")],
+        );
+        assert!(pending_cancellations(&graph).is_empty());
     }
 
     #[test]

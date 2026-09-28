@@ -13,7 +13,10 @@ use quansio_core::{CanonicalId, Generation};
 use crate::runtime::state_machine::{CancellationWon, RuntimeError, RuntimeIdentity, RuntimeStore};
 use crate::scheduler::{DispatchOutcome, RunDispatch, RunDispatchRequest};
 
-use super::cancel::{cancel_plan, CancelPlan, CancelRequest, CancellationOutcome, CancelledNode};
+use super::cancel::{
+    cancel_plan, pending_cancellations, CancelPlan, CancelRequest, CancellationOutcome,
+    CancelledNode,
+};
 use super::capacity::{CapacityGate, CapacityRefusal};
 use super::graph::{ReleaseBatch, WorkGraphPort};
 use super::queue::{ensure_acyclic, join_plan, project, release_plan, select};
@@ -330,6 +333,33 @@ impl Orchestrator {
             }
         }
         Ok(CancellationOutcome::already_done())
+    }
+
+    /// Carry every cancellation already written to the graph down to what it governs: each
+    /// top-most cancelled node whose subtree, runs or dependents are not settled yet is
+    /// cancelled through [`Self::cancel_subtree`], so a node cancelled by any writer stops
+    /// its descendants' runs and blocks its dependents exactly once.
+    ///
+    /// # Errors
+    /// Returns the port's refusal when the WorkGraph cannot be read, and the first
+    /// cancellation's refusal.
+    pub async fn propagate_cancellations(
+        &self,
+        workspace_id: &str,
+    ) -> Result<Vec<CancellationOutcome>, OrchestrationError> {
+        let snapshot = self.graph.snapshot(workspace_id).await?;
+        let mut outcomes = Vec::new();
+        for node_id in pending_cancellations(&snapshot) {
+            outcomes.push(
+                self.cancel_subtree(CancelRequest {
+                    workspace_id: workspace_id.to_string(),
+                    node_id: node_id.clone(),
+                    reason: format!("{node_id} was cancelled"),
+                })
+                .await?,
+            );
+        }
+        Ok(outcomes)
     }
 
     /// Cancel every live run the plan covers, returning (newly cancelled, already cancelled).
