@@ -461,11 +461,33 @@ pub fn wait_until(
     }
 }
 
+/// The most workspaces one background pass orchestrates per tenant; the rest wait a pass.
+pub const ORCHESTRATION_WORKSPACES: i64 = 64;
+
+/// The concurrency limit the orchestrator admits work under in `workspace`: the smallest
+/// `concurrency` the workspace and tenant budgets set (`0` once one is spent), unbounded when
+/// neither sets one — DOMAIN.md §13.2 limits are granted, never invented.
+async fn concurrency_limit(
+    budgets: &crate::runtime::budgets::BudgetService,
+    workspace: &str,
+) -> Result<usize, crate::runtime::budgets::BudgetError> {
+    let mut limit = usize::MAX;
+    for (scope, scope_ref) in [("workspace", Some(workspace)), ("tenant", None)] {
+        if let Some(budget) = budgets.for_scope(scope, scope_ref).await? {
+            if let Some(set) = budgets.capacity_limit(&budget.id).await? {
+                limit = limit.min(set);
+            }
+        }
+    }
+    Ok(limit)
+}
+
 /// The most events each client projection applies per tenant in one background pass; a
 /// backlog catches up over consecutive passes.
 pub const PROJECTION_BATCH: i64 = 512;
 
-/// The deployable's background loop (APP-010): for every tenant, one CORE-008 scheduler tick
+/// The deployable's background loop (APP-010): for every tenant, one RUN-004 orchestration
+/// pass over the workspaces with graph work, one CORE-008 scheduler tick
 /// (timers, routine windows and their fires, queued runs), one pass of the routine event
 /// triggers, the notifier, the client projections, and email delivery. Each pass is bounded; a failing tenant is
 /// logged and the others go on.
@@ -615,14 +637,66 @@ impl Background {
         Ok(())
     }
 
+    /// One orchestration pass over the tenant's workspaces that have graph work (RUN-004):
+    /// cancellations reach their subtrees, then one tick releases, joins and dispatches.
+    /// A workspace that fails is logged and the others go on.
+    async fn orchestrate(&self, tenant: &str) -> Result<(), String> {
+        use crate::runtime::orchestration::{CapacityGate, GraphWorkGraph, Orchestrator};
+        let graph = Arc::new(GraphWorkGraph::new(self.pool.clone(), tenant));
+        let workspaces = graph
+            .workspaces_with_work(ORCHESTRATION_WORKSPACES)
+            .await
+            .map_err(|error| format!("orchestration: {error}"))?;
+        if workspaces.is_empty() {
+            return Ok(());
+        }
+        let identity = crate::runtime::state_machine::RuntimeIdentity::system(
+            tenant,
+            "orchestration",
+            quansio_core::CorrelationId::generate(&mut quansio_core::UlidGenerator::new()),
+        );
+        let budgets =
+            crate::runtime::budgets::BudgetService::new(self.pool.clone(), identity.clone())
+                .map_err(|error| format!("orchestration budgets: {error}"))?;
+        for workspace in workspaces {
+            let limit = concurrency_limit(&budgets, &workspace)
+                .await
+                .map_err(|error| format!("orchestration budgets: {error}"))?;
+            let orchestrator = Orchestrator::new(
+                self.pool.clone(),
+                identity.clone(),
+                Arc::clone(&graph) as Arc<dyn crate::runtime::orchestration::WorkGraphPort>,
+                Arc::clone(&self.dispatch),
+                CapacityGate::new(limit),
+            )
+            .map_err(|error| format!("orchestrator: {error}"))?;
+            let pass = async {
+                orchestrator.propagate_cancellations(&workspace).await?;
+                orchestrator.tick(&workspace).await
+            };
+            if let Err(error) = pass.await {
+                crate::observability::notice(
+                    crate::observability::Level::Warn,
+                    &format!("orchestration for {tenant}/{workspace}: {error}"),
+                );
+            }
+        }
+        Ok(())
+    }
+
     async fn tenant_pass(&self, tenant: &str) -> Result<(), String> {
         let triggers = crate::control::routines::EventTriggers::new(self.pool.clone(), tenant);
         triggers
             .scan(512)
             .await
             .map_err(|error| format!("routine triggers: {error}"))?;
+        // Graph work first: releases, joins, cancellation propagation and dispatch of ready
+        // work within the concurrency budget (RUN-004); the scheduler then leaves that work
+        // to the orchestrator.
+        self.orchestrate(tenant).await?;
         let mut config = crate::scheduler::SchedulerConfig::new(self.instance.clone());
         config.execute_routine_fires = self.fires.is_none();
+        config.orchestrated = true;
         let scheduler = crate::scheduler::Scheduler::new(
             self.pool.clone(),
             tenant,

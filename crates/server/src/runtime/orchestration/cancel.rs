@@ -189,6 +189,47 @@ pub fn cancel_plan(
     })
 }
 
+/// Cancelled nodes whose cancellation has not reached everything it governs yet: a subtree
+/// node still open, a live run, or a dependent not yet blocked (a run that never started is
+/// not pending: it stays unstarted, and orchestration never dispatches a cancelled node).
+///
+/// Only the top-most such node of a cancelled subtree is returned, in id order, because its
+/// propagation covers the nodes beneath it. This is how a cancellation written by any
+/// authority (a graph edit, a plan revision) reaches its subtree.
+#[must_use]
+pub fn pending_cancellations(snapshot: &GraphSnapshot) -> Vec<String> {
+    let mut pending: Vec<String> = Vec::new();
+    for node in &snapshot.nodes {
+        if node.status != status::CANCELLED {
+            continue;
+        }
+        let under_cancelled_parent = node
+            .parent_id
+            .as_deref()
+            .and_then(|parent| snapshot.node(parent))
+            .is_some_and(|parent| parent.status == status::CANCELLED);
+        if under_cancelled_parent {
+            continue;
+        }
+        let request = CancelRequest {
+            workspace_id: snapshot.workspace_id.clone(),
+            node_id: node.id.clone(),
+            reason: String::new(),
+        };
+        let Ok(plan) = cancel_plan(snapshot, &request) else {
+            continue;
+        };
+        if !plan.cancelled_nodes.is_empty()
+            || !plan.blocked_dependents.is_empty()
+            || !plan.runs.is_empty()
+        {
+            pending.push(node.id.clone());
+        }
+    }
+    pending.sort();
+    pending
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::graph::{DependencyEdge, GraphSnapshot, RunRef, WorkNodeView};
