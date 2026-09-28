@@ -1,0 +1,6 @@
+[INT-005] work segment not offered
+  file: crates/server/src/intelligence/model_source.rs
+  command: cargo test -p quansio-server --test served_plan_and_memory a_served_run_observes
+  COMPILES; exit 101; KILLED
+    thread 'a_served_run_observes_the_workgraph_and_its_plan_is_committed_or_refused_with_its_code' (48719552) panicked at crates/server/tests/served_plan_and_memory.rs:305:5:
+    assertion `left == right` failed: [{"kind":"system","segment_id":"seg_0","source":"agt_01M3MEH9TQP5PVDH0KP5YC90SS@v1","tokens":53,"trust_level":"trusted_system"},{"kind":"thread","segment_id":"seg_1","source":"msg_01M3MEH9VD40CJ5YVATFVNCF96","tokens":85,"trust_level":"trusted_user"}]

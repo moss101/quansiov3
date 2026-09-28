@@ -1,0 +1,137 @@
+{
+  "task_id": "RUN-003",
+  "git_commit": "5696181",
+  "recorded_at": "2026-09-28T16:46:57Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, port 55440> cargo test -p quansio-server --test planning_compile --test planning --test graph_planning --test planning_graph_port --test workgraph_surface # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-28T16-46-57Z/planning.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, port 55440> cargo test -p quansio-server --test served_plan_and_memory -- --nocapture # HTTP PostMessage -> chat_engine -> Python intelligence service -> dev stub provider scripted with [[stub:call ...]]; not real-boundary evidence # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-28T16-46-57Z/served.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-28T16-46-57Z/serverlib.log"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy -p quansio-tools -p quansio-graph -p quansio-server -p quansio-contracts --all-targets -- -D warnings && (cd python && uv run ruff check . && uv run ruff format --check . && uv run mypy intelligence) # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-28T16-46-57Z/lint.log"
+    },
+    {
+      "command": "uv run python scripts/validate_v81.py # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-28T16-46-57Z/validator.log"
+    },
+    {
+      "command": "python3 controls.py # revert one fix at a time on the evidence commit; each build COMPILES and the named test must FAIL (KILLED); file restored after each # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-003/2026-09-28T16-46-57Z/controls.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, port 55440> cargo test -p quansio-server --test planning_compile --test planning --test graph_planning --test planning_graph_port --test workgraph_surface # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, port 55440> cargo test -p quansio-server --test served_plan_and_memory -- --nocapture # HTTP PostMessage -> chat_engine -> Python intelligence service -> dev stub provider scripted with [[stub:call ...]]; not real-boundary evidence # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy -p quansio-tools -p quansio-graph -p quansio-server -p quansio-contracts --all-targets -- -D warnings && (cd python && uv run ruff check . && uv run ruff format --check . && uv run mypy intelligence) # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run python scripts/validate_v81.py # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 controls.py # revert one fix at a time on the evidence commit; each build COMPILES and the named test must FAIL (KILLED); file restored after each # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/RUN-003/2026-09-28T16-46-57Z/planning.log",
+      "sha256": "95b70438cd7c755c6cbe29d33e23be4f938c21d1da7292a9811282f31c3b3ec0",
+      "bytes": 3699
+    },
+    {
+      "path": "evidence/RUN-003/2026-09-28T16-46-57Z/served.log",
+      "sha256": "30e715bc6b0275715195c1e88aaac3062e22ff2e11366e18d93527a20b78bcf4",
+      "bytes": 968
+    },
+    {
+      "path": "evidence/RUN-003/2026-09-28T16-46-57Z/serverlib.log",
+      "sha256": "44136669000a3708fb800a760667f802330037bfcbe1142668e9f6151381ca60",
+      "bytes": 16425
+    },
+    {
+      "path": "evidence/RUN-003/2026-09-28T16-46-57Z/lint.log",
+      "sha256": "b219c0f0de274428a8f9175abb0edcdd9182b20cc70176966752ffe98c7227f4",
+      "bytes": 769
+    },
+    {
+      "path": "evidence/RUN-003/2026-09-28T16-46-57Z/validator.log",
+      "sha256": "2c2be0aa519f1db22b89d36b76f6f19263497f3078eba2c62093fd1655a75a11",
+      "bytes": 66
+    },
+    {
+      "path": "evidence/RUN-003/2026-09-28T16-46-57Z/controls.log",
+      "sha256": "d186a90f69412e74596fdae93d17de212019c118aa0fe5c04652ee3f5bf0b215",
+      "bytes": 1498
+    },
+    {
+      "path": "evidence/RUN-003/2026-09-28T16-46-57Z/NOTES.md",
+      "sha256": "d98cec7e9050c954597d505a0ec352416a7e269d5aebb6261d0642506101033e",
+      "bytes": 2032
+    },
+    {
+      "path": "crates/server/src/runtime/planning/compile.rs",
+      "sha256": "0b7700ed8f0ba4b68b1efa161244e7a53a18c6f555361a7af47e417420b3d16b",
+      "bytes": 26979
+    },
+    {
+      "path": "crates/server/src/runtime/planning/graph_port.rs",
+      "sha256": "4b3fd14db0cce1b2d226d44c5df61c72c6a0f1f7a6f02f62d1a285b9575e20c8",
+      "bytes": 12269
+    },
+    {
+      "path": "crates/server/src/runtime/planning/run_port.rs",
+      "sha256": "9ac9e5ccdfa2b03601d2e527cb51304d773d030bfa0f0f55e1a6b0bb4f9384e9",
+      "bytes": 7208
+    },
+    {
+      "path": "crates/server/src/api/commands.rs",
+      "sha256": "1bc0366e0151d5d03a5583ab0bf0affae91a66d00afb0a3deba8c638c0cdb9b3",
+      "bytes": 65390
+    },
+    {
+      "path": "crates/server/tests/served_plan_and_memory.rs",
+      "sha256": "f4dfcd6776247bf843550db4dac4b4a4cb4761c1beb64651ca9b3c0b1a00e097",
+      "bytes": 18580
+    }
+  ]
+}

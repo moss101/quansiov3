@@ -1,0 +1,86 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/epic-payne-002dca/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.50s
+     Running tests/api.rs (target/debug/deps/api-325a3e1ceeb9b10d)
+
+running 17 tests
+test the_error_vocabulary_is_the_one_the_catalog_generates ... ok
+test feature_flags_load_from_config_and_cannot_disable_escalation ... ok
+test every_code_maps_to_a_status_and_says_whether_a_retry_could_help ... ok
+test the_command_catalog_is_the_one_the_gate_checks ... ok
+test an_api_handler_reads_and_writes_only_its_own_table ... ok
+test generated_openapi_lists_every_catalog_command ... ok
+test every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction ... ok
+test the_deployable_composes_from_the_environment ... ok
+test a_resend_while_the_first_is_still_being_applied_is_told_to_come_back ... ok
+test a_mutating_call_calls_the_owner_and_a_resend_returns_its_result_once ... ok
+test two_tenants_may_send_the_same_command_id_and_each_replays_its_own ... ok
+test a_call_without_a_usable_tenant_is_refused_with_the_right_code ... ok
+test a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal ... ok
+test a_tenant_over_the_rate_limit_is_rate_limited ... ok
+test a_command_scoped_to_another_tenant_does_not_touch_this_one ... ok
+test health_reports_readiness_and_the_catalogues_it_serves ... ok
+test the_public_surface_works_as_the_application_role_under_rls ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.55s
+
+     Running tests/intelligence_gateway.rs (target/debug/deps/intelligence_gateway-bbdccead2730ecfe)
+
+running 4 tests
+test the_plane_refuses_a_turn_it_cannot_render ... ok
+test the_gateway_refuses_with_its_typed_errors ... ok
+test the_runtime_builds_its_turn_context_through_the_plane_and_calls_the_model_with_it ... ok
+test the_rust_runtime_calls_the_python_gateway_across_the_process_boundary ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.54s
+
+     Running tests/turn_loop.rs (target/debug/deps/turn_loop-0dcf95b85a210c37)
+
+running 18 tests
+test every_declared_effect_class_has_a_catalog_tier ... ok
+test a_call_outside_the_capability_projection_is_rejected_before_dispatch ... ok
+test an_escalated_call_shows_its_untrusted_origin_and_completes_through_approval ... ok
+test a_proposal_from_an_untrusted_context_window_is_escalated ... ok
+test a_proposal_from_an_unlabelled_context_window_fails_closed ... ok
+test an_unprovable_proposal_chain_escalates_a_tier_two_call_to_approval ... ok
+test a_turn_executes_tool_proposals_through_capability_policy_and_the_effect_ledger ... ok
+test a_user_ask_call_parks_the_run_and_the_question_is_durable ... ok
+test a_tier_three_call_parks_for_approval_and_resumes_without_a_duplicate_dispatch ... ok
+test unknown_tools_and_unknown_fields_are_rejected_before_dispatch ... ok
+test a_proposal_from_a_trusted_context_window_is_not_escalated ... ok
+test a_delegation_wait_survives_a_restart ... ok
+test a_host_refusal_after_dispatch_settles_as_a_known_failure_not_an_unknown_outcome ... ok
+test a_crash_between_dispatch_and_settlement_reconciles_instead_of_redispatching ... ok
+test a_question_wait_survives_a_restart_and_resumes_on_the_answer ... ok
+test an_internal_tool_refused_by_its_port_settles_as_a_known_failure ... ok
+test independent_tool_calls_run_together_and_settle_in_proposal_order ... ok
+test a_question_past_its_ttl_cannot_be_answered_and_the_background_pass_fails_its_run ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.51s
+
+     Running tests/turn_loop_internal_tools.rs (target/debug/deps/turn_loop_internal_tools-ab3acaf36aa03fc7)
+
+running 13 tests
+test a_bounded_output_never_splits_a_multibyte_character ... ok
+test a_user_ask_call_records_its_choices_and_optional_flag_on_the_question ... ok
+test a_memory_propose_call_offers_the_candidate_to_the_gated_memory_port ... ok
+test a_reservation_that_survived_a_crash_before_dispatch_resumes_exactly_once ... ok
+test resume_reports_an_unsettled_effect_and_refuses_a_call_it_has_no_record_of ... ok
+test the_tools_exposed_to_a_run_follow_its_stored_projection ... ok
+test a_work_propose_plan_call_is_applied_through_the_plan_port_as_the_proposing_run ... ok
+test an_unresolved_acting_actor_denies_the_call_and_names_the_role_owner ... ok
+test a_work_delegate_call_spawns_a_child_thread_and_parks_the_run_on_it ... ok
+test a_parked_call_is_not_resumed_without_a_signing_key_a_granted_receipt_or_valid_arguments ... ok
+test an_operator_switch_engaged_while_a_call_waits_stops_its_resume_until_released ... ok
+test a_resumed_call_whose_outcome_is_lost_is_reported_for_reconciliation_on_every_later_resume ... ok
+test a_work_delegate_call_that_joins_inline_completes_with_the_child_result ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.49s
+
+     Running tests/walking_skeleton_gateway.rs (target/debug/deps/walking_skeleton_gateway-9f8a8c21a3746814)
+
+running 2 tests
+test a_provider_failure_fails_the_turn_with_its_code ... ok
+test a_chat_turn_runs_through_the_context_plane_the_gateway_and_the_ledger ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.58s
+
