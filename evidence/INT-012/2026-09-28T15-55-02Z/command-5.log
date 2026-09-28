@@ -1,0 +1,55 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.95s
+     Running tests/context_bridge.rs (target/debug/deps/context_bridge-abef8c5d8faf2f8e)
+
+running 3 tests
+test an_unwired_bridge_fails_closed_rather_than_fabricating_context ... ok
+test a_projection_the_plane_could_not_label_is_refused_before_the_run_sees_it ... ok
+test a_labelled_projection_is_accepted_and_its_id_is_recorded_on_the_turn ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.94s
+
+     Running tests/ops_kill_switches.rs (target/debug/deps/ops_kill_switches-597dff7875d7a173)
+
+running 8 tests
+test the_runbook_is_generated_from_the_switch_catalog ... ok
+test connector_revoke_goes_through_the_connector_owner ... ok
+test worker_quarantine_fences_the_target_and_release_restores_dispatch ... ok
+test drain_and_undrain_move_the_target_lifecycle_and_are_audited ... ok
+test emergency_deny_refuses_matching_classes_before_policy_and_scoped_freezes_stay_scoped ... ok
+test stream_shed_disconnects_live_sessions_with_backpressure ... ok
+test provider_outage_drill_fails_over_refuses_and_restores ... ok
+test effect_freeze_stops_new_consequential_actions_without_touching_reads_or_evidence ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.69s
+
+     Running tests/trust_policy.rs (target/debug/deps/trust_policy-bb548425697970ba)
+
+running 6 tests
+test tier_zero_and_one_are_not_escalated_but_tier_four_is_capped ... ok
+test a_trusted_proposal_is_not_escalated ... ok
+test untrusted_derived_tier_two_escalates_one_tier_and_cannot_use_always ... ok
+test an_instruction_from_a_fetched_page_cannot_redirect_output ... ok
+test movement_within_the_grant_set_is_permitted_and_no_movement_is_not_guarded ... ok
+test protected_content_cannot_leave_the_egress_grant_set ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/turn_loop_internal_tools.rs (target/debug/deps/turn_loop_internal_tools-ab3acaf36aa03fc7)
+
+running 13 tests
+test a_bounded_output_never_splits_a_multibyte_character ... ok
+test a_parked_call_is_not_resumed_without_a_signing_key_a_granted_receipt_or_valid_arguments ... ok
+test an_unresolved_acting_actor_denies_the_call_and_names_the_role_owner ... ok
+test resume_reports_an_unsettled_effect_and_refuses_a_call_it_has_no_record_of ... ok
+test a_work_delegate_call_spawns_a_child_thread_and_parks_the_run_on_it ... ok
+test a_user_ask_call_records_its_choices_and_optional_flag_on_the_question ... ok
+test a_work_delegate_call_that_joins_inline_completes_with_the_child_result ... ok
+test the_tools_exposed_to_a_run_follow_its_stored_projection ... ok
+test a_memory_propose_call_offers_the_candidate_to_the_gated_memory_port ... ok
+test a_resumed_call_whose_outcome_is_lost_is_reported_for_reconciliation_on_every_later_resume ... ok
+test a_work_propose_plan_call_is_applied_through_the_plan_port_as_the_proposing_run ... ok
+test an_operator_switch_engaged_while_a_call_waits_stops_its_resume_until_released ... ok
+test a_reservation_that_survived_a_crash_before_dispatch_resumes_exactly_once ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.97s
+
