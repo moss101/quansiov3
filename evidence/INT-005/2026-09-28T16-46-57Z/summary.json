@@ -1,0 +1,95 @@
+{
+  "task_id": "INT-005",
+  "git_commit": "5696181",
+  "recorded_at": "2026-09-28T16:46:57Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, port 55440> cargo test -p quansio-server --test served_plan_and_memory -- --nocapture # HTTP PostMessage -> chat_engine -> Python intelligence service -> dev stub provider scripted with [[stub:call ...]]; not real-boundary evidence # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-28T16-46-57Z/served.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-28T16-46-57Z/serverlib.log"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy -p quansio-tools -p quansio-graph -p quansio-server -p quansio-contracts --all-targets -- -D warnings && (cd python && uv run ruff check . && uv run ruff format --check . && uv run mypy intelligence) # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-28T16-46-57Z/lint.log"
+    },
+    {
+      "command": "python3 controls.py # revert one fix at a time on the evidence commit; each build COMPILES and the named test must FAIL (KILLED); file restored after each # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-005/2026-09-28T16-46-57Z/controls.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, port 55440> cargo test -p quansio-server --test served_plan_and_memory -- --nocapture # HTTP PostMessage -> chat_engine -> Python intelligence service -> dev stub provider scripted with [[stub:call ...]]; not real-boundary evidence # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy -p quansio-tools -p quansio-graph -p quansio-server -p quansio-contracts --all-targets -- -D warnings && (cd python && uv run ruff check . && uv run ruff format --check . && uv run mypy intelligence) # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 controls.py # revert one fix at a time on the evidence commit; each build COMPILES and the named test must FAIL (KILLED); file restored after each # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-005/2026-09-28T16-46-57Z/served.log",
+      "sha256": "30e715bc6b0275715195c1e88aaac3062e22ff2e11366e18d93527a20b78bcf4",
+      "bytes": 968
+    },
+    {
+      "path": "evidence/INT-005/2026-09-28T16-46-57Z/serverlib.log",
+      "sha256": "44136669000a3708fb800a760667f802330037bfcbe1142668e9f6151381ca60",
+      "bytes": 16425
+    },
+    {
+      "path": "evidence/INT-005/2026-09-28T16-46-57Z/lint.log",
+      "sha256": "b219c0f0de274428a8f9175abb0edcdd9182b20cc70176966752ffe98c7227f4",
+      "bytes": 769
+    },
+    {
+      "path": "evidence/INT-005/2026-09-28T16-46-57Z/controls.log",
+      "sha256": "5c5b441022002ecffecc68dfcd19c64197675b2341dcca91229b0921647e58fb",
+      "bytes": 676
+    },
+    {
+      "path": "evidence/INT-005/2026-09-28T16-46-57Z/NOTES.md",
+      "sha256": "e36431db86485f222f82b0f92470a790b857a6d07f5630cdac923195387f1479",
+      "bytes": 1104
+    },
+    {
+      "path": "crates/server/src/runtime/context_bridge/work.rs",
+      "sha256": "d4c4057c2fdece7ecdc0402ce9902a2c2b53d2b231b159b89fd9ef0858b86cfc",
+      "bytes": 3855
+    },
+    {
+      "path": "crates/server/src/intelligence/model_source.rs",
+      "sha256": "a2c6d55788cbced9ffd5af715f63a8d928f1cc68e6ed2f19ad78d12500b388cf",
+      "bytes": 34647
+    },
+    {
+      "path": "config/intelligence.yaml",
+      "sha256": "8e84b0515935a523756b9cb8370909e35cd4197a834fd7adae7e887b7ef89a06",
+      "bytes": 1284
+    }
+  ]
+}

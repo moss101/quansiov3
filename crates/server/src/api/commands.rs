@@ -1213,7 +1213,7 @@ pub(super) fn chat_engine(
         AgentDelegationPort::with_structural_check(state.pool().clone(), identity.clone())?,
     );
     let projections = StoredProjectionProvider::new(state.pool().clone(), identity.clone())?;
-    let dispatcher = ToolDispatchService::new(
+    let mut dispatcher = ToolDispatchService::new(
         state.pool().clone(),
         identity.clone(),
         Arc::new(projections),
@@ -1230,6 +1230,21 @@ pub(super) fn chat_engine(
         state.pool().clone(),
         &identity,
     )));
+    // memory.propose reaches INT-007's gated owner through the intelligence plane; without
+    // one the seam stays unavailable and the call is refused, never silently dropped.
+    if let Some(client) = state.intelligence() {
+        let deadline = crate::intelligence::model_source::ModelCallSettings::load()
+            .map_err(RuntimeError::ProtocolState)?
+            .deadline;
+        dispatcher = dispatcher.with_memory_port(Arc::new(
+            crate::intelligence::memory::GatewayMemoryProposals::new(
+                state.pool().clone(),
+                identity.clone(),
+                client.clone(),
+                deadline,
+            )?,
+        ));
+    }
     let questions = QuestionService::new(state.pool().clone(), identity.clone())?;
     let live: Arc<dyn crate::runtime::state_machine::LiveFramePort> = state.live().clone();
     let budgets =

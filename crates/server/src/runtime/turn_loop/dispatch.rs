@@ -49,8 +49,9 @@ use crate::runtime::protocol_state::{is_unsettled, PendingToolCall};
 
 use super::super::state_machine::{
     ClaimVerdict, CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort,
-    DelegationRequest, ProposedToolCall, Run, RunStatus, RuntimeError, RuntimeIdentity,
-    RuntimeStore, ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest, MEMORY_OWNER,
+    DelegationRequest, ProposedToolCall, Run, RunStatus, RunTriggerKind, RuntimeError,
+    RuntimeIdentity, RuntimeStore, ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest,
+    MEMORY_OWNER,
 };
 use super::parallel::COMPLETION_TOOL;
 use super::questions::{NewQuestion, QuestionService};
@@ -372,6 +373,9 @@ pub struct MemoryProposalContext {
     pub candidate_json: String,
     /// Optional scope hint.
     pub scope: Option<String>,
+    /// The message that triggered the run, when a message did: the provenance a memory
+    /// proposed by this run is pinned to.
+    pub trigger_message_id: Option<String>,
 }
 
 /// Default memory seam: gated writes are INT-007's.
@@ -1265,6 +1269,9 @@ impl ToolDispatchService {
                         candidate_json: string_arg(&stored.args, "candidate_json")
                             .unwrap_or_default(),
                         scope: string_arg(&stored.args, "scope"),
+                        trigger_message_id: (run.trigger_kind == RunTriggerKind::Message)
+                            .then(|| run.trigger_ref.clone())
+                            .flatten(),
                     })
                     .await
                 {

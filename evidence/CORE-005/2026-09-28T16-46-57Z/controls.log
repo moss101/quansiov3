@@ -1,0 +1,5 @@
+[CORE-005] transaction plan check walks parent_id child -> parent
+  file: crates/graph/src/transaction/plan.rs
+  command: cargo test -p quansio-graph --test plan_proposal a_plan_follows_the_parent_direction
+  COMPILES; exit 101; KILLED
+    thread 'a_plan_follows_the_parent_direction_of_parent_id' (48713331) panicked at crates/graph/tests/plan_proposal.rs:563:5:

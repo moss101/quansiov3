@@ -1,0 +1,19 @@
+[INT-007] served memory port not composed
+  file: crates/server/src/api/commands.rs
+  command: cargo test -p quansio-server --test served_plan_and_memory a_served_memory_proposal_lands
+  COMPILES; exit 101; KILLED
+    thread 'a_served_memory_proposal_lands_only_as_a_gated_candidate_of_the_triggering_message' (48721401) panicked at crates/server/tests/served_plan_and_memory.rs:417:5:
+    assertion `left == right` failed: [("memory.propose", "rejected", Object {"code": String("INTERNAL"), "detail": String("seam memory proposal is not available yet; owned by INT-007")})]
+[INT-007] intelligence process composes no memory sink
+  file: python/intelligence/server/app.py
+  command: cargo test -p quansio-server --test served_plan_and_memory a_served_memory_proposal_lands
+  COMPILES; exit 101; KILLED
+    thread 'a_served_memory_proposal_lands_only_as_a_gated_candidate_of_the_triggering_message' (48722922) panicked at crates/server/tests/served_plan_and_memory.rs:417:5:
+    assertion `left == right` failed: [("memory.propose", "rejected", Object {"code": String("ROUTE_UNAVAILABLE"), "detail": String("INT-007 refused: ROUTE_UNAVAILABLE: {\"code\":\"ROUTE_UNAVAILABLE\",\"correlation_id\":\"run_01M3MEJ5C7ZP8R43BAVNH905RD:memory\",\"details\":[{\"key\":\"owner_task\",\"val
+[INT-007] model-claimed provenance passes through
+  file: crates/server/src/intelligence/memory.rs (mutant: any given provenance accepted; the first mutant of this control did not compile and was replaced)
+  command: cargo test -p quansio-server --lib provenance_is_the_runs_trigger
+  COMPILES; exit 101; KILLED
+    thread 'intelligence::memory::tests::provenance_is_the_runs_trigger_never_the_models' (48725225) panicked at crates/server/src/intelligence/memory.rs:214:69:
+
+controls not killed: 0

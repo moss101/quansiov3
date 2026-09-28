@@ -1,0 +1,111 @@
+{
+  "task_id": "RUN-011",
+  "git_commit": "e93005c",
+  "recorded_at": "2026-09-28T16:46:57Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-tools # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-28T16-46-57Z/tools.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, port 55440> cargo test -p quansio-server --test turn_loop_internal_tools --test turn_loop --test walking_skeleton_gateway --test intelligence_gateway --test api # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-28T16-46-57Z/turnloop.log"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy -p quansio-tools -p quansio-graph -p quansio-server -p quansio-contracts --all-targets -- -D warnings && (cd python && uv run ruff check . && uv run ruff format --check . && uv run mypy intelligence) # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-28T16-46-57Z/lint.log"
+    },
+    {
+      "command": "uv run python scripts/validate_v81.py # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-28T16-46-57Z/validator.log"
+    },
+    {
+      "command": "python3 controls.py # revert one fix at a time on the evidence commit; each build COMPILES and the named test must FAIL (KILLED); file restored after each # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-09-28T16-46-57Z/controls.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-tools # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN, port 55440> cargo test -p quansio-server --test turn_loop_internal_tools --test turn_loop --test walking_skeleton_gateway --test intelligence_gateway --test api # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy -p quansio-tools -p quansio-graph -p quansio-server -p quansio-contracts --all-targets -- -D warnings && (cd python && uv run ruff check . && uv run ruff format --check . && uv run mypy intelligence) # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run python scripts/validate_v81.py # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 controls.py # revert one fix at a time on the evidence commit; each build COMPILES and the named test must FAIL (KILLED); file restored after each # at 51a3c63896e7",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/RUN-011/2026-09-28T16-46-57Z/tools.log",
+      "sha256": "d859362661008c61dd531cfe85624638d89ef09a28e0657f2c36eb0b750fb036",
+      "bytes": 3305
+    },
+    {
+      "path": "evidence/RUN-011/2026-09-28T16-46-57Z/turnloop.log",
+      "sha256": "0dbe588fa22508caf15e5d16f1a619180b3fc79ba12a821969e072a0f49f7f31",
+      "bytes": 5321
+    },
+    {
+      "path": "evidence/RUN-011/2026-09-28T16-46-57Z/lint.log",
+      "sha256": "b219c0f0de274428a8f9175abb0edcdd9182b20cc70176966752ffe98c7227f4",
+      "bytes": 769
+    },
+    {
+      "path": "evidence/RUN-011/2026-09-28T16-46-57Z/validator.log",
+      "sha256": "2c2be0aa519f1db22b89d36b76f6f19263497f3078eba2c62093fd1655a75a11",
+      "bytes": 66
+    },
+    {
+      "path": "evidence/RUN-011/2026-09-28T16-46-57Z/controls.log",
+      "sha256": "59c427ff0d08340c902b5db2502c252da9db0ced9783f5ce1b66283621742c43",
+      "bytes": 358
+    },
+    {
+      "path": "evidence/RUN-011/2026-09-28T16-46-57Z/NOTES.md",
+      "sha256": "f4e7523588e2c780aa86b597d170a3d703e124e89136c91b78cbf245e71b743c",
+      "bytes": 1233
+    },
+    {
+      "path": "crates/tools/src/call.rs",
+      "sha256": "9cbd14658cd6b1499fd766de06d1c24531f58ba590283b39264d01eb67bd22dc",
+      "bytes": 11680
+    },
+    {
+      "path": "crates/tools/src/declaration.rs",
+      "sha256": "fbbac6cc839914c880affc07a8316e4c91698aa6a7e5bab2b30decb51b7c123f",
+      "bytes": 21202
+    },
+    {
+      "path": "crates/tools/tests/tool_contract.rs",
+      "sha256": "8097c6b155194096a2b8c32a4f57a52d2915c1fbe349006ce29ed467d3ab263c",
+      "bytes": 14213
+    }
+  ]
+}

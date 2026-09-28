@@ -1,0 +1,5 @@
+[CORE-004] store walks parent_id child -> parent
+  file: crates/graph/src/work.rs
+  command: cargo test -p quansio-graph --test cycle_rejection parent_of_and_parent_id
+  COMPILES; exit 101; KILLED
+    thread 'parent_of_and_parent_id_share_one_direction' (48712886) panicked at crates/graph/tests/cycle_rejection.rs:166:10:
