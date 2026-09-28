@@ -33,6 +33,7 @@ use std::sync::Arc;
 use crate::control::schema;
 use crate::control::teammates::TeammateStore;
 use crate::intelligence::{CallScope, IntelligenceClient, IntelligenceError};
+use crate::runtime::context_bridge::work::work_graph_segment;
 use crate::runtime::context_bridge::{
     record_projection, validate_projection, ContextBridgeError, ContextBridgePort,
     ProjectionRequest, SegmentRequest, SegmentRole, SegmentSource,
@@ -60,6 +61,8 @@ pub struct ModelCallSettings {
     pub max_thread_messages: u32,
     /// Skills the plane may resolve into one call's context.
     pub max_skills: u32,
+    /// WorkGraph nodes offered when the run may propose a plan.
+    pub max_work_nodes: u32,
     /// The system instructions of a run without a teammate definition.
     pub default_system_instructions: String,
 }
@@ -77,6 +80,7 @@ struct RawModelCall {
     deadline_ms: u64,
     max_thread_messages: u32,
     max_skills: u32,
+    max_work_nodes: u32,
 }
 
 impl ModelCallSettings {
@@ -100,6 +104,7 @@ impl ModelCallSettings {
             || call.max_output_tokens == 0
             || call.deadline_ms == 0
             || call.max_thread_messages == 0
+            || call.max_work_nodes == 0
         {
             return Err("config/intelligence.yaml: every model_call bound must be positive".into());
         }
@@ -112,6 +117,7 @@ impl ModelCallSettings {
             deadline: Duration::from_millis(call.deadline_ms),
             max_thread_messages: call.max_thread_messages,
             max_skills: call.max_skills,
+            max_work_nodes: call.max_work_nodes,
             default_system_instructions: raw.default_system_instructions,
         })
     }
@@ -326,6 +332,23 @@ impl GatewayModelSource {
             .unwrap_or_default();
         granted_effect_classes.sort();
         granted_effect_classes.dedup();
+        // A run that may propose a plan sees the graph it plans against, right after its
+        // instructions (DOMAIN.md §11.2 `work`).
+        if tools.iter().any(|tool| tool == "work.propose_plan") {
+            let work = work_graph_segment(
+                &self.pool,
+                &request.tenant_id,
+                &run.workspace_id,
+                &snapshot,
+                usize::try_from(self.settings.max_work_nodes).unwrap_or(usize::MAX),
+                0,
+            )
+            .await?;
+            segments.insert(1, work);
+            for (seq, segment) in (0u32..).zip(segments.iter_mut()) {
+                segment.seq = seq;
+            }
+        }
         let received = self
             .context
             .project(ProjectionRequest {
@@ -797,12 +820,16 @@ mod tests {
 
     #[test]
     fn a_zero_bound_or_missing_instructions_is_refused() {
-        let base = "model_call:\n  context_token_budget: 10\n  max_output_tokens: 5\n  deadline_ms: 1000\n  max_thread_messages: 3\n  max_skills: 2\ndefault_system_instructions: be useful\n";
+        let base = "model_call:\n  context_token_budget: 10\n  max_output_tokens: 5\n  deadline_ms: 1000\n  max_thread_messages: 3\n  max_skills: 2\n  max_work_nodes: 4\ndefault_system_instructions: be useful\n";
         assert!(ModelCallSettings::parse(base).is_ok());
         assert!(
             ModelCallSettings::parse(&base.replace("deadline_ms: 1000", "deadline_ms: 0")).is_err()
         );
         assert!(ModelCallSettings::parse(&base.replace("be useful", "\"\"")).is_err());
+        assert!(
+            ModelCallSettings::parse(&base.replace("max_work_nodes: 4", "max_work_nodes: 0"))
+                .is_err()
+        );
         assert!(ModelCallSettings::parse("model_call: {}").is_err());
     }
 

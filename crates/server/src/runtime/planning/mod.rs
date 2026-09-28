@@ -54,6 +54,7 @@ mod compile;
 mod graph_port;
 mod policy;
 mod port;
+mod run_port;
 mod service;
 mod wire;
 
@@ -65,6 +66,7 @@ pub use compile::{
 pub use graph_port::{AlgebraNarrowing, GraphPlanWorkspace};
 pub use policy::max_plan_nodes;
 pub use port::{PlanCommitOutcome, PlanWorkspacePort, UnavailablePlanWorkspace, PLAN_GRAPH_OWNER};
+pub use run_port::{RunPlanApplication, PLAN_OWNER};
 pub use service::{PlanOutcome, Planner};
 pub use wire::{parse_raw, EdgeKind, NodeKind, NodeStatus, RawPlanProposal};
 
