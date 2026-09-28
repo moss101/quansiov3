@@ -1,0 +1,142 @@
+{
+  "task_id": "RUN-004",
+  "git_commit": "22edd793d74bd4287127fae78fe9d0cb348b43d8",
+  "recorded_at": "2026-09-28T16:47:43Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-28T16-47-43Z/command-1.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-28T16-47-43Z/command-2.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib orchestration",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-28T16-47-43Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test background_composition   # served Background pass as quansio_app: DAG order, concurrency budget, subtree cancellation",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-28T16-47-43Z/command-4.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --no-fail-fast   # the whole server crate (scheduler, routines, orchestration, api, walking skeletons)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-28T16-47-43Z/command-5.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-004/2026-09-28T16-47-43Z/command-6.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib orchestration",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test background_composition   # served Background pass as quansio_app: DAG order, concurrency budget, subtree cancellation",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --no-fail-fast   # the whole server crate (scheduler, routines, orchestration, api, walking skeletons)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/composition.rs",
+      "sha256": "7ec4bdb0e4a923531cc5d80d8fabba4e9696e6d6e6b20bb88c1050a45e4445e5",
+      "bytes": 36180
+    },
+    {
+      "path": "crates/server/src/runtime/orchestration/graph_port.rs",
+      "sha256": "e67d8686956c69bc955c34951cdbbbd877ae1cd5ff6757177c42276774d13649",
+      "bytes": 10582
+    },
+    {
+      "path": "crates/server/src/runtime/orchestration/cancel.rs",
+      "sha256": "0e689d661aa2f0bd875ecab3645b2c7bf61caf510ebfb84088bf2f0aa1db445d",
+      "bytes": 15451
+    },
+    {
+      "path": "crates/server/src/runtime/orchestration/service.rs",
+      "sha256": "67c1ef6ede99fe3a75033a03642d37a1dff8d3ba5576ec1ad538175bf29966ef",
+      "bytes": 16582
+    },
+    {
+      "path": "crates/server/src/scheduler/engine.rs",
+      "sha256": "2f02602af41b7cb9494cbef6359e0807e9f9ffa9a6dbcab07b698e2c192deda5",
+      "bytes": 12631
+    },
+    {
+      "path": "crates/server/tests/background_composition.rs",
+      "sha256": "c17ed732cde0c0708c53f5f2d432e0eb5e8b893d92bc65ba6c160dd7a9361a11",
+      "bytes": 20460
+    },
+    {
+      "path": "tests/architecture/test_qa002_composition.py",
+      "sha256": "723d944fc94906d555503e5baa0ce7242a60de10136aaf1de5c6921224401cf9",
+      "bytes": 8179
+    },
+    {
+      "path": "evidence/RUN-004/2026-09-28T16-47-43Z/command-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/RUN-004/2026-09-28T16-47-43Z/command-2.log",
+      "sha256": "80a72ab0b6d57f57833fbff08eb4f1c216d4bb98fd0953be701bdd8ef1a25c8e",
+      "bytes": 72
+    },
+    {
+      "path": "evidence/RUN-004/2026-09-28T16-47-43Z/command-3.log",
+      "sha256": "3022547c51cbc43d45bd3b9056f5b876c1c1477ebc186b1fcefb6dc956f308a6",
+      "bytes": 1830
+    },
+    {
+      "path": "evidence/RUN-004/2026-09-28T16-47-43Z/command-4.log",
+      "sha256": "c87bf95c6815a5154bd20f925d173e9aba9d1f0e99675d282bc0986f8af29087",
+      "bytes": 657
+    },
+    {
+      "path": "evidence/RUN-004/2026-09-28T16-47-43Z/command-5.log",
+      "sha256": "a9011947a0886d2a96227ff61f0a76b598199420ce4ccef623f004a947868706",
+      "bytes": 58098
+    },
+    {
+      "path": "evidence/RUN-004/2026-09-28T16-47-43Z/command-6.log",
+      "sha256": "eb98959795472be848a4da32b100843bb3fc84b34ad3cc290003349648cdc854",
+      "bytes": 181
+    }
+  ]
+}
