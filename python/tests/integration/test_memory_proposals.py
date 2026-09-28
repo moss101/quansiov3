@@ -25,8 +25,8 @@ import psycopg
 import pytest
 from quansio.v1.intelligence import service_pb2, service_pb2_grpc
 
-from intelligence.memory.candidates import StoreMemoryProposals
 from intelligence.memory.models import MemoryProvenance, MemoryStatus
+from intelligence.memory.sink import ENV_MEMORY_DATABASE_URL, memory_sink
 from intelligence.memory.store import SqlMemoryStore, memory_for
 from intelligence.server import (
     ErrorCode,
@@ -125,11 +125,8 @@ def wire_candidate(**overrides: object) -> service_pb2.MemoryCandidate:
 def running_gateway(
     database: str | None,
 ) -> Iterator[service_pb2_grpc.IntelligenceGatewayStub]:
-    memories = (
-        StoreMemoryProposals(store=SqlMemoryStore(lambda: psycopg.connect(database)))
-        if database is not None
-        else None
-    )
+    # The process's own composition: the DSN environment variable is the only input.
+    memories = memory_sink({ENV_MEMORY_DATABASE_URL: database or ""})
     server = IntelligenceServer(
         ServerConfig(transport=Transport.TCP, host="127.0.0.1", port=0),
         servicer=IntelligenceGatewayServicer(memories=memories),
@@ -222,3 +219,31 @@ def test_a_promoted_memory_becomes_retrievable(database: str) -> None:
     assert [item.id for item in retrieved] == [ack.proposal_id]
     bound.mark_used(ack.proposal_id, "2026-09-13T12:00:00Z")
     assert bound.get(ack.proposal_id).last_used_at == "2026-09-13T12:00:00Z"
+
+
+def test_the_scope_hint_travels_the_wire_and_is_resolved_by_the_owner(database: str) -> None:
+    with running_gateway(database) as client:
+        ack = client.ProposeMemory(wire_candidate(scope_hint="user"))
+        with pytest.raises(grpc.RpcError) as failure:
+            client.ProposeMemory(wire_candidate(content="Another claim.", scope_hint="everyone"))
+    stored = fabric(database).get(ack.proposal_id)
+    assert stored.scope.value == "user"
+    assert stored.workspace_id is None
+    assert decode_error(failure.value).code is ErrorCode.VALIDATION_SCHEMA
+    assert fabric(database).count() == 1
+
+
+def test_an_unreachable_store_is_a_typed_refusal_that_never_names_the_dsn() -> None:
+    dsn = "postgresql://quansio:do-not-log@127.0.0.1:1/nowhere?connect_timeout=1"
+    with running_gateway(dsn) as client, pytest.raises(grpc.RpcError) as failure:
+        client.ProposeMemory(wire_candidate())
+    envelope = decode_error(failure.value)
+    assert envelope.code is ErrorCode.INTERNAL
+    assert "memory store failed" in envelope.message
+    assert "do-not-log" not in envelope.message
+    assert ("owner_task", "INT-007") in {(detail.key, detail.value) for detail in envelope.details}
+
+
+def test_no_dsn_composes_no_sink() -> None:
+    assert memory_sink({}) is None
+    assert memory_sink({ENV_MEMORY_DATABASE_URL: "   "}) is None

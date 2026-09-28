@@ -64,7 +64,7 @@ class SearchResultSet(_message.Message):
     def __init__(self, schema_version: _Optional[str] = ..., results: _Optional[_Iterable[_Union[_intelligence_pb2.SearchResult, _Mapping]]] = ..., snapshot: _Optional[str] = ...) -> None: ...
 
 class MemoryCandidate(_message.Message):
-    __slots__ = ("schema_version", "scope", "subject_ref", "content", "provenance_kind", "provenance_ref", "confidence")
+    __slots__ = ("schema_version", "scope", "subject_ref", "content", "provenance_kind", "provenance_ref", "confidence", "scope_hint")
     SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
     SCOPE_FIELD_NUMBER: _ClassVar[int]
     SUBJECT_REF_FIELD_NUMBER: _ClassVar[int]
@@ -72,6 +72,7 @@ class MemoryCandidate(_message.Message):
     PROVENANCE_KIND_FIELD_NUMBER: _ClassVar[int]
     PROVENANCE_REF_FIELD_NUMBER: _ClassVar[int]
     CONFIDENCE_FIELD_NUMBER: _ClassVar[int]
+    SCOPE_HINT_FIELD_NUMBER: _ClassVar[int]
     schema_version: str
     scope: ScopeContext
     subject_ref: str
@@ -79,7 +80,8 @@ class MemoryCandidate(_message.Message):
     provenance_kind: str
     provenance_ref: str
     confidence: float
-    def __init__(self, schema_version: _Optional[str] = ..., scope: _Optional[_Union[ScopeContext, _Mapping]] = ..., subject_ref: _Optional[str] = ..., content: _Optional[str] = ..., provenance_kind: _Optional[str] = ..., provenance_ref: _Optional[str] = ..., confidence: _Optional[float] = ...) -> None: ...
+    scope_hint: str
+    def __init__(self, schema_version: _Optional[str] = ..., scope: _Optional[_Union[ScopeContext, _Mapping]] = ..., subject_ref: _Optional[str] = ..., content: _Optional[str] = ..., provenance_kind: _Optional[str] = ..., provenance_ref: _Optional[str] = ..., confidence: _Optional[float] = ..., scope_hint: _Optional[str] = ...) -> None: ...
 
 class ProposalAck(_message.Message):
     __slots__ = ("schema_version", "accepted", "proposal_id", "reason")

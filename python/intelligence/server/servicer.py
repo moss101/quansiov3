@@ -507,6 +507,7 @@ class IntelligenceGatewayServicer:
                 provenance_kind=provenance_kind,
                 provenance_ref=request.provenance_ref,
                 confidence=request.confidence,
+                scope_hint=request.scope_hint,
             )
         except MemoryEntryError as refusal:
             abort_with(
