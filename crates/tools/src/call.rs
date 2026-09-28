@@ -272,13 +272,12 @@ fn host_glob_from(value: &str) -> String {
 
 fn derive_params_digest(declaration: &ToolDeclaration, args: &Value) -> Result<Digest, ToolError> {
     let mut material = serde_json::Map::new();
+    // The schema has already enforced required arguments and refused an explicit null,
+    // so an absent optional digest argument is recorded as null: the digest stays
+    // distinct from a call that supplies it.
     for name in &declaration.idempotency.digest_args {
-        let value = args.get(name).ok_or_else(|| ToolError::InvalidArguments {
-            tool: declaration.name.clone(),
-            path: format!(".{name}"),
-            detail: "is a required digest argument".to_string(),
-        })?;
-        material.insert(name.clone(), value.clone());
+        let value = args.get(name).cloned().unwrap_or(Value::Null);
+        material.insert(name.clone(), value);
     }
     Ok(Digest::of_canonical_json(&canonical_json(&Value::Object(
         material,

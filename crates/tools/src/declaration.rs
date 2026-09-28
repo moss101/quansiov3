@@ -336,7 +336,7 @@ impl ToolDeclaration {
 
         let effect_class = parse_effect_class_rule(&tool, &raw.effect_class)?;
         let resource = parse_resource_rule(&tool, &raw.resource)?;
-        let idempotency = parse_idempotency(&tool, raw.idempotency)?;
+        let idempotency = parse_idempotency(&tool, raw.idempotency, &raw.input_schema)?;
         let host = ToolHost::parse(&raw.host).map_err(&malformed)?;
         let source_trust = SourceTrust::parse(&raw.source_trust).map_err(&malformed)?;
         let evidence = EvidenceCapture {
@@ -490,12 +490,29 @@ fn parse_resource_rule(tool: &str, raw: &RawResourceRule) -> Result<ResourceRule
     Ok(rule)
 }
 
-fn parse_idempotency(tool: &str, raw: RawIdempotencyRule) -> Result<IdempotencyRule, ToolError> {
+fn parse_idempotency(
+    tool: &str,
+    raw: RawIdempotencyRule,
+    input_schema: &Value,
+) -> Result<IdempotencyRule, ToolError> {
     if raw.digest_args.is_empty() {
         return Err(ToolError::MalformedDeclaration {
             tool: tool.to_string(),
             detail: "idempotency.digest_args must name the arguments that form the digest"
                 .to_string(),
+        });
+    }
+    let properties = input_schema.get("properties").and_then(Value::as_object);
+    if let Some(undeclared) = raw
+        .digest_args
+        .iter()
+        .find(|name| !properties.is_some_and(|declared| declared.contains_key(*name)))
+    {
+        return Err(ToolError::MalformedDeclaration {
+            tool: tool.to_string(),
+            detail: format!(
+                "idempotency.digest_args names {undeclared}, which is not an input property"
+            ),
         });
     }
     Ok(IdempotencyRule {
