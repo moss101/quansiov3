@@ -420,10 +420,12 @@ async fn the_graph_transaction_refuses_a_compiled_plan_that_breaks_a_rule_and_wr
         expected_revision: seed_revision,
         to: NodeStatus::Done,
     }];
-    // Completion is never self-certified through a plan: the store refuses the transition.
-    // (Its typed CONFLICT_STATE is flattened by the port; see the QA-001 finding.)
+    // Completion is never self-certified through a plan: the store refuses the transition
+    // with its own typed code, a plan verdict rather than an infrastructure failure.
     let error = apply(illegal).await;
     assert!(error.to_string().contains("done"), "{error}");
+    assert_eq!(error.code(), "CONFLICT_STATE", "{error}");
+    assert!(error.is_rejection(), "{error}");
 
     let mut malformed = plan(base);
     malformed.nodes_update = vec![CompiledNodeUpdate {
