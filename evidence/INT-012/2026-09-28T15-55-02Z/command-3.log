@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.54s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-ae3e0f5ced695b63)
+
+running 3 tests
+test policy::trust::tests::an_empty_window_or_an_unknown_label_fails_closed ... ok
+test policy::trust::tests::the_window_derives_its_most_untrusted_label ... ok
+test policy::trust::tests::a_segment_seen_twice_keeps_its_least_trusted_label ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 179 filtered out; finished in 0.01s
+

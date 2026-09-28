@@ -18,10 +18,10 @@ use quansio_capability::Grant;
 use quansio_core::{CanonicalId, CorrelationId, Prefix, UlidGenerator};
 use quansio_server::control::schema;
 use quansio_server::effects::{EffectLedger, EffectStatus};
-use quansio_server::policy::TrustLevel;
 use quansio_server::policy::{
     ActorRoles, ApprovalRuntime, ApprovalSigner, PolicyStore, TenantRole, WorkspaceRole,
 };
+use quansio_server::policy::{StoredProposalTrust, TrustLevel};
 use quansio_server::runtime::agents::AgentDelegationPort;
 use quansio_server::runtime::state_machine::{
     Budget, DelegationPort, ModelCallRequest, ModelProposal, ModelProposalSource, NewRun,
@@ -181,8 +181,9 @@ impl ToolHostPort for ConformanceHost {
 #[derive(Clone, Copy)]
 struct StaticProposalTrust(TrustLevel);
 
+#[async_trait::async_trait]
 impl ProposalTrustSource for StaticProposalTrust {
-    fn proposal_trust(&self, _run_id: &str) -> Option<TrustLevel> {
+    async fn proposal_trust(&self, _run_id: &str, _turn_id: &str) -> Option<TrustLevel> {
         Some(self.0)
     }
 }
@@ -1712,4 +1713,145 @@ async fn clear_grants(fixture: &Fixture) {
         .await
         .expect("clear grants");
     tx.commit().await.expect("commit");
+}
+
+/// A model that, like the gateway source, records the ContextProjection it was shown for the
+/// turn before it proposes (INT-005), with the segment labels the test chooses.
+#[derive(Clone)]
+struct ProjectingModel {
+    inner: StubModel,
+    pool: PgPool,
+    labels: Vec<(&'static str, &'static str)>,
+}
+
+#[async_trait]
+impl ModelProposalSource for ProjectingModel {
+    async fn propose(&self, request: ModelCallRequest) -> Result<ModelProposal, RuntimeError> {
+        let segments: Vec<Value> = self
+            .labels
+            .iter()
+            .map(|(segment, level)| json!({ "segment_id": segment, "trust_level": level }))
+            .collect();
+        let mut generator = UlidGenerator::new();
+        let mut tx = self.pool.begin().await.expect("begin");
+        schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .expect("tenant context");
+        sqlx::query(
+            "INSERT INTO context_projections (id, tenant_id, run_id, turn_id, segments) \
+             VALUES ($1, $2, $3, $4, $5)",
+        )
+        .bind(format!("ctx_{}", generator.generate()))
+        .bind(TENANT)
+        .bind(&request.run_id)
+        .bind(&request.turn_id)
+        .bind(Value::Array(segments))
+        .execute(&mut *tx)
+        .await
+        .expect("context projection");
+        tx.commit().await.expect("commit");
+        self.inner.propose(request).await
+    }
+}
+
+/// Run one `user.ask` turn (tier 2, allowed by policy) with the composed proposal-trust
+/// source over a recorded projection labelled `labels`, and return the state it parked in.
+async fn ask_with_recorded_context(
+    prefix: &str,
+    labels: Vec<(&'static str, &'static str)>,
+) -> Option<(RunStatus, usize)> {
+    let fixture = prepare(prefix).await?;
+    seed_policy(&fixture).await;
+    let model = ProjectingModel {
+        inner: StubModel::with(vec![ModelProposal {
+            tool_calls: vec![ProposedToolCall::new(
+                "call_ask",
+                "user.ask",
+                json!({ "kind": "confirm", "prompt": "Proceed?" }),
+            )],
+            ..ModelProposal::default()
+        }]),
+        pool: fixture.pool.clone(),
+        labels,
+    };
+    let host = ConformanceHost::default();
+    // The source the served composition installs (`api::commands::chat_engine`).
+    let seams = build_seams_with_trust(
+        &fixture,
+        StubModel::default(),
+        host.clone(),
+        Arc::new(StoredProposalTrust::new(
+            fixture.pool.clone(),
+            &fixture.identity,
+        )),
+    );
+    let engine = seams.engine.with_model_source(Arc::new(model));
+    let run = start_run(&fixture, &engine, 8).await;
+    seed_projection(&fixture, &run.id.to_string()).await;
+    let outcome = engine
+        .run_turn(
+            &run.id,
+            run.generation,
+            TurnInput::new(RunTriggerKind::Manual),
+        )
+        .await
+        .expect("turn");
+    let TurnOutcome::Parked { state, .. } = outcome else {
+        panic!("user.ask parks the run either way: {outcome:?}");
+    };
+    let dispatched = host.dispatch_count();
+    finish(fixture).await;
+    Some((state, dispatched))
+}
+
+/// INT-012 composed: a call whose turn was shown only trusted segments is labelled from the
+/// recorded projection and is not escalated — the tier 2 `user.ask` goes straight to its
+/// question instead of an approval.
+#[tokio::test]
+async fn a_proposal_from_a_trusted_context_window_is_not_escalated() {
+    let Some((state, dispatched)) = ask_with_recorded_context(
+        "int012_trusted",
+        vec![("system", "TRUSTED_SYSTEM"), ("msg_1", "TRUSTED_USER")],
+    )
+    .await
+    else {
+        blocked_marker();
+        return;
+    };
+    assert_eq!(
+        state,
+        RunStatus::WaitingQuestion,
+        "a trusted window derives TRUSTED_USER, so policy's allow stands"
+    );
+    assert_eq!(dispatched, 0);
+}
+
+/// The same call after the turn was shown an untrusted segment is escalated to approval.
+#[tokio::test]
+async fn a_proposal_from_an_untrusted_context_window_is_escalated() {
+    let Some((state, _)) = ask_with_recorded_context(
+        "int012_untrusted",
+        vec![("msg_1", "TRUSTED_USER"), ("page_1", "UNTRUSTED_EXTERNAL")],
+    )
+    .await
+    else {
+        blocked_marker();
+        return;
+    };
+    assert_eq!(state, RunStatus::WaitingApproval);
+}
+
+/// An unknown label in the window fails closed, exactly as no record at all does.
+#[tokio::test]
+async fn a_proposal_from_an_unlabelled_context_window_fails_closed() {
+    let Some((state, _)) = ask_with_recorded_context(
+        "int012_unlabelled",
+        vec![("msg_1", "TRUSTED_USER"), ("odd", "SOMEWHAT_TRUSTED")],
+    )
+    .await
+    else {
+        blocked_marker();
+        return;
+    };
+    assert_eq!(state, RunStatus::WaitingApproval);
 }
