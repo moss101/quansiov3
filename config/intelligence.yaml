@@ -14,6 +14,8 @@ model_call:
   max_thread_messages: 200
   # Skills the Context plane may resolve into one call's context (INT-009's resolver bound).
   max_skills: 3
+  # WorkGraph nodes offered as the `work` segment when the run may propose a plan (RUN-003).
+  max_work_nodes: 200
 
 # The system instructions a turn carries when the run has no teammate definition.
 default_system_instructions: >-

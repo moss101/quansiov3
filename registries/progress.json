@@ -441,13 +441,15 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-core009",
       "started_at": "2026-09-12T03:00:48Z",
-      "updated_at": "2026-09-27T14:44:10Z",
-      "git_commit": "12ca2a4b567d115a61fe36d684ab5646b56aa54b",
+      "updated_at": "2026-09-28T16:37:29Z",
+      "git_commit": "595d2852af8f98dbd2d64da60102c8afd9cdccc6",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-events",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test --workspace",
         "bash scripts/ci/ci.sh",
-        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test identity an_open_stream_closes_when_its_session_is_revoked (an open stream ends with AUTH_INVALID_TOKEN within one re-check after sign-out)"
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test identity an_open_stream_closes_when_its_session_is_revoked (an open stream ends with AUTH_INVALID_TOKEN within one re-check after sign-out)",
+        "cargo test -p quansio-server --test background_composition (the_background_pass_keeps_the_client_projections_current: the served Background pass, as quansio_app, projects the run and the objective's node with their canonical statuses, advances the checkpoint to the stream head, and an idle pass changes nothing)",
+        "cargo test -p quansio-server --test background_composition (the_work_node_projection_follows_status_changes: a node created and transitioned through GraphTransaction is projected with its latest status)"
       ],
       "artifacts": [
         "evidence/CORE-009/2026-09-12T02-58-59Z/summary.json",
@@ -455,12 +457,14 @@
         "crates/events/src/stream.rs",
         "crates/events/tests/projection_determinism.rs",
         "migrations/0005_projections.sql",
-        "evidence/CORE-009/2026-09-26T12-03-24Z/summary.json"
+        "evidence/CORE-009/2026-09-26T12-03-24Z/summary.json",
+        "evidence/CORE-009/2026-09-28T16-20-01Z/summary.json",
+        "evidence/CORE-009/2026-09-28T16-36-17Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Rebuildable projections with a checkpoint per projection (deterministic incremental vs rebuilt state, idempotent re-application, crash/resume with no gaps or duplicates) and resumable client streaming per DOMAIN.md \u00a79.3: durable event frames with cursors, transient live frames, channel and tenant scoping, and bounded backpressure that disconnects a slow consumer with a typed error. Integrated and re-verified by the principal agent after the subagent was killed by a full disk; the projections migration was renumbered to 0005 and the dev-dependency cycle the workspace gate caught was removed. 2026-09-26 regression (FAIL -> PASS in one step, fix/CORE-009-stream-session-revalidation, merge 12ca2a4): found by QA-008 - /v1/stream and /v1/stream/events authenticated only on connect, so a revoked, removed or expired session kept receiving the tenant's events on an open connection. Both loops now re-resolve the opening credential every 2 s and close with the typed refusal. Failing test: crates/server/tests/identity.rs::an_open_stream_closes_when_its_session_is_revoked. Evidence evidence/CORE-009/2026-09-26T12-03-24Z. 2026-09-27 QA-002 composition gate (tests/architecture/test_qa002_composition.py KNOWN_GAPS): ProjectionRunner and the event-crate projections never run in the served build; library-level acceptance still holds; owned by a follow-up composition task."
+      "notes": "Rebuildable projections with a checkpoint per projection (deterministic incremental vs rebuilt state, idempotent re-application, crash/resume with no gaps or duplicates) and resumable client streaming per DOMAIN.md \u00a79.3: durable event frames with cursors, transient live frames, channel and tenant scoping, and bounded backpressure that disconnects a slow consumer with a typed error. Integrated and re-verified by the principal agent after the subagent was killed by a full disk; the projections migration was renumbered to 0005 and the dev-dependency cycle the workspace gate caught was removed. 2026-09-26 regression (FAIL -> PASS in one step, fix/CORE-009-stream-session-revalidation, merge 12ca2a4): found by QA-008 - /v1/stream and /v1/stream/events authenticated only on connect, so a revoked, removed or expired session kept receiving the tenant's events on an open connection. Both loops now re-resolve the opening credential every 2 s and close with the typed refusal. Failing test: crates/server/tests/identity.rs::an_open_stream_closes_when_its_session_is_revoked. Evidence evidence/CORE-009/2026-09-26T12-03-24Z. 2026-09-27 QA-002 composition gate (tests/architecture/test_qa002_composition.py KNOWN_GAPS): ProjectionRunner and the event-crate projections never run in the served build; library-level acceptance still holds; owned by a follow-up composition task. 2026-09-28 (fix/CORE-009-projections-composed, found by QA-002 composition gate NOT_COMPOSED Projection / UNCOMPOSED ProjectionRunner, P1): the served build never ran RunStatusProjection or WorkNodeStatusProjection. The background tenant pass now catches both up behind their checkpoints (PROJECTION_BATCH per pass). Composing them exposed a second defect: WorkNodeStatusProjection accepted only aggregate_type 'work' while the graph transaction emits work.* node events on 'work_node', so no production node was ever projected; it now accepts both. Merge 75497d1. Evidence evidence/CORE-009/2026-09-28T16-20-01Z. 2026-09-28 (fix/CORE-009-node-status-changed, found while composing RUN-004, P2): CORE-005 states a node transition as from/to on work.node_status_changed, and the projection read only 'status', so no status change after creation reached work_node_status_projection; it now follows 'to'. Merge 595d285. Evidence evidence/CORE-009/2026-09-28T16-36-17Z."
     },
     "RUN-001": {
       "coverage": "GENUINE_GAP",
@@ -1240,8 +1244,8 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-12T16:19:38Z",
-      "updated_at": "2026-09-27T14:44:10Z",
-      "git_commit": "3914fc53ffa71a847e7f30ca2ac3a965f2468c08",
+      "updated_at": "2026-09-28T15:57:35Z",
+      "git_commit": "df3e5c84bfa469e4c12b53e6cccc7dd7ae6396c5",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test turn_loop (12 tests, including the new end-to-end escalated-approval path and the escalation park)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test trust_policy (6 tests: escalation one tier and no `always`, trusted proposals not escalated, tiers 0/1 and the tier 4 cap, the egress guard, an injected destination denied until a grant covers it, movement within the grant set permitted)",
@@ -1249,7 +1253,8 @@
         "(cd python && uv run --frozen pytest -q) (241 passed, 6 skipped live-provider cases)",
         "uv run --project python pytest tests -q (188 passed)",
         "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && (cd python && ruff check . && ruff format --check . && mypy intelligence)",
-        "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh (11 gates PASS)"
+        "QUANSIO_TEST_POSTGRES_URL=... bash scripts/ci/ci.sh (11 gates PASS)",
+        "cargo test -p quansio-server --test turn_loop (18 passed; a_proposal_from_a_trusted/untrusted/unlabelled_context_window_* drive the composed StoredProposalTrust over recorded ContextProjections)"
       ],
       "artifacts": [
         "evidence/INT-012/2026-09-12T21-51-59Z/summary.json",
@@ -1262,12 +1267,13 @@
         "python/intelligence/trust/propagation.py",
         "python/tests/intelligence/test_trust_labelling.py",
         "python/tests/intelligence/test_trust_propagation.py",
-        "tests/security/injection/corpus.json"
+        "tests/security/injection/corpus.json",
+        "evidence/INT-012/2026-09-28T15-55-02Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Content trust and injection defense, complete and exercised end to end now that the database is reachable. python/intelligence/trust labels every context segment by its source (an unrecognised source fails closed to UNTRUSTED_EXTERNAL), renders untrusted content inside a typed boundary carrying the data-only instruction, runs deterministic non-LLM injection heuristics that tag a suspect segment and replace it in context with an evidence reference, and derives an element's trust as the weakest label among the segments it references (an element referencing nothing is refused rather than assumed trusted). The policy side reuses the shipped guards rather than adding a second one: `escalate` raises a tier \u2265 2 proposal one tier when its chain reaches UNTRUSTED_EXTERNAL, forbids `always`, and `requires_receipt` at tier \u2265 3 makes the call park. The new end-to-end test closes the gap the task left open: an unprovable chain escalates a tier 2 egress call, the approval request the operator loads carries the untrusted origin and its refs (present if and only if policy escalated), the effect waits at PROPOSED, and after the receipt the resumed call dispatches exactly once and settles. The pinned corpus (7 malicious shapes, 4 benign) is what QA-007 will consume. 2026-09-27 QA-002 composition gate (tests/architecture/test_qa002_composition.py KNOWN_GAPS): ProposalTrustSource runs only on UnavailableProposalTrust in the served build, so every tier >= 2 call escalates; library-level acceptance still holds; owned by a follow-up composition task."
+      "notes": "Content trust and injection defense, complete and exercised end to end now that the database is reachable. python/intelligence/trust labels every context segment by its source (an unrecognised source fails closed to UNTRUSTED_EXTERNAL), renders untrusted content inside a typed boundary carrying the data-only instruction, runs deterministic non-LLM injection heuristics that tag a suspect segment and replace it in context with an evidence reference, and derives an element's trust as the weakest label among the segments it references (an element referencing nothing is refused rather than assumed trusted). The policy side reuses the shipped guards rather than adding a second one: `escalate` raises a tier \u2265 2 proposal one tier when its chain reaches UNTRUSTED_EXTERNAL, forbids `always`, and `requires_receipt` at tier \u2265 3 makes the call park. The new end-to-end test closes the gap the task left open: an unprovable chain escalates a tier 2 egress call, the approval request the operator loads carries the untrusted origin and its refs (present if and only if policy escalated), the effect waits at PROPOSED, and after the receipt the resumed call dispatches exactly once and settles. The pinned corpus (7 malicious shapes, 4 benign) is what QA-007 will consume. 2026-09-27 QA-002 composition gate (tests/architecture/test_qa002_composition.py KNOWN_GAPS): ProposalTrustSource runs only on UnavailableProposalTrust in the served build, so every tier >= 2 call escalates; library-level acceptance still holds; owned by a follow-up composition task. 2026-09-28 (fix/INT-012-proposal-trust-composed, found by QA-002 composition gate DEFAULT_ONLY ProposalTrustSource, P1): production labelled every proposal with UnavailableProposalTrust, so every tier >= 2 tool call escalated to approval. The served chat_engine now installs policy::StoredProposalTrust: derived_from_trust is the most-untrusted label among the segments the proposing turn's model calls were shown (context_projections recorded by INT-005); no record, an unreadable record or an unknown label fails closed to UNTRUSTED_EXTERNAL. ProposalTrustSource is async and takes the turn. Merge df3e5c8. Evidence evidence/INT-012/2026-09-28T15-55-02Z."
     },
     "EXEC-001": {
       "coverage": "GENUINE_GAP",
@@ -2507,10 +2513,11 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:35:00Z",
-      "updated_at": "2026-09-27T14:44:10Z",
-      "git_commit": "771bb22474fd857dcb4833407bbdb53f7be7ac4b",
+      "updated_at": "2026-09-28T16:15:46Z",
+      "git_commit": "aff44f6600b7050af25702fc66f6fb1da0425abc",
       "tests": [
-        "cargo test -p quansio-server --test usage (4 passed: rebuild is a pure function of the event set; soft quota alerts and still admits; hard quota refuses without committing an effect; concurrent admits produce one winner)"
+        "cargo test -p quansio-server --test usage (4 passed: rebuild is a pure function of the event set; soft quota alerts and still admits; hard quota refuses without committing an effect; concurrent admits produce one winner)",
+        "cargo test -p quansio-server --test budgets_enforced (4 passed; the_hard_quota_refuses_a_tool_call_before_its_effect_is_reserved drives PostMessage through the served API: three reads against two remaining tool_calls record two, the third never becomes a tool call, the turn stops on the budget)"
       ],
       "artifacts": [
         "evidence/OPS-004/2026-09-15T08-40-00Z/summary.json",
@@ -2518,12 +2525,13 @@
         "crates/server/src/usage/quota.rs",
         "evidence/OPS-004/2026-09-26T18-36-48Z/summary.json",
         "evidence/OPS-004/2026-09-26T18-49-43Z/summary.json",
-        "evidence/RUN-010/2026-09-26T22-45-53Z/summary.json"
+        "evidence/RUN-010/2026-09-26T22-45-53Z/summary.json",
+        "evidence/OPS-004/2026-09-28T16-09-35Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "UsageRecords rebuild deterministically from RuntimeEvents. Hard quotas refuse before effect commit. Soft quotas emit a budget alert and still admit. Billing is this projection, not runtime truth. 2026-09-26 (fix/OPS-004-usage-materialized, merge 67e20d6, found by QA-009, P1): GET /v1/usage re-projected the tenant's oldest 20,000 events on every read, so nothing newer was metered; the background loop now materializes usage_records behind a consumer cursor (idempotent, cursor in the same transaction) and a read sums the rows plus the events after the cursor from one snapshot. Open, recorded by QA-009: quota enforcement (usage::quota) has no production caller and DOMAIN.md defines no quota settings. Evidence evidence/OPS-004/2026-09-26T18-36-48Z. Correction (merge 01ebe0d): the 18-36-48Z bundle's lint.log recorded exit=0 over a clippy failure (unnecessary_sort_by in usage/store.rs; the captured status was the output filter's); fixed with sort_by_key and re-verified with each status captured before filtering. Evidence evidence/OPS-004/2026-09-26T18-49-43Z. 2026-09-26 (fix/RUN-010-budgets-enforced, merge 771bb22, found by QA-009, P1): no cost control was enforced in production (BudgetService and usage::quota had no caller); the budgets' limits are the hard quota and crossing 80 % of a limit emits usage.threshold_crossed once (the soft quota), closing the open quota-enforcement finding; /v1/usage lists the budgets. Evidence evidence/RUN-010/2026-09-26T22-45-53Z. 2026-09-27 QA-002 composition gate (tests/architecture/test_qa002_composition.py KNOWN_GAPS): usage::admit_effect (hard quotas) is never called by the served build; library-level acceptance still holds; owned by a follow-up composition task."
+      "notes": "UsageRecords rebuild deterministically from RuntimeEvents. Hard quotas refuse before effect commit. Soft quotas emit a budget alert and still admit. Billing is this projection, not runtime truth. 2026-09-26 (fix/OPS-004-usage-materialized, merge 67e20d6, found by QA-009, P1): GET /v1/usage re-projected the tenant's oldest 20,000 events on every read, so nothing newer was metered; the background loop now materializes usage_records behind a consumer cursor (idempotent, cursor in the same transaction) and a read sums the rows plus the events after the cursor from one snapshot. Open, recorded by QA-009: quota enforcement (usage::quota) has no production caller and DOMAIN.md defines no quota settings. Evidence evidence/OPS-004/2026-09-26T18-36-48Z. Correction (merge 01ebe0d): the 18-36-48Z bundle's lint.log recorded exit=0 over a clippy failure (unnecessary_sort_by in usage/store.rs; the captured status was the output filter's); fixed with sort_by_key and re-verified with each status captured before filtering. Evidence evidence/OPS-004/2026-09-26T18-49-43Z. 2026-09-26 (fix/RUN-010-budgets-enforced, merge 771bb22, found by QA-009, P1): no cost control was enforced in production (BudgetService and usage::quota had no caller); the budgets' limits are the hard quota and crossing 80 % of a limit emits usage.threshold_crossed once (the soft quota), closing the open quota-enforcement finding; /v1/usage lists the budgets. Evidence evidence/RUN-010/2026-09-26T22-45-53Z. 2026-09-27 QA-002 composition gate (tests/architecture/test_qa002_composition.py KNOWN_GAPS): usage::admit_effect (hard quotas) is never called by the served build; library-level acceptance still holds; owned by a follow-up composition task. 2026-09-28 (fix/OPS-004-quota-admission, found by QA-002 composition gate UNCOMPOSED admit_effect, P1): usage::admit_effect had no production caller, and a round of N tool calls against fewer remaining tool_calls recorded and dispatched all N (the charge was refused only afterwards). The quota gate is now generic over a QuotaUsage ledger (the usage projection, and a budget's consumption, whose limits are the hard quota, DOMAIN.md 13.2); BudgetPort::admit runs each call through admit_effect against every governing budget before the engine records its Step, so no effect is reserved for a call beyond the quota, and the turn stops on the budget. Merge aff44f6. Evidence evidence/OPS-004/2026-09-28T16-09-35Z."
     },
     "OPS-005": {
       "coverage": "GENUINE_GAP",

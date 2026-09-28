@@ -530,7 +530,8 @@ async fn resolve_removals(
 ///
 /// The structure is the workspace's existing acyclic relations (edges plus
 /// `work_nodes.parent_id`), with the proposal's edge additions applied and its removals
-/// dropped. The store re-checks inside the transaction, so this is a precise early
+/// dropped. Every relation runs from the node that waits to the node it waits on:
+/// dependent to dependency, and parent to child for both `parent_of` and `parent_id`. The store re-checks inside the transaction, so this is a precise early
 /// rejection rather than the only guard.
 fn cycle(
     nodes: &[WorkNode],
@@ -546,9 +547,9 @@ fn cycle(
     for node in nodes {
         if let Some(parent) = &node.parent_id {
             adjacency
-                .entry(node.id.to_string())
+                .entry(parent.to_string())
                 .or_default()
-                .push(parent.to_string());
+                .push(node.id.to_string());
         }
     }
     for edge in edges {

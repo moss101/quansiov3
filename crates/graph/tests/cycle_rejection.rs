@@ -104,15 +104,15 @@ async fn graph_rejects_self_two_node_and_longer_cycles() {
         .expect_err("parent_of cycle");
     assert!(matches!(error, GraphError::Cycle { .. }), "{error:?}");
 
-    // A node whose parent chain reaches a cannot also be depended on by a.
+    // A child cannot depend on its parent: the parent already waits on the child.
     let mut child = NewWorkNode::new(WORKSPACE, WorkNodeKind::Subtask, "child", actor());
     child.parent_id = Some(a.id);
     let d = store.create_node(child).await.expect("create child");
     let error = store
         .create_edge(NewWorkEdge::new(
             WORKSPACE,
-            a.id,
             d.id,
+            a.id,
             WorkEdgeKind::DependsOn,
         ))
         .await
@@ -136,6 +136,50 @@ async fn graph_rejects_self_two_node_and_longer_cycles() {
         3,
         "rejected edges must not be persisted: {edges:?}"
     );
+
+    drop_pool(&pool, &name).await;
+}
+
+/// `parent_of` runs parent -> child, the direction `work_nodes.parent_id` means (a parent
+/// waits on its children): restating a parent is no cycle, inverting it is, and a child may
+/// not depend on its own parent.
+#[tokio::test]
+async fn parent_of_and_parent_id_share_one_direction() {
+    let Some((name, pool)) = prepare("cycle_parent").await else {
+        blocked_marker();
+        return;
+    };
+    let store = GraphStore::new(pool.clone(), common::TENANT).expect("store");
+    let parent = make_node(&store, "parent").await;
+    let mut child = NewWorkNode::new(WORKSPACE, WorkNodeKind::Subtask, "child", actor());
+    child.parent_id = Some(parent.id);
+    let child = store.create_node(child).await.expect("create child");
+
+    store
+        .create_edge(NewWorkEdge::new(
+            WORKSPACE,
+            parent.id,
+            child.id,
+            WorkEdgeKind::ParentOf,
+        ))
+        .await
+        .expect("restating the parent is no cycle");
+    store
+        .create_edge(NewWorkEdge::new(
+            WORKSPACE,
+            parent.id,
+            child.id,
+            WorkEdgeKind::DependsOn,
+        ))
+        .await
+        .expect("a parent may depend on its own child");
+    for kind in [WorkEdgeKind::ParentOf, WorkEdgeKind::DependsOn] {
+        let error = store
+            .create_edge(NewWorkEdge::new(WORKSPACE, child.id, parent.id, kind))
+            .await
+            .expect_err("inverting the parent closes a cycle");
+        assert!(matches!(error, GraphError::Cycle { .. }), "{error:?}");
+    }
 
     drop_pool(&pool, &name).await;
 }

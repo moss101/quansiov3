@@ -1,0 +1,13 @@
+   Compiling quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/competent-perlman-e724dc/crates/events)
+   Compiling quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/competent-perlman-e724dc/crates/capability)
+   Compiling quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/competent-perlman-e724dc/crates/graph)
+   Compiling quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/competent-perlman-e724dc/crates/tools)
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/competent-perlman-e724dc/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.14s
+     Running tests/background_composition.rs (target/debug/deps/background_composition-f22544b85b42a805)
+
+running 1 test
+test the_background_pass_keeps_the_client_projections_current ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.83s
+

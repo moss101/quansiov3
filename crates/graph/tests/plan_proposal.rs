@@ -533,3 +533,55 @@ async fn replaying_an_applied_plan_conflicts_instead_of_duplicating_work() {
 
     drop_pool(&pool, &name).await;
 }
+
+/// A plan that restates an existing parent as a `parent_of` edge is no cycle; one that
+/// inverts it is (`parent_of` and `work_nodes.parent_id` both run parent -> child).
+#[tokio::test]
+async fn a_plan_follows_the_parent_direction_of_parent_id() {
+    let Some((name, pool, store)) = setup("plan_parent").await else {
+        blocked_marker();
+        return;
+    };
+    let parent = store.create_node(node("parent")).await.expect("parent");
+    let child = store
+        .create_node(inheriting_node("child", &parent.id))
+        .await
+        .expect("child");
+
+    let base = store.graph_revision(WORKSPACE).await.expect("head");
+    let mut inverted = proposal(base, Vec::new());
+    inverted.edges_add.push(NewWorkEdge::new(
+        WORKSPACE,
+        child.id,
+        parent.id,
+        WorkEdgeKind::ParentOf,
+    ));
+    let error = transaction(GraphStore::new(pool.clone(), TENANT).expect("store"), &pool)
+        .apply_plan(&plan_proposer(), inverted)
+        .await
+        .expect_err("inverting the parent closes a cycle");
+    assert!(
+        matches!(
+            &error,
+            GraphTransactionError::PlanRejected {
+                rejection: PlanRejection::Cycle { .. },
+                ..
+            }
+        ),
+        "{error:?}"
+    );
+
+    let mut restated = proposal(base, Vec::new());
+    restated.edges_add.push(NewWorkEdge::new(
+        WORKSPACE,
+        parent.id,
+        child.id,
+        WorkEdgeKind::ParentOf,
+    ));
+    transaction(store, &pool)
+        .apply_plan(&plan_proposer(), restated)
+        .await
+        .expect("restating the parent is no cycle");
+
+    drop_pool(&pool, &name).await;
+}

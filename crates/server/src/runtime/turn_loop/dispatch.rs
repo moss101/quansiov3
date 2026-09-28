@@ -263,22 +263,24 @@ pub struct ActingActor {
 
 /// Labels the trust of the causal chain a proposal was built from (DOMAIN.md §12).
 ///
-/// The runtime cannot yet prove the chain's trust: INT-005 builds the ContextProjection
-/// whose segments carry labels, and INT-012 owns labelling them. Until it does, the
-/// default fails closed to [`FAIL_CLOSED_TRUST`], so a tier >= 2 call is escalated and
-/// needs an approval rather than silently acting on content nobody vouched for.
+/// The served build composes [`crate::policy::StoredProposalTrust`], which derives the label
+/// from the ContextProjections INT-005 recorded for the proposing turn. The default fails
+/// closed to [`FAIL_CLOSED_TRUST`], so a tier >= 2 call is escalated and needs an approval
+/// rather than silently acting on content nobody vouched for.
+#[async_trait]
 pub trait ProposalTrustSource: Send + Sync {
-    /// The most-untrusted label of the proposal's causal chain, or `None` when it cannot
-    /// be established.
-    fn proposal_trust(&self, run_id: &str) -> Option<TrustLevel>;
+    /// The most-untrusted label of the causal chain of a call proposed in `turn_id` of
+    /// `run_id`, or `None` when it cannot be established.
+    async fn proposal_trust(&self, run_id: &str, turn_id: &str) -> Option<TrustLevel>;
 }
 
 /// The default source: it can prove nothing, so policy evaluates from untrusted origin.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct UnavailableProposalTrust;
 
+#[async_trait]
 impl ProposalTrustSource for UnavailableProposalTrust {
-    fn proposal_trust(&self, _run_id: &str) -> Option<TrustLevel> {
+    async fn proposal_trust(&self, _run_id: &str, _turn_id: &str) -> Option<TrustLevel> {
         None
     }
 }
@@ -842,7 +844,8 @@ impl ToolDispatchPort for ToolDispatchService {
         // `always` rules (DOMAIN.md §12 rule 2).
         let derived = self
             .trust
-            .proposal_trust(&request.run_id)
+            .proposal_trust(&request.run_id, &request.turn_id)
+            .await
             .unwrap_or(FAIL_CLOSED_TRUST);
         let outcome = self
             .evaluate_policy(&run, &plan, &actor, derived, &projection.id.to_string())

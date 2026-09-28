@@ -54,6 +54,7 @@ mod compile;
 mod graph_port;
 mod policy;
 mod port;
+mod run_port;
 mod service;
 mod wire;
 
@@ -65,6 +66,7 @@ pub use compile::{
 pub use graph_port::{AlgebraNarrowing, GraphPlanWorkspace};
 pub use policy::max_plan_nodes;
 pub use port::{PlanCommitOutcome, PlanWorkspacePort, UnavailablePlanWorkspace, PLAN_GRAPH_OWNER};
+pub use run_port::{RunPlanApplication, PLAN_OWNER};
 pub use service::{PlanOutcome, Planner};
 pub use wire::{parse_raw, EdgeKind, NodeKind, NodeStatus, RawPlanProposal};
 
@@ -125,6 +127,16 @@ pub enum PlanError {
     /// The proposal carries no change at all (`VALIDATION_SCHEMA`).
     #[error("the plan proposal carries no change")]
     EmptyPlan,
+    /// The graph store refused one of the plan's mutations with its own typed verdict
+    /// (an illegal or unverified transition, a concurrent state change, an unknown row);
+    /// `code` is the store's DOMAIN.md §15 code.
+    #[error("the graph refused the plan ({code}): {detail}")]
+    Graph {
+        /// The store's error code.
+        code: &'static str,
+        /// The store's diagnostic.
+        detail: String,
+    },
     /// The graph snapshot, policy bound or graph mutation path failed (`INTERNAL`).
     #[error("plan workspace error: {detail}")]
     Workspace {
@@ -145,6 +157,7 @@ impl PlanError {
             | Self::Cycle { .. }
             | Self::MissingCompletionContract { .. }
             | Self::EmptyPlan => "VALIDATION_SCHEMA",
+            Self::Graph { code, .. } => code,
             Self::Workspace { .. } => "INTERNAL",
         }
     }

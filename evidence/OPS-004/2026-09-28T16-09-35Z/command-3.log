@@ -1,0 +1,47 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/competent-perlman-e724dc/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.53s
+     Running tests/budget_service_paths.rs (target/debug/deps/budget_service_paths-e1679e7de6e1b773)
+
+running 3 tests
+test recording_a_meter_the_budget_does_not_limit_counts_it_without_a_threshold ... ok
+test recording_against_an_unknown_budget_or_for_a_malformed_tenant_is_refused ... ok
+test lowering_limits_below_consumption_exhausts_the_budget_and_the_port_then_refuses ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.81s
+
+     Running tests/budgets.rs (target/debug/deps/budgets-0d0255d5e464a10c)
+
+running 3 tests
+test a_budget_capacity_limit_bounds_admission_and_exhaustion_stops_it ... ok
+test budget_exhaustion_stops_new_work_without_corrupting_active_effects ... ok
+test child_budgets_cannot_exceed_parent_remaining ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.42s
+
+     Running tests/budgets_enforced.rs (target/debug/deps/budgets_enforced-1b844fc5c3b4b1f9)
+
+running 4 tests
+test set_budget_grants_and_relimits_within_the_tenant_budget ... ok
+test a_spent_budget_starts_no_new_model_call ... ok
+test concurrent_charges_add_up ... ok
+test the_hard_quota_refuses_a_tool_call_before_its_effect_is_reserved ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.44s
+
+     Running tests/usage.rs (target/debug/deps/usage-473350fa2d1b104b)
+
+running 4 tests
+test budget_alert_on_soft_quota_still_admits ... ok
+test quota_failure_does_not_partially_commit_a_new_effect ... ok
+test usage_rebuild_from_source_events_is_deterministic ... ok
+test quota_race_admits_at_most_one_winner ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/usage_store.rs (target/debug/deps/usage_store-2807288f7f783c1d)
+
+running 1 test
+test a_usage_read_is_the_whole_history_wherever_the_projection_stands ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.88s
+

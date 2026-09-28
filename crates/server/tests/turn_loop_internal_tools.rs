@@ -146,8 +146,9 @@ impl ToolHostPort for RecordingHost {
 #[derive(Clone, Copy)]
 struct AgentTrust;
 
+#[async_trait::async_trait]
 impl ProposalTrustSource for AgentTrust {
-    fn proposal_trust(&self, _run_id: &str) -> Option<TrustLevel> {
+    async fn proposal_trust(&self, _run_id: &str, _turn_id: &str) -> Option<TrustLevel> {
         Some(TrustLevel::AgentGenerated)
     }
 }
@@ -661,8 +662,6 @@ async fn a_work_delegate_call_spawns_a_child_thread_and_parks_the_run_on_it() {
     let model = one_call(
         "call_delegate",
         "work.delegate",
-        // `work_node_id` is optional in the input schema but is a digest argument, which the
-        // registry requires; see the QA-001 finding on config/tools.yaml `work.delegate`.
         json!({ "instruction": "Compare the three vendor quotes", "work_node_id": WORK_NODE }),
     );
     let seams = Seams::new(RecordingHost::default());
@@ -734,7 +733,8 @@ async fn a_work_delegate_call_that_joins_inline_completes_with_the_child_result(
     let model = one_call(
         "call_delegate",
         "work.delegate",
-        json!({ "instruction": "Summarise the quotes", "work_node_id": WORK_NODE }),
+        // `work_node_id` is optional even though it is a digest argument.
+        json!({ "instruction": "Summarise the quotes" }),
     );
     let joining = JoiningDelegation::default();
     let mut seams = Seams::new(RecordingHost::default());
@@ -757,7 +757,7 @@ async fn a_work_delegate_call_that_joins_inline_completes_with_the_child_result(
     assert_eq!(seen.len(), 1);
     let (request, context) = &seen[0];
     assert_eq!(request.instruction, "Summarise the quotes");
-    assert_eq!(request.work_node_id.as_deref(), Some(WORK_NODE));
+    assert_eq!(request.work_node_id, None);
     assert!(
         request.request_id.starts_with("tc_"),
         "the durable tool call is the delegation request: {}",

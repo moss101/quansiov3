@@ -1,0 +1,127 @@
+{
+  "task_id": "CORE-009",
+  "git_commit": "e90aeee44e3281c47895322743ab133fb0b03afc",
+  "recorded_at": "2026-09-28T16:20:01Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-28T16-20-01Z/command-1.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-events -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-28T16-20-01Z/command-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-events",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-28T16-20-01Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test background_composition   # served Background pass as quansio_app",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-28T16-20-01Z/command-4.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test api --test walking_skeleton --test turn_loop",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-28T16-20-01Z/command-5.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-009/2026-09-28T16-20-01Z/command-6.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-events -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-events",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test background_composition   # served Background pass as quansio_app",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test api --test walking_skeleton --test turn_loop",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/events/src/projection.rs",
+      "sha256": "74ac1f10d8d6c2b2b383acf4d70dc54d4c241ea1ac70476e7eaba5cc3d43280f",
+      "bytes": 23486
+    },
+    {
+      "path": "crates/server/src/composition.rs",
+      "sha256": "7a84b57d2a717ad6b87797d1eeb98f5c83d0c41a58f96cb6fc2cb2be9dbc8a76",
+      "bytes": 32701
+    },
+    {
+      "path": "crates/server/tests/background_composition.rs",
+      "sha256": "7923020fbe3efccedd569c284e582e25ef6941b3af7475fcbc97310264a04496",
+      "bytes": 8524
+    },
+    {
+      "path": "tests/architecture/test_qa002_composition.py",
+      "sha256": "5e92a8d76623e56d7db67eddb9ac205662bee40a7af96f55bc6a51e5ac2480c1",
+      "bytes": 8565
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-28T16-20-01Z/command-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-28T16-20-01Z/command-2.log",
+      "sha256": "c808e052e895946f4c89a1a032bd8fb162c8619947f00df128194b980201ae17",
+      "bytes": 712
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-28T16-20-01Z/command-3.log",
+      "sha256": "52254bb2f33a69a081ce438290e439f8c621cfd4339d400ce9af8a411d5950e6",
+      "bytes": 5659
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-28T16-20-01Z/command-4.log",
+      "sha256": "28f2889a5f8cd13363b73dba55416122944a65731b6d7168cfecc9d243b1dceb",
+      "bytes": 998
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-28T16-20-01Z/command-5.log",
+      "sha256": "e8f21061bb507c7e00d737c7c7f10ad47673cc2106e431240b3f2f1326bbc36d",
+      "bytes": 3557
+    },
+    {
+      "path": "evidence/CORE-009/2026-09-28T16-20-01Z/command-6.log",
+      "sha256": "10f671f0e7fb0cbb76c273a111cbb538f25ac4a8847abd1bb2a9b6d2d256d6b5",
+      "bytes": 181
+    }
+  ]
+}

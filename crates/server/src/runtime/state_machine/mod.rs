@@ -222,6 +222,18 @@ pub enum RuntimeError {
         /// What the plane said.
         detail: String,
     },
+    /// Another owner refused a runtime-dispatched request with its own typed verdict
+    /// (a plan the planner rejected, a memory candidate the gate refused); `code` is
+    /// that owner's DOMAIN.md §15 code.
+    #[error("{owner} refused: {code}: {detail}")]
+    OwnerRefused {
+        /// The owning task.
+        owner: &'static str,
+        /// The owner's error code.
+        code: &'static str,
+        /// The owner's diagnostic.
+        detail: String,
+    },
     /// A caller-supplied argument is invalid.
     #[error("invalid runtime argument: {0}")]
     InvalidArgument(String),
@@ -248,7 +260,7 @@ impl RuntimeError {
             Self::CapabilityWideningRejected { .. } => "CAPABILITY_DENIED",
             Self::NotFound { .. } => "NOT_FOUND",
             Self::InvalidArgument(_) | Self::Json(_) => "VALIDATION_SCHEMA",
-            Self::Intelligence { code, .. } => code,
+            Self::Intelligence { code, .. } | Self::OwnerRefused { code, .. } => code,
             Self::Database(_)
             | Self::Event(_)
             | Self::Schema(_)
