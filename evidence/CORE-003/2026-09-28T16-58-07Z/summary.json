@@ -1,0 +1,148 @@
+{
+  "task_id": "CORE-003",
+  "git_commit": "4180e241f4c0b9e3ee2b2cf12c0295f0ead3524c",
+  "recorded_at": "2026-09-28T16:58:07Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-28T16-58-07Z/command-1.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-events -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-28T16-58-07Z/command-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_NATS_URL=nats://127.0.0.1:54230 cargo test -p quansio-events   # includes tests/nats_transport.rs against the dev stack's JetStream",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-28T16-58-07Z/command-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_NATS_URL=nats://127.0.0.1:54230 cargo test -p quansio-server --test background_composition   # served OutboxRelay as quansio_app against real JetStream",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-28T16-58-07Z/command-4.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test api --test walking_skeleton",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-28T16-58-07Z/command-5.log"
+    },
+    {
+      "command": "curl -s 'http://127.0.0.1:54231/jsz?streams=true&config=true'   # the stream the transport ensured",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-28T16-58-07Z/command-6.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CORE-003/2026-09-28T16-58-07Z/command-7.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-events -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_NATS_URL=nats://127.0.0.1:54230 cargo test -p quansio-events   # includes tests/nats_transport.rs against the dev stack's JetStream",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_NATS_URL=nats://127.0.0.1:54230 cargo test -p quansio-server --test background_composition   # served OutboxRelay as quansio_app against real JetStream",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test api --test walking_skeleton",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "curl -s 'http://127.0.0.1:54231/jsz?streams=true&config=true'   # the stream the transport ensured",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/events/src/nats.rs",
+      "sha256": "79cbdd7721b0f57a95cc15c45cc7bb2b95eed0268da0d80065531f2be8c711a0",
+      "bytes": 18936
+    },
+    {
+      "path": "crates/events/tests/nats_transport.rs",
+      "sha256": "a9ab751c74d6c7fd8f301dbd98aabcff736dc1cbb4f61ecf6c70e12f864be292",
+      "bytes": 4146
+    },
+    {
+      "path": "crates/server/src/composition.rs",
+      "sha256": "62105156f40f6ac6b93385fe43dd4fb966206388139a483bcb19c99db9e6605b",
+      "bytes": 40639
+    },
+    {
+      "path": "crates/server/tests/background_composition.rs",
+      "sha256": "404cc1da02c65fc46fa3bd9e8ecde0df02f32418d69e6dac0324310a685a91e1",
+      "bytes": 25470
+    },
+    {
+      "path": "tests/architecture/test_qa002_composition.py",
+      "sha256": "c05a7127cadb9b7cd92a41a93c73a7402f24b4b6a37bc05b6049290e7efb1cda",
+      "bytes": 7950
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-28T16-58-07Z/command-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-28T16-58-07Z/command-2.log",
+      "sha256": "9c73735a1033f44f00ea48e15c38d73843ff5a391557aac653bd81d564a34b5f",
+      "bytes": 72
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-28T16-58-07Z/command-3.log",
+      "sha256": "68a95743c66015071c70820d6171ac237da14f5aa5917a65ede9e1f5cec84611",
+      "bytes": 4332
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-28T16-58-07Z/command-4.log",
+      "sha256": "d9dd1501e84e5cc55605cde16f72915d5d306207d5aeb455c56d6a1a974c8141",
+      "bytes": 795
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-28T16-58-07Z/command-5.log",
+      "sha256": "01e95b424692d3bbf8e266ac3e36b3b5384e2e24ed2ca322a01f837759bdf6ca",
+      "bytes": 1974
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-28T16-58-07Z/command-6.log",
+      "sha256": "65c4d78752caf8accccae7c7e5484cd8b944ebe0fd4436ba13a6dc1324adc3b1",
+      "bytes": 44
+    },
+    {
+      "path": "evidence/CORE-003/2026-09-28T16-58-07Z/command-7.log",
+      "sha256": "d5cf9641fcd4f093f4d74c20787d7ced265a0c2fc4dd34fafa2e38b35c6fc017",
+      "bytes": 181
+    }
+  ]
+}
