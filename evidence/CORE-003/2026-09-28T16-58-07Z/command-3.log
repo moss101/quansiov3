@@ -1,0 +1,97 @@
+   Compiling quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/competent-perlman-e724dc/crates/events)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.22s
+     Running unittests src/lib.rs (target/debug/deps/quansio_events-f192a0a8fc2b1373)
+
+running 2 tests
+test nats::tests::another_scheme_or_no_host_is_refused ... ok
+test nats::tests::a_nats_url_names_the_address_and_its_credentials ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/event_families.rs (target/debug/deps/event_families-c46ce118ed817d35)
+
+running 4 tests
+test malformed_types_are_rejected ... ok
+test unknown_family_is_rejected_with_a_typed_error ... ok
+test known_types_parse_and_subjects_follow_domain_naming ... ok
+test canonical_families_match_the_generated_catalog ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/nats_transport.rs (target/debug/deps/nats_transport-719fd154c74e364c)
+
+running 3 tests
+test an_unreachable_server_is_unavailable_not_a_silent_success ... ok
+test jetstream_stores_an_event_once_however_often_it_is_published ... ok
+test the_transport_reconnects_after_the_connection_is_lost ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/outbox_publisher.rs (target/debug/deps/outbox_publisher-6db6e18dbfe5f43d)
+
+running 2 tests
+test crash_between_send_and_mark_cannot_duplicate_and_loses_no_event ... ok
+test unavailable_transport_fails_closed_instead_of_dropping ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.60s
+
+     Running tests/projection_determinism.rs (target/debug/deps/projection_determinism-52b040fc4813bd03)
+
+running 3 tests
+test projections_do_not_write_rows_for_unrelated_events ... ok
+test reapplying_an_applied_event_neither_double_counts_nor_regresses ... ok
+test rebuild_is_byte_identical_to_incremental_application ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.95s
+
+     Running tests/projection_resume.rs (target/debug/deps/projection_resume-d1b06cbdffa2e2ef)
+
+running 1 test
+test checkpoint_resumes_after_a_crash_without_gaps_or_duplicates ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.23s
+
+     Running tests/runtime_event_store.rs (target/debug/deps/runtime_event_store-d80dcb0566043a6a)
+
+running 6 tests
+test committed_mutation_writes_state_event_and_outbox_together ... ok
+test concurrent_writers_get_distinct_gap_free_sequences ... ok
+test committing_without_an_event_is_refused ... ok
+test failing_mutation_rolls_back_state_event_and_outbox ... ok
+test consumer_resumes_exactly_after_the_stored_sequence ... ok
+test a_rolled_back_commit_releases_its_sequence_instead_of_burning_it ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.97s
+
+     Running tests/stream_backpressure.rs (target/debug/deps/stream_backpressure-7a844727b57daa5c)
+
+running 2 tests
+test a_slow_consumer_is_disconnected_without_blocking_the_publisher ... ok
+test a_consumer_that_keeps_reading_replays_far_past_the_buffer ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.16s
+
+     Running tests/stream_channels.rs (target/debug/deps/stream_channels-65a9991044716a85)
+
+running 3 tests
+test channel_and_subscription_validation_fails_closed ... ok
+test live_frames_are_transient_droppable_and_never_persisted ... ok
+test a_subscriber_receives_only_its_own_channel_and_tenant ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.64s
+
+     Running tests/stream_resume.rs (target/debug/deps/stream_resume-4444a19d27c70edc)
+
+running 3 tests
+test reconnecting_with_the_last_cursor_replays_exactly_the_missed_events ... ok
+test a_client_without_a_cursor_resumes_from_the_persisted_consumer_position ... ok
+test a_cursor_from_another_stream_is_rejected ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.46s
+
+   Doc-tests quansio_events
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -15,6 +15,7 @@ pub mod cursor;
 pub mod envelope;
 pub mod error;
 pub mod event_type;
+pub mod nats;
 pub mod outbox;
 pub mod projection;
 pub mod schema;
@@ -25,6 +26,7 @@ pub use cursor::{advance_cursor_in_tx, CursorState, ResumeBatch, PROJECTION_CONS
 pub use envelope::{Actor, ActorKind, EventDraft, RuntimeEvent, SCHEMA_VERSION_V1};
 pub use error::{EventError, TransportError};
 pub use event_type::{parse_family, EventFamily, EventType, EVENT_FAMILIES};
+pub use nats::{NatsConfig, NatsTransport, PublishAck, EVENT_STREAM, EVENT_SUBJECTS};
 pub use outbox::{EventTransport, OutboxPublisher, PublishReport, UnavailableTransport};
 pub use projection::{
     ApplyOutcome, CatchUpReport, Projection, ProjectionRunner, RunStatusProjection,

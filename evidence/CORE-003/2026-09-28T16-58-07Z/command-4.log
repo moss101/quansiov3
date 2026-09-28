@@ -1,0 +1,14 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.38s
+     Running tests/background_composition.rs (target/debug/deps/background_composition-f22544b85b42a805)
+
+running 7 tests
+test an_unreachable_broker_leaves_the_outbox_for_a_later_pass ... ok
+test the_background_pass_carries_a_cancellation_to_its_subtree_once ... ok
+test the_background_pass_starts_dependent_work_only_after_its_prerequisite ... ok
+test the_outbox_relay_publishes_every_event_to_jetstream_once ... ok
+test the_work_node_projection_follows_status_changes ... ok
+test the_background_pass_keeps_the_client_projections_current ... ok
+test the_background_pass_admits_ready_work_within_the_concurrency_budget ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.57s
+

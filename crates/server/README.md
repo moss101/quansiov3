@@ -10,6 +10,7 @@ The client for the Python intelligence gateway (`src/intelligence`) is the only
 way the runtime reaches the intelligence plane: a separate process, over gRPC.
 With `QUANSIO_INTELLIGENCE_ENDPOINT` set, turns are answered through it
 (`GatewayModelSource`); unset, by the conformance stub, and startup says so.
+With `QUANSIO_NATS_URL` set, `OutboxRelay` publishes the outbox to NATS JetStream.
 
 Build: `cargo test -p quansio-server`
 
