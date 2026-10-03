@@ -104,6 +104,8 @@ describe("preload bridge", () => {
         "requestTakeover",
         "handback",
         "attachLive",
+        "computerPermissions",
+        "openComputerSettings",
         "detachLive",
         "viewThread",
         "createThread",
@@ -198,6 +200,8 @@ describe("preload bridge", () => {
     await api.requestTakeover({ sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
     await api.handback({ sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
     await api.attachLive("tgt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.computerPermissions({ needs: ["accessibility"] });
+    await api.openComputerSettings("accessibility");
     await api.detachLive();
     await api.viewThread("thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.createThread({ kind: "group", title: "launch", participants: [] });

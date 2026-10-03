@@ -20,6 +20,7 @@ import { OBJECTIVE_COMMAND, PROPOSE_COMMAND } from "../work/monitor.js";
 import { computerCommand, handback as handbackCommand, requestTakeover as takeoverCommand } from "../live/session.js";
 import { desktopNotice, type DesktopNotice } from "../automation/notifications.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
+import { parseOpenSettings, parsePermissionRequest, readSnapshot, settingsUrl, notApplicable, type PermissionSnapshot, type PermissionSource } from "./permissions.js";
 import { SessionFile, type ActiveRunSession, type DesktopSession } from "./session-file.js";
 import { SessionManager, type SessionState } from "./session-manager.js";
 import type { TokenStore } from "./token-store.js";
@@ -79,6 +80,17 @@ export interface DesktopBridgeOptions {
    * Absent both, save and open are refused; the preview never needs them.
    */
   readonly files?: DesktopFiles;
+  /**
+   * What the system says about the OS permissions native computer use needs (ADP-002; main supplies
+   * Electron's `systemPreferences` on macOS). Absent, the guide reports that it does not apply.
+   */
+  readonly computerPermissions?: PermissionSource;
+  /**
+   * Opens one Privacy pane in System Settings (main supplies `shell.openExternal`). It is reached only
+   * through `computer.openSettings`, which takes a permission name and builds the URL itself, and only
+   * a person's click in the page calls that; no agent output reaches it.
+   */
+  readonly openSystemSettings?: (url: string) => Promise<void>;
 }
 
 /** The slice of the host's file/shell surface the bridge uses; main supplies the real one. */
@@ -245,6 +257,8 @@ export class DesktopBridge {
       "live.session": (payload) => Promise.resolve(payload).then((raw) => this.server.browserSession(asSessionId(raw, "live.session"))),
       "live.takeover": (payload) => settled(Promise.resolve(payload).then((raw) => this.liveControl("RequestTakeover", raw))),
       "live.handback": (payload) => settled(Promise.resolve(payload).then((raw) => this.liveControl("Handback", raw))),
+      "computer.permissions": (payload) => Promise.resolve(payload).then((raw) => this.computerPermissions(raw)),
+      "computer.openSettings": (payload) => Promise.resolve(payload).then((raw) => this.openComputerSettings(raw)),
       "live.attach": (payload) => Promise.resolve(payload).then((raw) => this.attachLive(asTargetId(raw, "live.attach"))),
       "live.detach": () => Promise.resolve().then(() => this.detachLive()),
       // Collaboration (APP-009): a protected thread refuses a non-participant, and the
@@ -328,6 +342,31 @@ export class DesktopBridge {
       throw new Error(`${what} needs a msg_ message_id`);
     }
     return (await this.server.invoke(name, newCommandId(), params)).result;
+  }
+
+  // ---- native computer permissions (ADP-002) ----
+
+  /** The permission guide's snapshot: what the system says, which permissions the parked run needs. */
+  async computerPermissions(raw: unknown): Promise<PermissionSnapshot> {
+    const source = this.#options.computerPermissions;
+    if (!source) {
+      return notApplicable();
+    }
+    return readSnapshot(source, parsePermissionRequest(raw));
+  }
+
+  /**
+   * Open the Privacy pane for one permission. The payload is a permission name and nothing else; the URL
+   * is built here from a fixed table, so the page cannot ask for any other destination.
+   */
+  async openComputerSettings(raw: unknown): Promise<{ readonly opened: boolean }> {
+    const permission = parseOpenSettings(raw);
+    const open = this.#options.openSystemSettings;
+    if (!open) {
+      return { opened: false };
+    }
+    await open(settingsUrl(permission));
+    return { opened: true };
   }
 
   // ---- the live browser/computer/terminal surface (APP-007) ----

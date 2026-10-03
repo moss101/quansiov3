@@ -34,6 +34,21 @@ final class PermissionStatusTests: XCTestCase {
         XCTAssertEqual(decoded, status)
     }
 
+    /// The wire form shared with the Rust runtime and the desktop: all three parse the same file.
+    func testTheSharedStatusFixtureDecodesAndEncodesBackToItself() throws {
+        var url = URL(fileURLWithPath: #filePath)
+        for _ in 0..<5 { url.deleteLastPathComponent() }
+        url = url.appendingPathComponent("crates/machine/tests/fixtures/computer/permission_status.json")
+        let data = try Data(contentsOf: url)
+        let status = try JSONDecoder().decode(PermissionStatus.self, from: data)
+        XCTAssertEqual(
+            status,
+            PermissionStatus(accessibility: .denied, screenRecording: .granted, inputMonitoring: .notDetermined, microphone: .restricted)
+        )
+        let encoded = try JSONSerialization.jsonObject(with: try permissionStatusJSON(status)) as? NSDictionary
+        XCTAssertEqual(encoded, try JSONSerialization.jsonObject(with: data) as? NSDictionary)
+    }
+
     func testInputMonitoringNeverReportsGrantedForAnAnswerItDoesNotUnderstand() {
         XCTAssertEqual(mapInputMonitoring(kIOHIDAccessTypeGranted), .granted)
         XCTAssertEqual(mapInputMonitoring(kIOHIDAccessTypeDenied), .denied)

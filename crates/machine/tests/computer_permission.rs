@@ -227,3 +227,45 @@ fn a_missing_permission_outranks_a_lapsed_grant_and_the_two_have_different_answe
     assert_eq!(lapsed.to_json()["notification_kind"], json!("blocked"));
     assert_eq!(lapsed.to_json()["resume_command"], json!("ResumeRun"));
 }
+
+// ------------------------------------------------------------------ the wire shapes other languages parse
+
+fn fixture(name: &str) -> Value {
+    let path = format!("{}/tests/fixtures/computer/{name}", env!("CARGO_MANIFEST_DIR"));
+    let text = std::fs::read_to_string(&path).unwrap_or_else(|error| panic!("{path}: {error}"));
+    serde_json::from_str(&text).expect("fixture is JSON")
+}
+
+#[test]
+fn the_attention_items_the_desktop_parses_are_exactly_what_the_runtime_writes() {
+    // `apps/desktop/tests/permissions.test.ts` parses these same files, so a renamed field or a changed
+    // resume command fails on both sides.
+    let panes = &ComputerUseConfig::builtin().panes;
+    let denied =
+        PermissionStatus::all_granted().with(Permission::Accessibility, PermissionState::Denied);
+    let restricted =
+        PermissionStatus::all_granted().with(Permission::Accessibility, PermissionState::Restricted);
+    let open = gate(&click(), &denied, ForegroundControl::Held, panes).expect_err("parks");
+    let admin = gate(&click(), &restricted, ForegroundControl::Held, panes).expect_err("parks");
+    let pause = gate(
+        &click(),
+        &PermissionStatus::all_granted(),
+        ForegroundControl::Lapsed,
+        panes,
+    )
+    .expect_err("parks");
+    assert_eq!(open.to_json(), fixture("attention_open_settings.json"));
+    assert_eq!(admin.to_json(), fixture("attention_restricted.json"));
+    assert_eq!(pause.to_json(), fixture("attention_pause_input.json"));
+}
+
+#[test]
+fn the_status_fixture_is_the_wire_form_the_bridge_and_the_desktop_share() {
+    let wire = fixture("permission_status.json");
+    let status = PermissionStatus::from_json(&wire).expect("parse");
+    assert_eq!(status.to_json(), wire);
+    assert_eq!(status.accessibility, PermissionState::Denied);
+    assert_eq!(status.screen_recording, PermissionState::Granted);
+    assert_eq!(status.input_monitoring, PermissionState::NotDetermined);
+    assert_eq!(status.microphone, PermissionState::Restricted);
+}

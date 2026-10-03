@@ -114,6 +114,21 @@ pub enum ApiErrorCode {
     BrowserTargetNotFound,
     /// The page or browser failed with a known outcome.
     BrowserPageFailure,
+    // Computer (ADP-002)
+    /// A person holds, or has asked to hold, the native computer.
+    ComputerTakeoverActive,
+    /// An OS permission the sequence had was withdrawn mid-sequence.
+    ComputerPermissionRevoked,
+    /// A computer action sequence passed its action, wall-time or typed-byte limit.
+    ComputerLimitExceeded,
+    /// The person stopped the run.
+    ComputerStoppedByUser,
+    /// An OS permission is missing at the first action; the run parks.
+    ComputerPermissionRequired,
+    /// The person is using the keyboard or pointer; the run parks and asks them to pause.
+    ComputerForegroundControlLapsed,
+    /// The native helper's signature does not match the configured pin.
+    ComputerHelperIdentityRefused,
     // Model
     /// The provider could not be reached.
     ProviderUnavailable,
@@ -138,7 +153,7 @@ pub enum ApiErrorCode {
 
 impl ApiErrorCode {
     /// Every code in the table, so a caller can check one against it without a list of its own.
-    pub const ALL: [ApiErrorCode; 54] = [
+    pub const ALL: [ApiErrorCode; 61] = [
         ApiErrorCode::AuthRequired,
         ApiErrorCode::AuthInvalidToken,
         ApiErrorCode::AuthExpired,
@@ -184,6 +199,13 @@ impl ApiErrorCode {
         ApiErrorCode::BrowserInvalidRequest,
         ApiErrorCode::BrowserTargetNotFound,
         ApiErrorCode::BrowserPageFailure,
+        ApiErrorCode::ComputerTakeoverActive,
+        ApiErrorCode::ComputerPermissionRevoked,
+        ApiErrorCode::ComputerLimitExceeded,
+        ApiErrorCode::ComputerStoppedByUser,
+        ApiErrorCode::ComputerPermissionRequired,
+        ApiErrorCode::ComputerForegroundControlLapsed,
+        ApiErrorCode::ComputerHelperIdentityRefused,
         ApiErrorCode::ProviderUnavailable,
         ApiErrorCode::ProviderRateLimited,
         ApiErrorCode::ProviderRefusal,
@@ -244,6 +266,13 @@ impl ApiErrorCode {
             Self::BrowserInvalidRequest => "BROWSER_INVALID_REQUEST",
             Self::BrowserTargetNotFound => "BROWSER_TARGET_NOT_FOUND",
             Self::BrowserPageFailure => "BROWSER_PAGE_FAILURE",
+            Self::ComputerTakeoverActive => "COMPUTER_TAKEOVER_ACTIVE",
+            Self::ComputerPermissionRevoked => "COMPUTER_PERMISSION_REVOKED",
+            Self::ComputerLimitExceeded => "COMPUTER_LIMIT_EXCEEDED",
+            Self::ComputerStoppedByUser => "COMPUTER_STOPPED_BY_USER",
+            Self::ComputerPermissionRequired => "COMPUTER_PERMISSION_REQUIRED",
+            Self::ComputerForegroundControlLapsed => "COMPUTER_FOREGROUND_CONTROL_LAPSED",
+            Self::ComputerHelperIdentityRefused => "COMPUTER_HELPER_IDENTITY_REFUSED",
             Self::ProviderUnavailable => "PROVIDER_UNAVAILABLE",
             Self::ProviderRateLimited => "PROVIDER_RATE_LIMITED",
             Self::ProviderRefusal => "PROVIDER_REFUSAL",
@@ -305,6 +334,14 @@ impl ApiErrorCode {
             | Self::BrowserInvalidRequest
             | Self::BrowserTargetNotFound
             | Self::BrowserPageFailure => "Browser",
+            Self::ComputerTakeoverActive
+            | Self::ComputerPermissionRevoked
+            | Self::ComputerLimitExceeded
+            | Self::ComputerStoppedByUser
+            | Self::ComputerPermissionRequired
+            | Self::ComputerForegroundControlLapsed
+            | Self::ComputerHelperIdentityRefused
+            => "Computer",
             Self::ProviderUnavailable
             | Self::ProviderRateLimited
             | Self::ProviderRefusal
@@ -373,6 +410,17 @@ impl ApiErrorCode {
             | Self::BrowserInvalidRequest
             | Self::BrowserTargetNotFound
             | Self::BrowserPageFailure => StatusCode::UNPROCESSABLE_ENTITY,
+            // Computer (409/422): a person holding the machine, a withdrawn permission or a parked run
+            // conflicts with the state the call assumed; a spent limit or a refused helper is
+            // unprocessable as asked.
+            Self::ComputerTakeoverActive
+            | Self::ComputerPermissionRevoked
+            | Self::ComputerStoppedByUser
+            | Self::ComputerPermissionRequired
+            | Self::ComputerForegroundControlLapsed => StatusCode::CONFLICT,
+            Self::ComputerLimitExceeded | Self::ComputerHelperIdentityRefused => {
+                StatusCode::UNPROCESSABLE_ENTITY
+            }
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::StreamBackpressure => StatusCode::SERVICE_UNAVAILABLE,

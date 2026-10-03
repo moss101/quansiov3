@@ -1,0 +1,8 @@
+{
+  "code": "COMPUTER_PERMISSION_REQUIRED",
+  "notification_kind": "blocked",
+  "resume_command": "ResumeRun",
+  "permission": "accessibility",
+  "status": "denied",
+  "guide": { "action": "open_settings", "pane": "Privacy_Accessibility" }
+}

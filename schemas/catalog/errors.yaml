@@ -136,6 +136,27 @@ errors:
 - code: BROWSER_PAGE_FAILURE
   family: Browser
   http_status: 409/422
+- code: COMPUTER_TAKEOVER_ACTIVE
+  family: Computer
+  http_status: 409/422
+- code: COMPUTER_PERMISSION_REVOKED
+  family: Computer
+  http_status: 409/422
+- code: COMPUTER_LIMIT_EXCEEDED
+  family: Computer
+  http_status: 409/422
+- code: COMPUTER_STOPPED_BY_USER
+  family: Computer
+  http_status: 409/422
+- code: COMPUTER_PERMISSION_REQUIRED
+  family: Computer
+  http_status: 409/422
+- code: COMPUTER_FOREGROUND_CONTROL_LAPSED
+  family: Computer
+  http_status: 409/422
+- code: COMPUTER_HELPER_IDENTITY_REFUSED
+  family: Computer
+  http_status: 409/422
 - code: PROVIDER_UNAVAILABLE
   family: Model
   http_status: 502/503

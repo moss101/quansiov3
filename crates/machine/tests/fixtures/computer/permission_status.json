@@ -1,0 +1,6 @@
+{
+  "accessibility": "denied",
+  "screen_recording": "granted",
+  "input_monitoring": "not_determined",
+  "microphone": "restricted"
+}
