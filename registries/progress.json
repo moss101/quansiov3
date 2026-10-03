@@ -3140,8 +3140,8 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:adp-002",
       "started_at": "2026-10-03T09:54:03Z",
-      "updated_at": "2026-10-03T11:20:26Z",
-      "git_commit": "820c7dcdcc5d7ac4f34376f8eff192a117823547",
+      "updated_at": "2026-10-03T11:21:57Z",
+      "git_commit": "a77af7344017e0e8ea6e47c660956da4a96ab6fe",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine -p quansio-tools -p quansio-native-windows (computer_receipts 16, computer_sequence 14, computer_permission 8, computer_helper 11, tools computer_receipt 4; real PostgreSQL and real codesign)",
         "QUANSIO_TEST_MACOS_COMPUTER_USE=1 swift test --package-path native/macos (42 tests, 0 failures, 1 BLOCKED_EXTERNAL skip: receipts, background measurement against a real pointer move, permission probes, foreground-control monitor, clipboard receipt)",
