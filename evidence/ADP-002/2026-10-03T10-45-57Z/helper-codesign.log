@@ -1,0 +1,20 @@
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/machine)
+   Compiling quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/tools)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.48s
+     Running tests/computer_helper.rs (target/debug/deps/computer_helper-96638c5d215d0f73)
+
+running 11 tests
+test configuration_that_weakens_the_pin_does_not_load ... ok
+test the_production_pin_needs_an_apple_anchor_and_the_configured_team ... ok
+test a_helper_signed_as_pinned_is_accepted_and_fingerprinted ... ok
+test a_pointer_that_is_not_a_version_is_refused ... ok
+test a_second_sweep_finds_nothing_to_do ... ok
+test a_refused_source_installs_nothing ... ok
+test a_helper_with_the_wrong_identity_is_refused ... ok
+test a_failed_activation_probe_restores_the_previous_version ... ok
+test orphaned_helpers_are_terminated_at_start_and_nothing_else_is ... ok
+test install_copies_into_a_versioned_directory_verifies_the_copy_and_prunes ... ok
+test a_helper_that_changes_after_install_is_refused_at_launch ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+

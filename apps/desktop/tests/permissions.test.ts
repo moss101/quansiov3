@@ -296,14 +296,14 @@ describe("polling", () => {
     const fake = fakeTimers();
     const seen: boolean[] = [];
     let reads = 0;
-    let release: (() => void) | null = null;
+    const slow: { release: (() => void) | null } = { release: null };
     const poller = new PermissionPoller({
       read: () => {
         reads += 1;
         if (reads === 2) {
           // A slow read: nothing is scheduled until it finishes.
           return new Promise((resolve) => {
-            release = () => {
+            slow.release = () => {
               resolve(wire(true));
             };
           });
@@ -325,7 +325,7 @@ describe("polling", () => {
     await settle();
     expect(reads).toBe(2);
     expect(fake.pending, "no timer while a read is in flight").toHaveLength(0);
-    release?.();
+    slow.release?.();
     await settle();
     expect(seen).toEqual([false, true]);
     expect(fake.pending).toHaveLength(1);
@@ -362,11 +362,11 @@ describe("polling", () => {
   it("does not report a snapshot that arrives after it was stopped", async () => {
     const fake = fakeTimers();
     const seen: boolean[] = [];
-    let release: (() => void) | null = null;
+    const slow: { release: (() => void) | null } = { release: null };
     const poller = new PermissionPoller({
       read: () =>
         new Promise((resolve) => {
-          release = () => {
+          slow.release = () => {
             resolve(wire(true));
           };
         }),
@@ -375,7 +375,7 @@ describe("polling", () => {
     });
     poller.start();
     poller.stop();
-    release?.();
+    slow.release?.();
     await settle();
     expect(seen).toEqual([]);
     expect(fake.pending).toHaveLength(0);

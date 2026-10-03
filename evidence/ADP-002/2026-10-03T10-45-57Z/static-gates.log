@@ -1,0 +1,12 @@
+V8.1 VALIDATION: PASS (108 tasks, 11 milestones, 66 PASS, 5 ready)
+validate exit=0
+architecture check: CLEAN (0 findings)
+arch_check exit=0
+workspace check: CLEAN (0 findings)
+workspace_check exit=0
+authority check: CLEAN (0 findings)
+check_authority exit=0
+legacy map check: CLEAN (0 findings)
+legacy_map exit=0
+contract regeneration check: CLEAN (catalog,openapi,ts,sdk)
+contracts-check exit=0

@@ -243,6 +243,11 @@ for name, tool, file, old, new in MUTANTS:
         failed = [f if isinstance(f, str) else " ".join(f) for f in failed]
         if result.returncode != 0 and failed:
             log(f"KILLED      {name} -- {failed[0]}" + (f" (+{len(failed) - 1} more)" if len(failed) > 1 else ""))
+            # What the first failing test said, so a kill by the intended assertion is distinguishable from a
+            # kill by an unrelated failure (a timeout, a connection).
+            said = re.search(r"panicked at [^\n]+\n([^\n]+)", out_of(result))
+            if said:
+                log(f"            says: {said.group(1)[:200]}")
             killed += 1
         elif result.returncode != 0:
             log(f"NO-VERDICT  {name}: the suite failed but no named test did")

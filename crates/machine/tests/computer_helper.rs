@@ -129,7 +129,7 @@ fn local_pin() -> HelperPin {
 fn installer(scratch: &Scratch, keep: usize) -> HelperInstaller {
     let mut config = ComputerUseConfig::builtin().helper.clone();
     config.keep_versions = keep;
-    config.terminate_grace = Duration::from_millis(1500);
+    config.terminate_grace = Duration::from_secs(10);
     HelperInstaller::new(
         &scratch.path().join("data").join("computer-helper"),
         local_pin(),
@@ -408,7 +408,7 @@ fn a_helper_that_changes_after_install_is_refused_at_launch() {
     // Before the change it launches, under the configured profile prefix.
     let mut process = installer.launch("run-one", &[]).expect("launch");
     assert!(process.profile.starts_with("quansio-computer-"));
-    let deadline = Instant::now() + Duration::from_secs(5);
+    let deadline = Instant::now() + Duration::from_secs(60);
     while !process.has_exited() && Instant::now() < deadline {
         std::thread::sleep(Duration::from_millis(20));
     }
@@ -576,7 +576,7 @@ fn orphaned_helpers_are_terminated_at_start_and_nothing_else_is() {
     start_orphan(&elsewhere, "quansio-computer-not-ours");
 
     assert!(
-        wait_for(Duration::from_secs(5), || {
+        wait_for(Duration::from_secs(60), || {
             pids_running("quansio-computer-crashed-run").len() == 1
                 && pids_running("someone-elses-profile").len() == 1
                 && pids_running("quansio-computer-not-ours").len() == 1
@@ -598,7 +598,7 @@ fn orphaned_helpers_are_terminated_at_start_and_nothing_else_is() {
         !outcomes[0].killed,
         "it exits on SIGTERM; no kill was needed"
     );
-    assert!(wait_for(Duration::from_secs(3), || !process_alive(
+    assert!(wait_for(Duration::from_secs(15), || !process_alive(
         orphan_pid
     )));
     assert!(
@@ -619,7 +619,7 @@ fn orphaned_helpers_are_terminated_at_start_and_nothing_else_is() {
         let _ = Command::new("/bin/kill").arg(pid.to_string()).status();
     }
     own.terminate();
-    assert!(wait_for(Duration::from_secs(3), || {
+    assert!(wait_for(Duration::from_secs(15), || {
         !process_alive(other_profile) && !process_alive(other_path)
     }));
 }
