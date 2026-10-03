@@ -1,0 +1,66 @@
+CONTROL -p quansio-qworkerd --test browser_fencing: CONTROL-PASSED
+COMPILES stale-revision-check-disabled
+stale-revision-check-disabled: KILLED by a_stale_revision_snapshot_or_fingerprint_never_clicks
+COMPILES fingerprint-difference-ignored
+fingerprint-difference-ignored: KILLED by a_stale_revision_snapshot_or_fingerprint_never_clicks
+COMPILES hit-test-skipped
+hit-test-skipped: KILLED by a_stale_revision_snapshot_or_fingerprint_never_clicks
+COMPILES observations-not-invalidated-by-a-mutation
+observations-not-invalidated-by-a-mutation: KILLED by a_snapshot_is_good_for_one_action, a_point_is_bound_to_the_capture_it_was_read_from
+COMPILES scroll-offset-not-checked
+scroll-offset-not-checked: KILLED by a_point_read_before_the_page_scrolled_is_stale
+COMPILES pixel-change-warning-dropped
+pixel-change-warning-dropped: KILLED by a_point_is_bound_to_the_capture_it_was_read_from
+CONTROL -p quansio-qworkerd --test browser_ledger: CONTROL-PASSED
+COMPILES replay-gate-always-fresh
+replay-gate-always-fresh: KILLED by a_replayed_action_returns_the_stored_result_and_never_touches_the_page, an_unacknowledged_click_is_in_doubt_surfaced_and_never_retried, a_restart_in_the_middle_of_an_action_leaves_it_in_doubt_and_unrepeated
+COMPILES journal-digest-conflict-ignored
+journal-digest-conflict-ignored: KILLED by the_journal_survives_a_torn_final_line, a_replayed_action_returns_the_stored_result_and_never_touches_the_page, an_unacknowledged_click_is_in_doubt_surfaced_and_never_retried
+COMPILES sent-flag-never-set-so-unacknowledged-input-is-a-plain-failure
+sent-flag-never-set-so-unacknowledged-input-is-a-plain-failure: KILLED by an_unacknowledged_click_is_in_doubt_surfaced_and_never_retried
+COMPILES restart-does-not-mark-started-actions-in-doubt
+restart-does-not-mark-started-actions-in-doubt: KILLED by the_journal_survives_a_torn_final_line, a_restart_in_the_middle_of_an_action_leaves_it_in_doubt_and_unrepeated
+COMPILES click-takes-no-queue-turn
+click-takes-no-queue-turn: KILLED by side_effecting_actions_are_serialized_in_one_queue
+COMPILES tier-ceiling-ignored
+tier-ceiling-ignored: KILLED by a_consequence_above_the_approved_tier_is_refused_before_dispatch
+CONTROL -p quansio-qworkerd --test browser_secrets: CONTROL-PASSED
+COMPILES plain-text-allowed-in-sensitive-fields
+plain-text-allowed-in-sensitive-fields: KILLED by plain_text_is_refused_in_password_one_time_code_and_card_fields
+COMPILES secret-origin-not-checked
+secret-origin-not-checked: KILLED by the_target_frame_is_checked_as_well_as_the_top_frame, a_secret_is_refused_on_an_origin_outside_its_allow_list
+COMPILES target-frame-origin-not-checked
+target-frame-origin-not-checked: KILLED by the_target_frame_is_checked_as_well_as_the_top_frame
+COMPILES printable-key-allowed-in-sensitive-fields
+printable-key-allowed-in-sensitive-fields: KILLED by a_printable_key_is_refused_in_a_sensitive_field_and_in_a_frame_it_cannot_read
+COMPILES digest-over-the-substituted-text
+digest-over-the-substituted-text: KILLED by the_ledger_digest_is_over_the_placeholder_form_not_the_value
+CONTROL -p quansio-qworkerd --test browser_guard: CONTROL-PASSED
+COMPILES pending-dialog-does-not-fence
+pending-dialog-does-not-fence: KILLED by a_pending_dialog_fences_every_other_action_until_it_is_answered
+COMPILES popups-from-agent-input-allowed
+popups-from-agent-input-allowed: KILLED by agent_input_is_not_a_gesture_and_a_users_is
+COMPILES stale-dialog-id-not-checked
+stale-dialog-id-not-checked: KILLED by a_pending_dialog_fences_every_other_action_until_it_is_answered
+COMPILES certificate-errors-continue-without-a-user
+certificate-errors-continue-without-a-user: KILLED by a_user_can_cancel_and_an_undecided_error_is_cancelled_after_its_wait, a_user_can_continue_and_the_certificate_hash_is_recorded, a_certificate_error_waits_for_a_user_and_agent_input_cannot_dismiss_it
+COMPILES permissions-not-denied-at-attach
+permissions-not-denied-at-attach: KILLED by every_permission_is_denied_and_agent_input_cannot_grant_one, only_a_user_decision_grants_media_and_only_for_its_origin
+COMPILES navigation-validation-disabled
+navigation-validation-disabled: KILLED by navigation_is_web_only_without_credentials
+CONTROL -p quansio-qworkerd --lib: CONTROL-PASSED
+COMPILES tool-output-not-schema-validated
+tool-output-not-schema-validated: KILLED by browser::tools::tests::a_result_the_declaration_does_not_describe_is_not_returned
+COMPILES tool-input-not-schema-validated
+tool-input-not-schema-validated: KILLED by everything_the_page_says_is_labelled_untrusted_and_the_surface_is_strict, a_certificate_error_waits_for_a_user_and_agent_input_cannot_dismiss_it, every_permission_is_denied_and_agent_input_cannot_grant_one
+CONTROL -p quansio-tools --test browser_side_effects: CONTROL-PASSED
+COMPILES side-effect-class-not-checked-against-mapping
+side-effect-class-not-checked-against-mapping: KILLED by a_browser_tool_that_disagrees_with_its_class_or_declares_none_is_refused
+CONTROL PG -p quansio-machine --test browser_guard: CONTROL-PASSED
+COMPILES an-agent-can-make-a-user-decision
+an-agent-can-make-a-user-decision: KILLED by only_a_user_decides_a_certificate_and_an_agent_leaves_the_row_untouched, only_a_user_grants_media_and_only_camera_and_microphone_can_be_granted
+COMPILES a-report-can-undo-a-users-decision
+a-report-can-undo-a-users-decision: KILLED by only_a_user_decides_a_certificate_and_an_agent_leaves_the_row_untouched
+COMPILES a-secret-resolves-without-a-matching-label
+a-secret-resolves-without-a-matching-label: KILLED by an_unresolvable_placeholder_is_refused_and_says_why_without_the_value
+restored

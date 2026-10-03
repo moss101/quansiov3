@@ -21,13 +21,39 @@
 //! `browser_sessions` is owned by machine control and this module carries the session state the worker
 //! is given and reports back.
 
+//!
+//! ## Hardened actions (ADP-001)
+//!
+//! The functions in this file read and act on a page given a selector. They are the low-level layer, and
+//! they trust the caller to have decided that the page is the one it meant. The hardened layer is built
+//! on top of them for everything a model drives:
+//!
+//! * [`driver`] — `BrowserDriver`: per-tab document revisions, snapshots with element refs, captures
+//!   with bound points, a serialized action queue, secret placeholders, dialogs, downloads,
+//!   permissions, certificate decisions and the gesture rule for popups and application handoffs;
+//! * [`journal`] — idempotency for side-effecting actions and the in-doubt outcome;
+//! * [`fence`], [`tab`], [`origin`], [`secrets`], [`fault`] — the vocabulary those use;
+//! * [`tools`] — the model-facing tool surface: schema-validated arguments in, schema-validated and
+//!   `UNTRUSTED_EXTERNAL`-labelled results out.
+
+mod actions;
 pub mod cdp;
+pub mod driver;
+pub mod fault;
+pub mod fence;
+pub mod journal;
+pub mod origin;
+pub mod secrets;
+pub mod tab;
+pub mod tools;
 
 use std::collections::BTreeMap;
 
 use serde_json::{json, Value};
 
 pub use cdp::{CdpConnection, CdpError, CdpEvent, PageTarget};
+pub use driver::{ActionReport, BrowserCallContext, BrowserDriver, DriverConfig};
+pub use fault::{BrowserFault, FaultCode};
 
 /// A default bound on the readable text an observation extracts.
 pub const DEFAULT_MAX_TEXT_BYTES: usize = 262_144;
@@ -685,7 +711,7 @@ const EXTRACT_SCRIPT: &str = r#"
 "#;
 
 /// What the extraction returned, before it is typed.
-async fn extract(connection: &CdpConnection) -> Result<Value, BrowserError> {
+pub(crate) async fn extract(connection: &CdpConnection) -> Result<Value, BrowserError> {
     let result = connection
         .call(
             "Runtime.evaluate",
@@ -848,7 +874,7 @@ fn links_from(extracted: &Value) -> Vec<Link> {
 }
 
 /// Bounds the session's readable text and links, digesting what it returns.
-fn bound(
+pub(crate) fn bound(
     extracted: &Value,
     max_text_bytes: usize,
     max_links: usize,
@@ -965,6 +991,11 @@ pub async fn screenshot(connection: &CdpConnection) -> Result<Vec<u8>, BrowserEr
         .and_then(Value::as_str)
         .ok_or_else(|| BrowserError::Page("the screenshot came back empty".to_string()))?;
     decode_base64(encoded)
+}
+
+/// Decode base64 into bytes, or `None` when the input is not base64 (certificates and downloads).
+pub(crate) fn decode_base64_bytes(input: &str) -> Option<Vec<u8>> {
+    decode_base64(input).ok()
 }
 
 /// Decode base64 without a dependency: CDP returns screenshots that way.

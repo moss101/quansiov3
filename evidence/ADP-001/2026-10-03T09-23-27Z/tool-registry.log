@@ -1,0 +1,80 @@
+   Compiling quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a89e68c0f39d045d2/crates/tools)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.54s
+     Running unittests src/lib.rs (target/debug/deps/quansio_tools-738afddca4ec4a2d)
+
+running 5 tests
+test registry::tests::families_match_only_their_own_shape ... ok
+test call::tests::urls_reduce_to_their_host ... ok
+test call::tests::paths_inside_the_root_are_recognised ... ok
+test side_effect::tests::a_missing_or_unknown_class_is_refused ... ok
+test side_effect::tests::the_shipped_mapping_names_every_class ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/quansio-tool-check.rs (target/debug/deps/quansio_tool_check-42ae8ca15955efb3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/browser_side_effects.rs (target/debug/deps/browser_side_effects-f7d39a12210777af)
+
+running 4 tests
+test every_browser_tool_declares_a_side_effect_class_that_agrees_with_the_mapping ... ok
+test there_is_no_selector_only_mutating_browser_tool ... ok
+test a_call_plans_as_privileged_input_and_its_key_moves_with_what_it_was_planned_against ... ok
+test a_browser_tool_that_disagrees_with_its_class_or_declares_none_is_refused ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/builtin_packs.rs (target/debug/deps/builtin_packs-af314eb650098041)
+
+running 2 tests
+test a_skills_capability_needs_are_exactly_what_its_tools_require ... ok
+test every_tool_a_builtin_pack_names_is_callable_in_the_registry ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/source_trust_parity.rs (target/debug/deps/source_trust_parity-d1a3da6635fb90dd)
+
+running 2 tests
+test only_untrusted_external_is_data_only ... ok
+test source_trust_matches_the_generated_contract ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/tool_check_binary.rs (target/debug/deps/tool_check_binary-d53758f5f28e982f)
+
+running 2 tests
+test blank_lines_are_skipped_and_order_is_kept ... ok
+test verdicts_follow_the_registry_schema_check ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
+
+     Running tests/tool_contract.rs (target/debug/deps/tool_contract-33cec0d5dd6f98b1)
+
+running 14 tests
+test schemas_reject_unsupported_vocabulary_at_load_time ... ok
+test open_object_schemas_are_refused ... ok
+test a_digest_argument_must_be_a_declared_property ... ok
+test unknown_argument_field_is_rejected ... ok
+test reserved_family_names_are_not_callable ... ok
+test declared_hosts_and_output_bounds_come_from_the_declaration ... ok
+test parameter_digest_is_canonical_and_key_order_independent ... ok
+test derived_effect_class_follows_the_target_root ... ok
+test unknown_tool_is_rejected_before_dispatch ... ok
+test missing_and_ill_typed_arguments_are_rejected ... ok
+test exposure_is_capability_filtered ... ok
+test an_absent_optional_digest_argument_still_plans_and_stays_distinct ... ok
+test native_computer_tools_are_machine_hosted_and_app_scoped ... ok
+test builtin_registry_covers_the_generated_tool_catalog ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests quansio_tools
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+exit=0

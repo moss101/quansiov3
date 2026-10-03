@@ -21,6 +21,13 @@ use sqlx::{Acquire, PgConnection, Row};
 
 use crate::control::MachineError;
 
+pub use super::browser_guard::{
+    BrowserSecretError, BrowserSecretMaterial, BrowserSecretRequest, BrowserSecretValue,
+    BrowserSecrets, Decision, DecisionActor, DecisionKind, DecisionReceipt, GuardCertificate,
+    GuardDialog, GuardDownload, GuardReport, GuardState, GuardTab, InDoubtAction, RecordedDecision,
+    BROWSER_SECRET_TOOL, GRANTABLE_PERMISSIONS,
+};
+
 /// Who is driving a session (the schema's `browser_sessions.control_holder`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ControlHolder {
@@ -102,6 +109,10 @@ pub struct Tab {
     pub url: String,
     /// Its title.
     pub title: String,
+    /// The opaque revision of the document the tab shows, as the worker last reported it (ADP-001).
+    /// It changes when the tab navigates or its frame tree changes, so a surface can tell that what a
+    /// model last observed is no longer the page.
+    pub document_revision: Option<String>,
 }
 
 /// A browser session.
@@ -131,6 +142,8 @@ pub struct BrowserSession {
     pub checkpoint_id: Option<String>,
     /// Its lifecycle state.
     pub status: SessionStatus,
+    /// What the hardened driver last reported, and the user's decisions (ADP-001, DOMAIN.md §8.4).
+    pub guard: GuardState,
 }
 
 impl BrowserSession {
@@ -181,6 +194,26 @@ pub enum BrowserSessionError {
         /// What is wrong with it.
         detail: String,
     },
+    /// A decision that only a user may make was attempted by someone else.
+    #[error("{subject} is a decision only a user can make; {actor} cannot make it")]
+    UserDecisionRequired {
+        /// What was being decided.
+        subject: String,
+        /// Who tried.
+        actor: String,
+    },
+    /// The certificate error, permission or dialog being decided is not waiting for a decision.
+    #[error("nothing is waiting for a decision on {0}")]
+    DecisionSubjectNotFound(String),
+    /// The permission can never be granted through a decision (only camera and microphone can).
+    #[error("{0:?} is not a permission a decision can grant")]
+    DecisionNotGrantable(String),
+    /// The worker's report is not the shape the domain defines.
+    #[error("the guard report is not valid: {detail}")]
+    GuardInvalid {
+        /// What is wrong with it.
+        detail: String,
+    },
 }
 
 impl From<BrowserSessionError> for MachineError {
@@ -189,9 +222,9 @@ impl From<BrowserSessionError> for MachineError {
     }
 }
 
-const COLUMNS: &str = "id, tenant_id, target_id, run_id, profile_ref, control_holder, \
+pub(super) const COLUMNS: &str = "id, tenant_id, target_id, run_id, profile_ref, control_holder, \
                        to_char(control_since AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') AS control_since, \
-                       current_url, tabs, screencast, checkpoint_id, status";
+                       current_url, tabs, screencast, checkpoint_id, status, guard_state";
 
 /// The browser session store.
 pub struct BrowserSessionStore;
@@ -321,21 +354,10 @@ impl BrowserSessionStore {
                 target_id: target_id.to_string(),
                 url: url.to_string(),
                 title: title.to_string(),
+                document_revision: None,
             }),
         }
-        let tabs = Value::Array(
-            session
-                .tabs
-                .iter()
-                .map(|tab| {
-                    json!({
-                        "target_id": tab.target_id,
-                        "url": tab.url,
-                        "title": tab.title,
-                    })
-                })
-                .collect(),
-        );
+        let tabs = tabs_json(&session.tabs);
         sqlx::query(
             "UPDATE browser_sessions SET current_url = $3, tabs = $4 WHERE id = $1 AND tenant_id = $2",
         )
@@ -511,7 +533,9 @@ impl BrowserSessionStore {
     }
 }
 
-fn row_to_session(row: &sqlx::postgres::PgRow) -> Result<BrowserSession, BrowserSessionError> {
+pub(super) fn row_to_session(
+    row: &sqlx::postgres::PgRow,
+) -> Result<BrowserSession, BrowserSessionError> {
     let holder: String = row.try_get("control_holder")?;
     let status: String = row.try_get("status")?;
     let tabs: Value = row.try_get("tabs")?;
@@ -529,6 +553,10 @@ fn row_to_session(row: &sqlx::postgres::PgRow) -> Result<BrowserSession, Browser
                             .and_then(Value::as_str)
                             .unwrap_or_default()
                             .to_string(),
+                        document_revision: tab
+                            .get("document_revision")
+                            .and_then(Value::as_str)
+                            .map(str::to_string),
                     })
                 })
                 .collect()
@@ -553,5 +581,24 @@ fn row_to_session(row: &sqlx::postgres::PgRow) -> Result<BrowserSession, Browser
         status: SessionStatus::parse(&status).ok_or_else(|| BrowserSessionError::Corrupt {
             detail: format!("status {status:?} is not one the domain defines"),
         })?,
+        guard: GuardState::from_json(&row.try_get::<Value, _>("guard_state")?),
     })
+}
+
+pub(super) fn tabs_json(tabs: &[Tab]) -> Value {
+    Value::Array(
+        tabs.iter()
+            .map(|tab| {
+                let mut entry = json!({
+                    "target_id": tab.target_id,
+                    "url": tab.url,
+                    "title": tab.title,
+                });
+                if let Some(revision) = &tab.document_revision {
+                    entry["document_revision"] = json!(revision);
+                }
+                entry
+            })
+            .collect(),
+    )
 }

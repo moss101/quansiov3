@@ -15,6 +15,7 @@ use serde_json::Value;
 
 use crate::error::ToolError;
 use crate::schema::check_vocabulary;
+use crate::side_effect::SideEffectClass;
 
 /// Where a tool executes (DOMAIN.md §7.5 `host`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -297,6 +298,9 @@ pub struct ToolDeclaration {
     pub evidence: EvidenceCapture,
     /// Grants that must be present in a projection for the tool to be exposed.
     pub grant_templates: Vec<Grant>,
+    /// What kind of thing the tool does to the world (ADP-001). A browser tool must declare one;
+    /// `config/effects.yaml` maps it onto the effect class the Effect Ledger records.
+    pub side_effect: Option<SideEffectClass>,
 }
 
 impl ToolDeclaration {
@@ -343,6 +347,12 @@ impl ToolDeclaration {
             kinds: raw.evidence.kinds,
             redact: raw.evidence.redact,
         };
+        let side_effect = raw
+            .side_effect
+            .as_deref()
+            .map(SideEffectClass::parse)
+            .transpose()
+            .map_err(&malformed)?;
         let grant_templates = parse_grant_templates(&tool, &raw.grant_templates)?;
         if grant_templates.is_empty() {
             return Err(malformed(
@@ -382,6 +392,7 @@ impl ToolDeclaration {
             cancellable: raw.cancellable,
             evidence,
             grant_templates,
+            side_effect,
         })
     }
 
@@ -570,6 +581,9 @@ pub struct RawToolDeclaration {
     /// Grants that expose the tool.
     #[serde(default)]
     pub grant_templates: Vec<Value>,
+    /// What kind of thing the tool does to the world (ADP-001); see `config/effects.yaml`.
+    #[serde(default)]
+    pub side_effect: Option<String>,
 }
 
 /// The YAML/JSON shape of a resource rule.

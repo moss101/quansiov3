@@ -72,6 +72,11 @@ Use these names in code, contracts, events, UI copy and tests. Do not introduce 
 | **ModelRoute** | Deterministic resolution of which provider/model/config fulfils a model call. |
 | **UsageRecord** | Metered consumption (tokens, cost, machine time, storage, connector calls) attributed to scopes. |
 | **AuditEntry** | Append-only record of admin/access/policy/effect decisions. |
+| **DocumentRevision** | Opaque per-tab token that changes when a browser tab navigates or its frame tree changes; every mutating browser Tool names the one the model last observed (§8.4.1). |
+| **Snapshot / Capture** | A browser observation whose element refs (Snapshot) or screenshot points (Capture) are bound to a tab and DocumentRevision and are invalidated by any mutation (§8.4.1). |
+| **In-doubt outcome** | The explicit result of a browser action whose effect on the page cannot be established; settles as `OUTCOME_UNKNOWN`, is never retried, and is reconciled by a fresh observation (§8.4.1). |
+| **SecretPlaceholder** | `{{secret:<name>.<field>}}` in a browser Tool argument; only the trusted runtime resolves it, at insertion, against the SecretHandle's allowed origins (§8.4.1). |
+| **DecisionReceipt** | Proof, minted only by machine control for a user, that a person resolved a certificate error or granted a media permission (§8.4.1). |
 
 ---
 
@@ -367,9 +372,21 @@ timeout/disconnect → OUTCOME_UNKNOWN → reconcile before any retry
 ```
 
 ### 7.5 Tool
-`name (namespaced: fs.read, fs.write, fs.patch, terminal.exec, process.spawn, browser.navigate, browser.click, browser.type, browser.extract, browser.screenshot, web.search, web.fetch, computer.read, computer.click, computer.type, computer.clipboard, computer.system_key, connector.<id>.<op>, scm.git.<op>, scm.pr.<op>, artifact.create, artifact.update, work.propose_plan, work.delegate, work.complete, user.ask, memory.propose, knowledge.cite), version, description, input_schema (JSON Schema, additionalProperties=false), output_schema, effect_class (static or derived by function of args), resource_derivation, required_grant_template, idempotency_key_derivation, host (server|qworkerd|browser|machine|adapter), max_output_bytes, evidence_capture (what is recorded), source_trust (trust level assigned to results), timeout_ms, cancellable`.
+`name (namespaced: fs.read, fs.write, fs.patch, terminal.exec, process.spawn, browser.navigate, browser.observe, browser.click, browser.type, browser.press_key, browser.handle_dialog, browser.extract, browser.screenshot, web.search, web.fetch, computer.read, computer.click, computer.type, computer.clipboard, computer.system_key, connector.<id>.<op>, scm.git.<op>, scm.pr.<op>, artifact.create, artifact.update, work.propose_plan, work.delegate, work.complete, user.ask, memory.propose, knowledge.cite), version, description, input_schema (JSON Schema, additionalProperties=false), output_schema, effect_class (static or derived by function of args), resource_derivation, required_grant_template, idempotency_key_derivation, side_effect (browser Tools only: below), host (server|qworkerd|browser|machine|adapter), max_output_bytes, evidence_capture (what is recorded), source_trust (trust level assigned to results), timeout_ms, cancellable`.
 
 Tools are registered in the Tool Registry (control plane) and exposed to models only through CapabilityProjection filtering; a model never sees a tool it cannot use.
+
+**Browser side-effect classes (ADP-001).** Every `browser.*` Tool declares a `side_effect` class, and `config/effects.yaml` (`browser_side_effects`) maps it onto an effect class of the §7.1 table. The mapping adds no class and no tier; the registry refuses a browser Tool whose declared `effect_class` differs from its row, so a Tool cannot lower its tier by choosing a different class.
+
+| Side-effect class | Meaning | Settles as (journaled?) |
+|---|---|---|
+| `read` | reads a page, changes nothing | `read.external` (not journaled) |
+| `read_sensitive` | reads what may expose sensitive on-screen content (a screenshot) | `read.internal` (not journaled) |
+| `local_mutation` | changes the page's own state inside the sandbox (typing, a key, a dialog answer) | `computer.input.privileged` (journaled) |
+| `open_world_mutation` | reaches a destination outside the sandbox (navigation) | `network.egress.new_destination` (journaled) |
+| `potential_external_effect` | may cause whatever the page decides (a click); the driver refines the class from the control before dispatch (`message.send`, `record.delete`, `payment.execute`, `credential.access`, …) | `computer.input.privileged` (journaled) |
+
+A **journaled** action is keyed by `(tool_call_id, action_id)` with a canonical-argument digest taken from the arguments in placeholder form (§8.4.1 B). Its outcome settles on the Effect Ledger as `SETTLED_SUCCESS`, `SETTLED_FAILED` or — when the worker cannot establish it — `OUTCOME_UNKNOWN`, which is reconciled (§7.2) and never retried.
 
 ### 7.6 Operator kill switches (OPS-008)
 `KillSwitch: id (ksw_), tenant_id, switch, target, reason, engaged_by, engaged_at, released_by?, released_at?, release_reason?` — one row per engagement, history kept, at most one active per (switch, target). Engaging and releasing are `runtime.control` (tier 3, tenant administrators, audited) and emit `ops.kill_switch_engaged` / `ops.kill_switch_released`. Releasing restores service; nothing is deleted.
@@ -413,9 +430,44 @@ States: `REQUESTED → PROVISIONING → READY ⇄ BUSY; READY → DRAINING → S
 `id, target_id, holder {controller_id, generation}, acquired_at, expires_at, renewed_at, status (held|released|expired|revoked)`. qworkerd rejects any action whose `(lease_id, generation)` does not match its current lease.
 
 ### 8.4 BrowserSession
-`id, target_id, run_id?, profile_ref, control_holder (agent|user|none), control_since, current_url, tabs[], screencast {enabled, stream_ref}, checkpoint_id?, status (active|paused_takeover|paused_policy|closed)`. Takeover: `RequestTakeover` → `control_holder=user` fences agent input; `Handback` → agent resumes. No second session is created on takeover (APP-007).
+`id, target_id, run_id?, profile_ref, control_holder (agent|user|none), control_since, current_url, tabs[] {target_id, url, title, document_revision?}, screencast {enabled, stream_ref}, checkpoint_id?, status (active|paused_takeover|paused_policy|closed), guard (§8.4.1)`. Takeover: `RequestTakeover` → `control_holder=user` fences agent input; `Handback` → agent resumes. No second session is created on takeover (APP-007).
 
 Understanding order for agents: DOM/CDP/network metadata → accessibility tree → screenshot/vision fallback (EXEC-009). Live view: CDP screencast frames as binary LiveFrames over the client stream; user input during takeover flows client → server → qworkerd → CDP input.
+
+#### 8.4.1 Hardened browser actions (ADP-001) — normative
+
+The managed browser is driven only through `browser.*` Tools (§7.5). Each Tool is dispatched by the qworkerd browser driver, serialized per session in one action queue. Page-derived content in every result — snapshot text and element names, console lines, dialog messages, download names, certificate error URLs — is `UNTRUSTED_EXTERNAL` (§12); results are validated against the Tool's `output_schema` and a result the schema does not describe is not returned.
+
+**A. Stale-page fencing.**
+- A tab carries an opaque `document_revision` that changes on every navigation (including same-document navigation) and every frame-tree change, and whenever the driver lost events.
+- `browser.observe` returns `snapshot_id`, `document_revision` and an element `ref` (`e1`, `e2`, …) for each interactive element. A ref is bound to its snapshot, its tab and its revision, and is never silently re-resolved. `browser.screenshot` returns a `capture_id` bound to the screenshot, the revision and the scroll position, and records one digest per viewport tile.
+- A mutating Tool names its target as `{snapshot_id, ref}` or `{capture_id, x, y}` — exactly one form — plus `expected_document_revision`. Before dispatch the driver re-verifies: the revision; that the snapshot or capture is still valid; for a ref, that the backend node resolves and its semantic fingerprint (`role`, accessible `name`, `tag`, frame origin) is unchanged; and by hit test at the point that will be clicked that the point lands on the target (or inside it). A point whose capture was taken at another scroll position is stale. Pixels changing in the tiles around a point produce a `pixels_changed_near_point` warning, not a refusal.
+- Any mismatch fails closed with `BROWSER_STALE_PAGE` before any input event is sent. Any mutation invalidates the tab's snapshots and captures, so a ref is good for one action; the model observes again.
+
+**B. Action idempotency and the in-doubt outcome.**
+- A journaled action (§7.5) is keyed by `(tool_call_id, action_id)`; `action_id` is the effect's idempotency key, derived by the runtime and never supplied by the model. Its digest is the SHA-256 of the canonical arguments **in placeholder form** (§C).
+- The same key and digest after completion returns the stored result without touching the page. The same key with a different digest is `BROWSER_ACTION_REPLAY_CONFLICT`. The `start` record is made durable immediately before the first input event; refusals that happen earlier write nothing.
+- When input may have reached the page and the browser then fails (timeout, connection lost, target closed), or a started action has no recorded outcome after a restart, the result is **in doubt**: status `in_doubt`, `retryable=false`, `requires_new_observation=true`, settled on the Effect Ledger as `OUTCOME_UNKNOWN`. Nothing retries it; the model reconciles it with a fresh observation, and a reconciled key stays spent — repeating the work is a new action with a new id.
+- The journal is the worker's half of the same record; it holds no policy, approval or outcome the server has not been told. The server holds the doubt in `BrowserSession.guard.in_doubt`.
+- The classified consequence of a click (the control it lands on) is checked against the tier the runtime approved for the call; a higher one is `BROWSER_EFFECT_TIER_EXCEEDED` before dispatch.
+
+**C. Secret placeholders.**
+- The model writes `{{secret:<name>.<field>}}` in `browser.type` arguments. `<name>` is the label of an active SecretHandle (§0) and `<field>` a field of its sealed material, which holds `{fields, allowed_origins}`; there is no second secret store. Only the trusted runtime substitutes, at insertion, through the secret broker (`credential.access`, tier 4: the call needs an approved tier of 4).
+- The live origin of the top frame **and** of the frame containing the target field is compared with the secret's `allowed_origins` before insertion and again, inside the page and in the same task as the insertion, immediately before the text is inserted. A mismatch is `BROWSER_SECRET_ORIGIN_MISMATCH` and nothing is typed. The element's fingerprint and sensitivity are re-checked after focus.
+- Plain text typed into a password, one-time-code or card number/security-code/expiry field (`type=password`, `autocomplete` `current-password|new-password|one-time-code|cc-number|cc-csc|cc-exp*`, or a name/id/placeholder that says so) is `BROWSER_SENSITIVE_INPUT_DENIED`; such a field accepts only placeholders. A printable `browser.press_key` is refused while focus is in a sensitive field, or in a frame whose focus the driver cannot read.
+- The resolved value is never written to a ledger digest, log, event, observation, journal record or model-facing result; results carry `used_secrets: [{name, field}]` only.
+
+**D. Dialogs, downloads, permissions, certificates, gesture.**
+- A pending JavaScript dialog (`alert`, `confirm`, `prompt`, `beforeunload`) is typed state (`dialog {id, kind, message, url, document_revision}`) and fences every other action on the tab (`BROWSER_DIALOG_PENDING`) except `browser.handle_dialog`, which must quote the exact `dialog_id` and the revision it was raised under (`BROWSER_STALE_DIALOG` otherwise). An action during which a dialog opens returns `dialog_pending` instead of hanging.
+- Downloads are tracked per tab and directed to the session's bounded directory. A download is cancelled when it passes its size cap, receives no byte within its start timeout, stalls past its stall timeout, or exceeds the per-tab count; each is a typed record `{id, url, suggested_filename, state (in_progress|completed|cancelled), received_bytes, total_bytes, file?, sha256?, failure? (too_large|start_timeout|stalled|too_many)}` with the file name sanitised.
+- Every permission is denied when a tab is attached and stays denied. Only `camera` and `microphone` can be granted, only for one origin, and only by a user through `DecisionReceipt` (below); agent input has no argument or Tool that names a permission.
+- A certificate error does not load the page: it becomes `certificates[]` state `pending` and `BROWSER_CERTIFICATE_DECISION_REQUIRED`. Only a user can resolve it, per origin and error, by `continue` or `cancel`; unresolved errors are cancelled after a bounded wait. The browser reveals a certificate only after a *continue*, so the leaf's SHA-256 is recorded in the decision once it is known. A `DecisionReceipt` can be minted only by machine control for a user actor; an agent actor is refused and the row is unchanged.
+- A popup, or a handoff to another application (`mailto:`, an application scheme), is allowed only when it follows genuine user input — input relayed during a takeover. Agent-synthesized input is flagged `input_origin: agent` and does not count: popups it causes are closed (`popups_blocked`), a handoff is stopped (`handoffs_blocked`), and a click on a link that would hand off is `BROWSER_GESTURE_REQUIRED`.
+- Navigation is `http`, `https` or `about:blank` with no credentials in the URL (`BROWSER_NAVIGATION_DENIED`).
+
+**E. Guard state.** `BrowserSession.guard` is `{reported_at, tabs[] {tab_id, url, document_revision, dialog?, certificates[], downloads[], popups_blocked}, in_doubt[] {call_id, action_id, reason}, decisions[] {kind (certificate|permission), tab_id, subject, decision (allow|deny), decided_by, decided_at}}`. The worker reports `tabs` and `in_doubt` (strict, bounded); machine control writes `decisions`. A report never reverts a decided certificate to `pending`.
+
+**F. User-only decisions.** `ResolveBrowserCertificate {session_id, tab_id, certificate_id, decision}` and `DecideBrowserPermission {session_id, tab_id, origin, permission, decision}` (§14) are user commands. They are recorded by machine control with the user's identity and yield the receipt the worker acts on; no agent Tool corresponds to either.
 
 ### 8.5 TerminalSession
 `id, target_id, run_id?, pty_ref, cursor (durable byte offset), status, last_command_id`. Replay resumes from `cursor`; commands are effects with `process.exec.*` class.
@@ -522,6 +574,7 @@ Rules:
 3. Data exfiltration guard: content originating from `UNTRUSTED_EXTERNAL` or protected data classes cannot be sent to a destination not already in the egress grant set without approval (`data.upload.protected`).
 4. Deterministic injection detectors (pattern/heuristic, non-LLM) tag segments `injection_suspected`; suspected segments are truncated to evidence references in context and surfaced in UI.
 5. Adversarial suite (QA-007) asserts zero unauthorized effect executions across the injection corpus.
+6. Browser results (ADP-001, §8.4.1) are `UNTRUSTED_EXTERNAL` in full: the declaration's `source_trust`, the `trust` label on the worker's reply and the Tool's schema-validated output agree, and a dialog message, console line, element name or download name is data even when it reads as an instruction. Typing a secret never needs page content: the placeholder form is the only form the model sees or the ledger digests.
 
 ---
 
@@ -568,7 +621,7 @@ Commands are `POST /v1/commands/<Name>` (one endpoint per command; OpenAPI-gener
 | Work | `CreateObjective`, `ProposeGraphEdit` (user-originated, validated like a PlanProposal), `CancelRun`, `RetryRun`, `PauseRun`, `ResumeRun`, `RequestVerification` |
 | Trust | `ApproveEffect`, `DenyEffect`, `SetUserRule`, `RevokeUserRule` |
 | Execution | `ProvisionTarget`, `StopTarget`, `ResetTarget`, `CreateCheckpoint`, `RestoreCheckpoint` |
-| Browser/computer | `RequestTakeover`, `Handback`, `ImportBrowserSession`, `GrantComputerTier` |
+| Browser/computer | `RequestTakeover`, `Handback`, `ImportBrowserSession`, `GrantComputerTier`, `ResolveBrowserCertificate`, `DecideBrowserPermission` |
 | Artifacts | `CreateArtifact` (upload init/complete), `AddArtifactVersion`, `GrantArtifactAccess`, `DeleteArtifact` |
 | Knowledge & memory | `IngestSource`, `DeleteKnowledge`, `SupersedeKnowledge`, `CreateMemory`, `DeleteMemory` |
 | Skills & packs | `InstallSkill`, `PromoteSkillVersion`, `DisableSkill`, `ProposeSkillCandidates`, `SubmitPack`, `QualifyPack`, `PublishPack`, `RollbackPack` |
@@ -596,8 +649,30 @@ Tracing (OPS-003): a client may send a W3C `traceparent` header with any request
 | Authority (403) | `CAPABILITY_DENIED`, `CAPABILITY_INPUTS_UNAVAILABLE`, `POLICY_DENIED`, `APPROVAL_REQUIRED`, `APPROVAL_INVALID`, `APPROVAL_EXPIRED`, `APPROVAL_SUPERSEDED` |
 | Runtime (409/422) | `RUNTIME_ILLEGAL_TRANSITION`, `FENCED_STALE_GENERATION`, `LEASE_LOST`, `EFFECT_UNKNOWN_PENDING_RECONCILIATION`, `BUDGET_EXHAUSTED`, `EFFECTS_FROZEN` |
 | Execution (503/504) | `TARGET_UNAVAILABLE`, `TARGET_PROVISION_FAILED`, `TOOL_TIMEOUT`, `TOOL_OUTPUT_TRUNCATED` (warning), `EGRESS_DENIED` |
+| Browser (409/422) | `BROWSER_STALE_PAGE`, `BROWSER_STALE_DIALOG`, `BROWSER_DIALOG_PENDING`, `BROWSER_ACTION_REPLAY_CONFLICT`, `BROWSER_ACTION_IN_DOUBT`, `BROWSER_SECRET_ORIGIN_MISMATCH`, `BROWSER_SECRET_UNAVAILABLE`, `BROWSER_SENSITIVE_INPUT_DENIED`, `BROWSER_NAVIGATION_DENIED`, `BROWSER_CERTIFICATE_DECISION_REQUIRED`, `BROWSER_GESTURE_REQUIRED`, `BROWSER_INPUT_FENCED`, `BROWSER_EFFECT_TIER_EXCEEDED`, `BROWSER_INVALID_REQUEST`, `BROWSER_TARGET_NOT_FOUND`, `BROWSER_PAGE_FAILURE` |
 | Model (502/503) | `PROVIDER_UNAVAILABLE`, `PROVIDER_RATE_LIMITED`, `PROVIDER_REFUSAL`, `ROUTE_UNAVAILABLE`, `DLP_DENIED` |
 | Generic | `NOT_FOUND` (404), `RATE_LIMITED` (429), `STREAM_BACKPRESSURE` (WS close), `INTERNAL` (500) |
+
+**Browser error flags (ADP-001).** A `BROWSER_*` error is a Tool error (§7.4 `ToolResult`), returned with `{code, message, retryable, requires_new_observation, details?}`. `retryable` means the *same request* may be sent again once the stated condition clears — it is never true for an unknown outcome. `requires_new_observation` means the model must `browser.observe` again before acting on the page. These flags belong to the Tool error; the public API's own `retryable` (above) is about whether the same *call to the server* could succeed unchanged, which for a `BROWSER_*` code it never does, so an `ApiError` carrying one is `retryable: false`.
+
+| Code | retryable | requires_new_observation | When |
+|---|---|---|---|
+| `BROWSER_STALE_PAGE` | `true` | `true` | the revision, snapshot, capture, fingerprint or hit test no longer matches the page |
+| `BROWSER_STALE_DIALOG` | `true` | `true` | the dialog id or revision is not the pending dialog |
+| `BROWSER_DIALOG_PENDING` | `true` | `false` | a dialog is pending; answer it with `browser.handle_dialog` first |
+| `BROWSER_ACTION_REPLAY_CONFLICT` | `false` | `false` | an action id was reused with different arguments |
+| `BROWSER_ACTION_IN_DOUBT` | `false` | `true` | input may have reached the page and the outcome cannot be established; settles `OUTCOME_UNKNOWN` |
+| `BROWSER_SECRET_ORIGIN_MISMATCH` | `false` | `false` | the top or target frame origin is outside the secret's allowed origins |
+| `BROWSER_SECRET_UNAVAILABLE` | `false` | `false` | a placeholder cannot be resolved (no broker, no such secret or field) |
+| `BROWSER_SENSITIVE_INPUT_DENIED` | `false` | `false` | plain text or a printable key aimed at a password, one-time-code or card field |
+| `BROWSER_NAVIGATION_DENIED` | `false` | `false` | the destination is not `http`/`https`/`about:blank`, or embeds credentials |
+| `BROWSER_CERTIFICATE_DECISION_REQUIRED` | `false` | `false` | a certificate error waits for a decision only a user can make |
+| `BROWSER_GESTURE_REQUIRED` | `false` | `false` | the action needs a genuine user gesture; agent input is not one |
+| `BROWSER_INPUT_FENCED` | `false` | `true` | a user holds the session |
+| `BROWSER_EFFECT_TIER_EXCEEDED` | `false` | `false` | the classified consequence is above the approved tier |
+| `BROWSER_INVALID_REQUEST` | `false` | `false` | unknown field, missing target, malformed placeholder or key |
+| `BROWSER_TARGET_NOT_FOUND` | `true` | `true` | the tab, ref or selector does not exist |
+| `BROWSER_PAGE_FAILURE` | `false` | `false` | the page or browser failed with a known outcome |
 
 ---
 

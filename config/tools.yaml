@@ -185,14 +185,24 @@ tools:
         process_id: { type: string }
       required: [process_id]
 
+  # ---- Managed browser (EXEC-009, hardened by ADP-001; DOMAIN.md §8.4, §7.5) -----------------------
+  #
+  # Every browser tool names the page it acts on in a form the driver can check against the live
+  # page (document revision, snapshot ref or capture point), so there is no selector-only mutating
+  # tool: an unfenced click or type is not callable. `side_effect` is the tool's side-effect class;
+  # `config/effects.yaml` maps each class onto the effect class and tier the Effect Ledger records,
+  # and the registry refuses a declaration whose `effect_class` disagrees with that mapping.
+  # All results are page content: `source_trust: untrusted_external`.
+
   - name: browser.navigate
-    version: 1
-    description: Navigate a browser session to a destination, an egress to a new host.
+    version: 2
+    description: Navigate a tab (or open a new one) to an http or https destination. Needs the tab's document revision; refused for any other scheme or for a URL with credentials.
     host: browser
     source_trust: untrusted_external
+    side_effect: open_world_mutation
     effect_class: network.egress.new_destination
     resource: { kind: domain, arg: url }
-    idempotency: { digest_args: [url, session_id] }
+    idempotency: { digest_args: [url, session_id, tab_id, expected_document_revision] }
     max_output_bytes: 65536
     timeout_ms: 60000
     cancellable: true
@@ -207,23 +217,183 @@ tools:
       properties:
         url: { type: string, minLength: 1 }
         session_id: { type: string, minLength: 1 }
+        tab_id: { type: string, minLength: 1 }
+        expected_document_revision: { type: string, minLength: 1 }
       required: [url, session_id]
     output_schema:
       type: object
       additionalProperties: false
       properties:
+        navigated: { type: boolean }
+        completed: { type: boolean }
+        tab_id: { type: string }
         url: { type: string }
-        title: { type: string }
-      required: [url]
+        document_revision: { type: string }
+        loading: { type: boolean }
+        input_origin: { type: string }
+        warnings: { type: array, items: { type: string } }
+        dialog_pending:
+          type: object
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            kind: { type: string }
+            message: { type: string }
+            url: { type: string }
+            default_prompt: { type: string }
+            document_revision: { type: string }
+        certificate_decision_required:
+          type: object
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            origin: { type: string }
+            error_type: { type: string }
+            url: { type: string }
+            status: { type: string }
+            certificate_sha256: { type: [string, "null"] }
+            decided_by: { type: [string, "null"] }
+      required: [navigated]
 
-  - name: browser.click
+  - name: browser.observe
     version: 1
-    description: Click an element in a browser session; the consequence class is the privileged-input tier.
+    description: Read a tab. Returns its readable text, a snapshot id and an element ref for each interactive element, the tab's document revision, and any dialog, certificate error, download or blocked popup. A tab with a dialog or certificate error pending is not read.
     host: browser
     source_trust: untrusted_external
+    side_effect: read
+    effect_class: read.external
+    resource: { kind: domain, selector: "*" }
+    idempotency: { digest_args: [session_id, tab_id, include_screenshot] }
+    max_output_bytes: 1048576
+    timeout_ms: 60000
+    cancellable: true
+    evidence: { kinds: [page_observation], redact: [] }
+    grant_templates:
+      - effect_class: read.external
+        resource: { kind: domain, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        session_id: { type: string, minLength: 1 }
+        tab_id: { type: string, minLength: 1 }
+        include_screenshot: { type: boolean }
+      required: [session_id]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        tab_id: { type: string }
+        url: { type: string }
+        document_revision: { type: string }
+        page_available: { type: boolean }
+        snapshot_id: { type: string }
+        title: { type: string }
+        text: { type: string }
+        text_truncated: { type: boolean }
+        elements:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              ref: { type: string }
+              role: { type: string }
+              name: { type: string }
+              tag: { type: string }
+              frame_origin: { type: string }
+              sensitive: { type: string }
+            required: [ref, role, tag]
+        elements_truncated: { type: boolean }
+        frames_skipped: { type: integer }
+        dialog:
+          type: [object, "null"]
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            kind: { type: string }
+            message: { type: string }
+            url: { type: string }
+            default_prompt: { type: string }
+            document_revision: { type: string }
+        certificates:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id: { type: string }
+              origin: { type: string }
+              error_type: { type: string }
+              url: { type: string }
+              status: { type: string }
+              certificate_sha256: { type: [string, "null"] }
+              decided_by: { type: [string, "null"] }
+        downloads:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id: { type: string }
+              url: { type: string }
+              suggested_filename: { type: string }
+              state: { type: string }
+              received_bytes: { type: integer }
+              total_bytes: { type: integer }
+              file: { type: [string, "null"] }
+              sha256: { type: [string, "null"] }
+              failure: { type: [string, "null"] }
+        popups_blocked:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              url: { type: string }
+              reason: { type: string }
+        handoffs_blocked:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              scheme: { type: string }
+              reason: { type: string }
+        console:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              level: { type: string }
+              text: { type: string }
+        permissions_denied: { type: array, items: { type: string } }
+        capture:
+          type: object
+          additionalProperties: false
+          properties:
+            tab_id: { type: string }
+            capture_id: { type: string }
+            document_revision: { type: string }
+            width: { type: integer }
+            height: { type: integer }
+            scroll_x: { type: integer }
+            scroll_y: { type: integer }
+            tile_px: { type: integer }
+            png_bytes: { type: integer }
+      required: [tab_id, document_revision, page_available]
+
+  - name: browser.click
+    version: 2
+    description: Click an element the model observed. The target is {snapshot_id, ref} or {capture_id, x, y} plus the document revision; a stale revision, snapshot, capture or fingerprint never clicks. The consequence class is refined from the control the click lands on.
+    host: browser
+    source_trust: untrusted_external
+    side_effect: potential_external_effect
     effect_class: computer.input.privileged
     resource: { kind: domain, selector: "*" }
-    idempotency: { digest_args: [selector, session_id] }
+    idempotency: { digest_args: [session_id, tab_id, expected_document_revision, snapshot_id, ref, capture_id, x, y] }
     max_output_bytes: 65536
     timeout_ms: 60000
     cancellable: true
@@ -236,24 +406,74 @@ tools:
       type: object
       additionalProperties: false
       properties:
-        selector: { type: string, minLength: 1 }
         session_id: { type: string, minLength: 1 }
-      required: [selector, session_id]
+        tab_id: { type: string, minLength: 1 }
+        expected_document_revision: { type: string, minLength: 1 }
+        snapshot_id: { type: string, minLength: 1 }
+        ref: { type: string, minLength: 1 }
+        capture_id: { type: string, minLength: 1 }
+        x: { type: number }
+        y: { type: number }
+      required: [session_id, tab_id, expected_document_revision]
     output_schema:
       type: object
       additionalProperties: false
       properties:
         clicked: { type: boolean }
+        completed: { type: boolean }
+        tab_id: { type: string }
+        url: { type: string }
+        document_revision: { type: string }
+        loading: { type: boolean }
+        input_origin: { type: string }
+        warnings: { type: array, items: { type: string } }
+        hit:
+          type: object
+          additionalProperties: false
+          properties:
+            tag: { type: [string, "null"] }
+            role: { type: string }
+            name: { type: string }
+            frame_origin: { type: [string, "null"] }
+        classified:
+          type: [object, "null"]
+          additionalProperties: false
+          properties:
+            effect_class: { type: [string, "null"] }
+            tier: { type: [integer, "null"] }
+            reason: { type: string }
+        dialog_pending:
+          type: object
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            kind: { type: string }
+            message: { type: string }
+            url: { type: string }
+            default_prompt: { type: string }
+            document_revision: { type: string }
+        certificate_decision_required:
+          type: object
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            origin: { type: string }
+            error_type: { type: string }
+            url: { type: string }
+            status: { type: string }
+            certificate_sha256: { type: [string, "null"] }
+            decided_by: { type: [string, "null"] }
       required: [clicked]
 
   - name: browser.type
-    version: 1
-    description: Type text into an element in a browser session.
+    version: 2
+    description: Type into a text field the model observed. The text may contain {{secret:<name>.<field>}} placeholders, which only the runtime resolves, at insertion, after the live origin of the top frame and of the field's frame is checked against the secret's allowed origins. Plain text into a password, one-time-code or card field is refused.
     host: browser
     source_trust: untrusted_external
+    side_effect: local_mutation
     effect_class: computer.input.privileged
     resource: { kind: domain, selector: "*" }
-    idempotency: { digest_args: [selector, text, session_id] }
+    idempotency: { digest_args: [session_id, tab_id, expected_document_revision, snapshot_id, ref, capture_id, x, y, text, clear] }
     max_output_bytes: 65536
     timeout_ms: 60000
     cancellable: true
@@ -266,25 +486,185 @@ tools:
       type: object
       additionalProperties: false
       properties:
-        selector: { type: string, minLength: 1 }
-        text: { type: string }
         session_id: { type: string, minLength: 1 }
-      required: [selector, text, session_id]
+        tab_id: { type: string, minLength: 1 }
+        expected_document_revision: { type: string, minLength: 1 }
+        snapshot_id: { type: string, minLength: 1 }
+        ref: { type: string, minLength: 1 }
+        capture_id: { type: string, minLength: 1 }
+        x: { type: number }
+        y: { type: number }
+        text: { type: string }
+        clear: { type: boolean }
+      required: [session_id, tab_id, expected_document_revision, text]
     output_schema:
       type: object
       additionalProperties: false
       properties:
         typed: { type: boolean }
+        completed: { type: boolean }
+        tab_id: { type: string }
+        url: { type: string }
+        document_revision: { type: string }
+        loading: { type: boolean }
+        input_origin: { type: string }
+        sensitive_field: { type: string }
+        used_secrets:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              name: { type: string }
+              field: { type: string }
+        warnings: { type: array, items: { type: string } }
+        dialog_pending:
+          type: object
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            kind: { type: string }
+            message: { type: string }
+            url: { type: string }
+            default_prompt: { type: string }
+            document_revision: { type: string }
+        certificate_decision_required:
+          type: object
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            origin: { type: string }
+            error_type: { type: string }
+            url: { type: string }
+            status: { type: string }
+            certificate_sha256: { type: [string, "null"] }
+            decided_by: { type: [string, "null"] }
       required: [typed]
+
+  - name: browser.press_key
+    version: 1
+    description: Press a key (Enter, Tab, Escape, an arrow, a single character, or a chord such as Control+a) in a tab. A printable key is refused while focus is in a password, one-time-code or card field.
+    host: browser
+    source_trust: untrusted_external
+    side_effect: local_mutation
+    effect_class: computer.input.privileged
+    resource: { kind: domain, selector: "*" }
+    idempotency: { digest_args: [session_id, tab_id, expected_document_revision, key] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: true
+    evidence: { kinds: [browser_action], redact: [] }
+    grant_templates:
+      - effect_class: computer.input.privileged
+        resource: { kind: domain, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        session_id: { type: string, minLength: 1 }
+        tab_id: { type: string, minLength: 1 }
+        expected_document_revision: { type: string, minLength: 1 }
+        key: { type: string, minLength: 1, maxLength: 32 }
+      required: [session_id, tab_id, expected_document_revision, key]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        pressed: { type: string }
+        completed: { type: boolean }
+        tab_id: { type: string }
+        url: { type: string }
+        document_revision: { type: string }
+        loading: { type: boolean }
+        input_origin: { type: string }
+        warnings: { type: array, items: { type: string } }
+        dialog_pending:
+          type: object
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            kind: { type: string }
+            message: { type: string }
+            url: { type: string }
+            default_prompt: { type: string }
+            document_revision: { type: string }
+        certificate_decision_required:
+          type: object
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            origin: { type: string }
+            error_type: { type: string }
+            url: { type: string }
+            status: { type: string }
+            certificate_sha256: { type: [string, "null"] }
+            decided_by: { type: [string, "null"] }
+      required: [pressed]
+
+  - name: browser.handle_dialog
+    version: 1
+    description: Answer the JavaScript dialog (alert, confirm, prompt, beforeunload) that is pending in a tab. A pending dialog fences every other browser action on the tab; the answer must quote the dialog's exact id and the document revision it was raised under.
+    host: browser
+    source_trust: untrusted_external
+    side_effect: local_mutation
+    effect_class: computer.input.privileged
+    resource: { kind: domain, selector: "*" }
+    idempotency: { digest_args: [session_id, tab_id, expected_document_revision, dialog_id, accept, prompt_text] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: true
+    evidence: { kinds: [browser_action], redact: [prompt_text] }
+    grant_templates:
+      - effect_class: computer.input.privileged
+        resource: { kind: domain, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        session_id: { type: string, minLength: 1 }
+        tab_id: { type: string, minLength: 1 }
+        expected_document_revision: { type: string, minLength: 1 }
+        dialog_id: { type: string, minLength: 1 }
+        accept: { type: boolean }
+        prompt_text: { type: string }
+      required: [session_id, tab_id, expected_document_revision, dialog_id, accept]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        handled: { type: boolean }
+        dialog_id: { type: string }
+        accepted: { type: boolean }
+        completed: { type: boolean }
+        tab_id: { type: string }
+        url: { type: string }
+        document_revision: { type: string }
+        loading: { type: boolean }
+        input_origin: { type: string }
+        warnings: { type: array, items: { type: string } }
+        dialog_pending:
+          type: object
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            kind: { type: string }
+            message: { type: string }
+            url: { type: string }
+            default_prompt: { type: string }
+            document_revision: { type: string }
+      required: [handled]
 
   - name: browser.extract
     version: 1
-    description: Extract text, HTML or JSON from the current page.
+    description: Extract text, HTML or JSON from an element of the current page.
     host: browser
     source_trust: untrusted_external
+    side_effect: read
     effect_class: read.external
     resource: { kind: domain, selector: "*" }
-    idempotency: { digest_args: [selector, format, session_id] }
+    idempotency: { digest_args: [selector, format, session_id, tab_id] }
     max_output_bytes: 1048576
     timeout_ms: 60000
     cancellable: true
@@ -300,22 +680,27 @@ tools:
         selector: { type: string, minLength: 1 }
         format: { type: string, enum: [text, html, json] }
         session_id: { type: string, minLength: 1 }
+        tab_id: { type: string, minLength: 1 }
       required: [selector, session_id]
     output_schema:
       type: object
       additionalProperties: false
       properties:
         content: { type: string }
+        tab_id: { type: string }
+        document_revision: { type: string }
+        truncated: { type: boolean }
       required: [content]
 
   - name: browser.screenshot
-    version: 1
-    description: Capture the current browser viewport as an evidence artifact.
+    version: 2
+    description: Capture the tab's viewport as an evidence artifact. Returns a capture id bound to this screenshot, the document revision and the scroll position; a point read from it can be clicked with {capture_id, x, y}.
     host: browser
     source_trust: untrusted_external
+    side_effect: read_sensitive
     effect_class: read.internal
     resource: { kind: target, selector: "browser" }
-    idempotency: { digest_args: [session_id] }
+    idempotency: { digest_args: [session_id, tab_id] }
     max_output_bytes: 65536
     timeout_ms: 60000
     cancellable: true
@@ -329,13 +714,23 @@ tools:
       additionalProperties: false
       properties:
         session_id: { type: string, minLength: 1 }
+        tab_id: { type: string, minLength: 1 }
       required: [session_id]
     output_schema:
       type: object
       additionalProperties: false
       properties:
         artifact_id: { type: string }
-      required: [artifact_id]
+        tab_id: { type: string }
+        capture_id: { type: string }
+        document_revision: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+        scroll_x: { type: integer }
+        scroll_y: { type: integer }
+        tile_px: { type: integer }
+        png_bytes: { type: integer }
+      required: [capture_id, document_revision]
 
   - name: web.search
     version: 1

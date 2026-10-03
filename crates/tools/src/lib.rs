@@ -13,6 +13,7 @@ pub mod declaration;
 pub mod error;
 pub mod registry;
 pub mod schema;
+pub mod side_effect;
 
 pub use call::{plan_call, CallContext, ToolCallPlan};
 pub use canonical::canonical_json;
@@ -24,6 +25,7 @@ pub use declaration::{
 pub use error::ToolError;
 pub use registry::{RawFamilyReservation, ToolRegistry};
 pub use schema::{check_vocabulary, first_violation, validate_instance, SchemaViolation};
+pub use side_effect::{SideEffectClass, SideEffectMapping, SideEffectRow};
 
 /// Repository path of this crate's canonical owner, used by the workspace
 /// conformance check to prove one owner maps to exactly one package.
