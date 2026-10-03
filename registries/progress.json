@@ -3136,11 +3136,11 @@
       "notes": "Hardened managed browser (D-019): per-tab document revisions, snapshot refs and captures that fail closed with BROWSER_STALE_PAGE; a journal that keeps side-effecting actions idempotent and an unknown outcome in doubt (OUTCOME_UNKNOWN, never retried); secret placeholders resolved only through the runtime's secret port; dialogs, downloads, permissions, certificates and the user-gesture rule as typed state; side-effect classes mapped onto the existing effect taxonomy. Deferred (evidence NOTES.md): HTTP handlers and desktop controls for ResolveBrowserCertificate/DecideBrowserPermission, and a production composition of BrowserDriver (qworkerd has no daemon yet; QA-002 KNOWN_GAPS)."
     },
     "ADP-002": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:adp-002",
+      "started_at": "2026-10-03T09:54:03Z",
+      "updated_at": "2026-10-03T09:54:03Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
