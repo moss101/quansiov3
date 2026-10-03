@@ -52,6 +52,16 @@ pub enum ToolError {
         /// What the schema required.
         detail: String,
     },
+    /// A Tool's result does not satisfy its output schema or its receipt is incoherent (ADP-002).
+    #[error("tool {tool} result is invalid at {path}: {detail}")]
+    InvalidResult {
+        /// Tool name.
+        tool: String,
+        /// Instance location of the first violation.
+        path: String,
+        /// What was wrong.
+        detail: String,
+    },
     /// The Tool Registry configuration could not be read or parsed.
     #[error("tool registry config error: {0}")]
     Config(String),
@@ -96,9 +106,10 @@ impl ToolError {
             | Self::UnsupportedSchemaKeyword { .. }
             | Self::InvalidArguments { .. } => "VALIDATION_SCHEMA",
             Self::NotExposed { .. } | Self::CapabilityDenied { .. } => "CAPABILITY_DENIED",
-            Self::Config(_) | Self::CatalogDivergence { .. } | Self::UnknownEffectClass { .. } => {
-                "INTERNAL"
-            }
+            Self::Config(_)
+            | Self::CatalogDivergence { .. }
+            | Self::UnknownEffectClass { .. }
+            | Self::InvalidResult { .. } => "INTERNAL",
         }
     }
 }

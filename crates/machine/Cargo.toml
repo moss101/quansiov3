@@ -30,4 +30,6 @@ test-support = []
 
 [dev-dependencies]
 async-trait = "0.1"
+# The Tool Registry's receipt schema and coherence rules must agree with the runtime's (ADP-002).
+quansio-tools = { path = "../tools" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }

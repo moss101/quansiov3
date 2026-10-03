@@ -75,6 +75,9 @@ impl ToolRegistry {
                 .check_side_effects(crate::side_effect::SideEffectMapping::builtin())
                 .expect("config/tools.yaml agrees with the browser_side_effects mapping");
             registry
+                .check_receipts()
+                .expect("config/tools.yaml gives every computer Tool the canonical receipt");
+            registry
         })
     }
 
@@ -257,6 +260,17 @@ impl ToolRegistry {
         self.declarations
             .iter()
             .try_for_each(|declaration| mapping.check(declaration))
+    }
+
+    /// Prove every `computer.*` declaration carries the canonical, required action receipt in its
+    /// output (ADP-002).
+    ///
+    /// # Errors
+    /// Returns [`ToolError::MalformedDeclaration`] naming the first Tool without it.
+    pub fn check_receipts(&self) -> Result<(), ToolError> {
+        self.declarations
+            .iter()
+            .try_for_each(crate::receipt::check_declaration)
     }
 
     /// Prove the registry and the generated tool catalog cover each other exactly.

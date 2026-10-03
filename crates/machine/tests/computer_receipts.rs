@@ -533,3 +533,65 @@ async fn a_verified_receipt_and_a_refused_receipt_settle_as_the_bridge_said() {
     drop(conn);
     common::drop_pool(&pool, &name).await;
 }
+
+// ------------------------------------------------------------------ one definition of "coherent"
+
+#[test]
+fn the_machine_and_the_tool_registry_agree_on_what_a_receipt_is() {
+    use quansio_tools::receipt::validate_result;
+    let declaration = quansio_tools::ToolRegistry::builtin()
+        .get("computer.click")
+        .expect("computer.click");
+    let as_result =
+        |receipt: &ActionReceipt| json!({ "clicked": true, "receipt": receipt.to_json() });
+    let method = ReceiptMethod::ProcessEvent;
+    let bg = ExecutionMethod::Background;
+    let fg = ExecutionMethod::Foreground;
+
+    // Everything the runtime produces after normalization is a valid Tool result.
+    let mut violated = clean();
+    violated.moved_system_cursor = true;
+    let produced = [
+        ActionReceipt::unverified(method, fg),
+        ActionReceipt::applied(method, fg),
+        ActionReceipt::not_applied(method, fg),
+        ActionReceipt::refused(method, fg),
+        ActionReceipt::observed(ReceiptMethod::AccessibilityTree, fg),
+        ActionReceipt::applied(method, bg).with_invariants(clean()),
+        ActionReceipt::applied(method, bg).with_invariants(violated),
+        ActionReceipt::applied(method, bg),
+    ];
+    for receipt in produced {
+        let normalized = receipt
+            .clone()
+            .normalized()
+            .expect("coherent after normalization");
+        validate_result(declaration, &as_result(&normalized))
+            .unwrap_or_else(|error| panic!("{receipt:?}: {error}"));
+    }
+
+    // Everything the runtime calls incoherent the registry refuses too.
+    let nonsense = |dispatched, verified, outcome, violated, execution| ActionReceipt {
+        method,
+        execution_method: execution,
+        dispatched,
+        effect_verified: verified,
+        outcome,
+        invariant_violated: violated,
+        invariants: None,
+    };
+    for receipt in [
+        nonsense(false, Some(true), ReceiptOutcome::Applied, false, fg),
+        nonsense(true, Some(true), ReceiptOutcome::Unverified, false, fg),
+        nonsense(true, None, ReceiptOutcome::Applied, false, fg),
+        nonsense(true, Some(false), ReceiptOutcome::Refused, false, fg),
+        nonsense(true, Some(false), ReceiptOutcome::InvariantViolated, true, fg),
+        nonsense(true, Some(true), ReceiptOutcome::Applied, false, bg),
+    ] {
+        assert!(receipt.check_coherence().is_err(), "{receipt:?}");
+        assert!(
+            validate_result(declaration, &as_result(&receipt)).is_err(),
+            "the registry accepted what the runtime refuses: {receipt:?}"
+        );
+    }
+}
