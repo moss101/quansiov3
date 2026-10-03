@@ -3074,11 +3074,11 @@
     },
     "ADP-001": {
       "coverage": "GENUINE_GAP",
-      "status": "IN_PROGRESS",
+      "status": "PASS",
       "claimed_by": "agent:adp-001",
       "started_at": "2026-10-03T07:56:30Z",
-      "updated_at": "2026-10-03T09:24:23Z",
-      "git_commit": null,
+      "updated_at": "2026-10-03T09:50:35Z",
+      "git_commit": "0e4e9ddbd939d0806dab6c4e02e7f185892924aa",
       "tests": [
         "cargo test -p quansio-qworkerd (85 passed against a real headless Google Chrome 154.0.8037.93: browser_fencing 5, browser_ledger 6, browser_secrets 8, browser_guard 15, browser_contract 3, 20 unit tests, plus EXEC-009's browser suite 5 and the existing host/tools/scm suites)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine --test browser --test browser_guard (12 passed against real PostgreSQL)",
@@ -3133,7 +3133,7 @@
       ],
       "implementation_complete": true,
       "blocker": null,
-      "notes": "Hardened managed browser (D-019): per-tab document revisions, snapshot refs and captures that fail closed with BROWSER_STALE_PAGE; a journal that keeps side-effecting actions idempotent and an unknown outcome in doubt (OUTCOME_UNKNOWN, never retried); secret placeholders resolved only through the runtime's secret port; dialogs, downloads, permissions, certificates and the user-gesture rule as typed state; side-effect classes mapped onto the existing effect taxonomy. Deferred (see evidence NOTES.md): the HTTP handlers and desktop controls for ResolveBrowserCertificate/DecideBrowserPermission (the user-only control-plane store and the worker half exist and are tested), and a production composition of BrowserDriver (qworkerd has no daemon yet; QA-002 KNOWN_GAPS WorkerHost/EXEC-002)."
+      "notes": "Hardened managed browser (D-019): per-tab document revisions, snapshot refs and captures that fail closed with BROWSER_STALE_PAGE; a journal that keeps side-effecting actions idempotent and an unknown outcome in doubt (OUTCOME_UNKNOWN, never retried); secret placeholders resolved only through the runtime's secret port; dialogs, downloads, permissions, certificates and the user-gesture rule as typed state; side-effect classes mapped onto the existing effect taxonomy. Deferred (evidence NOTES.md): HTTP handlers and desktop controls for ResolveBrowserCertificate/DecideBrowserPermission, and a production composition of BrowserDriver (qworkerd has no daemon yet; QA-002 KNOWN_GAPS)."
     },
     "ADP-002": {
       "coverage": null,
