@@ -139,10 +139,13 @@ public func receiptedClipboardRead(
 public func receiptedTypeText(
     _ text: String,
     expectedBundleId: String,
+    monitor: ForegroundControlMonitor = .shared,
     focusedValue: () -> String? = focusedFieldValue
 ) throws -> ActionReceipt {
     let before = focusedValue()
     try typeText(text, expectedBundleId: expectedBundleId)
+    // Stamp the moment the agent last put input on the machine, so a later event is known to be someone else's.
+    monitor.recordAgentInput()
     let after = focusedValue()
     switch typedTextVerification(typed: text, valueBefore: before, valueAfter: after) {
     case .some(true): return .applied(.hidEvent, .foreground)
@@ -157,9 +160,11 @@ public func receiptedClick(
     x: Double,
     y: Double,
     button: MouseButton = .left,
-    expectedBundleId: String
+    expectedBundleId: String,
+    monitor: ForegroundControlMonitor = .shared
 ) throws -> ActionReceipt {
     try click(x: x, y: y, button: button, expectedBundleId: expectedBundleId)
+    monitor.recordAgentInput()
     return .unverified(.hidEvent, .foreground)
 }
 

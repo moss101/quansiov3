@@ -20,7 +20,11 @@ holds the OS permissions, or a typed permission status with a guide that parks a
   it yet: see "Not in this task").
 - `apps/desktop/src/{live,renderer,preload,i18n}` and `apps/desktop/src/index.ts` — the guide surface and its two
   channels (`computer.permissions`, `computer.openSettings`) cannot live in `src/main/` alone.
-- `tests/architecture/{composition_scan.py,test_qa002_composition.py}` — see "Composition".
+- `native/windows/src/computer_use.rs` — `WindowsComputerBridge` implements `NativeComputerBridge`, whose two new
+  required methods (`permission_status`, `foreground_control`) it must answer; it reports what Windows actually has
+  (no per-application permission gate; no input-lapse detection yet) and says so in comments.
+- `tests/architecture/{composition_scan.py,test_qa002_composition.py}` and `tests/contract/test_contracts.py` — see
+  "Composition"; the error catalog now has 61 codes and `computer-use.yaml` is validated against its schema.
 - Generated: `schemas/catalog/{errors,glossary}.yaml`, `schemas/openapi/public-api-v1.yaml`, `sdk/*/generated/*`.
 
 ## Existing code and its coverage

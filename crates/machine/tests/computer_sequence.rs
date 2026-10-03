@@ -383,20 +383,21 @@ async fn a_takeover_requested_during_an_action_ends_the_sequence_after_that_acti
     ComputerControlStore::handback(&mut conn, TENANT, TARGET, 2, AT)
         .await
         .expect("handback");
+    // The stale sequence is refused before the model is even asked for an action: the count, not the
+    // end state, is what separates "noticed the changed generation" from "tried and was refused".
+    let (feed, asked) = endless();
     let stale = ComputerSequence::new(&dispatcher, StopHandle::new())
-        .run(
-            &mut conn,
-            TENANT,
-            TARGET,
-            CALL_B,
-            1,
-            ListFeed::new([click()]),
-        )
+        .run(&mut conn, TENANT, TARGET, CALL_B, 1, feed)
         .await
         .expect("sequence");
     assert_eq!(
         stale.end,
         SequenceEnd::Terminal(TerminalCondition::TakeoverActive)
+    );
+    assert_eq!(
+        asked.load(Ordering::SeqCst),
+        0,
+        "a sequence from an older generation was still asked for actions"
     );
     let fresh = ComputerSequence::new(&dispatcher, StopHandle::new())
         .run(

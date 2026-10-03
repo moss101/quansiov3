@@ -126,6 +126,9 @@ fn contradictory_receipts_are_incoherent() {
     let incoherent = [
         // Verified true although nothing was sent.
         base(false, Some(true), ReceiptOutcome::Applied),
+        // Refused is the right word, but the verdict still has to be "known absent".
+        base(false, Some(true), ReceiptOutcome::Refused),
+        base(false, None, ReceiptOutcome::Refused),
         base(false, None, ReceiptOutcome::Unverified),
         base(false, Some(false), ReceiptOutcome::Unverified),
         // Verified true with a word that says otherwise.

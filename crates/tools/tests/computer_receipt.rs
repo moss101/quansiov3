@@ -156,6 +156,9 @@ fn a_receipt_that_contradicts_itself_fails_output_validation() {
     let contradictions = [
         // Verified, but nothing was dispatched.
         receipt(json!({ "dispatched": false, "effect_verified": true, "outcome": "applied" })),
+        // Refused is the right word, but the verdict still has to be "known absent".
+        receipt(json!({ "dispatched": false, "effect_verified": true, "outcome": "refused" })),
+        receipt(json!({ "dispatched": false, "effect_verified": null, "outcome": "refused" })),
         receipt(json!({ "dispatched": false })),
         // Verified true with a word that says unknown or absent.
         receipt(json!({ "effect_verified": true })),

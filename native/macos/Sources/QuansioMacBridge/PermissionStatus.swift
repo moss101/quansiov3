@@ -159,6 +159,9 @@ public final class ForegroundControlMonitor: @unchecked Sendable {
     private let lock = NSLock()
     private var lastAgentInput: TimeInterval?
 
+    /// The monitor the receipted input functions stamp, and the foreground-control answer reads.
+    public static let shared = ForegroundControlMonitor()
+
     public init(clock: InputClock = LiveInputClock(), pauseSeconds: TimeInterval = 1.5, tolerance: TimeInterval = 0.05) {
         self.clock = clock
         self.pauseSeconds = pauseSeconds
