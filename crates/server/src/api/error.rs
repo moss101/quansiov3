@@ -340,8 +340,7 @@ impl ApiErrorCode {
             | Self::ComputerStoppedByUser
             | Self::ComputerPermissionRequired
             | Self::ComputerForegroundControlLapsed
-            | Self::ComputerHelperIdentityRefused
-            => "Computer",
+            | Self::ComputerHelperIdentityRefused => "Computer",
             Self::ProviderUnavailable
             | Self::ProviderRateLimited
             | Self::ProviderRefusal

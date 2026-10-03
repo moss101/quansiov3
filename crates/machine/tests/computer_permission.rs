@@ -231,7 +231,10 @@ fn a_missing_permission_outranks_a_lapsed_grant_and_the_two_have_different_answe
 // ------------------------------------------------------------------ the wire shapes other languages parse
 
 fn fixture(name: &str) -> Value {
-    let path = format!("{}/tests/fixtures/computer/{name}", env!("CARGO_MANIFEST_DIR"));
+    let path = format!(
+        "{}/tests/fixtures/computer/{name}",
+        env!("CARGO_MANIFEST_DIR")
+    );
     let text = std::fs::read_to_string(&path).unwrap_or_else(|error| panic!("{path}: {error}"));
     serde_json::from_str(&text).expect("fixture is JSON")
 }
@@ -243,8 +246,8 @@ fn the_attention_items_the_desktop_parses_are_exactly_what_the_runtime_writes() 
     let panes = &ComputerUseConfig::builtin().panes;
     let denied =
         PermissionStatus::all_granted().with(Permission::Accessibility, PermissionState::Denied);
-    let restricted =
-        PermissionStatus::all_granted().with(Permission::Accessibility, PermissionState::Restricted);
+    let restricted = PermissionStatus::all_granted()
+        .with(Permission::Accessibility, PermissionState::Restricted);
     let open = gate(&click(), &denied, ForegroundControl::Held, panes).expect_err("parks");
     let admin = gate(&click(), &restricted, ForegroundControl::Held, panes).expect_err("parks");
     let pause = gate(

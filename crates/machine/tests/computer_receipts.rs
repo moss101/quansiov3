@@ -585,7 +585,13 @@ fn the_machine_and_the_tool_registry_agree_on_what_a_receipt_is() {
         nonsense(true, Some(true), ReceiptOutcome::Unverified, false, fg),
         nonsense(true, None, ReceiptOutcome::Applied, false, fg),
         nonsense(true, Some(false), ReceiptOutcome::Refused, false, fg),
-        nonsense(true, Some(false), ReceiptOutcome::InvariantViolated, true, fg),
+        nonsense(
+            true,
+            Some(false),
+            ReceiptOutcome::InvariantViolated,
+            true,
+            fg,
+        ),
         nonsense(true, Some(true), ReceiptOutcome::Applied, false, bg),
     ] {
         assert!(receipt.check_coherence().is_err(), "{receipt:?}");

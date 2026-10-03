@@ -24,7 +24,10 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: (kind, name) -> (owning task, what is missing). Found by QA-001/QA-002, 2026-09-27.
 KNOWN_GAPS: Dict[Tuple[str, str], Tuple[str, str]] = {
-    ("UNCOMPOSED", "ComputerDispatcher"): ("EXEC-010", "computer use has no composed dispatcher"),
+    # EXEC-010's dispatcher is only named by the ADP-002 sequence runner (which the scan counts as a
+    # mention), so what is missing is the runtime tool host that walks a sequence: both are one gap.
+    ("UNCOMPOSED", "ComputerSequence"): ("ADP-002", "no tool host walks native computer action sequences (EXEC-010's dispatcher is never constructed either)"),
+    ("NOT_COMPOSED", "ActionFeed"): ("ADP-002", "no runtime feeds a computer action sequence"),
     ("UNCOMPOSED", "WorkerHost"): ("EXEC-002", "qworkerd has no daemon that runs its host"),
 }
 

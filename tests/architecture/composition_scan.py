@@ -242,6 +242,7 @@ OBLIGATIONS: Tuple[Obligation, ...] = (
     Obligation("admit_effect", "call", "OPS-004", "hard quotas refusing before an effect is reserved"),
     Obligation("KmsKeyProvider", "type", "EXEC-007", "KMS-backed secret keys"),
     Obligation("ComputerDispatcher", "type", "EXEC-010", "computer use"),
+    Obligation("ComputerSequence", "type", "ADP-002", "native computer action sequences: terminal conditions and permission parking"),
     Obligation("WorkerHost", "type", "EXEC-002", "the qworkerd daemon's host"),
 )
 

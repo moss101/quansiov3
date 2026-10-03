@@ -156,8 +156,10 @@ pub fn check_coherence(receipt: &Value) -> Result<(), String> {
         return if outcome == "refused" && verified == Some(false) && !violated {
             Ok(())
         } else {
-            Err("a receipt that dispatched nothing must be refused with effect_verified=false"
-                .to_string())
+            Err(
+                "a receipt that dispatched nothing must be refused with effect_verified=false"
+                    .to_string(),
+            )
         };
     }
     if outcome == "refused" {

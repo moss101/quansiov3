@@ -40,7 +40,9 @@ fn click_result(receipt: Value) -> Value {
 }
 
 fn click() -> &'static quansio_tools::ToolDeclaration {
-    ToolRegistry::builtin().get("computer.click").expect("computer.click")
+    ToolRegistry::builtin()
+        .get("computer.click")
+        .expect("computer.click")
 }
 
 #[test]
@@ -53,7 +55,9 @@ fn every_computer_tool_carries_the_canonical_required_receipt() {
             Some(&receipt_schema()),
             "{name}"
         );
-        let required = declaration.output_schema["required"].as_array().expect("required");
+        let required = declaration.output_schema["required"]
+            .as_array()
+            .expect("required");
         assert!(required.iter().any(|field| field == "receipt"), "{name}");
     }
     // Only computer tools carry one: a browser Tool's results are not receipts.
@@ -93,10 +97,17 @@ fn a_computer_declaration_that_drops_or_loosens_the_receipt_is_refused() {
     ];
     for registry in refused {
         let error = registry.check_receipts().expect_err("must be refused");
-        assert!(matches!(error, ToolError::MalformedDeclaration { .. }), "{error:?}");
+        assert!(
+            matches!(error, ToolError::MalformedDeclaration { .. }),
+            "{error:?}"
+        );
     }
     // A computer Tool with no receipt at all.
-    let without = TOOLS_YAML.replacen("        receipt: *computer_receipt\n      required: [clicked, receipt]", "      required: [clicked]", 1);
+    let without = TOOLS_YAML.replacen(
+        "        receipt: *computer_receipt\n      required: [clicked, receipt]",
+        "      required: [clicked]",
+        1,
+    );
     assert_ne!(without, TOOLS_YAML);
     let registry = ToolRegistry::from_yaml(&without).expect("registry");
     assert!(registry.check_receipts().is_err());
@@ -110,19 +121,26 @@ fn unknown_verification_is_a_valid_result_and_a_made_up_verdict_is_not() {
     let unverified = receipt(json!({}));
     let not_applied = receipt(json!({ "effect_verified": false, "outcome": "not_applied" }));
     for ok in [applied, unverified, not_applied] {
-        validate_result(declaration, &click_result(ok.clone())).unwrap_or_else(|e| panic!("{ok}: {e}"));
+        validate_result(declaration, &click_result(ok.clone()))
+            .unwrap_or_else(|e| panic!("{ok}: {e}"));
     }
     // Anything else is not.
     for bad in [json!("unknown"), json!("true"), json!(0), json!({})] {
         let result = click_result(receipt(json!({ "effect_verified": bad })));
         assert!(
-            matches!(validate_result(declaration, &result), Err(ToolError::InvalidResult { .. })),
+            matches!(
+                validate_result(declaration, &result),
+                Err(ToolError::InvalidResult { .. })
+            ),
             "{result}"
         );
     }
     // A missing verdict is not read as unknown.
     let mut missing = receipt(json!({}));
-    missing.as_object_mut().expect("object").remove("effect_verified");
+    missing
+        .as_object_mut()
+        .expect("object")
+        .remove("effect_verified");
     assert!(validate_result(declaration, &click_result(missing)).is_err());
     // A result with no receipt at all.
     assert!(validate_result(declaration, &json!({ "clicked": true })).is_err());
@@ -148,10 +166,14 @@ fn a_receipt_that_contradicts_itself_fails_output_validation() {
         // Refused although dispatched.
         receipt(json!({ "effect_verified": false, "outcome": "refused" })),
         // A violated invariant on a foreground action, or without the outcome that says so.
-        receipt(json!({ "invariant_violated": true, "effect_verified": false, "outcome": "invariant_violated" })),
+        receipt(
+            json!({ "invariant_violated": true, "effect_verified": false, "outcome": "invariant_violated" }),
+        ),
         receipt(json!({ "execution_method": "background", "invariant_violated": true })),
         // Background and verified, but never measured.
-        receipt(json!({ "execution_method": "background", "effect_verified": true, "outcome": "applied" })),
+        receipt(
+            json!({ "execution_method": "background", "effect_verified": true, "outcome": "applied" }),
+        ),
     ];
     for bad in contradictions {
         assert!(check_coherence(&bad).is_err(), "{bad}");
@@ -175,8 +197,12 @@ fn a_receipt_that_contradicts_itself_fails_output_validation() {
         receipt(json!({})),
         receipt(json!({ "outcome": "observed" })),
         receipt(json!({ "dispatched": false, "effect_verified": false, "outcome": "refused" })),
-        receipt(json!({ "execution_method": "background", "effect_verified": true, "outcome": "applied", "invariants": measured })),
-        receipt(json!({ "execution_method": "background", "invariant_violated": true, "effect_verified": false, "outcome": "invariant_violated", "invariants": measured })),
+        receipt(
+            json!({ "execution_method": "background", "effect_verified": true, "outcome": "applied", "invariants": measured }),
+        ),
+        receipt(
+            json!({ "execution_method": "background", "invariant_violated": true, "effect_verified": false, "outcome": "invariant_violated", "invariants": measured }),
+        ),
     ] {
         assert!(check_coherence(&good).is_ok(), "{good}");
     }
