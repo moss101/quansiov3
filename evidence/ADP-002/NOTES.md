@@ -21,12 +21,13 @@ test is `computer_permission.rs` (8) plus `permissions.test.ts`.
 
 ## Mutation checks
 
-`mutation-checks.log` (script: `mutation-checks.py`): 50 mutants of the guards across Rust, Swift and the desktop. A mutant
+`mutation-checks.log` (script: `mutation-checks.py`; run on commit 820c7dc): 50 mutants of the guards across Rust, Swift and
+the desktop; all 50 compile and all 50 are KILLED, each log line followed by what the failing assertion said. A mutant
 is KILLED only if it compiled (`COMPILES`), the unmutated suite passed first (`CONTROL-PASSED`) and a named test then
 failed. The first run left three SURVIVED (a refused receipt that dispatched nothing but claimed a verdict; a sequence
 from an older generation, which the dispatcher's own check refused anyway; the registry's copy of the first rule): each
 was a hole in the tests, not an equivalent mutant, and was closed by a test that counts what the model was asked or
-names the missing case. The final run is in the log.
+names the missing case. The first run had already been replaced by the final one, which is the log.
 
 ## Traps met, and what was decided
 
@@ -57,6 +58,19 @@ names the missing case. The final run is in the log.
 - **`quansio-server --test api` needs MinIO.** `the_public_surface_works_as_the_application_role_under_rls` fails with a
   connection refused to `127.0.0.1:59010` when the dev stack is down; it is not a skip and not related to this change (the
   other 16 pass, including the error-code table).
+- **A new binary's first launch can be slow under load** (macOS assesses it, as for `quansio-server`; see the memory note on
+  first launches). The orphan and launch tests wait up to 60 s for a helper to appear instead of 5 s; one workspace run
+  failed `orphaned_helpers_are_terminated_at_start_and_nothing_else_is` at the old limit.
+- **`apps/desktop/tests/work.e2e.test.ts` is flaky on the base commit.** In full vitest runs it fails with
+  `CONFLICT_REVISION: base revision 3 is not the current graph revision 4` (the run the objective starts commits a revision
+  between the test's load and its edit). Against the same server binary, 18a7e83 failed it in 2 of 3 full runs; it passes alone
+  on both trees. Ten alternating full runs against one server binary (five rounds of 18a7e83 then 820c7dc): work.e2e failed
+  in 3 of 5 rounds on each tree, and the other full-run failure (`collaboration.e2e`, once) also appeared on the base. The
+  desktop log of this bundle excludes that one file and passes (182 passed, 12 skipped, typecheck and eslint clean); the file
+  is untouched and still runs in the repository's own gate. Not touched by this task.
+- **Server suites need more of the dev stack than PostgreSQL.** On the private database, 13 `quansio-server` tests fail:
+  every one is an artifact/evidence store call to MinIO (`127.0.0.1:59010`), which was not running; with the container's
+  default `max_locks_per_transaction` another dozen failed with `out of shared memory` until it was raised to 512.
 - **Private database.** A throwaway PostgreSQL (`pgvector/pgvector:pg17` on port 55462) served every database-backed test;
   nothing touched the shared dev stack, and the container was removed afterwards.
 
@@ -64,7 +78,8 @@ names the missing case. The final run is in the log.
 
 macOS Apple Silicon, Accessibility and Screen Recording granted to the terminal host, no Developer ID available:
 
-- `QUANSIO_TEST_MACOS_COMPUTER_USE=1 swift test --package-path native/macos`: 49 tests. New and live: the permission probes
+- `QUANSIO_TEST_MACOS_COMPUTER_USE=1 swift test --package-path native/macos`: 42 tests, 0 failures, 1 skipped (the pre-existing
+  `BLOCKED_EXTERNAL` real-VM test). New and live: the permission probes
   against the system's own answers, the foreground-control monitor, a real one-point pointer move seen by the measurement
   (and put back), a real clipboard write receipted, measured and verified by read-back (and put back), and an unauthorized
   foreground refused before anything is written.

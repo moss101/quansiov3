@@ -1,14 +1,3 @@
-    Checking quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/core)
-   Compiling quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/events)
-    Checking quansio-contracts v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/contracts)
-   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/server)
-    Checking quansio-cli v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/cli)
     Checking quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/machine)
-    Checking quansio-indexer v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/indexer)
-    Checking quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/capability)
-    Checking quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/graph)
-    Checking quansio-native-windows v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/native/windows)
-    Checking quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/tools)
-    Checking quansio-qworkerd v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/qworkerd)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 24.47s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.13s
 fmt exit=0 clippy exit=0

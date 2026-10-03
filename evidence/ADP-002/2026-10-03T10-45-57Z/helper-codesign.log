@@ -1,6 +1,5 @@
    Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/machine)
-   Compiling quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a01a9b961a33dd368/crates/tools)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.48s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.77s
      Running tests/computer_helper.rs (target/debug/deps/computer_helper-96638c5d215d0f73)
 
 running 11 tests
@@ -16,5 +15,5 @@ test orphaned_helpers_are_terminated_at_start_and_nothing_else_is ... ok
 test install_copies_into_a_versioned_directory_verifies_the_copy_and_prunes ... ok
 test a_helper_that_changes_after_install_is_refused_at_launch ... ok
 
-test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.99s
 
