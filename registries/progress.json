@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 5,
-  "updated_at": "2026-09-26",
+  "updated_at": "2026-10-03",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -3073,11 +3073,11 @@
       "notes": ""
     },
     "ADP-001": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:adp-001",
+      "started_at": "2026-10-03T07:56:30Z",
+      "updated_at": "2026-10-03T07:56:30Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
