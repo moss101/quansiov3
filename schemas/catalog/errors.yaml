@@ -88,6 +88,54 @@ errors:
 - code: EGRESS_DENIED
   family: Execution
   http_status: 503/504
+- code: BROWSER_STALE_PAGE
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_STALE_DIALOG
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_DIALOG_PENDING
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_ACTION_REPLAY_CONFLICT
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_ACTION_IN_DOUBT
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_SECRET_ORIGIN_MISMATCH
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_SECRET_UNAVAILABLE
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_SENSITIVE_INPUT_DENIED
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_NAVIGATION_DENIED
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_CERTIFICATE_DECISION_REQUIRED
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_GESTURE_REQUIRED
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_INPUT_FENCED
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_EFFECT_TIER_EXCEEDED
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_INVALID_REQUEST
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_TARGET_NOT_FOUND
+  family: Browser
+  http_status: 409/422
+- code: BROWSER_PAGE_FAILURE
+  family: Browser
+  http_status: 409/422
 - code: PROVIDER_UNAVAILABLE
   family: Model
   http_status: 502/503

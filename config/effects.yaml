@@ -9,6 +9,37 @@
 # unknown class, an out-of-range tier or an unparseable strategy. DOMAIN.md remains the
 # authority; this file never widens a tier or a policy decision.
 version: 1
+
+# Side-effect classes of the managed browser's tools (ADP-001, DOMAIN.md §7.1 "Browser side-effect
+# classes"). A tool declares what kind of thing it does; this table says which effect class of the
+# taxonomy above that kind settles as, and whether the host journals the action for idempotency
+# (keyed by call id and action id, with an in-doubt outcome that is never retried). It adds no class
+# and no tier: `crates/tools` refuses a browser tool whose declared `effect_class` differs from its
+# row, so a tool cannot lower its tier by changing its class.
+browser_side_effects:
+  # Reads a page and changes nothing outside it.
+  read:
+    settles_as: read.external
+    journaled: false
+  # Reads what is on the target's own screen, which may include sensitive content (a screenshot).
+  read_sensitive:
+    settles_as: read.internal
+    journaled: false
+  # Changes the page's own state inside the sandbox and sends nothing (typing, a key, a dialog answer).
+  # Settles as the privileged-input class so the tier is not lower than the click that follows it.
+  local_mutation:
+    settles_as: computer.input.privileged
+    journaled: true
+  # Reaches a destination outside the sandbox (navigation).
+  open_world_mutation:
+    settles_as: network.egress.new_destination
+    journaled: true
+  # May cause whatever the page decides (a click that submits, sends, deletes or pays); the driver
+  # refines the class from the control it lands on before dispatch.
+  potential_external_effect:
+    settles_as: computer.input.privileged
+    journaled: true
+
 effect_classes:
   - effect_class: read.internal
     tier: 0

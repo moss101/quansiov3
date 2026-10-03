@@ -57,3 +57,8 @@ glossary:
 - ModelRoute
 - UsageRecord
 - AuditEntry
+- DocumentRevision
+- Snapshot / Capture
+- In-doubt outcome
+- SecretPlaceholder
+- DecisionReceipt

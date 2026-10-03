@@ -16,6 +16,7 @@ import { decodeBrowserFrame, latestFrame, type BrowserFrame } from "../live/fram
 import {
   agentInputAllowed,
   applyEvent,
+  attentionNeeded,
   decodeLiveSession,
   decodeTargets,
   handbackAllowed,
@@ -274,6 +275,43 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
             ) : null}
             {session.controller === "user" ? <div className="live-user-owns">{t("liveYouOwn")}</div> : null}
           </div>
+          <section className="live-guard" aria-label={t("liveGuard")}>
+            <h3>{t("liveGuard")}</h3>
+            {attentionNeeded(session).length === 0 ? (
+              <p className="stage">{t("liveGuardNone")}</p>
+            ) : (
+              <ul className="cards">
+                {attentionNeeded(session).map((item) => (
+                  <li key={`${item.kind}:${item.id}`} className={`card live-guard-${item.kind}`} data-attention={item.kind}>
+                    <strong>{item.kind === "dialog" ? t("liveDialogPending") : item.kind === "certificate" ? t("liveCertificateRequired") : t("liveInDoubt")}</strong>
+                    <span className="live-untrusted">{item.detail}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="stage">{t("liveGuardUntrusted")}</p>
+            {session.guard.tabs.map((tab) => (
+              <div key={tab.tabId} className="live-guard-tab" data-tab={tab.tabId}>
+                <p className="stage">
+                  {t("liveRevision")} {tab.documentRevision}
+                  {tab.popupsBlocked > 0 ? ` · ${String(tab.popupsBlocked)} ${t("livePopupsBlocked")}` : ""}
+                </p>
+                <h4>{t("liveDownloads")}</h4>
+                {tab.downloads.length === 0 ? (
+                  <p className="stage">{t("liveNoDownloads")}</p>
+                ) : (
+                  <ul>
+                    {tab.downloads.map((download) => (
+                      <li key={download.id} data-download-state={download.state}>
+                        <span className="live-untrusted">{download.suggestedFilename}</span> · {download.state} · {String(download.receivedBytes)} B
+                        {download.failure ? ` · ${download.failure}` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </section>
           {session.computerControl ? (
             <section className="live-computer">
               <h3>{t("liveComputer")}</h3>

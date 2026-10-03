@@ -769,6 +769,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/commands/ResolveBrowserCertificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Browser/computer: ResolveBrowserCertificate */
+        post: operations["ResolveBrowserCertificate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commands/DecideBrowserPermission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Browser/computer: DecideBrowserPermission */
+        post: operations["DecideBrowserPermission"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/commands/CreateArtifact": {
         parameters: {
             query?: never;
@@ -2264,7 +2298,7 @@ export interface components {
              * @description DOMAIN.md §15 error taxonomy.
              * @enum {string}
              */
-            code: "AUTH_REQUIRED" | "AUTH_INVALID_TOKEN" | "AUTH_EXPIRED" | "SCOPE_FORBIDDEN" | "TENANT_MISMATCH" | "VALIDATION_SCHEMA" | "VALIDATION_UNKNOWN_FIELD" | "VALIDATION_BOUNDS" | "CONFLICT_REVISION" | "CONFLICT_IDEMPOTENCY_MISMATCH" | "CONFLICT_STATE" | "CAPABILITY_DENIED" | "CAPABILITY_INPUTS_UNAVAILABLE" | "POLICY_DENIED" | "APPROVAL_REQUIRED" | "APPROVAL_INVALID" | "APPROVAL_EXPIRED" | "APPROVAL_SUPERSEDED" | "RUNTIME_ILLEGAL_TRANSITION" | "FENCED_STALE_GENERATION" | "LEASE_LOST" | "EFFECT_UNKNOWN_PENDING_RECONCILIATION" | "BUDGET_EXHAUSTED" | "EFFECTS_FROZEN" | "TARGET_UNAVAILABLE" | "TARGET_PROVISION_FAILED" | "TOOL_TIMEOUT" | "TOOL_OUTPUT_TRUNCATED" | "EGRESS_DENIED" | "PROVIDER_UNAVAILABLE" | "PROVIDER_RATE_LIMITED" | "PROVIDER_REFUSAL" | "ROUTE_UNAVAILABLE" | "DLP_DENIED" | "NOT_FOUND" | "RATE_LIMITED" | "STREAM_BACKPRESSURE" | "INTERNAL";
+            code: "AUTH_REQUIRED" | "AUTH_INVALID_TOKEN" | "AUTH_EXPIRED" | "SCOPE_FORBIDDEN" | "TENANT_MISMATCH" | "VALIDATION_SCHEMA" | "VALIDATION_UNKNOWN_FIELD" | "VALIDATION_BOUNDS" | "CONFLICT_REVISION" | "CONFLICT_IDEMPOTENCY_MISMATCH" | "CONFLICT_STATE" | "CAPABILITY_DENIED" | "CAPABILITY_INPUTS_UNAVAILABLE" | "POLICY_DENIED" | "APPROVAL_REQUIRED" | "APPROVAL_INVALID" | "APPROVAL_EXPIRED" | "APPROVAL_SUPERSEDED" | "RUNTIME_ILLEGAL_TRANSITION" | "FENCED_STALE_GENERATION" | "LEASE_LOST" | "EFFECT_UNKNOWN_PENDING_RECONCILIATION" | "BUDGET_EXHAUSTED" | "EFFECTS_FROZEN" | "TARGET_UNAVAILABLE" | "TARGET_PROVISION_FAILED" | "TOOL_TIMEOUT" | "TOOL_OUTPUT_TRUNCATED" | "EGRESS_DENIED" | "BROWSER_STALE_PAGE" | "BROWSER_STALE_DIALOG" | "BROWSER_DIALOG_PENDING" | "BROWSER_ACTION_REPLAY_CONFLICT" | "BROWSER_ACTION_IN_DOUBT" | "BROWSER_SECRET_ORIGIN_MISMATCH" | "BROWSER_SECRET_UNAVAILABLE" | "BROWSER_SENSITIVE_INPUT_DENIED" | "BROWSER_NAVIGATION_DENIED" | "BROWSER_CERTIFICATE_DECISION_REQUIRED" | "BROWSER_GESTURE_REQUIRED" | "BROWSER_INPUT_FENCED" | "BROWSER_EFFECT_TIER_EXCEEDED" | "BROWSER_INVALID_REQUEST" | "BROWSER_TARGET_NOT_FOUND" | "BROWSER_PAGE_FAILURE" | "PROVIDER_UNAVAILABLE" | "PROVIDER_RATE_LIMITED" | "PROVIDER_REFUSAL" | "ROUTE_UNAVAILABLE" | "DLP_DENIED" | "NOT_FOUND" | "RATE_LIMITED" | "STREAM_BACKPRESSURE" | "INTERNAL";
             message: string;
             correlation_id: string;
             retryable: boolean;
@@ -2456,6 +2490,14 @@ export interface components {
         };
         /** @description Browser/computer command GrantComputerTier. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
         GrantComputerTierParams: {
+            [key: string]: unknown;
+        };
+        /** @description Browser/computer command ResolveBrowserCertificate. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        ResolveBrowserCertificateParams: {
+            [key: string]: unknown;
+        };
+        /** @description Browser/computer command DecideBrowserPermission. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        DecideBrowserPermissionParams: {
             [key: string]: unknown;
         };
         /** @description Artifacts command CreateArtifact. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
@@ -4437,6 +4479,84 @@ export interface operations {
         };
     };
     GrantComputerTier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    ResolveBrowserCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    DecideBrowserPermission: {
         parameters: {
             query?: never;
             header?: never;

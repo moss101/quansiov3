@@ -24,6 +24,68 @@ export interface Tab {
   readonly targetId: string;
   readonly url: string;
   readonly title: string;
+  /** The opaque revision of the document the tab shows (ADP-001): it changes when the page does. */
+  readonly documentRevision: string | null;
+}
+
+/**
+ * What the hardened browser driver reported about the session (ADP-001, DOMAIN.md §8.4.1 E). Every
+ * string a page produced — a dialog's message, a download's name — is untrusted: the page renders it as
+ * text, never as markup or as an instruction.
+ */
+export interface GuardDialogView {
+  readonly id: string;
+  readonly kind: string;
+  readonly message: string;
+  readonly url: string;
+}
+
+export interface GuardCertificateView {
+  readonly id: string;
+  readonly origin: string;
+  readonly errorType: string;
+  readonly status: "pending" | "continued" | "cancelled" | "expired";
+  readonly certificateSha256: string | null;
+  readonly decidedBy: string | null;
+}
+
+export interface GuardDownloadView {
+  readonly id: string;
+  readonly suggestedFilename: string;
+  readonly state: "in_progress" | "completed" | "cancelled";
+  readonly receivedBytes: number;
+  readonly failure: string | null;
+}
+
+export interface GuardTabView {
+  readonly tabId: string;
+  readonly url: string;
+  readonly documentRevision: string;
+  readonly dialog: GuardDialogView | null;
+  readonly certificates: readonly GuardCertificateView[];
+  readonly downloads: readonly GuardDownloadView[];
+  readonly popupsBlocked: number;
+}
+
+export interface InDoubtView {
+  readonly callId: string;
+  readonly actionId: string;
+  readonly reason: string;
+}
+
+export interface GuardView {
+  readonly reportedAt: string | null;
+  readonly tabs: readonly GuardTabView[];
+  readonly inDoubt: readonly InDoubtView[];
+}
+
+/** Something on this session that is waiting for a person rather than for the agent. */
+export type AttentionKind = "dialog" | "certificate" | "in_doubt";
+
+export interface Attention {
+  readonly kind: AttentionKind;
+  readonly id: string;
+  readonly detail: string;
 }
 
 export interface TerminalSessionView {
@@ -68,6 +130,7 @@ export interface LiveSession {
     readonly reason: PauseReason | null;
     readonly agentInputFenced: boolean;
   };
+  readonly guard: GuardView;
 }
 
 export interface TargetView {
@@ -144,6 +207,87 @@ export function decodeComputerControl(raw: unknown): ComputerControlView | null 
   };
 }
 
+function certificateStatus(value: unknown): GuardCertificateView["status"] {
+  return value === "continued" || value === "cancelled" || value === "expired" ? value : "pending";
+}
+
+function downloadState(value: unknown): GuardDownloadView["state"] {
+  return value === "completed" || value === "cancelled" ? value : "in_progress";
+}
+
+/** Decode the `guard` object of the session projection. A missing or malformed part reads as empty. */
+export function decodeGuard(raw: unknown): GuardView {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { reportedAt: null, tabs: [], inDoubt: [] };
+  }
+  const source = raw as Record<string, unknown>;
+  const list = (key: string): unknown[] => (Array.isArray(source[key]) ? (source[key] as unknown[]) : []);
+  const object = (value: unknown): Record<string, unknown> => (value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {});
+  return {
+    reportedAt: text(source, "reported_at"),
+    tabs: list("tabs").map((entry) => {
+      const tab = object(entry);
+      const dialog = tab["dialog"] && typeof tab["dialog"] === "object" ? object(tab["dialog"]) : null;
+      const items = (key: string): unknown[] => (Array.isArray(tab[key]) ? (tab[key] as unknown[]) : []);
+      return {
+        tabId: text(tab, "tab_id") ?? "",
+        url: text(tab, "url") ?? "",
+        documentRevision: text(tab, "document_revision") ?? "",
+        dialog: dialog ? { id: text(dialog, "id") ?? "", kind: text(dialog, "kind") ?? "", message: text(dialog, "message") ?? "", url: text(dialog, "url") ?? "" } : null,
+        certificates: items("certificates").map((item) => {
+          const certificate = object(item);
+          return {
+            id: text(certificate, "id") ?? "",
+            origin: text(certificate, "origin") ?? "",
+            errorType: text(certificate, "error_type") ?? "",
+            status: certificateStatus(certificate["status"]),
+            certificateSha256: text(certificate, "certificate_sha256"),
+            decidedBy: text(certificate, "decided_by"),
+          };
+        }),
+        downloads: items("downloads").map((item) => {
+          const download = object(item);
+          return {
+            id: text(download, "id") ?? "",
+            suggestedFilename: text(download, "suggested_filename") ?? "",
+            state: downloadState(download["state"]),
+            receivedBytes: cursorOf(download["received_bytes"]),
+            failure: text(download, "failure"),
+          };
+        }),
+        popupsBlocked: cursorOf(tab["popups_blocked"]),
+      };
+    }),
+    inDoubt: list("in_doubt").map((entry) => {
+      const item = object(entry);
+      return { callId: text(item, "call_id") ?? "", actionId: text(item, "action_id") ?? "", reason: text(item, "reason") ?? "" };
+    }),
+  };
+}
+
+/**
+ * What on this session waits for a person: a dialog the page raised, a certificate error only the user
+ * can decide, and browser actions whose outcome is in doubt. The page shows them; it does not decide
+ * them, and none of them can be dismissed by the agent.
+ */
+export function attentionNeeded(session: LiveSession): readonly Attention[] {
+  const items: Attention[] = [];
+  for (const tab of session.guard.tabs) {
+    if (tab.dialog) {
+      items.push({ kind: "dialog", id: tab.dialog.id, detail: `${tab.dialog.kind}: ${tab.dialog.message}` });
+    }
+    for (const certificate of tab.certificates) {
+      if (certificate.status === "pending") {
+        items.push({ kind: "certificate", id: certificate.id, detail: `${certificate.origin} ${certificate.errorType}` });
+      }
+    }
+  }
+  for (const doubt of session.guard.inDoubt) {
+    items.push({ kind: "in_doubt", id: doubt.actionId, detail: doubt.reason });
+  }
+  return items;
+}
+
 /** Decode `GET /v1/browser-sessions/{id}`. */
 export function decodeLiveSession(raw: unknown): LiveSession {
   const view = record(raw, "live session");
@@ -163,7 +307,12 @@ export function decodeLiveSession(raw: unknown): LiveSession {
     currentUrl: text(session, "current_url"),
     tabs: tabs.map((tab) => {
       const source = record(tab, "tab");
-      return { targetId: text(source, "target_id") ?? "", url: text(source, "url") ?? "", title: text(source, "title") ?? "" };
+      return {
+        targetId: text(source, "target_id") ?? "",
+        url: text(source, "url") ?? "",
+        title: text(source, "title") ?? "",
+        documentRevision: text(source, "document_revision"),
+      };
     }),
     screencastEnabled: screencast["enabled"] === true,
     agentMayDrive: session["agent_may_drive"] === true,
@@ -181,6 +330,7 @@ export function decodeLiveSession(raw: unknown): LiveSession {
       reason: pauseReason(automation["reason"]),
       agentInputFenced: automation["agent_input_fenced"] === true,
     },
+    guard: decodeGuard(session["guard"]),
   };
 }
 

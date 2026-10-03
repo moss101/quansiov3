@@ -29,6 +29,9 @@ pub mod terminal;
 /// Browser sessions and their control handovers (EXEC-009).
 pub mod browser;
 
+/// The hardened browser's guard state, user-only decisions and secret placeholders (ADP-001).
+mod browser_guard;
+
 /// Refusal rules, named so a caller can tell which one fired.
 pub mod rules {
     /// The target does not exist for this tenant.

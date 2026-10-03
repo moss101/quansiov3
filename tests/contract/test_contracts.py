@@ -41,7 +41,8 @@ def test_catalog_is_derived_from_domain_and_current(catalog):
 
 def test_domain_derivation_covers_commands_errors_effects_events_trust(catalog):
     assert sum(len(v) for v in catalog["commands"].values()) >= 70
-    assert len(catalog["errors"]) == 38
+    # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15).
+    assert len(catalog["errors"]) == 54
     assert len(catalog["effect_classes"]) == 23
     assert len(catalog["event_families"]) == 35  # + webhook.* (APP-015)
     assert catalog["trust_levels"] == [

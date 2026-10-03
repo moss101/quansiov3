@@ -21,7 +21,7 @@ use std::time::Duration;
 use futures_util::{SinkExt, StreamExt};
 use serde_json::{json, Value};
 use tokio::net::TcpStream;
-use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::sync::{broadcast, mpsc, oneshot, Mutex};
 use tokio_tungstenite::tungstenite::Message;
 
 /// How long one CDP call may take before it is abandoned.
@@ -83,10 +83,14 @@ pub struct CdpEvent {
     pub params: Value,
 }
 
+/// How many events a subscriber may fall behind before it is told it lost some.
+const EVENT_FANOUT_CAPACITY: usize = 4096;
+
 /// A live CDP connection to one target.
 pub struct CdpConnection {
     calls: mpsc::Sender<Call>,
     events: Arc<Mutex<mpsc::Receiver<CdpEvent>>>,
+    fanout: broadcast::Sender<CdpEvent>,
     page: PageTarget,
     closed: Arc<std::sync::atomic::AtomicBool>,
 }
@@ -132,6 +136,23 @@ impl CdpConnection {
     /// [`CdpError::Protocol`] when it answers with an error, and [`CdpError::Closed`] when the
     /// connection is gone.
     pub async fn call(&self, method: &str, params: Value) -> Result<Value, CdpError> {
+        self.call_within(method, params, CALL_TIMEOUT).await
+    }
+
+    /// Call a CDP method and wait for its result for at most `within`.
+    ///
+    /// A mutating action uses a shorter, configured bound than [`CALL_TIMEOUT`]: a renderer that never
+    /// acknowledges an input event is an *unknown outcome*, and how long to wait before saying so is the
+    /// driver's decision.
+    ///
+    /// # Errors
+    /// As [`Self::call`].
+    pub async fn call_within(
+        &self,
+        method: &str,
+        params: Value,
+        within: Duration,
+    ) -> Result<Value, CdpError> {
         let (reply, answered) = oneshot::channel();
         self.calls
             .send(Call {
@@ -141,7 +162,7 @@ impl CdpConnection {
             })
             .await
             .map_err(|_| CdpError::Closed)?;
-        match tokio::time::timeout(CALL_TIMEOUT, answered).await {
+        match tokio::time::timeout(within, answered).await {
             Ok(Ok(result)) => result,
             // The writer dropped the reply: the connection died mid-call.
             Ok(Err(_)) => Err(CdpError::Closed),
@@ -149,6 +170,17 @@ impl CdpConnection {
                 method: method.to_string(),
             }),
         }
+    }
+
+    /// Subscribe to every event the browser emits from now on.
+    ///
+    /// The single queue behind [`Self::next_event`] and [`Self::wait_for_event`] has one consumer, and
+    /// `wait_for_event` discards what it is not waiting for. A driver that must see every navigation,
+    /// dialog, download and certificate event therefore subscribes here instead; a subscriber that falls
+    /// too far behind is told so (`RecvError::Lagged`) and must treat what it knew as stale.
+    #[must_use]
+    pub fn subscribe(&self) -> broadcast::Receiver<CdpEvent> {
+        self.fanout.subscribe()
     }
 
     /// The next event the browser emitted, if one is already queued.
@@ -278,6 +310,16 @@ pub async fn open_page(port: u16, url: &str) -> Result<PageTarget, CdpError> {
     })
 }
 
+/// Close a page the browser has open, by its target id.
+///
+/// # Errors
+/// As [`discover`], plus [`CdpError::Endpoint`] when the browser declines.
+pub async fn close_page(port: u16, target_id: &str) -> Result<(), CdpError> {
+    http_request("GET", port, &format!("/json/close/{target_id}"))
+        .await
+        .map(|_| ())
+}
+
 /// Connect to a page target and start pumping its frames.
 ///
 /// One frame loop owns the socket in both directions, and one registry holds the calls awaiting an
@@ -299,6 +341,7 @@ pub async fn connect(target: PageTarget) -> Result<CdpConnection, CdpError> {
     let (mut sink, mut stream) = socket.split();
     let (calls_tx, mut calls_rx) = mpsc::channel::<Call>(32);
     let (events_tx, events_rx) = mpsc::channel::<CdpEvent>(256);
+    let (fanout_tx, _) = broadcast::channel::<CdpEvent>(EVENT_FANOUT_CAPACITY);
     let closed = Arc::new(std::sync::atomic::AtomicBool::new(false));
     let awaiting: Awaiting = Arc::new(Mutex::new(HashMap::new()));
 
@@ -334,6 +377,7 @@ pub async fn connect(target: PageTarget) -> Result<CdpConnection, CdpError> {
     {
         let closed = Arc::clone(&closed);
         let awaiting = Arc::clone(&awaiting);
+        let fanout = fanout_tx.clone();
         tokio::spawn(async move {
             while let Some(frame) = stream.next().await {
                 let Ok(message) = frame else { break };
@@ -364,8 +408,13 @@ pub async fn connect(target: PageTarget) -> Result<CdpConnection, CdpError> {
                         method: method.to_string(),
                         params: parsed.get("params").cloned().unwrap_or(Value::Null),
                     };
-                    if events_tx.send(event).await.is_err() {
-                        break;
+                    // Subscribers first: nobody is required to be listening.
+                    let _ = fanout.send(event.clone());
+                    // The legacy queue is bounded and has at most one consumer, and a reader that blocks
+                    // on it would stop answering calls. A full queue drops the event instead.
+                    match events_tx.try_send(event) {
+                        Ok(()) | Err(mpsc::error::TrySendError::Full(_)) => {}
+                        Err(mpsc::error::TrySendError::Closed(_)) => break,
                     }
                 }
             }
@@ -379,6 +428,7 @@ pub async fn connect(target: PageTarget) -> Result<CdpConnection, CdpError> {
     Ok(CdpConnection {
         calls: calls_tx,
         events: Arc::new(Mutex::new(events_rx)),
+        fanout: fanout_tx,
         page: target,
         closed,
     })

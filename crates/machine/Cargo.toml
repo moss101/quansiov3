@@ -21,6 +21,13 @@ sha2 = "0.10"
 thiserror = "2"
 tokio = { version = "1", features = ["macros", "rt", "sync"] }
 
+[features]
+# Lets another crate's *tests* build a DecisionReceipt without a database, so the worker half of a
+# user decision can be driven against a real browser. A receipt is otherwise minted only by
+# BrowserSessionStore for a user actor; the control-plane half is tested against real PostgreSQL in
+# this crate's own suite. No production target enables this feature.
+test-support = []
+
 [dev-dependencies]
 async-trait = "0.1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }

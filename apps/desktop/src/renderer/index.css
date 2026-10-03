@@ -2263,6 +2263,11 @@ form label:has(textarea) {
 
 .live-screen img { display: block; max-width: 100%; }
 .live-no-frame { padding: var(--s4); color: var(--fg-2); }
+.live-guard { display: flex; flex-direction: column; gap: var(--s2); }
+.live-guard .live-guard-dialog,
+.live-guard .live-guard-certificate,
+.live-guard .live-guard-in_doubt { display: flex; flex-direction: column; gap: var(--s1); }
+.live-untrusted { font-family: var(--font-mono, monospace); overflow-wrap: anywhere; }
 
 .live-cursor {
   position: absolute;

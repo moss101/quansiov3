@@ -230,8 +230,10 @@ export type { Availability, CreateInput, EffectiveCapability, MemoryScope, Narro
 export {
   agentInputAllowed,
   applyEvent as applyLiveEvent,
+  attentionNeeded,
   computerCommand,
   decodeComputerControl,
+  decodeGuard,
   decodeLiveSession,
   decodeTargets,
   decodeTerminal,
@@ -242,7 +244,25 @@ export {
   requestTakeover,
   takeoverAllowed,
 } from "./live/session.js";
-export type { ComputerControlView, Controller, LiveSession, PauseReason, RunView, SessionStatus, Tab, TargetView, TerminalSessionView } from "./live/session.js";
+export type {
+  Attention,
+  AttentionKind,
+  ComputerControlView,
+  Controller,
+  GuardCertificateView,
+  GuardDialogView,
+  GuardDownloadView,
+  GuardTabView,
+  GuardView,
+  InDoubtView,
+  LiveSession,
+  PauseReason,
+  RunView,
+  SessionStatus,
+  Tab,
+  TargetView,
+  TerminalSessionView,
+} from "./live/session.js";
 export { TerminalReplay, decodeTerminalBytes, replayPosition } from "./live/terminal.js";
 export type { Accepted, ReplayPosition, TerminalBytesFrame } from "./live/terminal.js";
 export { decodeBrowserFrame, latestFrame } from "./live/frames.js";

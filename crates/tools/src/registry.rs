@@ -72,6 +72,9 @@ impl ToolRegistry {
                 .check_catalog(&catalog.tools)
                 .expect("config/tools.yaml covers the generated tool catalog");
             registry
+                .check_side_effects(crate::side_effect::SideEffectMapping::builtin())
+                .expect("config/tools.yaml agrees with the browser_side_effects mapping");
+            registry
         })
     }
 
@@ -240,6 +243,20 @@ impl ToolRegistry {
         self.exposed_to(projection, now)
             .into_iter()
             .any(|declaration| declaration.name == name)
+    }
+
+    /// Prove every declaration agrees with the side-effect mapping (ADP-001): a browser tool declares
+    /// its side-effect class, and its effect class is the one that class maps to.
+    ///
+    /// # Errors
+    /// Returns [`ToolError::MalformedDeclaration`] naming the first disagreement.
+    pub fn check_side_effects(
+        &self,
+        mapping: &crate::side_effect::SideEffectMapping,
+    ) -> Result<(), ToolError> {
+        self.declarations
+            .iter()
+            .try_for_each(|declaration| mapping.check(declaration))
     }
 
     /// Prove the registry and the generated tool catalog cover each other exactly.

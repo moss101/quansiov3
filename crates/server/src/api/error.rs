@@ -81,6 +81,39 @@ pub enum ApiErrorCode {
     ToolOutputTruncated,
     /// Egress was refused.
     EgressDenied,
+    // Browser (ADP-001)
+    /// The revision, snapshot, capture, fingerprint or hit test no longer matches the page.
+    BrowserStalePage,
+    /// The dialog id or revision is not the pending dialog.
+    BrowserStaleDialog,
+    /// A dialog is pending; it must be answered first.
+    BrowserDialogPending,
+    /// An action id was reused with different arguments.
+    BrowserActionReplayConflict,
+    /// The outcome of a dispatched action could not be established.
+    BrowserActionInDoubt,
+    /// A secret was about to be typed on an origin outside its allow-list.
+    BrowserSecretOriginMismatch,
+    /// A secret placeholder could not be resolved.
+    BrowserSecretUnavailable,
+    /// Plain text or a printable key aimed at a password, one-time-code or card field.
+    BrowserSensitiveInputDenied,
+    /// The destination is not an http, https or about:blank URL without credentials.
+    BrowserNavigationDenied,
+    /// A certificate error waits for a decision only a user can make.
+    BrowserCertificateDecisionRequired,
+    /// The action needs a genuine user gesture.
+    BrowserGestureRequired,
+    /// A user holds the session.
+    BrowserInputFenced,
+    /// The classified consequence is above the approved tier.
+    BrowserEffectTierExceeded,
+    /// The browser Tool request is malformed.
+    BrowserInvalidRequest,
+    /// The tab, ref or selector does not exist.
+    BrowserTargetNotFound,
+    /// The page or browser failed with a known outcome.
+    BrowserPageFailure,
     // Model
     /// The provider could not be reached.
     ProviderUnavailable,
@@ -105,7 +138,7 @@ pub enum ApiErrorCode {
 
 impl ApiErrorCode {
     /// Every code in the table, so a caller can check one against it without a list of its own.
-    pub const ALL: [ApiErrorCode; 38] = [
+    pub const ALL: [ApiErrorCode; 54] = [
         ApiErrorCode::AuthRequired,
         ApiErrorCode::AuthInvalidToken,
         ApiErrorCode::AuthExpired,
@@ -135,6 +168,22 @@ impl ApiErrorCode {
         ApiErrorCode::ToolTimeout,
         ApiErrorCode::ToolOutputTruncated,
         ApiErrorCode::EgressDenied,
+        ApiErrorCode::BrowserStalePage,
+        ApiErrorCode::BrowserStaleDialog,
+        ApiErrorCode::BrowserDialogPending,
+        ApiErrorCode::BrowserActionReplayConflict,
+        ApiErrorCode::BrowserActionInDoubt,
+        ApiErrorCode::BrowserSecretOriginMismatch,
+        ApiErrorCode::BrowserSecretUnavailable,
+        ApiErrorCode::BrowserSensitiveInputDenied,
+        ApiErrorCode::BrowserNavigationDenied,
+        ApiErrorCode::BrowserCertificateDecisionRequired,
+        ApiErrorCode::BrowserGestureRequired,
+        ApiErrorCode::BrowserInputFenced,
+        ApiErrorCode::BrowserEffectTierExceeded,
+        ApiErrorCode::BrowserInvalidRequest,
+        ApiErrorCode::BrowserTargetNotFound,
+        ApiErrorCode::BrowserPageFailure,
         ApiErrorCode::ProviderUnavailable,
         ApiErrorCode::ProviderRateLimited,
         ApiErrorCode::ProviderRefusal,
@@ -179,6 +228,22 @@ impl ApiErrorCode {
             Self::ToolTimeout => "TOOL_TIMEOUT",
             Self::ToolOutputTruncated => "TOOL_OUTPUT_TRUNCATED",
             Self::EgressDenied => "EGRESS_DENIED",
+            Self::BrowserStalePage => "BROWSER_STALE_PAGE",
+            Self::BrowserStaleDialog => "BROWSER_STALE_DIALOG",
+            Self::BrowserDialogPending => "BROWSER_DIALOG_PENDING",
+            Self::BrowserActionReplayConflict => "BROWSER_ACTION_REPLAY_CONFLICT",
+            Self::BrowserActionInDoubt => "BROWSER_ACTION_IN_DOUBT",
+            Self::BrowserSecretOriginMismatch => "BROWSER_SECRET_ORIGIN_MISMATCH",
+            Self::BrowserSecretUnavailable => "BROWSER_SECRET_UNAVAILABLE",
+            Self::BrowserSensitiveInputDenied => "BROWSER_SENSITIVE_INPUT_DENIED",
+            Self::BrowserNavigationDenied => "BROWSER_NAVIGATION_DENIED",
+            Self::BrowserCertificateDecisionRequired => "BROWSER_CERTIFICATE_DECISION_REQUIRED",
+            Self::BrowserGestureRequired => "BROWSER_GESTURE_REQUIRED",
+            Self::BrowserInputFenced => "BROWSER_INPUT_FENCED",
+            Self::BrowserEffectTierExceeded => "BROWSER_EFFECT_TIER_EXCEEDED",
+            Self::BrowserInvalidRequest => "BROWSER_INVALID_REQUEST",
+            Self::BrowserTargetNotFound => "BROWSER_TARGET_NOT_FOUND",
+            Self::BrowserPageFailure => "BROWSER_PAGE_FAILURE",
             Self::ProviderUnavailable => "PROVIDER_UNAVAILABLE",
             Self::ProviderRateLimited => "PROVIDER_RATE_LIMITED",
             Self::ProviderRefusal => "PROVIDER_REFUSAL",
@@ -224,6 +289,22 @@ impl ApiErrorCode {
             | Self::ToolTimeout
             | Self::ToolOutputTruncated
             | Self::EgressDenied => "Execution",
+            Self::BrowserStalePage
+            | Self::BrowserStaleDialog
+            | Self::BrowserDialogPending
+            | Self::BrowserActionReplayConflict
+            | Self::BrowserActionInDoubt
+            | Self::BrowserSecretOriginMismatch
+            | Self::BrowserSecretUnavailable
+            | Self::BrowserSensitiveInputDenied
+            | Self::BrowserNavigationDenied
+            | Self::BrowserCertificateDecisionRequired
+            | Self::BrowserGestureRequired
+            | Self::BrowserInputFenced
+            | Self::BrowserEffectTierExceeded
+            | Self::BrowserInvalidRequest
+            | Self::BrowserTargetNotFound
+            | Self::BrowserPageFailure => "Browser",
             Self::ProviderUnavailable
             | Self::ProviderRateLimited
             | Self::ProviderRefusal
@@ -273,6 +354,25 @@ impl ApiErrorCode {
             // A bounded output is a warning the caller can act on, not a refusal.
             Self::ToolOutputTruncated => StatusCode::OK,
             Self::EgressDenied => StatusCode::FORBIDDEN,
+            // Browser (409/422): a page that moved, a dialog, a replay or a fenced session is a
+            // conflict with the state the call assumed; a denial or a malformed request is
+            // unprocessable as asked.
+            Self::BrowserStalePage
+            | Self::BrowserStaleDialog
+            | Self::BrowserDialogPending
+            | Self::BrowserActionReplayConflict
+            | Self::BrowserActionInDoubt
+            | Self::BrowserCertificateDecisionRequired
+            | Self::BrowserInputFenced => StatusCode::CONFLICT,
+            Self::BrowserSecretOriginMismatch
+            | Self::BrowserSecretUnavailable
+            | Self::BrowserSensitiveInputDenied
+            | Self::BrowserNavigationDenied
+            | Self::BrowserGestureRequired
+            | Self::BrowserEffectTierExceeded
+            | Self::BrowserInvalidRequest
+            | Self::BrowserTargetNotFound
+            | Self::BrowserPageFailure => StatusCode::UNPROCESSABLE_ENTITY,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::StreamBackpressure => StatusCode::SERVICE_UNAVAILABLE,

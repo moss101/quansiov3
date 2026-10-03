@@ -1921,6 +1921,90 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/commands/ResolveBrowserCertificate:
+    post:
+      operationId: ResolveBrowserCertificate
+      summary: 'Browser/computer: ResolveBrowserCertificate'
+      tags:
+      - Browser/computer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DecideBrowserPermission:
+    post:
+      operationId: DecideBrowserPermission
+      summary: 'Browser/computer: DecideBrowserPermission'
+      tags:
+      - Browser/computer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/commands/CreateArtifact:
     post:
       operationId: CreateArtifact
@@ -5482,6 +5566,22 @@ components:
           - TOOL_TIMEOUT
           - TOOL_OUTPUT_TRUNCATED
           - EGRESS_DENIED
+          - BROWSER_STALE_PAGE
+          - BROWSER_STALE_DIALOG
+          - BROWSER_DIALOG_PENDING
+          - BROWSER_ACTION_REPLAY_CONFLICT
+          - BROWSER_ACTION_IN_DOUBT
+          - BROWSER_SECRET_ORIGIN_MISMATCH
+          - BROWSER_SECRET_UNAVAILABLE
+          - BROWSER_SENSITIVE_INPUT_DENIED
+          - BROWSER_NAVIGATION_DENIED
+          - BROWSER_CERTIFICATE_DECISION_REQUIRED
+          - BROWSER_GESTURE_REQUIRED
+          - BROWSER_INPUT_FENCED
+          - BROWSER_EFFECT_TIER_EXCEEDED
+          - BROWSER_INVALID_REQUEST
+          - BROWSER_TARGET_NOT_FOUND
+          - BROWSER_PAGE_FAILURE
           - PROVIDER_UNAVAILABLE
           - PROVIDER_RATE_LIMITED
           - PROVIDER_REFUSAL
@@ -5788,6 +5888,20 @@ components:
       type: object
       additionalProperties: true
       description: 'Browser/computer command GrantComputerTier. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    ResolveBrowserCertificateParams:
+      type: object
+      additionalProperties: true
+      description: 'Browser/computer command ResolveBrowserCertificate. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    DecideBrowserPermissionParams:
+      type: object
+      additionalProperties: true
+      description: 'Browser/computer command DecideBrowserPermission. The concrete parameter schema is owned by the implementing
         task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
         false.'
       x-quansio-params-defined: false
@@ -6290,6 +6404,22 @@ x-quansio-error-http-map:
   TOOL_TIMEOUT: 503/504
   TOOL_OUTPUT_TRUNCATED: 503/504
   EGRESS_DENIED: 503/504
+  BROWSER_STALE_PAGE: 409/422
+  BROWSER_STALE_DIALOG: 409/422
+  BROWSER_DIALOG_PENDING: 409/422
+  BROWSER_ACTION_REPLAY_CONFLICT: 409/422
+  BROWSER_ACTION_IN_DOUBT: 409/422
+  BROWSER_SECRET_ORIGIN_MISMATCH: 409/422
+  BROWSER_SECRET_UNAVAILABLE: 409/422
+  BROWSER_SENSITIVE_INPUT_DENIED: 409/422
+  BROWSER_NAVIGATION_DENIED: 409/422
+  BROWSER_CERTIFICATE_DECISION_REQUIRED: 409/422
+  BROWSER_GESTURE_REQUIRED: 409/422
+  BROWSER_INPUT_FENCED: 409/422
+  BROWSER_EFFECT_TIER_EXCEEDED: 409/422
+  BROWSER_INVALID_REQUEST: 409/422
+  BROWSER_TARGET_NOT_FOUND: 409/422
+  BROWSER_PAGE_FAILURE: 409/422
   PROVIDER_UNAVAILABLE: 502/503
   PROVIDER_RATE_LIMITED: 502/503
   PROVIDER_REFUSAL: 502/503

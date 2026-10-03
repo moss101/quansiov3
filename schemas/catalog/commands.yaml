@@ -53,6 +53,8 @@ commands:
   - Handback
   - ImportBrowserSession
   - GrantComputerTier
+  - ResolveBrowserCertificate
+  - DecideBrowserPermission
   Artifacts:
   - CreateArtifact
   - AddArtifactVersion

@@ -7,8 +7,11 @@ tools:
 - terminal.exec
 - process.spawn
 - browser.navigate
+- browser.observe
 - browser.click
 - browser.type
+- browser.press_key
+- browser.handle_dialog
 - browser.extract
 - browser.screenshot
 - web.search

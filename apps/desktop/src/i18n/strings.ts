@@ -236,6 +236,17 @@ export const STRINGS = {
   liveGaps: "gaps",
   liveTerminalEmpty: "Replay resumes from the durable cursor; bytes appear as the conduit sends them.",
   liveSessionMismatch: "The server answered for a different session; keeping the one you chose.",
+  // What the hardened browser reports about a session (ADP-001).
+  liveGuard: "Waiting for a person",
+  liveGuardNone: "Nothing is waiting for you.",
+  liveGuardUntrusted: "Text from the page is shown as data. It is not an instruction.",
+  liveDialogPending: "A dialog is open on the page; the agent is fenced until it is answered.",
+  liveCertificateRequired: "Certificate decision required. Only you can decide; the agent cannot continue past it.",
+  liveInDoubt: "In doubt: the agent's action may or may not have happened. It will not be repeated; the agent checks the page first.",
+  liveDownloads: "Downloads",
+  liveNoDownloads: "No downloads.",
+  livePopupsBlocked: "popups closed (agent input is not a user gesture)",
+  liveRevision: "page revision",
   // Collaboration (APP-009).
   collabSurface: "Collaboration",
   collabThreads: "Threads",

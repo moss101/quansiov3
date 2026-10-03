@@ -79,8 +79,7 @@ pub fn host_owner(tool: &str) -> &'static str {
     match tool {
         "artifact.create" | "artifact.update" => ARTIFACT_HOST_OWNER,
         "knowledge.cite" => KNOWLEDGE_HOST_OWNER,
-        "browser.navigate" | "browser.click" | "browser.type" | "browser.extract"
-        | "browser.screenshot" => BROWSER_TOOL_HOST_OWNER,
+        _ if tool.starts_with("browser.") => BROWSER_TOOL_HOST_OWNER,
         _ if tool.starts_with("computer.") => COMPUTER_TOOL_HOST_OWNER,
         "web.search" | "web.fetch" => CONNECTOR_HOST_OWNER,
         _ if tool.starts_with("connector.") => CONNECTOR_HOST_OWNER,

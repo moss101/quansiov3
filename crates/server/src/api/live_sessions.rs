@@ -56,10 +56,13 @@ fn browser_error(error: BrowserSessionError, correlation: &str) -> ApiError {
         BrowserSessionError::NotFound(_) | BrowserSessionError::TargetNotFound(_) => {
             ApiErrorCode::NotFound
         }
-        BrowserSessionError::SessionIdInvalid(_) => ApiErrorCode::ValidationSchema,
-        BrowserSessionError::NotAllowed { .. } | BrowserSessionError::NotHeld { .. } => {
-            ApiErrorCode::ConflictState
-        }
+        BrowserSessionError::SessionIdInvalid(_)
+        | BrowserSessionError::DecisionNotGrantable(_)
+        | BrowserSessionError::GuardInvalid { .. } => ApiErrorCode::ValidationSchema,
+        BrowserSessionError::NotAllowed { .. }
+        | BrowserSessionError::NotHeld { .. }
+        | BrowserSessionError::DecisionSubjectNotFound(_) => ApiErrorCode::ConflictState,
+        BrowserSessionError::UserDecisionRequired { .. } => ApiErrorCode::ScopeForbidden,
         BrowserSessionError::Database(_) | BrowserSessionError::Corrupt { .. } => {
             ApiErrorCode::Internal
         }
@@ -121,11 +124,16 @@ pub fn session_json(session: &BrowserSession) -> Value {
             "target_id": tab.target_id,
             "url": tab.url,
             "title": tab.title,
+            "document_revision": tab.document_revision,
         })).collect::<Vec<_>>(),
         "screencast": session.screencast,
         "checkpoint_id": session.checkpoint_id,
         "status": session.status.as_str(),
         "agent_may_drive": session.agent_may_drive(),
+        // What the hardened driver last reported (ADP-001): a dialog or a certificate error waiting
+        // for an answer, downloads, and browser actions in doubt. Page-derived text in it is
+        // UNTRUSTED_EXTERNAL; the surface renders it as data.
+        "guard": session.guard.to_json(),
     })
 }
 
@@ -969,6 +977,7 @@ mod tests {
             screencast: json!({}),
             checkpoint_id: None,
             status: SessionStatus::Active,
+            guard: quansio_machine::control::browser::GuardState::default(),
         };
         let free = automation_json(&session, Some(RunStatus::Running), None);
         assert_eq!(free["paused"], false);
