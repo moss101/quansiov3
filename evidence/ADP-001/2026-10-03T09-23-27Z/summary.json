@@ -1,0 +1,295 @@
+{
+  "task_id": "ADP-001",
+  "git_commit": "9725c432cfb7e834bf5fe53e151af0f6f9157a17",
+  "recorded_at": "2026-10-03T09:23:27Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-qworkerd  # 85 passed, 0 failed, against a real headless Google Chrome 154.0.8037.93 (+ python3/openssl for a real HTTPS server with a self-signed certificate). New suites: browser_fencing (5), browser_ledger (6), browser_secrets (8), browser_guard (15), browser_contract (3), plus 20 unit tests; EXEC-009's browser suite (5) still passes. Proves: a stale revision/snapshot/capture/fingerprint/hit test never clicks (server-side hit counts), an in-doubt action is not retried (real unacknowledged click, redelivery, restart), secrets never in model context/journal/digests and refused outside the allow-list (top and target frame), plain text refused in password/one-time-code/card fields, dialogs fence, downloads are bounded, permissions denied, certificate errors wait for a user, agent input is not a gesture",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-03T09-23-27Z/browser-suites.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test -p quansio-machine --test browser --test browser_guard  # 12 passed against real PostgreSQL: the guard report is parsed strictly and stored on the session row; only a user decides a certificate or grants camera/microphone, an agent actor leaves the row byte-for-byte unchanged, a report cannot undo a decision; a placeholder resolves through the secret broker's own handles scoped to browser.type and the value is in no stored column",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-03T09-23-27Z/browser-control-plane.log"
+    },
+    {
+      "command": "cargo test -p quansio-tools  # browser tool declarations: every browser tool declares a side-effect class that agrees with config/effects.yaml, no selector-only mutating tool, a lowered tier or missing class is refused, idempotency keys move with snapshot/ref/revision",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-03T09-23-27Z/tool-registry.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 990 passed, 0 failed across 150 suites",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-03T09-23-27Z/workspace-tests.log"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; paths are this worktree's)  # 29 mutants of the guards, every one COMPILES and every one KILLED by a named test after CONTROL-PASSED on the unmutated suite",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-03T09-23-27Z/mutation-checks.log"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-03T09-23-27Z/lint.log"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py; scripts/ci/arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py --check; legacy_map_check.py; supply_chain/check.py  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-03T09-23-27Z/static-gates.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci  # 238 passed (test_generated_bindings_are_current deselected: the Rust contract generator cannot run from a worktree under .claude/worktrees; verified by the external-checkout ci.sh run)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-03T09-23-27Z/python-tests.log"
+    },
+    {
+      "command": "cd apps/desktop && npx vitest run && tsc --noEmit; npx eslint apps/desktop  # 136 passed (41 e2e skipped: they need a built server), typecheck and eslint clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-03T09-23-27Z/desktop-tests.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-qworkerd  # 85 passed, 0 failed, against a real headless Google Chrome 154.0.8037.93 (+ python3/openssl for a real HTTPS server with a self-signed certificate). New suites: browser_fencing (5), browser_ledger (6), browser_secrets (8), browser_guard (15), browser_contract (3), plus 20 unit tests; EXEC-009's browser suite (5) still passes. Proves: a stale revision/snapshot/capture/fingerprint/hit test never clicks (server-side hit counts), an in-doubt action is not retried (real unacknowledged click, redelivery, restart), secrets never in model context/journal/digests and refused outside the allow-list (top and target frame), plain text refused in password/one-time-code/card fields, dialogs fence, downloads are bounded, permissions denied, certificate errors wait for a user, agent input is not a gesture",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test -p quansio-machine --test browser --test browser_guard  # 12 passed against real PostgreSQL: the guard report is parsed strictly and stored on the session row; only a user decides a certificate or grants camera/microphone, an agent actor leaves the row byte-for-byte unchanged, a report cannot undo a decision; a placeholder resolves through the secret broker's own handles scoped to browser.type and the value is in no stored column",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-tools  # browser tool declarations: every browser tool declares a side-effect class that agrees with config/effects.yaml, no selector-only mutating tool, a lowered tier or missing class is refused, idempotency keys move with snapshot/ref/revision",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 990 passed, 0 failed across 150 suites",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; paths are this worktree's)  # 29 mutants of the guards, every one COMPILES and every one KILLED by a named test after CONTROL-PASSED on the unmutated suite",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py; scripts/ci/arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py --check; legacy_map_check.py; supply_chain/check.py  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci  # 238 passed (test_generated_bindings_are_current deselected: the Rust contract generator cannot run from a worktree under .claude/worktrees; verified by the external-checkout ci.sh run)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && npx vitest run && tsc --noEmit; npx eslint apps/desktop  # 136 passed (41 e2e skipped: they need a built server), typecheck and eslint clean",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/ADP-001/2026-10-03T09-23-27Z/browser-control-plane.log",
+      "sha256": "5fd3383a3f134b34b7fcadbbea135c78b59feeaa297e55365b9b64eac48986b6",
+      "bytes": 1549
+    },
+    {
+      "path": "evidence/ADP-001/2026-10-03T09-23-27Z/browser-suites.log",
+      "sha256": "117360ae84b399bc68d19fe58bb94de5db1b462bec16e6ae043ca9db3b4bc7ff",
+      "bytes": 8246
+    },
+    {
+      "path": "evidence/ADP-001/2026-10-03T09-23-27Z/desktop-tests.log",
+      "sha256": "ac164382905aa300f93bd4b66a57e91f97cc29be4ff6341e677834c0b10620bb",
+      "bytes": 2005
+    },
+    {
+      "path": "evidence/ADP-001/2026-10-03T09-23-27Z/lint.log",
+      "sha256": "74b2a955695eedbeadc10e3928503005b1d097303221b428e0468e16101e6574",
+      "bytes": 833
+    },
+    {
+      "path": "evidence/ADP-001/2026-10-03T09-23-27Z/mutation-checks.log",
+      "sha256": "6240309979d1cfa273b045c1036a1df206505fcdd877a3a9fc51f76aed4735e5",
+      "bytes": 5564
+    },
+    {
+      "path": "evidence/ADP-001/2026-10-03T09-23-27Z/mutation-checks.py",
+      "sha256": "c24bd5f8fac2dae1727f2ab19e81caec125228feb00ba683ad8ea3bbe3225baa",
+      "bytes": 12883
+    },
+    {
+      "path": "evidence/ADP-001/2026-10-03T09-23-27Z/python-tests.log",
+      "sha256": "a7b4023169a811ca857e0dd957486f6d7498fa96df30b6864d4427e40200675f",
+      "bytes": 362
+    },
+    {
+      "path": "evidence/ADP-001/2026-10-03T09-23-27Z/static-gates.log",
+      "sha256": "f9450cf3bc729ba78a68bca7d42a20b1f2905833a5f7c4293f82b71e3a3f0ca9",
+      "bytes": 1927
+    },
+    {
+      "path": "evidence/ADP-001/2026-10-03T09-23-27Z/tool-registry.log",
+      "sha256": "84ed47fb5ad08da179e542be593e96d7ace0df8b7f0669d79bc2c898dd7c0754",
+      "bytes": 3628
+    },
+    {
+      "path": "evidence/ADP-001/2026-10-03T09-23-27Z/workspace-tests.log",
+      "sha256": "d6f106fb1a1741913db678f4eb13c12d45eb2f845d780d0d2053daa14976ab56",
+      "bytes": 102997
+    },
+    {
+      "path": "evidence/ADP-001/RECONCILIATION.md",
+      "sha256": "61d77f9d68de4945c362dd621befb902e7bc820a8b6ecb7452965ee6f882330d",
+      "bytes": 8014
+    },
+    {
+      "path": "evidence/ADP-001/NOTES.md",
+      "sha256": "1381967d897d039b974aa6aca49a0ba93542a56ef2d3921c919258ba47fdf4fc",
+      "bytes": 9770
+    },
+    {
+      "path": "crates/qworkerd/src/browser/driver.rs",
+      "sha256": "82b9efbaac36c0661fd637d113959f92c53ca86ea7ff0c3ca58b5c6e9b9f06a4",
+      "bytes": 66597
+    },
+    {
+      "path": "crates/qworkerd/src/browser/actions.rs",
+      "sha256": "05c8af4931638bee704673c3a73227c8f34419af9789a0b4aa97561bf56b5be5",
+      "bytes": 56679
+    },
+    {
+      "path": "crates/qworkerd/src/browser/journal.rs",
+      "sha256": "c0a23ebb59a28771cf84dd52fc15cb83155c781dc1bcae2ff9174ca2cb447cbd",
+      "bytes": 15406
+    },
+    {
+      "path": "crates/qworkerd/src/browser/fence.rs",
+      "sha256": "882605ee0b2d141e0730d7a452496f856a18d351595b4dded2f45653cf2499f9",
+      "bytes": 10850
+    },
+    {
+      "path": "crates/qworkerd/src/browser/tab.rs",
+      "sha256": "302ec79e07b44ed3af397faa6c1521993a7fb6f8ad5a50e8c7222feaa942e738",
+      "bytes": 34745
+    },
+    {
+      "path": "crates/qworkerd/src/browser/secrets.rs",
+      "sha256": "8943d1728c74f52b18cbb0ca3935a2186ef83acde5013ef04af3448be6b4410e",
+      "bytes": 13002
+    },
+    {
+      "path": "crates/qworkerd/src/browser/origin.rs",
+      "sha256": "dbaa98862a17fc165da043e3091a79900c7021e4964d100711055e2a8bb1fd1e",
+      "bytes": 7189
+    },
+    {
+      "path": "crates/qworkerd/src/browser/fault.rs",
+      "sha256": "592211a38662f78a3c95288f30a269fbdbca6e2f0ec1c4366a27d5ec5f30d5cd",
+      "bytes": 7541
+    },
+    {
+      "path": "crates/qworkerd/src/browser/tools.rs",
+      "sha256": "b2aaff876d5c952a121b828b372b6023af7f5ecefb627cd831aa0ff25dd6ef88",
+      "bytes": 13669
+    },
+    {
+      "path": "crates/qworkerd/src/browser/cdp.rs",
+      "sha256": "c03f18deb67ce42b469b0e38d748d5581df3d895c600ef5361cf708ff1fa0872",
+      "bytes": 19785
+    },
+    {
+      "path": "crates/qworkerd/tests/common/mod.rs",
+      "sha256": "92fcbf68b1b17ea397552b612b6f537fe4a17fcc984fe44c113eec0850359b2e",
+      "bytes": 19600
+    },
+    {
+      "path": "crates/qworkerd/tests/browser_fencing.rs",
+      "sha256": "a7a61d2e669a9e7750a3b920a2b1f3b5ef1bd63e45163903acaf0fd52d2eb4aa",
+      "bytes": 12549
+    },
+    {
+      "path": "crates/qworkerd/tests/browser_ledger.rs",
+      "sha256": "f1ba011ae86c885dcbc1bbf01792b38b40ded27c951ea3ef4bcb090496e2200c",
+      "bytes": 14575
+    },
+    {
+      "path": "crates/qworkerd/tests/browser_secrets.rs",
+      "sha256": "1fb7e2c69e3ad02b11f437afd7c6cbd082a56cc755d8353d657b78eeda515f20",
+      "bytes": 25489
+    },
+    {
+      "path": "crates/qworkerd/tests/browser_guard.rs",
+      "sha256": "7a81c13f27580983366eae81054840231facf1048af6dfb9a076158309d9d721",
+      "bytes": 44422
+    },
+    {
+      "path": "crates/qworkerd/tests/browser_contract.rs",
+      "sha256": "52f2a8b1821a9894a7540c065e3ea6706553e9ec750886e50fb12b22ac8abe3e",
+      "bytes": 7112
+    },
+    {
+      "path": "crates/machine/src/control/browser.rs",
+      "sha256": "bdc376dd980972b9077e9f49a7a53b7e065da177e53f4c8bc0c9099f9025d863",
+      "bytes": 21155
+    },
+    {
+      "path": "crates/machine/src/control/browser_guard.rs",
+      "sha256": "bb5d1b1c5ebdb9103c72db388cf19750d07a81a0f35454199425346bc8d57d37",
+      "bytes": 34737
+    },
+    {
+      "path": "crates/machine/tests/browser_guard.rs",
+      "sha256": "eaed360777e6b7ed888c8519a694cacbc402be10d26714306f48e889bb00ae35",
+      "bytes": 26972
+    },
+    {
+      "path": "crates/tools/src/side_effect.rs",
+      "sha256": "4dcf6f9d8550d7477a9845852573a6de06958714b0a2fba9cf256c0988a35901",
+      "bytes": 8622
+    },
+    {
+      "path": "crates/tools/tests/browser_side_effects.rs",
+      "sha256": "e6f69f6eaa26471a69a86b016d4b3bc3231af0a5d3174762a13c3bd1ac69dc42",
+      "bytes": 11162
+    },
+    {
+      "path": "migrations/0025_browser_guard_state.sql",
+      "sha256": "07728366712ec112efa67834c46c913ba876aa07bb61795fc7d049236294197a",
+      "bytes": 1100
+    },
+    {
+      "path": "config/tools.yaml",
+      "sha256": "d6dddc2ee58c927121a28a60b2fc4abf56e46cfb0440f0af44d0959b83723a93",
+      "bytes": 44521
+    },
+    {
+      "path": "config/effects.yaml",
+      "sha256": "aeed15edd6a878eeb94817c3e295b568b98f31c8bfa48c54bde38f2078edd3e7",
+      "bytes": 5121
+    },
+    {
+      "path": "DOMAIN.md",
+      "sha256": "a4afd54d570e760e435c68d603e50654179003de8ff7d2b579116edbe88c29c8",
+      "bytes": 90053
+    }
+  ]
+}

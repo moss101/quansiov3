@@ -3074,17 +3074,17 @@
     },
     "ADP-001": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "IN_PROGRESS",
       "claimed_by": "agent:adp-001",
       "started_at": "2026-10-03T07:56:30Z",
-      "updated_at": "2026-10-03T07:56:30Z",
+      "updated_at": "2026-10-03T09:23:36Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Implementation complete on task/ADP-001-browser-hardening; evidence bundle recorded; PASS follows the merge to main."
     },
     "ADP-002": {
       "coverage": null,

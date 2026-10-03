@@ -1,0 +1,11 @@
+===== cargo fmt --all --check =====
+exit=0
+
+===== cargo clippy --workspace --all-targets -- -D warnings =====
+    Checking quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a89e68c0f39d045d2/crates/machine)
+    Checking quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a89e68c0f39d045d2/crates/tools)
+    Checking quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a89e68c0f39d045d2/crates/server)
+    Checking quansio-qworkerd v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a89e68c0f39d045d2/crates/qworkerd)
+    Checking quansio-native-windows v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a89e68c0f39d045d2/native/windows)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 12.29s
+exit=0

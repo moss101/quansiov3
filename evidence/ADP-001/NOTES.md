@@ -22,16 +22,21 @@ Dialogs, downloads, permissions, certificates, gesture, labelling and the strict
 
 ## Mutation checks
 
-`adp001-mutations.log`: each guard was broken on purpose (31 mutants: revision, fingerprint, hit test,
-invalidation, scroll, pixel warning, replay gate, digest conflict, restart doubt, queue, tier ceiling,
-sent flag, plain text in sensitive fields, secret origin (top and frame), printable keys, digest over the
-substituted text, dialog fence, popup gesture, dialog id, certificate pending, permission denial,
-navigation validation, schema validation in and out, the side-effect mapping check, user-only decisions,
-report-undoes-decision, secret label match). A mutant is KILLED only if it compiled (`COMPILES`), the
-unmutated suite passed first (`CONTROL-PASSED`) and a named test then failed. One mutant first logged
-`SURVIVED` — disabling only the scheme check of `validate_navigation` — and was an equivalent mutant:
-`origin_of` refuses every non-web URL on the next line, so the check is defence in depth. The mutant
-that disables the whole validation is killed.
+`mutation-checks.log` (script: `mutation-checks.py`): each guard was broken on purpose — 29 mutants:
+revision, fingerprint, hit test, invalidation, scroll, pixel warning, replay gate, digest conflict,
+restart doubt, queue, tier ceiling, the sent flag, plain text in sensitive fields, secret origin (top and
+frame), printable keys, digest over the substituted text, dialog fence, popup gesture, dialog id,
+certificate pending, permission denial, navigation validation, schema validation in and out, the
+side-effect mapping check, user-only decisions, report-undoes-decision, secret label match. A mutant is
+KILLED only if it compiled (`COMPILES`), the unmutated suite passed first (`CONTROL-PASSED`) and a named
+test then failed; a mutant that does not compile is `NO-VERDICT`, never KILLED. In the final run all 29
+compile and all 29 are killed. Two earlier verdicts were not clean and were replaced rather than
+counted: a mutant whose `if false` match guard left the match non-exhaustive did not compile
+(NO-VERDICT; replaced by one that stops the sent flag being set), and a mutant that disabled only the
+scheme check of `validate_navigation` SURVIVED because `origin_of` refuses every non-web URL on the next
+line (an equivalent mutant — defence in depth; replaced by one that disables the whole validation).
+The unit tests for the result-validation step (`tools.rs`) were added after the first run showed that
+nothing in the Chrome suites produced a schema-invalid result.
 
 ## Traps met, and what was decided
 

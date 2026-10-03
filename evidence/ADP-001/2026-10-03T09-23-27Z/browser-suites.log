@@ -1,0 +1,154 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s
+     Running unittests src/lib.rs (target/debug/deps/quansio_qworkerd-9cbf4d26adf750b4)
+
+running 20 tests
+test browser::origin::tests::external_handoffs_are_application_schemes ... ok
+test browser::fence::tests::a_fingerprint_names_what_changed ... ok
+test browser::secrets::tests::placeholders_split_around_literals ... ok
+test browser::tab::tests::filenames_lose_their_separators ... ok
+test browser::secrets::tests::a_half_written_placeholder_is_refused_not_typed ... ok
+test browser::fence::tests::a_neighbourhood_is_clipped_to_the_viewport ... ok
+test browser::tab::tests::a_dialog_is_pending_until_it_closes ... ok
+test browser::secrets::tests::a_secret_has_no_rendering ... ok
+test browser::tab::tests::a_window_and_an_application_handoff_are_follow_ups ... ok
+test browser::secrets::tests::sensitivity_follows_the_signals_the_browser_acts_on ... ok
+test browser::tab::tests::a_download_over_the_cap_is_cancelled_and_named_so ... ok
+test browser::fence::tests::exactly_one_target_form_is_accepted ... ok
+test browser::tab::tests::a_navigation_changes_the_revision_and_drops_observations ... ok
+test browser::origin::tests::an_allow_list_entry_with_no_origin_matches_nothing ... ok
+test browser::origin::tests::origins_are_canonical ... ok
+test browser::origin::tests::navigation_is_web_only_without_credentials ... ok
+test browser::tab::tests::a_certificate_error_on_a_navigation_is_pending_and_one_on_a_subresource_is_cancelled ... ok
+test browser::tools::tests::a_reconciled_replay_is_not_held_to_the_tools_output ... ok
+test browser::tools::tests::an_in_doubt_report_is_an_unknown_outcome_with_the_flags_that_forbid_a_retry ... ok
+test browser::tools::tests::a_result_the_declaration_does_not_describe_is_not_returned ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/browser.rs (target/debug/deps/browser-cf39d09cf8881eda)
+
+running 5 tests
+test a_takeover_fences_agent_input_without_creating_a_second_session ... ok
+test a_click_is_classified_from_the_page_s_own_semantics_before_it_happens ... ok
+test web_fetch_is_bounded_labelled_and_digested ... ok
+test the_dom_is_read_first_and_a_screenshot_only_when_it_says_nothing ... ok
+test a_dom_action_round_trip_stays_inside_the_budget ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.40s
+
+     Running tests/browser_contract.rs (target/debug/deps/browser_contract-281acddd21e2ad87)
+
+running 3 tests
+test the_three_new_tools_and_the_side_effect_table_are_in_the_domain ... ok
+test every_browser_error_code_is_documented_with_the_flags_the_code_returns ... ok
+test extract_and_a_screenshot_observation_return_what_their_declarations_describe ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.01s
+
+     Running tests/browser_fencing.rs (target/debug/deps/browser_fencing-f3e5a6e4e21d152b)
+
+running 5 tests
+test a_click_on_the_page_the_model_observed_lands_exactly_once ... ok
+test a_stale_revision_snapshot_or_fingerprint_never_clicks ... ok
+test a_snapshot_is_good_for_one_action ... ok
+test a_point_read_before_the_page_scrolled_is_stale ... ok
+test a_point_is_bound_to_the_capture_it_was_read_from ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.32s
+
+     Running tests/browser_guard.rs (target/debug/deps/browser_guard-854db3b4ee9725b9)
+
+running 15 tests
+test the_agent_tool_surface_has_no_route_to_a_user_decision ... ok
+test navigation_is_web_only_without_credentials ... ok
+test a_user_can_cancel_and_an_undecided_error_is_cancelled_after_its_wait ... ok
+test a_download_that_stalls_is_cancelled ... ok
+test a_download_over_its_size_cap_is_cancelled ... ok
+test a_certificate_error_waits_for_a_user_and_agent_input_cannot_dismiss_it ... ok
+test everything_the_page_says_is_labelled_untrusted_and_the_surface_is_strict ... ok
+test a_download_is_directed_to_the_session_directory_named_safely_and_hashed ... ok
+test a_pending_dialog_fences_every_other_action_until_it_is_answered ... ok
+test a_user_can_continue_and_the_certificate_hash_is_recorded ... ok
+test confirm_and_prompt_dialogs_deliver_the_answer_to_the_page ... ok
+test every_permission_is_denied_and_agent_input_cannot_grant_one ... ok
+test only_a_user_decision_grants_media_and_only_for_its_origin ... ok
+test a_download_that_never_starts_is_cancelled ... ok
+test agent_input_is_not_a_gesture_and_a_users_is ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.62s
+
+     Running tests/browser_ledger.rs (target/debug/deps/browser_ledger-ba70acbdaced2356)
+
+running 6 tests
+test the_journal_survives_a_torn_final_line ... ok
+test a_replayed_action_returns_the_stored_result_and_never_touches_the_page ... ok
+test a_consequence_above_the_approved_tier_is_refused_before_dispatch ... ok
+test side_effecting_actions_are_serialized_in_one_queue ... ok
+test an_unacknowledged_click_is_in_doubt_surfaced_and_never_retried ... ok
+test a_restart_in_the_middle_of_an_action_leaves_it_in_doubt_and_unrepeated ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.44s
+
+     Running tests/browser_secrets.rs (target/debug/deps/browser_secrets-bcc58b65daed3674)
+
+running 8 tests
+test plain_text_is_refused_in_password_one_time_code_and_card_fields ... ok
+test the_ledger_digest_is_over_the_placeholder_form_not_the_value ... ok
+test a_placeholder_without_a_broker_or_above_the_approved_tier_is_refused ... ok
+test a_printable_key_is_refused_in_a_sensitive_field_and_in_a_frame_it_cannot_read ... ok
+test a_placeholder_is_resolved_at_insertion_and_the_value_leaves_no_trace ... ok
+test a_page_that_moves_while_the_secret_is_resolved_receives_nothing ... ok
+test a_secret_is_refused_on_an_origin_outside_its_allow_list ... ok
+test the_target_frame_is_checked_as_well_as_the_top_frame ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.34s
+
+     Running tests/host.rs (target/debug/deps/host-6d5021a9c5297592)
+
+running 13 tests
+test a_private_worker_is_never_dialled ... ok
+test an_unknown_kind_is_refused_rather_than_guessed ... ok
+test a_worker_reports_the_state_it_observes_and_only_its_own_generation ... ok
+test the_sink_bounds_each_chunk_as_it_arrives ... ok
+test a_failing_tool_is_recorded_as_a_failure ... ok
+test a_replayed_dispatch_is_answered_from_the_record_not_run_again ... ok
+test a_checkpoint_hook_records_the_target ... ok
+test a_stale_envelope_fails_before_any_tool_runs ... ok
+test a_cancelled_effect_is_recorded_and_not_re_dispatched ... ok
+test qworkerd_evaluates_no_policy_or_capability ... ok
+test a_replay_after_the_lease_lapsed_is_fenced_rather_than_served ... ok
+test output_is_bounded_while_the_tool_streams_and_evidence_is_uploaded ... ok
+test qworkerd_reaches_no_control_plane_database ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/scm_tools.rs (target/debug/deps/scm_tools-e48e19507deafa4d)
+
+running 3 tests
+test remote_writes_are_classified_and_keyed_not_executed ... ok
+test local_read_operations_work_offline ... ok
+test commit_is_a_local_write_settling_the_callers_effect ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running tests/tools.rs (target/debug/deps/tools-b49914935a747537)
+
+running 7 tests
+test a_reconnect_resumes_from_the_durable_cursor_without_running_the_command_again ... ok
+test a_root_must_be_absolute_existing_and_a_directory ... ok
+test a_path_that_leaves_its_root_is_refused_before_any_io ... ok
+test a_patch_applies_all_or_nothing ... ok
+test a_write_checks_its_declared_digest_and_reads_back_with_provenance ... ok
+test output_is_bounded_while_a_command_runs ... ok
+kill: 31245: No such process
+test a_command_is_cancelled_while_it_runs_and_stopped_when_it_is ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+   Doc-tests quansio_qworkerd
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+exit=0
