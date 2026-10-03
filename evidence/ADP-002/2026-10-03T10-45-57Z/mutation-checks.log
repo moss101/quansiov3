@@ -1,0 +1,132 @@
+CONTROL-PASSED  machine
+COMPILES    receipt: a measured violation no longer overrides the bridge's claim
+KILLED      receipt: a measured violation no longer overrides the bridge's claim -- a_bridge_flag_can_add_a_violation_but_never_clear_one (+3 more)
+            says: physical input
+COMPILES    receipt: an unmeasured background 'applied' is no longer lowered to unknown
+KILLED      receipt: an unmeasured background 'applied' is no longer lowered to unknown -- a_background_claim_without_a_measurement_cannot_be_verified (+1 more)
+            says: lowered: Incoherent("a background action cannot be verified without a measurement")
+COMPILES    receipt: an unknown effect is written to the wire as verified
+KILLED      receipt: an unknown effect is written to the wire as verified -- a_bridge_that_cannot_verify_gets_an_unknown_receipt_not_a_verified_one (+4 more)
+            says: assertion `left == right` failed
+COMPILES    receipt: 'verified' is accepted for an action that dispatched nothing
+KILLED      receipt: 'verified' is accepted for an action that dispatched nothing -- contradictory_receipts_are_incoherent
+            says: ActionReceipt { method: HidEvent, execution_method: Foreground, dispatched: false, effect_verified: Some(true), outcome: Refused, invariant_violated: false, invariants: None } was accepted
+COMPILES    receipt: an unverified action settles as success in the ledger
+KILLED      receipt: an unverified action settles as success in the ledger -- a_bridge_that_cannot_verify_gets_an_unknown_receipt_not_a_verified_one (+1 more)
+            says: assertion `left == right` failed
+COMPILES    dispatcher: the bridge's receipt is used without being re-derived
+KILLED      dispatcher: the bridge's receipt is used without being re-derived -- a_bridge_that_cannot_verify_gets_an_unknown_receipt_not_a_verified_one (+2 more)
+            says: assertion `left == right` failed
+COMPILES    dispatcher: a missing permission no longer stops the action
+KILLED      dispatcher: a missing permission no longer stops the action -- a_lapsed_foreground_grant_asks_the_person_to_pause_input_and_never_opens_settings (+3 more)
+            says: expected a park
+COMPILES    dispatcher: an input that failed after dispatch releases its slot (blind retry)
+KILLED      dispatcher: an input that failed after dispatch releases its slot (blind retry) -- an_incoherent_receipt_is_a_bridge_fault_handled_like_a_failed_call
+            says: ReadFailed(NativeBridgeError { code: "receipt_incoherent" })
+COMPILES    sequence: a user stop is not checked
+KILLED      sequence: a user stop is not checked -- a_user_stop_ends_the_sequence_and_the_model_is_not_asked_again (+1 more)
+            says: assertion `left == right` failed
+COMPILES    sequence: a changed generation is not a takeover
+KILLED      sequence: a changed generation is not a takeover -- a_takeover_requested_during_an_action_ends_the_sequence_after_that_action
+            says: assertion `left == right` failed: a sequence from an older generation was still asked for actions
+COMPILES    sequence: a pending takeover is not seen before the next action
+KILLED      sequence: a pending takeover is not seen before the next action -- a_takeover_requested_during_an_action_ends_the_sequence_after_that_action
+            says: assertion `left == right` failed: the model was not asked for a third action
+COMPILES    sequence: the action limit is not enforced
+KILLED      sequence: the action limit is not enforced -- a_spent_limit_ends_the_sequence_for_each_kind_of_limit
+            says: assertion `left == right` failed
+COMPILES    sequence: the wall-time limit is not enforced
+KILLED      sequence: the wall-time limit is not enforced -- a_spent_limit_ends_the_sequence_for_each_kind_of_limit
+            says: assertion `left == right` failed
+COMPILES    sequence: the typed-byte limit is not enforced
+KILLED      sequence: the typed-byte limit is not enforced -- a_spent_limit_ends_the_sequence_for_each_kind_of_limit
+            says: assertion `left == right` failed
+COMPILES    sequence: a permission revoked mid-sequence parks instead of ending it
+KILLED      sequence: a permission revoked mid-sequence parks instead of ending it -- a_permission_revoked_mid_sequence_stops_it_with_a_guide_to_restore_it
+            says: expected a terminal condition, got Parked(AttentionRequest { reason: PermissionMissing, permission: Some(Accessibility), status: Some(Denied), guide: OpenSettings { pane: "Privacy_Accessibility" } })
+COMPILES    sequence: a receipt that says 'not applied' no longer halts the sequence
+KILLED      sequence: a receipt that says 'not applied' no longer halts the sequence -- a_receipt_that_says_the_effect_is_absent_halts_the_sequence_without_being_a_terminal_condition
+            says: assertion `left == right` failed
+COMPILES    permission: a lapsed foreground grant is ignored
+KILLED      permission: a lapsed foreground grant is ignored -- a_missing_permission_outranks_a_lapsed_grant_and_the_two_have_different_answers (+1 more)
+            says: parks: ()
+COMPILES    permission: a restricted permission sends the person to Settings
+KILLED      permission: a restricted permission sends the person to Settings -- the_attention_items_the_desktop_parses_are_exactly_what_the_runtime_writes
+            says: assertion `left == right` failed
+COMPILES    permission: a screenshot does not need Screen Recording
+KILLED      permission: a screenshot does not need Screen Recording -- each_action_names_the_permissions_it_needs
+            says: assertion `left == right` failed
+COMPILES    permission: an unknown permission in a status is ignored
+KILLED      permission: an unknown permission in a status is ignored -- a_status_that_is_only_partly_understood_is_not_used
+            says: assertion failed: PermissionStatus::from_json(&extra).is_err()
+COMPILES    helper: the pinned bundle ids are not checked
+KILLED      helper: the pinned bundle ids are not checked -- a_helper_with_the_wrong_identity_is_refused (+1 more)
+            says: wrong identifier: VerifiedHelper { identity: HelperIdentity { identifier: Some("com.example.imposter"), team_id: None, cdhash: "a33f543e20373704dd630b629ebd9dbd32726e94", hardened_runtime: true, adhoc
+COMPILES    helper: the signature is not verified
+KILLED      helper: the signature is not verified -- a_helper_with_the_wrong_identity_is_refused
+            says: RequirementNotSatisfied { detail: "the identifier requirement failed" }
+COMPILES    helper: the designated requirement is not tested
+KILLED      helper: the designated requirement is not tested -- the_production_pin_needs_an_apple_anchor_and_the_configured_team
+            says: ad hoc is not the pinned team: VerifiedHelper { identity: HelperIdentity { identifier: Some("com.quansio.computer-helper"), team_id: None, cdhash: "362920e52cbcfc6d563fa60935ee822ad2230a44", hardened_
+COMPILES    helper: the hardened runtime is not required
+KILLED      helper: the hardened runtime is not required -- a_helper_with_the_wrong_identity_is_refused
+            says: no hardened runtime: VerifiedHelper { identity: HelperIdentity { identifier: Some("com.quansio.computer-helper"), team_id: None, cdhash: "020d5427ca6754e099ff0fc1e320386f5282010c", hardened_runtime: f
+COMPILES    helper: an installed version is not held to its fingerprint
+KILLED      helper: an installed version is not held to its fingerprint -- a_helper_that_changes_after_install_is_refused_at_launch
+            says: fingerprint changed: HelperProcess { child: Child { stdin: None, stdout: None, stderr: None, .. }, installed: InstalledHelper { fingerprint: "57b26876f55144cdda924099a2c060a6e320609a95f3152765e3eab3fd
+COMPILES    helper: an old version is never pruned
+KILLED      helper: an old version is never pruned -- install_copies_into_a_versioned_directory_verifies_the_copy_and_prunes
+            says: assertion `left == right` failed: ["f58e1777d7bd2128af6aec78b8edd29c097513d9f19c21c0105b3566cc9b3113", "ff5fbed49659910e8917fdb552ac26241d1667d72a27961e71b4575cc0f77e5f", "85e7d928347f0848bf299263c37d
+COMPILES    helper: a rollback forgets the version it replaced
+KILLED      helper: a rollback forgets the version it replaced -- install_copies_into_a_versioned_directory_verifies_the_copy_and_prunes
+            says: assertion `left == right` failed
+COMPILES    helper: a failed probe does not restore the active pointer
+KILLED      helper: a failed probe does not restore the active pointer -- a_failed_activation_probe_restores_the_previous_version
+            says: assertion `left == right` failed: the earlier version is active again
+COMPILES    helper: the orphan sweep ignores where the helper runs from
+KILLED      helper: the orphan sweep ignores where the helper runs from -- a_second_sweep_finds_nothing_to_do (+1 more)
+            says: assertion failed: installer.terminate_orphans(&[]).expect("sweep").is_empty()
+COMPILES    helper: the orphan sweep kills the runtime's own helper
+KILLED      helper: the orphan sweep kills the runtime's own helper -- orphaned_helpers_are_terminated_at_start_and_nothing_else_is
+            says: assertion `left == right` failed: [OrphanOutcome { pid: 89311, command: "/private/var/folders/_1/1xvpd9n50m97rq8_c4ylpw940000gn/T/quansio-adp002-orphans-89016/data/computer-helper/versions/57b26876f55
+COMPILES    config: the Apple anchor can be switched off
+KILLED      config: the Apple anchor can be switched off -- configuration_that_weakens_the_pin_does_not_load
+            says: # Native computer use (ADP-002, DOMAIN.md 8.6.1). Policy lives here, never as a source constant (D-018).
+COMPILES    config: a published helper need not name a team
+KILLED      config: a published helper need not name a team -- configuration_that_weakens_the_pin_does_not_load
+            says: # Native computer use (ADP-002, DOMAIN.md 8.6.1). Policy lives here, never as a source constant (D-018).
+CONTROL-PASSED  tools
+COMPILES    tools: a loosened receipt schema is accepted
+KILLED      tools: a loosened receipt schema is accepted -- a_computer_declaration_that_drops_or_loosens_the_receipt_is_refused
+            says: must be refused: ()
+COMPILES    tools: a verified effect is accepted for an action that dispatched nothing
+KILLED      tools: a verified effect is accepted for an action that dispatched nothing -- a_receipt_that_contradicts_itself_fails_output_validation
+            says: {"dispatched":false,"effect_verified":true,"execution_method":"foreground","invariant_violated":false,"invariants":null,"method":"hid_event","outcome":"refused"}
+COMPILES    tools: a background action is verified without a measurement
+KILLED      tools: a background action is verified without a measurement -- a_receipt_that_contradicts_itself_fails_output_validation
+            says: {"dispatched":true,"effect_verified":true,"execution_method":"background","invariant_violated":false,"invariants":null,"method":"hid_event","outcome":"applied"}
+CONTROL-PASSED  swift
+COMPILES    native: a measured violation no longer overrides the claim
+KILLED      native: a measured violation no longer overrides the claim -- QuansioMacBridgeTests.BackgroundInvariantTests testTheLiveProbeSeesARealCursorMoveAndNothingElse (+1 more)
+COMPILES    native: an unknown verdict is omitted instead of written as null
+KILLED      native: an unknown verdict is omitted instead of written as null -- QuansioMacBridgeTests.ReceiptTests testAnUnknownVerdictIsEncodedAsNullAndNeverOmitted (+1 more)
+COMPILES    native: input during the window is never detected
+KILLED      native: input during the window is never detected -- QuansioMacBridgeTests.BackgroundInvariantTests testEachViolationIsSeenOnItsOwn (+1 more)
+COMPILES    native: a moved cursor is never detected
+KILLED      native: a moved cursor is never detected -- QuansioMacBridgeTests.BackgroundInvariantTests testEachViolationIsSeenOnItsOwn (+1 more)
+COMPILES    native: text that was not found is reported unknown instead of absent
+KILLED      native: text that was not found is reported unknown instead of absent -- QuansioMacBridgeTests.BackgroundInvariantTests testTypedTextVerificationNeverRoundsUnknownToAnAnswer
+COMPILES    native: a person's input never lapses the foreground grant
+KILLED      native: a person's input never lapses the foreground grant -- QuansioMacBridgeTests.PermissionStatusTests testAPersonActiveBeforeTheAgentHasInputAnythingIsAlreadyInTheWay (+1 more)
+COMPILES    native: an unknown Input Monitoring answer is read as granted
+KILLED      native: an unknown Input Monitoring answer is read as granted -- QuansioMacBridgeTests.PermissionStatusTests testInputMonitoringNeverReportsGrantedForAnAnswerItDoesNotUnderstand
+CONTROL-PASSED  vitest
+KILLED      desktop: openSettings accepts extra fields (a destination) -- tests/permissions.test.ts > computer channels > cannot be pointed at any other destination, however the payload is shaped
+KILLED      desktop: main opens whatever string the page names -- tests/permissions.test.ts > computer channels > opens exactly the pane of the permission the person clicked, built by main from a fixed table
+KILLED      desktop: a permission the run needs does not hold Continue back -- tests/permissions.test.ts > computer channels > answers the poll from what the system says and the permissions the page asked about (+2 more)
+KILLED      desktop: Continue is offered while a Settings step is outstanding -- tests/permissions.test.ts > guide > enables Continue only when the snapshot says everything the run needs is granted (+1 more)
+KILLED      desktop: an attention item may name another resume command -- tests/permissions.test.ts > the attention item > refuses an item that asks for anything but the person's own resume
+KILLED      desktop: input counts as paused immediately -- tests/permissions.test.ts > guide > a lapsed foreground grant asks for paused input and offers no Settings and no permission rows (+1 more)
+KILLED      desktop: a permission with no probe sends the person to Settings -- tests/permissions.test.ts > computer channels > answers the poll from what the system says and the permissions the page asked about (+1 more)
+KILLED      desktop: an unknown media status is read as granted -- tests/permissions.test.ts > permission status > never reads an answer it does not understand as granted
+SUMMARY killed=50 survived=0 no_verdict=0 total=50

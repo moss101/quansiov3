@@ -3,6 +3,11 @@
 use serde_json::Value;
 use sqlx::PgConnection;
 
+use super::config::ComputerUseConfig;
+use super::permission::{self, AttentionRequest, ForegroundControl, PermissionStatus};
+use super::receipt::{
+    ActionReceipt, BridgeReport, ComputerActionResult, ExecutionMethod, ReceiptMethod,
+};
 use super::store::{ComputerControlError, ComputerControlStore};
 use super::{AppIdentity, ComputerTier, ComputerUsePolicy, Refusal};
 
@@ -86,6 +91,30 @@ impl NativeComputerAction {
     pub const fn is_consequential(&self) -> bool {
         !matches!(self, Self::Read { .. })
     }
+
+    /// The method the receipt of this action names when a bridge reports none.
+    #[must_use]
+    pub const fn default_method(&self) -> ReceiptMethod {
+        match self {
+            Self::Read { .. } => ReceiptMethod::AccessibilityTree,
+            Self::Click { .. } | Self::Type { .. } | Self::SystemKey { .. } => {
+                ReceiptMethod::HidEvent
+            }
+            Self::Clipboard { .. } => ReceiptMethod::Pasteboard,
+        }
+    }
+
+    /// Bytes this action types or writes, which a sequence's limit counts.
+    #[must_use]
+    pub fn typed_bytes(&self) -> usize {
+        match self {
+            Self::Type { text, .. } => text.len(),
+            Self::Clipboard {
+                operation, text, ..
+            } if operation == "write" => text.len(),
+            _ => 0,
+        }
+    }
 }
 
 /// Narrow platform implementation called only after Rust authorization and fencing.
@@ -106,6 +135,37 @@ pub trait NativeComputerBridge: Send + Sync {
     /// Returns a platform refusal. For consequential input the caller records an unknown outcome and
     /// reconciles before any retry.
     fn execute(&self, action: &NativeComputerAction) -> Result<Value, NativeBridgeError>;
+
+    /// What the system says about the four OS permissions, right now.
+    ///
+    /// # Errors
+    /// A status that cannot be read is a refusal, never a guess that everything is granted.
+    fn permission_status(&self) -> Result<PermissionStatus, NativeBridgeError>;
+
+    /// Whether the person's own input has taken the foreground back from the agent.
+    ///
+    /// # Errors
+    /// An unreadable answer is a refusal to drive the foreground.
+    fn foreground_control(&self) -> Result<ForegroundControl, NativeBridgeError>;
+
+    /// Execute one action and report what it did (ADP-002, DOMAIN.md §8.6.1 A).
+    ///
+    /// The default wraps [`Self::execute`] in the weakest honest receipt: input was handed to the system
+    /// and its effect was not observed (`effect_verified = None`), or, for a read, that data came back.
+    /// A bridge that can verify or measure overrides this; one that cannot gets no credit for it.
+    ///
+    /// # Errors
+    /// As [`Self::execute`].
+    fn perform(&self, action: &NativeComputerAction) -> Result<BridgeReport, NativeBridgeError> {
+        let output = self.execute(action)?;
+        let method = action.default_method();
+        let receipt = if action.is_consequential() {
+            ActionReceipt::unverified(method, ExecutionMethod::Foreground)
+        } else {
+            ActionReceipt::observed(method, ExecutionMethod::Foreground)
+        };
+        Ok(BridgeReport { output, receipt })
+    }
 }
 
 /// Native-platform refusal with no credential or input payload in its rendering.
@@ -157,26 +217,84 @@ pub enum ComputerDispatchError {
         /// Redaction-safe bridge code.
         code: String,
     },
+    /// An OS permission or the foreground-control grant is missing: the run parks on an attention item
+    /// (DOMAIN.md §8.6.1 E). Nothing reached the bridge and no dispatch slot was taken.
+    #[error("{}: the run waits for the person", .0.code())]
+    PermissionRequired(AttentionRequest),
+    /// The bridge could not say what the permissions are, so nothing was sent.
+    #[error("permission status is unavailable: {0}")]
+    PermissionStatusUnavailable(NativeBridgeError),
+}
+
+/// Run a platform call that may take a while (a screen capture, an accessibility walk, input that waits
+/// for the system) without starving the async runtime.
+///
+/// On a multi-threaded runtime the worker is handed over before it blocks, so tasks queued behind it
+/// (including the connection tasks of the database this call is fenced by) keep running. A
+/// current-thread runtime has nothing to hand over to and runs the call in place.
+fn blocking<T>(call: impl FnOnce() -> T) -> T {
+    match tokio::runtime::Handle::try_current() {
+        Ok(handle) if handle.runtime_flavor() == tokio::runtime::RuntimeFlavor::MultiThread => {
+            tokio::task::block_in_place(call)
+        }
+        _ => call(),
+    }
 }
 
 /// Rust-owned native computer dispatcher.
 pub struct ComputerDispatcher<B> {
     bridge: B,
     policy: ComputerUsePolicy,
+    config: ComputerUseConfig,
 }
 
 impl<B: NativeComputerBridge> ComputerDispatcher<B> {
-    /// Bind a platform bridge to the already-narrowed computer policy.
+    /// Bind a platform bridge to the already-narrowed computer policy, under the committed
+    /// `config/computer-use.yaml`.
     #[must_use]
-    pub const fn new(bridge: B, policy: ComputerUsePolicy) -> Self {
-        Self { bridge, policy }
+    pub fn new(bridge: B, policy: ComputerUsePolicy) -> Self {
+        Self::with_config(bridge, policy, ComputerUseConfig::builtin().clone())
     }
 
-    /// Authorize, durably fence, invoke, and settle one native operation.
+    /// As [`Self::new`] under an explicit configuration.
+    #[must_use]
+    pub const fn with_config(
+        bridge: B,
+        policy: ComputerUsePolicy,
+        config: ComputerUseConfig,
+    ) -> Self {
+        Self {
+            bridge,
+            policy,
+            config,
+        }
+    }
+
+    /// The configuration in force.
+    #[must_use]
+    pub const fn config(&self) -> &ComputerUseConfig {
+        &self.config
+    }
+
+    /// The bridge, for callers that report its other answers (the permission status the desktop shows).
+    #[must_use]
+    pub const fn bridge(&self) -> &B {
+        &self.bridge
+    }
+
+    /// Authorize, check permissions, durably fence, invoke, and settle one native operation.
+    ///
+    /// The order is deliberate. Identity and tier come first (the app is what the decision is about),
+    /// then the permissions the action needs: a missing one is the person's to fix, so the action is
+    /// refused with an [`AttentionRequest`] before the control row is touched and before the bridge is
+    /// asked to do anything. Only then does the durable slot open.
+    ///
+    /// The bridge's receipt is re-derived ([`ActionReceipt::normalized`]) before it is returned; a
+    /// receipt that contradicts itself is a bridge fault, handled like a failed call.
     ///
     /// # Errors
-    /// Refuses before dispatch for identity/tier/control failures. A consequential bridge failure keeps
-    /// the exact ToolCall active and returns [`ComputerDispatchError::OutcomeUnknown`].
+    /// Refuses before dispatch for identity/tier/permission/control failures. A consequential bridge
+    /// failure keeps the exact ToolCall active and returns [`ComputerDispatchError::OutcomeUnknown`].
     pub async fn execute(
         &self,
         conn: &mut PgConnection,
@@ -185,7 +303,7 @@ impl<B: NativeComputerBridge> ComputerDispatcher<B> {
         tool_call_id: &str,
         generation: i64,
         action: &NativeComputerAction,
-    ) -> Result<Value, ComputerDispatchError> {
+    ) -> Result<ComputerActionResult, ComputerDispatchError> {
         let foreground = self
             .bridge
             .foreground_app()
@@ -201,10 +319,32 @@ impl<B: NativeComputerBridge> ComputerDispatcher<B> {
         }
         self.policy
             .authorize(action.computer_tier(), Some(&foreground))?;
+        let status = self
+            .bridge
+            .permission_status()
+            .map_err(ComputerDispatchError::PermissionStatusUnavailable)?;
+        let control = self
+            .bridge
+            .foreground_control()
+            .map_err(ComputerDispatchError::PermissionStatusUnavailable)?;
+        permission::gate(action, &status, control, &self.config.panes)
+            .map_err(ComputerDispatchError::PermissionRequired)?;
         ComputerControlStore::begin_action(conn, tenant_id, target_id, tool_call_id, generation)
             .await?;
-        match self.bridge.execute(action) {
-            Ok(output) => {
+        let settled = blocking(|| self.bridge.perform(action))
+            .map_err(|error| error.code)
+            .and_then(|report| {
+                report
+                    .receipt
+                    .normalized()
+                    .map(|receipt| ComputerActionResult {
+                        output: report.output,
+                        receipt,
+                    })
+                    .map_err(|_| "receipt_incoherent".to_string())
+            });
+        match settled {
+            Ok(result) => {
                 ComputerControlStore::finish_action(
                     conn,
                     tenant_id,
@@ -213,13 +353,13 @@ impl<B: NativeComputerBridge> ComputerDispatcher<B> {
                     generation,
                 )
                 .await?;
-                Ok(output)
+                Ok(result)
             }
-            Err(error) if action.is_consequential() => Err(ComputerDispatchError::OutcomeUnknown {
+            Err(code) if action.is_consequential() => Err(ComputerDispatchError::OutcomeUnknown {
                 tool_call_id: tool_call_id.to_string(),
-                code: error.code,
+                code,
             }),
-            Err(error) => {
+            Err(code) => {
                 ComputerControlStore::finish_action(
                     conn,
                     tenant_id,
@@ -228,7 +368,9 @@ impl<B: NativeComputerBridge> ComputerDispatcher<B> {
                     generation,
                 )
                 .await?;
-                Err(ComputerDispatchError::ReadFailed(error))
+                Err(ComputerDispatchError::ReadFailed(NativeBridgeError::new(
+                    code,
+                )))
             }
         }
     }

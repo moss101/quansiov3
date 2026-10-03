@@ -1,0 +1,39 @@
+# Native computer use (ADP-002, DOMAIN.md 8.6.1). Policy lives here, never as a source constant (D-018).
+# Validated by schemas/json/computer-use-config.schema.json and, at load, by quansio-machine.
+version: 1
+
+# The privileged native helper. It is launched only when its code signature carries one of these bundle ids
+# and this team id, an Apple anchor and the hardened runtime. `unpublished` means no signing identity has
+# been issued yet (BLOCKED_EXTERNAL): the runtime refuses to launch any helper, it never falls back to
+# trusting an unsigned or ad-hoc one.
+helper:
+  status: unpublished
+  allowed_bundle_ids:
+    - com.quansio.computer-helper
+  team_id: null
+  require_apple_anchor: true
+  require_hardened_runtime: true
+  install:
+    directory: computer-helper
+    keep_versions: 2
+  orphan_sweep:
+    profile_prefix: quansio-computer-
+    terminate_grace_ms: 3000
+  blocker: >-
+    The Developer ID team identity that signs the helper has not been issued. The runtime refuses to launch
+    a helper until `status` is `published` and `team_id` names it.
+
+# One ToolCall may carry a sequence of actions (8.6.1 B). The first limit passed ends the sequence.
+sequence_limits:
+  max_actions: 32
+  max_duration_ms: 120000
+  max_typed_bytes: 8192
+
+# The macOS Privacy pane each permission's guide deep-links to. Only a user click opens one.
+permission_guide:
+  panes:
+    accessibility: Privacy_Accessibility
+    screen_recording: Privacy_ScreenCapture
+    input_monitoring: Privacy_ListenEvent
+    microphone: Privacy_Microphone
+  poll_interval_ms: 2000

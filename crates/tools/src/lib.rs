@@ -11,6 +11,7 @@ pub mod call;
 pub mod canonical;
 pub mod declaration;
 pub mod error;
+pub mod receipt;
 pub mod registry;
 pub mod schema;
 pub mod side_effect;

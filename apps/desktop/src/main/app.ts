@@ -15,12 +15,13 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { app, autoUpdater, BrowserWindow, dialog, ipcMain, nativeTheme, net, Notification, protocol, safeStorage, session, shell } from "electron";
+import { app, autoUpdater, BrowserWindow, dialog, ipcMain, nativeTheme, net, Notification, powerMonitor, protocol, safeStorage, session, shell, systemPreferences } from "electron";
 import WebSocket from "ws";
 
 import type { SocketFactory, SocketLike } from "../client/stream.js";
 import { deepLinkFromArgv, DEEP_LINK_SCHEME } from "./deeplinks.js";
 import { DesktopBridge, registerBridgeHandlers, type DesktopAuth } from "./ipc.js";
+import { UNPROBED_PERMISSIONS, mapMediaAccess, type PermissionSource } from "./permissions.js";
 import {
   navigationAllowed,
   permissionRequestDecision,
@@ -179,6 +180,10 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
         return path;
       },
     },
+    // Native computer-use permissions (ADP-002): what macOS says, read on request. Only the person's
+    // click in the guide opens a Settings pane; nothing here grants or requests a permission.
+    ...optional("computerPermissions", macPermissionSource()),
+    openSystemSettings: (url) => shell.openExternal(url),
     session: sessionFile,
     openSocket,
     updates,
@@ -228,6 +233,36 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
   await bridge.resume();
   await window.loadURL(RENDERER_ENTRY_URL);
   return { window, bridge };
+}
+
+/** An option that is present only when it has a value (the options type forbids an explicit undefined). */
+function optional<K extends string, V>(key: K, value: V | undefined): { [P in K]?: V } {
+  return value === undefined ? {} : ({ [key]: value } as { [P in K]?: V });
+}
+
+/**
+ * Electron's view of the OS permissions native computer use needs, on macOS. Accessibility, Screen
+ * Recording and Microphone have probes; Input Monitoring does not, and is reported as not checked
+ * (`UNPROBED_PERMISSIONS`) rather than guessed. The prompt flag is always false: reading a status never
+ * asks the person for anything.
+ */
+function macPermissionSource(): PermissionSource | undefined {
+  if (process.platform !== "darwin") {
+    return undefined;
+  }
+  return {
+    read: () =>
+      Promise.resolve({
+        status: {
+          accessibility: systemPreferences.isTrustedAccessibilityClient(false) ? "granted" : "denied",
+          screen_recording: mapMediaAccess(systemPreferences.getMediaAccessStatus("screen")),
+          input_monitoring: "not_determined",
+          microphone: mapMediaAccess(systemPreferences.getMediaAccessStatus("microphone")),
+        },
+        unprobed: UNPROBED_PERMISSIONS,
+      }),
+    idleSeconds: () => powerMonitor.getSystemIdleTime(),
+  };
 }
 
 /** Process entry: single instance, protocol client, then the window. */

@@ -1,0 +1,8 @@
+{
+  "code": "COMPUTER_FOREGROUND_CONTROL_LAPSED",
+  "notification_kind": "blocked",
+  "resume_command": "ResumeRun",
+  "permission": null,
+  "status": null,
+  "guide": { "action": "pause_input" }
+}

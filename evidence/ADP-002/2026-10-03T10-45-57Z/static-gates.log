@@ -1,0 +1,41 @@
+V8.1 VALIDATION: PASS (108 tasks, 11 milestones, 66 PASS, 5 ready)
+validate exit=0
+architecture check: CLEAN (0 findings)
+arch_check exit=0
+workspace check: CLEAN (0 findings)
+workspace_check exit=0
+duplicate-authority scan: CLEAN (0 findings)
+inventory exit=0
+authority check: CLEAN (0 findings)
+check_authority exit=0
+legacy map check: CLEAN (0 findings)
+legacy_map exit=0
+cargo-deny-unavailable: cargo-deny could not reach the advisory database (offline); the committed advisory fixture scan still applies. Output tail:       │   │   │       │   ├── quansio-native-windows v0.1.0
+      │   │   │       │   ├── quansio-qworkerd v0.1.0
+      │   │   │       │   └── quansio-server v0.1.0 (*)
+      │   │   │       ├── quansio-qworkerd v0.1.0 (*)
+      │   │   │       └── quansio-server v0.1.0 (*)
+      │   │   ├── quansio-events v0.1.0
+      │   │   │   ├── quansio-capability v0.1.0 (*)
+      │   │   │   ├── (dev) quansio-graph v0.1.0 (*)
+      │   │   │   └── quansio-server v0.1.0 (*)
+      │   │   ├── quansio-graph v0.1.0 (*)
+      │   │   ├── (dev) quansio-indexer v0.1.0
+      │   │   │   └── quansio-server v0.1.0 (*)
+      │   │   ├── quansio-machine v0.1.0 (*)
+      │   │   └── quansio-server v0.1.0 (*)
+      │   ├── sqlx-macros v0.8.6
+      │   │   └── sqlx v0.8.6 (*)
+      │   ├── sqlx-macros-core v0.8.6
+      │   │   └── sqlx-macros v0.8.6 (*)
+      │   └── sqlx-postgres v0.8.6
+      │       ├── sqlx v0.8.6 (*)
+      │       └── sqlx-macros-core v0.8.6 (*)
+      └── tokio-rustls v0.26.5
+          ├── hyper-rustls v0.27.9 (*)
+          └── reqwest v0.12.28 (*)
+
+supply-chain: CLEAN (1 informational)
+supply_chain exit=0
+contract regeneration check: CLEAN (catalog,openapi,ts,sdk)
+contracts-check exit=0

@@ -13,6 +13,9 @@ use base64::Engine as _;
 use quansio_machine::computer_use::bridge::{
     NativeBridgeError, NativeComputerAction, NativeComputerBridge,
 };
+use quansio_machine::computer_use::permission::{
+    ForegroundControl, PermissionState, PermissionStatus,
+};
 use quansio_machine::computer_use::AppIdentity;
 use serde_json::Value;
 
@@ -32,6 +35,26 @@ impl NativeComputerBridge for WindowsComputerBridge {
             .filter(|pid| *pid > 0)
             .ok_or_else(|| NativeBridgeError::new("windows_identity_pid_invalid"))?;
         Ok(AppIdentity::new(bundle_id, name, pid))
+    }
+
+    /// Windows has no per-application permission gate for UI Automation, screen capture or injected input
+    /// (nothing to grant in Settings, as macOS has), so those three are reported as granted: the
+    /// platform's lack of a gate, not a probe. The microphone's privacy switch is not read here and is
+    /// reported as not determined; no computer action needs it (DOMAIN.md 8.6.1 E).
+    fn permission_status(&self) -> Result<PermissionStatus, NativeBridgeError> {
+        Ok(PermissionStatus {
+            accessibility: PermissionState::Granted,
+            screen_recording: PermissionState::Granted,
+            input_monitoring: PermissionState::Granted,
+            microphone: PermissionState::NotDetermined,
+        })
+    }
+
+    /// There is no detection of the person's own input on this bridge yet, so a lapsed foreground-control
+    /// grant is never reported: this keeps the behaviour that existed before ADP-002 and is deferred
+    /// there (the macOS bridge measures it).
+    fn foreground_control(&self) -> Result<ForegroundControl, NativeBridgeError> {
+        Ok(ForegroundControl::Held)
     }
 
     fn execute(&self, action: &NativeComputerAction) -> Result<Value, NativeBridgeError> {

@@ -26,6 +26,22 @@ export { DesktopBridge, MAX_FILE_BYTES, MAX_PREVIEW_FETCH_BYTES, registerBridgeH
 export type { ActiveRunProjection, DesktopBridgeOptions, DesktopFiles, IpcMainLike, PushSender, Settled } from "./main/ipc.js";
 export { SessionFile, parseSession, serializeSession } from "./main/session-file.js";
 export type { ActiveRunSession, DesktopSession } from "./main/session-file.js";
+export {
+  PAUSE_IDLE_SECONDS,
+  PERMISSION_NAMES,
+  PERMISSION_POLL_MS,
+  SETTINGS_PANES,
+  UNPROBED_PERMISSIONS,
+  buildSnapshot,
+  guideAction,
+  mapMediaAccess,
+  parseOpenSettings,
+  parsePermissionRequest,
+  parsePermissionStatus,
+  readSnapshot,
+  settingsUrl,
+} from "./main/permissions.js";
+export type { PermissionSource, PermissionStatus } from "./main/permissions.js";
 export { DEEP_LINK_SCHEME, deepLinkFromArgv, parseDeepLink } from "./main/deeplinks.js";
 export type { DeepLinkIntent } from "./main/deeplinks.js";
 export { UpdateHooks, parseUpdateChannel, updateFeedUrl } from "./main/updates.js";
@@ -263,6 +279,16 @@ export type {
   TargetView,
   TerminalSessionView,
 } from "./live/session.js";
+export {
+  PermissionPoller,
+  attentionFromEvent,
+  decodePermissionSnapshot,
+  guideView,
+  parseComputerAttention,
+  requestFor,
+  resumeCommand,
+} from "./live/permissions.js";
+export type { ComputerAttention, GuideView, PermissionName, PermissionRow, PermissionSnapshot, PermissionState } from "./live/permissions.js";
 export { TerminalReplay, decodeTerminalBytes, replayPosition } from "./live/terminal.js";
 export type { Accepted, ReplayPosition, TerminalBytesFrame } from "./live/terminal.js";
 export { decodeBrowserFrame, latestFrame } from "./live/frames.js";

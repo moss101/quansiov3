@@ -62,3 +62,7 @@ glossary:
 - In-doubt outcome
 - SecretPlaceholder
 - DecisionReceipt
+- ActionReceipt
+- Terminal condition
+- PermissionStatus
+- Pinned helper

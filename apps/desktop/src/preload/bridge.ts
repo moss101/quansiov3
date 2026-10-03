@@ -65,6 +65,8 @@ export const PRELOAD_ALLOWLIST = [
   "live.takeover",
   "live.handback",
   "live.attach",
+  "computer.permissions",
+  "computer.openSettings",
   "live.detach",
   "threads.view",
   "threads.create",
@@ -216,6 +218,10 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     requestTakeover: (subject: { sessionId: string } | { targetId: string }) => send("live.takeover", subject),
     handback: (subject: { sessionId: string } | { targetId: string }) => send("live.handback", subject),
     attachLive: (targetId: string) => send("live.attach", { targetId }),
+    // Native computer permissions (ADP-002): the status the guide polls, and the one click that opens a
+    // Privacy pane (a permission name, never a URL).
+    computerPermissions: (request: { needs?: readonly string[]; pauseInput?: boolean } = {}) => send("computer.permissions", request),
+    openComputerSettings: (permission: string) => send("computer.openSettings", { permission }),
     detachLive: () => send("live.detach", {}),
     // Collaboration (APP-009): the thread's membership and attention, and the commands that
     // change membership, react and hand a thread to another teammate (refusals are data).

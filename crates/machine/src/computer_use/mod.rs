@@ -17,10 +17,25 @@
 //! The native side is `native/macos` (AX over Accessibility, input over `CGEvent`), which the Rust machine
 //! module calls (DOSSIER.md §5). It is deliberately *not* in this crate: `#![forbid(unsafe_code)]` holds
 //! here, and the privileged calls belong in the bridge that the operator grants the permission to.
+//!
+//! ADP-002 (DOMAIN.md §8.6.1) adds four more rules, one module each:
+//!
+//! * [`receipt`]: every action reports `{method, execution_method, dispatched, effect_verified, outcome}`,
+//!   and an effect that could not be verified is `None`, never `true` and never `false`;
+//! * [`sequence`]: a sequence of actions in one ToolCall ends at the first terminal condition (takeover,
+//!   revoked permission, spent limit, user stop) and the model cannot extend it;
+//! * [`permission`]: the typed OS permission status, and the attention item a missing one parks the run on;
+//! * [`helper`]: the native helper is launched only after its code signature matches the pin in
+//!   [`config`] (`config/computer-use.yaml`), from a versioned install directory with a rollback pointer.
 
 use std::collections::BTreeSet;
 
 pub mod bridge;
+pub mod config;
+pub mod helper;
+pub mod permission;
+pub mod receipt;
+pub mod sequence;
 pub mod store;
 
 /// What an action does, in the order the tiers escalate.

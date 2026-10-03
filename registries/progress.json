@@ -3136,18 +3136,43 @@
       "notes": "Hardened managed browser (D-019): per-tab document revisions, snapshot refs and captures that fail closed with BROWSER_STALE_PAGE; a journal that keeps side-effecting actions idempotent and an unknown outcome in doubt (OUTCOME_UNKNOWN, never retried); secret placeholders resolved only through the runtime's secret port; dialogs, downloads, permissions, certificates and the user-gesture rule as typed state; side-effect classes mapped onto the existing effect taxonomy. Deferred (evidence NOTES.md): HTTP handlers and desktop controls for ResolveBrowserCertificate/DecideBrowserPermission, and a production composition of BrowserDriver (qworkerd has no daemon yet; QA-002 KNOWN_GAPS)."
     },
     "ADP-002": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
-      "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "coverage": "GENUINE_GAP",
+      "status": "BLOCKED_EXTERNAL",
+      "claimed_by": "agent:adp-002",
+      "started_at": "2026-10-03T09:54:03Z",
+      "updated_at": "2026-10-03T11:20:26Z",
+      "git_commit": "820c7dcdcc5d7ac4f34376f8eff192a117823547",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-machine -p quansio-tools -p quansio-native-windows (computer_receipts 16, computer_sequence 14, computer_permission 8, computer_helper 11, tools computer_receipt 4; real PostgreSQL and real codesign)",
+        "QUANSIO_TEST_MACOS_COMPUTER_USE=1 swift test --package-path native/macos (42 tests, 0 failures, 1 BLOCKED_EXTERNAL skip: receipts, background measurement against a real pointer move, permission probes, foreground-control monitor, clipboard receipt)",
+        "cd apps/desktop && npx vitest run --exclude tests/work.e2e.test.ts (182 passed incl. permissions.test.ts 29), tsc and eslint clean",
+        "uv run --project python pytest tests/architecture tests/contract tests/ci (239 passed)",
+        "python3 mutation-checks.py (50 mutants, 50 killed after a passing control; three holes found in the first run were closed)"
+      ],
+      "artifacts": [
+        "evidence/ADP-002/2026-10-03T10-45-57Z/summary.json"
+      ],
+      "real_boundary_evidence": [
+        {
+          "boundary": "macOS native computer-use receipts, background-invariant measurement and permission status through the real CoreGraphics, AppKit, Accessibility, IOKit HID and AVFoundation APIs",
+          "environment": "macOS 26 Apple Silicon interactive host; Accessibility and Screen Recording granted to the terminal host; QUANSIO_TEST_MACOS_COMPUTER_USE=1",
+          "command": "QUANSIO_TEST_MACOS_COMPUTER_USE=1 swift test --package-path native/macos",
+          "artifact": "evidence/ADP-002/2026-10-03T10-45-57Z/swift-live.log",
+          "sha256": "d3fec9e9b8d6f1a37646b3656fbd13750f8a9ab6367d8c1d6cb515f5ca0d7f0d",
+          "recorded_at": "2026-10-03T11:20:26Z"
+        },
+        {
+          "boundary": "macOS code signing (codesign) and the process table for the pinned native helper",
+          "environment": "macOS 26 Apple Silicon host with /usr/bin/codesign and the system C compiler; ad-hoc signatures (no Developer ID)",
+          "command": "cargo test -p quansio-machine --test computer_helper -- --nocapture",
+          "artifact": "evidence/ADP-002/2026-10-03T10-45-57Z/helper-codesign.log",
+          "sha256": "4c391b3b2822d22d8401bf2ad162d119b239838e5a513929150ed444f41518a2",
+          "recorded_at": "2026-10-03T11:20:26Z"
+        }
+      ],
+      "implementation_complete": true,
+      "blocker": "ADP-002 is implemented and its tests pass, but it may not be PASS (AGENTS.md; D-017): its dependency EXEC-010 is BLOCKED_EXTERNAL (the Windows 11 UIA boundary was never run on a Windows host). Real-boundary steps of ADP-002 itself that were not run: (1) the positive production helper-identity run: config/computer-use.yaml has helper.status unpublished and no team_id because no Developer ID signing identity exists, so the Apple-anchor and team-id requirement is proven only negatively (real codesign refuses an ad-hoc helper) -- set status published and team_id, sign the helper with that identity and run cargo test -p quansio-machine --test computer_helper plus a launch of the signed helper; (2) live input on the Mac: a real click/type/system-key post and a real physical-input violation were not exercised (posting drives the person's machine); run swift test --package-path native/macos with QUANSIO_TEST_MACOS_COMPUTER_USE=1 on an idle interactive host after adding the input receipts to ComputerUseTests; (3) the Windows 11 run of EXEC-010 with QUANSIO_TEST_WINDOWS_COMPUTER_USE=1. Unblock: clear EXEC-010, then publish the helper identity and record (1) and (2) as real_boundary_evidence.",
+      "notes": "Native computer use (D-019): every computer.* Tool result carries an ActionReceipt {method, execution_method, dispatched, effect_verified true|false|null, outcome} in the Tool Registry schema, where null (unknown) is never rounded and settles OUTCOME_UNKNOWN; a sequence ends at the first terminal condition (COMPUTER_TAKEOVER_ACTIVE, COMPUTER_PERMISSION_REVOKED, COMPUTER_LIMIT_EXCEEDED, COMPUTER_STOPPED_BY_USER) and the model cannot extend it; background actions are measured (physical input, cursor, frontmost app) and a broken claim voids the verification; the helper is launched only after real codesign verification against config/computer-use.yaml, from a fingerprinted versioned directory with rollback and orphan cleanup; a typed PermissionStatus and a desktop guide that opens a Privacy pane only on the person's click and resumes only through ResumeRun. Deferred (evidence NOTES.md): the runtime tool host that walks sequences and parks the run (QA-002 KNOWN_GAPS), a helper executable and its control channel, reading the helper's own permission status in the desktop."
     },
     "ADP-003": {
       "coverage": null,

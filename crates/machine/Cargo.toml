@@ -19,7 +19,7 @@ base64 = "0.22"
 chacha20poly1305 = "0.10"
 sha2 = "0.10"
 thiserror = "2"
-tokio = { version = "1", features = ["macros", "rt", "sync"] }
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
 # Lets another crate's *tests* build a DecisionReceipt without a database, so the worker half of a
@@ -30,4 +30,6 @@ test-support = []
 
 [dev-dependencies]
 async-trait = "0.1"
+# The Tool Registry's receipt schema and coherence rules must agree with the runtime's (ADP-002).
+quansio-tools = { path = "../tools" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }

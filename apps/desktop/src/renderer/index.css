@@ -2268,6 +2268,11 @@ form label:has(textarea) {
 .live-guard .live-guard-certificate,
 .live-guard .live-guard-in_doubt { display: flex; flex-direction: column; gap: var(--s1); }
 .live-untrusted { font-family: var(--font-mono, monospace); overflow-wrap: anywhere; }
+.live-permissions { display: flex; flex-direction: column; gap: var(--s2); }
+.live-permissions .permission-row { display: flex; flex-direction: column; gap: var(--s1); }
+.live-permissions .permission-denied,
+.live-permissions .permission-not_determined,
+.live-permissions .permission-restricted { box-shadow: inset 0 0 0 1px var(--warn-fill); }
 
 .live-cursor {
   position: absolute;

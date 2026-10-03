@@ -10,6 +10,7 @@ use quansio_machine::computer_use::{
         ComputerDispatchError, ComputerDispatcher, NativeBridgeError, NativeComputerAction,
         NativeComputerBridge,
     },
+    permission::{ForegroundControl, PermissionStatus},
     store::{ComputerControlError, ComputerControlStore},
     AppIdentity, ComputerGrant, ComputerTier, ComputerUsePolicy, KnownApps, MachineHolder, Refusal,
 };
@@ -58,6 +59,14 @@ impl NativeComputerBridge for TestBridge {
             Some(code) => Err(NativeBridgeError::new(code)),
             None => Ok(json!({ "application": action.application(), "ok": true })),
         }
+    }
+
+    fn permission_status(&self) -> Result<PermissionStatus, NativeBridgeError> {
+        Ok(PermissionStatus::all_granted())
+    }
+
+    fn foreground_control(&self) -> Result<ForegroundControl, NativeBridgeError> {
+        Ok(ForegroundControl::Held)
     }
 }
 

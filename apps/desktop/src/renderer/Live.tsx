@@ -24,7 +24,9 @@ import {
   type LiveSession,
   type TargetView,
 } from "../live/session.js";
+import { attentionFromEvent, type ComputerAttention } from "../live/permissions.js";
 import { TerminalReplay, decodeTerminalBytes } from "../live/terminal.js";
+import { ComputerPermissions } from "./ComputerPermissions.js";
 
 interface LiveProps {
   readonly workspaceId: string;
@@ -64,6 +66,9 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
   const [terminalGaps, setTerminalGaps] = useState<number>(0);
   const replay = useRef<TerminalReplay | null>(null);
   const sessionIdRef = useRef<string | null>(null);
+  // Why the runtime parked the run on an OS permission, when an event said so (ADP-002).
+  const [attention, setAttention] = useState<ComputerAttention | null>(null);
+  const runIdRef = useRef<string | null>(null);
 
   const loadTargets = useCallback(async () => {
     try {
@@ -120,6 +125,7 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
 
   useEffect(() => {
     sessionIdRef.current = session?.sessionId ?? null;
+    runIdRef.current = session?.run?.id ?? null;
   }, [session]);
 
   useEffect(
@@ -172,6 +178,12 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
         const event = record["event"] && typeof record["event"] === "object" ? (record["event"] as Record<string, unknown>) : null;
         if (!event) {
           return;
+        }
+        const parked = attentionFromEvent(event, runIdRef.current);
+        if (parked) {
+          setAttention(parked);
+        } else if (event["type"] === "run.resumed" && (event["payload"] as Record<string, unknown> | undefined)?.["run_id"] === runIdRef.current) {
+          setAttention(null);
         }
         setSession((current) => (current ? applyEvent(current, event) : current));
       }),
@@ -325,6 +337,14 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
               ) : session.computerControl.holder === "user" ? (
                 <button type="button" onClick={() => { void computerControl("handback"); }}>{t("liveHandBack")}</button>
               ) : null}
+              <ComputerPermissions
+                run={session.run ? { id: session.run.id, generation: session.run.generation } : null}
+                attention={attention}
+                onResumed={() => {
+                  setAttention(null);
+                  void open(session.sessionId);
+                }}
+              />
             </section>
           ) : null}
           <section className="live-terminal">

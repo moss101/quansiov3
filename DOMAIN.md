@@ -77,6 +77,10 @@ Use these names in code, contracts, events, UI copy and tests. Do not introduce 
 | **In-doubt outcome** | The explicit result of a browser action whose effect on the page cannot be established; settles as `OUTCOME_UNKNOWN`, is never retried, and is reconciled by a fresh observation (§8.4.1). |
 | **SecretPlaceholder** | `{{secret:<name>.<field>}}` in a browser Tool argument; only the trusted runtime resolves it, at insertion, against the SecretHandle's allowed origins (§8.4.1). |
 | **DecisionReceipt** | Proof, minted only by machine control for a user, that a person resolved a certificate error or granted a media permission (§8.4.1). |
+| **ActionReceipt** | What a native computer action reports about itself: `{method, execution_method, dispatched, effect_verified (true\|false\|null), outcome}`; `null` means the effect could not be verified and is never read as `true` (§8.6.1 A). |
+| **Terminal condition** | User takeover, revoked permission, exceeded resource limit or user stop: it ends the computer action sequence it occurs in and returns a typed `COMPUTER_*` result (§8.6.1 B). |
+| **PermissionStatus** | The bridge's typed answer for Accessibility, Screen Recording, Input Monitoring and Microphone: `granted\|denied\|not_determined\|restricted` (§8.6.1 E). |
+| **Pinned helper** | The native helper process, launched only after its code signature matches the bundle ids and team id in `config/computer-use.yaml`, from a versioned install directory (§8.6.1 D). |
 
 ---
 
@@ -388,6 +392,8 @@ Tools are registered in the Tool Registry (control plane) and exposed to models 
 
 A **journaled** action is keyed by `(tool_call_id, action_id)` with a canonical-argument digest taken from the arguments in placeholder form (§8.4.1 B). Its outcome settles on the Effect Ledger as `SETTLED_SUCCESS`, `SETTLED_FAILED` or — when the worker cannot establish it — `OUTCOME_UNKNOWN`, which is reconciled (§7.2) and never retried.
 
+**Computer Tool results (ADP-002).** Every `computer.*` Tool's `output_schema` requires a `receipt` (§8.6.1 A); the registry refuses a `computer.*` declaration whose schema omits it or loosens it, and a result whose receipt is incoherent (for example `effect_verified=true` with `dispatched=false`) fails output validation. Terminal conditions (§8.6.1 B) are returned as `COMPUTER_*` Tool errors, not as results.
+
 ### 7.6 Operator kill switches (OPS-008)
 `KillSwitch: id (ksw_), tenant_id, switch, target, reason, engaged_by, engaged_at, released_by?, released_at?, release_reason?` — one row per engagement, history kept, at most one active per (switch, target). Engaging and releasing are `runtime.control` (tier 3, tenant administrators, audited) and emit `ops.kill_switch_engaged` / `ops.kill_switch_released`. Releasing restores service; nothing is deleted.
 
@@ -483,6 +489,25 @@ active ToolCall settles or is reconciled, and increments `generation`. `Handback
 from `user` to `agent` and increments `generation` again. A restart reloads the row; it never assumes an
 active ToolCall failed and never clears user ownership. Browser takeover continues to use BrowserSession
 §8.4; both forms park the owning Run through ProtocolState.
+
+#### 8.6.1 Native computer actions (ADP-002) — normative
+
+Every `computer.*` Tool result carries an `ActionReceipt`; a sequence of actions in one ToolCall ends at the first terminal condition; the helper that performs them is pinned; and a missing permission is a place the run waits for the user, never a model retry. Limits, the helper's identity and the guide's Settings panes are `config/computer-use.yaml` (D-018), validated by `schemas/json/computer-use-config.schema.json`.
+
+**A. Action receipts.** The bridge reports and the runtime re-checks: `receipt {method, execution_method, dispatched, effect_verified, outcome, invariant_violated, invariants?}`.
+- `method`: `accessibility_tree`, `accessibility_action`, `process_event` (an event posted to one process), `hid_event` (an event through the system input stream), `pasteboard`. `execution_method`: `background` (the action claims to change neither the frontmost application nor the real pointer) or `foreground`.
+- `dispatched` is whether the bridge handed input to the system. `effect_verified` is `true` only when the bridge observed the intended effect (a read-back), `false` when it observed that the effect is absent or an invariant was violated, and `null` when the effect could not be observed. `null` is not `false` and is never reported as `true`; a bridge that cannot tell says `null`.
+- `outcome`: `applied` (`true`), `observed` (a read: `null`, data returned), `unverified` (`null`), `not_applied` (`false`), `invariant_violated` (`false`), `refused` (`dispatched=false`, `false`: nothing was sent).
+- Coherence, enforced by the runtime on every receipt and by `crates/tools` on the Tool result: `dispatched=false` ⇒ `refused`; `effect_verified=true` ⇒ `dispatched` and `applied` and not `invariant_violated`; `effect_verified=null` ⇒ `dispatched` and `observed` or `unverified`; a `background` receipt may be `applied` only with measured `invariants` that show no violation, else the runtime lowers `true` to `null` (`unverified`). An incoherent receipt is a bridge fault: for input it is an unknown outcome (the ToolCall slot stays active), for a read a failed read.
+- Settlement: `applied` and `observed` settle `SETTLED_SUCCESS`, `refused` settles `SETTLED_FAILED`, and every other receipt of a dispatched action (`unverified`, `not_applied`, `invariant_violated`) settles `OUTCOME_UNKNOWN`: input reached the machine, so the Effect Ledger reconciles it (§7.1: `computer.input.privileged`, manual) and never retries it blind. The dispatch slot (§8.6) is released once the bridge has answered; it stays active only when the bridge itself failed after dispatch.
+
+**B. Terminal conditions.** A ToolCall may carry a sequence of actions. Before every action and after every settled action the runtime checks, in this order: a user stop, the control row (`holder` is not `agent`, `takeover_pending`, or a changed `generation` is a takeover), the permissions the next action needs, and the sequence limits (`config/computer-use.yaml: sequence_limits`: actions, wall time, typed bytes). The first condition found ends the sequence: no further action is dispatched, the actions already settled keep their receipts, the unattempted ones are reported as `skipped`, and the result is the typed terminal result. The sequence is a closed list the runtime consumes; a model's later output cannot extend, resume or re-order it, and a terminal state is final for that ToolCall. A permission that was granted when the sequence began and is missing later is `COMPUTER_PERMISSION_REVOKED`; one that is missing at its first action is the park of §E. A receipt of `not_applied` or `invariant_violated` also stops the sequence (the premise of the next action is gone) but is a result, not a terminal condition; an `unverified` receipt does not stop it, and the ToolCall settles as the least certain of its actions.
+
+**C. Background invariants.** An action whose `execution_method` is `background` is measured by the bridge before and after: `invariants {physical_input, moved_system_cursor, frontmost_before {bundle_id, pid}, frontmost_after {bundle_id, pid}, frontmost_changed}`. `physical_input` is any input from the system input stream during the action window (the bridge cannot tell a person from a synthetic event, and either breaks the claim). A violation sets `invariant_violated=true`, `effect_verified=false`, `outcome=invariant_violated`; the runtime recomputes this from `invariants`, keeps a flag the bridge raised, and never accepts a bridge's "no violation" over numbers that show one. A background action the bridge could not measure (no frontmost application or pointer to read) carries `invariants: null`, and the runtime lowers its `applied` to `unverified`.
+
+**D. Helper identity.** The helper is launched only after `codesign` verification of its code signature, its designated requirement (`identifier` in `helper.allowed_bundle_ids`, Apple anchor and `certificate leaf[subject.OU]` equal to `helper.team_id`) and the hardened-runtime flag. Until the configuration is `published` with a team id, no helper may be launched (`COMPUTER_HELPER_IDENTITY_REFUSED`). The helper is installed into `<app data>/<helper.install.directory>/versions/<fingerprint>/`, re-verified after the copy (SHA-256 of the tree and CDHash), with `active` and `previous` pointers so a failed activation rolls back; helper processes found running from that directory with the configured profile prefix when the runtime starts are orphans of a crash and are terminated.
+
+**E. Permission onboarding.** `PermissionStatus {accessibility, screen_recording, input_monitoring, microphone}` (each `granted|denied|not_determined|restricted`) comes from the bridge. The permissions an action needs: `computer.read` Accessibility, plus Screen Recording when it asks for a screenshot; `computer.click`, `computer.type`, `computer.system_key` Accessibility; `computer.clipboard` none. When one is missing the dispatcher refuses before any slot is taken, with an attention request `{reason, permission, status, guide}`; nothing is sent to the bridge and a repeated proposal gets the same answer. The runtime parks the Run `SUSPENDED` (target capability loss) with `COMPUTER_PERMISSION_REQUIRED` and a `blocked` Notification (§13.3); it leaves `SUSPENDED` only through `ResumeRun`, which the user sends. `guide.action` is `open_settings` (the desktop deep-links the user to the Privacy pane named by `guide.pane`; only a user click opens it and the agent never operates System Settings), `contact_administrator` for `restricted`, or `pause_input` for a lapsed foreground-control grant (`ForegroundControl: held|lapsed`, reported by the bridge when input from the person arrived after the agent's last input): that one asks the person to stop using the keyboard and mouse for a moment and never opens Settings (`COMPUTER_FOREGROUND_CONTROL_LAPSED`). The desktop polls the status and enables its Continue control only when every permission the guide names is `granted`.
 
 ---
 
@@ -650,6 +675,7 @@ Tracing (OPS-003): a client may send a W3C `traceparent` header with any request
 | Runtime (409/422) | `RUNTIME_ILLEGAL_TRANSITION`, `FENCED_STALE_GENERATION`, `LEASE_LOST`, `EFFECT_UNKNOWN_PENDING_RECONCILIATION`, `BUDGET_EXHAUSTED`, `EFFECTS_FROZEN` |
 | Execution (503/504) | `TARGET_UNAVAILABLE`, `TARGET_PROVISION_FAILED`, `TOOL_TIMEOUT`, `TOOL_OUTPUT_TRUNCATED` (warning), `EGRESS_DENIED` |
 | Browser (409/422) | `BROWSER_STALE_PAGE`, `BROWSER_STALE_DIALOG`, `BROWSER_DIALOG_PENDING`, `BROWSER_ACTION_REPLAY_CONFLICT`, `BROWSER_ACTION_IN_DOUBT`, `BROWSER_SECRET_ORIGIN_MISMATCH`, `BROWSER_SECRET_UNAVAILABLE`, `BROWSER_SENSITIVE_INPUT_DENIED`, `BROWSER_NAVIGATION_DENIED`, `BROWSER_CERTIFICATE_DECISION_REQUIRED`, `BROWSER_GESTURE_REQUIRED`, `BROWSER_INPUT_FENCED`, `BROWSER_EFFECT_TIER_EXCEEDED`, `BROWSER_INVALID_REQUEST`, `BROWSER_TARGET_NOT_FOUND`, `BROWSER_PAGE_FAILURE` |
+| Computer (409/422) | `COMPUTER_TAKEOVER_ACTIVE`, `COMPUTER_PERMISSION_REVOKED`, `COMPUTER_LIMIT_EXCEEDED`, `COMPUTER_STOPPED_BY_USER`, `COMPUTER_PERMISSION_REQUIRED`, `COMPUTER_FOREGROUND_CONTROL_LAPSED`, `COMPUTER_HELPER_IDENTITY_REFUSED` |
 | Model (502/503) | `PROVIDER_UNAVAILABLE`, `PROVIDER_RATE_LIMITED`, `PROVIDER_REFUSAL`, `ROUTE_UNAVAILABLE`, `DLP_DENIED` |
 | Generic | `NOT_FOUND` (404), `RATE_LIMITED` (429), `STREAM_BACKPRESSURE` (WS close), `INTERNAL` (500) |
 
@@ -673,6 +699,18 @@ Tracing (OPS-003): a client may send a W3C `traceparent` header with any request
 | `BROWSER_INVALID_REQUEST` | `false` | `false` | unknown field, missing target, malformed placeholder or key |
 | `BROWSER_TARGET_NOT_FOUND` | `true` | `true` | the tab, ref or selector does not exist |
 | `BROWSER_PAGE_FAILURE` | `false` | `false` | the page or browser failed with a known outcome |
+
+**Computer error flags (ADP-002).** A `COMPUTER_*` error is a Tool error with `{code, message, retryable, requires_new_observation, requires, details?}` (§8.6.1). The four terminal conditions end a sequence (§8.6.1 B). `retryable` means the same request may be sent again once `requires` has happened; the model must observe again first when `requires_new_observation` is true.
+
+| Code | retryable | requires_new_observation | requires | When |
+|---|---|---|---|---|
+| `COMPUTER_TAKEOVER_ACTIVE` | `true` | `true` | `handback` | a person holds, or has asked to hold, the computer (§8.6) |
+| `COMPUTER_PERMISSION_REVOKED` | `true` | `true` | `permission_granted` | an OS permission the sequence had was withdrawn mid-sequence |
+| `COMPUTER_LIMIT_EXCEEDED` | `false` | `true` | `smaller_sequence` | the sequence passed its action, wall-time or typed-byte limit |
+| `COMPUTER_STOPPED_BY_USER` | `false` | `true` | `user_resume` | the person stopped the run |
+| `COMPUTER_PERMISSION_REQUIRED` | `true` | `false` | `permission_granted` | a permission is missing at the first action; the run parks (§8.6.1 E) |
+| `COMPUTER_FOREGROUND_CONTROL_LAPSED` | `true` | `true` | `input_paused` | the person is using the keyboard or mouse; the run parks and asks them to pause |
+| `COMPUTER_HELPER_IDENTITY_REFUSED` | `false` | `false` | `none` | the helper's signature, bundle id, team id or hardened runtime does not match the configured pin |
 
 ---
 

@@ -1,0 +1,275 @@
+{
+  "task_id": "ADP-002",
+  "git_commit": "820c7dcdcc5d7ac4f34376f8eff192a117823547",
+  "recorded_at": "2026-10-03T11:20:07Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test -p quansio-machine -p quansio-tools -p quansio-native-windows  # computer_receipts 16, computer_sequence 14, computer_permission 8, computer_helper 11, computer_use 6 (EXEC-010's, unchanged), tools computer_receipt 4, all pass. Proves: unknown verification is null on the wire and never rounded; a background claim is re-derived from its measurement; terminal conditions (stop, takeover, revoked permission, each limit) end a sequence with the model asked and the platform reached the asserted number of times; the takeover race (a takeover requested while an action is in flight); a missing permission parks with the attention item and nothing reaches the bridge; a crash mid-sequence leaves the call active and a restart does not retry it; the Tool Registry carries the one canonical receipt and refuses a loosened one",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-002/2026-10-03T10-45-57Z/machine-tools-suites.log"
+    },
+    {
+      "command": "cargo test -p quansio-machine --test computer_helper -- --nocapture  # 11 passed against real /usr/bin/codesign and real signed executables: wrong identifier, unsigned, not hardened, altered after signing and ad-hoc-vs-production-requirement are each refused with COMPUTER_HELPER_IDENTITY_REFUSED; versioned install with a re-verified copy, rollback, prune, probe restore; an altered installed copy (even re-signed) is refused at launch; orphaned helpers are terminated and nothing else is",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-002/2026-10-03T10-45-57Z/helper-codesign.log"
+    },
+    {
+      "command": "QUANSIO_TEST_MACOS_COMPUTER_USE=1 swift test --package-path native/macos  # 42 tests, 0 failures, 1 skipped (the pre-existing real-VM test, BLOCKED_EXTERNAL); live: permission probes agree with the system's own answers, a real one-point pointer move is seen by the background measurement, a real clipboard write is receipted, measured and verified by read-back, an unauthorized foreground is refused before anything is written",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-002/2026-10-03T10-45-57Z/swift-live.log"
+    },
+    {
+      "command": "cd apps/desktop && npx vitest run --exclude tests/work.e2e.test.ts && npx tsc -p tsconfig.json --noEmit; npx eslint apps/desktop  # 182 passed, 12 skipped (e2e tests that need services), typecheck and eslint clean; permissions.test.ts has 29 tests. work.e2e.test.ts is excluded from this run because it is flaky on the base commit too (see NOTES.md)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-002/2026-10-03T10-45-57Z/desktop-tests.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci  # 239 passed (test_generated_bindings_are_current deselected: the Rust contract generator cannot run from a worktree under .claude/worktrees)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-002/2026-10-03T10-45-57Z/python-tests.log"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; run on commit 820c7dc)  # 50 mutants of the guards, every one COMPILES and every one KILLED by a named test after CONTROL-PASSED on the unmutated suite",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-002/2026-10-03T10-45-57Z/mutation-checks.log"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-002/2026-10-03T10-45-57Z/lint.log"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py; arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py; gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-002/2026-10-03T10-45-57Z/static-gates.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1030 passed, 13 failed across 155 suites: all 13 are artifact/evidence-store calls to MinIO (127.0.0.1:59010), which was not running (BLOCKED_EXTERNAL: the dev stack's object store); none touches this task",
+      "exit_code": 101,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/ADP-002/2026-10-03T10-45-57Z/workspace-tests.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test -p quansio-machine -p quansio-tools -p quansio-native-windows  # computer_receipts 16, computer_sequence 14, computer_permission 8, computer_helper 11, computer_use 6 (EXEC-010's, unchanged), tools computer_receipt 4, all pass. Proves: unknown verification is null on the wire and never rounded; a background claim is re-derived from its measurement; terminal conditions (stop, takeover, revoked permission, each limit) end a sequence with the model asked and the platform reached the asserted number of times; the takeover race (a takeover requested while an action is in flight); a missing permission parks with the attention item and nothing reaches the bridge; a crash mid-sequence leaves the call active and a restart does not retry it; the Tool Registry carries the one canonical receipt and refuses a loosened one",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-machine --test computer_helper -- --nocapture  # 11 passed against real /usr/bin/codesign and real signed executables: wrong identifier, unsigned, not hardened, altered after signing and ad-hoc-vs-production-requirement are each refused with COMPUTER_HELPER_IDENTITY_REFUSED; versioned install with a re-verified copy, rollback, prune, probe restore; an altered installed copy (even re-signed) is refused at launch; orphaned helpers are terminated and nothing else is",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_MACOS_COMPUTER_USE=1 swift test --package-path native/macos  # 42 tests, 0 failures, 1 skipped (the pre-existing real-VM test, BLOCKED_EXTERNAL); live: permission probes agree with the system's own answers, a real one-point pointer move is seen by the background measurement, a real clipboard write is receipted, measured and verified by read-back, an unauthorized foreground is refused before anything is written",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && npx vitest run --exclude tests/work.e2e.test.ts && npx tsc -p tsconfig.json --noEmit; npx eslint apps/desktop  # 182 passed, 12 skipped (e2e tests that need services), typecheck and eslint clean; permissions.test.ts has 29 tests. work.e2e.test.ts is excluded from this run because it is flaky on the base commit too (see NOTES.md)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci  # 239 passed (test_generated_bindings_are_current deselected: the Rust contract generator cannot run from a worktree under .claude/worktrees)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; run on commit 820c7dc)  # 50 mutants of the guards, every one COMPILES and every one KILLED by a named test after CONTROL-PASSED on the unmutated suite",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py; arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py; gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1030 passed, 13 failed across 155 suites: all 13 are artifact/evidence-store calls to MinIO (127.0.0.1:59010), which was not running (BLOCKED_EXTERNAL: the dev stack's object store); none touches this task",
+      "exit_code": 101,
+      "result": "BLOCKED_EXTERNAL"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/ADP-002/2026-10-03T10-45-57Z/machine-tools-suites.log",
+      "sha256": "b06e04ed1837b7a0727bb02642df7eee6e88c31bba4e5892cfe496f61a59d626",
+      "bytes": 18505
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-03T10-45-57Z/helper-codesign.log",
+      "sha256": "4c391b3b2822d22d8401bf2ad162d119b239838e5a513929150ed444f41518a2",
+      "bytes": 1110
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-03T10-45-57Z/swift-live.log",
+      "sha256": "d3fec9e9b8d6f1a37646b3656fbd13750f8a9ab6367d8c1d6cb515f5ca0d7f0d",
+      "bytes": 12568
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-03T10-45-57Z/desktop-tests.log",
+      "sha256": "45efd07c4b63a11fdba4d006e2355d1b63cd40fdfd457bb21acd0abf579cddb4",
+      "bytes": 5367
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-03T10-45-57Z/python-tests.log",
+      "sha256": "101dfe38b18454224d7e82bfb10e60f910a65147c2231639b8e0aab20a22268e",
+      "bytes": 355
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-03T10-45-57Z/mutation-checks.log",
+      "sha256": "1e4f103e5497d9d36103ff1da5366a25091f3220d6e6641d0196c5ac520bb298",
+      "bytes": 14397
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-03T10-45-57Z/mutation-checks.py",
+      "sha256": "522a6fd8b8f68fa765d61214a7d04449a2ff1b29a193c32e1452199a7f467f68",
+      "bytes": 15737
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-03T10-45-57Z/lint.log",
+      "sha256": "df95f456ee9b19bfa5185f39e729add742ecd24f20bea4778f7bb678ce5c7402",
+      "bytes": 225
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-03T10-45-57Z/static-gates.log",
+      "sha256": "4deda8aa7559f047a25a4ebc45a7d9bf96337ec8a006f22da7cd2c1d0534a28c",
+      "bytes": 1969
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-03T10-45-57Z/workspace-tests.log",
+      "sha256": "86e34cef030b7c6602721466f585acb9238b27678f60019ae53f65f6049ba4af",
+      "bytes": 120407
+    },
+    {
+      "path": "evidence/ADP-002/RECONCILIATION.md",
+      "sha256": "cf44b7e1cb5bb4933c97e27814c40332e952a3490cdce1419dbe6a7d76032ee1",
+      "bytes": 8427
+    },
+    {
+      "path": "evidence/ADP-002/NOTES.md",
+      "sha256": "33bc5ea51670f42a4788d3dfe3b8cc133fbfbcf0f28bf245ca3b7a0c05ad9fbd",
+      "bytes": 11820
+    },
+    {
+      "path": "config/computer-use.yaml",
+      "sha256": "a3689f05936064baabe93f8335d5f387792d626b8810156d051231201f3a1f67",
+      "bytes": 1559
+    },
+    {
+      "path": "schemas/json/computer-use-config.schema.json",
+      "sha256": "90eb1367ecec316fb47039f07a617fc705000f331d3207025442ec42617f126b",
+      "bytes": 3647
+    },
+    {
+      "path": "crates/machine/src/computer_use/receipt.rs",
+      "sha256": "b5c739a7ff2c6e24b5e75f4a77ff8d0b85c3d3d6daeba7ed0abc497c963cf212",
+      "bytes": 20997
+    },
+    {
+      "path": "crates/machine/src/computer_use/sequence.rs",
+      "sha256": "c73ec94235ec311d70e71a9d656ae8024fdf2dc49e3a9d39107a6f63a09a2678",
+      "bytes": 15173
+    },
+    {
+      "path": "crates/machine/src/computer_use/permission.rs",
+      "sha256": "016dffca311fdd587ad09ddcc718304649eeee960ae5c66f4ccb57a85ccbe68a",
+      "bytes": 13140
+    },
+    {
+      "path": "crates/machine/src/computer_use/helper.rs",
+      "sha256": "ed9c3b4bf169e85d321c9c13ccfaf17323fce82fc0a75be268fe0e8541e5f525",
+      "bytes": 30703
+    },
+    {
+      "path": "crates/machine/src/computer_use/config.rs",
+      "sha256": "0a121953ed9193652b6e0b38ab8eee5a73945c58de0a07ff9190549a4c7b24b1",
+      "bytes": 13988
+    },
+    {
+      "path": "crates/machine/src/computer_use/bridge.rs",
+      "sha256": "d420b4706a84b01c1c6b807d459bbb4061c48a6b540439f122e6beb792dcb169",
+      "bytes": 14456
+    },
+    {
+      "path": "crates/tools/src/receipt.rs",
+      "sha256": "13a9aaffab89c3b363ab1b82400650370710ba0fdd9967ac18bdc5a348717c3a",
+      "bytes": 7782
+    },
+    {
+      "path": "native/macos/Sources/QuansioMacBridge/Receipt.swift",
+      "sha256": "2a26c679ae35278d719291ead353bc4875f694269f9580b3cfbf552f7849129d",
+      "bytes": 8008
+    },
+    {
+      "path": "native/macos/Sources/QuansioMacBridge/BackgroundInvariants.swift",
+      "sha256": "34a5f8c7fbba749e3245189b11e2e03f164c208d510f4a30311e98cdcfe73f21",
+      "bytes": 8119
+    },
+    {
+      "path": "native/macos/Sources/QuansioMacBridge/PermissionStatus.swift",
+      "sha256": "599360570f0c6af2441fba55ef911b9987f8cc7bacb1125646c47205248d1354",
+      "bytes": 7392
+    },
+    {
+      "path": "apps/desktop/src/main/permissions.ts",
+      "sha256": "3aa9db1e64c8a287307c085d7312bd95a80750a7d44b0d6dc46b6c0aa3f29cbc",
+      "bytes": 10468
+    },
+    {
+      "path": "apps/desktop/src/live/permissions.ts",
+      "sha256": "4509516a21a11a12630c71d79c77efa77809220928bb08c0707c16cd0d2dd1c3",
+      "bytes": 12055
+    },
+    {
+      "path": "apps/desktop/src/renderer/ComputerPermissions.tsx",
+      "sha256": "143f9c2d38193e616efc82a60d97d082ec33ff1d3aaaafcb1cf3ca9dae2caffd",
+      "bytes": 5617
+    },
+    {
+      "path": "crates/machine/tests/computer_receipts.rs",
+      "sha256": "09f82f43b690aca34e9ea95ebc3c0bc382386d0bfd2ff3d3303284314904b0d2",
+      "bytes": 24103
+    },
+    {
+      "path": "crates/machine/tests/computer_sequence.rs",
+      "sha256": "468fdc5efe68714e4e5de7df24098d63eda7401046e953cd8f0bc4e2488da5fe",
+      "bytes": 35072
+    },
+    {
+      "path": "crates/machine/tests/computer_permission.rs",
+      "sha256": "5c31e87fcde8753c2fb7bc27a20cb544f7621b0711061d0ad81bb97c44ce3e4c",
+      "bytes": 10526
+    },
+    {
+      "path": "crates/machine/tests/computer_helper.rs",
+      "sha256": "0c8dff5e357395dbe00cc73074ea49598dfaa88b5c30fa93db859b32e5236e7e",
+      "bytes": 23844
+    },
+    {
+      "path": "crates/tools/tests/computer_receipt.rs",
+      "sha256": "7d094618835740171fdf181a24b1c3b7810c5481288618fbeb97221c351b97b5",
+      "bytes": 8726
+    },
+    {
+      "path": "apps/desktop/tests/permissions.test.ts",
+      "sha256": "1ae96d52a20dd984def687d74235d0239415f104ffda08f2c97e5d2f0472f8a1",
+      "bytes": 25544
+    }
+  ]
+}

@@ -41,8 +41,9 @@ def test_catalog_is_derived_from_domain_and_current(catalog):
 
 def test_domain_derivation_covers_commands_errors_effects_events_trust(catalog):
     assert sum(len(v) for v in catalog["commands"].values()) >= 70
-    # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15).
-    assert len(catalog["errors"]) == 54
+    # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15) and the
+    # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15).
+    assert len(catalog["errors"]) == 61
     assert len(catalog["effect_classes"]) == 23
     assert len(catalog["event_families"]) == 35  # + webhook.* (APP-015)
     assert catalog["trust_levels"] == [
@@ -237,6 +238,8 @@ def test_json_schemas_validate_real_artifacts():
     validator("models-config").validate(models)
     flags = yaml.safe_load((ROOT / "config" / "flags.yaml").read_text())
     validator("flags-config").validate(flags)
+    computer_use = yaml.safe_load((ROOT / "config" / "computer-use.yaml").read_text())
+    validator("computer-use-config").validate(computer_use)
 
     summaries = sorted((ROOT / "evidence").glob("*/*/summary.json"))
     assert summaries, "at least one task evidence bundle must exist"
@@ -281,3 +284,31 @@ def test_generated_catalog_files_declare_their_origin():
         text = (CATALOG / filename).read_text()
         assert text.startswith("# GENERATED from DOMAIN.md"), filename
         assert "Do not hand edit" in text
+
+
+def test_computer_use_schema_refuses_a_weakened_helper_pin():
+    """The helper pin cannot be switched off by configuration (ADP-002, DOMAIN.md 8.6.1 D)."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "computer-use-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "computer-use.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    published = lambda d: d["helper"].update(status="published")  # noqa: E731
+    assert broken(published), "a published helper must name its team"
+    assert not broken(lambda d: d["helper"].update(status="published", team_id="ABCDE12345"))
+    assert broken(lambda d: d["helper"].update(require_apple_anchor=False))
+    assert broken(lambda d: d["helper"].update(require_hardened_runtime=False))
+    assert broken(lambda d: d["helper"].update(team_id="not-a-team"))
+    assert broken(lambda d: d["helper"].update(allowed_bundle_ids=[]))
+    assert broken(lambda d: d["helper"].update(allow_unsigned=True))
+    assert broken(lambda d: d["permission_guide"]["panes"].update(accessibility="Privacy_Accessibility/../x"))
+    assert broken(lambda d: d["sequence_limits"].update(max_actions=0))

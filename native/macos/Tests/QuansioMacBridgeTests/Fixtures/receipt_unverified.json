@@ -1,0 +1,9 @@
+{
+  "method": "hid_event",
+  "execution_method": "foreground",
+  "dispatched": true,
+  "effect_verified": null,
+  "outcome": "unverified",
+  "invariant_violated": false,
+  "invariants": null
+}

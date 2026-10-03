@@ -825,7 +825,28 @@ tools:
         nodes: { type: array, items: { type: object, additionalProperties: false, properties: { role: { type: string }, title: { type: string }, value: { type: string }, depth: { type: integer }, child_count: { type: integer } } } }
         truncated: { type: boolean }
         screenshot_artifact_id: { type: string }
-      required: [application, nodes, truncated]
+        receipt: &computer_receipt
+          type: object
+          additionalProperties: false
+          properties:
+            method: { type: string, enum: [accessibility_tree, accessibility_action, process_event, hid_event, pasteboard] }
+            execution_method: { type: string, enum: [background, foreground] }
+            dispatched: { type: boolean }
+            effect_verified: { type: [boolean, "null"] }
+            outcome: { type: string, enum: [applied, observed, unverified, not_applied, invariant_violated, refused] }
+            invariant_violated: { type: boolean }
+            invariants:
+              type: [object, "null"]
+              additionalProperties: false
+              properties:
+                physical_input: { type: boolean }
+                moved_system_cursor: { type: boolean }
+                frontmost_before: { type: object, additionalProperties: false, properties: { bundle_id: { type: string }, pid: { type: integer } }, required: [bundle_id, pid] }
+                frontmost_after: { type: object, additionalProperties: false, properties: { bundle_id: { type: string }, pid: { type: integer } }, required: [bundle_id, pid] }
+                frontmost_changed: { type: boolean }
+              required: [physical_input, moved_system_cursor, frontmost_before, frontmost_after, frontmost_changed]
+          required: [method, execution_method, dispatched, effect_verified, outcome, invariant_violated, invariants]
+      required: [application, nodes, truncated, receipt]
 
   - name: computer.click
     version: 1
@@ -857,7 +878,8 @@ tools:
       additionalProperties: false
       properties:
         clicked: { type: boolean }
-      required: [clicked]
+        receipt: *computer_receipt
+      required: [clicked, receipt]
 
   - name: computer.type
     version: 1
@@ -887,7 +909,8 @@ tools:
       additionalProperties: false
       properties:
         typed: { type: boolean }
-      required: [typed]
+        receipt: *computer_receipt
+      required: [typed, receipt]
 
   - name: computer.clipboard
     version: 1
@@ -919,6 +942,8 @@ tools:
       properties:
         text: { type: string }
         written: { type: boolean }
+        receipt: *computer_receipt
+      required: [receipt]
 
   - name: computer.system_key
     version: 1
@@ -948,7 +973,8 @@ tools:
       additionalProperties: false
       properties:
         sent: { type: boolean }
-      required: [sent]
+        receipt: *computer_receipt
+      required: [sent, receipt]
 
   - name: artifact.create
     version: 1

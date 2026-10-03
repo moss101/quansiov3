@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/computer-use-config.schema.json",
+  "title": "Quansio native computer use (config/computer-use.yaml)",
+  "description": "The pinned helper identity, the sequence limits and the permission guide panes (DOMAIN.md 8.6.1). A published helper must name a team id; the Apple anchor and the hardened runtime cannot be switched off.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "helper", "sequence_limits", "permission_guide"],
+  "properties": {
+    "version": { "const": 1 },
+    "helper": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "allowed_bundle_ids",
+        "team_id",
+        "require_apple_anchor",
+        "require_hardened_runtime",
+        "install",
+        "orphan_sweep"
+      ],
+      "properties": {
+        "status": { "enum": ["published", "unpublished"] },
+        "allowed_bundle_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$" }
+        },
+        "team_id": { "type": ["string", "null"], "pattern": "^[A-Z0-9]{10}$" },
+        "require_apple_anchor": { "const": true },
+        "require_hardened_runtime": { "const": true },
+        "install": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["directory", "keep_versions"],
+          "properties": {
+            "directory": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" },
+            "keep_versions": { "type": "integer", "minimum": 2, "maximum": 8 }
+          }
+        },
+        "orphan_sweep": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["profile_prefix", "terminate_grace_ms"],
+          "properties": {
+            "profile_prefix": { "type": "string", "pattern": "^[a-z][a-z0-9-]{3,63}$" },
+            "terminate_grace_ms": { "type": "integer", "minimum": 100, "maximum": 60000 }
+          }
+        },
+        "blocker": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "published" } } },
+          "then": { "properties": { "team_id": { "type": "string" } } }
+        }
+      ]
+    },
+    "sequence_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_actions", "max_duration_ms", "max_typed_bytes"],
+      "properties": {
+        "max_actions": { "type": "integer", "minimum": 1, "maximum": 256 },
+        "max_duration_ms": { "type": "integer", "minimum": 1000, "maximum": 3600000 },
+        "max_typed_bytes": { "type": "integer", "minimum": 1, "maximum": 1048576 }
+      }
+    },
+    "permission_guide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["panes", "poll_interval_ms"],
+      "properties": {
+        "panes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["accessibility", "screen_recording", "input_monitoring", "microphone"],
+          "properties": {
+            "accessibility": { "const": "Privacy_Accessibility" },
+            "screen_recording": { "const": "Privacy_ScreenCapture" },
+            "input_monitoring": { "const": "Privacy_ListenEvent" },
+            "microphone": { "const": "Privacy_Microphone" }
+          }
+        },
+        "poll_interval_ms": { "type": "integer", "minimum": 500, "maximum": 60000 }
+      }
+    }
+  }
+}
