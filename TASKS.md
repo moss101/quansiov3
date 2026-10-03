@@ -3,9 +3,9 @@
 > Generated from `registries/tasks.json` by `scripts/validate_v81.py --write`. Do not hand edit.
 
 **Revision:** 2  
-**Task count:** 99  
+**Task count:** 108  
 **GA-required:** 99  
-**Real-boundary:** 27
+**Real-boundary:** 32
 
 ## M0 — Authority, repository and build foundation
 
@@ -2453,4 +2453,260 @@
 - final readiness validator
 - artifact digest verification
 - post-release smoke
+
+## M10 — Agent-surface expansion
+
+**Exit criteria:** Each ADP task is PASS (or BLOCKED_EXTERNAL with implementation complete and the exact external blocker named): hardened browser/computer authority, skill recording, desktop shell, local file grants, output generators, automation triggers, tool visibility split and the decided larger surfaces, all on the existing Effect Ledger, Capability Projection, Tool Registry and Skill Registry.
+
+### ADP-001 — Harden the managed browser: stale-page fencing, action ledger, secret placeholders, dialogs, downloads, permissions
+- **Owner:** Execution
+- **Language:** Rust + TypeScript
+- **Component:** `browser`
+- **Paths:** `crates/qworkerd/src/browser/`, `crates/machine/src/control/browser.rs`, `crates/tools/`, `config/tools.yaml`, `config/effects.yaml`
+- **Depends on:** EXEC-009, RUN-011, INT-012
+- **Real boundary:** required
+- **GA:** deferrable
+- **Goal:** Make every browser action verifiable against the page the model actually observed, and keep credentials out of model context.
+
+**Build**
+- Per-tab document revision; observations return snapshot refs; mutating actions carry the expected revision and an observed-point capture, and a mismatch fails closed with a typed stale-page error.
+- Browser action idempotency keyed by run/action id plus argument digest on the Effect Ledger; an unknown outcome is a distinct in-doubt result that is never blindly retried.
+- Secret placeholders resolved only by the runtime at insertion time; the live top-frame and target-frame origin is re-checked against the secret's allowed origins; plain text into password, one-time-code and card fields is refused.
+- Handle JavaScript dialogs (a pending dialog fences other actions), downloads (directed, bounded, per tab), permission requests (deny by default, native approval for media), certificate decisions (user-only, per origin and certificate) and external-application handoff gated on genuine user gesture.
+- Label all page-derived output UNTRUSTED_EXTERNAL; DOMAIN.md additions for the new error codes, states and commands in the same commit.
+
+**Acceptance**
+- A stale revision, snapshot or capture never mutates the page.
+- An in-doubt browser action is not retried and is surfaced as in-doubt.
+- A secret never appears in model context, tool arguments at rest, ledger digests, logs or events, and is refused on an origin outside its allow-list.
+- Agent input cannot dismiss a certificate error or grant a permission.
+
+**Required tests/evidence**
+- stale-page fencing test
+- action ledger replay/conflict/in-doubt test
+- secret origin and sensitive-field negative tests
+- dialog/download/permission/certificate tests against real headless Chrome
+- crash/restart in-doubt recovery test
+
+### ADP-002 — Computer-use action receipts, helper identity pinning and permission onboarding
+- **Owner:** Execution
+- **Language:** Rust + Swift
+- **Component:** `computer-use`
+- **Paths:** `crates/machine/src/computer_use/`, `native/macos/`, `apps/desktop/src/main/`
+- **Depends on:** EXEC-010, EXEC-009, RUN-006
+- **Real boundary:** required
+- **GA:** deferrable
+- **Goal:** Report what an input action actually did, run the privileged helper under a pinned identity, and guide the user through OS permissions.
+
+**Build**
+- Every computer.* action returns a receipt with dispatched, effect_verified (true, false or unknown), and outcome; unknown is never reported as verified.
+- Terminal conditions (user takeover, permission revoked, resource limit) end the action sequence and cannot be swallowed by the model.
+- Per-action background invariants: no physical input when the action claims background operation, frontmost application unchanged, system cursor not moved.
+- Pin the native helper's bundle id and team id; verify its code signature before launch; install into a versioned directory with a previous-version rollback; stop orphaned helpers on start.
+- Permission onboarding: a typed permission status (Accessibility, Screen Recording, Input Monitoring, Microphone) and a desktop guide surface that the run waits on instead of driving System Settings.
+
+**Acceptance**
+- An unverifiable action is recorded as unknown, never as verified.
+- A revoked permission or takeover stops further actions in the same sequence.
+- A helper with the wrong identity is refused.
+- Missing permission parks the run on an attention item, not on a model retry.
+
+**Required tests/evidence**
+- receipt shape and unknown-verification test
+- terminal-condition test
+- helper identity negative test
+- permission status/onboarding test
+- takeover race test
+
+### ADP-003 — Skill recording: turn a demonstrated workflow into a DRAFT skill
+- **Owner:** Capability
+- **Language:** Rust + Swift + Python + TypeScript
+- **Component:** `skills`
+- **Paths:** `native/macos/`, `crates/server/src/control/skills/`, `python/intelligence/skills/`, `apps/desktop/src/`
+- **Depends on:** INT-009, ADP-002, INT-012
+- **Real boundary:** required
+- **GA:** deferrable
+- **Goal:** Let a user demonstrate a workflow once and have it become a reviewable DRAFT skill.
+
+**Build**
+- Recorder session with explicit start and finish by the user: action log, bounded periodic screenshots, optional voice transcript, redaction of secrets, card numbers and verification codes, and a secure-input pause.
+- Archive stored as a recording Artifact with owner/epoch fencing on every call so an account switch rejects it.
+- Skill compilation in Python treats the recording as evidence of intent, never as a coordinate replay; it asks which example values are inputs and emits pre/postconditions and recovery.
+- Result enters the existing Skill Registry ladder as DRAFT; promotion stays admin-only.
+
+**Acceptance**
+- A recording never reaches the model unredacted.
+- A recording cannot complete without the user's explicit finish.
+- A compiled skill carries no recorded coordinates or element indexes.
+
+**Required tests/evidence**
+- redaction test
+- owner/epoch fence negative test
+- finish-required test
+- compilation shape test
+- DRAFT-only promotion test
+
+### ADP-004 — Desktop shell: tray, menu, global shortcuts, keep-awake, quit confirmation, activity indicator, connectivity and secondary windows
+- **Owner:** Product
+- **Language:** TypeScript + Rust
+- **Component:** `desktop-shell`
+- **Paths:** `apps/desktop/src/main/`, `apps/desktop/src/renderer/`, `crates/server/src/api/`
+- **Depends on:** APP-003, APP-010
+- **Real boundary:** not required
+- **GA:** deferrable
+- **Goal:** Bring the desktop to a complete native shell without moving authority out of the server.
+
+**Build**
+- Application menu, tray (Windows/Linux), rebindable global shortcuts with conflict detection and recording mode, keep-awake only on AC power while runs are active, quit confirmation when runs are active.
+- Connectivity monitor with a short offline grace period feeding the existing reconnect and cursor replay.
+- Window types: task pop-out, quick entry and a floating activity indicator ordered by attention; all share the sandboxed preload and the trusted-URL check; events sent before the renderer subscribes are queued per window.
+- Update installation deferred while runs are active; a maintenance fence in the server reports idle, active turns and in-flight actions.
+
+**Acceptance**
+- No window can invoke IPC from an untrusted URL.
+- Quit and update never interrupt an active run without confirmation.
+- Shortcut registration failure rolls back.
+
+**Required tests/evidence**
+- shell unit tests
+- window IPC trust negative tests
+- update-deferral test
+- connectivity grace test
+- Playwright desktop smoke
+
+### ADP-005 — Local file grants, media URLs, safe edits, workspace file watching and worktree retention
+- **Owner:** Product
+- **Language:** TypeScript + Rust
+- **Component:** `local-files`
+- **Paths:** `apps/desktop/src/main/`, `crates/qworkerd/src/tools/`, `crates/server/src/artifacts/`
+- **Depends on:** APP-003, EXEC-006
+- **Real boundary:** not required
+- **GA:** deferrable
+- **Goal:** Give the desktop and agents narrow, auditable access to the user's files.
+
+**Build**
+- One-time file grant: a native picker issues a single-use token bound to the requesting window with TTL and size caps; no path-read primitive exists in the renderer.
+- Capability-token media URLs bound to the requesting window and revoked on window close.
+- Edit-conflict-safe local writes (baseline check, atomic replace, self-write suppression) and a shared debounced workspace file watcher confined to granted roots.
+- Worktree retention with two-phase cleanup and a recovery snapshot under private refs before removal; never touches user branches or stashes.
+
+**Acceptance**
+- A path outside granted roots is refused.
+- A grant cannot be claimed twice or by another window.
+- Cleanup is recoverable after crash.
+
+**Required tests/evidence**
+- grant claim/expiry/replay tests
+- media token revocation test
+- edit conflict test
+- watcher confinement test
+- worktree cleanup crash-recovery test
+
+### ADP-006 — Output generators: slides rendering/export with completion gate, diagrams, PDF, speech-to-text, video, web-dev preview
+- **Owner:** Capability
+- **Language:** Python + Rust + TypeScript
+- **Component:** `artifact-generators`
+- **Paths:** `python/intelligence/artifacts/`, `crates/server/src/artifacts/`, `apps/desktop/src/renderer/`
+- **Depends on:** CAP-003, INT-012, APP-003
+- **Real boundary:** required
+- **GA:** deferrable
+- **Goal:** Produce the deliverable formats users expect, with quality checks that gate completion.
+
+**Build**
+- Slides renderer and PPTX/PDF export from the structured deck; a deck is not deliverable while any page is pending or fails its quality check.
+- Diagram rendering, markdown-to-PDF, speech-to-text and video inspection as artifact adapters behind the Tool Registry.
+- Typed atomic video edit operations with an expected revision and dry-run, rendered as supervised jobs.
+- Web-dev preview that binds a short-lived scope to the workspace and re-resolves authority on every call.
+
+**Acceptance**
+- A pending or failing page blocks delivery.
+- Every adapter output is a versioned Artifact with a quality record.
+- Preview authority lapses when the workspace changes.
+
+**Required tests/evidence**
+- deck gate test
+- adapter golden-output tests
+- video op revision/dry-run test
+- preview scope expiry test
+
+### ADP-007 — Automation triggers: inbound events and webhooks, dry run, optimistic concurrency, IANA timezones, journaled workflow scripts
+- **Owner:** Product
+- **Language:** Rust + TypeScript
+- **Component:** `automation`
+- **Paths:** `crates/server/src/control/routines/`, `crates/server/src/scheduler/`, `crates/server/src/notify/`
+- **Depends on:** APP-010, RUN-011, INT-012
+- **Real boundary:** not required
+- **GA:** deferrable
+- **Goal:** Extend routines to event-driven and scripted automation on the same WorkGraph, policy and effect path.
+
+**Build**
+- Inbound webhook and connector-event triggers with the payload labelled untrusted when injected into a run.
+- Dry-run of a trigger entry; optimistic-concurrency updates (expected revision) and idempotent creates; per-plan minimum interval.
+- IANA timezone support with explicit DST rules.
+- Deterministic workflow scripts executed by the runtime from an append-only journal with a declared call budget and approval above a threshold; no polling loops inside agent runs.
+
+**Acceptance**
+- A replayed webhook does not fire twice.
+- Payload text can never authorize an action.
+- A restart resumes a script from its journal without repeating completed calls.
+
+**Required tests/evidence**
+- webhook dedupe test
+- stale-revision update test
+- DST fire test
+- journal replay/restart test
+- budget approval test
+
+### ADP-008 — Tool visibility split, content-hash pack revisions and redacted install reports
+- **Owner:** Capability
+- **Language:** Rust + Python
+- **Component:** `tool-registry`
+- **Paths:** `crates/tools/`, `config/tools.yaml`, `python/intelligence/capability_compiler/`
+- **Depends on:** RUN-011, APP-003, INT-012
+- **Real boundary:** not required
+- **GA:** deferrable
+- **Goal:** Let the host call tools the model cannot, and make capability installs reversible and diagnosable.
+
+**Build**
+- Tool declarations carry model_visible and host_callable; the model-facing projection excludes host-only tools and the projection can only narrow.
+- Content-hash revisions for pack installs with previous-revision retention and rollback.
+- Install reports with state, phase and redacted bounded diagnostics, retained for a fixed period.
+
+**Acceptance**
+- A host-only tool is absent from every model-facing projection.
+- A failed install leaves the previous revision active.
+
+**Required tests/evidence**
+- projection narrowing test
+- host-only absence negative test
+- failed install rollback test
+- report redaction test
+
+### ADP-009 — Decided larger surfaces: remote control, composition sandbox, passkeys, password manager and browser data import, commerce, MCP
+- **Owner:** Execution
+- **Language:** Rust + TypeScript
+- **Component:** `remote-surfaces`
+- **Paths:** `crates/server/src/api/`, `crates/qworkerd/src/`, `apps/desktop/src/`
+- **Depends on:** ADP-001, ADP-002, ADP-007, APP-003
+- **Real boundary:** required
+- **GA:** deferrable
+- **Goal:** Deliver the remaining larger surfaces behind explicit decisions, each on the existing authority path.
+
+**Build**
+- Remote control: consented, per-viewer authorized screen session with input only when capture is ready, unlocked and permitted; viewer identity bound to the signed-in account.
+- Composition sandbox: a memory-, time- and call-bounded script VM with no ambient I/O in which the model composes browser/computer calls, with a receipt per call.
+- Passkeys through the cross-device flow, a human-only password manager and explicit browser data import (browser.session.import, tier 4).
+- Commerce: payment.execute through a one-time payment-field flow, never exposing card data to the model.
+- MCP client for external tool servers through the Tool Registry and Capability Projection.
+
+**Acceptance**
+- No surface bypasses the Capability Projection or the Effect Ledger.
+- Card, password and passkey material never enters model context.
+
+**Required tests/evidence**
+- viewer authorization negative tests
+- sandbox budget/escape tests
+- import approval test
+- payment field masking test
+- MCP projection narrowing test
 
