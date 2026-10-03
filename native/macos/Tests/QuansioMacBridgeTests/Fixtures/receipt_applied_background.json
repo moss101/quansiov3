@@ -1,0 +1,15 @@
+{
+  "method": "pasteboard",
+  "execution_method": "background",
+  "dispatched": true,
+  "effect_verified": true,
+  "outcome": "applied",
+  "invariant_violated": false,
+  "invariants": {
+    "physical_input": false,
+    "moved_system_cursor": false,
+    "frontmost_before": { "bundle_id": "com.apple.TextEdit", "pid": 4242 },
+    "frontmost_after": { "bundle_id": "com.apple.TextEdit", "pid": 4242 },
+    "frontmost_changed": false
+  }
+}

@@ -10,6 +10,8 @@
 //! This crate owns no other package's schema helpers: it sets the tenant context directly, the way
 //! `quansio-events` and `quansio-indexer` do, so machine control has no dependency on the server crate.
 
+pub mod computer;
+
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Executor, PgPool};
 

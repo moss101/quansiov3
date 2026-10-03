@@ -1,0 +1,9 @@
+{
+  "method": "accessibility_action",
+  "execution_method": "background",
+  "dispatched": false,
+  "effect_verified": false,
+  "outcome": "refused",
+  "invariant_violated": false,
+  "invariants": null
+}

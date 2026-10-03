@@ -1,0 +1,15 @@
+{
+  "method": "process_event",
+  "execution_method": "background",
+  "dispatched": true,
+  "effect_verified": false,
+  "outcome": "invariant_violated",
+  "invariant_violated": true,
+  "invariants": {
+    "physical_input": false,
+    "moved_system_cursor": true,
+    "frontmost_before": { "bundle_id": "com.apple.TextEdit", "pid": 4242 },
+    "frontmost_after": { "bundle_id": "com.apple.Safari", "pid": 777 },
+    "frontmost_changed": true
+  }
+}
