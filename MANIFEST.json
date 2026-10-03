@@ -4,8 +4,8 @@
   "files": [
     {
       "path": "DOSSIER.md",
-      "bytes": 40030,
-      "sha256": "25d62031664f9c0aac5910e208bd4e553f95384484b1b06338146af0bc821cd9"
+      "bytes": 41569,
+      "sha256": "6270f78bd8ac3eb33c0513915dc237bb6dde192dcd5ec6d1a989de4ed8f22628"
     },
     {
       "path": "DOMAIN.md",
@@ -24,23 +24,23 @@
     },
     {
       "path": "TASKS.md",
-      "bytes": 100973,
-      "sha256": "84e42eac1a62f7239211c4378dfb2c6c56e601aab8cbb40b8509f5ebe3324544"
+      "bytes": 115353,
+      "sha256": "4dbecd20e43cd0be0f5a2b87e193b9de5c97eaf64fcbdcf06d2cba3b856a2654"
     },
     {
       "path": "registries/tasks.json",
-      "bytes": 126028,
-      "sha256": "5ab458e1116b0c0434d2992e94c09d34bcde03205fef47aa6b6c051585cbbb5a"
+      "bytes": 143134,
+      "sha256": "42e62e3e51d7d09d51bf522801dccd232e989e2c36753348e10e7bb0cf7d6995"
     },
     {
       "path": "registries/task-graph.json",
-      "bytes": 17977,
-      "sha256": "8be8d4c5071c2596fe394d025a7a30c4203fc8cca5aead4c698a224e1432932e"
+      "bytes": 19676,
+      "sha256": "be460a2a46153686579ba1c4cdcd7f303afa6d3dc4b6e38b46727c1abff77ee2"
     },
     {
       "path": "registries/progress.json",
-      "bytes": 363916,
-      "sha256": "e8d29cf974faefd265645af0851d31c476819646089a19bf4e815481ec350d47"
+      "bytes": 366994,
+      "sha256": "44c525f375449b6ea3ff0c05994147071a3166b76c062d25ea2ebecf0e163e75"
     },
     {
       "path": "scripts/validate_v81.py",
