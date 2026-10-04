@@ -68,7 +68,9 @@ impl Category {
     /// Parse the durable spelling.
     #[must_use]
     pub fn parse(value: &str) -> Option<Self> {
-        Self::ALL.into_iter().find(|category| category.as_str() == value)
+        Self::ALL
+            .into_iter()
+            .find(|category| category.as_str() == value)
     }
 }
 
@@ -151,8 +153,7 @@ static LONG_TOKEN: LazyLock<Regex> = LazyLock::new(|| rx(r"\b[A-Za-z0-9_-]{40,}\
 static AUTHORIZATION: LazyLock<Regex> = LazyLock::new(|| {
     rx(r"(?i)\bauthorization\s*[:=]\s*(?:(?:bearer|basic|token)\s+)?[A-Za-z0-9._~+/=-]{8,}")
 });
-static BEARER: LazyLock<Regex> =
-    LazyLock::new(|| rx(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{8,}"));
+static BEARER: LazyLock<Regex> = LazyLock::new(|| rx(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{8,}"));
 static CARD: LazyLock<Regex> = LazyLock::new(|| rx(r"\d(?:[ -]?\d){12,}"));
 static CODE_AFTER_WORD: LazyLock<Regex> =
     LazyLock::new(|| rx(&format!(r"(?i)\b{TRIGGERS}\b[^0-9\n]{{0,40}}\b\d{{4,8}}\b")));
@@ -206,8 +207,18 @@ pub fn redact_text(text: &str) -> (String, Counts) {
     out = replace_all(&out, &AUTHORIZATION, Category::BearerToken, &mut counts);
     out = replace_all(&out, &BEARER, Category::BearerToken, &mut counts);
     out = replace_all(&out, &CARD, Category::CardNumber, &mut counts);
-    out = replace_all(&out, &CODE_AFTER_WORD, Category::VerificationCode, &mut counts);
-    out = replace_all(&out, &CODE_BEFORE_WORD, Category::VerificationCode, &mut counts);
+    out = replace_all(
+        &out,
+        &CODE_AFTER_WORD,
+        Category::VerificationCode,
+        &mut counts,
+    );
+    out = replace_all(
+        &out,
+        &CODE_BEFORE_WORD,
+        Category::VerificationCode,
+        &mut counts,
+    );
     (out, counts)
 }
 
@@ -273,20 +284,28 @@ fn has_pair(tokens: &[String], pairs: &[(&str, &str)]) -> bool {
 }
 
 fn label_category(tokens: &[String]) -> Option<Category> {
-    if has_any(tokens, &["otp", "2fa", "mfa", "verification", "authenticator", "onetime"])
-        || has_pair(
-            tokens,
-            &[
-                ("one", "time"),
-                ("security", "code"),
-                ("auth", "code"),
-                ("authentication", "code"),
-                ("confirmation", "code"),
-                ("sms", "code"),
-                ("login", "code"),
-            ],
-        )
-    {
+    if has_any(
+        tokens,
+        &[
+            "otp",
+            "2fa",
+            "mfa",
+            "verification",
+            "authenticator",
+            "onetime",
+        ],
+    ) || has_pair(
+        tokens,
+        &[
+            ("one", "time"),
+            ("security", "code"),
+            ("auth", "code"),
+            ("authentication", "code"),
+            ("confirmation", "code"),
+            ("sms", "code"),
+            ("login", "code"),
+        ],
+    ) {
         return Some(Category::VerificationCode);
     }
     if has_any(tokens, &["cvv", "cvc", "ccnum", "cardnumber"])
@@ -317,7 +336,17 @@ fn label_category(tokens: &[String]) -> Option<Category> {
     {
         return Some(Category::ApiKey);
     }
-    if has_any(tokens, &["password", "passwd", "pwd", "passphrase", "passcode", "secret"]) {
+    if has_any(
+        tokens,
+        &[
+            "password",
+            "passwd",
+            "pwd",
+            "passphrase",
+            "passcode",
+            "secret",
+        ],
+    ) {
         return Some(Category::PasswordField);
     }
     None
@@ -382,7 +411,10 @@ mod tests {
     fn expected_counts(case: &Value) -> Counts {
         let mut counts = Counts::default();
         for (key, n) in case["counts"].as_object().expect("counts") {
-            counts.add(Category::parse(key).expect("category"), n.as_u64().expect("n"));
+            counts.add(
+                Category::parse(key).expect("category"),
+                n.as_u64().expect("n"),
+            );
         }
         counts
     }
@@ -402,7 +434,11 @@ mod tests {
         let corpus = corpus();
         assert_eq!(corpus["rule_set"], RULE_SET);
         let cases = corpus["cases"].as_array().expect("cases");
-        assert!(cases.len() >= 40, "the corpus is the contract: {}", cases.len());
+        assert!(
+            cases.len() >= 40,
+            "the corpus is the contract: {}",
+            cases.len()
+        );
         for case in cases {
             let id = case["id"].as_str().expect("id");
             let input = case["input"].as_str().expect("input");
@@ -422,7 +458,10 @@ mod tests {
             // Idempotent: what redaction produced redacts to itself, and a scan finds nothing.
             if let Some(text) = redacted {
                 assert_eq!(redact_text(&text).0, text, "{id}: not idempotent");
-                assert!(scan_text(&text).is_empty(), "{id}: a scan of the output finds more");
+                assert!(
+                    scan_text(&text).is_empty(),
+                    "{id}: a scan of the output finds more"
+                );
             }
         }
     }
@@ -453,6 +492,10 @@ mod tests {
             title: Some("Footprint"),
             ..FieldAttrs::default()
         };
-        assert_eq!(field_rule(&attrs), None, "otp inside a word is not a code field");
+        assert_eq!(
+            field_rule(&attrs),
+            None,
+            "otp inside a word is not a code field"
+        );
     }
 }

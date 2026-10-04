@@ -110,7 +110,9 @@ impl RecordingCompiler {
             )
             .await?;
         let (Some(version_id), Some(_)) = (&row.artifact_version_id, &row.content_digest) else {
-            return Err(RecordingError::Malformed("a finished recording lost its archive".to_string()));
+            return Err(RecordingError::Malformed(
+                "a finished recording lost its archive".to_string(),
+            ));
         };
         let version = ArtifactVersionId::parse(version_id)?;
         let mut tx = self.store.pool().begin().await?;
@@ -144,17 +146,27 @@ impl RecordingCompiler {
                 &scope,
                 &row.id,
                 report.projection.to_string(),
-                tools.iter().map(|tool| tool.to_json().to_string()).collect(),
+                tools
+                    .iter()
+                    .map(|tool| tool.to_json().to_string())
+                    .collect(),
                 self.config.settings_json().to_string(),
             )
             .await?;
-        let proposal: Value = serde_json::from_str(&raw).map_err(|error| RecordingError::ProposalRejected {
-            rule: "proposal.shape",
-            detail: format!("the plane returned something that is not JSON: {error}"),
-        })?;
+        let proposal: Value =
+            serde_json::from_str(&raw).map_err(|error| RecordingError::ProposalRejected {
+                rule: "proposal.shape",
+                detail: format!("the plane returned something that is not JSON: {error}"),
+            })?;
         proposal::validate(&proposal, &row.id, &tools, self.config)?;
-        let recording = self.store.record_proposal(caller, &row.id, &proposal).await?;
-        Ok(CompileOutcome { recording, proposal })
+        let recording = self
+            .store
+            .record_proposal(caller, &row.id, &proposal)
+            .await?;
+        Ok(CompileOutcome {
+            recording,
+            proposal,
+        })
     }
 
     /// Register the person's reviewed proposal as one `DRAFT` skill version.
@@ -186,23 +198,22 @@ impl RecordingCompiler {
             .await?;
         if row.status == RecordingStatus::Submitted {
             // A repeated submission answers with what the first one made.
-            let version = adopt(&skills, &caller.tenant_id, &row.id, name).await?.ok_or_else(|| {
-                RecordingError::State {
+            let version = adopt(&skills, &caller.tenant_id, &row.id, name)
+                .await?
+                .ok_or_else(|| RecordingError::State {
                     id: row.id.clone(),
                     status: "submitted".to_string(),
                     detail: "this recording became a skill under another name".to_string(),
-                }
-            })?;
+                })?;
             return Ok(SubmitOutcome {
                 recording: row,
                 skill_id: version.skill_id.to_string(),
                 version,
             });
         }
-        let stored = row
-            .proposal
-            .clone()
-            .ok_or_else(|| RecordingError::Malformed("a compiled recording lost its proposal".to_string()))?;
+        let stored = row.proposal.clone().ok_or_else(|| {
+            RecordingError::Malformed("a compiled recording lost its proposal".to_string())
+        })?;
         let mut choices = Vec::with_capacity(decisions.len());
         for decision in decisions {
             let constant = match decision.classification.as_str() {
@@ -244,7 +255,10 @@ impl RecordingCompiler {
                         return Err(RecordingError::State {
                             id: row.id.clone(),
                             status: row.status.as_str().to_string(),
-                            detail: format!("a skill named `{}` is already registered", existing.name),
+                            detail: format!(
+                                "a skill named `{}` is already registered",
+                                existing.name
+                            ),
                         })
                     }
                 }
@@ -338,7 +352,9 @@ fn validate_semver(semver: &str) -> Result<(), RecordingError> {
     if valid {
         Ok(())
     } else {
-        Err(RecordingError::Invalid("a version is semver (major.minor.patch)".to_string()))
+        Err(RecordingError::Invalid(
+            "a version is semver (major.minor.patch)".to_string(),
+        ))
     }
 }
 

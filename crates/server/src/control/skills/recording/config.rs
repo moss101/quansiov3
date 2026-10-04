@@ -14,7 +14,8 @@ use serde_json::{json, Value};
 use super::redact::RULE_SET;
 
 /// The committed configuration.
-pub const SKILL_RECORDING_YAML: &str = include_str!("../../../../../../config/skill-recording.yaml");
+pub const SKILL_RECORDING_YAML: &str =
+    include_str!("../../../../../../config/skill-recording.yaml");
 
 /// A configuration that cannot be trusted.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
@@ -94,7 +95,9 @@ fn uint(value: &serde_yaml::Value, key: &str, min: u64, max: u64) -> Result<u64,
     if (min..=max).contains(&found) {
         Ok(found)
     } else {
-        Err(ConfigError(format!("`{key}` must be {min}..={max}, found {found}")))
+        Err(ConfigError(format!(
+            "`{key}` must be {min}..={max}, found {found}"
+        )))
     }
 }
 
@@ -126,7 +129,14 @@ impl RecordingConfig {
         closed(
             &document,
             "document",
-            &["version", "rule_set", "max_duration_ms", "limits", "proposal", "tool_paths"],
+            &[
+                "version",
+                "rule_set",
+                "max_duration_ms",
+                "limits",
+                "proposal",
+                "tool_paths",
+            ],
         )?;
         if get(&document, "version")?.as_u64() != Some(1) {
             return Err(ConfigError("`version` must be 1".to_string()));
@@ -163,17 +173,29 @@ impl RecordingConfig {
             ],
         )?;
         let transcript = get(limits, "transcript")?;
-        closed(transcript, "limits.transcript", &["max_segments", "max_chars"])?;
+        closed(
+            transcript,
+            "limits.transcript",
+            &["max_segments", "max_chars"],
+        )?;
         let archive = get(limits, "archive")?;
         closed(archive, "limits.archive", &["max_bytes"])?;
         let proposal = get(&document, "proposal")?;
-        closed(proposal, "proposal", &["max_bytes", "max_steps", "max_slots"])?;
+        closed(
+            proposal,
+            "proposal",
+            &["max_bytes", "max_steps", "max_slots"],
+        )?;
         let mut tool_paths = Vec::new();
         for entry in get(&document, "tool_paths")?
             .as_sequence()
             .ok_or_else(|| ConfigError("`tool_paths` must be a list".to_string()))?
         {
-            closed(entry, "tool_paths[]", &["id", "bundle_ids", "tools", "tool_prefix"])?;
+            closed(
+                entry,
+                "tool_paths[]",
+                &["id", "bundle_ids", "tools", "tool_prefix"],
+            )?;
             let strings = |key: &str| -> Vec<String> {
                 entry
                     .get(key)
@@ -196,7 +218,9 @@ impl RecordingConfig {
                     .map(str::to_string),
             };
             if path.id.is_empty() || path.bundle_ids.is_empty() {
-                return Err(ConfigError("a tool path needs an id and bundle ids".to_string()));
+                return Err(ConfigError(
+                    "a tool path needs an id and bundle ids".to_string(),
+                ));
             }
             if path.tools.is_empty() == path.tool_prefix.is_none() {
                 return Err(ConfigError(format!(
@@ -207,7 +231,12 @@ impl RecordingConfig {
             tool_paths.push(path);
         }
         let config = Self {
-            max_duration: Duration::from_millis(uint(&document, "max_duration_ms", 60_000, 7_200_000)?),
+            max_duration: Duration::from_millis(uint(
+                &document,
+                "max_duration_ms",
+                60_000,
+                7_200_000,
+            )?),
             max_actions: usize_of(uint(limits, "max_actions", 1, 10_000)?),
             action_text_max_chars: usize_of(uint(limits, "action_text_max_chars", 1, 10_000)?),
             attribute_max_chars: usize_of(uint(limits, "attribute_max_chars", 16, 1_000)?),
@@ -272,8 +301,14 @@ mod tests {
         let config = RecordingConfig::committed();
         assert!(config.archive_max_bytes <= 8 * 1024 * 1024);
         assert!(config.screenshots.max_count > 0);
-        assert!(config.tool_paths.iter().any(|path| path.id == "managed_browser"));
-        assert_eq!(config.limits_json()["archive"]["max_bytes"], config.archive_max_bytes);
+        assert!(config
+            .tool_paths
+            .iter()
+            .any(|path| path.id == "managed_browser"));
+        assert_eq!(
+            config.limits_json()["archive"]["max_bytes"],
+            config.archive_max_bytes
+        );
     }
 
     #[test]

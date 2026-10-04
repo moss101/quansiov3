@@ -460,16 +460,34 @@ async fn dispatch(
                 .await?
         }
         "FinishRecording" => {
-            super::recordings::finish_recording(state, scope, identity, &request.params, correlation)
-                .await?
+            super::recordings::finish_recording(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            )
+            .await?
         }
         "CancelRecording" => {
-            super::recordings::cancel_recording(state, scope, identity, &request.params, correlation)
-                .await?
+            super::recordings::cancel_recording(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            )
+            .await?
         }
         "CompileRecording" => {
-            super::recordings::compile_recording(state, scope, identity, &request.params, correlation)
-                .await?
+            super::recordings::compile_recording(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            )
+            .await?
         }
         "SubmitRecordingSkill" => {
             super::recordings::submit_recording_skill(

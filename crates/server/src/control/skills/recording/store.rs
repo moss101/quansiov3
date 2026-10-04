@@ -33,7 +33,8 @@ use crate::artifacts::{
     Origin, OriginKind, ProducedBy, Retention,
 };
 
-const COLUMNS: &str = "id, tenant_id, workspace_id, owner_user_id, session_family_id, epoch, status, \
+const COLUMNS: &str =
+    "id, tenant_id, workspace_id, owner_user_id, session_family_id, epoch, status, \
     start_key, started_at, expires_at, (expires_at <= now()) AS expired, finished_at, artifact_id, \
     artifact_version_id, content_digest, size_bytes, redaction, stats, proposal, skill_version_id, \
     abort_reason, created_at, updated_at";
@@ -190,7 +191,8 @@ impl Recording {
 /// What a mutation decided after it changed state: the value, or a refusal that is returned once the
 /// state change (an abort) has committed.
 type Step<T> = Result<T, RecordingError>;
-type BoxStepFuture<'a, T> = Pin<Box<dyn Future<Output = Result<Step<T>, RecordingError>> + Send + 'a>>;
+type BoxStepFuture<'a, T> =
+    Pin<Box<dyn Future<Output = Result<Step<T>, RecordingError>> + Send + 'a>>;
 
 /// The durable recorder-session registry.
 #[derive(Debug, Clone)]
@@ -226,11 +228,18 @@ impl RecordingStore {
         start_key: &str,
         config: &RecordingConfig,
     ) -> Result<Recording, RecordingError> {
-        if start_key.is_empty() || start_key.chars().count() > 128 || start_key.chars().any(char::is_control) {
-            return Err(RecordingError::Invalid("start_key must be 1..=128 printable characters".to_string()));
+        if start_key.is_empty()
+            || start_key.chars().count() > 128
+            || start_key.chars().any(char::is_control)
+        {
+            return Err(RecordingError::Invalid(
+                "start_key must be 1..=128 printable characters".to_string(),
+            ));
         }
         if caller.epoch < 1 {
-            return Err(RecordingError::Invalid("epoch must be a positive integer".to_string()));
+            return Err(RecordingError::Invalid(
+                "epoch must be a positive integer".to_string(),
+            ));
         }
         if let Some(existing) = self.find_by_key(caller, start_key).await? {
             return replay_of_start(existing, caller, workspace_id);
@@ -298,14 +307,18 @@ impl RecordingStore {
             })
             .await;
         match attempt {
-            Err(RecordingError::Database(sqlx::Error::Database(error))) if error.is_unique_violation() => {
+            Err(RecordingError::Database(sqlx::Error::Database(error)))
+                if error.is_unique_violation() =>
+            {
                 // Two starts raced: the same key is a replay, another key is a recording in progress.
                 match self.find_by_key(caller, start_key).await? {
                     Some(existing) => replay_of_start(existing, caller, workspace_id),
                     None => Err(RecordingError::State {
                         id: String::new(),
                         status: "recording".to_string(),
-                        detail: "finish or cancel the recording in progress before starting another".to_string(),
+                        detail:
+                            "finish or cancel the recording in progress before starting another"
+                                .to_string(),
                     }),
                 }
             }
@@ -383,7 +396,7 @@ impl RecordingStore {
                 let artifacts = ArtifactStore::new(objects.as_ref());
                 let artifact = artifacts
                     .create(
-                        &mut **tx,
+                        tx,
                         &caller.tenant_id,
                         &caller.user_id,
                         &NewArtifact {
@@ -405,7 +418,7 @@ impl RecordingStore {
                     .await?;
                 let stored = artifacts
                     .add_version(
-                        &mut **tx,
+                        tx,
                         &caller.tenant_id,
                         &caller.user_id,
                         &artifact.id,
@@ -465,7 +478,11 @@ impl RecordingStore {
     ///
     /// # Errors
     /// [`RecordingError::OwnerChanged`], or [`RecordingError::State`] for one that is not in progress.
-    pub async fn cancel(&self, caller: &RecordingCaller, recording_id: &str) -> Result<Recording, RecordingError> {
+    pub async fn cancel(
+        &self,
+        caller: &RecordingCaller,
+        recording_id: &str,
+    ) -> Result<Recording, RecordingError> {
         if let Some(existing) = self.peek_for_replay(caller, recording_id).await? {
             if existing.status == RecordingStatus::Cancelled {
                 return Ok(existing);
@@ -533,7 +550,11 @@ impl RecordingStore {
                 status: row.status.as_str().to_string(),
                 detail: format!(
                     "this call needs the recording to be {}",
-                    wanted.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(" or ")
+                    wanted
+                        .iter()
+                        .map(|s| s.as_str())
+                        .collect::<Vec<_>>()
+                        .join(" or ")
                 ),
             });
         }
@@ -681,7 +702,12 @@ impl RecordingStore {
     ///
     /// # Errors
     /// A database failure.
-    pub async fn list_owned(&self, tenant_id: &str, user_id: &str, limit: i64) -> Result<Vec<Recording>, RecordingError> {
+    pub async fn list_owned(
+        &self,
+        tenant_id: &str,
+        user_id: &str,
+        limit: i64,
+    ) -> Result<Vec<Recording>, RecordingError> {
         let mut tx = self.events.begin_tenant_transaction(tenant_id).await?;
         let rows = sqlx::query(&format!(
             "SELECT {COLUMNS} FROM skill_recordings WHERE tenant_id = $1 AND owner_user_id = $2 \
@@ -698,8 +724,15 @@ impl RecordingStore {
 
     /// A recording as its owner's call sees it: `None` when it does not exist, the fence's refusal
     /// (without aborting anything: this is a read) when the call is not the owner's.
-    async fn peek(&self, caller: &RecordingCaller, recording_id: &str) -> Result<Option<Recording>, RecordingError> {
-        let mut tx = self.events.begin_tenant_transaction(&caller.tenant_id).await?;
+    async fn peek(
+        &self,
+        caller: &RecordingCaller,
+        recording_id: &str,
+    ) -> Result<Option<Recording>, RecordingError> {
+        let mut tx = self
+            .events
+            .begin_tenant_transaction(&caller.tenant_id)
+            .await?;
         let row = sqlx::query(&format!(
             "SELECT {COLUMNS} FROM skill_recordings WHERE tenant_id = $1 AND id = $2"
         ))
@@ -730,8 +763,15 @@ impl RecordingStore {
         }
     }
 
-    async fn find_by_key(&self, caller: &RecordingCaller, start_key: &str) -> Result<Option<Recording>, RecordingError> {
-        let mut tx = self.events.begin_tenant_transaction(&caller.tenant_id).await?;
+    async fn find_by_key(
+        &self,
+        caller: &RecordingCaller,
+        start_key: &str,
+    ) -> Result<Option<Recording>, RecordingError> {
+        let mut tx = self
+            .events
+            .begin_tenant_transaction(&caller.tenant_id)
+            .await?;
         let row = sqlx::query(&format!(
             "SELECT {COLUMNS} FROM skill_recordings \
              WHERE tenant_id = $1 AND owner_user_id = $2 AND start_key = $3"
@@ -754,7 +794,10 @@ impl RecordingStore {
         T: Send,
         F: Send
             + 'static
-            + for<'a> FnOnce(&'a mut Transaction<'static, Postgres>, &'a mut EventBatch) -> BoxStepFuture<'a, T>,
+            + for<'a> FnOnce(
+                &'a mut Transaction<'static, Postgres>,
+                &'a mut EventBatch,
+            ) -> BoxStepFuture<'a, T>,
     {
         let rejection: Arc<Mutex<Option<RecordingError>>> = Arc::new(Mutex::new(None));
         let slot = Arc::clone(&rejection);
@@ -783,7 +826,11 @@ impl RecordingStore {
             .await;
         match result {
             Ok(step) => step,
-            Err(error) => match rejection.lock().unwrap_or_else(PoisonError::into_inner).take() {
+            Err(error) => match rejection
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .take()
+            {
                 Some(error) => Err(error),
                 None => Err(RecordingError::Event(error)),
             },
@@ -791,7 +838,11 @@ impl RecordingStore {
     }
 }
 
-fn replay_of_start(existing: Recording, caller: &RecordingCaller, workspace_id: &str) -> Result<Recording, RecordingError> {
+fn replay_of_start(
+    existing: Recording,
+    caller: &RecordingCaller,
+    workspace_id: &str,
+) -> Result<Recording, RecordingError> {
     if existing.workspace_id != workspace_id || existing.epoch != caller.epoch {
         return Err(RecordingError::IdempotencyMismatch {
             key: existing.start_key,
@@ -1044,22 +1095,38 @@ mod tests {
         assert_eq!(violation(&row, &caller(&row)), None);
         let mut other_user = caller(&row);
         other_user.user_id = "usr_01J8Z3K6F1N8VQ2X5W9YOTHER1".to_string();
-        assert_eq!(violation(&row, &other_user), Some("the call is from another user"));
+        assert_eq!(
+            violation(&row, &other_user),
+            Some("the call is from another user")
+        );
         let mut other_tenant = caller(&row);
         other_tenant.tenant_id = "tn_01J8Z3K6F1N8VQ2X5W9YOTHER1".to_string();
         assert!(violation(&row, &other_tenant).is_some());
         let mut other_session = caller(&row);
         other_session.session_family_id = Some("fam_2".to_string());
-        assert_eq!(violation(&row, &other_session), Some("the call is from another sign-in session"));
+        assert_eq!(
+            violation(&row, &other_session),
+            Some("the call is from another sign-in session")
+        );
         let mut no_session = caller(&row);
         no_session.session_family_id = None;
-        assert!(violation(&row, &no_session).is_some(), "a recording bound to a session needs one");
+        assert!(
+            violation(&row, &no_session).is_some(),
+            "a recording bound to a session needs one"
+        );
         let mut other_epoch = caller(&row);
         other_epoch.epoch = 3;
-        assert_eq!(violation(&row, &other_epoch), Some("the call carries another epoch"));
+        assert_eq!(
+            violation(&row, &other_epoch),
+            Some("the call carries another epoch")
+        );
         let mut header_scoped = row.clone();
         header_scoped.session_family_id = None;
-        assert_eq!(violation(&header_scoped, &no_session), None, "header-scoped development has no session to bind");
+        assert_eq!(
+            violation(&header_scoped, &no_session),
+            None,
+            "header-scoped development has no session to bind"
+        );
     }
 
     #[test]

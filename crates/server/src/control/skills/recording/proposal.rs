@@ -36,8 +36,18 @@ pub const MANIFEST_KEYS: [&str; 8] = [
 ];
 
 const SLOT_TYPES: [&str; 7] = ["text", "number", "choice", "file", "date", "email", "url"];
-const PRECONDITION_KINDS: [&str; 4] = ["app_installed", "app_running", "slot_provided", "control_present"];
-const POSTCONDITION_KINDS: [&str; 4] = ["app_frontmost", "value_present", "control_present", "evidence_required"];
+const PRECONDITION_KINDS: [&str; 4] = [
+    "app_installed",
+    "app_running",
+    "slot_provided",
+    "control_present",
+];
+const POSTCONDITION_KINDS: [&str; 4] = [
+    "app_frontmost",
+    "value_present",
+    "control_present",
+    "evidence_required",
+];
 const UI_ACTIONS: [&str; 8] = [
     "press",
     "set_value",
@@ -48,7 +58,11 @@ const UI_ACTIONS: [&str; 8] = [
     "scroll",
     "activate_app",
 ];
-const RECOVERY_ACTIONS: [&str; 3] = ["reobserve_then_ask", "stop_and_ask", "reconcile_by_observation"];
+const RECOVERY_ACTIONS: [&str; 3] = [
+    "reobserve_then_ask",
+    "stop_and_ask",
+    "reconcile_by_observation",
+];
 
 /// Keys that name where something was on the screen, or which one of several it was.
 const FORBIDDEN_KEYS: [&str; 19] = [
@@ -160,12 +174,19 @@ fn closed<'a>(
         .as_object()
         .ok_or_else(|| reject(rule, format!("{what} must be an object")))?;
     if let Some(unknown) = map.keys().find(|key| !keys.contains(&key.as_str())) {
-        return Err(reject(rule, format!("{what} has a field outside the closed vocabulary: `{unknown}`")));
+        return Err(reject(
+            rule,
+            format!("{what} has a field outside the closed vocabulary: `{unknown}`"),
+        ));
     }
     Ok(map)
 }
 
-fn list<'a>(map: &'a Map<String, Value>, key: &str, what: &str) -> Result<&'a Vec<Value>, RecordingError> {
+fn list<'a>(
+    map: &'a Map<String, Value>,
+    key: &str,
+    what: &str,
+) -> Result<&'a Vec<Value>, RecordingError> {
     map.get(key)
         .and_then(Value::as_array)
         .ok_or_else(|| reject("proposal.procedure", format!("{what}.{key} must be a list")))
@@ -175,7 +196,12 @@ fn text<'a>(map: &'a Map<String, Value>, key: &str, what: &str) -> Result<&'a st
     map.get(key)
         .and_then(Value::as_str)
         .filter(|value| !value.trim().is_empty())
-        .ok_or_else(|| reject("proposal.procedure", format!("{what}.{key} must be non-empty text")))
+        .ok_or_else(|| {
+            reject(
+                "proposal.procedure",
+                format!("{what}.{key} must be non-empty text"),
+            )
+        })
 }
 
 /// A key or a value that says where something was on the screen.
@@ -189,10 +215,9 @@ fn find_coordinates(value: &Value, pointer: &str, strings: bool) -> Option<Strin
                 find_coordinates(inner, &child, strings)
             }
         }),
-        Value::Array(items) => items
-            .iter()
-            .enumerate()
-            .find_map(|(index, inner)| find_coordinates(inner, &format!("{pointer}/{index}"), strings)),
+        Value::Array(items) => items.iter().enumerate().find_map(|(index, inner)| {
+            find_coordinates(inner, &format!("{pointer}/{index}"), strings)
+        }),
         Value::String(text) if strings => POINT_TEXT
             .iter()
             .any(|pattern| pattern.is_match(text))
@@ -240,7 +265,10 @@ pub fn validate(
 ) -> Result<(), RecordingError> {
     let size = proposal.to_string().len();
     if size > config.proposal_max_bytes {
-        return Err(reject("proposal.size", format!("{size} bytes; the limit is {}", config.proposal_max_bytes)));
+        return Err(reject(
+            "proposal.size",
+            format!("{size} bytes; the limit is {}", config.proposal_max_bytes),
+        ));
     }
     let root = closed(
         proposal,
@@ -273,23 +301,35 @@ pub fn validate(
         "proposal.manifest_vocabulary",
     )?;
     if manifest.contains_key("eval_suite_id") {
-        return Err(reject("proposal.manifest_vocabulary", "a proposal cannot choose its own evaluation suite"));
+        return Err(reject(
+            "proposal.manifest_vocabulary",
+            "a proposal cannot choose its own evaluation suite",
+        ));
     }
     if manifest
         .get("instructions")
         .and_then(Value::as_str)
         .is_none_or(|text| text.trim().is_empty())
     {
-        return Err(reject("proposal.manifest_vocabulary", "instructions are required"));
+        return Err(reject(
+            "proposal.manifest_vocabulary",
+            "instructions are required",
+        ));
     }
 
     // Tools and effect classes: only what exists, only what those tools need.
-    let known: BTreeMap<&str, &ToolSummary> = tools.iter().map(|tool| (tool.name.as_str(), tool)).collect();
+    let known: BTreeMap<&str, &ToolSummary> = tools
+        .iter()
+        .map(|tool| (tool.name.as_str(), tool))
+        .collect();
     let tool_needs = strings_of(manifest, "tool_needs");
     let mut allowed_classes = BTreeSet::new();
     for name in &tool_needs {
         let Some(tool) = known.get(name.as_str()) else {
-            return Err(reject("proposal.tools", format!("`{name}` is not a tool the registry offers")));
+            return Err(reject(
+                "proposal.tools",
+                format!("`{name}` is not a tool the registry offers"),
+            ));
         };
         allowed_classes.extend(tool.effect_classes.iter().cloned());
     }
@@ -319,10 +359,18 @@ pub fn validate(
         "proposal.procedure",
     )?;
     if procedure.get("schema_version").and_then(Value::as_str) != Some(PROCEDURE_SCHEMA_VERSION) {
-        return Err(reject("proposal.procedure", "procedure.schema_version must be v1"));
+        return Err(reject(
+            "proposal.procedure",
+            "procedure.schema_version must be v1",
+        ));
     }
     for entry in list(procedure, "apps", "procedure")? {
-        let app = closed(entry, "an app", &["bundle_id", "name"], "proposal.procedure")?;
+        let app = closed(
+            entry,
+            "an app",
+            &["bundle_id", "name"],
+            "proposal.procedure",
+        )?;
         text(app, "bundle_id", "app")?;
     }
     let slots = root
@@ -330,7 +378,14 @@ pub fn validate(
         .and_then(Value::as_array)
         .ok_or_else(|| reject("proposal.slots", "slots must be a list"))?;
     if slots.len() > config.proposal_max_slots {
-        return Err(reject("proposal.slots", format!("{} slots; the limit is {}", slots.len(), config.proposal_max_slots)));
+        return Err(reject(
+            "proposal.slots",
+            format!(
+                "{} slots; the limit is {}",
+                slots.len(),
+                config.proposal_max_slots
+            ),
+        ));
     }
     let mut slot_ids = BTreeSet::new();
     for slot in slots {
@@ -354,7 +409,10 @@ pub fn validate(
             .and_then(Value::as_str)
             .ok_or_else(|| reject("proposal.slots", "a slot needs a slot_id"))?;
         if !slot_ids.insert(id.to_string()) {
-            return Err(reject("proposal.slots", format!("slot_id `{id}` is used twice")));
+            return Err(reject(
+                "proposal.slots",
+                format!("slot_id `{id}` is used twice"),
+            ));
         }
         if !map.get("classification").is_none_or(Value::is_null) {
             return Err(reject(
@@ -364,7 +422,10 @@ pub fn validate(
         }
         let kind = map.get("type").and_then(Value::as_str).unwrap_or_default();
         if !SLOT_TYPES.contains(&kind) {
-            return Err(reject("proposal.slots", format!("`{kind}` is not a slot type")));
+            return Err(reject(
+                "proposal.slots",
+                format!("`{kind}` is not a slot type"),
+            ));
         }
     }
     let mut declared_inputs = BTreeSet::new();
@@ -372,70 +433,130 @@ pub fn validate(
         let input = closed(
             entry,
             "an input",
-            &["slot_id", "name", "description", "type", "classification", "constant_value"],
+            &[
+                "slot_id",
+                "name",
+                "description",
+                "type",
+                "classification",
+                "constant_value",
+            ],
             "proposal.procedure",
         )?;
         let id = text(input, "slot_id", "input")?;
         if !slot_ids.contains(id) {
-            return Err(reject("proposal.slots", format!("input `{id}` has no slot")));
+            return Err(reject(
+                "proposal.slots",
+                format!("input `{id}` has no slot"),
+            ));
         }
-        if !input.get("classification").is_none_or(Value::is_null) || input.contains_key("constant_value") {
-            return Err(reject("proposal.unclassified", "an input is unclassified until the person decides"));
+        if !input.get("classification").is_none_or(Value::is_null)
+            || input.contains_key("constant_value")
+        {
+            return Err(reject(
+                "proposal.unclassified",
+                "an input is unclassified until the person decides",
+            ));
         }
         declared_inputs.insert(id.to_string());
     }
     if declared_inputs != slot_ids {
-        return Err(reject("proposal.slots", "every slot is an input of the procedure, and no input lacks a slot"));
+        return Err(reject(
+            "proposal.slots",
+            "every slot is an input of the procedure, and no input lacks a slot",
+        ));
     }
     for entry in list(procedure, "preconditions", "procedure")? {
-        let pre = closed(entry, "a precondition", &["kind", "bundle_id", "slot_id", "description"], "proposal.procedure")?;
+        let pre = closed(
+            entry,
+            "a precondition",
+            &["kind", "bundle_id", "slot_id", "description"],
+            "proposal.procedure",
+        )?;
         let kind = text(pre, "kind", "precondition")?;
         if !PRECONDITION_KINDS.contains(&kind) {
-            return Err(reject("proposal.procedure", format!("`{kind}` is not a precondition kind")));
+            return Err(reject(
+                "proposal.procedure",
+                format!("`{kind}` is not a precondition kind"),
+            ));
         }
         if let Some(slot) = pre.get("slot_id").and_then(Value::as_str) {
             if !slot_ids.contains(slot) {
-                return Err(reject("proposal.slots", format!("precondition names unknown slot `{slot}`")));
+                return Err(reject(
+                    "proposal.slots",
+                    format!("precondition names unknown slot `{slot}`"),
+                ));
             }
         }
     }
     let steps = list(procedure, "steps", "procedure")?;
     if steps.is_empty() || steps.len() > config.proposal_max_steps {
-        return Err(reject("proposal.procedure", format!("{} steps; allowed 1..={}", steps.len(), config.proposal_max_steps)));
+        return Err(reject(
+            "proposal.procedure",
+            format!(
+                "{} steps; allowed 1..={}",
+                steps.len(),
+                config.proposal_max_steps
+            ),
+        ));
     }
     let mut step_ids = BTreeSet::new();
     for entry in steps {
         let step = closed(
             entry,
             "a step",
-            &["id", "intent", "path", "tools", "slot_ids", "ui", "provenance", "needs_review"],
+            &[
+                "id",
+                "intent",
+                "path",
+                "tools",
+                "slot_ids",
+                "ui",
+                "provenance",
+                "needs_review",
+            ],
             "proposal.procedure",
         )?;
         let id = text(step, "id", "step")?;
         if !step_ids.insert(id.to_string()) {
-            return Err(reject("proposal.procedure", format!("step id `{id}` is used twice")));
+            return Err(reject(
+                "proposal.procedure",
+                format!("step id `{id}` is used twice"),
+            ));
         }
         text(step, "intent", "step")?;
         for slot in strings_of(step, "slot_ids") {
             if !slot_ids.contains(&slot) {
-                return Err(reject("proposal.slots", format!("step uses unknown slot `{slot}`")));
+                return Err(reject(
+                    "proposal.slots",
+                    format!("step uses unknown slot `{slot}`"),
+                ));
             }
         }
         match text(step, "path", "step")? {
             "tool" => {
                 let named = strings_of(step, "tools");
                 if named.is_empty() || step.contains_key("ui") {
-                    return Err(reject("proposal.procedure", "a tool step names tools and no ui"));
+                    return Err(reject(
+                        "proposal.procedure",
+                        "a tool step names tools and no ui",
+                    ));
                 }
                 for tool in named {
                     if !tool_needs.contains(&tool) {
-                        return Err(reject("proposal.tools", format!("step uses `{tool}` which the skill does not declare it needs")));
+                        return Err(reject(
+                            "proposal.tools",
+                            format!("step uses `{tool}` which the skill does not declare it needs"),
+                        ));
                     }
                 }
             }
             "ui" => {
                 if step.contains_key("tools") {
-                    return Err(reject("proposal.procedure", "a ui step names a control, not tools"));
+                    return Err(reject(
+                        "proposal.procedure",
+                        "a ui step names a control, not tools",
+                    ));
                 }
                 let ui = closed(
                     step.get("ui").unwrap_or(&Value::Null),
@@ -456,30 +577,57 @@ pub fn validate(
                 text(ui, "bundle_id", "ui")?;
                 let action = text(ui, "action", "ui")?;
                 if !UI_ACTIONS.contains(&action) {
-                    return Err(reject("proposal.procedure", format!("`{action}` is not a ui action")));
+                    return Err(reject(
+                        "proposal.procedure",
+                        format!("`{action}` is not a ui action"),
+                    ));
                 }
                 if let Some(slot) = ui.get("slot_id").and_then(Value::as_str) {
                     if !slot_ids.contains(slot) {
-                        return Err(reject("proposal.slots", format!("step uses unknown slot `{slot}`")));
+                        return Err(reject(
+                            "proposal.slots",
+                            format!("step uses unknown slot `{slot}`"),
+                        ));
                     }
                 }
             }
-            other => return Err(reject("proposal.procedure", format!("`{other}` is not a step path"))),
+            other => {
+                return Err(reject(
+                    "proposal.procedure",
+                    format!("`{other}` is not a step path"),
+                ))
+            }
         }
         if let Some(provenance) = step.get("provenance") {
-            closed(provenance, "provenance", &["action_seqs"], "proposal.procedure")?;
+            closed(
+                provenance,
+                "provenance",
+                &["action_seqs"],
+                "proposal.procedure",
+            )?;
         }
     }
     for entry in list(procedure, "postconditions", "procedure")? {
         let post = closed(
             entry,
             "a postcondition",
-            &["kind", "description", "slot_id", "bundle_id", "ax_role", "ax_title", "ax_identifier"],
+            &[
+                "kind",
+                "description",
+                "slot_id",
+                "bundle_id",
+                "ax_role",
+                "ax_title",
+                "ax_identifier",
+            ],
             "proposal.procedure",
         )?;
         let kind = text(post, "kind", "postcondition")?;
         if !POSTCONDITION_KINDS.contains(&kind) {
-            return Err(reject("proposal.procedure", format!("`{kind}` is not a postcondition kind")));
+            return Err(reject(
+                "proposal.procedure",
+                format!("`{kind}` is not a postcondition kind"),
+            ));
         }
     }
     let recovery = list(procedure, "recovery", "procedure")?;
@@ -487,11 +635,19 @@ pub fn validate(
         return Err(reject("proposal.procedure", "a procedure carries recovery"));
     }
     for entry in recovery {
-        let item = closed(entry, "a recovery", &["on", "action", "guidance"], "proposal.procedure")?;
+        let item = closed(
+            entry,
+            "a recovery",
+            &["on", "action", "guidance"],
+            "proposal.procedure",
+        )?;
         text(item, "on", "recovery")?;
         let action = text(item, "action", "recovery")?;
         if !RECOVERY_ACTIONS.contains(&action) {
-            return Err(reject("proposal.procedure", format!("`{action}` is not a recovery action; none repeats an action blind")));
+            return Err(reject(
+                "proposal.procedure",
+                format!("`{action}` is not a recovery action; none repeats an action blind"),
+            ));
         }
     }
 
@@ -500,21 +656,39 @@ pub fn validate(
         .and_then(Value::as_array)
         .ok_or_else(|| reject("proposal.shape", "questions must be a list"))?
     {
-        closed(entry, "a question", &["slot_id", "step_id", "question"], "proposal.shape")?;
+        closed(
+            entry,
+            "a question",
+            &["slot_id", "step_id", "question"],
+            "proposal.shape",
+        )?;
     }
 
     // No coordinates, no element indexes, anywhere in what becomes a skill; nothing redactable anywhere.
     let manifest_value = Value::Object(manifest.clone());
     if let Some(pointer) = find_coordinates(&manifest_value, "/manifest", true) {
-        return Err(reject("proposal.no_coordinates", format!("a screen position or element index at {pointer}")));
+        return Err(reject(
+            "proposal.no_coordinates",
+            format!("a screen position or element index at {pointer}"),
+        ));
     }
     for (index, slot) in slots.iter().enumerate() {
-        if let Some(pointer) = find_coordinates(slot.get("control").unwrap_or(&Value::Null), &format!("/slots/{index}/control"), false) {
-            return Err(reject("proposal.no_coordinates", format!("a screen position or element index at {pointer}")));
+        if let Some(pointer) = find_coordinates(
+            slot.get("control").unwrap_or(&Value::Null),
+            &format!("/slots/{index}/control"),
+            false,
+        ) {
+            return Err(reject(
+                "proposal.no_coordinates",
+                format!("a screen position or element index at {pointer}"),
+            ));
         }
     }
     if let Some(pointer) = find_redactable(proposal, "") {
-        return Err(reject("proposal.redaction", format!("text a redaction rule removes at {pointer}")));
+        return Err(reject(
+            "proposal.redaction",
+            format!("text a redaction rule removes at {pointer}"),
+        ));
     }
     Ok(())
 }
@@ -551,10 +725,19 @@ pub fn build_manifest(proposal: &Value, choices: &[SlotChoice]) -> Result<Built,
     let mut decided = BTreeMap::new();
     for choice in choices {
         if !by_id.contains_key(choice.slot_id.as_str()) {
-            return Err(RecordingError::Invalid(format!("`{}` is not a slot of this proposal", choice.slot_id)));
+            return Err(RecordingError::Invalid(format!(
+                "`{}` is not a slot of this proposal",
+                choice.slot_id
+            )));
         }
-        if decided.insert(choice.slot_id.as_str(), choice.constant).is_some() {
-            return Err(RecordingError::Invalid(format!("slot `{}` is decided twice", choice.slot_id)));
+        if decided
+            .insert(choice.slot_id.as_str(), choice.constant)
+            .is_some()
+        {
+            return Err(RecordingError::Invalid(format!(
+                "slot `{}` is decided twice",
+                choice.slot_id
+            )));
         }
     }
     if let Some(missing) = by_id.keys().find(|id| !decided.contains_key(*id)) {
@@ -565,7 +748,9 @@ pub fn build_manifest(proposal: &Value, choices: &[SlotChoice]) -> Result<Built,
     let mut manifest = proposal["manifest"].clone();
     let inputs = manifest["procedure"]["inputs"]
         .as_array_mut()
-        .ok_or_else(|| RecordingError::Malformed("a stored proposal lost its inputs".to_string()))?;
+        .ok_or_else(|| {
+            RecordingError::Malformed("a stored proposal lost its inputs".to_string())
+        })?;
     let mut summary = Vec::new();
     for input in inputs.iter_mut() {
         let id = input["slot_id"].as_str().unwrap_or_default().to_string();
@@ -651,7 +836,12 @@ pub(crate) mod tests {
     }
 
     fn check(proposal: &Value) -> Result<(), RecordingError> {
-        validate(proposal, "rec_01J8Z3K6F1N8VQ2X5W9YADP003", &tools(), RecordingConfig::committed())
+        validate(
+            proposal,
+            "rec_01J8Z3K6F1N8VQ2X5W9YADP003",
+            &tools(),
+            RecordingConfig::committed(),
+        )
     }
 
     fn rule_of(result: Result<(), RecordingError>) -> &'static str {
@@ -673,14 +863,27 @@ pub(crate) mod tests {
             ("/manifest/procedure/steps/0/ui/point", json!({ "a": 1 })),
             ("/manifest/procedure/steps/0/ui/element_index", json!(3)),
             ("/manifest/procedure/steps/0/provenance/offset", json!(3)),
-            ("/manifest/procedure/steps/0/intent", json!("Click at (120, 340)")),
-            ("/manifest/procedure/steps/0/intent", json!("Press AXButton[2]")),
-            ("/manifest/procedure/steps/1/intent", json!("press element 4")),
+            (
+                "/manifest/procedure/steps/0/intent",
+                json!("Click at (120, 340)"),
+            ),
+            (
+                "/manifest/procedure/steps/0/intent",
+                json!("Press AXButton[2]"),
+            ),
+            (
+                "/manifest/procedure/steps/1/intent",
+                json!("press element 4"),
+            ),
             ("/manifest/procedure/steps/1/intent", json!("go to x=10")),
         ] {
             let mut document = proposal();
             let (parent, key) = path.rsplit_once('/').unwrap();
-            let target = document.pointer_mut(parent).unwrap().as_object_mut().unwrap();
+            let target = document
+                .pointer_mut(parent)
+                .unwrap()
+                .as_object_mut()
+                .unwrap();
             target.insert(key.to_string(), value);
             let rule = rule_of(check(&document));
             // A key outside the closed vocabulary is caught first; both are refusals of the same proposal.
@@ -722,7 +925,8 @@ pub(crate) mod tests {
         document["slots"][0]["classification"] = json!("constant");
         assert_eq!(rule_of(check(&document)), "proposal.unclassified");
         let mut document = proposal();
-        document["manifest"]["procedure"]["inputs"][0]["constant_value"] = json!("Quarterly report");
+        document["manifest"]["procedure"]["inputs"][0]["constant_value"] =
+            json!("Quarterly report");
         assert_eq!(rule_of(check(&document)), "proposal.unclassified");
         let mut document = proposal();
         document["manifest"]["procedure"]["steps"][1]["ui"]["slot_id"] = json!("slot_9");
@@ -760,30 +964,63 @@ pub(crate) mod tests {
     fn a_submission_needs_every_slot_decided_and_never_bakes_in_an_input_example() {
         let proposal = proposal();
         let undecided = build_manifest(&proposal, &[]).expect_err("undecided");
-        assert!(matches!(undecided, RecordingError::Invalid(_)), "{undecided:?}");
+        assert!(
+            matches!(undecided, RecordingError::Invalid(_)),
+            "{undecided:?}"
+        );
         let as_input = build_manifest(
             &proposal,
-            &[SlotChoice { slot_id: "slot_1".into(), constant: false }],
+            &[SlotChoice {
+                slot_id: "slot_1".into(),
+                constant: false,
+            }],
         )
         .expect("input");
         let rendered = as_input.manifest.to_string();
-        assert!(!rendered.contains("Quarterly report"), "an input's example never enters the manifest");
-        assert_eq!(as_input.manifest["procedure"]["inputs"][0]["classification"], "input");
+        assert!(
+            !rendered.contains("Quarterly report"),
+            "an input's example never enters the manifest"
+        );
+        assert_eq!(
+            as_input.manifest["procedure"]["inputs"][0]["classification"],
+            "input"
+        );
         let as_constant = build_manifest(
             &proposal,
-            &[SlotChoice { slot_id: "slot_1".into(), constant: true }],
+            &[SlotChoice {
+                slot_id: "slot_1".into(),
+                constant: true,
+            }],
         )
         .expect("constant");
-        assert_eq!(as_constant.manifest["procedure"]["inputs"][0]["constant_value"], "Quarterly report");
+        assert_eq!(
+            as_constant.manifest["procedure"]["inputs"][0]["constant_value"],
+            "Quarterly report"
+        );
         assert!(matches!(
-            build_manifest(&proposal, &[
-                SlotChoice { slot_id: "slot_1".into(), constant: true },
-                SlotChoice { slot_id: "slot_1".into(), constant: false },
-            ]),
+            build_manifest(
+                &proposal,
+                &[
+                    SlotChoice {
+                        slot_id: "slot_1".into(),
+                        constant: true
+                    },
+                    SlotChoice {
+                        slot_id: "slot_1".into(),
+                        constant: false
+                    },
+                ]
+            ),
             Err(RecordingError::Invalid(_))
         ));
         assert!(matches!(
-            build_manifest(&proposal, &[SlotChoice { slot_id: "nope".into(), constant: false }]),
+            build_manifest(
+                &proposal,
+                &[SlotChoice {
+                    slot_id: "nope".into(),
+                    constant: false
+                }]
+            ),
             Err(RecordingError::Invalid(_))
         ));
     }
@@ -793,15 +1030,35 @@ pub(crate) mod tests {
         let mut redacted = proposal();
         redacted["slots"][0]["example"] = json!("[REDACTED:verification_code]");
         assert!(matches!(
-            build_manifest(&redacted, &[SlotChoice { slot_id: "slot_1".into(), constant: true }]),
+            build_manifest(
+                &redacted,
+                &[SlotChoice {
+                    slot_id: "slot_1".into(),
+                    constant: true
+                }]
+            ),
             Err(RecordingError::Invalid(_))
         ));
         let mut sensitive = proposal();
-        sensitive["slots"][0]["control"] = json!({ "ax_role": "AXTextField", "ax_title": "Password" });
+        sensitive["slots"][0]["control"] =
+            json!({ "ax_role": "AXTextField", "ax_title": "Password" });
         assert!(matches!(
-            build_manifest(&sensitive, &[SlotChoice { slot_id: "slot_1".into(), constant: true }]),
+            build_manifest(
+                &sensitive,
+                &[SlotChoice {
+                    slot_id: "slot_1".into(),
+                    constant: true
+                }]
+            ),
             Err(RecordingError::Invalid(_))
         ));
-        assert!(build_manifest(&sensitive, &[SlotChoice { slot_id: "slot_1".into(), constant: false }]).is_ok());
+        assert!(build_manifest(
+            &sensitive,
+            &[SlotChoice {
+                slot_id: "slot_1".into(),
+                constant: false
+            }]
+        )
+        .is_ok());
     }
 }

@@ -49,8 +49,10 @@ pub const PAUSE_REASONS: [&str; 3] = ["secure_input", "secure_field", "user_paus
 const MAX_POINTERS: usize = 20;
 
 static BUNDLE_ID: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$")
-        .expect("bundle id pattern")
+    Regex::new(
+        r"^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$",
+    )
+    .expect("bundle id pattern")
 });
 
 /// Who an archive must belong to.
@@ -85,7 +87,11 @@ fn bounds(detail: impl Into<String>) -> RecordingError {
     RecordingError::ArchiveBounds(detail.into())
 }
 
-fn object<'a>(value: &'a Value, what: &str, keys: &[&str]) -> Result<&'a Map<String, Value>, RecordingError> {
+fn object<'a>(
+    value: &'a Value,
+    what: &str,
+    keys: &[&str],
+) -> Result<&'a Map<String, Value>, RecordingError> {
     let map = value
         .as_object()
         .ok_or_else(|| invalid(format!("{what} must be an object")))?;
@@ -95,13 +101,21 @@ fn object<'a>(value: &'a Value, what: &str, keys: &[&str]) -> Result<&'a Map<Str
     Ok(map)
 }
 
-fn string<'a>(map: &'a Map<String, Value>, key: &str, what: &str) -> Result<&'a str, RecordingError> {
+fn string<'a>(
+    map: &'a Map<String, Value>,
+    key: &str,
+    what: &str,
+) -> Result<&'a str, RecordingError> {
     map.get(key)
         .and_then(Value::as_str)
         .ok_or_else(|| invalid(format!("{what}.{key} must be text")))
 }
 
-fn optional_string<'a>(map: &'a Map<String, Value>, key: &str, what: &str) -> Result<Option<&'a str>, RecordingError> {
+fn optional_string<'a>(
+    map: &'a Map<String, Value>,
+    key: &str,
+    what: &str,
+) -> Result<Option<&'a str>, RecordingError> {
     match map.get(key) {
         None | Some(Value::Null) => Ok(None),
         Some(Value::String(text)) => Ok(Some(text)),
@@ -109,7 +123,11 @@ fn optional_string<'a>(map: &'a Map<String, Value>, key: &str, what: &str) -> Re
     }
 }
 
-fn timestamp(map: &Map<String, Value>, key: &str, what: &str) -> Result<DateTime<Utc>, RecordingError> {
+fn timestamp(
+    map: &Map<String, Value>,
+    key: &str,
+    what: &str,
+) -> Result<DateTime<Utc>, RecordingError> {
     let text = string(map, key, what)?;
     DateTime::parse_from_rfc3339(text)
         .map(|at| at.with_timezone(&Utc))
@@ -155,18 +173,30 @@ impl Findings {
     }
 }
 
-fn app(value: &Value, what: &str, config: &RecordingConfig) -> Result<(String, String), RecordingError> {
+fn app(
+    value: &Value,
+    what: &str,
+    config: &RecordingConfig,
+) -> Result<(String, String), RecordingError> {
     let map = object(value, what, &["bundle_id", "name"])?;
     let bundle_id = string(map, "bundle_id", what)?;
     if bundle_id.len() > 255 || !BUNDLE_ID.is_match(bundle_id) {
-        return Err(invalid(format!("{what}.bundle_id is not a bundle identifier")));
+        return Err(invalid(format!(
+            "{what}.bundle_id is not a bundle identifier"
+        )));
     }
     let name = string(map, "name", what)?;
     within(name, config.attribute_max_chars, &format!("{what}.name"))?;
     Ok((bundle_id.to_string(), name.to_string()))
 }
 
-const TARGET_KEYS: [&str; 5] = ["ax_role", "ax_subrole", "ax_title", "ax_identifier", "ax_description"];
+const TARGET_KEYS: [&str; 5] = [
+    "ax_role",
+    "ax_subrole",
+    "ax_title",
+    "ax_identifier",
+    "ax_description",
+];
 
 /// Validate an archive and build what the server keeps and what the compiler reads.
 ///
@@ -228,7 +258,9 @@ pub fn validate(
         });
     }
     if !PLATFORMS.contains(&string(root, "platform", "archive")?) {
-        return Err(invalid("archive.platform is not a platform a recorder reports"));
+        return Err(invalid(
+            "archive.platform is not a platform a recorder reports",
+        ));
     }
     let started = timestamp(root, "started_at", "archive")?;
     let finished = timestamp(root, "finished_at", "archive")?;
@@ -241,7 +273,9 @@ pub fn validate(
         &["by", "request_id"],
     )?;
     if string(finish, "by", "finish")? != "user" {
-        return Err(invalid("a recording is finished by the person: finish.by must be `user`"));
+        return Err(invalid(
+            "a recording is finished by the person: finish.by must be `user`",
+        ));
     }
     string(finish, "request_id", "finish")?;
 
@@ -320,7 +354,11 @@ pub fn validate(
             let mut projected = Map::new();
             for (slot, key) in TARGET_KEYS.iter().enumerate() {
                 if let Some(text) = optional_string(target_map, key, "action.target")? {
-                    within(text, config.attribute_max_chars, &format!("action.target.{key}"))?;
+                    within(
+                        text,
+                        config.attribute_max_chars,
+                        &format!("action.target.{key}"),
+                    )?;
                     findings.text(&format!("/actions/{index}/target/{key}"), text);
                     attrs[slot] = Some(text);
                     projected.insert((*key).to_string(), json!(text));
@@ -333,13 +371,11 @@ pub fn validate(
             within(title, config.attribute_max_chars, "action.window_title")?;
             findings.text(&format!("/actions/{index}/window_title"), title);
         }
-        let unresolved = map
-            .get("target_unresolved")
-            .map_or(Ok(false), |value| {
-                value
-                    .as_bool()
-                    .ok_or_else(|| invalid("target_unresolved must be true or false"))
-            })?;
+        let unresolved = map.get("target_unresolved").map_or(Ok(false), |value| {
+            value
+                .as_bool()
+                .ok_or_else(|| invalid("target_unresolved must be true or false"))
+        })?;
         if map.contains_key("point") && !unresolved {
             return Err(invalid(
                 "only an action whose control could not be resolved may keep a screen point",
@@ -355,13 +391,11 @@ pub fn validate(
             within(key, 64, "action.key")?;
             findings.text(&format!("/actions/{index}/key"), key);
         }
-        let secure = map
-            .get("secure")
-            .map_or(Ok(false), |value| {
-                value
-                    .as_bool()
-                    .ok_or_else(|| invalid("secure must be true or false"))
-            })?;
+        let secure = map.get("secure").map_or(Ok(false), |value| {
+            value
+                .as_bool()
+                .ok_or_else(|| invalid("secure must be true or false"))
+        })?;
         let text = optional_string(map, "text", what)?;
         if let Some(text) = text {
             within(text, config.action_text_max_chars, "action.text")?;
@@ -394,7 +428,10 @@ pub fn validate(
         projected.insert("seq".to_string(), json!(seq));
         projected.insert("at".to_string(), json!(at.to_rfc3339()));
         projected.insert("kind".to_string(), json!(kind));
-        projected.insert("app".to_string(), json!({ "bundle_id": bundle_id, "name": name }));
+        projected.insert(
+            "app".to_string(),
+            json!({ "bundle_id": bundle_id, "name": name }),
+        );
         if !target_projection.is_null() {
             projected.insert("target".to_string(), target_projection);
         }
@@ -422,7 +459,11 @@ pub fn validate(
         .and_then(Value::as_array)
         .ok_or_else(|| invalid("archive.screenshots must be a list"))?;
     let shot_limits = config.screenshots;
-    let allowed = if shot_limits.enabled { shot_limits.max_count } else { 0 };
+    let allowed = if shot_limits.enabled {
+        shot_limits.max_count
+    } else {
+        0
+    };
     if screenshots.len() > allowed {
         return Err(bounds(format!(
             "{} screenshots; the limit is {allowed}",
@@ -490,12 +531,18 @@ pub fn validate(
                 )));
             }
             if *last_sha == sha {
-                return Err(bounds("two consecutive screenshots are identical".to_string()));
+                return Err(bounds(
+                    "two consecutive screenshots are identical".to_string(),
+                ));
             }
         }
         previous = Some((at, sha));
         if let Some(text) = optional_string(map, "screen_text", what)? {
-            within(text, shot_limits.screen_text_max_chars, "screenshot.screen_text")?;
+            within(
+                text,
+                shot_limits.screen_text_max_chars,
+                "screenshot.screen_text",
+            )?;
             findings.text(&format!("/screenshots/{index}/screen_text"), text);
             if !text.is_empty() {
                 screen_text.push(json!({ "at": at.to_rfc3339(), "text": text }));
@@ -551,7 +598,8 @@ pub fn validate(
             return Err(invalid(format!("`{reason}` is not a pause reason")));
         }
         paused_ms += (to - from).num_milliseconds();
-        projected_paused.push(json!({ "from": from.to_rfc3339(), "to": to.to_rfc3339(), "reason": reason }));
+        projected_paused
+            .push(json!({ "from": from.to_rfc3339(), "to": to.to_rfc3339(), "reason": reason }));
     }
 
     // The recorder's own redaction summary: closed, counts only.
@@ -560,7 +608,9 @@ pub fn validate(
         "archive.redaction",
         &["rule_set", "counts", "screenshots_withheld"],
     )?;
-    if string(redaction, "rule_set", "redaction")? != RULE_SET || RULE_SET != config_rule_set(config) {
+    if string(redaction, "rule_set", "redaction")? != RULE_SET
+        || RULE_SET != config_rule_set(config)
+    {
         return Err(invalid(format!(
             "the archive was redacted under another rule set; this server applies {RULE_SET}"
         )));
@@ -581,7 +631,12 @@ pub fn validate(
         let n = counts
             .get(category.as_str())
             .and_then(Value::as_u64)
-            .ok_or_else(|| invalid(format!("redaction.counts.{} must be a count", category.as_str())))?;
+            .ok_or_else(|| {
+                invalid(format!(
+                    "redaction.counts.{} must be a count",
+                    category.as_str()
+                ))
+            })?;
         declared.insert(category.as_str().to_string(), json!(n));
     }
     let withheld = redaction
@@ -688,6 +743,21 @@ mod tests {
         )
     }
 
+    /// The archive the macOS recorder produces for a scripted session (`native/macos`, which writes and
+    /// checks this very file), accepted by the server's own validator: the two cannot drift on the format.
+    #[test]
+    fn the_recorders_own_archive_is_accepted() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/contract/fixtures/recording/archive_from_recorder.json");
+        let bytes = std::fs::read(&path).expect("the recorder's golden archive");
+        let report = validate(&bytes, &expected(), RecordingConfig::committed()).expect("valid");
+        assert_eq!(report.stats["actions"], 4);
+        assert_eq!(report.redaction["counts"]["password_field"], 1);
+        assert!(report.stats["paused_ms"].as_i64().unwrap() >= 0);
+        let projection = report.projection.to_string();
+        assert!(projection.contains("New Note") && !projection.contains("hunter2"));
+    }
+
     #[test]
     fn a_redacted_archive_is_accepted_and_projected_without_pixels_or_points() {
         let mut document = archive();
@@ -707,30 +777,47 @@ mod tests {
         document["actions"][1]["text"] = json!("AKIAIOSFODNN7EXAMPLE");
         document["transcript"][0]["text"] = json!("my card is 4111 1111 1111 1111");
         let error = run(&document).expect_err("unredacted");
-        let RecordingError::Unredacted { categories, pointers } = &error else {
+        let RecordingError::Unredacted {
+            categories,
+            pointers,
+        } = &error
+        else {
             panic!("{error:?}");
         };
         assert_eq!(categories, &["api_key", "card_number"]);
         assert!(pointers.contains(&"/actions/1/text".to_string()));
         assert!(pointers.contains(&"/transcript/0/text".to_string()));
         let rendered = format!("{error} {error:?}");
-        assert!(!rendered.contains("AKIA") && !rendered.contains("4111"), "{rendered}");
+        assert!(
+            !rendered.contains("AKIA") && !rendered.contains("4111"),
+            "{rendered}"
+        );
     }
 
     #[test]
     fn text_in_a_secure_or_labelled_field_must_already_be_gone() {
         let mut document = archive();
-        document["actions"][1]["target"] = json!({ "ax_role": "AXTextField", "ax_subrole": "AXSecureTextField" });
+        document["actions"][1]["target"] =
+            json!({ "ax_role": "AXTextField", "ax_subrole": "AXSecureTextField" });
         document["actions"][1]["text"] = json!("hunter2");
         let error = run(&document).expect_err("secure text kept");
-        assert!(matches!(error, RecordingError::Unredacted { ref categories, .. } if categories == &["password_field"]));
-        document["actions"][1].as_object_mut().unwrap().remove("text");
+        assert!(
+            matches!(error, RecordingError::Unredacted { ref categories, .. } if categories == &["password_field"])
+        );
+        document["actions"][1]
+            .as_object_mut()
+            .unwrap()
+            .remove("text");
         document["actions"][1]["secure"] = json!(true);
         assert!(run(&document).is_ok(), "the dropped form is accepted");
         let mut labelled = archive();
-        labelled["actions"][1]["target"] = json!({ "ax_role": "AXTextField", "ax_title": "Verification code" });
+        labelled["actions"][1]["target"] =
+            json!({ "ax_role": "AXTextField", "ax_title": "Verification code" });
         labelled["actions"][1]["text"] = json!("123456");
-        assert!(matches!(run(&labelled), Err(RecordingError::Unredacted { .. })));
+        assert!(matches!(
+            run(&labelled),
+            Err(RecordingError::Unredacted { .. })
+        ));
         labelled["actions"][1]["text"] = json!("[REDACTED:verification_code]");
         assert!(run(&labelled).is_ok());
     }
@@ -751,39 +838,66 @@ mod tests {
         }
         let mut document = archive();
         document["recording_id"] = json!("rec_01J8Z3K6F1N8VQ2X5W9YOTHER1");
-        assert!(matches!(run(&document), Err(RecordingError::InvalidArchive(_))));
+        assert!(matches!(
+            run(&document),
+            Err(RecordingError::InvalidArchive(_))
+        ));
     }
 
     #[test]
     fn a_recording_the_person_did_not_finish_is_not_an_archive() {
         let mut document = archive();
         document["finish"]["by"] = json!("model");
-        assert!(matches!(run(&document), Err(RecordingError::InvalidArchive(_))));
+        assert!(matches!(
+            run(&document),
+            Err(RecordingError::InvalidArchive(_))
+        ));
         document["finish"] = Value::Null;
-        assert!(matches!(run(&document), Err(RecordingError::InvalidArchive(_))));
+        assert!(matches!(
+            run(&document),
+            Err(RecordingError::InvalidArchive(_))
+        ));
     }
 
     #[test]
     fn the_shape_is_closed_and_the_limits_hold() {
         let mut document = archive();
         document["actions"][0]["extra"] = json!(1);
-        assert!(matches!(run(&document), Err(RecordingError::InvalidArchive(_))));
+        assert!(matches!(
+            run(&document),
+            Err(RecordingError::InvalidArchive(_))
+        ));
         let mut document = archive();
         document["actions"][0]["point"] = json!({ "x": 1, "y": 2 });
-        assert!(matches!(run(&document), Err(RecordingError::InvalidArchive(_))), "a point needs an unresolved target");
+        assert!(
+            matches!(run(&document), Err(RecordingError::InvalidArchive(_))),
+            "a point needs an unresolved target"
+        );
         let mut document = archive();
         document["actions"][0]["kind"] = json!("teleport");
-        assert!(matches!(run(&document), Err(RecordingError::InvalidArchive(_))));
+        assert!(matches!(
+            run(&document),
+            Err(RecordingError::InvalidArchive(_))
+        ));
         let mut document = archive();
         document["actions"][1]["seq"] = json!(1);
-        assert!(matches!(run(&document), Err(RecordingError::InvalidArchive(_))));
+        assert!(matches!(
+            run(&document),
+            Err(RecordingError::InvalidArchive(_))
+        ));
         let mut document = archive();
         document["redaction"]["rule_set"] = json!("v0");
-        assert!(matches!(run(&document), Err(RecordingError::InvalidArchive(_))));
+        assert!(matches!(
+            run(&document),
+            Err(RecordingError::InvalidArchive(_))
+        ));
         let mut document = archive();
         let long = "x".repeat(RecordingConfig::committed().action_text_max_chars + 1);
         document["actions"][1]["text"] = json!(long);
-        assert!(matches!(run(&document), Err(RecordingError::ArchiveBounds(_))));
+        assert!(matches!(
+            run(&document),
+            Err(RecordingError::ArchiveBounds(_))
+        ));
         let huge = vec![b'x'; RecordingConfig::committed().archive_max_bytes + 1];
         assert!(matches!(
             validate(&huge, &expected(), RecordingConfig::committed()),
@@ -803,30 +917,61 @@ mod tests {
             })
         };
         let mut document = archive();
-        document["screenshots"] = json!([shot("2026-10-04T10:00:10Z", 1), shot("2026-10-04T10:00:20Z", 2)]);
+        document["screenshots"] = json!([
+            shot("2026-10-04T10:00:10Z", 1),
+            shot("2026-10-04T10:00:20Z", 2)
+        ]);
         let report = run(&document).expect("spaced and distinct");
         assert_eq!(report.stats["screenshots"], 2);
-        assert_eq!(report.projection["screen_text"].as_array().unwrap().len(), 2);
+        assert_eq!(
+            report.projection["screen_text"].as_array().unwrap().len(),
+            2
+        );
 
         let mut close = archive();
-        close["screenshots"] = json!([shot("2026-10-04T10:00:10Z", 1), shot("2026-10-04T10:00:11Z", 2)]);
-        assert!(matches!(run(&close), Err(RecordingError::ArchiveBounds(_))), "min interval");
+        close["screenshots"] = json!([
+            shot("2026-10-04T10:00:10Z", 1),
+            shot("2026-10-04T10:00:11Z", 2)
+        ]);
+        assert!(
+            matches!(run(&close), Err(RecordingError::ArchiveBounds(_))),
+            "min interval"
+        );
         let mut same = archive();
-        same["screenshots"] = json!([shot("2026-10-04T10:00:10Z", 1), shot("2026-10-04T10:00:20Z", 1)]);
-        assert!(matches!(run(&same), Err(RecordingError::ArchiveBounds(_))), "de-duplication");
+        same["screenshots"] = json!([
+            shot("2026-10-04T10:00:10Z", 1),
+            shot("2026-10-04T10:00:20Z", 1)
+        ]);
+        assert!(
+            matches!(run(&same), Err(RecordingError::ArchiveBounds(_))),
+            "de-duplication"
+        );
         let mut lying = archive();
         let mut first = shot("2026-10-04T10:00:10Z", 1);
         first["sha256"] = json!("0".repeat(64));
         lying["screenshots"] = json!([first]);
-        assert!(matches!(run(&lying), Err(RecordingError::InvalidArchive(_))));
+        assert!(matches!(
+            run(&lying),
+            Err(RecordingError::InvalidArchive(_))
+        ));
         let mut many = archive();
         let cap = RecordingConfig::committed().screenshots.max_count;
-        many["screenshots"] = Value::Array((0..=cap).map(|i| shot("2026-10-04T10:00:10Z", u8::try_from(i % 200).unwrap())).collect());
-        assert!(matches!(run(&many), Err(RecordingError::ArchiveBounds(_))), "count");
+        many["screenshots"] = Value::Array(
+            (0..=cap)
+                .map(|i| shot("2026-10-04T10:00:10Z", u8::try_from(i % 200).unwrap()))
+                .collect(),
+        );
+        assert!(
+            matches!(run(&many), Err(RecordingError::ArchiveBounds(_))),
+            "count"
+        );
         let mut text = archive();
         let mut with_key = shot("2026-10-04T10:00:10Z", 1);
         with_key["screen_text"] = json!("token ghp_abcdefghijklmnopqrstuvwxyz0123456789");
         text["screenshots"] = json!([with_key]);
-        assert!(matches!(run(&text), Err(RecordingError::Unredacted { .. })), "screen text is scanned");
+        assert!(
+            matches!(run(&text), Err(RecordingError::Unredacted { .. })),
+            "screen text is scanned"
+        );
     }
 }

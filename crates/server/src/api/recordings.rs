@@ -50,7 +50,11 @@ fn required_str<'a>(params: &'a Value, key: &str, correlation: &str) -> Result<&
         .and_then(Value::as_str)
         .filter(|value| !value.is_empty())
         .ok_or_else(|| {
-            ApiError::new(ApiErrorCode::ValidationSchema, format!("{key} is required"), correlation)
+            ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                format!("{key} is required"),
+                correlation,
+            )
         })
 }
 
@@ -113,7 +117,9 @@ fn compiler(state: &ApiState) -> Result<RecordingCompiler, ApiError> {
     // Only a compile calls the plane; a deployment whose model settings do not load can still start,
     // finish and cancel recordings.
     let deadline = crate::intelligence::model_source::ModelCallSettings::load()
-        .map_or(std::time::Duration::from_secs(60), |settings| settings.deadline);
+        .map_or(std::time::Duration::from_secs(60), |settings| {
+            settings.deadline
+        });
     Ok(RecordingCompiler::new(
         state.pool().clone(),
         state.intelligence().cloned(),
@@ -185,6 +191,7 @@ pub async fn start_recording(
         "epoch": recording.epoch,
         "expires_at": recording.expires_at,
         "limits": config.limits_json(),
+        "max_duration_ms": u64::try_from(config.max_duration.as_millis()).unwrap_or(u64::MAX),
         "rule_set": crate::control::skills::recording::RULE_SET,
     }))
 }
@@ -203,7 +210,11 @@ pub async fn finish_recording(
     let compiler = compiler(state)?;
     authorize_recording(state, scope, &compiler, recording_id, correlation).await?;
     let archive = params.get("archive").ok_or_else(|| {
-        ApiError::new(ApiErrorCode::ValidationSchema, "archive is required", correlation)
+        ApiError::new(
+            ApiErrorCode::ValidationSchema,
+            "archive is required",
+            correlation,
+        )
     })?;
     let encoded = required_str(archive, "content_base64", correlation)?;
     let digest = required_str(archive, "content_digest", correlation)?;
@@ -213,7 +224,10 @@ pub async fn finish_recording(
     if encoded.len() > config.archive_max_bytes / 3 * 4 + 8 {
         return Err(ApiError::new(
             ApiErrorCode::ValidationBounds,
-            format!("the archive is over the {} byte limit", config.archive_max_bytes),
+            format!(
+                "the archive is over the {} byte limit",
+                config.archive_max_bytes
+            ),
             correlation,
         ));
     }
@@ -306,14 +320,16 @@ pub async fn submit_recording_skill(
     let recording_id = required_str(params, "recording_id", correlation)?;
     let name = required_str(params, "name", correlation)?;
     let semver = required_str(params, "semver", correlation)?;
-    let slots: Vec<SubmitSlot> = serde_json::from_value(params.get("slots").cloned().unwrap_or_else(|| json!([])))
-        .map_err(|failure| {
-            ApiError::new(
-                ApiErrorCode::ValidationSchema,
-                format!("slots: {failure}"),
-                correlation,
-            )
-        })?;
+    let slots: Vec<SubmitSlot> = serde_json::from_value(
+        params.get("slots").cloned().unwrap_or_else(|| json!([])),
+    )
+    .map_err(|failure| {
+        ApiError::new(
+            ApiErrorCode::ValidationSchema,
+            format!("slots: {failure}"),
+            correlation,
+        )
+    })?;
     let compiler = compiler(state)?;
     authorize_recording(state, scope, &compiler, recording_id, correlation).await?;
     let decisions: Vec<SlotDecision> = slots
@@ -367,7 +383,11 @@ pub async fn recordings(
     let user_id = session_user(&scope)?;
     let rows = compiler(&state)?
         .store()
-        .list_owned(&scope.tenant_id, user_id, query.limit.unwrap_or(MAX_ROWS).clamp(1, MAX_ROWS))
+        .list_owned(
+            &scope.tenant_id,
+            user_id,
+            query.limit.unwrap_or(MAX_ROWS).clamp(1, MAX_ROWS),
+        )
         .await
         .map_err(|failure| error(failure, "projection"))?;
     Ok(Json(json!({
@@ -389,7 +409,11 @@ pub async fn recording(
         .await
         .map_err(|failure| error(failure, "projection"))?
         .ok_or_else(|| {
-            ApiError::new(ApiErrorCode::NotFound, format!("recording {id} not found"), "projection")
+            ApiError::new(
+                ApiErrorCode::NotFound,
+                format!("recording {id} not found"),
+                "projection",
+            )
         })?;
     Ok(Json(json!({ "recording": row.to_json(true) })))
 }

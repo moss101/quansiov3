@@ -25,7 +25,7 @@ pub mod store;
 use thiserror::Error;
 
 pub use archive::{ArchiveReport, Expected, ARCHIVE_MEDIA_TYPE};
-pub use compile::{CompileOutcome, RecordingCompiler, SubmitOutcome, SlotDecision};
+pub use compile::{CompileOutcome, RecordingCompiler, SlotDecision, SubmitOutcome};
 pub use config::{ConfigError, RecordingConfig};
 pub use redact::{Category, Counts, RULE_SET};
 pub use store::{Recording, RecordingCaller, RecordingStatus, RecordingStore};
@@ -151,9 +151,10 @@ impl RecordingError {
     #[must_use]
     pub fn details(&self) -> Option<serde_json::Value> {
         match self {
-            Self::Unredacted { categories, pointers } => {
-                Some(serde_json::json!({ "categories": categories, "pointers": pointers }))
-            }
+            Self::Unredacted {
+                categories,
+                pointers,
+            } => Some(serde_json::json!({ "categories": categories, "pointers": pointers })),
             Self::ProposalRejected { rule, .. } => Some(serde_json::json!({ "rule": rule })),
             Self::OwnerChanged { reason } => Some(serde_json::json!({ "reason": reason })),
             _ => None,
