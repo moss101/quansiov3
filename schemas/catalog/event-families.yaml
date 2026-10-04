@@ -25,6 +25,7 @@ event_families:
 - knowledge
 - memory
 - skill
+- recording
 - pack
 - routine
 - notification

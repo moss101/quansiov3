@@ -199,6 +199,30 @@ class SkillCandidatesResponse(_message.Message):
     candidates_json: _containers.RepeatedScalarFieldContainer[str]
     def __init__(self, schema_version: _Optional[str] = ..., candidates_json: _Optional[_Iterable[str]] = ...) -> None: ...
 
+class CompileRecordingRequest(_message.Message):
+    __slots__ = ("schema_version", "scope", "recording_id", "projection_json", "tools_json", "settings_json")
+    SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
+    SCOPE_FIELD_NUMBER: _ClassVar[int]
+    RECORDING_ID_FIELD_NUMBER: _ClassVar[int]
+    PROJECTION_JSON_FIELD_NUMBER: _ClassVar[int]
+    TOOLS_JSON_FIELD_NUMBER: _ClassVar[int]
+    SETTINGS_JSON_FIELD_NUMBER: _ClassVar[int]
+    schema_version: str
+    scope: ScopeContext
+    recording_id: str
+    projection_json: str
+    tools_json: _containers.RepeatedScalarFieldContainer[str]
+    settings_json: str
+    def __init__(self, schema_version: _Optional[str] = ..., scope: _Optional[_Union[ScopeContext, _Mapping]] = ..., recording_id: _Optional[str] = ..., projection_json: _Optional[str] = ..., tools_json: _Optional[_Iterable[str]] = ..., settings_json: _Optional[str] = ...) -> None: ...
+
+class CompileRecordingResponse(_message.Message):
+    __slots__ = ("schema_version", "proposal_json")
+    SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
+    PROPOSAL_JSON_FIELD_NUMBER: _ClassVar[int]
+    schema_version: str
+    proposal_json: str
+    def __init__(self, schema_version: _Optional[str] = ..., proposal_json: _Optional[str] = ...) -> None: ...
+
 class CompletionVerificationRequest(_message.Message):
     __slots__ = ("schema_version", "scope", "run_id", "work_node_id", "claim_summary", "rubric_id", "evidence_ids", "independent_model", "claimant_model", "max_output_tokens")
     SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]

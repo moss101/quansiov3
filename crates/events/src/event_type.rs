@@ -37,6 +37,7 @@ pub const EVENT_FAMILIES: &[&str] = &[
     "knowledge",
     "memory",
     "skill",
+    "recording",
     "pack",
     "routine",
     "notification",

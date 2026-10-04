@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/skill-recording-config.schema.json",
+  "title": "Quansio skill recording (config/skill-recording.yaml)",
+  "description": "The redaction rule set, the capture and archive limits, the lifetime of an unfinished recording and the tool-path preferences the compiler uses (DOMAIN.md 11.7). Every limit is bounded so a configuration cannot make a recording unbounded.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "rule_set", "max_duration_ms", "limits", "proposal", "tool_paths"],
+  "properties": {
+    "version": { "const": 1 },
+    "rule_set": { "const": "v1" },
+    "max_duration_ms": { "type": "integer", "minimum": 60000, "maximum": 7200000 },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_actions", "action_text_max_chars", "attribute_max_chars", "screenshots", "transcript", "archive"],
+      "properties": {
+        "max_actions": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "action_text_max_chars": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "attribute_max_chars": { "type": "integer", "minimum": 16, "maximum": 1000 },
+        "screenshots": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "max_count", "min_interval_ms", "max_bytes", "max_dimension_px", "screen_text_max_chars"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "max_count": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "min_interval_ms": { "type": "integer", "minimum": 1000, "maximum": 600000 },
+            "max_bytes": { "type": "integer", "minimum": 1024, "maximum": 1048576 },
+            "max_dimension_px": { "type": "integer", "minimum": 256, "maximum": 4096 },
+            "screen_text_max_chars": { "type": "integer", "minimum": 0, "maximum": 10000 }
+          }
+        },
+        "transcript": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["max_segments", "max_chars"],
+          "properties": {
+            "max_segments": { "type": "integer", "minimum": 0, "maximum": 5000 },
+            "max_chars": { "type": "integer", "minimum": 0, "maximum": 200000 }
+          }
+        },
+        "archive": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["max_bytes"],
+          "properties": {
+            "max_bytes": { "type": "integer", "minimum": 1024, "maximum": 8388608 }
+          }
+        }
+      }
+    },
+    "proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_bytes", "max_steps", "max_slots"],
+      "properties": {
+        "max_bytes": { "type": "integer", "minimum": 1024, "maximum": 1048576 },
+        "max_steps": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "max_slots": { "type": "integer", "minimum": 1, "maximum": 256 }
+      }
+    },
+    "tool_paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "bundle_ids"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$" },
+          "bundle_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$" }
+          },
+          "tools": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$" }
+          },
+          "tool_prefix": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)*\\.$" }
+        },
+        "oneOf": [{ "required": ["tools"] }, { "required": ["tool_prefix"] }]
+      }
+    }
+  }
+}

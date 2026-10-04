@@ -18,6 +18,8 @@ read_projections:
 - /v1/knowledge
 - /v1/memory
 - /v1/skills
+- /v1/recordings
+- /v1/recordings/{id}
 - /v1/packs
 - /v1/routines
 - /v1/connectors

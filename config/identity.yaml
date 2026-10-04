@@ -20,8 +20,9 @@ service_principals:
   argon2_memory_kib: 19456
   argon2_iterations: 2
   argon2_parallelism: 1
-  # Command families a principal can never hold: approval decisions stay with people.
-  ungrantable_scopes: [Trust]
+  # Command families a principal can never hold: approval decisions stay with people, and so does
+  # demonstrating a workflow (a recording is a person's, ADP-003).
+  ungrantable_scopes: [Trust, Recording]
 scim:
   # The largest page a SCIM list returns.
   max_results: 200

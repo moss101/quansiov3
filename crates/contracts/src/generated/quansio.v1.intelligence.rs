@@ -1229,6 +1229,37 @@ pub struct SkillCandidatesResponse {
     pub candidates_json: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Served by python/intelligence. Rust is the only caller.
+/// Skill recording (ADP-003, DOMAIN.md §11.7): the runtime hands over the text-only projection of one
+/// finished, redacted Recording (never a pixel) and the tools the Tool Registry offers; the plane
+/// returns a skill proposal. The plane reads untrusted content and has no effect path: the registry
+/// write, the validation and the DRAFT status are the runtime's.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CompileRecordingRequest {
+    #[prost(string, tag = "100")]
+    pub schema_version: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "1")]
+    pub scope: ::core::option::Option<ScopeContext>,
+    #[prost(string, tag = "2")]
+    pub recording_id: ::prost::alloc::string::String,
+    /// {actions\[\], transcript\[\], screen_text\[\], windows\[\], apps\[\], redaction{}}: text only.
+    #[prost(string, tag = "3")]
+    pub projection_json: ::prost::alloc::string::String,
+    /// \[{name, effect_class, description}\] for every tool the registry offers.
+    #[prost(string, repeated, tag = "4")]
+    pub tools_json: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// {tool_paths\[\], limits{}} from config/skill-recording.yaml.
+    #[prost(string, tag = "5")]
+    pub settings_json: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CompileRecordingResponse {
+    #[prost(string, tag = "100")]
+    pub schema_version: ::prost::alloc::string::String,
+    /// {schema_version, trust, manifest, slots, questions}
+    #[prost(string, tag = "1")]
+    pub proposal_json: ::prost::alloc::string::String,
+}
+/// Served by python/intelligence. Rust is the only caller.
 /// Independent semantic verification of a completion claim (RUN-008, DOMAIN.md §4.4): the plane
 /// asks a model that is not the claimant and returns its verdict. A refusal (malformed verdict,
 /// unavailable model, unprovable independence) is a typed error, never a verdict.
@@ -1615,6 +1646,35 @@ pub mod intelligence_gateway_client {
                 );
             self.inner.unary(req, path, codec).await
         }
+        pub async fn compile_skill_recording(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CompileRecordingRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::CompileRecordingResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/quansio.v1.intelligence.IntelligenceGateway/CompileSkillRecording",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "quansio.v1.intelligence.IntelligenceGateway",
+                        "CompileSkillRecording",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -1688,6 +1748,13 @@ pub mod intelligence_gateway_server {
             request: tonic::Request<super::CompletionVerificationRequest>,
         ) -> std::result::Result<
             tonic::Response<super::CompletionVerdict>,
+            tonic::Status,
+        >;
+        async fn compile_skill_recording(
+            &self,
+            request: tonic::Request<super::CompileRecordingRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::CompileRecordingResponse>,
             tonic::Status,
         >;
     }
@@ -2169,6 +2236,55 @@ pub mod intelligence_gateway_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = VerifyCompletionSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/quansio.v1.intelligence.IntelligenceGateway/CompileSkillRecording" => {
+                    #[allow(non_camel_case_types)]
+                    struct CompileSkillRecordingSvc<T: IntelligenceGateway>(pub Arc<T>);
+                    impl<
+                        T: IntelligenceGateway,
+                    > tonic::server::UnaryService<super::CompileRecordingRequest>
+                    for CompileSkillRecordingSvc<T> {
+                        type Response = super::CompileRecordingResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CompileRecordingRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as IntelligenceGateway>::compile_skill_recording(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = CompileSkillRecordingSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
