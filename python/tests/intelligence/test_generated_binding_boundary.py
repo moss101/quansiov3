@@ -100,8 +100,8 @@ def test_implemented_and_unimplemented_partition_the_contract() -> None:
     owners = IntelligenceGatewayServicer.UNIMPLEMENTED_OWNERS
     assert generated - set(owners) == IMPLEMENTED_METHODS
     # INT-002 implemented model fulfillment, INT-011 the embedding request class, INT-007 the
-    # memory proposal path, INT-005 the turn context and RUN-008 the semantic verifier; every other
-    # RPC still names its owner.
+    # memory proposal path, INT-005 the turn context, RUN-008 the semantic verifier and ADP-003 the
+    # skill-recording compiler; every other RPC still names its owner.
     assert {
         "ClassifyTrust",
         "FulfillModel",
@@ -110,6 +110,7 @@ def test_implemented_and_unimplemented_partition_the_contract() -> None:
         "BuildContext",
         "ProposeSkillCandidates",
         "VerifyCompletion",
+        "CompileSkillRecording",
     } == IMPLEMENTED_METHODS
     assert set(owners) == generated - IMPLEMENTED_METHODS
 

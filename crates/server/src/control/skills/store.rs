@@ -402,6 +402,49 @@ impl SkillStore {
         .await
     }
 
+    /// The skill registered under `name` in this tenant, if any (names are unique per tenant).
+    ///
+    /// # Errors
+    /// Returns the control-plane refusal when the row cannot be read.
+    pub async fn skill_by_name(
+        &self,
+        tenant_id: &str,
+        name: &str,
+    ) -> Result<Option<Skill>, SkillControlError> {
+        let mut tx = self.events.begin_tenant_transaction(tenant_id).await?;
+        let row = sqlx::query(&format!(
+            "SELECT {SKILL_COLUMNS} FROM skills WHERE tenant_id = $1 AND name = $2"
+        ))
+        .bind(tenant_id)
+        .bind(name)
+        .fetch_optional(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        row.as_ref().map(map_skill).transpose()
+    }
+
+    /// Every version of one skill, oldest first.
+    ///
+    /// # Errors
+    /// Returns the control-plane refusal when the rows cannot be read.
+    pub async fn versions_of(
+        &self,
+        tenant_id: &str,
+        skill_id: &CanonicalId,
+    ) -> Result<Vec<SkillVersion>, SkillControlError> {
+        let mut tx = self.events.begin_tenant_transaction(tenant_id).await?;
+        let rows = sqlx::query(&format!(
+            "SELECT {VERSION_COLUMNS} FROM skill_versions WHERE tenant_id = $1 AND skill_id = $2 \
+             ORDER BY created_at, id"
+        ))
+        .bind(tenant_id)
+        .bind(skill_id.to_string())
+        .fetch_all(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        rows.iter().map(map_version).collect()
+    }
+
     /// Every skill with its active version, ordered by name.
     ///
     /// This is the view the resolver consumes. A version appears only when its own state

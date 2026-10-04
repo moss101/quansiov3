@@ -453,6 +453,34 @@ async fn dispatch(
             )
             .await?
         }
+        // Skill recording (ADP-003): a person's commands. The handlers refuse a service principal and
+        // build the owner fence from the authenticated session; the store checks it.
+        "StartRecording" => {
+            super::recordings::start_recording(state, scope, identity, &request.params, correlation)
+                .await?
+        }
+        "FinishRecording" => {
+            super::recordings::finish_recording(state, scope, identity, &request.params, correlation)
+                .await?
+        }
+        "CancelRecording" => {
+            super::recordings::cancel_recording(state, scope, identity, &request.params, correlation)
+                .await?
+        }
+        "CompileRecording" => {
+            super::recordings::compile_recording(state, scope, identity, &request.params, correlation)
+                .await?
+        }
+        "SubmitRecordingSkill" => {
+            super::recordings::submit_recording_skill(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
         "InviteMember" => {
             super::admin::invite_member(state, scope, identity, &request.params, correlation)
                 .await?

@@ -1,0 +1,62 @@
+{
+  "rule_set": "v1",
+  "note": "The one corpus the recorder (native/macos), the server (crates/server/src/control/skills/recording) and the plane (python/intelligence/skills/recording) must agree on (DOMAIN.md 11.7 C). `redacted` is what redaction must produce, `counts` what it must report; a `field` case is text entered into a control with those accessibility attributes, and `redacted: null` means the text is dropped whole. Hand-written; never regenerate it from an implementation.",
+  "categories": ["api_key", "bearer_token", "card_number", "verification_code", "password_field"],
+  "cases": [
+    {"id": "api_key_sk_project", "input": "my key is sk-proj-abcdefghijklmnopqrstuvwx1234", "redacted": "my key is [REDACTED:api_key]", "counts": {"api_key": 1}},
+    {"id": "api_key_sk_live_underscore", "input": "STRIPE=sk_live_4eC39HqLyjWDarjtT1zdp7dc", "redacted": "STRIPE=[REDACTED:api_key]", "counts": {"api_key": 1}},
+    {"id": "api_key_aws_access_key_id", "input": "use AKIAIOSFODNN7EXAMPLE for aws", "redacted": "use [REDACTED:api_key] for aws", "counts": {"api_key": 1}},
+    {"id": "api_key_github_token", "input": "token ghp_abcdefghijklmnopqrstuvwxyz0123456789 here", "redacted": "token [REDACTED:api_key] here", "counts": {"api_key": 1}},
+    {"id": "api_key_github_fine_grained", "input": "github_pat_11ABCDEFG0abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGH", "redacted": "[REDACTED:api_key]", "counts": {"api_key": 1}},
+    {"id": "api_key_slack_token", "input": "xoxb-1234567890-abcdefghijkl", "redacted": "[REDACTED:api_key]", "counts": {"api_key": 1}},
+    {"id": "api_key_google", "input": "key=AIzaSyA-1234567890abcdefghijklmnopqrstuv", "redacted": "key=[REDACTED:api_key]", "counts": {"api_key": 1}},
+    {"id": "api_key_jwt", "input": "session eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVPmB92K27uhbUJU1p1rwW1gFWFOEj end", "redacted": "session [REDACTED:api_key] end", "counts": {"api_key": 1}},
+    {"id": "api_key_private_key_block", "input": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC\n-----END PRIVATE KEY-----\ndone", "redacted": "[REDACTED:api_key]\ndone", "counts": {"api_key": 1}},
+    {"id": "api_key_long_token_with_letters_and_digits", "input": "da39a3ee5e6b4b0d3255bfef95601890afd80709", "redacted": "[REDACTED:api_key]", "counts": {"api_key": 1}},
+    {"id": "api_key_short_prefix_alone_is_text", "input": "the sk- prefix is for keys", "redacted": "the sk- prefix is for keys", "counts": {}},
+    {"id": "api_key_uuid_is_not_a_key", "input": "id 3F2504E0-4F89-11D3-9A0C-0305E82C3301", "redacted": "id 3F2504E0-4F89-11D3-9A0C-0305E82C3301", "counts": {}},
+    {"id": "api_key_long_word_without_digits_is_text", "input": "supercalifragilisticexpialidocious_antidisestablishmentarianism", "redacted": "supercalifragilisticexpialidocious_antidisestablishmentarianism", "counts": {}},
+
+    {"id": "bearer_authorization_header", "input": "Authorization: Bearer abc123def456ghi789", "redacted": "[REDACTED:bearer_token]", "counts": {"bearer_token": 1}},
+    {"id": "bearer_basic_in_quotes", "input": "curl -H \"Authorization: Basic dXNlcjpwYXNz\" https://example.test", "redacted": "curl -H \"[REDACTED:bearer_token]\" https://example.test", "counts": {"bearer_token": 1}},
+    {"id": "bearer_inline", "input": "send Bearer 9f8e7d6c5b4a3210 to the api", "redacted": "send [REDACTED:bearer_token] to the api", "counts": {"bearer_token": 1}},
+    {"id": "bearer_too_short_is_text", "input": "Bearer short", "redacted": "Bearer short", "counts": {}},
+
+    {"id": "card_spaced", "input": "pay with 4111 1111 1111 1111 now", "redacted": "pay with [REDACTED:card_number] now", "counts": {"card_number": 1}},
+    {"id": "card_dashed", "input": "4111-1111-1111-1111", "redacted": "[REDACTED:card_number]", "counts": {"card_number": 1}},
+    {"id": "card_plain_16", "input": "card 4111111111111111", "redacted": "card [REDACTED:card_number]", "counts": {"card_number": 1}},
+    {"id": "card_13_digits", "input": "4222222222222", "redacted": "[REDACTED:card_number]", "counts": {"card_number": 1}},
+    {"id": "card_19_digits", "input": "6011111111111117111", "redacted": "[REDACTED:card_number]", "counts": {"card_number": 1}},
+    {"id": "card_long_run_is_removed_whole", "input": "1234 5678 9012 3456 7890 1234", "redacted": "[REDACTED:card_number]", "counts": {"card_number": 1}},
+    {"id": "card_twelve_digits_is_text", "input": "ref 411111111111", "redacted": "ref 411111111111", "counts": {}},
+    {"id": "card_phone_number_is_text", "input": "call 415-555-0100", "redacted": "call 415-555-0100", "counts": {}},
+
+    {"id": "code_verification_phrase", "input": "Your verification code is 482913", "redacted": "Your [REDACTED:verification_code]", "counts": {"verification_code": 1}},
+    {"id": "code_digits_first", "input": "482913 is your OTP", "redacted": "[REDACTED:verification_code]", "counts": {"verification_code": 1}},
+    {"id": "code_one_time_password", "input": "one-time password: 7731", "redacted": "[REDACTED:verification_code]", "counts": {"verification_code": 1}},
+    {"id": "code_2fa_eight_digits", "input": "2FA 12345678", "redacted": "[REDACTED:verification_code]", "counts": {"verification_code": 1}},
+    {"id": "code_two_digits_is_text", "input": "otp: 12", "redacted": "otp: 12", "counts": {}},
+    {"id": "code_nine_digits_is_outside_the_window", "input": "code 123456789", "redacted": "code 123456789", "counts": {}},
+    {"id": "code_word_without_digits_is_text", "input": "enter the code in the box", "redacted": "enter the code in the box", "counts": {}},
+
+    {"id": "mixed_card_and_code", "input": "card 4111111111111111 and code 123456", "redacted": "card [REDACTED:card_number] and [REDACTED:verification_code]", "counts": {"card_number": 1, "verification_code": 1}},
+    {"id": "mixed_key_and_bearer", "input": "sk-proj-abcdefghijklmnopqrstuvwx1234 then Bearer abcdefgh12345678", "redacted": "[REDACTED:api_key] then [REDACTED:bearer_token]", "counts": {"api_key": 1, "bearer_token": 1}},
+    {"id": "two_keys", "input": "AKIAIOSFODNN7EXAMPLE and AKIAIOSFODNN7EXAMPL2", "redacted": "[REDACTED:api_key] and [REDACTED:api_key]", "counts": {"api_key": 2}},
+
+    {"id": "idempotent_markers_stay", "input": "[REDACTED:api_key] and [REDACTED:card_number] and [REDACTED:verification_code]", "redacted": "[REDACTED:api_key] and [REDACTED:card_number] and [REDACTED:verification_code]", "counts": {}},
+    {"id": "plain_text_is_untouched", "input": "Click Save, then type the quarterly report title.", "redacted": "Click Save, then type the quarterly report title.", "counts": {}},
+    {"id": "empty_text", "input": "", "redacted": "", "counts": {}},
+
+    {"id": "field_password_title", "field": {"ax_role": "AXTextField", "ax_title": "Password"}, "input": "hunter2-correct-horse", "redacted": "[REDACTED:password_field]", "counts": {"password_field": 1}},
+    {"id": "field_password_identifier", "field": {"ax_role": "AXTextField", "ax_identifier": "login_passwd_input"}, "input": "x", "redacted": "[REDACTED:password_field]", "counts": {"password_field": 1}},
+    {"id": "field_secure_text_subrole_is_dropped", "field": {"ax_role": "AXTextField", "ax_subrole": "AXSecureTextField"}, "input": "anything at all", "redacted": null, "counts": {"password_field": 1}},
+    {"id": "field_secure_text_role_is_dropped", "field": {"ax_role": "AXSecureTextField"}, "input": "anything at all", "redacted": null, "counts": {"password_field": 1}},
+    {"id": "field_one_time_code_title", "field": {"ax_role": "AXTextField", "ax_title": "Verification code"}, "input": "55", "redacted": "[REDACTED:verification_code]", "counts": {"verification_code": 1}},
+    {"id": "field_otp_description", "field": {"ax_role": "AXTextField", "ax_description": "One-time passcode"}, "input": "9", "redacted": "[REDACTED:verification_code]", "counts": {"verification_code": 1}},
+    {"id": "field_card_number_title", "field": {"ax_role": "AXTextField", "ax_title": "Card number"}, "input": "4 1 1 1", "redacted": "[REDACTED:card_number]", "counts": {"card_number": 1}},
+    {"id": "field_api_key_title", "field": {"ax_role": "AXTextField", "ax_title": "API key"}, "input": "abc", "redacted": "[REDACTED:api_key]", "counts": {"api_key": 1}},
+    {"id": "field_ordinary_title_keeps_text", "field": {"ax_role": "AXTextField", "ax_title": "Document title"}, "input": "Quarterly report", "redacted": "Quarterly report", "counts": {}},
+    {"id": "field_ordinary_title_still_scrubs_patterns", "field": {"ax_role": "AXTextField", "ax_title": "Notes"}, "input": "key AKIAIOSFODNN7EXAMPLE saved", "redacted": "key [REDACTED:api_key] saved", "counts": {"api_key": 1}},
+    {"id": "field_empty_text_in_password_field_is_not_counted", "field": {"ax_role": "AXTextField", "ax_title": "Password"}, "input": "", "redacted": "", "counts": {}}
+  ]
+}

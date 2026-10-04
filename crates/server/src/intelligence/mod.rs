@@ -25,8 +25,8 @@ use serde_json::json;
 use crate::observability::{metrics, Span, TRACEPARENT};
 use quansio_contracts::generated::intelligence::intelligence_gateway_client::IntelligenceGatewayClient;
 use quansio_contracts::generated::intelligence::{
-    CompletionVerdict, CompletionVerificationRequest, ContextBuildRequest, ContextProjection,
-    MemoryCandidate, ModelCallRequest, ModelEvent, ProposalAck, ScopeContext,
+    CompileRecordingRequest, CompletionVerdict, CompletionVerificationRequest, ContextBuildRequest,
+    ContextProjection, MemoryCandidate, ModelCallRequest, ModelEvent, ProposalAck, ScopeContext,
     SkillCandidatesRequest, TrustClassifyRequest, TrustClassifyResponse,
 };
 use tonic::metadata::MetadataValue;
@@ -315,6 +315,41 @@ impl IntelligenceClient {
             Ok(Ok(response)) => Ok(response.into_inner().candidates_json),
         };
         finish(span, "ProposeSkillCandidates", &result);
+        result
+    }
+
+    /// `CompileSkillRecording` (ADP-003): a skill proposal from the text-only projection of one
+    /// finished, redacted recording. The proposal is untrusted data; the server validates it and the
+    /// registry decides what, if anything, it stores.
+    ///
+    /// # Errors
+    /// The typed refusal, or an unreachable or late gateway.
+    pub async fn compile_skill_recording(
+        &mut self,
+        scope: &CallScope,
+        recording_id: &str,
+        projection_json: String,
+        tools_json: Vec<String>,
+        settings_json: String,
+    ) -> Result<String, IntelligenceError> {
+        let request = CompileRecordingRequest {
+            schema_version: SCHEMA_VERSION.to_string(),
+            scope: Some(scope.context()),
+            recording_id: recording_id.to_string(),
+            projection_json,
+            tools_json,
+            settings_json,
+        };
+        let span = rpc_span("CompileSkillRecording", scope);
+        let call = self
+            .inner
+            .compile_skill_recording(Self::request(scope, request, &span));
+        let result = match tokio::time::timeout(scope.deadline, call).await {
+            Err(_) => Err(IntelligenceError::DeadlineExceeded),
+            Ok(Err(status)) => Err(refused(&status)),
+            Ok(Ok(response)) => Ok(response.into_inner().proposal_json),
+        };
+        finish(span, "CompileSkillRecording", &result);
         result
     }
 

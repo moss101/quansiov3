@@ -873,6 +873,31 @@ impl AuthStore {
         }
     }
 
+    /// The sign-in family a session belongs to: a refresh rotation stays in its family, a sign-out and a
+    /// new sign-in starts another (ADP-003 binds a recording to it).
+    ///
+    /// # Errors
+    /// Returns a database error.
+    pub async fn session_family(
+        &self,
+        tenant_id: &str,
+        session_id: &str,
+    ) -> Result<Option<String>, AuthError> {
+        let mut tx = self.begin_auth_transaction().await?;
+        sqlx::query("SELECT set_config('quansio.tenant_id', $1, true)")
+            .bind(tenant_id)
+            .execute(&mut *tx)
+            .await?;
+        let family: Option<String> =
+            sqlx::query_scalar("SELECT family_id FROM sessions WHERE id = $1 AND tenant_id = $2")
+                .bind(session_id)
+                .bind(tenant_id)
+                .fetch_optional(&mut *tx)
+                .await?;
+        tx.commit().await?;
+        Ok(family)
+    }
+
     /// The signed-in user's own view: identity, tenants, workspaces, effective settings.
     ///
     /// # Errors
