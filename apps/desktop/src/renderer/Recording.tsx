@@ -102,12 +102,21 @@ export function Recording({ onSubmitted }: Props): ReactElement {
   }, []);
 
   useEffect(() => {
-    void reload();
-    const timer = setInterval(() => {
-      void reload();
-    }, 2000);
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const tick = (): void => {
+      void reload().finally(() => {
+        if (alive) {
+          timer = setTimeout(tick, 2000);
+        }
+      });
+    };
+    tick();
     return () => {
-      clearInterval(timer);
+      alive = false;
+      if (timer) {
+        clearTimeout(timer);
+      }
     };
   }, [reload]);
 

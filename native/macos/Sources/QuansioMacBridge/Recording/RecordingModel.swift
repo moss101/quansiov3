@@ -35,7 +35,7 @@ public struct RecordingOwner: Equatable, Hashable, Sendable {
     }
 }
 
-/// What the recorder may capture, as `StartRecording` returns it from `config/skill-recording.yaml`.
+/// What the recorder may capture, as `StartRecording` returns it from `config/recording.yaml`.
 public struct RecordingLimits: Equatable, Sendable {
     public var maxActions: Int
     public var actionTextMaxChars: Int
@@ -73,7 +73,7 @@ public struct RecordingLimits: Equatable, Sendable {
         self.maxDurationMs = maxDurationMs
     }
 
-    /// Read the limits object `StartRecording` returns (`config/skill-recording.yaml: limits`), plus the
+    /// Read the limits object `StartRecording` returns (`config/recording.yaml: limits`), plus the
     /// recording's lifetime. A missing or malformed field is `nil`: the recorder does not guess a bound.
     public init?(wire: Any?, maxDurationMs: Int) {
         guard let map = wire as? [String: Any],

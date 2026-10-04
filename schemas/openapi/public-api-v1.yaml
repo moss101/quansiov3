@@ -6320,34 +6320,114 @@ components:
       x-quansio-params-defined: false
     StartRecordingParams:
       type: object
-      additionalProperties: true
-      description: 'Recording command StartRecording. The concrete parameter schema is owned by the implementing task and
-        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
-      x-quansio-params-defined: false
+      required:
+      - workspace_id
+      - start_key
+      - epoch
+      properties:
+        workspace_id:
+          type: string
+        start_key:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: 'Idempotency key of the start: a repeat returns the same recording.'
+        epoch:
+          type: integer
+          minimum: 1
+          description: The epoch the desktop advances when the signed-in account changes (DOMAIN.md §11.7 B).
+      description: Recording command StartRecording.
+      x-quansio-params-defined: true
     FinishRecordingParams:
       type: object
-      additionalProperties: true
-      description: 'Recording command FinishRecording. The concrete parameter schema is owned by the implementing task and
-        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
-      x-quansio-params-defined: false
+      required:
+      - recording_id
+      - epoch
+      - archive
+      properties:
+        recording_id:
+          type: string
+        epoch:
+          type: integer
+          minimum: 1
+        archive:
+          type: object
+          required:
+          - content_base64
+          - content_digest
+          properties:
+            content_base64:
+              type: string
+              description: The redacted archive the person's recorder built (media type application/vnd.quansio.recording+json).
+            content_digest:
+              type: string
+              description: SHA-256 (hex) of the archive's bytes.
+      description: Recording command FinishRecording.
+      x-quansio-params-defined: true
     CancelRecordingParams:
       type: object
-      additionalProperties: true
-      description: 'Recording command CancelRecording. The concrete parameter schema is owned by the implementing task and
-        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
-      x-quansio-params-defined: false
+      required:
+      - recording_id
+      - epoch
+      properties:
+        recording_id:
+          type: string
+        epoch:
+          type: integer
+          minimum: 1
+      description: Recording command CancelRecording.
+      x-quansio-params-defined: true
     CompileRecordingParams:
       type: object
-      additionalProperties: true
-      description: 'Recording command CompileRecording. The concrete parameter schema is owned by the implementing task and
-        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
-      x-quansio-params-defined: false
+      required:
+      - recording_id
+      - epoch
+      properties:
+        recording_id:
+          type: string
+        epoch:
+          type: integer
+          minimum: 1
+      description: Recording command CompileRecording.
+      x-quansio-params-defined: true
     SubmitRecordingSkillParams:
       type: object
-      additionalProperties: true
-      description: 'Recording command SubmitRecordingSkill. The concrete parameter schema is owned by the implementing task
-        and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
-      x-quansio-params-defined: false
+      required:
+      - recording_id
+      - epoch
+      - name
+      - semver
+      - slots
+      properties:
+        recording_id:
+          type: string
+        epoch:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9._-]{0,63}$
+        semver:
+          type: string
+        slots:
+          type: array
+          maxItems: 64
+          items:
+            type: object
+            required:
+            - slot_id
+            - classification
+            properties:
+              slot_id:
+                type: string
+              classification:
+                type: string
+                enum:
+                - input
+                - constant
+          description: The person's decision for every slot of the proposal; an undecided slot is refused.
+      description: Recording command SubmitRecordingSkill.
+      x-quansio-params-defined: true
     CreateRoutineParams:
       type: object
       additionalProperties: true

@@ -110,7 +110,7 @@ class ToolInfo:
 
 @dataclass(frozen=True, slots=True)
 class Limits:
-    """The proposal limits from ``config/skill-recording.yaml``."""
+    """The proposal limits from ``config/recording.yaml``."""
 
     max_bytes: int = 262_144
     max_steps: int = 200

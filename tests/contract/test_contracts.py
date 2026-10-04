@@ -41,11 +41,11 @@ def test_catalog_is_derived_from_domain_and_current(catalog):
 
 def test_domain_derivation_covers_commands_errors_effects_events_trust(catalog):
     assert sum(len(v) for v in catalog["commands"].values()) >= 70
-    # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15) and the
-    # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15).
-    assert len(catalog["errors"]) == 61
+    # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15), the
+    # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15) and the 4 `RECORDING_*` codes (ADP-003, §15).
+    assert len(catalog["errors"]) == 65
     assert len(catalog["effect_classes"]) == 23
-    assert len(catalog["event_families"]) == 35  # + webhook.* (APP-015)
+    assert len(catalog["event_families"]) == 36  # + webhook.* (APP-015), recording.* (ADP-003)
     assert catalog["trust_levels"] == [
         "TRUSTED_SYSTEM",
         "TRUSTED_USER",
@@ -240,8 +240,8 @@ def test_json_schemas_validate_real_artifacts():
     validator("flags-config").validate(flags)
     computer_use = yaml.safe_load((ROOT / "config" / "computer-use.yaml").read_text())
     validator("computer-use-config").validate(computer_use)
-    skill_recording = yaml.safe_load((ROOT / "config" / "skill-recording.yaml").read_text())
-    validator("skill-recording-config").validate(skill_recording)
+    skill_recording = yaml.safe_load((ROOT / "config" / "recording.yaml").read_text())
+    validator("recording-config").validate(skill_recording)
 
     summaries = sorted((ROOT / "evidence").glob("*/*/summary.json"))
     assert summaries, "at least one task evidence bundle must exist"
@@ -322,9 +322,9 @@ def test_skill_recording_schema_keeps_every_limit_bounded():
 
     from jsonschema import Draft202012Validator
 
-    schema = json.loads((ROOT / "schemas" / "json" / "skill-recording-config.schema.json").read_text())
+    schema = json.loads((ROOT / "schemas" / "json" / "recording-config.schema.json").read_text())
     validator = Draft202012Validator(schema)
-    good = yaml.safe_load((ROOT / "config" / "skill-recording.yaml").read_text())
+    good = yaml.safe_load((ROOT / "config" / "recording.yaml").read_text())
     assert not list(validator.iter_errors(good))
 
     def broken(edit):

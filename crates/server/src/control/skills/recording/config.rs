@@ -1,7 +1,7 @@
-//! `config/skill-recording.yaml`: capture limits, the archive cap, the lifetime of an unfinished recording
+//! `config/recording.yaml`: capture limits, the archive cap, the lifetime of an unfinished recording
 //! and the tool-path preferences (ADP-003, D-018).
 //!
-//! The same file is validated against `schemas/json/skill-recording-config.schema.json` by the contract
+//! The same file is validated against `schemas/json/recording-config.schema.json` by the contract
 //! tests; this loader repeats the checks that matter to safety so a copy edited on a host without the
 //! schema tooling still fails closed: an unknown key, a missing section, a zero or absurd limit and a rule
 //! set other than the one this server implements are load errors, never defaults.
@@ -15,7 +15,7 @@ use super::redact::RULE_SET;
 
 /// The committed configuration.
 pub const SKILL_RECORDING_YAML: &str =
-    include_str!("../../../../../../config/skill-recording.yaml");
+    include_str!("../../../../../../config/recording.yaml");
 
 /// A configuration that cannot be trusted.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]

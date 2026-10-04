@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://quansio.dev/schemas/json/skill-recording-config.schema.json",
-  "title": "Quansio skill recording (config/skill-recording.yaml)",
+  "$id": "https://quansio.dev/schemas/json/recording-config.schema.json",
+  "title": "Quansio skill recording (config/recording.yaml)",
   "description": "The redaction rule set, the capture and archive limits, the lifetime of an unfinished recording and the tool-path preferences the compiler uses (DOMAIN.md 11.7). Every limit is bounded so a configuration cannot make a recording unbounded.",
   "x-quansio-version": "v1",
   "type": "object",

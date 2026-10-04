@@ -186,7 +186,7 @@ export class RecordingHost {
   #running: Running | null = null;
   #view: RecorderView = IDLE_RECORDER;
   #recordingId: string | null = null;
-  #poll: ReturnType<typeof setInterval> | null = null;
+  #poll: ReturnType<typeof setTimeout> | null = null;
   #pendingArchive: { readonly base64: string; readonly sha256: string; readonly requestId: string } | null = null;
   #finishCalls = 0;
 
@@ -447,39 +447,46 @@ export class RecordingHost {
     }
   }
 
+  /** Read the recorder's counts, then again after `pollMs`: each read waits for the one before it. */
   #startPolling(identity: RecorderIdentity, epoch: number): void {
     this.#stopPolling();
-    this.#poll = setInterval(() => {
-      const running = this.#running;
-      if (!running || this.#view.state !== "recording") {
-        return;
-      }
-      void running.channel
-        .call({ op: "status", id: newCommandId(), owner: { tenant_id: identity.tenantId, user_id: identity.userId, epoch } }, 10_000)
-        .then((answer) => {
-          if (answer["ok"] !== true) {
-            this.#teardown(text(answer["error"]) ?? "recorder_stopped");
-            return;
-          }
-          this.#view = decodeRecorder({
-            state: "recording",
-            recordingId: this.#recordingId,
-            startedAt: this.#view.startedAt,
-            actions: answer["actions"],
-            screenshots: answer["screenshots"],
-            paused: answer["paused"],
-            counts: answer["counts"],
+    const next = (): void => {
+      this.#poll = setTimeout(() => {
+        const running = this.#running;
+        if (!running || this.#view.state !== "recording") {
+          return;
+        }
+        void running.channel
+          .call({ op: "status", id: newCommandId(), owner: { tenant_id: identity.tenantId, user_id: identity.userId, epoch } }, 10_000)
+          .then((answer) => {
+            if (answer["ok"] !== true) {
+              this.#teardown(text(answer["error"]) ?? "recorder_stopped");
+              return;
+            }
+            this.#view = decodeRecorder({
+              state: "recording",
+              recordingId: this.#recordingId,
+              startedAt: this.#view.startedAt,
+              actions: answer["actions"],
+              screenshots: answer["screenshots"],
+              paused: answer["paused"],
+              counts: answer["counts"],
+            });
+            if (this.#running === running) {
+              next();
+            }
+          })
+          .catch(() => {
+            this.#teardown("recorder_stopped");
           });
-        })
-        .catch(() => {
-          this.#teardown("recorder_stopped");
-        });
-    }, this.#options.pollMs ?? 1000);
+      }, this.#options.pollMs ?? 1000);
+    };
+    next();
   }
 
   #stopPolling(): void {
     if (this.#poll) {
-      clearInterval(this.#poll);
+      clearTimeout(this.#poll);
       this.#poll = null;
     }
   }

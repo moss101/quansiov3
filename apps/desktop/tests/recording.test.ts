@@ -314,7 +314,7 @@ describe("the structure that keeps a recording the person's", () => {
     expect(source).toMatch(/void finish\(event\.nativeEvent\)/);
     // Nothing in the page reacts to a stream frame, a message or a timer by finishing.
     expect(source.match(/finishRecording\(/g)).toHaveLength(1);
-    expect(source).not.toMatch(/onStreamFrame|setTimeout/);
+    expect(source).not.toMatch(/onStreamFrame|onSessionState|invokeCommand/);
   });
 
   it("never lets the page hold or send the owner fence", () => {

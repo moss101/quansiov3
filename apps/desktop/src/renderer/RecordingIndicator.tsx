@@ -26,6 +26,8 @@ export function RecordingIndicator({ onEnded }: Props): ReactElement | null {
 
   useEffect(() => {
     let alive = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    // Each read waits for the one before it, so a slow main never stacks requests.
     const read = (): void => {
       void window.quansio
         .recordingStatus()
@@ -34,13 +36,19 @@ export function RecordingIndicator({ onEnded }: Props): ReactElement | null {
             setRecorder(decodeRecorder(raw));
           }
         })
-        .catch(() => undefined);
+        .catch(() => undefined)
+        .finally(() => {
+          if (alive) {
+            timer = setTimeout(read, INDICATOR_POLL_MS);
+          }
+        });
     };
     read();
-    const timer = setInterval(read, INDICATOR_POLL_MS);
     return () => {
       alive = false;
-      clearInterval(timer);
+      if (timer) {
+        clearTimeout(timer);
+      }
     };
   }, []);
 

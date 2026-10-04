@@ -2688,25 +2688,47 @@ export interface components {
         RollbackPackParams: {
             [key: string]: unknown;
         };
-        /** @description Recording command StartRecording. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        /** @description Recording command StartRecording. */
         StartRecordingParams: {
-            [key: string]: unknown;
+            workspace_id: string;
+            /** @description Idempotency key of the start: a repeat returns the same recording. */
+            start_key: string;
+            /** @description The epoch the desktop advances when the signed-in account changes (DOMAIN.md §11.7 B). */
+            epoch: number;
         };
-        /** @description Recording command FinishRecording. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        /** @description Recording command FinishRecording. */
         FinishRecordingParams: {
-            [key: string]: unknown;
+            recording_id: string;
+            epoch: number;
+            archive: {
+                /** @description The redacted archive the person's recorder built (media type application/vnd.quansio.recording+json). */
+                content_base64: string;
+                /** @description SHA-256 (hex) of the archive's bytes. */
+                content_digest: string;
+            };
         };
-        /** @description Recording command CancelRecording. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        /** @description Recording command CancelRecording. */
         CancelRecordingParams: {
-            [key: string]: unknown;
+            recording_id: string;
+            epoch: number;
         };
-        /** @description Recording command CompileRecording. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        /** @description Recording command CompileRecording. */
         CompileRecordingParams: {
-            [key: string]: unknown;
+            recording_id: string;
+            epoch: number;
         };
-        /** @description Recording command SubmitRecordingSkill. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        /** @description Recording command SubmitRecordingSkill. */
         SubmitRecordingSkillParams: {
-            [key: string]: unknown;
+            recording_id: string;
+            epoch: number;
+            name: string;
+            semver: string;
+            /** @description The person's decision for every slot of the proposal; an undecided slot is refused. */
+            slots: {
+                slot_id: string;
+                /** @enum {string} */
+                classification: "input" | "constant";
+            }[];
         };
         /** @description Routines command CreateRoutine. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
         CreateRoutineParams: {

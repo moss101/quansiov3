@@ -20,7 +20,7 @@ document or a closed vocabulary forces:
   mirrored in the generated contract by test.
 - `schemas/proto/quansio/v1/intelligence/service.proto` — one RPC, `CompileSkillRecording`, beside
   `ProposeSkillCandidates`. Python proposes; Rust commits.
-- `config/skill-recording.yaml` + `schemas/json/skill-recording-config.schema.json` — D-018: capture limits, the
+- `config/recording.yaml` + `schemas/json/recording-config.schema.json` — D-018: capture limits, the
   archive cap, the lifetime of an unfinished recording, the tool-path preferences. `config/identity.yaml` adds
   `Recording` to `ungrantable_scopes` (a service principal never records).
 - `crates/server/src/api/{commands,knowledge,error}.rs` — dispatch of five catalog commands and two projections;

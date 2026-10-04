@@ -105,6 +105,63 @@ DEFINED_PARAMS: Dict[str, Dict[str, object]] = {
         "required": ["subscription_id"],
         "properties": {"subscription_id": {"type": "string"}},
     },
+    # Skill recording (ADP-003, DOMAIN.md §11.7): a person's commands. Every one carries the owner fence's
+    # epoch; the tenant and user come from the authenticated session.
+    "StartRecording": {
+        "type": "object",
+        "required": ["workspace_id", "start_key", "epoch"],
+        "properties": {
+            "workspace_id": {"type": "string"},
+            "start_key": {"type": "string", "minLength": 1, "maxLength": 128, "description": "Idempotency key of the start: a repeat returns the same recording."},
+            "epoch": {"type": "integer", "minimum": 1, "description": "The epoch the desktop advances when the signed-in account changes (DOMAIN.md §11.7 B)."},
+        },
+    },
+    "FinishRecording": {
+        "type": "object",
+        "required": ["recording_id", "epoch", "archive"],
+        "properties": {
+            "recording_id": {"type": "string"},
+            "epoch": {"type": "integer", "minimum": 1},
+            "archive": {
+                "type": "object",
+                "required": ["content_base64", "content_digest"],
+                "properties": {
+                    "content_base64": {"type": "string", "description": "The redacted archive the person's recorder built (media type application/vnd.quansio.recording+json)."},
+                    "content_digest": {"type": "string", "description": "SHA-256 (hex) of the archive's bytes."},
+                },
+            },
+        },
+    },
+    "CancelRecording": {
+        "type": "object",
+        "required": ["recording_id", "epoch"],
+        "properties": {"recording_id": {"type": "string"}, "epoch": {"type": "integer", "minimum": 1}},
+    },
+    "CompileRecording": {
+        "type": "object",
+        "required": ["recording_id", "epoch"],
+        "properties": {"recording_id": {"type": "string"}, "epoch": {"type": "integer", "minimum": 1}},
+    },
+    "SubmitRecordingSkill": {
+        "type": "object",
+        "required": ["recording_id", "epoch", "name", "semver", "slots"],
+        "properties": {
+            "recording_id": {"type": "string"},
+            "epoch": {"type": "integer", "minimum": 1},
+            "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"},
+            "semver": {"type": "string"},
+            "slots": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                    "type": "object",
+                    "required": ["slot_id", "classification"],
+                    "properties": {"slot_id": {"type": "string"}, "classification": {"type": "string", "enum": ["input", "constant"]}},
+                },
+                "description": "The person's decision for every slot of the proposal; an undecided slot is refused.",
+            },
+        },
+    },
 }
 
 

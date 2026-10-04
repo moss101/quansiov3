@@ -1247,7 +1247,7 @@ pub struct CompileRecordingRequest {
     /// \[{name, effect_class, description}\] for every tool the registry offers.
     #[prost(string, repeated, tag = "4")]
     pub tools_json: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// {tool_paths\[\], limits{}} from config/skill-recording.yaml.
+    /// {tool_paths\[\], limits{}} from config/recording.yaml.
     #[prost(string, tag = "5")]
     pub settings_json: ::prost::alloc::string::String,
 }

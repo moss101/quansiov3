@@ -75,7 +75,7 @@ _RECOVERY_CONSEQUENTIAL = (
 
 @dataclass(frozen=True, slots=True)
 class CompileSettings:
-    """What the compiler needs of ``config/skill-recording.yaml``."""
+    """What the compiler needs of ``config/recording.yaml``."""
 
     limits: Limits = field(default_factory=Limits)
     tool_paths: tuple[Mapping[str, Any], ...] = ()

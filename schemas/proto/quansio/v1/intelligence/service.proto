@@ -140,7 +140,7 @@ message CompileRecordingRequest {
   string projection_json = 3;
   // [{name, effect_class, description}] for every tool the registry offers.
   repeated string tools_json = 4;
-  // {tool_paths[], limits{}} from config/skill-recording.yaml.
+  // {tool_paths[], limits{}} from config/recording.yaml.
   string settings_json = 5;
 }
 

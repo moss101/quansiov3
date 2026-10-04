@@ -1,5 +1,5 @@
-# Skill recording (ADP-003, DOMAIN.md 11.7). Policy lives here, never as a source constant (D-018).
-# Validated by schemas/json/skill-recording-config.schema.json and, at load, by quansio-server and the
+# Recording (ADP-003, DOMAIN.md 11.7). Policy lives here, never as a source constant (D-018).
+# Validated by schemas/json/recording-config.schema.json and, at load, by quansio-server and the
 # intelligence plane. The server returns `limits` to the person's recorder when a recording starts and
 # re-checks every one of them when the archive arrives, so a recorder that ignores a limit gains nothing.
 version: 1

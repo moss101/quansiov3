@@ -19,7 +19,7 @@ use std::sync::LazyLock;
 use regex::Regex;
 use serde_json::{json, Value};
 
-/// The rule-set version an archive declares and `config/skill-recording.yaml` pins.
+/// The rule-set version an archive declares and `config/recording.yaml` pins.
 pub const RULE_SET: &str = "v1";
 
 /// What redaction removes, in the order the rules run.
