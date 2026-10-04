@@ -67,6 +67,13 @@ export const PRELOAD_ALLOWLIST = [
   "live.attach",
   "computer.permissions",
   "computer.openSettings",
+  "recording.status",
+  "recording.start",
+  "recording.finish",
+  "recording.cancel",
+  "recording.list",
+  "recording.compile",
+  "recording.submit",
   "live.detach",
   "threads.view",
   "threads.create",
@@ -223,6 +230,17 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     computerPermissions: (request: { needs?: readonly string[]; pauseInput?: boolean } = {}) => send("computer.permissions", request),
     openComputerSettings: (permission: string) => send("computer.openSettings", { permission }),
     detachLive: () => send("live.detach", {}),
+    // Skill recording (ADP-003): the recorder's own state, start, the person's finish (a genuine click
+    // only; the page passes `gesture`), cancel, the caller's recordings, compile and submit as DRAFT.
+    // The renderer never supplies the owner fence: main holds it.
+    recordingStatus: () => send("recording.status", {}),
+    startRecording: () => send("recording.start", {}),
+    finishRecording: (request: { gesture: boolean }) => send("recording.finish", request),
+    cancelRecording: () => send("recording.cancel", {}),
+    listRecordings: () => send("recording.list", {}),
+    compileRecording: (recordingId: string) => send("recording.compile", { recordingId }),
+    submitRecordingSkill: (params: { recordingId: string; name: string; semver: string; slots: readonly { slot_id: string; classification: string }[] }) =>
+      send("recording.submit", params),
     // Collaboration (APP-009): the thread's membership and attention, and the commands that
     // change membership, react and hand a thread to another teammate (refusals are data).
     viewThread: (threadId: string) => send("threads.view", { threadId }),

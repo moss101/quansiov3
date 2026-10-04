@@ -11,7 +11,7 @@
  * Electron binary; this file wires them.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -184,6 +184,8 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
     // click in the guide opens a Settings pane; nothing here grants or requests a permission.
     ...optional("computerPermissions", macPermissionSource()),
     openSystemSettings: (url) => shell.openExternal(url),
+    // The person's recorder (ADP-003): a separate short-lived process the desktop starts for one recording.
+    ...optional("recorderBinary", recorderBinaryPath()),
     session: sessionFile,
     openSocket,
     updates,
@@ -233,6 +235,18 @@ export async function startDesktop(): Promise<{ window: BrowserWindow; bridge: D
   await bridge.resume();
   await window.loadURL(RENDERER_ENTRY_URL);
   return { window, bridge };
+}
+
+/**
+ * The `quansio-recorder` executable this build ships (macOS only): `QUANSIO_RECORDER_BIN` for development,
+ * otherwise beside the app's resources. Absent, recording says so instead of failing late.
+ */
+function recorderBinaryPath(): string | undefined {
+  if (process.platform !== "darwin") {
+    return undefined;
+  }
+  const candidates = [process.env["QUANSIO_RECORDER_BIN"], join(process.resourcesPath, "quansio-recorder")];
+  return candidates.find((path): path is string => typeof path === "string" && path.length > 0 && existsSync(path));
 }
 
 /** An option that is present only when it has a value (the options type forbids an explicit undefined). */

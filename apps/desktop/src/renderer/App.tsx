@@ -34,6 +34,7 @@ import { Live } from "./Live.js";
 import { OPENS, PAGE_ENTRY, SURFACE_ICONS, SURFACE_LABELS, type Page } from "./navigation.js";
 import { Onboarding } from "./Onboarding.js";
 import { Palette, type PaletteItem } from "./Palette.js";
+import { RecordingIndicator } from "./RecordingIndicator.js";
 import { Settings } from "./Settings.js";
 import { Sidebar, type SidebarView } from "./Sidebar.js";
 import { Teammates } from "./Teammates.js";
@@ -414,6 +415,7 @@ function Shell(): ReactElement {
 
   return (
     <main className="shell">
+      <RecordingIndicator />
       <Sidebar
         view={view}
         onView={setView}

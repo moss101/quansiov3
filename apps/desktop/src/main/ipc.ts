@@ -21,6 +21,8 @@ import { computerCommand, handback as handbackCommand, requestTakeover as takeov
 import { desktopNotice, type DesktopNotice } from "../automation/notifications.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { parseOpenSettings, parsePermissionRequest, readSnapshot, settingsUrl, notApplicable, type PermissionSnapshot, type PermissionSource } from "./permissions.js";
+import { RECORDING_COMMANDS } from "../recording/state.js";
+import { RecordingHost } from "./recorder.js";
 import { SessionFile, type ActiveRunSession, type DesktopSession } from "./session-file.js";
 import { SessionManager, type SessionState } from "./session-manager.js";
 import type { TokenStore } from "./token-store.js";
@@ -91,6 +93,11 @@ export interface DesktopBridgeOptions {
    * a person's click in the page calls that; no agent output reaches it.
    */
   readonly openSystemSettings?: (url: string) => Promise<void>;
+  /**
+   * The `quansio-recorder` executable (ADP-003), when this build ships one. Absent, `recording.start` answers
+   * `RECORDER_UNAVAILABLE`; nothing else about the desktop changes.
+   */
+  readonly recorderBinary?: string | null;
 }
 
 /** The slice of the host's file/shell surface the bridge uses; main supplies the real one. */
@@ -109,8 +116,11 @@ export class DesktopBridge {
   readonly localRuntime: LocalRuntimeClient;
   /** Present in session mode; the trusted-header harness has none. */
   readonly sessions: SessionManager | null;
+  /** The person's recorder (ADP-003): started, finished and cancelled only through the recording channels. */
+  readonly recording: RecordingHost;
   readonly #options: DesktopBridgeOptions;
   #stream: StreamClient | null = null;
+  #accountKey: string | null = null;
   #streamState: StreamState = "closed";
   /** The target-scoped live subscription (APP-007): cursor-less, frames only, one at a time. */
   #live: { readonly targetId: string; readonly client: StreamClient } | null = null;
@@ -139,6 +149,20 @@ export class DesktopBridge {
       this.#ensureSessionFile(options.auth.workspaceId);
     }
     this.localRuntime = new LocalRuntimeClient(this.server);
+    this.recording = new RecordingHost({
+      server: this.server,
+      binary: options.recorderBinary ?? null,
+      identity: () => this.#identity(),
+    });
+  }
+
+  /** Who is signed in, for the recorder's owner fence. */
+  #identity(): { readonly tenantId: string; readonly userId: string } | null {
+    if (this.#options.auth.kind === "trusted-headers") {
+      return { tenantId: this.#options.auth.scope.tenantId, userId: this.#options.auth.scope.userId };
+    }
+    const state = this.sessions?.state();
+    return state?.kind === "signed-in" ? { tenantId: state.tenantId, userId: state.userId } : null;
   }
 
   /** Resume a stored session from the keychain (session mode); false when there is none. */
@@ -166,6 +190,13 @@ export class DesktopBridge {
   }
 
   #onSessionState(state: SessionState): void {
+    // The account changed (sign-in, sign-out or a switch): advance the recorder's epoch and end a local
+    // recording. A token refresh of the same account is not a change.
+    const key = state.kind === "signed-in" ? `${state.tenantId}/${state.userId}` : null;
+    if (key !== this.#accountKey) {
+      this.#accountKey = key;
+      this.recording.accountChanged();
+    }
     if (state.kind === "signed-in" && state.workspaceId) {
       this.#ensureSessionFile(state.workspaceId);
     } else if (state.kind === "signed-out") {
@@ -259,6 +290,14 @@ export class DesktopBridge {
       "live.handback": (payload) => settled(Promise.resolve(payload).then((raw) => this.liveControl("Handback", raw))),
       "computer.permissions": (payload) => Promise.resolve(payload).then((raw) => this.computerPermissions(raw)),
       "computer.openSettings": (payload) => Promise.resolve(payload).then((raw) => this.openComputerSettings(raw)),
+      // Skill recording (ADP-003): refusals are data the page branches on, so the commands are settled.
+      "recording.status": () => Promise.resolve().then(() => this.recording.status()),
+      "recording.start": () => Promise.resolve().then(() => this.startRecording()),
+      "recording.finish": (payload) => Promise.resolve(payload).then((raw) => this.finishRecording(raw)),
+      "recording.cancel": () => Promise.resolve().then(() => this.recording.cancel()),
+      "recording.list": () => this.server.recordings(),
+      "recording.compile": (payload) => settled(Promise.resolve(payload).then((raw) => this.recordingCommand("CompileRecording", raw))),
+      "recording.submit": (payload) => settled(Promise.resolve(payload).then((raw) => this.recordingCommand("SubmitRecordingSkill", raw))),
       "live.attach": (payload) => Promise.resolve(payload).then((raw) => this.attachLive(asTargetId(raw, "live.attach"))),
       "live.detach": () => Promise.resolve().then(() => this.detachLive()),
       // Collaboration (APP-009): a protected thread refuses a non-participant, and the
@@ -285,6 +324,35 @@ export class DesktopBridge {
           return { theme };
         }),
     };
+  }
+
+  // ---- skill recording (ADP-003) ----
+
+  /** Start the person's recorder in the workspace the desktop acts in. */
+  startRecording(): Promise<unknown> {
+    return this.recording.start(this.#requireWorkspace());
+  }
+
+  /** The person's own finish: the page sends `gesture` from a genuine click; anything else is refused. */
+  async finishRecording(raw: unknown): Promise<unknown> {
+    const gesture = asRecord(raw ?? {}, "recording.finish")["gesture"] === true;
+    return this.recording.finish({ gesture });
+  }
+
+  /** Compile or submit with the params the page built; main adds the epoch it holds, never the page. */
+  async recordingCommand(name: "CompileRecording" | "SubmitRecordingSkill", raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, name);
+    const recordingId = record["recordingId"];
+    if (typeof recordingId !== "string" || !recordingId.startsWith("rec_")) {
+      throw new Error(`${name} needs a rec_ recordingId`);
+    }
+    const params: Record<string, unknown> = { recording_id: recordingId, epoch: this.recording.epoch };
+    if (name === "SubmitRecordingSkill") {
+      params["name"] = record["name"];
+      params["semver"] = record["semver"];
+      params["slots"] = record["slots"];
+    }
+    return (await this.server.invoke(name, newCommandId(), params)).result;
   }
 
   // ---- routines and notifications (APP-010) ----
@@ -804,6 +872,11 @@ export class DesktopBridge {
   }
 
   async invoke(command: BridgeCommand): Promise<CommandResponse> {
+    if (RECORDING_COMMANDS.includes(command.name)) {
+      // A recording command carries the owner fence and (for the finish) a click: the recording channels
+      // add them; the generic command path does not.
+      throw new Error(`${command.name} goes through the recording channels`);
+    }
     const response = await this.server.invoke(command.name, command.commandId, command.params);
     const result = response.result;
     const workspaceId = this.workspaceId();

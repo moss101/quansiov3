@@ -29,6 +29,7 @@ import {
   type MemoryView,
 } from "../knowledge/entries.js";
 import { activation, decodeSkills, disable, install, promotion, type SkillStatus, type SkillView } from "../knowledge/skills.js";
+import { Recording } from "./Recording.js";
 
 interface KnowledgeProps {
   readonly workspaceId: string;
@@ -251,6 +252,7 @@ export function Knowledge({ workspaceId, runId = null }: KnowledgeProps): ReactE
             </li>
           ))}
         </ul>
+        <Recording onSubmitted={() => { setStale(true); }} />
         <form
           className="install"
           onSubmit={(event) => {

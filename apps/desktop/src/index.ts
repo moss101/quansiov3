@@ -222,6 +222,31 @@ export {
 export type { Control, DecodedMemory, KnowledgeStatus, KnowledgeView, MemoryStatus, MemoryView, Provenance } from "./knowledge/entries.js";
 export { DISABLE_COMMAND, INSTALL_COMMAND, PROMOTE_COMMAND, SKILL_LADDER, activation, activeVersions, decodeSkills, disable, install, promotion } from "./knowledge/skills.js";
 export type { CapabilityNeed, Disable, Install, InstallInput, Promotion, SkillManifest, SkillStatus, SkillVersionView, SkillView } from "./knowledge/skills.js";
+export {
+  CANCEL_COMMAND as CANCEL_RECORDING_COMMAND,
+  COMPILE_COMMAND as COMPILE_RECORDING_COMMAND,
+  FINISH_COMMAND as FINISH_RECORDING_COMMAND,
+  IDLE_RECORDER,
+  RECORDING_COMMANDS,
+  REDACTION_CATEGORIES,
+  START_COMMAND as START_RECORDING_COMMAND,
+  SUBMIT_COMMAND as SUBMIT_RECORDING_COMMAND,
+  canBeConstant,
+  canCompile,
+  canFinish,
+  decodeProposal,
+  decodeRecorder,
+  decodeRecording,
+  decodeRecordings,
+  decodeRedaction,
+  finishRequest,
+  isCapturing,
+  submission,
+  undecided,
+} from "./recording/state.js";
+export type { Decisions, ProposalView, RecorderState, RecorderView, RecordingStatus, RecordingView, RedactionCategory, RedactionSummary, SlotClassification, SlotView, StepView } from "./recording/state.js";
+export { RecorderChannel, RecordingHost } from "./main/recorder.js";
+export type { Outcome as RecorderOutcome, Refusal as RecorderRefusal, RecorderHostOptions, RecorderIdentity, RecordingServerPort } from "./main/recorder.js";
 export { LAYERS, decodeCapabilityResolution, isCurrent, layersInOrder, skillInputs } from "./knowledge/capabilities.js";
 export type { CapabilityResolution, GrantView, Layer, LayerInput, LayerRow } from "./knowledge/capabilities.js";
 export {
