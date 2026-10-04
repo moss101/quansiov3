@@ -102,6 +102,8 @@ pub enum EventFamily {
     Memory,
     /// `skill.*`
     Skill,
+    /// `recording.*` (ADP-003)
+    Recording,
     /// `pack.*`
     Pack,
     /// `routine.*`
@@ -155,6 +157,7 @@ impl EventFamily {
             Self::Knowledge,
             Self::Memory,
             Self::Skill,
+            Self::Recording,
             Self::Pack,
             Self::Routine,
             Self::Notification,
@@ -197,6 +200,7 @@ impl EventFamily {
             Self::Knowledge => "knowledge",
             Self::Memory => "memory",
             Self::Skill => "skill",
+            Self::Recording => "recording",
             Self::Pack => "pack",
             Self::Routine => "routine",
             Self::Notification => "notification",
