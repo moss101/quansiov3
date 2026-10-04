@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 5,
-  "updated_at": "2026-10-03",
+  "updated_at": "2026-10-04",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -3175,11 +3175,11 @@
       "notes": "Native computer use (D-019): every computer.* Tool result carries an ActionReceipt {method, execution_method, dispatched, effect_verified true|false|null, outcome} in the Tool Registry schema, where null (unknown) is never rounded and settles OUTCOME_UNKNOWN; a sequence ends at the first terminal condition (COMPUTER_TAKEOVER_ACTIVE, COMPUTER_PERMISSION_REVOKED, COMPUTER_LIMIT_EXCEEDED, COMPUTER_STOPPED_BY_USER) and the model cannot extend it; background actions are measured (physical input, cursor, frontmost app) and a broken claim voids the verification; the helper is launched only after real codesign verification against config/computer-use.yaml, from a fingerprinted versioned directory with rollback and orphan cleanup; a typed PermissionStatus and a desktop guide that opens a Privacy pane only on the person's click and resumes only through ResumeRun. Deferred (evidence NOTES.md): the runtime tool host that walks sequences and parks the run (QA-002 KNOWN_GAPS), a helper executable and its control channel, reading the helper's own permission status in the desktop."
     },
     "ADP-003": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "GENUINE_GAP",
+      "status": "RECONCILING",
+      "claimed_by": "agent:adp-003",
+      "started_at": "2026-10-04T03:43:14Z",
+      "updated_at": "2026-10-04T03:43:14Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
