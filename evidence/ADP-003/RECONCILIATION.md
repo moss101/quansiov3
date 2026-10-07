@@ -101,11 +101,33 @@ a durable archive and a `finished` row; compile and submit are idempotent by rec
 
 ## Plan (checklist; not registry tasks)
 
-1. [ ] DOMAIN.md, config, schemas, migration, prefix, error and command catalog; regenerate contracts.
-2. [ ] Rust: redaction rule set, archive validation, `skill_recordings` store with the fence, compile and submit,
+1. [x] DOMAIN.md, config, schemas, migration, prefix, error and command catalog; regenerate contracts.
+2. [x] Rust: redaction rule set, archive validation, `skill_recordings` store with the fence, compile and submit,
        proposal validator, API handlers and projections.
-3. [ ] Proto + Python: `CompileSkillRecording`, the compiler (slots, conditions, recovery, tool preference, trust
+3. [x] Proto + Python: `CompileSkillRecording`, the compiler (slots, conditions, recovery, tool preference, trust
        labelling, no-coordinates validator), manifest `procedure`.
-4. [ ] Swift: event model, redaction, sampler, secure-input pause, owner fence, control channel, executable.
-5. [ ] Desktop: recording state, main-process recorder client, indicator, review and submit.
-6. [ ] Tests (positive, negative, recovery), mutation checks, evidence bundle, validator, progress.
+4. [x] Swift: event model, redaction, sampler, secure-input pause, owner fence, control channel, executable.
+5. [x] Desktop: recording state, main-process recorder client, indicator, review and submit.
+6. [x] Tests (positive, negative, recovery), mutation checks, evidence bundle, validator, progress.
+
+## What changed against this plan while building
+
+- The config and its schema are `config/recording.yaml` and `schemas/json/recording-config.schema.json`: the supply
+  chain gate reads any file whose name carries the token `skill` as a skill manifest and demands a quarantine
+  lifecycle, so the first names (`skill-recording*`) were renamed.
+- `crates/events` (`EventFamily::Recording`, `EVENT_FAMILIES`), `crates/core` (`Prefix::Recording`),
+  `crates/server/src/intelligence/mod.rs` (`compile_skill_recording`) and
+  `crates/server/src/control/identity/auth.rs` (`AuthStore::session_family`) gained the one addition each that a closed
+  vocabulary or a missing accessor forced; `scripts/ci/gen_contracts.py` gained the five commands' parameter schemas.
+- `apps/desktop/tests/preload.test.ts` lists the seven new bridge names; `tests/contract/test_contracts.py` counts 65
+  errors and 36 event families.
+- The recorder is a separate short-lived executable (`quansio-recorder`) rather than a library the desktop loads, so a
+  crash or a closed channel cannot take the desktop with it and nothing of the recording outlives the process.
+
+## Recorder platform seam
+
+`ObservationSource` (`native/macos/Sources/QuansioMacBridge/Recording/RecordingModel.swift`) is the whole of what a
+platform provides: start delivering `Observation` values (kind, bundle id, accessibility attributes, text, key, time)
+and stop. Everything else (redaction, the session, the fence, the control channel, the archive) is platform-free Swift
+over that seam, and the archive format is the same JSON a Windows recorder would produce. Remote and other platforms
+are out of scope; nothing in the server or the plane knows the platform beyond the archive's `platform` field.

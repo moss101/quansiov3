@@ -14,8 +14,7 @@ use serde_json::{json, Value};
 use super::redact::RULE_SET;
 
 /// The committed configuration.
-pub const SKILL_RECORDING_YAML: &str =
-    include_str!("../../../../../../config/recording.yaml");
+pub const SKILL_RECORDING_YAML: &str = include_str!("../../../../../../config/recording.yaml");
 
 /// A configuration that cannot be trusted.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]

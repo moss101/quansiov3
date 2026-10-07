@@ -153,12 +153,7 @@ impl RecordingCompiler {
                 self.config.settings_json().to_string(),
             )
             .await?;
-        let proposal: Value =
-            serde_json::from_str(&raw).map_err(|error| RecordingError::ProposalRejected {
-                rule: "proposal.shape",
-                detail: format!("the plane returned something that is not JSON: {error}"),
-            })?;
-        proposal::validate(&proposal, &row.id, &tools, self.config)?;
+        let proposal = accept_proposal(&raw, &row.id, &tools, self.config)?;
         let recording = self
             .store
             .record_proposal(caller, &row.id, &proposal)
@@ -300,6 +295,27 @@ impl RecordingCompiler {
     }
 }
 
+/// What the plane answered, as the server accepts it: JSON, and a proposal that passes the server's own
+/// validator (closed vocabulary, real tools, no coordinates, nothing for redaction to remove). The plane's
+/// word is never taken for it.
+///
+/// # Errors
+/// [`RecordingError::ProposalRejected`] naming the rule.
+pub fn accept_proposal(
+    raw: &str,
+    recording_id: &str,
+    tools: &[proposal::ToolSummary],
+    config: &RecordingConfig,
+) -> Result<Value, RecordingError> {
+    let proposal: Value =
+        serde_json::from_str(raw).map_err(|error| RecordingError::ProposalRejected {
+            rule: "proposal.shape",
+            detail: format!("the plane returned something that is not JSON: {error}"),
+        })?;
+    proposal::validate(&proposal, recording_id, tools, config)?;
+    Ok(proposal)
+}
+
 /// The version a recording already produced under `name`, if there is one.
 async fn adopt(
     skills: &SkillStore,
@@ -361,6 +377,73 @@ fn validate_semver(semver: &str) -> Result<(), RecordingError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::control::skills::recording::proposal::tests as fixtures;
+
+    const RECORDING: &str = "rec_01J8Z3K6F1N8VQ2X5W9YADP003";
+
+    fn accept(raw: &str) -> Result<Value, RecordingError> {
+        accept_proposal(
+            raw,
+            RECORDING,
+            &fixtures::tools(),
+            RecordingConfig::committed(),
+        )
+    }
+
+    #[test]
+    fn the_planes_answer_is_taken_only_after_the_servers_own_validation() {
+        let good = fixtures::proposal();
+        assert_eq!(accept(&good.to_string()).expect("a valid proposal"), good);
+        assert!(matches!(
+            accept("not json"),
+            Err(RecordingError::ProposalRejected {
+                rule: "proposal.shape",
+                ..
+            })
+        ));
+        // A plane that was fooled (or is hostile) cannot get a coordinate, an invented tool, a decided slot
+        // or an unredacted value past the server.
+        for (pointer, value, rule) in [
+            (
+                "/manifest/procedure/steps/0/ui/x",
+                serde_json::json!(412),
+                "proposal.procedure",
+            ),
+            (
+                "/manifest/procedure/steps/0/intent",
+                serde_json::json!("Click at (120, 340)"),
+                "proposal.no_coordinates",
+            ),
+            (
+                "/manifest/tool_needs",
+                serde_json::json!(["computer.read", "made.up"]),
+                "proposal.tools",
+            ),
+            (
+                "/slots/0/classification",
+                serde_json::json!("constant"),
+                "proposal.unclassified",
+            ),
+            (
+                "/slots/0/example",
+                serde_json::json!("AKIAIOSFODNN7EXAMPLE"),
+                "proposal.redaction",
+            ),
+        ] {
+            let mut bad = fixtures::proposal();
+            let (parent, key) = pointer.rsplit_once('/').expect("pointer");
+            bad.pointer_mut(parent)
+                .and_then(Value::as_object_mut)
+                .expect("parent")
+                .insert(key.to_string(), value);
+            match accept(&bad.to_string()) {
+                Err(RecordingError::ProposalRejected { rule: found, .. }) => {
+                    assert_eq!(found, rule, "{pointer}")
+                }
+                other => panic!("{pointer}: {other:?}"),
+            }
+        }
+    }
 
     #[test]
     fn names_and_versions_are_checked_before_anything_is_written() {
