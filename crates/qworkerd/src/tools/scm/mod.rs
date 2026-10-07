@@ -9,6 +9,8 @@
 //! PR/comment/merge ask by default), and this module only classifies them and
 //! derives their idempotency key so a retry of the same write is the same call.
 
+pub mod retention;
+
 use std::path::Path;
 use std::process::Command;
 

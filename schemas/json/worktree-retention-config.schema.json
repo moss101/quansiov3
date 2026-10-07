@@ -6,12 +6,13 @@
   "x-quansio-version": "v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "prepare_ttl_ms", "max_resident", "ref_namespace", "state_dir", "sweep"],
+  "required": ["version", "prepare_ttl_ms", "max_resident", "ref_namespace", "managed_dir", "state_dir", "sweep"],
   "properties": {
     "version": { "const": 1 },
     "prepare_ttl_ms": { "type": "integer", "minimum": 1000, "maximum": 86400000 },
     "max_resident": { "type": "integer", "minimum": 1, "maximum": 256 },
     "ref_namespace": { "type": "string", "pattern": "^refs/quansio/[a-z][a-z0-9_-]*(/[a-z][a-z0-9_-]*)*$", "maxLength": 96 },
+    "managed_dir": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$", "maxLength": 32 },
     "state_dir": { "type": "string", "pattern": "^\\.[a-z][a-z0-9_-]*$", "maxLength": 32 },
     "sweep": {
       "type": "object",

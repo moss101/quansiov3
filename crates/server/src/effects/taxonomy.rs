@@ -262,7 +262,7 @@ mod tests {
     fn builtin_matches_the_generated_catalog() {
         let taxonomy = EffectTaxonomy::builtin();
         let catalog = catalog();
-        assert_eq!(catalog.effect_classes.len(), 23);
+        assert_eq!(catalog.effect_classes.len(), 24);
         for row in &catalog.effect_classes {
             let entry = taxonomy.get(&row.effect_class).unwrap_or_else(|| {
                 panic!("{} is missing from config/effects.yaml", row.effect_class)

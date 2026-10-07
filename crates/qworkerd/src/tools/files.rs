@@ -12,8 +12,18 @@
 //! * **a patch is all-or-nothing.** `fs.patch` applies a unified diff, and a hunk whose context does not
 //!   match the file is refused with the line named, leaving the file untouched. A partially applied
 //!   patch is worse than a refused one: the caller cannot tell what the file now is.
+//! * **a write is checked against what was read (ADP-005, DOMAIN.md §8.7 G).** A call may carry
+//!   `base_digest`, the digest of the file as the caller last read it. The new bytes are written to a
+//!   temporary file first and the file's digest is compared with the expectation **after** that and just
+//!   before the rename; a difference deletes the temporary file, leaves the target untouched and is
+//!   [`ToolError::EditConflict`] (`FILE_EDIT_CONFLICT`). A patch is applied to the bytes it was checked
+//!   against or not at all: with no `base_digest` the expectation is the digest of the bytes the patch was
+//!   computed from, so a change between the read and the rename is a conflict, never a lost edit.
 
-use std::path::Path;
+use std::io::Write as _;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 
 use quansio_core::Digest;
 
@@ -101,17 +111,43 @@ pub struct FilePatch {
     pub effect_id: String,
 }
 
+/// A function called with the target's path after the temporary file is written and before the target
+/// is re-checked: the instant a conflicting edit has to land in to be caught by the re-check. Production
+/// code never sets one; the conflict tests do, to land a real edit exactly there.
+type AfterTemporary = Arc<dyn Fn(&Path) + Send + Sync>;
+
 /// File, directory and patch operations over a sandbox.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct FileHost {
     sandbox: super::sandbox::Sandbox,
+    after_temporary: Option<AfterTemporary>,
+}
+
+impl std::fmt::Debug for FileHost {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FileHost")
+            .field("sandbox", &self.sandbox)
+            .field("after_temporary", &self.after_temporary.is_some())
+            .finish()
+    }
 }
 
 impl FileHost {
     /// Build a host over a sandbox.
     #[must_use]
     pub const fn new(sandbox: super::sandbox::Sandbox) -> Self {
-        Self { sandbox }
+        Self {
+            sandbox,
+            after_temporary: None,
+        }
+    }
+
+    /// Call `hook` with the target's path after each temporary file is written and before the target is
+    /// re-checked (a test seam: it is how a test lands a real edit in the window the re-check closes).
+    #[must_use]
+    pub fn with_after_temporary(mut self, hook: impl Fn(&Path) + Send + Sync + 'static) -> Self {
+        self.after_temporary = Some(Arc::new(hook));
+        self
     }
 
     /// The sandbox in force.
@@ -184,6 +220,28 @@ impl FileHost {
         content: &[u8],
         content_digest: &str,
     ) -> Result<FileWrite, ToolError> {
+        self.write_checked(context, scope, requested, content, content_digest, None)
+    }
+
+    /// Write a file that the caller last read with digest `base_digest` (DOMAIN.md §8.7 G).
+    ///
+    /// With a base digest the target must still hash to it — both before the temporary file is written
+    /// and again after, just before the rename — and a target that does not exist counts as
+    /// `"absent"`. With `None` the write is unconditional, as [`FileHost::write`] always was.
+    ///
+    /// # Errors
+    /// [`ToolError::EditConflict`] when the file's digest is not the base, [`ToolError::DigestMismatch`]
+    /// when the content does not hash to `content_digest`, and the read/write errors above. A refused
+    /// write leaves the target untouched and removes its temporary file.
+    pub fn write_checked(
+        &self,
+        context: &ToolContext<'_>,
+        scope: super::sandbox::RootScope,
+        requested: &str,
+        content: &[u8],
+        content_digest: &str,
+        base_digest: Option<&str>,
+    ) -> Result<FileWrite, ToolError> {
         let path = self.sandbox.resolve(scope, requested)?;
         let actual = Digest::of(content).as_str().to_string();
         if actual != content_digest {
@@ -202,21 +260,17 @@ impl FileHost {
             // concurrent actor replaced with a link could, so the resolved path is re-checked.
             self.recheck(&path)?;
         }
-        let temporary = path.absolute().with_extension(format!(
-            "{}.qworkerd-partial",
-            path.absolute()
-                .extension()
-                .and_then(|extension| extension.to_str())
-                .unwrap_or("file")
-        ));
-        std::fs::write(&temporary, content).map_err(|error| ToolError::Io {
-            path: path.relative().to_string(),
-            detail: error.to_string(),
-        })?;
-        std::fs::rename(&temporary, path.absolute()).map_err(|error| ToolError::Io {
-            path: path.relative().to_string(),
-            detail: error.to_string(),
-        })?;
+        if let Some(base) = base_digest {
+            let current = current_digest(path.absolute(), path.relative())?;
+            if current != base {
+                return Err(ToolError::EditConflict {
+                    path: path.relative().to_string(),
+                    expected_digest: base.to_string(),
+                    actual_digest: current,
+                });
+            }
+        }
+        self.replace_atomically(&path, content, base_digest)?;
         Ok(FileWrite {
             scope: scope.as_str(),
             path: path.relative().to_string(),
@@ -226,6 +280,64 @@ impl FileHost {
             effect_id: context.effect_id.to_string(),
             idempotency_key: context.idempotency_key.to_string(),
         })
+    }
+
+    /// Write `content` over the target through a temporary file that is created exclusively next to it
+    /// (so two writers never share one), carries the target's permissions, and is `fsync`ed before the
+    /// rename. When `expected` is given, the target's digest is compared with it after the temporary
+    /// file is complete and immediately before the rename: a difference removes the temporary file and
+    /// leaves the target untouched. The rename itself is the only step that changes the target.
+    fn replace_atomically(
+        &self,
+        path: &SandboxPath,
+        content: &[u8],
+        expected: Option<&str>,
+    ) -> Result<(), ToolError> {
+        let io = |error: std::io::Error| ToolError::Io {
+            path: path.relative().to_string(),
+            detail: error.to_string(),
+        };
+        let temporary = temporary_beside(path.absolute());
+        let written = (|| -> Result<(), std::io::Error> {
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&temporary)?;
+            if let Ok(metadata) = std::fs::metadata(path.absolute()) {
+                file.set_permissions(metadata.permissions())?;
+            }
+            file.write_all(content)?;
+            file.sync_all()
+        })();
+        if let Err(error) = written {
+            let _ = std::fs::remove_file(&temporary);
+            return Err(io(error));
+        }
+        if let Some(hook) = &self.after_temporary {
+            hook(path.absolute());
+        }
+        if let Some(expected) = expected {
+            let current = match current_digest(path.absolute(), path.relative()) {
+                Ok(current) => current,
+                Err(error) => {
+                    let _ = std::fs::remove_file(&temporary);
+                    return Err(error);
+                }
+            };
+            if current != expected {
+                let _ = std::fs::remove_file(&temporary);
+                return Err(ToolError::EditConflict {
+                    path: path.relative().to_string(),
+                    expected_digest: expected.to_string(),
+                    actual_digest: current,
+                });
+            }
+        }
+        if let Err(error) = std::fs::rename(&temporary, path.absolute()) {
+            let _ = std::fs::remove_file(&temporary);
+            return Err(io(error));
+        }
+        Ok(())
     }
 
     /// Apply a unified diff, all-or-nothing.
@@ -240,26 +352,57 @@ impl FileHost {
         requested: &str,
         patch: &str,
     ) -> Result<FilePatch, ToolError> {
+        self.patch_checked(context, scope, requested, patch, None)
+    }
+
+    /// Apply a unified diff to a file the caller last read with digest `base_digest`.
+    ///
+    /// The patch is applied to the bytes read here, and the file is replaced only if it still hashes to
+    /// what those bytes hash to: the base digest when one is given (which must match the bytes read),
+    /// otherwise the digest of the bytes read. So a patch lands on the content it was checked against
+    /// or not at all, and the replacement is atomic.
+    ///
+    /// # Errors
+    /// [`ToolError::EditConflict`] when the file is not what the caller read, [`ToolError::PatchRejected`]
+    /// when a hunk does not match, and the read/write errors above.
+    pub fn patch_checked(
+        &self,
+        context: &ToolContext<'_>,
+        scope: super::sandbox::RootScope,
+        requested: &str,
+        patch: &str,
+        base_digest: Option<&str>,
+    ) -> Result<FilePatch, ToolError> {
         let path = self.sandbox.resolve(scope, requested)?;
-        let original =
-            std::fs::read_to_string(path.absolute()).map_err(|error| match error.kind() {
-                std::io::ErrorKind::NotFound => ToolError::NotFound {
+        let bytes = std::fs::read(path.absolute()).map_err(|error| match error.kind() {
+            std::io::ErrorKind::NotFound => ToolError::NotFound {
+                path: path.relative().to_string(),
+            },
+            _ => ToolError::Io {
+                path: path.relative().to_string(),
+                detail: error.to_string(),
+            },
+        })?;
+        let read_digest = Digest::of(&bytes).as_str().to_string();
+        if let Some(base) = base_digest {
+            if read_digest != base {
+                return Err(ToolError::EditConflict {
                     path: path.relative().to_string(),
-                },
-                _ => ToolError::Io {
-                    path: path.relative().to_string(),
-                    detail: error.to_string(),
-                },
-            })?;
+                    expected_digest: base.to_string(),
+                    actual_digest: read_digest,
+                });
+            }
+        }
+        let original = String::from_utf8(bytes).map_err(|error| ToolError::Io {
+            path: path.relative().to_string(),
+            detail: error.to_string(),
+        })?;
         let applied =
             apply_unified_diff(&original, patch).map_err(|detail| ToolError::PatchRejected {
                 path: path.relative().to_string(),
                 detail,
             })?;
-        std::fs::write(path.absolute(), &applied.content).map_err(|error| ToolError::Io {
-            path: path.relative().to_string(),
-            detail: error.to_string(),
-        })?;
+        self.replace_atomically(&path, applied.content.as_bytes(), Some(&read_digest))?;
         Ok(FilePatch {
             scope: scope.as_str(),
             path: path.relative().to_string(),
@@ -352,6 +495,33 @@ impl FileHost {
         }
         Ok(())
     }
+}
+
+/// The digest of the file now, or `"absent"` when there is none. A path that is a directory (or cannot
+/// be read for another reason) is an I/O refusal, not "absent".
+fn current_digest(absolute: &Path, relative: &str) -> Result<String, ToolError> {
+    match std::fs::read(absolute) {
+        Ok(bytes) => Ok(Digest::of(&bytes).as_str().to_string()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok("absent".to_string()),
+        Err(error) => Err(ToolError::Io {
+            path: relative.to_string(),
+            detail: error.to_string(),
+        }),
+    }
+}
+
+/// A fresh temporary path beside `target`: hidden, unique per process and call, never reused.
+fn temporary_beside(target: &Path) -> PathBuf {
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+    let name = target
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("file");
+    let sequence = COUNTER.fetch_add(1, Ordering::Relaxed);
+    target.with_file_name(format!(
+        ".{name}.qworkerd-{}-{sequence}.partial",
+        std::process::id()
+    ))
 }
 
 struct AppliedPatch {

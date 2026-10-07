@@ -13,6 +13,10 @@ max_resident: 8
 # Where recovery refs live: refs/quansio/recovery/<worktree id>/{head,index,snapshot}. Never a branch or tag namespace.
 ref_namespace: refs/quansio/recovery
 
+# The directory under the target's workspace root that holds every managed worktree (a plain name, resolved through
+# the sandbox so it cannot leave the root).
+managed_dir: agent-worktrees
+
 # The directory under the managed root that holds recovery records and prepared sets.
 state_dir: .quansio
 
