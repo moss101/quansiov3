@@ -97,6 +97,19 @@ describe("a file that changed after it was read", () => {
     expect(r.written).toEqual([]);
   });
 
+  it("is found before anything is written when the file already differs, so no temporary file is made", () => {
+    let temporaries = 0;
+    const r = rig({ hooks: { afterTemporary: () => { temporaries += 1; } } });
+    const path = put(r.folder, "early.txt", "base\n");
+    const { opened } = r.open(A, "early.txt");
+    if (!opened.ok) {
+      throw new Error("not opened");
+    }
+    writeFileSync(path, "changed before the save\n");
+    expect(r.edits.save(A, opened.result.editId, "mine\n", "fail")).toMatchObject({ ok: false, error: { code: "FILE_EDIT_CONFLICT" } });
+    expect(temporaries, "the new bytes were not even written to a temporary file").toBe(0);
+  });
+
   it("is a conflict when only the modification time changed", () => {
     const r = rig();
     const path = put(r.folder, "t.txt", "same size");
