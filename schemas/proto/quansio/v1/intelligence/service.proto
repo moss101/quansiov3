@@ -128,6 +128,29 @@ message SkillCandidatesResponse {
 }
 
 // Served by python/intelligence. Rust is the only caller.
+// Skill recording (ADP-003, DOMAIN.md §11.7): the runtime hands over the text-only projection of one
+// finished, redacted Recording (never a pixel) and the tools the Tool Registry offers; the plane
+// returns a skill proposal. The plane reads untrusted content and has no effect path: the registry
+// write, the validation and the DRAFT status are the runtime's.
+message CompileRecordingRequest {
+  string schema_version = 100;
+  ScopeContext scope = 1;
+  string recording_id = 2;
+  // {actions[], transcript[], screen_text[], windows[], apps[], redaction{}}: text only.
+  string projection_json = 3;
+  // [{name, effect_class, description}] for every tool the registry offers.
+  repeated string tools_json = 4;
+  // {tool_paths[], limits{}} from config/recording.yaml.
+  string settings_json = 5;
+}
+
+message CompileRecordingResponse {
+  string schema_version = 100;
+  // {schema_version, trust, manifest, slots, questions}
+  string proposal_json = 1;
+}
+
+// Served by python/intelligence. Rust is the only caller.
 // Independent semantic verification of a completion claim (RUN-008, DOMAIN.md §4.4): the plane
 // asks a model that is not the claimant and returns its verdict. A refusal (malformed verdict,
 // unavailable model, unprovable independence) is a typed error, never a verdict.
@@ -161,4 +184,5 @@ service IntelligenceGateway {
   rpc Evaluate(EvaluationRequest) returns (EvaluationReport);
   rpc ProposeSkillCandidates(SkillCandidatesRequest) returns (SkillCandidatesResponse);
   rpc VerifyCompletion(CompletionVerificationRequest) returns (CompletionVerdict);
+  rpc CompileSkillRecording(CompileRecordingRequest) returns (CompileRecordingResponse);
 }

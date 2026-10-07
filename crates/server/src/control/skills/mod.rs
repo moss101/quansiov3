@@ -8,6 +8,7 @@
 //! sees only `ACTIVE` versions.
 
 pub mod evolution;
+pub mod recording;
 pub mod state;
 pub mod store;
 

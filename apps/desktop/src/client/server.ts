@@ -383,6 +383,16 @@ export class ServerClient {
     return this.#request("GET", `${this.origin}/v1/skills`);
   }
 
+  // ---- skill recording (ADP-003): the caller's own recordings ----
+
+  recordings(): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/recordings`);
+  }
+
+  recording(recordingId: string): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/recordings/${encodeURIComponent(recordingId)}`);
+  }
+
   // ---- the teammate roster (APP-014) ----
 
   teammates(workspaceId: string): Promise<unknown> {

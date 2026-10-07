@@ -28,6 +28,7 @@ quansio-graph = { path = "../graph" }
 quansio-indexer = { path = "../indexer" }
 quansio-machine = { path = "../machine" }
 quansio-tools = { path = "../tools" }
+regex = "1"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "http2", "json"] }
 ring = "0.17"
 serde = { version = "1", features = ["derive"] }

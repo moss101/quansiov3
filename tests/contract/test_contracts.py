@@ -41,11 +41,11 @@ def test_catalog_is_derived_from_domain_and_current(catalog):
 
 def test_domain_derivation_covers_commands_errors_effects_events_trust(catalog):
     assert sum(len(v) for v in catalog["commands"].values()) >= 70
-    # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15) and the
-    # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15).
-    assert len(catalog["errors"]) == 61
+    # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15), the
+    # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15) and the 4 `RECORDING_*` codes (ADP-003, §15).
+    assert len(catalog["errors"]) == 65
     assert len(catalog["effect_classes"]) == 23
-    assert len(catalog["event_families"]) == 35  # + webhook.* (APP-015)
+    assert len(catalog["event_families"]) == 36  # + webhook.* (APP-015), recording.* (ADP-003)
     assert catalog["trust_levels"] == [
         "TRUSTED_SYSTEM",
         "TRUSTED_USER",
@@ -240,6 +240,8 @@ def test_json_schemas_validate_real_artifacts():
     validator("flags-config").validate(flags)
     computer_use = yaml.safe_load((ROOT / "config" / "computer-use.yaml").read_text())
     validator("computer-use-config").validate(computer_use)
+    skill_recording = yaml.safe_load((ROOT / "config" / "recording.yaml").read_text())
+    validator("recording-config").validate(skill_recording)
 
     summaries = sorted((ROOT / "evidence").glob("*/*/summary.json"))
     assert summaries, "at least one task evidence bundle must exist"
@@ -312,3 +314,29 @@ def test_computer_use_schema_refuses_a_weakened_helper_pin():
     assert broken(lambda d: d["helper"].update(allow_unsigned=True))
     assert broken(lambda d: d["permission_guide"]["panes"].update(accessibility="Privacy_Accessibility/../x"))
     assert broken(lambda d: d["sequence_limits"].update(max_actions=0))
+
+
+def test_skill_recording_schema_keeps_every_limit_bounded():
+    """A configuration cannot make a recording or its archive unbounded (ADP-003, DOMAIN.md 11.7)."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "recording-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "recording.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    assert broken(lambda d: d["limits"]["archive"].update(max_bytes=64 * 1024 * 1024))
+    assert broken(lambda d: d["limits"]["screenshots"].update(max_count=10_000))
+    assert broken(lambda d: d["limits"]["screenshots"].update(min_interval_ms=1))
+    assert broken(lambda d: d.update(max_duration_ms=10**9))
+    assert broken(lambda d: d.update(rule_set="v0"))
+    assert broken(lambda d: d["limits"].update(unbounded=True))
+    assert broken(lambda d: d["tool_paths"][0].update(tool_prefix="connector.slack."))  # tools and prefix together
+    assert broken(lambda d: d["tool_paths"].append({"id": "x", "bundle_ids": ["com.example.app"]}))

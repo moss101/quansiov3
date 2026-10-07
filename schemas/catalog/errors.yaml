@@ -157,6 +157,18 @@ errors:
 - code: COMPUTER_HELPER_IDENTITY_REFUSED
   family: Computer
   http_status: 409/422
+- code: RECORDING_OWNER_CHANGED
+  family: Recording
+  http_status: 409/422
+- code: RECORDING_NOT_FINISHED
+  family: Recording
+  http_status: 409/422
+- code: RECORDING_UNREDACTED
+  family: Recording
+  http_status: 409/422
+- code: RECORDING_PROPOSAL_REJECTED
+  family: Recording
+  http_status: 409/422
 - code: PROVIDER_UNAVAILABLE
   family: Model
   http_status: 502/503

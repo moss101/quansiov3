@@ -33,6 +33,7 @@ RULE_STATUS = "skill.status"
 RULE_MANIFEST_KEYS = "skill.manifest_keys"
 RULE_MANIFEST_SHAPE = "skill.manifest_shape"
 RULE_SNAPSHOT = "skill.snapshot"
+RULE_PROCEDURE = "skill.procedure"
 
 #: The §11.5 ladder, in order. `REJECTED` is reachable from `EVALUATING` only.
 SKILL_STATES: tuple[str, ...] = (
@@ -58,6 +59,8 @@ MANIFEST_KEYS: frozenset[str] = frozenset(
         "eval_suite_id",
         "compatibility",
         "recovery_guidance",
+        # A recorded workflow (ADP-003, DOMAIN.md §11.7 D): data the resolver reads, never a grant.
+        "procedure",
     }
 )
 
@@ -134,6 +137,7 @@ class SkillManifest:
     eval_suite_id: str | None = None
     compatibility: tuple[str, ...] = ()
     recovery_guidance: str | None = None
+    procedure: Mapping[str, object] | None = None
 
     @classmethod
     def parse(cls, payload: Mapping[str, object] | str | None) -> SkillManifest:
@@ -162,6 +166,7 @@ class SkillManifest:
             eval_suite_id=_optional_string(raw.get("eval_suite_id"), "eval_suite_id"),
             compatibility=_string_tuple(raw.get("compatibility"), "compatibility"),
             recovery_guidance=_optional_string(raw.get("recovery_guidance"), "recovery_guidance"),
+            procedure=_procedure(raw.get("procedure")),
         )
 
     @property
@@ -181,6 +186,31 @@ def _string_tuple(value: object, field_name: str) -> tuple[str, ...]:
                 "VALIDATION_SCHEMA", RULE_MANIFEST_SHAPE, f"{field_name} must hold non-empty strings"
             )
     return tuple(str(item) for item in value)
+
+
+def _procedure(value: object) -> Mapping[str, object] | None:
+    """A recorded procedure (DOMAIN.md §11.7 D): an object, version v1, a list of steps, and no screen
+    coordinate or element index anywhere in it."""
+    if value is None:
+        return None
+    if (
+        not isinstance(value, Mapping)
+        or value.get("schema_version") != "v1"
+        or not isinstance(value.get("steps"), list)
+    ):
+        raise SkillError(
+            "VALIDATION_SCHEMA", RULE_PROCEDURE, "procedure must be a v1 object with a list of steps"
+        )
+    from intelligence.skills.recording.proposal import find_coordinates
+
+    found = find_coordinates(value, "/procedure", strings=True)
+    if found:
+        raise SkillError(
+            "VALIDATION_SCHEMA",
+            RULE_PROCEDURE,
+            f"a procedure holds no screen position or element index ({found})",
+        )
+    return dict(value)
 
 
 def _optional_string(value: object, field_name: str) -> str | None:

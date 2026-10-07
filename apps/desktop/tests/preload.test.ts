@@ -106,6 +106,13 @@ describe("preload bridge", () => {
         "attachLive",
         "computerPermissions",
         "openComputerSettings",
+        "recordingStatus",
+        "startRecording",
+        "finishRecording",
+        "cancelRecording",
+        "listRecordings",
+        "compileRecording",
+        "submitRecordingSkill",
         "detachLive",
         "viewThread",
         "createThread",
@@ -202,6 +209,13 @@ describe("preload bridge", () => {
     await api.attachLive("tgt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.computerPermissions({ needs: ["accessibility"] });
     await api.openComputerSettings("accessibility");
+    await api.recordingStatus();
+    await api.startRecording();
+    await api.finishRecording({ gesture: true });
+    await api.cancelRecording();
+    await api.listRecordings();
+    await api.compileRecording("rec_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.submitRecordingSkill({ recordingId: "rec_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", name: "make-a-note", semver: "1.0.0", slots: [] });
     await api.detachLive();
     await api.viewThread("thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.createThread({ kind: "group", title: "launch", participants: [] });

@@ -1,0 +1,75 @@
+# Recording (ADP-003, DOMAIN.md 11.7). Policy lives here, never as a source constant (D-018).
+# Validated by schemas/json/recording-config.schema.json and, at load, by quansio-server and the
+# intelligence plane. The server returns `limits` to the person's recorder when a recording starts and
+# re-checks every one of them when the archive arrives, so a recorder that ignores a limit gains nothing.
+version: 1
+
+# The redaction rule set the recorder, the server and the plane all apply (DOMAIN.md 11.7 C). A rule
+# set that does not match the one an archive declares is refused, so a stale recorder cannot send
+# material a newer rule set would have removed.
+rule_set: v1
+
+# How long an unfinished recording may last. Past it the recording is `aborted` (`expired`) the next time
+# anything touches it; there is no timer or sweeper (DOSSIER 18: no second scheduler).
+max_duration_ms: 1800000
+
+limits:
+  max_actions: 2000
+  # Typed or entered text, after redaction.
+  action_text_max_chars: 2000
+  # Window and control titles are data, bounded so a hostile title cannot be a payload.
+  attribute_max_chars: 200
+  screenshots:
+    enabled: true
+    max_count: 24
+    min_interval_ms: 5000
+    max_bytes: 262144
+    max_dimension_px: 1280
+    # The text recognised on a kept screenshot, after redaction.
+    screen_text_max_chars: 2000
+  transcript:
+    max_segments: 400
+    max_chars: 20000
+  archive:
+    # The same bound the artifact upload path enforces (MAX_UPLOAD_BYTES).
+    max_bytes: 8388608
+
+proposal:
+  max_bytes: 262144
+  max_steps: 200
+  max_slots: 64
+
+# Where an equivalent Tool exists, a step uses it instead of driving pixels (DOMAIN.md 11.7 D). A path
+# applies only when the Tool Registry actually offers the tool; `tool_prefix` names a family whose
+# concrete operations the registry registers (connectors, source control).
+tool_paths:
+  - id: managed_browser
+    bundle_ids:
+      - com.google.Chrome
+      - com.apple.Safari
+      - org.mozilla.firefox
+      - com.microsoft.edgemac
+      - com.brave.Browser
+      - company.thebrowser.Browser
+    tools: [browser.navigate, browser.observe, browser.click, browser.type, browser.press_key]
+  - id: terminal
+    bundle_ids:
+      - com.apple.Terminal
+      - com.googlecode.iterm2
+      - dev.warp.Warp-Stable
+    tools: [terminal.exec]
+  - id: files
+    bundle_ids:
+      - com.apple.finder
+      - com.apple.TextEdit
+      - com.microsoft.VSCode
+      - com.apple.dt.Xcode
+    tools: [fs.read, fs.write, fs.patch]
+  - id: slack
+    bundle_ids:
+      - com.tinyspeck.slackmacgap
+    tool_prefix: connector.slack.
+  - id: source_control
+    bundle_ids:
+      - com.github.GitHubClient
+    tool_prefix: scm.

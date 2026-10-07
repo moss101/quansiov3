@@ -47,6 +47,7 @@ tests read it instead of restating it.
 
 from __future__ import annotations
 
+import json
 import logging
 import sys
 import threading
@@ -92,6 +93,12 @@ from intelligence.skills.evolution.propose import (
     versions_from_json,
 )
 from intelligence.skills.models import SkillError
+from intelligence.skills.recording import (
+    CompileSettings,
+    RecordingCompileError,
+    ToolInfo,
+    compile_recording,
+)
 from intelligence.trust.classifier import TrustClassification, classify
 
 INTELLIGENCE_TASK_ID = "INT-001"
@@ -114,6 +121,7 @@ IMPLEMENTED_METHODS: frozenset[str] = frozenset(
         "BuildContext",
         "ProposeSkillCandidates",
         "VerifyCompletion",
+        "CompileSkillRecording",
     }
 )
 
@@ -437,6 +445,62 @@ class IntelligenceGatewayServicer:
             return service_pb2.SkillCandidatesResponse(
                 schema_version=SCHEMA_VERSION,
                 candidates_json=[candidate_json(proposal) for proposal in proposals],
+            )
+        finally:
+            self._end_call(span)
+
+    def CompileSkillRecording(
+        self, request: service_pb2.CompileRecordingRequest, context: grpc.ServicerContext
+    ) -> service_pb2.CompileRecordingResponse:
+        """A skill proposal from the text-only projection of one finished, redacted recording (ADP-003).
+
+        The projection is untrusted data: the compiler re-checks that redaction left nothing, never
+        copies the recording into instructions, never adds a tool or a capability its catalog does not
+        give it and never holds a coordinate. It returns a proposal; the runtime validates it, keeps it
+        and, if the person submits it, registers it as DRAFT. Nothing here writes.
+        """
+        span = self._begin_call(context, "CompileSkillRecording")
+        try:
+            scope = self._validated_scope("CompileSkillRecording", request, context)
+            self._ensure_live("CompileSkillRecording", context)
+            try:
+                try:
+                    projection = json.loads(request.projection_json)
+                    tools = [ToolInfo.parse(raw) for raw in request.tools_json]
+                    settings = CompileSettings.parse(request.settings_json or None)
+                except (ValueError, KeyError, TypeError) as malformed:
+                    raise RecordingCompileError(
+                        "VALIDATION_SCHEMA", "recording.request", f"the request is malformed: {malformed}"
+                    ) from malformed
+                if not isinstance(projection, dict) or not request.recording_id:
+                    raise RecordingCompileError(
+                        "VALIDATION_SCHEMA",
+                        "recording.request",
+                        "a projection object and a recording id are required",
+                    )
+                proposal = compile_recording(
+                    recording_id=request.recording_id,
+                    projection=projection,
+                    tools=tools,
+                    settings=settings,
+                )
+            except RecordingCompileError as refusal:
+                abort_with(
+                    context,
+                    ErrorEnvelope(
+                        code=_error_code(refusal.code),
+                        message=refusal.detail,
+                        correlation_id=scope.correlation_id,
+                        details=(
+                            ErrorDetail("rule_id", refusal.rule_id),
+                            ErrorDetail("owner_task", "ADP-003"),
+                        ),
+                    ),
+                )
+            self._ensure_live("CompileSkillRecording", context)
+            return service_pb2.CompileRecordingResponse(
+                schema_version=SCHEMA_VERSION,
+                proposal_json=json.dumps(proposal, sort_keys=True, separators=(",", ":")),
             )
         finally:
             self._end_call(span)

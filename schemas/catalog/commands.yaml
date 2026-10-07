@@ -75,6 +75,12 @@ commands:
   - QualifyPack
   - PublishPack
   - RollbackPack
+  Recording:
+  - StartRecording
+  - FinishRecording
+  - CancelRecording
+  - CompileRecording
+  - SubmitRecordingSkill
   Routines:
   - CreateRoutine
   - UpdateRoutine

@@ -24,6 +24,7 @@ tags:
 - name: Artifacts
 - name: Knowledge & memory
 - name: Skills & packs
+- name: Recording
 - name: Routines
 - name: Connectors
 - name: Notifications
@@ -2719,6 +2720,216 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/commands/StartRecording:
+    post:
+      operationId: StartRecording
+      summary: 'Recording: StartRecording'
+      tags:
+      - Recording
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/FinishRecording:
+    post:
+      operationId: FinishRecording
+      summary: 'Recording: FinishRecording'
+      tags:
+      - Recording
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CancelRecording:
+    post:
+      operationId: CancelRecording
+      summary: 'Recording: CancelRecording'
+      tags:
+      - Recording
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/CompileRecording:
+    post:
+      operationId: CompileRecording
+      summary: 'Recording: CompileRecording'
+      tags:
+      - Recording
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/SubmitRecordingSkill:
+    post:
+      operationId: SubmitRecordingSkill
+      summary: 'Recording: SubmitRecordingSkill'
+      tags:
+      - Recording
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/commands/CreateRoutine:
     post:
       operationId: CreateRoutine
@@ -4621,6 +4832,88 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/recordings:
+    get:
+      operationId: ReadV1Recordings
+      summary: Read projection /v1/recordings (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/recordings/{id}:
+    get:
+      operationId: ReadV1Recordings{Id}
+      summary: Read projection /v1/recordings/{id} (DOMAIN.md §14).
+      tags:
+      - Read projections
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+      responses:
+        '200':
+          description: Projection page with cursor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/packs:
     get:
       operationId: ReadV1Packs
@@ -5589,6 +5882,10 @@ components:
           - COMPUTER_PERMISSION_REQUIRED
           - COMPUTER_FOREGROUND_CONTROL_LAPSED
           - COMPUTER_HELPER_IDENTITY_REFUSED
+          - RECORDING_OWNER_CHANGED
+          - RECORDING_NOT_FINISHED
+          - RECORDING_UNREDACTED
+          - RECORDING_PROPOSAL_REJECTED
           - PROVIDER_UNAVAILABLE
           - PROVIDER_RATE_LIMITED
           - PROVIDER_REFUSAL
@@ -6021,6 +6318,116 @@ components:
       description: 'Skills & packs command RollbackPack. The concrete parameter schema is owned by the implementing task and
         must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
       x-quansio-params-defined: false
+    StartRecordingParams:
+      type: object
+      required:
+      - workspace_id
+      - start_key
+      - epoch
+      properties:
+        workspace_id:
+          type: string
+        start_key:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: 'Idempotency key of the start: a repeat returns the same recording.'
+        epoch:
+          type: integer
+          minimum: 1
+          description: The epoch the desktop advances when the signed-in account changes (DOMAIN.md §11.7 B).
+      description: Recording command StartRecording.
+      x-quansio-params-defined: true
+    FinishRecordingParams:
+      type: object
+      required:
+      - recording_id
+      - epoch
+      - archive
+      properties:
+        recording_id:
+          type: string
+        epoch:
+          type: integer
+          minimum: 1
+        archive:
+          type: object
+          required:
+          - content_base64
+          - content_digest
+          properties:
+            content_base64:
+              type: string
+              description: The redacted archive the person's recorder built (media type application/vnd.quansio.recording+json).
+            content_digest:
+              type: string
+              description: SHA-256 (hex) of the archive's bytes.
+      description: Recording command FinishRecording.
+      x-quansio-params-defined: true
+    CancelRecordingParams:
+      type: object
+      required:
+      - recording_id
+      - epoch
+      properties:
+        recording_id:
+          type: string
+        epoch:
+          type: integer
+          minimum: 1
+      description: Recording command CancelRecording.
+      x-quansio-params-defined: true
+    CompileRecordingParams:
+      type: object
+      required:
+      - recording_id
+      - epoch
+      properties:
+        recording_id:
+          type: string
+        epoch:
+          type: integer
+          minimum: 1
+      description: Recording command CompileRecording.
+      x-quansio-params-defined: true
+    SubmitRecordingSkillParams:
+      type: object
+      required:
+      - recording_id
+      - epoch
+      - name
+      - semver
+      - slots
+      properties:
+        recording_id:
+          type: string
+        epoch:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9._-]{0,63}$
+        semver:
+          type: string
+        slots:
+          type: array
+          maxItems: 64
+          items:
+            type: object
+            required:
+            - slot_id
+            - classification
+            properties:
+              slot_id:
+                type: string
+              classification:
+                type: string
+                enum:
+                - input
+                - constant
+          description: The person's decision for every slot of the proposal; an undecided slot is refused.
+      description: Recording command SubmitRecordingSkill.
+      x-quansio-params-defined: true
     CreateRoutineParams:
       type: object
       additionalProperties: true
@@ -6434,6 +6841,10 @@ x-quansio-error-http-map:
   COMPUTER_PERMISSION_REQUIRED: 409/422
   COMPUTER_FOREGROUND_CONTROL_LAPSED: 409/422
   COMPUTER_HELPER_IDENTITY_REFUSED: 409/422
+  RECORDING_OWNER_CHANGED: 409/422
+  RECORDING_NOT_FINISHED: 409/422
+  RECORDING_UNREDACTED: 409/422
+  RECORDING_PROPOSAL_REJECTED: 409/422
   PROVIDER_UNAVAILABLE: 502/503
   PROVIDER_RATE_LIMITED: 502/503
   PROVIDER_REFUSAL: 502/503
@@ -6468,6 +6879,7 @@ x-quansio-event-families:
 - knowledge
 - memory
 - skill
+- recording
 - pack
 - routine
 - notification

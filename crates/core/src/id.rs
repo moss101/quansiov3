@@ -122,6 +122,8 @@ pub enum Prefix {
     KillSwitch,
     /// `bdg_` budget grant (RUN-010).
     Budget,
+    /// `rec_` skill recording session (ADP-003).
+    Recording,
 }
 
 impl Prefix {
@@ -183,6 +185,7 @@ impl Prefix {
             Self::DirectoryGroup => "dgr_",
             Self::KillSwitch => "ksw_",
             Self::Budget => "bdg_",
+            Self::Recording => "rec_",
         }
     }
 
@@ -246,6 +249,7 @@ impl Prefix {
             Self::DirectoryGroup => "DIRECTORY_GROUP",
             Self::KillSwitch => "KILL_SWITCH",
             Self::Budget => "BUDGET",
+            Self::Recording => "RECORDING",
         }
     }
 
@@ -307,6 +311,7 @@ impl Prefix {
             Self::DirectoryGroup,
             Self::KillSwitch,
             Self::Budget,
+            Self::Recording,
         ]
     }
 }

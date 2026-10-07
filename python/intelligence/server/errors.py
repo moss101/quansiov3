@@ -38,6 +38,10 @@ class ErrorCode(StrEnum):
     PROVIDER_REFUSAL = "PROVIDER_REFUSAL"
     # Authority family: the semantic verifier refuses to judge when independence is unprovable.
     POLICY_DENIED = "POLICY_DENIED"
+    # Recording family (ADP-003, DOMAIN.md §15): a recording the compiler will not read, and a proposal
+    # that broke the skill-recording rules.
+    RECORDING_UNREDACTED = "RECORDING_UNREDACTED"
+    RECORDING_PROPOSAL_REJECTED = "RECORDING_PROPOSAL_REJECTED"
 
 
 _GRPC_STATUS_BY_CODE: dict[ErrorCode, grpc.StatusCode] = {
@@ -54,6 +58,8 @@ _GRPC_STATUS_BY_CODE: dict[ErrorCode, grpc.StatusCode] = {
     ErrorCode.PROVIDER_RATE_LIMITED: grpc.StatusCode.UNAVAILABLE,
     ErrorCode.PROVIDER_REFUSAL: grpc.StatusCode.FAILED_PRECONDITION,
     ErrorCode.POLICY_DENIED: grpc.StatusCode.PERMISSION_DENIED,
+    ErrorCode.RECORDING_UNREDACTED: grpc.StatusCode.FAILED_PRECONDITION,
+    ErrorCode.RECORDING_PROPOSAL_REJECTED: grpc.StatusCode.FAILED_PRECONDITION,
 }
 
 

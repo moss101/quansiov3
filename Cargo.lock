@@ -1884,6 +1884,7 @@ dependencies = [
  "quansio-indexer",
  "quansio-machine",
  "quansio-tools",
+ "regex",
  "reqwest",
  "ring",
  "serde",

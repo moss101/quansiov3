@@ -129,6 +129,15 @@ pub enum ApiErrorCode {
     ComputerForegroundControlLapsed,
     /// The native helper's signature does not match the configured pin.
     ComputerHelperIdentityRefused,
+    // Recording (ADP-003)
+    /// The call's user, session family or epoch is not the recording's.
+    RecordingOwnerChanged,
+    /// Compile or submit on a recording the person has not finished.
+    RecordingNotFinished,
+    /// An archive text field still matches a redaction rule.
+    RecordingUnredacted,
+    /// The plane's proposal broke a skill-recording rule.
+    RecordingProposalRejected,
     // Model
     /// The provider could not be reached.
     ProviderUnavailable,
@@ -153,7 +162,7 @@ pub enum ApiErrorCode {
 
 impl ApiErrorCode {
     /// Every code in the table, so a caller can check one against it without a list of its own.
-    pub const ALL: [ApiErrorCode; 61] = [
+    pub const ALL: [ApiErrorCode; 65] = [
         ApiErrorCode::AuthRequired,
         ApiErrorCode::AuthInvalidToken,
         ApiErrorCode::AuthExpired,
@@ -206,6 +215,10 @@ impl ApiErrorCode {
         ApiErrorCode::ComputerPermissionRequired,
         ApiErrorCode::ComputerForegroundControlLapsed,
         ApiErrorCode::ComputerHelperIdentityRefused,
+        ApiErrorCode::RecordingOwnerChanged,
+        ApiErrorCode::RecordingNotFinished,
+        ApiErrorCode::RecordingUnredacted,
+        ApiErrorCode::RecordingProposalRejected,
         ApiErrorCode::ProviderUnavailable,
         ApiErrorCode::ProviderRateLimited,
         ApiErrorCode::ProviderRefusal,
@@ -273,6 +286,10 @@ impl ApiErrorCode {
             Self::ComputerPermissionRequired => "COMPUTER_PERMISSION_REQUIRED",
             Self::ComputerForegroundControlLapsed => "COMPUTER_FOREGROUND_CONTROL_LAPSED",
             Self::ComputerHelperIdentityRefused => "COMPUTER_HELPER_IDENTITY_REFUSED",
+            Self::RecordingOwnerChanged => "RECORDING_OWNER_CHANGED",
+            Self::RecordingNotFinished => "RECORDING_NOT_FINISHED",
+            Self::RecordingUnredacted => "RECORDING_UNREDACTED",
+            Self::RecordingProposalRejected => "RECORDING_PROPOSAL_REJECTED",
             Self::ProviderUnavailable => "PROVIDER_UNAVAILABLE",
             Self::ProviderRateLimited => "PROVIDER_RATE_LIMITED",
             Self::ProviderRefusal => "PROVIDER_REFUSAL",
@@ -341,6 +358,10 @@ impl ApiErrorCode {
             | Self::ComputerPermissionRequired
             | Self::ComputerForegroundControlLapsed
             | Self::ComputerHelperIdentityRefused => "Computer",
+            Self::RecordingOwnerChanged
+            | Self::RecordingNotFinished
+            | Self::RecordingUnredacted
+            | Self::RecordingProposalRejected => "Recording",
             Self::ProviderUnavailable
             | Self::ProviderRateLimited
             | Self::ProviderRefusal
@@ -418,6 +439,13 @@ impl ApiErrorCode {
             | Self::ComputerPermissionRequired
             | Self::ComputerForegroundControlLapsed => StatusCode::CONFLICT,
             Self::ComputerLimitExceeded | Self::ComputerHelperIdentityRefused => {
+                StatusCode::UNPROCESSABLE_ENTITY
+            }
+            // Recording (409/422): a changed owner or an unfinished recording conflicts with the
+            // state the call assumed; an archive that still holds what redaction removes, or a
+            // proposal that breaks a rule, is unprocessable as sent.
+            Self::RecordingOwnerChanged | Self::RecordingNotFinished => StatusCode::CONFLICT,
+            Self::RecordingUnredacted | Self::RecordingProposalRejected => {
                 StatusCode::UNPROCESSABLE_ENTITY
             }
             Self::NotFound => StatusCode::NOT_FOUND,

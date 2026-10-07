@@ -2533,6 +2533,39 @@ form label:has(textarea) {
   .collaboration { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* Skill recording (ADP-003): the indicator is visible on every page while the recorder is watching. */
+.recording-indicator {
+  position: fixed;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  max-width: min(92vw, 880px);
+  padding: var(--s2) var(--s4);
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: 0 6px 24px #0003;
+}
+.recording-indicator .recording-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--danger-fill);
+  animation: recording-pulse 1.4s ease-in-out infinite;
+}
+.recording-indicator .recording-detail { color: var(--fg-muted, var(--fg)); font-size: 0.9em; }
+.recording-indicator .recording-error { color: var(--danger); }
+.recording-notice { margin: var(--s2) var(--s4); color: var(--danger); }
+.recording .recording-slots { border: 1px solid var(--border, #8884); border-radius: 8px; padding: var(--s3); }
+.recording .slot { margin: var(--s2) 0; }
+.recording .slot .example { margin: 0; font-family: var(--mono, monospace); opacity: 0.8; }
+@keyframes recording-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0ms !important; animation: none !important; }
 }

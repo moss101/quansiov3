@@ -1,0 +1,154 @@
+{
+  "task_id": "ADP-003",
+  "git_commit": "0979579eb200c28ed82956dda2f5fd6bddc8e985",
+  "recorded_at": "2026-10-07T05:35:19Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1067 passed, 13 failed: all 13 are calls to the artifact/evidence object store at 127.0.0.1:59010 (MinIO was not running; none touches this task, ADP-002's bundle recorded the same 13). This task's own suites pass: skill_recording 12 (real PostgreSQL, real Python plane, in-memory object store) and 25 recording unit tests in the server library",
+      "exit_code": 101,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/ADP-003/2026-10-04T05-24-48Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-003/2026-10-04T05-24-48Z/lint.log"
+    },
+    {
+      "command": "QUANSIO_TEST_MACOS_RECORDER=1 swift test --package-path native/macos  # 82 tests, 0 failures, 14 skipped (ADP-002's QUANSIO_TEST_MACOS_COMPUTER_USE tests); this task's 40 pass, including the real listen-only event tap, a real accessibility lookup, a real display capture judged by the real Vision recogniser, real secure-event-input state and the real quansio-recorder process (one-time token read and deleted, 0600 refusal, exits with its parent)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-003/2026-10-04T05-24-48Z/swift-live.log"
+    },
+    {
+      "command": "cd python && uv run pytest tests  # 640 passed, 91 skipped (redaction corpus parity, compiler shape and no-coordinates validator, RPC)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-003/2026-10-04T05-24-48Z/python-tests.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect test_generated_bindings_are_current  # 240 passed (the Rust contract generator cannot run from a worktree under .claude/worktrees; it is run in the finalize dry-run clone)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-003/2026-10-04T05-24-48Z/repo-tests.log"
+    },
+    {
+      "command": "cd apps/desktop && npx vitest run --exclude tests/work.e2e.test.ts && npx tsc --noEmit; npx eslint apps/desktop  # 190 passed, 39 skipped; recording.test.ts 18 and recorder.test.ts 7 (drives the real recorder binary); typecheck and eslint clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-003/2026-10-04T05-24-48Z/desktop-tests.log"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 49 mutants of the guards across Rust, Swift, Python and the desktop, every one COMPILES and CONTROL-PASSED; 48 KILLED by a named test, one NO-VERDICT (the test then trapped the process on an unguarded index) fixed in the test and re-run KILLED (appended to the log); 0 survived",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-003/2026-10-04T05-24-48Z/mutation-checks.log"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py; python3.12 arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py (uv python); gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-003/2026-10-04T05-24-48Z/static-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1067 passed, 13 failed: all 13 are calls to the artifact/evidence object store at 127.0.0.1:59010 (MinIO was not running; none touches this task, ADP-002's bundle recorded the same 13). This task's own suites pass: skill_recording 12 (real PostgreSQL, real Python plane, in-memory object store) and 25 recording unit tests in the server library",
+      "exit_code": 101,
+      "result": "BLOCKED_EXTERNAL"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_MACOS_RECORDER=1 swift test --package-path native/macos  # 82 tests, 0 failures, 14 skipped (ADP-002's QUANSIO_TEST_MACOS_COMPUTER_USE tests); this task's 40 pass, including the real listen-only event tap, a real accessibility lookup, a real display capture judged by the real Vision recogniser, real secure-event-input state and the real quansio-recorder process (one-time token read and deleted, 0600 refusal, exits with its parent)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd python && uv run pytest tests  # 640 passed, 91 skipped (redaction corpus parity, compiler shape and no-coordinates validator, RPC)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect test_generated_bindings_are_current  # 240 passed (the Rust contract generator cannot run from a worktree under .claude/worktrees; it is run in the finalize dry-run clone)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && npx vitest run --exclude tests/work.e2e.test.ts && npx tsc --noEmit; npx eslint apps/desktop  # 190 passed, 39 skipped; recording.test.ts 18 and recorder.test.ts 7 (drives the real recorder binary); typecheck and eslint clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 49 mutants of the guards across Rust, Swift, Python and the desktop, every one COMPILES and CONTROL-PASSED; 48 KILLED by a named test, one NO-VERDICT (the test then trapped the process on an unguarded index) fixed in the test and re-run KILLED (appended to the log); 0 survived",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py; python3.12 arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py (uv python); gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/ADP-003/2026-10-04T05-24-48Z/workspace-tests.log",
+      "sha256": "615d0d343dfe0538db8e26f21296de99aabd6282949fbb1b6ede498e243e9cdd",
+      "bytes": 126541
+    },
+    {
+      "path": "evidence/ADP-003/2026-10-04T05-24-48Z/lint.log",
+      "sha256": "8084a06d1a69487a5e541ae71c80ff05a81999faa3fad98a33ac78939a8f3d5b",
+      "bytes": 9395
+    },
+    {
+      "path": "evidence/ADP-003/2026-10-04T05-24-48Z/swift-live.log",
+      "sha256": "e32faba308d6a32d84ae5e86de5b3b254c218b26a2f6c1ff704c42df2eb52963",
+      "bytes": 29926
+    },
+    {
+      "path": "evidence/ADP-003/2026-10-04T05-24-48Z/python-tests.log",
+      "sha256": "073719305e16ff86c6b3a227df2feb111e6dbab139a7415992b4507d057ad2ec",
+      "bytes": 913
+    },
+    {
+      "path": "evidence/ADP-003/2026-10-04T05-24-48Z/repo-tests.log",
+      "sha256": "8d9d7d5e7441630005f316721254641be76b6e2fb19007d299a28875ae8dd078",
+      "bytes": 355
+    },
+    {
+      "path": "evidence/ADP-003/2026-10-04T05-24-48Z/desktop-tests.log",
+      "sha256": "8f405027fb6758601a86689ca0ea3d1144c8cef0bb5324f12996bac3a4e8da4f",
+      "bytes": 2193
+    },
+    {
+      "path": "evidence/ADP-003/2026-10-04T05-24-48Z/mutation-checks.log",
+      "sha256": "2fb6bec84946e60639caad4cd4407562ac6189d9c40dbd3d47a856a3edff0776",
+      "bytes": 13979
+    },
+    {
+      "path": "evidence/ADP-003/2026-10-04T05-24-48Z/static-gates.log",
+      "sha256": "7d8a5d2ba679147fb3b397eeade2365f8513f37457277d57cde4648d84bac22b",
+      "bytes": 1967
+    },
+    {
+      "path": "evidence/ADP-003/2026-10-04T05-24-48Z/mutation-checks.py",
+      "sha256": "0b75e8f52748815c3668bc94702941d047d42f3514aaa626e2120ddcd68b549b",
+      "bytes": 16364
+    },
+    {
+      "path": "evidence/ADP-003/NOTES.md",
+      "sha256": "50fdd5ba0bf2dbe99eca1f239621efd090668605032a0cf4ad6be6d469d87d7e",
+      "bytes": 9861
+    },
+    {
+      "path": "evidence/ADP-003/RECONCILIATION.md",
+      "sha256": "2e09e9c68b32ae2fa54451c85bf500e505c6fc2ba3e95191def68d11a1aa5fed",
+      "bytes": 11040
+    }
+  ]
+}

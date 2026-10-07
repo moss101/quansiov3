@@ -1,0 +1,239 @@
+warning: 'macos': found 4 file(s) which are unhandled; explicitly declare them as resources or exclude from the target
+    /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/Fixtures/receipt_applied_background.json
+    /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/Fixtures/receipt_invariant_violated.json
+    /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/Fixtures/receipt_refused.json
+    /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/Fixtures/receipt_unverified.json
+Building for debugging...
+[2 / 6] QuansioMacBridge
+[3 / 7] QuansioMacBridge
+[7 / 11] QuansioMacBridge
+[11 / 12] QuansioMacBridgeTests-product
+[15 / 16] quansio-recorder-product
+Build complete! (1.44 sec)
+Test Suite 'All tests' started at 2026-10-07 08:33:27.713.
+Test Suite 'QuansioMacBridgeTests.xctest' started at 2026-10-07 08:33:27.713.
+Test Suite 'BackgroundInvariantTests' started at 2026-10-07 08:33:27.713.
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testABodyThatThrowsPropagatesAndMeasuresNothing]' started.
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testABodyThatThrowsPropagatesAndMeasuresNothing]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testACleanWindowMeasuresClean]' started.
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testACleanWindowMeasuresClean]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAClipboardWriteIsReceiptedMeasuredAndVerifiedByReadBack]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/BackgroundInvariantTests.swift:137: -[QuansioMacBridgeTests.BackgroundInvariantTests testAClipboardWriteIsReceiptedMeasuredAndVerifiedByReadBack] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAClipboardWriteIsReceiptedMeasuredAndVerifiedByReadBack]' skipped (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAMeasurementThatCannotBeMadeIsReportedAsUnmeasuredNeverAsClean]' started.
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAMeasurementThatCannotBeMadeIsReportedAsUnmeasuredNeverAsClean]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAnUnauthorizedForegroundIsRefusedBeforeAnythingIsWritten]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/BackgroundInvariantTests.swift:137: -[QuansioMacBridgeTests.BackgroundInvariantTests testAnUnauthorizedForegroundIsRefusedBeforeAnythingIsWritten] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAnUnauthorizedForegroundIsRefusedBeforeAnythingIsWritten]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testEachViolationIsSeenOnItsOwn]' started.
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testEachViolationIsSeenOnItsOwn]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testIdleTimeThatGrowsByExactlyTheElapsedTimeMeansNoInput]' started.
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testIdleTimeThatGrowsByExactlyTheElapsedTimeMeansNoInput]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testTheLiveProbeSeesARealCursorMoveAndNothingElse]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/BackgroundInvariantTests.swift:137: -[QuansioMacBridgeTests.BackgroundInvariantTests testTheLiveProbeSeesARealCursorMoveAndNothingElse] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testTheLiveProbeSeesARealCursorMoveAndNothingElse]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testTypedTextVerificationNeverRoundsUnknownToAnAnswer]' started.
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testTypedTextVerificationNeverRoundsUnknownToAnAnswer]' passed (0.000 seconds).
+Test Suite 'BackgroundInvariantTests' passed at 2026-10-07 08:33:27.716.
+	 Executed 9 tests, with 3 tests skipped and 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'ComputerUseTests' started at 2026-10-07 08:33:27.716.
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testATreeWalkIsBounded]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testATreeWalkIsBounded] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testATreeWalkIsBounded]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testBoundsThatAreNotUsableAreRefused]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testBoundsThatAreNotUsableAreRefused] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testBoundsThatAreNotUsableAreRefused]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testExactForegroundIdentityFailsClosed]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testExactForegroundIdentityFailsClosed] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testExactForegroundIdentityFailsClosed]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testFrontmostAppResolvesWithoutAccessibility]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testFrontmostAppResolvesWithoutAccessibility] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testFrontmostAppResolvesWithoutAccessibility]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenCaptureAvailabilityAgreesWithReadableWindowTitles]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testScreenCaptureAvailabilityAgreesWithReadableWindowTitles] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenCaptureAvailabilityAgreesWithReadableWindowTitles]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenshotOutputIsHardBounded]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testScreenshotOutputIsHardBounded] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenshotOutputIsHardBounded]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testSystemKeyVocabularyFailsBeforePostingUnknownInput]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testSystemKeyVocabularyFailsBeforePostingUnknownInput] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testSystemKeyVocabularyFailsBeforePostingUnknownInput]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testTheClipboardRoundTripsAndIsPutBack]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testTheClipboardRoundTripsAndIsPutBack] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testTheClipboardRoundTripsAndIsPutBack]' skipped (0.000 seconds).
+Test Suite 'ComputerUseTests' passed at 2026-10-07 08:33:27.717.
+	 Executed 8 tests, with 8 tests skipped and 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'LiveRecorderTests' started at 2026-10-07 08:33:27.717.
+Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheAccessibilityLookupNamesARealControlByItsAttributes]' started.
+Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheAccessibilityLookupNamesARealControlByItsAttributes]' passed (0.069 seconds).
+Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheLiveObserverStartsOnlyWithItsPermissionsAndStopsCleanly]' started.
+Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheLiveObserverStartsOnlyWithItsPermissionsAndStopsCleanly]' passed (0.008 seconds).
+Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheRealScreenIsCapturedJudgedByItsTextAndBounded]' started.
+Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheRealScreenIsCapturedJudgedByItsTextAndBounded]' passed (0.393 seconds).
+Test Suite 'LiveRecorderTests' passed at 2026-10-07 08:33:28.188.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.471 (0.471) seconds
+Test Suite 'MacBridgeTests' started at 2026-10-07 08:33:28.188.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testAppleSiliconIsSupported]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testAppleSiliconIsSupported]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testIntelIsBestEffort]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testIntelIsBestEffort]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testRequireSupportPassesOnArm64]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testRequireSupportPassesOnArm64]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testUnknownArchitectureFailsClosed]' started.
+Test Case '-[QuansioMacBridgeTests.MacBridgeTests testUnknownArchitectureFailsClosed]' passed (0.000 seconds).
+Test Suite 'MacBridgeTests' passed at 2026-10-07 08:33:28.189.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'MacOSCapsuleTests' started at 2026-10-07 08:33:28.189.
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testArbitraryGuestPortAndHostURLAreDenied]' started.
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testArbitraryGuestPortAndHostURLAreDenied]' passed (0.003 seconds).
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testDeviceGraphHasOnlyPrivateControlAndNoHostOrIPReachability]' started.
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testDeviceGraphHasOnlyPrivateControlAndNoHostOrIPReachability]' passed (0.021 seconds).
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testRealVMStartStopResetCheckpointAndPrivateQworkerdChannel]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/MacOSCapsuleTests.swift:95: -[QuansioMacBridgeTests.MacOSCapsuleTests testRealVMStartStopResetCheckpointAndPrivateQworkerdChannel] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_VM=1 is required for the real macOS VM boundary
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testRealVMStartStopResetCheckpointAndPrivateQworkerdChannel]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testResetRecreatesTheWritableDiskAndPreservesImmutableRoot]' started.
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testResetRecreatesTheWritableDiskAndPreservesImmutableRoot]' passed (0.001 seconds).
+Test Suite 'MacOSCapsuleTests' passed at 2026-10-07 08:33:28.214.
+	 Executed 4 tests, with 1 test skipped and 0 failures (0 unexpected) in 0.025 (0.025) seconds
+Test Suite 'PermissionStatusTests' started at 2026-10-07 08:33:28.214.
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testAPersonActiveBeforeTheAgentHasInputAnythingIsAlreadyInTheWay]' started.
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testAPersonActiveBeforeTheAgentHasInputAnythingIsAlreadyInTheWay]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testAPersonsInputAfterTheAgentsLapsesTheGrantAndPausingRestoresIt]' started.
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testAPersonsInputAfterTheAgentsLapsesTheGrantAndPausingRestoresIt]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testAStatusIsBuiltFromEachProbeIndependently]' started.
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testAStatusIsBuiltFromEachProbeIndependently]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testInputMonitoringNeverReportsGrantedForAnAnswerItDoesNotUnderstand]' started.
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testInputMonitoringNeverReportsGrantedForAnAnswerItDoesNotUnderstand]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testMicrophoneMapsEveryAuthorizationStatus]' started.
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testMicrophoneMapsEveryAuthorizationStatus]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheAgentsOwnInputDoesNotLapseItsGrant]' started.
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheAgentsOwnInputDoesNotLapseItsGrant]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheLiveForegroundControlAnswersWithoutTouchingTheMachine]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/PermissionStatusTests.swift:142: -[QuansioMacBridgeTests.PermissionStatusTests testTheLiveForegroundControlAnswersWithoutTouchingTheMachine] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheLiveForegroundControlAnswersWithoutTouchingTheMachine]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheLiveStatusAgreesWithTheSystemsOwnAnswers]' started.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/PermissionStatusTests.swift:142: -[QuansioMacBridgeTests.PermissionStatusTests testTheLiveStatusAgreesWithTheSystemsOwnAnswers] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheLiveStatusAgreesWithTheSystemsOwnAnswers]' skipped (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheSharedStatusFixtureDecodesAndEncodesBackToItself]' started.
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheSharedStatusFixtureDecodesAndEncodesBackToItself]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheStatusIsExactlyFourPermissionsInSnakeCase]' started.
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheStatusIsExactlyFourPermissionsInSnakeCase]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheWireWordsAreHeldAndLapsed]' started.
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheWireWordsAreHeldAndLapsed]' passed (0.000 seconds).
+Test Suite 'PermissionStatusTests' passed at 2026-10-07 08:33:28.216.
+	 Executed 11 tests, with 2 tests skipped and 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'ReceiptTests' started at 2026-10-07 08:33:28.216.
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testABrokenBackgroundClaimOverridesTheObservedEffect]' started.
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testABrokenBackgroundClaimOverridesTheObservedEffect]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testACleanMeasurementKeepsAVerifiedActionVerifiedAndNoMeasurementLowersIt]' started.
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testACleanMeasurementKeepsAVerifiedActionVerifiedAndNoMeasurementLowersIt]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testAnActionThatDispatchedNothingIsNotTouchedByTheBackgroundRules]' started.
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testAnActionThatDispatchedNothingIsNotTouchedByTheBackgroundRules]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testAnUnknownVerdictIsEncodedAsNullAndNeverOmitted]' started.
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testAnUnknownVerdictIsEncodedAsNullAndNeverOmitted]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testTheFixturesDecodeAndEncodeBackToThemselves]' started.
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testTheFixturesDecodeAndEncodeBackToThemselves]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testTheWireWordsAreTheOnesDomainMdStates]' started.
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testTheWireWordsAreTheOnesDomainMdStates]' passed (0.000 seconds).
+Test Suite 'ReceiptTests' passed at 2026-10-07 08:33:28.217.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'RecorderControlTests' started at 2026-10-07 08:33:28.217.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testABootstrapFileOthersCouldReadIsRefusedAndDeletedAnyway]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testABootstrapFileOthersCouldReadIsRefusedAndDeletedAnyway]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testAnotherOwnerOrEpochOverTheChannelEndsTheRecordingAndDiscardsIt]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testAnotherOwnerOrEpochOverTheChannelEndsTheRecordingAndDiscardsIt]' passed (0.107 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testClosingTheChannelDiscardsTheRecordingAndStopsTheRecorder]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testClosingTheChannelDiscardsTheRecordingAndStopsTheRecorder]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testGuessingTheTokenEndsTheServerRatherThanLetItBeGuessed]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testGuessingTheTokenEndsTheServerRatherThanLetItBeGuessed]' passed (0.002 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testNothingIsCapturedUntilEveryNeededPermissionIsGranted]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testNothingIsCapturedUntilEveryNeededPermissionIsGranted]' passed (0.003 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testStartAndFinishAreIdempotentByIdAndFingerprint]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testStartAndFinishAreIdempotentByIdAndFingerprint]' passed (0.003 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testStartObserveFinishOverTheChannelAndTheArchiveHoldsWhatWasObserved]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testStartObserveFinishOverTheChannelAndTheArchiveHoldsWhatWasObserved]' passed (0.108 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheBootstrapFileIsReadOnceAndDeleted]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheBootstrapFileIsReadOnceAndDeleted]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheRealPermissionStatusIsFourTypedAnswers]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheRealPermissionStatusIsFourTypedAnswers]' passed (0.031 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheSocketDirectoryMustBePrivateAndTheSocketIsOwnerOnly]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheSocketDirectoryMustBePrivateAndTheSocketIsOwnerOnly]' passed (0.002 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheTokenWorksOnceAndOnlyTheFirstConnectionIsTheChannel]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheTokenWorksOnceAndOnlyTheFirstConnectionIsTheChannel]' passed (0.002 seconds).
+Test Suite 'RecorderControlTests' passed at 2026-10-07 08:33:28.478.
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.260 (0.261) seconds
+Test Suite 'RecorderProcessTests' started at 2026-10-07 08:33:28.478.
+Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessExitsWhenItsParentGoesAway]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessExitsWhenItsParentGoesAway]' passed (0.198 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessReadsAndDeletesItsTokenAndAnswersOneAuthenticatedChannel]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessReadsAndDeletesItsTokenAndAnswersOneAuthenticatedChannel]' passed (0.167 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessRefusesABootstrapFileOthersCouldRead]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessRefusesABootstrapFileOthersCouldRead]' passed (0.053 seconds).
+Test Suite 'RecorderProcessTests' passed at 2026-10-07 08:33:28.896.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.417 (0.418) seconds
+Test Suite 'RecorderSessionTests' started at 2026-10-07 08:33:28.896.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAnArchiveOverItsLimitDropsScreenshotsThenRefuses]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAnArchiveOverItsLimitDropsScreenshotsThenRefuses]' passed (0.007 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAnotherAccountOrEpochEndsTheSessionAndDiscardsEverything]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAnotherAccountOrEpochEndsTheSessionAndDiscardsEverything]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAScreenPointIsKeptOnlyForAnUnresolvedControlAsEvidence]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAScreenPointIsKeptOnlyForAnUnresolvedControlAsEvidence]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testCancelDiscardsAndAFinishedSessionCannotBeFinishedAgainDifferently]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testCancelDiscardsAndAFinishedSessionCannotBeFinishedAgainDifferently]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testCaptureStopsWhileSecureInputIsOnAndResumesAfter]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testCaptureStopsWhileSecureInputIsOnAndResumesAfter]' passed (0.002 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testEveryCallCarriesTheFence]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testEveryCallCarriesTheFence]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testNothingButFinishCompletesARecording]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testNothingButFinishCompletesARecording]' passed (0.002 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testNothingTheRulesRemoveIsKeptAndTheSummaryHoldsCountsOnly]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testNothingTheRulesRemoveIsKeptAndTheSummaryHoldsCountsOnly]' passed (0.002 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testRedactionRunsBeforeTruncationSoACutCannotLeaveHalfASecret]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testRedactionRunsBeforeTruncationSoACutCannotLeaveHalfASecret]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testRunningOutOfTimeAbortsAndDiscardsItNeverFinishes]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testRunningOutOfTimeAbortsAndDiscardsItNeverFinishes]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTextTypedIntoASecureFieldIsDroppedWholeAndCounted]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTextTypedIntoASecureFieldIsDroppedWholeAndCounted]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTheArchiveHasExactlyTheShapeTheServerValidates]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTheArchiveHasExactlyTheShapeTheServerValidates]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTheGoldenArchiveIsWhatTheRecorderProduces]' started.
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTheGoldenArchiveIsWhatTheRecorderProduces]' passed (0.004 seconds).
+Test Suite 'RecorderSessionTests' passed at 2026-10-07 08:33:28.920.
+	 Executed 13 tests, with 0 failures (0 unexpected) in 0.023 (0.024) seconds
+Test Suite 'RecordingRedactionTests' started at 2026-10-07 08:33:28.920.
+Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testASummaryIsCountsAndNeverAValue]' started.
+Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testASummaryIsCountsAndNeverAValue]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testLabelsAreReadAsWordsNotSubstrings]' started.
+Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testLabelsAreReadAsWordsNotSubstrings]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testTheCorpusIsTheContract]' started.
+Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testTheCorpusIsTheContract]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testTheRecorderAgreesWithEveryCorpusCase]' started.
+Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testTheRecorderAgreesWithEveryCorpusCase]' passed (0.002 seconds).
+Test Suite 'RecordingRedactionTests' passed at 2026-10-07 08:33:28.923.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'RecordingScreenshotTests' started at 2026-10-07 08:33:28.923.
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testAScreenshotWhoseTextMatchesARuleIsWithheldWholeAndCounted]' started.
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testAScreenshotWhoseTextMatchesARuleIsWithheldWholeAndCounted]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testCountSpacingAndDuplicatesAreBounded]' started.
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testCountSpacingAndDuplicatesAreBounded]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testScreenTextIsTruncatedAfterRedaction]' started.
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testScreenTextIsTruncatedAfterRedaction]' passed (0.000 seconds).
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testSizeIsBoundedByDownscalingAndByBytes]' started.
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testSizeIsBoundedByDownscalingAndByBytes]' passed (0.009 seconds).
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testTheSystemsOwnRecogniserReadsACardNumberOffAnImageSoItIsWithheld]' started.
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testTheSystemsOwnRecogniserReadsACardNumberOffAnImageSoItIsWithheld]' passed (0.123 seconds).
+Test Suite 'RecordingScreenshotTests' passed at 2026-10-07 08:33:29.057.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.134 (0.135) seconds
+Test Suite 'SecureInputTests' started at 2026-10-07 08:33:29.057.
+Test Case '-[QuansioMacBridgeTests.SecureInputTests testTheLiveProbeSeesRealSecureEventInputAndTheSessionPausesOnIt]' started.
+Test Case '-[QuansioMacBridgeTests.SecureInputTests testTheLiveProbeSeesRealSecureEventInputAndTheSessionPausesOnIt]' passed (0.004 seconds).
+Test Suite 'SecureInputTests' passed at 2026-10-07 08:33:29.062.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'QuansioMacBridgeTests.xctest' passed at 2026-10-07 08:33:29.062.
+	 Executed 82 tests, with 14 tests skipped and 0 failures (0 unexpected) in 1.343 (1.349) seconds
+Test Suite 'All tests' passed at 2026-10-07 08:33:29.062.
+	 Executed 82 tests, with 14 tests skipped and 0 failures (0 unexpected) in 1.343 (1.349) seconds
+◇ Test run started.
+↳ Testing Library Version: 2084
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.

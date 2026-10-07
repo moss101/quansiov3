@@ -1092,6 +1092,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/commands/StartRecording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recording: StartRecording */
+        post: operations["StartRecording"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commands/FinishRecording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recording: FinishRecording */
+        post: operations["FinishRecording"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commands/CancelRecording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recording: CancelRecording */
+        post: operations["CancelRecording"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commands/CompileRecording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recording: CompileRecording */
+        post: operations["CompileRecording"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commands/SubmitRecordingSkill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recording: SubmitRecordingSkill */
+        post: operations["SubmitRecordingSkill"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/commands/CreateRoutine": {
         parameters: {
             query?: never;
@@ -1880,6 +1965,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/recordings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read projection /v1/recordings (DOMAIN.md §14). */
+        get: operations["ReadV1Recordings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/recordings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read projection /v1/recordings/{id} (DOMAIN.md §14). */
+        get: operations["ReadV1Recordings{Id}"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/packs": {
         parameters: {
             query?: never;
@@ -2298,7 +2417,7 @@ export interface components {
              * @description DOMAIN.md §15 error taxonomy.
              * @enum {string}
              */
-            code: "AUTH_REQUIRED" | "AUTH_INVALID_TOKEN" | "AUTH_EXPIRED" | "SCOPE_FORBIDDEN" | "TENANT_MISMATCH" | "VALIDATION_SCHEMA" | "VALIDATION_UNKNOWN_FIELD" | "VALIDATION_BOUNDS" | "CONFLICT_REVISION" | "CONFLICT_IDEMPOTENCY_MISMATCH" | "CONFLICT_STATE" | "CAPABILITY_DENIED" | "CAPABILITY_INPUTS_UNAVAILABLE" | "POLICY_DENIED" | "APPROVAL_REQUIRED" | "APPROVAL_INVALID" | "APPROVAL_EXPIRED" | "APPROVAL_SUPERSEDED" | "RUNTIME_ILLEGAL_TRANSITION" | "FENCED_STALE_GENERATION" | "LEASE_LOST" | "EFFECT_UNKNOWN_PENDING_RECONCILIATION" | "BUDGET_EXHAUSTED" | "EFFECTS_FROZEN" | "TARGET_UNAVAILABLE" | "TARGET_PROVISION_FAILED" | "TOOL_TIMEOUT" | "TOOL_OUTPUT_TRUNCATED" | "EGRESS_DENIED" | "BROWSER_STALE_PAGE" | "BROWSER_STALE_DIALOG" | "BROWSER_DIALOG_PENDING" | "BROWSER_ACTION_REPLAY_CONFLICT" | "BROWSER_ACTION_IN_DOUBT" | "BROWSER_SECRET_ORIGIN_MISMATCH" | "BROWSER_SECRET_UNAVAILABLE" | "BROWSER_SENSITIVE_INPUT_DENIED" | "BROWSER_NAVIGATION_DENIED" | "BROWSER_CERTIFICATE_DECISION_REQUIRED" | "BROWSER_GESTURE_REQUIRED" | "BROWSER_INPUT_FENCED" | "BROWSER_EFFECT_TIER_EXCEEDED" | "BROWSER_INVALID_REQUEST" | "BROWSER_TARGET_NOT_FOUND" | "BROWSER_PAGE_FAILURE" | "COMPUTER_TAKEOVER_ACTIVE" | "COMPUTER_PERMISSION_REVOKED" | "COMPUTER_LIMIT_EXCEEDED" | "COMPUTER_STOPPED_BY_USER" | "COMPUTER_PERMISSION_REQUIRED" | "COMPUTER_FOREGROUND_CONTROL_LAPSED" | "COMPUTER_HELPER_IDENTITY_REFUSED" | "PROVIDER_UNAVAILABLE" | "PROVIDER_RATE_LIMITED" | "PROVIDER_REFUSAL" | "ROUTE_UNAVAILABLE" | "DLP_DENIED" | "NOT_FOUND" | "RATE_LIMITED" | "STREAM_BACKPRESSURE" | "INTERNAL";
+            code: "AUTH_REQUIRED" | "AUTH_INVALID_TOKEN" | "AUTH_EXPIRED" | "SCOPE_FORBIDDEN" | "TENANT_MISMATCH" | "VALIDATION_SCHEMA" | "VALIDATION_UNKNOWN_FIELD" | "VALIDATION_BOUNDS" | "CONFLICT_REVISION" | "CONFLICT_IDEMPOTENCY_MISMATCH" | "CONFLICT_STATE" | "CAPABILITY_DENIED" | "CAPABILITY_INPUTS_UNAVAILABLE" | "POLICY_DENIED" | "APPROVAL_REQUIRED" | "APPROVAL_INVALID" | "APPROVAL_EXPIRED" | "APPROVAL_SUPERSEDED" | "RUNTIME_ILLEGAL_TRANSITION" | "FENCED_STALE_GENERATION" | "LEASE_LOST" | "EFFECT_UNKNOWN_PENDING_RECONCILIATION" | "BUDGET_EXHAUSTED" | "EFFECTS_FROZEN" | "TARGET_UNAVAILABLE" | "TARGET_PROVISION_FAILED" | "TOOL_TIMEOUT" | "TOOL_OUTPUT_TRUNCATED" | "EGRESS_DENIED" | "BROWSER_STALE_PAGE" | "BROWSER_STALE_DIALOG" | "BROWSER_DIALOG_PENDING" | "BROWSER_ACTION_REPLAY_CONFLICT" | "BROWSER_ACTION_IN_DOUBT" | "BROWSER_SECRET_ORIGIN_MISMATCH" | "BROWSER_SECRET_UNAVAILABLE" | "BROWSER_SENSITIVE_INPUT_DENIED" | "BROWSER_NAVIGATION_DENIED" | "BROWSER_CERTIFICATE_DECISION_REQUIRED" | "BROWSER_GESTURE_REQUIRED" | "BROWSER_INPUT_FENCED" | "BROWSER_EFFECT_TIER_EXCEEDED" | "BROWSER_INVALID_REQUEST" | "BROWSER_TARGET_NOT_FOUND" | "BROWSER_PAGE_FAILURE" | "COMPUTER_TAKEOVER_ACTIVE" | "COMPUTER_PERMISSION_REVOKED" | "COMPUTER_LIMIT_EXCEEDED" | "COMPUTER_STOPPED_BY_USER" | "COMPUTER_PERMISSION_REQUIRED" | "COMPUTER_FOREGROUND_CONTROL_LAPSED" | "COMPUTER_HELPER_IDENTITY_REFUSED" | "RECORDING_OWNER_CHANGED" | "RECORDING_NOT_FINISHED" | "RECORDING_UNREDACTED" | "RECORDING_PROPOSAL_REJECTED" | "PROVIDER_UNAVAILABLE" | "PROVIDER_RATE_LIMITED" | "PROVIDER_REFUSAL" | "ROUTE_UNAVAILABLE" | "DLP_DENIED" | "NOT_FOUND" | "RATE_LIMITED" | "STREAM_BACKPRESSURE" | "INTERNAL";
             message: string;
             correlation_id: string;
             retryable: boolean;
@@ -2568,6 +2687,48 @@ export interface components {
         /** @description Skills & packs command RollbackPack. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
         RollbackPackParams: {
             [key: string]: unknown;
+        };
+        /** @description Recording command StartRecording. */
+        StartRecordingParams: {
+            workspace_id: string;
+            /** @description Idempotency key of the start: a repeat returns the same recording. */
+            start_key: string;
+            /** @description The epoch the desktop advances when the signed-in account changes (DOMAIN.md §11.7 B). */
+            epoch: number;
+        };
+        /** @description Recording command FinishRecording. */
+        FinishRecordingParams: {
+            recording_id: string;
+            epoch: number;
+            archive: {
+                /** @description The redacted archive the person's recorder built (media type application/vnd.quansio.recording+json). */
+                content_base64: string;
+                /** @description SHA-256 (hex) of the archive's bytes. */
+                content_digest: string;
+            };
+        };
+        /** @description Recording command CancelRecording. */
+        CancelRecordingParams: {
+            recording_id: string;
+            epoch: number;
+        };
+        /** @description Recording command CompileRecording. */
+        CompileRecordingParams: {
+            recording_id: string;
+            epoch: number;
+        };
+        /** @description Recording command SubmitRecordingSkill. */
+        SubmitRecordingSkillParams: {
+            recording_id: string;
+            epoch: number;
+            name: string;
+            semver: string;
+            /** @description The person's decision for every slot of the proposal; an undecided slot is refused. */
+            slots: {
+                slot_id: string;
+                /** @enum {string} */
+                classification: "input" | "constant";
+            }[];
         };
         /** @description Routines command CreateRoutine. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
         CreateRoutineParams: {
@@ -5258,6 +5419,201 @@ export interface operations {
             };
         };
     };
+    StartRecording: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    FinishRecording: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    CancelRecording: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    CompileRecording: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    SubmitRecordingSkill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     CreateRoutine: {
         parameters: {
             query?: never;
@@ -6936,6 +7292,76 @@ export interface operations {
         };
     };
     ReadV1Skills: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Projection page with cursor. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: Record<string, never>[];
+                        next_cursor?: string | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    ReadV1Recordings: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Projection page with cursor. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: Record<string, never>[];
+                        next_cursor?: string | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "ReadV1Recordings{Id}": {
         parameters: {
             query?: {
                 cursor?: string;
