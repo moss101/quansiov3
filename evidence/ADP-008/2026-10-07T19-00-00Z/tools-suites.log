@@ -1,0 +1,31 @@
+   Compiling quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a1eeed1f1fd2d5d8b/crates/tools)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.45s
+     Running tests/tool_check_binary.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/tool_check_binary-6390633b2a3e04ae)
+
+running 3 tests
+test blank_lines_are_skipped_and_order_is_kept ... ok
+test a_host_only_tool_is_not_a_tool_a_model_may_propose ... ok
+test verdicts_follow_the_registry_schema_check ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+     Running tests/visibility.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/visibility-ef4de7161dcf8e42)
+
+running 13 tests
+test a_tool_nobody_can_call_is_refused ... ok
+test a_misspelt_or_ill_typed_flag_cannot_leave_a_tool_visible ... ok
+test the_host_may_not_call_a_tool_that_is_not_host_callable ... ok
+test a_declaration_is_model_visible_and_not_host_callable_unless_it_says_otherwise ... ok
+test a_model_naming_a_host_only_tool_is_refused_before_its_arguments_are_read ... ok
+test an_older_version_never_makes_a_name_visible ... ok
+test the_host_reaches_a_host_callable_tool_and_gets_the_same_plan ... ok
+test a_projection_can_only_remove_tools_from_the_model_view ... ok
+test the_shipped_host_only_tool_plans_for_the_host_and_not_for_a_model ... ok
+test the_shipped_registry_declares_exactly_one_host_only_tool_and_the_rest_are_the_models ... ok
+test a_host_only_tool_is_absent_from_every_model_facing_view_whatever_the_projection_holds ... ok
+test the_python_gateway_reads_the_registry_only_for_model_visible_declarations ... ok
+test no_crate_but_the_registry_reads_the_unfiltered_declaration_list ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+exit=0

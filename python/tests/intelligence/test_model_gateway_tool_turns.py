@@ -61,9 +61,13 @@ def _gateway(stub: StubProvider) -> ModelGateway:
     )
 
 
-def _registry_names() -> list[str]:
+def _registry_names(*, model_visible_only: bool = False) -> list[str]:
     document = yaml.safe_load(default_tool_registry_path().read_text(encoding="utf-8"))
-    return [entry["name"] for entry in document["tools"]]
+    return [
+        entry["name"]
+        for entry in document["tools"]
+        if not model_visible_only or entry.get("model_visible", True)
+    ]
 
 
 # -- the content contract ------------------------------------------------------------------
@@ -206,7 +210,8 @@ def test_a_tool_result_without_its_call_is_refused_as_a_provider_would(
 
 def test_the_production_gateway_offers_the_registry_schemas(tmp_path: Path) -> None:
     source = RegistryToolSchemaSource.load()
-    assert set(source.names()) == set(_registry_names())
+    # A host-only tool (ADP-008) has no schema to offer a provider.
+    assert set(source.names()) == set(_registry_names(model_visible_only=True))
     resolved = resolve_tools(source.names(), source, frozenset({"tools"}))
     assert [tool.name for tool in resolved] == list(source.names())
     registry = yaml.safe_load(default_tool_registry_path().read_text(encoding="utf-8"))

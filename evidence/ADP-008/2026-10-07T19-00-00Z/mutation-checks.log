@@ -1,0 +1,75 @@
+CONTROL-PASSED cargo test -p quansio-tools --test visibility -q
+COMPILES registry-ignores-model-visible
+KILLED registry-ignores-model-visible (the model-facing exposure no longer excludes a host-only tool): error: test failed, to rerun pass `-p quansio-tools --test visibility`
+COMPILES model-visible-names-lists-all
+KILLED model-visible-names-lists-all (the ceiling for model-facing lists includes host-only tools): error: test failed, to rerun pass `-p quansio-tools --test visibility`
+COMPILES older-version-makes-name-visible
+KILLED older-version-makes-name-visible (an older version decides visibility): error: test failed, to rerun pass `-p quansio-tools --test visibility`
+COMPILES plan-call-skips-the-caller-check
+KILLED plan-call-skips-the-caller-check (a model can propose a host-only tool): error: test failed, to rerun pass `-p quansio-tools --test visibility`
+COMPILES default-caller-is-the-host
+KILLED default-caller-is-the-host (a caller that forgets to say who it is reaches host-only tools): error: test failed, to rerun pass `-p quansio-tools --test visibility`
+COMPILES unknown-declaration-keys-accepted
+KILLED unknown-declaration-keys-accepted (a misspelt flag leaves a tool visible): error: test failed, to rerun pass `-p quansio-tools --test visibility`
+COMPILES tool-nobody-can-call-accepted
+KILLED tool-nobody-can-call-accepted (a tool that nobody can call is accepted): error: test failed, to rerun pass `-p quansio-tools --test visibility`
+CONTROL-PASSED uv run --project python pytest -q -p no:cacheprovider
+COMPILES gateway-offers-host-only-schemas
+KILLED gateway-offers-host-only-schemas (a provider is sent a host-only tool's schema): FAILED python/tests/intelligence/test_tool_visibility.py::test_the_shipped_source_holds_every_model_visible_tool_and_no_host_only_one; FAILED python/tests/intelligence/test_tool_visibility.py::test_a_host_only_tool_cannot_be_offered_to_a_provider; FAILED python/tests/intelligence/test_tool_visibility.py::test_model_visible_defaults_to_true_and_false_hides_the_declaration
+COMPILES recording-compile-lists-every-tool
+KILLED recording-compile-lists-every-tool (a recording compile is told about host-only tools): error: test failed, to rerun pass `-p quansio-tools --test visibility`
+CONTROL-PASSED cargo test -p quansio-server --test tool_visibility
+COMPILES host-call-recorded-and-dispatched-as-model
+KILLED host-call-recorded-and-dispatched-as-model (a host call is treated as a model's): test the_host_is_still_subject_to_the_capability_projection ... FAILED; test the_host_reaches_a_host_only_tool_through_the_same_policy_and_ledger_path ... FAILED; test the_host_may_not_call_a_tool_that_is_not_host_callable ... FAILED
+COMPILES rejected-model-attempt-not-recorded-as-model
+KILLED rejected-model-attempt-not-recorded-as-model (a refused model attempt is recorded under the wrong caller): test a_model_naming_a_host_only_tool_is_refused_and_it_is_recorded ... FAILED
+CONTROL-PASSED uv run --project python pytest -q -p no:cacheprovider
+COMPILES pack-compile-allows-host-only-tools
+KILLED pack-compile-allows-host-only-tools (a pack can name a host-only tool): FAILED python/tests/capability_compiler/test_pack_install.py::test_a_pack_cannot_name_a_tool_a_model_cannot_see; FAILED python/tests/capability_compiler/test_pack_install.py::test_verification_is_reported_before_compilation; FAILED python/tests/capability_compiler/test_pack_install.py::test_the_plane_compiles_a_pack_over_the_real_grpc_boundary
+COMPILES pack-credentials-not-scanned
+KILLED pack-credentials-not-scanned (a pack carrying a credential installs): FAILED python/tests/capability_compiler/test_pack_install.py::test_a_credential_in_a_file_or_the_manifest_is_refused_and_never_echoed
+COMPILES revision-includes-the-governance-record
+KILLED revision-includes-the-governance-record (a re-review changes the revision): FAILED python/tests/capability_compiler/test_pack_install.py::test_the_revision_is_a_content_address; FAILED python/tests/capability_compiler/test_pack_install.py::test_the_revision_corpus_pins_the_plane_to_the_server; FAILED python/tests/capability_compiler/test_pack_install.py::test_every_builtin_pack_verifies_and_compiles_against_the_real_registry[artifacts]
+COMPILES revision-ignores-files
+KILLED revision-ignores-files (a changed file is the same revision): FAILED python/tests/capability_compiler/test_pack_install.py::test_the_revision_is_a_content_address; FAILED python/tests/capability_compiler/test_pack_install.py::test_the_revision_corpus_pins_the_plane_to_the_server
+CONTROL-PASSED cargo test -p quansio-server --lib control::packs -q
+COMPILES runtime-revision-includes-governance
+KILLED runtime-revision-includes-governance (the runtime's revision drifts from the plane's): control::packs::content::tests::a_re_review_does_not_change_the_revision_and_a_change_to_what_executes_does --- FAILED
+CONTROL-PASSED cargo test -p quansio-server --test pack_install
+COMPILES install-ignores-the-plane-verdict
+KILLED install-ignores-the-plane-verdict (a pack the plane refused is activated): error: test failed, to rerun pass `-p quansio-server --test pack_install`
+COMPILES activation-ignores-the-expected-active-revision
+KILLED activation-ignores-the-expected-active-revision (a concurrent install overwrites the other's revision): error: test failed, to rerun pass `-p quansio-server --test pack_install`
+NO-VERDICT retention-is-unbounded: pattern found 0 times
+COMPILES previous-revision-not-retired
+KILLED previous-revision-not-retired (the replaced revision is not kept for rollback): test a_pack_is_installed_by_its_content_hash_and_installing_it_again_is_idempotent ... FAILED; test rollback_activates_the_previous_revision_deterministically_and_goes_forward_again ... FAILED; test retention_is_bounded_and_an_evicted_revision_keeps_its_row_and_loses_its_content ... FAILED
+COMPILES expired-reports-are-returned
+SURVIVED expired-reports-are-returned (an expired report is returned)
+NO-VERDICT expired-reports-are-not-purged: pattern found 0 times
+COMPILES stale-running-reports-are-not-closed
+KILLED stale-running-reports-are-not-closed (a crashed install's report stays running): test an_install_stopped_between_phases_leaves_the_previous_revision_and_a_report_the_next_read_closes ... FAILED
+NO-VERDICT diagnostics-are-not-redacted: pattern found 0 times
+COMPILES pointers-are-not-redacted
+KILLED pointers-are-not-redacted (a secret in a quoted path reaches the stored report): error: test failed, to rerun pass `-p quansio-server --test pack_install`
+COMPILES home-directories-are-kept
+KILLED home-directories-are-kept (a person's name reaches the report): test a_diagnostic_never_keeps_a_secret_a_home_directory_or_a_url_credential_and_is_bounded ... FAILED
+COMPILES url-credentials-are-kept
+KILLED url-credentials-are-kept (a URL's credentials reach the report): error: test failed, to rerun pass `-p quansio-server --test pack_install`
+COMPILES diagnostics-are-not-bounded-in-count
+KILLED diagnostics-are-not-bounded-in-count (a report is unbounded): test a_diagnostic_never_keeps_a_secret_a_home_directory_or_a_url_credential_and_is_bounded ... FAILED
+COMPILES a-name-the-person-chose-is-stored
+KILLED a-name-the-person-chose-is-stored (text chosen as a name reaches the report): test a_diagnostic_never_keeps_a_secret_a_home_directory_or_a_url_credential_and_is_bounded ... FAILED
+COMPILES reports-are-readable-by-members
+KILLED reports-are-readable-by-members (install reports are shown to a member): error: test failed, to rerun pass `-p quansio-server --test pack_install`
+CONTROL-PASSED cargo test -p quansio-server --lib control::packs::compile -q
+COMPILES the-plane-may-say-ok-with-an-error
+KILLED the-plane-may-say-ok-with-an-error (an incoherent plane answer is believed): control::packs::compile::tests::the_plane_answer_is_read_strictly --- FAILED
+CONTROL-PASSED cargo test -p quansio-server --test pack_install
+COMPILES retention-is-unbounded
+KILLED retention-is-unbounded (history is kept without bound): test retention_is_bounded_and_an_evicted_revision_keeps_its_row_and_loses_its_content ... FAILED
+COMPILES an-expired-report-is-read-by-id
+KILLED an-expired-report-is-read-by-id (an expired report is returned by its id): test reports_expire_are_purged_and_belong_to_their_tenant ... FAILED
+COMPILES expired-reports-are-not-purged
+KILLED expired-reports-are-not-purged (an expired report is kept): test reports_expire_are_purged_and_belong_to_their_tenant ... FAILED
+COMPILES diagnostics-are-not-redacted
+KILLED diagnostics-are-not-redacted (a secret reaches the stored report): test a_diagnostic_never_keeps_a_secret_a_home_directory_or_a_url_credential_and_is_bounded ... FAILED

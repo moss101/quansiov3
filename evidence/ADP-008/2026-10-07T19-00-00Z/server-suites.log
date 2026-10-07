@@ -1,0 +1,62 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.18s
+     Running tests/intelligence_gateway.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/intelligence_gateway-5c57645291a5b1b1)
+
+running 5 tests
+test the_plane_refuses_a_turn_it_cannot_render ... ok
+test the_gateway_refuses_with_its_typed_errors ... ok
+test the_plane_never_offers_a_provider_a_host_only_tool ... ok
+test the_rust_runtime_calls_the_python_gateway_across_the_process_boundary ... ok
+test the_runtime_builds_its_turn_context_through_the_plane_and_calls_the_model_with_it ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.06s
+
+     Running tests/outputs_preview.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outputs_preview-ea6ae3cbd4fe97a0)
+
+running 13 tests
+test a_file_over_the_bound_is_not_served ... ok
+test a_scope_is_the_openers_to_renew_close_or_read ... ok
+test a_pages_suggestions_are_stored_as_untrusted_data_and_read_back_through_the_tool ... ok
+test a_scope_lapses_when_its_time_runs_out_and_stays_lapsed ... ok
+test a_scope_serves_its_directory_with_sandboxing_headers_and_nothing_else ... ok
+test a_scope_lapses_when_the_run_ends_the_member_is_removed_or_the_root_changes ... ok
+test a_token_that_was_never_issued_and_a_foreign_host_are_refused_alike ... ok
+test closing_a_scope_ends_it_at_once_and_is_idempotent ... ok
+test nothing_is_opened_for_a_bad_directory_a_run_without_a_root_or_too_many_scopes ... ok
+test suggestions_posted_at_once_are_all_kept_in_order ... ok
+test with_no_preview_server_composed_the_tools_fail_closed_and_name_the_adapter ... ok
+test renewing_extends_a_scope_but_never_past_its_maximum_lifetime ... ok
+test the_host_lists_the_scopes_a_member_opened_and_a_model_is_never_offered_the_tool ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.69s
+
+     Running tests/pack_install.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/pack_install-4fb9273c454367f9)
+
+running 13 tests
+test a_first_install_that_fails_leaves_nothing_active_and_says_failed ... ok
+test a_failed_install_leaves_the_previous_revision_active_at_every_phase ... ok
+test a_diagnostic_never_keeps_a_secret_a_home_directory_or_a_url_credential_and_is_bounded ... ok
+test a_revision_that_is_not_the_content_and_a_digest_that_does_not_name_it_are_refused ... ok
+test a_pack_is_installed_by_its_content_hash_and_installing_it_again_is_idempotent ... ok
+test an_install_stopped_between_phases_leaves_the_previous_revision_and_a_report_the_next_read_closes ... ok
+test an_install_that_finds_the_pack_changed_underneath_it_fails_at_activate_and_keeps_the_other ... ok
+test reports_expire_are_purged_and_belong_to_their_tenant ... ok
+test retention_is_bounded_and_an_evicted_revision_keeps_its_row_and_loses_its_content ... ok
+test rollback_activates_the_previous_revision_deterministically_and_goes_forward_again ... ok
+test the_commands_and_the_read_work_over_the_api_and_leak_nothing ... ok
+test without_the_plane_nothing_installs_and_the_previous_revision_stays ... ok
+test the_whole_flow_runs_as_the_least_privileged_role_under_row_level_security ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.04s
+
+     Running tests/tool_visibility.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/tool_visibility-2e85f0d5c96eb23f)
+
+running 5 tests
+test the_host_may_not_call_a_tool_that_is_not_host_callable ... ok
+test the_host_is_still_subject_to_the_capability_projection ... ok
+test a_model_naming_a_host_only_tool_is_refused_and_it_is_recorded ... ok
+test the_tools_a_run_exposes_to_its_model_exclude_a_host_only_tool_the_grants_cover ... ok
+test the_host_reaches_a_host_only_tool_through_the_same_policy_and_ledger_path ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.27s
+
+exit=0
