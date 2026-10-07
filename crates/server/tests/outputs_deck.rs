@@ -500,6 +500,40 @@ async fn a_pending_or_failing_page_blocks_delivery_until_every_page_is_ready() {
         ["ready", "edited", "ready", "ready", "ready", "ready", "ready"],
         "{elsewhere:#?}"
     );
+    // What the pages Artifact stored says the same, not only what the call answered: the edited slide's entry is
+    // for its new source and is edited (not the old ready entry carried over), and the record does not say whole.
+    let pages_artifact = h
+        .artifact_with_role(&format!("deck_pages:{deck_id}"))
+        .await
+        .expect("the pages artifact");
+    let newest = h
+        .versions(&pages_artifact)
+        .await
+        .pop()
+        .expect("a pages version");
+    let stored = DeckPages::parse(&h.bytes(&newest.id).await).expect("stored pages parse");
+    let edited_digests: Vec<String> = deck::parse_presentation(&edited_source, 1 << 20)
+        .expect("edited deck")
+        .slides
+        .iter()
+        .map(deck::SlideSource::digest)
+        .collect();
+    assert_eq!(stored.slides[1].state, SlideState::Edited);
+    assert_eq!(stored.slides[1].source_digest, edited_digests[1]);
+    assert!(
+        stored.slides[1].fragment.is_none(),
+        "no page of the old slide is kept"
+    );
+    assert_eq!(
+        stored.slides[2].state,
+        SlideState::Ready,
+        "an unchanged page is carried"
+    );
+    assert!(newest.quality_record["checks"]
+        .as_array()
+        .expect("checks")
+        .iter()
+        .any(|check| check["rule"] == "output.deck.pages.ready" && check["ok"] == false));
     let refreshed = h
         .call(
             "deck.render",
