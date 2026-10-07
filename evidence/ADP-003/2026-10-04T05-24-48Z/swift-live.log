@@ -4,62 +4,75 @@ warning: 'macos': found 4 file(s) which are unhandled; explicitly declare them a
     /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/Fixtures/receipt_refused.json
     /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/Fixtures/receipt_unverified.json
 Building for debugging...
-[Computing dependencies]
-[Starting]
-[1 / 5]
-Build complete! (1.48 sec)
-Test Suite 'All tests' started at 2026-10-07 08:11:29.678.
-Test Suite 'QuansioMacBridgeTests.xctest' started at 2026-10-07 08:11:29.683.
-Test Suite 'BackgroundInvariantTests' started at 2026-10-07 08:11:29.683.
+[2 / 6] QuansioMacBridge
+[3 / 7] QuansioMacBridge
+[7 / 11] QuansioMacBridge
+[11 / 12] QuansioMacBridgeTests-product
+[15 / 16] quansio-recorder-product
+Build complete! (1.44 sec)
+Test Suite 'All tests' started at 2026-10-07 08:33:27.713.
+Test Suite 'QuansioMacBridgeTests.xctest' started at 2026-10-07 08:33:27.713.
+Test Suite 'BackgroundInvariantTests' started at 2026-10-07 08:33:27.713.
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testABodyThatThrowsPropagatesAndMeasuresNothing]' started.
-Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testABodyThatThrowsPropagatesAndMeasuresNothing]' passed (0.005 seconds).
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testABodyThatThrowsPropagatesAndMeasuresNothing]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testACleanWindowMeasuresClean]' started.
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testACleanWindowMeasuresClean]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAClipboardWriteIsReceiptedMeasuredAndVerifiedByReadBack]' started.
-Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAClipboardWriteIsReceiptedMeasuredAndVerifiedByReadBack]' passed (0.171 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/BackgroundInvariantTests.swift:137: -[QuansioMacBridgeTests.BackgroundInvariantTests testAClipboardWriteIsReceiptedMeasuredAndVerifiedByReadBack] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAClipboardWriteIsReceiptedMeasuredAndVerifiedByReadBack]' skipped (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAMeasurementThatCannotBeMadeIsReportedAsUnmeasuredNeverAsClean]' started.
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAMeasurementThatCannotBeMadeIsReportedAsUnmeasuredNeverAsClean]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAnUnauthorizedForegroundIsRefusedBeforeAnythingIsWritten]' started.
-Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAnUnauthorizedForegroundIsRefusedBeforeAnythingIsWritten]' passed (0.000 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/BackgroundInvariantTests.swift:137: -[QuansioMacBridgeTests.BackgroundInvariantTests testAnUnauthorizedForegroundIsRefusedBeforeAnythingIsWritten] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testAnUnauthorizedForegroundIsRefusedBeforeAnythingIsWritten]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testEachViolationIsSeenOnItsOwn]' started.
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testEachViolationIsSeenOnItsOwn]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testIdleTimeThatGrowsByExactlyTheElapsedTimeMeansNoInput]' started.
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testIdleTimeThatGrowsByExactlyTheElapsedTimeMeansNoInput]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testTheLiveProbeSeesARealCursorMoveAndNothingElse]' started.
-Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testTheLiveProbeSeesARealCursorMoveAndNothingElse]' passed (0.025 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/BackgroundInvariantTests.swift:137: -[QuansioMacBridgeTests.BackgroundInvariantTests testTheLiveProbeSeesARealCursorMoveAndNothingElse] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testTheLiveProbeSeesARealCursorMoveAndNothingElse]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testTypedTextVerificationNeverRoundsUnknownToAnAnswer]' started.
 Test Case '-[QuansioMacBridgeTests.BackgroundInvariantTests testTypedTextVerificationNeverRoundsUnknownToAnAnswer]' passed (0.000 seconds).
-Test Suite 'BackgroundInvariantTests' passed at 2026-10-07 08:11:29.947.
-	 Executed 9 tests, with 0 failures (0 unexpected) in 0.201 (0.264) seconds
-Test Suite 'ComputerUseTests' started at 2026-10-07 08:11:29.947.
+Test Suite 'BackgroundInvariantTests' passed at 2026-10-07 08:33:27.716.
+	 Executed 9 tests, with 3 tests skipped and 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'ComputerUseTests' started at 2026-10-07 08:33:27.716.
 Test Case '-[QuansioMacBridgeTests.ComputerUseTests testATreeWalkIsBounded]' started.
-Test Case '-[QuansioMacBridgeTests.ComputerUseTests testATreeWalkIsBounded]' passed (0.288 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testATreeWalkIsBounded] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testATreeWalkIsBounded]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.ComputerUseTests testBoundsThatAreNotUsableAreRefused]' started.
-Test Case '-[QuansioMacBridgeTests.ComputerUseTests testBoundsThatAreNotUsableAreRefused]' passed (0.000 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testBoundsThatAreNotUsableAreRefused] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testBoundsThatAreNotUsableAreRefused]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.ComputerUseTests testExactForegroundIdentityFailsClosed]' started.
-Test Case '-[QuansioMacBridgeTests.ComputerUseTests testExactForegroundIdentityFailsClosed]' passed (0.000 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testExactForegroundIdentityFailsClosed] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testExactForegroundIdentityFailsClosed]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.ComputerUseTests testFrontmostAppResolvesWithoutAccessibility]' started.
-Test Case '-[QuansioMacBridgeTests.ComputerUseTests testFrontmostAppResolvesWithoutAccessibility]' passed (0.000 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testFrontmostAppResolvesWithoutAccessibility] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testFrontmostAppResolvesWithoutAccessibility]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenCaptureAvailabilityAgreesWithReadableWindowTitles]' started.
-Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenCaptureAvailabilityAgreesWithReadableWindowTitles]' passed (0.019 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testScreenCaptureAvailabilityAgreesWithReadableWindowTitles] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenCaptureAvailabilityAgreesWithReadableWindowTitles]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenshotOutputIsHardBounded]' started.
-Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenshotOutputIsHardBounded]' passed (1.263 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testScreenshotOutputIsHardBounded] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testScreenshotOutputIsHardBounded]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.ComputerUseTests testSystemKeyVocabularyFailsBeforePostingUnknownInput]' started.
-Test Case '-[QuansioMacBridgeTests.ComputerUseTests testSystemKeyVocabularyFailsBeforePostingUnknownInput]' passed (0.001 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testSystemKeyVocabularyFailsBeforePostingUnknownInput] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testSystemKeyVocabularyFailsBeforePostingUnknownInput]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.ComputerUseTests testTheClipboardRoundTripsAndIsPutBack]' started.
-Test Case '-[QuansioMacBridgeTests.ComputerUseTests testTheClipboardRoundTripsAndIsPutBack]' passed (0.002 seconds).
-Test Suite 'ComputerUseTests' passed at 2026-10-07 08:11:31.521.
-	 Executed 8 tests, with 0 failures (0 unexpected) in 1.574 (1.575) seconds
-Test Suite 'LiveRecorderTests' started at 2026-10-07 08:11:31.521.
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/ComputerUseTests.swift:17: -[QuansioMacBridgeTests.ComputerUseTests testTheClipboardRoundTripsAndIsPutBack] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.ComputerUseTests testTheClipboardRoundTripsAndIsPutBack]' skipped (0.000 seconds).
+Test Suite 'ComputerUseTests' passed at 2026-10-07 08:33:27.717.
+	 Executed 8 tests, with 8 tests skipped and 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'LiveRecorderTests' started at 2026-10-07 08:33:27.717.
 Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheAccessibilityLookupNamesARealControlByItsAttributes]' started.
-Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheAccessibilityLookupNamesARealControlByItsAttributes]' passed (0.033 seconds).
+Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheAccessibilityLookupNamesARealControlByItsAttributes]' passed (0.069 seconds).
 Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheLiveObserverStartsOnlyWithItsPermissionsAndStopsCleanly]' started.
-Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheLiveObserverStartsOnlyWithItsPermissionsAndStopsCleanly]' passed (0.014 seconds).
+Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheLiveObserverStartsOnlyWithItsPermissionsAndStopsCleanly]' passed (0.008 seconds).
 Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheRealScreenIsCapturedJudgedByItsTextAndBounded]' started.
-Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheRealScreenIsCapturedJudgedByItsTextAndBounded]' passed (2.073 seconds).
-Test Suite 'LiveRecorderTests' passed at 2026-10-07 08:11:33.641.
-	 Executed 3 tests, with 0 failures (0 unexpected) in 2.119 (2.120) seconds
-Test Suite 'MacBridgeTests' started at 2026-10-07 08:11:33.641.
+Test Case '-[QuansioMacBridgeTests.LiveRecorderTests testTheRealScreenIsCapturedJudgedByItsTextAndBounded]' passed (0.393 seconds).
+Test Suite 'LiveRecorderTests' passed at 2026-10-07 08:33:28.188.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.471 (0.471) seconds
+Test Suite 'MacBridgeTests' started at 2026-10-07 08:33:28.188.
 Test Case '-[QuansioMacBridgeTests.MacBridgeTests testAppleSiliconIsSupported]' started.
 Test Case '-[QuansioMacBridgeTests.MacBridgeTests testAppleSiliconIsSupported]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.MacBridgeTests testIntelIsBestEffort]' started.
@@ -68,21 +81,21 @@ Test Case '-[QuansioMacBridgeTests.MacBridgeTests testRequireSupportPassesOnArm6
 Test Case '-[QuansioMacBridgeTests.MacBridgeTests testRequireSupportPassesOnArm64]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.MacBridgeTests testUnknownArchitectureFailsClosed]' started.
 Test Case '-[QuansioMacBridgeTests.MacBridgeTests testUnknownArchitectureFailsClosed]' passed (0.000 seconds).
-Test Suite 'MacBridgeTests' passed at 2026-10-07 08:11:33.642.
-	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
-Test Suite 'MacOSCapsuleTests' started at 2026-10-07 08:11:33.642.
+Test Suite 'MacBridgeTests' passed at 2026-10-07 08:33:28.189.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'MacOSCapsuleTests' started at 2026-10-07 08:33:28.189.
 Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testArbitraryGuestPortAndHostURLAreDenied]' started.
-Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testArbitraryGuestPortAndHostURLAreDenied]' passed (0.055 seconds).
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testArbitraryGuestPortAndHostURLAreDenied]' passed (0.003 seconds).
 Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testDeviceGraphHasOnlyPrivateControlAndNoHostOrIPReachability]' started.
-Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testDeviceGraphHasOnlyPrivateControlAndNoHostOrIPReachability]' passed (0.037 seconds).
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testDeviceGraphHasOnlyPrivateControlAndNoHostOrIPReachability]' passed (0.021 seconds).
 Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testRealVMStartStopResetCheckpointAndPrivateQworkerdChannel]' started.
 /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/MacOSCapsuleTests.swift:95: -[QuansioMacBridgeTests.MacOSCapsuleTests testRealVMStartStopResetCheckpointAndPrivateQworkerdChannel] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_VM=1 is required for the real macOS VM boundary
-Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testRealVMStartStopResetCheckpointAndPrivateQworkerdChannel]' skipped (0.002 seconds).
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testRealVMStartStopResetCheckpointAndPrivateQworkerdChannel]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testResetRecreatesTheWritableDiskAndPreservesImmutableRoot]' started.
-Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testResetRecreatesTheWritableDiskAndPreservesImmutableRoot]' passed (0.034 seconds).
-Test Suite 'MacOSCapsuleTests' passed at 2026-10-07 08:11:33.771.
-	 Executed 4 tests, with 1 test skipped and 0 failures (0 unexpected) in 0.128 (0.129) seconds
-Test Suite 'PermissionStatusTests' started at 2026-10-07 08:11:33.771.
+Test Case '-[QuansioMacBridgeTests.MacOSCapsuleTests testResetRecreatesTheWritableDiskAndPreservesImmutableRoot]' passed (0.001 seconds).
+Test Suite 'MacOSCapsuleTests' passed at 2026-10-07 08:33:28.214.
+	 Executed 4 tests, with 1 test skipped and 0 failures (0 unexpected) in 0.025 (0.025) seconds
+Test Suite 'PermissionStatusTests' started at 2026-10-07 08:33:28.214.
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testAPersonActiveBeforeTheAgentHasInputAnythingIsAlreadyInTheWay]' started.
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testAPersonActiveBeforeTheAgentHasInputAnythingIsAlreadyInTheWay]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testAPersonsInputAfterTheAgentsLapsesTheGrantAndPausingRestoresIt]' started.
@@ -96,18 +109,20 @@ Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testMicrophoneMapsEvery
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheAgentsOwnInputDoesNotLapseItsGrant]' started.
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheAgentsOwnInputDoesNotLapseItsGrant]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheLiveForegroundControlAnswersWithoutTouchingTheMachine]' started.
-Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheLiveForegroundControlAnswersWithoutTouchingTheMachine]' passed (0.000 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/PermissionStatusTests.swift:142: -[QuansioMacBridgeTests.PermissionStatusTests testTheLiveForegroundControlAnswersWithoutTouchingTheMachine] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheLiveForegroundControlAnswersWithoutTouchingTheMachine]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheLiveStatusAgreesWithTheSystemsOwnAnswers]' started.
-Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheLiveStatusAgreesWithTheSystemsOwnAnswers]' passed (0.083 seconds).
+/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a666779963b4ee06c/native/macos/Tests/QuansioMacBridgeTests/PermissionStatusTests.swift:142: -[QuansioMacBridgeTests.PermissionStatusTests testTheLiveStatusAgreesWithTheSystemsOwnAnswers] : Test skipped - BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_COMPUTER_USE=1 is required for the live macOS computer-use boundary
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheLiveStatusAgreesWithTheSystemsOwnAnswers]' skipped (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheSharedStatusFixtureDecodesAndEncodesBackToItself]' started.
-Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheSharedStatusFixtureDecodesAndEncodesBackToItself]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheSharedStatusFixtureDecodesAndEncodesBackToItself]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheStatusIsExactlyFourPermissionsInSnakeCase]' started.
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheStatusIsExactlyFourPermissionsInSnakeCase]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheWireWordsAreHeldAndLapsed]' started.
 Test Case '-[QuansioMacBridgeTests.PermissionStatusTests testTheWireWordsAreHeldAndLapsed]' passed (0.000 seconds).
-Test Suite 'PermissionStatusTests' passed at 2026-10-07 08:11:33.857.
-	 Executed 11 tests, with 0 failures (0 unexpected) in 0.085 (0.086) seconds
-Test Suite 'ReceiptTests' started at 2026-10-07 08:11:33.857.
+Test Suite 'PermissionStatusTests' passed at 2026-10-07 08:33:28.216.
+	 Executed 11 tests, with 2 tests skipped and 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'ReceiptTests' started at 2026-10-07 08:33:28.216.
 Test Case '-[QuansioMacBridgeTests.ReceiptTests testABrokenBackgroundClaimOverridesTheObservedEffect]' started.
 Test Case '-[QuansioMacBridgeTests.ReceiptTests testABrokenBackgroundClaimOverridesTheObservedEffect]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.ReceiptTests testACleanMeasurementKeepsAVerifiedActionVerifiedAndNoMeasurementLowersIt]' started.
@@ -117,133 +132,107 @@ Test Case '-[QuansioMacBridgeTests.ReceiptTests testAnActionThatDispatchedNothin
 Test Case '-[QuansioMacBridgeTests.ReceiptTests testAnUnknownVerdictIsEncodedAsNullAndNeverOmitted]' started.
 Test Case '-[QuansioMacBridgeTests.ReceiptTests testAnUnknownVerdictIsEncodedAsNullAndNeverOmitted]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.ReceiptTests testTheFixturesDecodeAndEncodeBackToThemselves]' started.
-Test Case '-[QuansioMacBridgeTests.ReceiptTests testTheFixturesDecodeAndEncodeBackToThemselves]' passed (0.003 seconds).
+Test Case '-[QuansioMacBridgeTests.ReceiptTests testTheFixturesDecodeAndEncodeBackToThemselves]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.ReceiptTests testTheWireWordsAreTheOnesDomainMdStates]' started.
 Test Case '-[QuansioMacBridgeTests.ReceiptTests testTheWireWordsAreTheOnesDomainMdStates]' passed (0.000 seconds).
-Test Suite 'ReceiptTests' passed at 2026-10-07 08:11:33.861.
-	 Executed 6 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
-Test Suite 'RecorderControlTests' started at 2026-10-07 08:11:33.861.
+Test Suite 'ReceiptTests' passed at 2026-10-07 08:33:28.217.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'RecorderControlTests' started at 2026-10-07 08:33:28.217.
 Test Case '-[QuansioMacBridgeTests.RecorderControlTests testABootstrapFileOthersCouldReadIsRefusedAndDeletedAnyway]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderControlTests testABootstrapFileOthersCouldReadIsRefusedAndDeletedAnyway]' passed (0.069 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testABootstrapFileOthersCouldReadIsRefusedAndDeletedAnyway]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderControlTests testAnotherOwnerOrEpochOverTheChannelEndsTheRecordingAndDiscardsIt]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderControlTests testAnotherOwnerOrEpochOverTheChannelEndsTheRecordingAndDiscardsIt]' passed (0.168 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testAnotherOwnerOrEpochOverTheChannelEndsTheRecordingAndDiscardsIt]' passed (0.107 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderControlTests testClosingTheChannelDiscardsTheRecordingAndStopsTheRecorder]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderControlTests testClosingTheChannelDiscardsTheRecordingAndStopsTheRecorder]' passed (0.044 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testClosingTheChannelDiscardsTheRecordingAndStopsTheRecorder]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderControlTests testGuessingTheTokenEndsTheServerRatherThanLetItBeGuessed]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderControlTests testGuessingTheTokenEndsTheServerRatherThanLetItBeGuessed]' passed (0.030 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testGuessingTheTokenEndsTheServerRatherThanLetItBeGuessed]' passed (0.002 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderControlTests testNothingIsCapturedUntilEveryNeededPermissionIsGranted]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderControlTests testNothingIsCapturedUntilEveryNeededPermissionIsGranted]' passed (0.124 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testNothingIsCapturedUntilEveryNeededPermissionIsGranted]' passed (0.003 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderControlTests testStartAndFinishAreIdempotentByIdAndFingerprint]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderControlTests testStartAndFinishAreIdempotentByIdAndFingerprint]' passed (0.036 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testStartAndFinishAreIdempotentByIdAndFingerprint]' passed (0.003 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderControlTests testStartObserveFinishOverTheChannelAndTheArchiveHoldsWhatWasObserved]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderControlTests testStartObserveFinishOverTheChannelAndTheArchiveHoldsWhatWasObserved]' passed (0.130 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testStartObserveFinishOverTheChannelAndTheArchiveHoldsWhatWasObserved]' passed (0.108 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheBootstrapFileIsReadOnceAndDeleted]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheBootstrapFileIsReadOnceAndDeleted]' passed (0.012 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheBootstrapFileIsReadOnceAndDeleted]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheRealPermissionStatusIsFourTypedAnswers]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheRealPermissionStatusIsFourTypedAnswers]' passed (0.070 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheRealPermissionStatusIsFourTypedAnswers]' passed (0.031 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheSocketDirectoryMustBePrivateAndTheSocketIsOwnerOnly]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheSocketDirectoryMustBePrivateAndTheSocketIsOwnerOnly]' passed (0.049 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheSocketDirectoryMustBePrivateAndTheSocketIsOwnerOnly]' passed (0.002 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheTokenWorksOnceAndOnlyTheFirstConnectionIsTheChannel]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheTokenWorksOnceAndOnlyTheFirstConnectionIsTheChannel]' passed (0.004 seconds).
-Test Suite 'RecorderControlTests' passed at 2026-10-07 08:11:34.599.
-	 Executed 11 tests, with 0 failures (0 unexpected) in 0.736 (0.738) seconds
-Test Suite 'RecorderProcessTests' started at 2026-10-07 08:11:34.599.
+Test Case '-[QuansioMacBridgeTests.RecorderControlTests testTheTokenWorksOnceAndOnlyTheFirstConnectionIsTheChannel]' passed (0.002 seconds).
+Test Suite 'RecorderControlTests' passed at 2026-10-07 08:33:28.478.
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.260 (0.261) seconds
+Test Suite 'RecorderProcessTests' started at 2026-10-07 08:33:28.478.
 Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessExitsWhenItsParentGoesAway]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessExitsWhenItsParentGoesAway]' passed (0.099 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessExitsWhenItsParentGoesAway]' passed (0.198 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessReadsAndDeletesItsTokenAndAnswersOneAuthenticatedChannel]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessReadsAndDeletesItsTokenAndAnswersOneAuthenticatedChannel]' passed (0.343 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessReadsAndDeletesItsTokenAndAnswersOneAuthenticatedChannel]' passed (0.167 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessRefusesABootstrapFileOthersCouldRead]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessRefusesABootstrapFileOthersCouldRead]' passed (0.065 seconds).
-Test Suite 'RecorderProcessTests' passed at 2026-10-07 08:11:35.107.
-	 Executed 3 tests, with 0 failures (0 unexpected) in 0.508 (0.508) seconds
-Test Suite 'RecorderSessionTests' started at 2026-10-07 08:11:35.107.
+Test Case '-[QuansioMacBridgeTests.RecorderProcessTests testTheRealProcessRefusesABootstrapFileOthersCouldRead]' passed (0.053 seconds).
+Test Suite 'RecorderProcessTests' passed at 2026-10-07 08:33:28.896.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.417 (0.418) seconds
+Test Suite 'RecorderSessionTests' started at 2026-10-07 08:33:28.896.
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAnArchiveOverItsLimitDropsScreenshotsThenRefuses]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAnArchiveOverItsLimitDropsScreenshotsThenRefuses]' passed (0.010 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAnArchiveOverItsLimitDropsScreenshotsThenRefuses]' passed (0.007 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAnotherAccountOrEpochEndsTheSessionAndDiscardsEverything]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAnotherAccountOrEpochEndsTheSessionAndDiscardsEverything]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAnotherAccountOrEpochEndsTheSessionAndDiscardsEverything]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAScreenPointIsKeptOnlyForAnUnresolvedControlAsEvidence]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAScreenPointIsKeptOnlyForAnUnresolvedControlAsEvidence]' passed (0.002 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testAScreenPointIsKeptOnlyForAnUnresolvedControlAsEvidence]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testCancelDiscardsAndAFinishedSessionCannotBeFinishedAgainDifferently]' started.
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testCancelDiscardsAndAFinishedSessionCannotBeFinishedAgainDifferently]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testCaptureStopsWhileSecureInputIsOnAndResumesAfter]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testCaptureStopsWhileSecureInputIsOnAndResumesAfter]' passed (0.003 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testCaptureStopsWhileSecureInputIsOnAndResumesAfter]' passed (0.002 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testEveryCallCarriesTheFence]' started.
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testEveryCallCarriesTheFence]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testNothingButFinishCompletesARecording]' started.
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testNothingButFinishCompletesARecording]' passed (0.002 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testNothingTheRulesRemoveIsKeptAndTheSummaryHoldsCountsOnly]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testNothingTheRulesRemoveIsKeptAndTheSummaryHoldsCountsOnly]' passed (0.003 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testNothingTheRulesRemoveIsKeptAndTheSummaryHoldsCountsOnly]' passed (0.002 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testRedactionRunsBeforeTruncationSoACutCannotLeaveHalfASecret]' started.
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testRedactionRunsBeforeTruncationSoACutCannotLeaveHalfASecret]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testRunningOutOfTimeAbortsAndDiscardsItNeverFinishes]' started.
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testRunningOutOfTimeAbortsAndDiscardsItNeverFinishes]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTextTypedIntoASecureFieldIsDroppedWholeAndCounted]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTextTypedIntoASecureFieldIsDroppedWholeAndCounted]' passed (0.002 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTextTypedIntoASecureFieldIsDroppedWholeAndCounted]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTheArchiveHasExactlyTheShapeTheServerValidates]' started.
-Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTheArchiveHasExactlyTheShapeTheServerValidates]' passed (0.002 seconds).
+Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTheArchiveHasExactlyTheShapeTheServerValidates]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTheGoldenArchiveIsWhatTheRecorderProduces]' started.
 Test Case '-[QuansioMacBridgeTests.RecorderSessionTests testTheGoldenArchiveIsWhatTheRecorderProduces]' passed (0.004 seconds).
-Test Suite 'RecorderSessionTests' passed at 2026-10-07 08:11:35.139.
-	 Executed 13 tests, with 0 failures (0 unexpected) in 0.031 (0.032) seconds
-Test Suite 'RecordingRedactionTests' started at 2026-10-07 08:11:35.139.
+Test Suite 'RecorderSessionTests' passed at 2026-10-07 08:33:28.920.
+	 Executed 13 tests, with 0 failures (0 unexpected) in 0.023 (0.024) seconds
+Test Suite 'RecordingRedactionTests' started at 2026-10-07 08:33:28.920.
 Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testASummaryIsCountsAndNeverAValue]' started.
 Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testASummaryIsCountsAndNeverAValue]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testLabelsAreReadAsWordsNotSubstrings]' started.
 Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testLabelsAreReadAsWordsNotSubstrings]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testTheCorpusIsTheContract]' started.
-Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testTheCorpusIsTheContract]' passed (0.002 seconds).
+Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testTheCorpusIsTheContract]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testTheRecorderAgreesWithEveryCorpusCase]' started.
-Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testTheRecorderAgreesWithEveryCorpusCase]' passed (0.005 seconds).
-Test Suite 'RecordingRedactionTests' passed at 2026-10-07 08:11:35.148.
-	 Executed 4 tests, with 0 failures (0 unexpected) in 0.007 (0.008) seconds
-Test Suite 'RecordingScreenshotTests' started at 2026-10-07 08:11:35.148.
+Test Case '-[QuansioMacBridgeTests.RecordingRedactionTests testTheRecorderAgreesWithEveryCorpusCase]' passed (0.002 seconds).
+Test Suite 'RecordingRedactionTests' passed at 2026-10-07 08:33:28.923.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'RecordingScreenshotTests' started at 2026-10-07 08:33:28.923.
 Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testAScreenshotWhoseTextMatchesARuleIsWithheldWholeAndCounted]' started.
 Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testAScreenshotWhoseTextMatchesARuleIsWithheldWholeAndCounted]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testCountSpacingAndDuplicatesAreBounded]' started.
-Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testCountSpacingAndDuplicatesAreBounded]' passed (0.005 seconds).
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testCountSpacingAndDuplicatesAreBounded]' passed (0.001 seconds).
 Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testScreenTextIsTruncatedAfterRedaction]' started.
-Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testScreenTextIsTruncatedAfterRedaction]' passed (0.001 seconds).
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testScreenTextIsTruncatedAfterRedaction]' passed (0.000 seconds).
 Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testSizeIsBoundedByDownscalingAndByBytes]' started.
-Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testSizeIsBoundedByDownscalingAndByBytes]' passed (0.021 seconds).
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testSizeIsBoundedByDownscalingAndByBytes]' passed (0.009 seconds).
 Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testTheSystemsOwnRecogniserReadsACardNumberOffAnImageSoItIsWithheld]' started.
-Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testTheSystemsOwnRecogniserReadsACardNumberOffAnImageSoItIsWithheld]' passed (0.285 seconds).
-Test Suite 'RecordingScreenshotTests' passed at 2026-10-07 08:11:35.461.
-	 Executed 5 tests, with 0 failures (0 unexpected) in 0.313 (0.313) seconds
-Test Suite 'SecureInputTests' started at 2026-10-07 08:11:35.461.
+Test Case '-[QuansioMacBridgeTests.RecordingScreenshotTests testTheSystemsOwnRecogniserReadsACardNumberOffAnImageSoItIsWithheld]' passed (0.123 seconds).
+Test Suite 'RecordingScreenshotTests' passed at 2026-10-07 08:33:29.057.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.134 (0.135) seconds
+Test Suite 'SecureInputTests' started at 2026-10-07 08:33:29.057.
 Test Case '-[QuansioMacBridgeTests.SecureInputTests testTheLiveProbeSeesRealSecureEventInputAndTheSessionPausesOnIt]' started.
 Test Case '-[QuansioMacBridgeTests.SecureInputTests testTheLiveProbeSeesRealSecureEventInputAndTheSessionPausesOnIt]' passed (0.004 seconds).
-Test Suite 'SecureInputTests' passed at 2026-10-07 08:11:35.466.
+Test Suite 'SecureInputTests' passed at 2026-10-07 08:33:29.062.
 	 Executed 1 test, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
-Test Suite 'QuansioMacBridgeTests.xctest' passed at 2026-10-07 08:11:35.466.
-	 Executed 82 tests, with 1 test skipped and 0 failures (0 unexpected) in 5.711 (5.783) seconds
-Test Suite 'All tests' passed at 2026-10-07 08:11:35.466.
-	 Executed 82 tests, with 1 test skipped and 0 failures (0 unexpected) in 5.711 (5.788) seconds
-objc[2516]: Class _TtC12UniversalHID17FluidTouchGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04f248) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x1084325a0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID23FluidTouchGestureFilter is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04f2e8) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x1084326a0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID15RotationGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04f468) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108432860). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID20GameControllerFilter is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04f508) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108432a40). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID18TranslationGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04f5e8) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108432b68). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID21HIDVirtualServicePool is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04f688) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108432f88). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtCC12UniversalHID21HIDVirtualServicePool14VirtualService is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04f750) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108433088). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID14PointerGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04f8b0) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x1084335d8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID12ScaleGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04fa18) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108433798). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID16DigitizerGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04fe40) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108433ec8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID12ScrollFilter is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04ff08) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108434120). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID14KeyboardFilter is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04ffc0) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108434230). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID27TouchSensitiveButtonGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc0500d0) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x1084343d0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID21GameControllerGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc050230) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x1084347b0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID17HIDVirtualService is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc0502d8) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108434970). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHIDP33_77F0A1D2252CCF67CE1080DE620C755225HIDVirtualServiceDelegate is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc04f0d0) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108432360). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID22AbsolutePointerGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc050420) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108434c70). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID13PointerFilter is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc0504e8) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108434d80). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID22NavigationSwipeGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc0505e0) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108434e78). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID21GenericGestureGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc0506a8) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x1084353c0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID16DockSwipeGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc050768) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108435480). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID19HIDReportDispatcher is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc050808) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108435580). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID26TouchSensitiveButtonFilter is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc0508c8) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x1084356f0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID15DigitizerFilter is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc050980) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x1084357b8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID13ScrollGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc050a78) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108435938). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
-objc[2516]: Class _TtC12UniversalHID17ZoomToggleGesture is implemented in both /System/Library/PrivateFrameworks/UniversalHID.framework/Versions/A/UniversalHID (0x2dc050b58) and /Library/Developer/PrivateFrameworks/CoreDevice.framework/Versions/A/Frameworks/UniversalHID.framework/Versions/A/UniversalHID (0x108435a28). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+Test Suite 'QuansioMacBridgeTests.xctest' passed at 2026-10-07 08:33:29.062.
+	 Executed 82 tests, with 14 tests skipped and 0 failures (0 unexpected) in 1.343 (1.349) seconds
+Test Suite 'All tests' passed at 2026-10-07 08:33:29.062.
+	 Executed 82 tests, with 14 tests skipped and 0 failures (0 unexpected) in 1.343 (1.349) seconds
 ◇ Test run started.
 ↳ Testing Library Version: 2084
 ↳ Target Platform: arm64e-apple-macos14.0

@@ -116,3 +116,9 @@ KILLED      desktop: main finishes without the person's click -- tests/recorder.
 KILLED      desktop: an account change leaves the recorder running -- tests/recorder.test.ts > the real recorder process > ends the local recording at once when the account changes, and a later finish is refused
 KILLED      desktop: compile and submit carry an epoch the page sent -- tests/recording.test.ts > the bridge's recording channels > compile and submit carry the epoch main holds, never one the page sent
 SUMMARY killed=48 survived=0 no_verdict=1 total=49
+
+RERUN after commit of the test fix (the one NO-VERDICT above: the named test did fail, but the test process then trapped on an unguarded index, so no failing-test line was printed; the test now reads through first/XCTUnwrap and fails by name):
+CONTROL-PASSED  swift
+COMPILES    recorder: text typed into a secure field is kept
+KILLED      recorder: text typed into a secure field is kept -- QuansioMacBridgeTests.RecorderSessionTests testTextTypedIntoASecureFieldIsDroppedWholeAndCounted (+1 more)
+SUMMARY killed=1 survived=0 no_verdict=0 total=1
