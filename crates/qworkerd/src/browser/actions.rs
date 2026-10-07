@@ -42,6 +42,7 @@ use super::secrets::{
 use super::tab::{CertificateStatus, PendingDialog};
 use super::{classify_input, classify_navigation, Classified};
 
+mod import;
 mod payment;
 
 /// One CDP call of an action.
@@ -71,6 +72,7 @@ enum Interrupt {
 fn static_class(class: &str) -> Option<&'static str> {
     [
         "payment.execute",
+        "browser.session.import",
         "record.delete",
         "credential.access",
         "message.send",

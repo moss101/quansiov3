@@ -259,6 +259,12 @@ def test_json_schemas_validate_real_artifacts():
     validator("mcp-config").validate(mcp)
     compose = yaml.safe_load((ROOT / "config" / "composition.yaml").read_text())
     validator("composition-config").validate(compose)
+    local_secrets = yaml.safe_load((ROOT / "config" / "local-secrets.yaml").read_text())
+    validator("local-secrets-config").validate(local_secrets)
+    payment_inputs = yaml.safe_load((ROOT / "config" / "payment-inputs.yaml").read_text())
+    validator("payment-inputs-config").validate(payment_inputs)
+    browser_import = yaml.safe_load((ROOT / "config" / "browser-import.yaml").read_text())
+    validator("browser-import-config").validate(browser_import)
 
     summaries = sorted((ROOT / "evidence").glob("*/*/summary.json"))
     assert summaries, "at least one task evidence bundle must exist"
@@ -632,3 +638,95 @@ def test_compose_config_schema_keeps_the_sandbox_bounded_and_its_terminal_condit
     assert broken(lambda d: d["limits"].pop("host_call_budget"))
     assert broken(lambda d: d.update(unknown_section={}))
     assert broken(lambda d: d["limits"].update(allow_network=True))
+
+
+def _bounded(name: str, config: str, values: dict):
+    """The shipped config validates, and each key the schema bounds is refused one past either end."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / f"{name}.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / config).read_text())
+    assert not list(validator.iter_errors(good))
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    for key, (low, high) in values.items():
+        assert schema["properties"][key]["minimum"] == low and schema["properties"][key]["maximum"] == high, key
+        assert not broken(lambda d, k=key, v=low: d.update({k: v})), f"{key} at its minimum"
+        assert not broken(lambda d, k=key, v=high: d.update({k: v})), f"{key} at its maximum"
+        assert broken(lambda d, k=key, v=low - 1: d.update({k: v})), f"{key} below its minimum"
+        assert broken(lambda d, k=key, v=high + 1: d.update({k: v})), f"{key} above its maximum"
+        assert broken(lambda d, k=key: d.update({k: "7"})), f"{key} is a number"
+    assert broken(lambda d: d.update(unknown_key=1))
+    assert broken(lambda d: d.pop("version"))
+    assert broken(lambda d: d.update(version=2))
+    return good, broken
+
+
+def test_payment_input_config_keeps_a_card_number_short_lived_and_bounded():
+    good, broken = _bounded(
+        "payment-inputs-config",
+        "payment-inputs.yaml",
+        {"ttl_seconds": (10, 900), "max_ttl_seconds": (10, 900), "max_fields": (1, 16), "max_value_chars": (4, 256)},
+    )
+    assert good["ttl_seconds"] == 300 and good["max_ttl_seconds"] == 900 and good["enabled"] is True
+    # A configuration cannot keep a payment value waiting for an hour, or allow an unbounded supply.
+    assert broken(lambda d: d.update(max_ttl_seconds=3600))
+    assert broken(lambda d: d.update(max_fields=1000))
+    assert broken(lambda d: d.update(enabled="yes"))
+
+
+def test_browser_import_config_keeps_a_staged_cookie_bundle_short_lived_and_bounded():
+    good, broken = _bounded(
+        "browser-import-config",
+        "browser-import.yaml",
+        {
+            "ttl_seconds": (60, 3600),
+            "max_cookies": (1, 100000),
+            "max_value_bytes": (64, 8192),
+            "max_bundle_bytes": (4096, 33554432),
+            "max_domains_listed": (1, 200),
+        },
+    )
+    assert good["ttl_seconds"] == 900 and good["max_cookies"] == 5000 and good["enabled"] is True
+    # A bundle travels in one command, so the shipped bundle bound stays under the API's request body limit (2 MiB).
+    assert good["max_bundle_bytes"] <= 2 * 1024 * 1024
+    assert broken(lambda d: d.update(ttl_seconds=86400))
+    assert broken(lambda d: d.update(enabled=None))
+
+
+def test_local_secrets_config_bounds_the_password_manager_the_import_and_the_payment_form():
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "local-secrets-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "local-secrets.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+    numeric = [key for key, rule in schema["properties"].items() if rule.get("type") == "integer"]
+    assert numeric, "the schema bounds numbers"
+    for key in numeric:
+        low, high = schema["properties"][key]["minimum"], schema["properties"][key]["maximum"]
+        for value, ok in ((low, True), (high, True), (low - 1, False), (high + 1, False)):
+            document = copy.deepcopy(good)
+            document[key] = value
+            assert (not list(validator.iter_errors(document))) == ok, f"{key}={value}"
+    for switch in ("local_secrets.enabled", "local_secrets.import_enabled"):
+        document = copy.deepcopy(good)
+        document[switch] = "yes"
+        assert list(validator.iter_errors(document)), switch
+    document = copy.deepcopy(good)
+    document["local_secrets.vault_path"] = "/etc"
+    assert list(validator.iter_errors(document)), "no key names a path"
+    # The desktop's payment ceiling never passes the runtime's.
+    runtime = yaml.safe_load((ROOT / "config" / "payment-inputs.yaml").read_text())
+    assert good["local_secrets.payment_ttl_ms"] / 1000 <= runtime["max_ttl_seconds"]
+    assert good["local_secrets.payment_max_fields"] <= runtime["max_fields"]
+    assert good["local_secrets.payment_value_max_chars"] <= runtime["max_value_chars"]

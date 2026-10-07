@@ -243,6 +243,23 @@ impl BrowserDriver {
                 )
                 .await
             }
+            "browser.import_session" => {
+                self.import_session(
+                    ctx,
+                    required(args, "import_id")?,
+                    required(args, "digest")?,
+                    args.get("cookie_count")
+                        .and_then(Value::as_u64)
+                        .and_then(|count| usize::try_from(count).ok())
+                        .ok_or_else(|| {
+                            BrowserFault::new(
+                                FaultCode::InvalidRequest,
+                                "cookie_count is required for this tool",
+                            )
+                        })?,
+                )
+                .await
+            }
             "browser.press_key" => {
                 self.press_key(
                     ctx,

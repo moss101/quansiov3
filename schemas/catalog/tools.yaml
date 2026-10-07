@@ -11,6 +11,7 @@ tools:
 - browser.click
 - browser.type
 - browser.fill_payment_field
+- browser.import_session
 - browser.press_key
 - browser.handle_dialog
 - browser.extract

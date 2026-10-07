@@ -143,12 +143,30 @@ export const FILE_CHANNELS = [
   "files.watch.unsubscribe",
 ] as const;
 
+/**
+ * Channels for the person's own secrets (ADP-009, DOMAIN.md §13.9 A, B): the password manager and the import from another browser.
+ * Every one is the main window's alone. A payload names an opaque id main issued (a saved login, a profile the scan listed) and
+ * never a path; no answer carries a password or a cookie value, and no agent tool corresponds to any of them.
+ */
+export const SECRET_CHANNELS = [
+  "passwords.status",
+  "passwords.list",
+  "passwords.suggest",
+  "passwords.save",
+  "passwords.remove",
+  "passwords.fill",
+  "import.scan",
+  "import.logins",
+  "import.cookies",
+] as const;
+
 /** Channels the renderer may invoke (renderer → main, request/response). */
-export const PRELOAD_ALLOWLIST = [...BRIDGE_CHANNELS, ...SHELL_CHANNELS, ...FILE_CHANNELS] as const;
+export const PRELOAD_ALLOWLIST = [...BRIDGE_CHANNELS, ...SHELL_CHANNELS, ...FILE_CHANNELS, ...SECRET_CHANNELS] as const;
 
 export type BridgeChannel = (typeof BRIDGE_CHANNELS)[number];
 export type ShellChannel = (typeof SHELL_CHANNELS)[number];
 export type FileChannel = (typeof FILE_CHANNELS)[number];
+export type SecretChannel = (typeof SECRET_CHANNELS)[number];
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
 
 /** Channels main may push on (main → renderer, fire and forget). */
@@ -387,6 +405,17 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     closeFileEdit: (editId: string) => send("files.edit.close", { editId }),
     watchFolder: (rootId: string, entryId?: string | null) => send("files.watch.subscribe", { rootId, entryId: entryId ?? null }),
     unwatchFolder: (subscriptionId: string) => send("files.watch.unsubscribe", { subscriptionId }),
+    // The person's own secrets (ADP-009): the password manager (metadata only; a password is typed in and never read back) and the
+    // import from another browser, one type at a time (each asks its own native question in main).
+    passwordStatus: () => send("passwords.status", {}),
+    listPasswords: () => send("passwords.list", {}),
+    suggestPasswords: (pageUrl: string) => send("passwords.suggest", { pageUrl }),
+    savePassword: (login: { origin: string; username: string; password: string }) => send("passwords.save", login),
+    removePassword: (id: string) => send("passwords.remove", { id }),
+    fillPassword: (request: { id: string; sessionId: string }) => send("passwords.fill", request),
+    scanBrowsers: () => send("import.scan", {}),
+    importLogins: (request: { family: string; profile: string }) => send("import.logins", request),
+    stageCookies: (request: { family: string; profile: string; domains: readonly string[] }) => send("import.cookies", request),
     onFileChanges: (listener: (payload: unknown) => void) => subscribe("files.changes", listener),
     onFileGrant: (listener: (payload: unknown) => void) => subscribe("files.grant", listener),
   };

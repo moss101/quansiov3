@@ -117,6 +117,15 @@ describe("preload bridge", () => {
         "submitRecordingSkill",
         "detachLive",
         "supplyPayment",
+        "passwordStatus",
+        "listPasswords",
+        "suggestPasswords",
+        "savePassword",
+        "removePassword",
+        "fillPassword",
+        "scanBrowsers",
+        "importLogins",
+        "stageCookies",
         "viewThread",
         "createThread",
         "addParticipant",
@@ -315,6 +324,16 @@ describe("preload bridge", () => {
     await api.closeFileEdit("edit_00000000000000000000000000000000");
     await api.watchFolder("lroot_00000000000000000000000000000000");
     await api.unwatchFolder("sub_0000000000000000");
+    // The person's own secrets (ADP-009): metadata and ids in, counts out.
+    await api.passwordStatus();
+    await api.listPasswords();
+    await api.suggestPasswords("https://example.com/login");
+    await api.savePassword({ origin: "https://example.com", username: "ada", password: "a-test-password" });
+    await api.removePassword("pw_00000000000000000000000000000001");
+    await api.fillPassword({ id: "pw_00000000000000000000000000000001", sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.scanBrowsers();
+    await api.importLogins({ family: "chrome", profile: "Default" });
+    await api.stageCookies({ family: "chrome", profile: "Default", domains: ["example.test"] });
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { BRIDGE_CHANNELS, FILE_CHANNELS, PRELOAD_ALLOWLIST, SHELL_CHANNELS, type PreloadChannel } from "../src/preload/bridge.js";
+import { BRIDGE_CHANNELS, FILE_CHANNELS, PRELOAD_ALLOWLIST, SECRET_CHANNELS, SHELL_CHANNELS, type PreloadChannel } from "../src/preload/bridge.js";
 import { IpcGuard, POLICY, registerGuardedHandlers, senderOf, type WindowHandler } from "../src/main/ipc-trust.js";
 import { parseShellConfig } from "../src/main/shell-config.js";
 import { WindowManager, type ManagedWindow, type WindowType } from "../src/main/windows.js";
@@ -145,7 +145,7 @@ describe("a trusted sender", () => {
 
   it("registers exactly the allowlist (and the policy covers exactly it)", () => {
     expect(Object.keys(POLICY).sort()).toEqual([...PRELOAD_ALLOWLIST].sort());
-    expect([...BRIDGE_CHANNELS, ...SHELL_CHANNELS, ...FILE_CHANNELS]).toEqual([...PRELOAD_ALLOWLIST]);
+    expect([...BRIDGE_CHANNELS, ...SHELL_CHANNELS, ...FILE_CHANNELS, ...SECRET_CHANNELS]).toEqual([...PRELOAD_ALLOWLIST]);
   });
 });
 

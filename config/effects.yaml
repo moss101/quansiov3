@@ -39,6 +39,10 @@ browser_side_effects:
   potential_external_effect:
     settles_as: computer.input.privileged
     journaled: true
+  # Brings another browser's session data (cookies) into the managed browser (ADP-009, DOMAIN.md 13.9 B). Always asked at tier 4.
+  session_import:
+    settles_as: browser.session.import
+    journaled: true
 
 # Worktree retention operations (ADP-005, DOMAIN.md 8.7 G). qworkerd's retention host settles each operation as the
 # effect class named here; a test holds `crates/qworkerd` to this map, and every class named must be in the taxonomy

@@ -1,0 +1,24 @@
+# Staged browser-data imports (ADP-009, DOMAIN.md 13.9 B). Policy lives here, never as a source constant (D-018).
+# crates/machine/src/secrets/imports.rs reads this file; schemas/json/browser-import-config.schema.json bounds every value, so a
+# configuration cannot keep a person's session cookies waiting for days or accept an unbounded bundle.
+#
+# A person who imports another browser's cookies into the agent's browser first STAGES them (`ImportBrowserSession`): the bundle is
+# sealed as one SecretHandle (provider `browser_import`) and waits for the approved `browser.import_session` call. Staging is not
+# importing; nothing reaches a browser until that call is approved (effect class browser.session.import, tier 4, always asked). The
+# bundle is overwritten (re-sealed empty and revoked) the moment it is taken or when its time runs out.
+version: 1
+
+# Switch. Off, staging is refused with POLICY_DENIED and nothing is sealed.
+enabled: true
+
+# How long a staged bundle waits for its approval and use (seconds). Past it the bundle is overwritten.
+ttl_seconds: 900
+
+# The most cookies in one bundle, the longest cookie value (bytes), and the largest bundle (bytes of JSON). A bundle travels in one
+# command, so max_bundle_bytes stays under the API's request body limit (2 MiB); a person imports a few domains, not a whole profile.
+max_cookies: 5000
+max_value_bytes: 4096
+max_bundle_bytes: 1048576
+
+# How many domains an approval request lists before it says "and N more".
+max_domains_listed: 50

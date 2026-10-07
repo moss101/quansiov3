@@ -27,6 +27,7 @@ import {
 import { attentionFromEvent, type ComputerAttention } from "../live/permissions.js";
 import { TerminalReplay, decodeTerminalBytes } from "../live/terminal.js";
 import { ComputerPermissions } from "./ComputerPermissions.js";
+import { LoginSuggestions } from "./LoginSuggestions.js";
 import { PaymentInput } from "./PaymentInput.js";
 
 interface LiveProps {
@@ -325,6 +326,7 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
               </div>
             ))}
           </section>
+          <LoginSuggestions sessionId={session.sessionId} pageUrl={frame?.url ?? session.currentUrl ?? null} />
           <PaymentInput pageUrl={frame?.url ?? session.currentUrl ?? null} />
           {session.computerControl ? (
             <section className="live-computer">

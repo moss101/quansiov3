@@ -17,7 +17,7 @@
  * answers nothing at all.
  */
 
-import { BRIDGE_CHANNELS, FILE_CHANNELS, PRELOAD_ALLOWLIST, SHELL_CHANNELS, type BridgeChannel, type PreloadChannel } from "../preload/bridge.js";
+import { BRIDGE_CHANNELS, FILE_CHANNELS, PRELOAD_ALLOWLIST, SECRET_CHANNELS, SHELL_CHANNELS, type BridgeChannel, type PreloadChannel } from "../preload/bridge.js";
 import { navigationAllowed } from "./security.js";
 import type { ManagedWindow, WindowLookup, WindowType } from "./windows.js";
 
@@ -137,6 +137,22 @@ const FILE_POLICY: Readonly<Record<(typeof FILE_CHANNELS)[number], ChannelPolicy
   "files.watch.unsubscribe": { windows: ["main"] },
 };
 
+/**
+ * The password manager and the import (ADP-009, DOMAIN.md §13.9 A, B). Every channel is the main window's alone: a pop-out, a
+ * quick-entry window and the indicator are never offered a saved login or another browser's data.
+ */
+const SECRET_POLICY: Readonly<Record<(typeof SECRET_CHANNELS)[number], ChannelPolicy>> = {
+  "passwords.status": { windows: ["main"] },
+  "passwords.list": { windows: ["main"] },
+  "passwords.suggest": { windows: ["main"] },
+  "passwords.save": { windows: ["main"] },
+  "passwords.remove": { windows: ["main"] },
+  "passwords.fill": { windows: ["main"] },
+  "import.scan": { windows: ["main"] },
+  "import.logins": { windows: ["main"] },
+  "import.cookies": { windows: ["main"] },
+};
+
 function bridgePolicy(channel: BridgeChannel): ChannelPolicy {
   const popout = POPOUT[channel];
   const windows: WindowType[] = ["main"];
@@ -151,7 +167,7 @@ function bridgePolicy(channel: BridgeChannel): ChannelPolicy {
 
 /** The policy of every allowlisted channel. A bridge channel nobody lists above is main-only. */
 export const POLICY: Readonly<Record<PreloadChannel, ChannelPolicy>> = Object.freeze(
-  Object.fromEntries([...BRIDGE_CHANNELS.map((channel) => [channel, bridgePolicy(channel)] as const), ...Object.entries(SHELL_POLICY), ...Object.entries(FILE_POLICY)]) as Record<PreloadChannel, ChannelPolicy>,
+  Object.fromEntries([...BRIDGE_CHANNELS.map((channel) => [channel, bridgePolicy(channel)] as const), ...Object.entries(SHELL_POLICY), ...Object.entries(FILE_POLICY), ...Object.entries(SECRET_POLICY)]) as Record<PreloadChannel, ChannelPolicy>,
 );
 
 export type Refusal =

@@ -20,7 +20,7 @@
 #                                   Effect Ledger; only the caller differs.
 # A declaration must be at least one of the two. Both flags only narrow: no projection layer, pack or skill
 # makes a model_visible: false tool visible. The 44 tools declared before ADP-008 are all things a model
-# proposes to do, so they keep the defaults; webdev.preview_scopes is host-only. An unknown key is refused,
+# proposes to do, so they keep the defaults; webdev.preview_scopes and browser.import_session (ADP-009) are host-only. An unknown key is refused,
 # so a misspelt flag cannot leave a tool visible.
 version: 1
 
@@ -642,6 +642,61 @@ tools:
             certificate_sha256: { type: [string, "null"] }
             decided_by: { type: [string, "null"] }
       required: [filled]
+
+  - name: browser.import_session
+    version: 1
+    description: >-
+      Host-only. Apply the cookies a person staged from another browser to the managed browser (DOMAIN.md 13.9 B). The arguments
+      name the staged bundle, its digest, its size and the domains it covers, and never a cookie value; the call settles as
+      browser.session.import, tier 4, asked every time. A model is never offered this tool.
+    model_visible: false
+    host_callable: true
+    host: browser
+    source_trust: untrusted_external
+    side_effect: session_import
+    effect_class: browser.session.import
+    resource: { kind: domain, selector: "*" }
+    idempotency: { digest_args: [session_id, import_id, digest, cookie_count] }
+    max_output_bytes: 8192
+    timeout_ms: 120000
+    cancellable: false
+    evidence: { kinds: [browser_action], redact: [] }
+    grant_templates:
+      - effect_class: browser.session.import
+        resource: { kind: domain, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        session_id: { type: string, minLength: 1 }
+        import_id: { type: string, minLength: 1 }
+        digest: { type: string, minLength: 64, maxLength: 64 }
+        cookie_count: { type: integer, minimum: 1 }
+        domains:
+          type: array
+          maxItems: 50
+          items: { type: string, minLength: 1, maxLength: 253 }
+        more_domains: { type: integer, minimum: 0 }
+      required: [session_id, import_id, digest, cookie_count, domains]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        imported: { type: boolean }
+        cookie_count: { type: integer }
+        applied: { type: integer }
+        rejected: { type: integer }
+        digest: { type: string }
+        in_doubt: { type: boolean }
+        action_id: { type: string }
+        reason: { type: string }
+        retryable: { type: boolean }
+        requires_new_observation: { type: boolean }
+        guidance: { type: string }
+        reconciled: { type: boolean }
+        outcome: { type: string }
+      required: []
 
   - name: browser.press_key
     version: 1

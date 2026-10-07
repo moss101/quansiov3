@@ -182,6 +182,53 @@ pub type TakeFuture =
 
 type TakeFn = Arc<dyn Fn(PaymentRequest) -> TakeFuture + Send + Sync>;
 
+/// One staged bundle to take, with the call it is taken for.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ImportRequest {
+    /// The staged bundle's id, as the approved call named it.
+    pub import_id: String,
+    /// The digest the approval carried: the runtime refuses a bundle that is not this one.
+    pub digest: String,
+    /// The ToolCall the import belongs to.
+    pub call_id: String,
+    /// The action id the import belongs to.
+    pub action_id: String,
+}
+
+/// A staged bundle of another browser's cookies, taken once. The values are zeroed when it is dropped and redacted in every
+/// rendering.
+pub struct ImportedBundle {
+    /// The cookies (the runtime's own type: [`quansio_machine::secrets::imports::ImportCookie`] redacts its value in `Debug`).
+    pub cookies: Vec<quansio_machine::secrets::imports::ImportCookie>,
+}
+
+impl std::fmt::Debug for ImportedBundle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "ImportedBundle(<{} cookies redacted>)",
+            self.cookies.len()
+        )
+    }
+}
+
+impl Drop for ImportedBundle {
+    /// Overwrite every value before the allocation is released (best effort, as for [`SecretText`]).
+    fn drop(&mut self) {
+        for cookie in &mut self.cookies {
+            let mut bytes = std::mem::take(&mut cookie.value).into_bytes();
+            bytes.fill(0);
+            std::hint::black_box(&bytes);
+        }
+    }
+}
+
+/// The future an import take returns.
+pub type ImportFuture =
+    Pin<Box<dyn Future<Output = Result<ImportedBundle, BrowserFault>> + Send + 'static>>;
+
+type ImportFn = Arc<dyn Fn(ImportRequest) -> ImportFuture + Send + Sync>;
+
 /// What the runtime returns for one placeholder: the value, and where it may be used.
 #[derive(Debug)]
 pub struct ResolvedSecret {
@@ -218,6 +265,8 @@ pub struct SecretPort {
     resolve: Arc<dyn Fn(SecretRequest) -> ResolveFuture + Send + Sync>,
     /// Where the person's one-time payment values are taken from (ADP-009), when the runtime has one.
     payments: Option<TakeFn>,
+    /// Where the person's staged cookie bundle is taken from (ADP-009), when the runtime has one.
+    imports: Option<ImportFn>,
 }
 
 impl SecretPort {
@@ -229,6 +278,7 @@ impl SecretPort {
         Self {
             resolve: Arc::new(resolve),
             payments: None,
+            imports: None,
         }
     }
 
@@ -241,6 +291,35 @@ impl SecretPort {
     {
         self.payments = Some(Arc::new(take));
         self
+    }
+
+    /// Install the source of staged cookie bundles. A take **consumes**: the runtime overwrites the bundle as it hands it over, so
+    /// a second take of the same id is `SecretUnavailable` until the person stages again.
+    #[must_use]
+    pub fn with_imports<F>(mut self, take: F) -> Self
+    where
+        F: Fn(ImportRequest) -> ImportFuture + Send + Sync + 'static,
+    {
+        self.imports = Some(Arc::new(take));
+        self
+    }
+
+    /// Take one staged bundle, if the runtime has it.
+    ///
+    /// # Errors
+    /// Returns [`FaultCode::SecretUnavailable`] when no source is connected, and whatever the runtime refused with otherwise
+    /// (nothing staged, expired, already used, not the bundle that was approved).
+    pub async fn take_import(
+        &self,
+        request: ImportRequest,
+    ) -> Result<ImportedBundle, BrowserFault> {
+        match &self.imports {
+            Some(take) => take(request).await,
+            None => Err(BrowserFault::new(
+                FaultCode::SecretUnavailable,
+                "no browser-data import is connected to this session",
+            )),
+        }
     }
 
     /// Take one payment value, if the runtime has any to give.

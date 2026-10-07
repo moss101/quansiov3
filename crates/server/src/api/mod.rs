@@ -18,6 +18,7 @@
 pub mod admin;
 pub mod artifacts;
 pub mod auth;
+pub mod browser_imports;
 pub mod collaboration;
 pub mod commands;
 pub mod diagnostics;
