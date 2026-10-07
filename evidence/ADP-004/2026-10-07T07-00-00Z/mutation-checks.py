@@ -105,7 +105,7 @@ MUTANTS = [
      "    if (this.#asking) {\n      return this.#asking;\n    }\n", ""),
     ("update: installs over running work without asking", "vitest", MAIN + "update-gate.ts",
      'const status = await this.#read();\n    if (status.kind === "idle") {\n      this.#stopWaiting();\n      return this.#install();\n    }\n    const choice',
-     'const status = await this.#read();\n    if (Boolean(status)) {\n      this.#stopWaiting();\n      return this.#install();\n    }\n    const choice'),
+     'const status = await this.#read();\n    if (status.kind === "idle" || (status as { kind: string }).kind === "busy") {\n      this.#stopWaiting();\n      return this.#install();\n    }\n    const choice'),
     ("update: install-when-idle installs while busy", "vitest", MAIN + "update-gate.ts",
      'if (status.kind === "idle" && this.#options.updates.downloaded) {', "if (this.#options.updates.downloaded) {"),
     ("update: a failed install leaves the permission to quit", "vitest", MAIN + "update-gate.ts",
