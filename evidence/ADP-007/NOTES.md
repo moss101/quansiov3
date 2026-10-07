@@ -74,3 +74,22 @@ What ran for real, what did not, what was deferred, and the traps worth keeping.
 - **Hand-written ids must be 26 Crockford characters** (a stray `U` or a 27-character id fails the command, not the CHECK).
 - **The format hook rewrites files between a Read and an Edit**; edits to files the hook touches were made with patch scripts.
 - **chrono-tz** is a new dependency (with phf and siphasher): it passed DOSSIER §18, `deny.toml` and the supply-chain gate.
+
+## Mutation checks
+
+`mutation-checks.py` (this bundle) breaks 39 guards on purpose (replay ledger, signature and staleness, paused hook, delivery id,
+the three layers of the body cap, rate limits, revision check and advance, idempotent create, plan limits, time zone rules,
+journal replay of single steps and items, call start, call budget, approval threshold, schema validation of results, script
+structure, recovery of an orphaned turn, the attention item, the untrusted block, its label, its segment and its boundary markers,
+four desktop guards). A mutant counts only when it compiles, its control passed and a named test then fails.
+
+- The first full run found two holes in the tests, one mutant that was too narrow and one robustness gap in the code, each closed and re-run: the body cap has
+  three layers, so the mutant now removes all three (a single layer survives by design); a finished single step called again
+  after a restart left the model untouched (the port is idempotent) but wrote a second `call_finished`, which the restart test now
+  asserts cannot happen; two mutants made a fan-out spin forever, which the suite could only report as a timeout, so a fan-out
+  that makes no progress over `items + 4` rounds now ends the step with a typed `STALLED` failure and the tests bound every
+  pass in time; the call-cap refusal now has to name the guaranteed calls.
+- **One mutant survives, by layering, and is left standing:** removing `room` in the fan-out loop (items start without
+  regard to the cap). The cap is enforced before any item starts, at the fan-out gate (`capacity(used + remaining + items)`), so
+  `room` is a second layer that no reachable journal can exercise; a test that reached it would have to fabricate a journal the
+  executor never writes.

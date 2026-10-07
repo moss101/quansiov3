@@ -1,0 +1,4 @@
+fmt rc=0
+    Checking quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a2ab90f91c5b77719/crates/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 15.27s
+clippy rc=0

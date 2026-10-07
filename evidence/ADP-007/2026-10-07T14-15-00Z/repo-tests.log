@@ -1,0 +1,26 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a2ab90f91c5b77719
+collected 246 items / 1 deselected / 245 selected
+
+tests/architecture/test_arch_check.py .................................. [ 13%]
+.................                                                        [ 20%]
+tests/architecture/test_authority_check.py ........                      [ 24%]
+tests/architecture/test_config_catalog.py ..........                     [ 28%]
+tests/architecture/test_guest_image_config.py .                          [ 28%]
+tests/architecture/test_inventory.py .............                       [ 33%]
+tests/architecture/test_legacy_map_check.py ...........                  [ 38%]
+tests/architecture/test_prefix_contract_consistency.py ..                [ 39%]
+tests/architecture/test_qa002_composition.py ............                [ 44%]
+tests/architecture/test_qa002_consistency.py .....                       [ 46%]
+tests/architecture/test_runtime_state_parity.py ....                     [ 47%]
+tests/architecture/test_workspace_check.py ............                  [ 52%]
+tests/contract/test_contracts.py ..........................              [ 63%]
+tests/contract/test_qa001_gate.py ....                                   [ 64%]
+tests/ci/test_dossier_consistency.py .................                   [ 71%]
+tests/ci/test_evidence.py ....                                           [ 73%]
+tests/ci/test_progress_tool.py ......                                    [ 75%]
+tests/ci/test_qa001_tools.py ..............................              [ 88%]
+tests/ci/test_supply_chain.py .............................              [100%]
+
+====================== 245 passed, 1 deselected in 59.40s ======================

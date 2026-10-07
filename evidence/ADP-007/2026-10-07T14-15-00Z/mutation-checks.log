@@ -1,0 +1,111 @@
+# ADP-007 mutation checks at b2399340
+CONTROL-PASSED trig
+COMPILES replay: the purge of old records removes every record
+KILLED replay: the purge of old records removes every record <- a_replayed_webhook_does_not_fire_twice
+COMPILES replay: a signature is not remembered
+KILLED replay: a signature is not remembered <- a_replayed_webhook_does_not_fire_twice
+COMPILES replay: a seen delivery claims a fire
+KILLED replay: a seen delivery claims a fire <- a_replayed_webhook_does_not_fire_twice
+COMPILES filters: a group holds when any condition holds
+KILLED filters: a group holds when any condition holds <- filters_pass_a_delivery_when_any_group_holds_and_fail_closed
+COMPILES auth: a stale signature is accepted
+KILLED auth: a stale signature is accepted <- an_inbound_request_is_authenticated_bounded_and_refused_with_typed_errors
+COMPILES auth: a wrong signature is accepted
+KILLED auth: a wrong signature is accepted <- an_inbound_request_is_authenticated_bounded_and_refused_with_typed_errors
+COMPILES auth: a paused hook accepts a delivery
+KILLED auth: a paused hook accepts a delivery <- an_inbound_request_is_authenticated_bounded_and_refused_with_typed_errors
+COMPILES auth: a malformed delivery id is accepted
+KILLED auth: a malformed delivery id is accepted <- an_inbound_request_is_authenticated_bounded_and_refused_with_typed_errors
+COMPILES bounds: the body is not capped
+SURVIVED bounds: the body is not capped
+COMPILES bounds: an endpoint has no rate limit
+KILLED bounds: an endpoint has no rate limit <- an_inbound_request_is_authenticated_bounded_and_refused_with_typed_errors
+COMPILES revision: a stale expected_revision is applied
+KILLED revision: a stale expected_revision is applied <- a_stale_revision_is_refused_and_a_full_replacement_replaces_everything
+COMPILES revision: an update does not advance the revision
+KILLED revision: an update does not advance the revision <- a_stale_revision_is_refused_and_a_full_replacement_replaces_everything
+COMPILES create: the same request id with another definition is replayed
+KILLED create: the same request id with another definition is replayed <- a_client_named_create_is_idempotent_and_a_different_definition_is_a_mismatch
+COMPILES limits: the enabled-trigger limit is one too high
+KILLED limits: the enabled-trigger limit is one too high <- plan_limits_come_from_configuration
+COMPILES limits: the minimum interval is not enforced
+KILLED limits: the minimum interval is not enforced <- plan_limits_come_from_configuration
+COMPILES dry run: it has no rate limit
+KILLED dry run: it has no rate limit <- a_dry_run_evaluates_without_starting_anything_and_is_rate_limited
+CONTROL-PASSED lib-sched
+COMPILES zones: a repeated wall-clock time fires at its later occurrence
+KILLED zones: a repeated wall-clock time fires at its later occurrence <- scheduler::routine::tests::a_fall_back_repeat_fires_once_at_the_first_occurrence
+COMPILES zones: a skipped wall-clock time never fires
+KILLED zones: a skipped wall-clock time never fires <- scheduler::routine::tests::a_spring_forward_gap_fires_once_at_the_end_of_the_gap
+COMPILES zones: an unknown name falls back to UTC
+KILLED zones: an unknown name falls back to UTC <- a_dry_run_evaluates_without_starting_anything_and_is_rate_limited
+CONTROL-PASSED wf
+COMPILES script: a finished single step is called again after a restart
+SURVIVED script: a finished single step is called again after a restart
+COMPILES script: a finished item is called again after a restart
+NO-VERDICT (failed with no named test) script: a finished item is called again after a restart
+COMPILES script: a call is journalled as started every time
+KILLED script: a call is journalled as started every time <- a_restart_resumes_a_script_from_its_journal_without_repeating_a_completed_call
+COMPILES script: the call budget is not enforced
+NO-VERDICT (failed with no named test) script: the call budget is not enforced
+# ADP-007 mutation checks at 2c9fc974
+CONTROL-PASSED trig
+COMPILES bounds: the body is not capped
+KILLED bounds: the body is not capped <- an_inbound_request_is_authenticated_bounded_and_refused_with_typed_errors
+CONTROL-PASSED wf
+COMPILES script: a finished single step is called again after a restart
+KILLED script: a finished single step is called again after a restart <- a_restart_resumes_a_script_from_its_journal_without_repeating_a_completed_call
+COMPILES script: a finished item is called again after a restart
+NO-VERDICT (failed with no named test) script: a finished item is called again after a restart
+# ADP-007 mutation checks at 09ed65ce
+CONTROL-PASSED wf
+COMPILES script: a finished item is called again after a restart
+# ADP-007 mutation checks at 5aaff219
+CONTROL-PASSED wf
+COMPILES script: a finished item is called again after a restart
+KILLED script: a finished item is called again after a restart <- a_restart_resumes_a_script_from_its_journal_without_repeating_a_completed_call
+COMPILES script: the call budget is not enforced
+KILLED script: the call budget is not enforced <- reaching_the_call_budget_pauses_the_run_into_an_attention_item_instead_of_failing_it
+COMPILES script: a fan-out above the threshold needs no approval
+KILLED script: a fan-out above the threshold needs no approval <- a_script_with_a_gate_runs_as_the_least_privileged_role
+COMPILES script: an invalid item result is accepted
+KILLED script: an invalid item result is accepted <- an_invalid_item_result_fails_that_item_and_the_reducer_sees_the_failure
+COMPILES script: items start without regard to the cap
+SURVIVED script: items start without regard to the cap
+CONTROL-PASSED lib-routines
+COMPILES script: a script with two reducers over one step is valid
+KILLED script: a script with two reducers over one step is valid <- control::routines::dryrun::tests::a_script_shows_its_calls_and_whether_it_needs_a_gate
+COMPILES script: an array bigger than max_items is valid
+KILLED script: an array bigger than max_items is valid <- control::routines::script::tests::the_structural_policy_is_enforced_when_a_script_is_saved
+COMPILES script: more guaranteed calls than the cap is valid
+SURVIVED script: more guaranteed calls than the cap is valid
+CONTROL-PASSED served
+COMPILES script: a turn a killed process left active is not recovered
+KILLED script: a turn a killed process left active is not recovered <- a_killed_process_resumes_a_hook_fired_script_from_its_journal_without_repeating_a_completed_call
+COMPILES script: a budget pause is not an attention item
+KILLED script: a budget pause is not an attention item <- above_the_threshold_a_script_holds_an_approval_before_it_fans_out
+CONTROL-PASSED trig
+COMPILES untrusted: a payload block is a plain text block
+KILLED untrusted: a payload block is a plain text block <- a_dry_run_evaluates_without_starting_anything_and_is_rate_limited
+CONTROL-PASSED untrusted
+COMPILES untrusted: an untrusted block loses its label
+KILLED untrusted: an untrusted block loses its label <- payload_text_cannot_authorize_an_action_through_the_real_plane
+COMPILES untrusted: an untrusted block is merged into the text before it
+KILLED untrusted: an untrusted block is merged into the text before it <- payload_text_cannot_authorize_an_action_through_the_real_plane
+COMPILES untrusted: the boundary markers in a payload are not neutralised
+KILLED untrusted: the boundary markers in a payload are not neutralised <- control::routines::script::tests::a_substituted_value_is_a_data_block_and_is_never_read_again
+CONTROL-PASSED vitest
+COMPILES desktop: an update does not name the revision it was made from
+KILLED desktop: an update does not name the revision it was made from <- tests/automation-triggers.test.ts > an edit that meets a revision conflict > keeps the person's draft, moves t
+COMPILES desktop: pause and resume do not name the revision
+KILLED desktop: pause and resume do not name the revision <- tests/automation-triggers.test.ts > routine commands > names the revision on pause, resume, delete and rotate,
+COMPILES desktop: a kept result still holds the one-time secret
+KILLED desktop: a kept result still holds the one-time secret <- tests/automation-triggers.test.ts > the signing secret is shown once > anything that keeps a result around kee
+COMPILES desktop: any refusal is a revision conflict
+KILLED desktop: any refusal is a revision conflict <- tests/automation-triggers.test.ts > refusals > recognises a revision conflict and nothing else as one
+# mutants: 18  killed: 16  survived: 2  no-verdict: 0
+# ADP-007 mutation checks at 3c8cbbdc
+CONTROL-PASSED lib-routines
+COMPILES script: more guaranteed calls than the cap is valid
+KILLED script: more guaranteed calls than the cap is valid <- control::routines::script::tests::the_budget_is_declared_and_bounded
+# mutants: 1  killed: 1  survived: 0  no-verdict: 0
