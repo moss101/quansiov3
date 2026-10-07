@@ -41,6 +41,17 @@ pub struct RawFamilyReservation {
     pub materialized_by: String,
 }
 
+/// Who may propose one tool (ADP-008).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ToolVisibility {
+    /// The tool's name.
+    pub name: String,
+    /// A model may be offered it and may propose it.
+    pub model_visible: bool,
+    /// The host may call it with no model proposing it.
+    pub host_callable: bool,
+}
+
 /// The generated catalog YAML shape.
 #[derive(Debug, Deserialize)]
 struct CatalogDocument {
@@ -173,7 +184,9 @@ impl ToolRegistry {
         names
     }
 
-    /// Every callable tool name, deduplicated and sorted.
+    /// Every declared tool name, deduplicated and sorted, whoever may call it. This is the set the
+    /// catalog and the contract tests cover; it is **not** a list to show a model: use
+    /// [`ToolRegistry::model_visible_names`] or [`ToolRegistry::exposed_names`] for that.
     #[must_use]
     pub fn callable_names(&self) -> Vec<&str> {
         let mut names: Vec<&str> = self
@@ -184,6 +197,60 @@ impl ToolRegistry {
         names.sort_unstable();
         names.dedup();
         names
+    }
+
+    /// The newest declaration of every tool, in configuration order. Visibility is judged on this one:
+    /// a call resolves to the latest version, so an older version must never make a name visible.
+    fn latest(&self) -> impl Iterator<Item = &ToolDeclaration> {
+        self.declarations.iter().filter(|declaration| {
+            self.get(&declaration.name)
+                .is_some_and(|newest| newest.version == declaration.version)
+        })
+    }
+
+    /// Every tool a model may be offered by *any* projection, deduplicated and sorted: the ceiling a
+    /// model-facing list (a recording compile's tool summaries, a schema export, a tool search, an MCP
+    /// or SDK export) must stay inside. A projection narrows it further and never widens it.
+    #[must_use]
+    pub fn model_visible_names(&self) -> Vec<&str> {
+        let mut names: Vec<&str> = self
+            .latest()
+            .filter(|declaration| declaration.model_visible)
+            .map(|declaration| declaration.name.as_str())
+            .collect();
+        names.sort_unstable();
+        names.dedup();
+        names
+    }
+
+    /// Every tool the host may call without a model, deduplicated and sorted.
+    #[must_use]
+    pub fn host_callable_names(&self) -> Vec<&str> {
+        let mut names: Vec<&str> = self
+            .latest()
+            .filter(|declaration| declaration.host_callable)
+            .map(|declaration| declaration.name.as_str())
+            .collect();
+        names.sort_unstable();
+        names.dedup();
+        names
+    }
+
+    /// Who may propose each tool, for an **administrator-facing** check such as compiling a pack (ADP-008): the
+    /// newest declaration of every tool, sorted by name. It names host-only tools, so it is never a list to show
+    /// a model: use [`ToolRegistry::model_visible_names`] or [`ToolRegistry::exposed_names`] for that.
+    #[must_use]
+    pub fn visibility(&self) -> Vec<ToolVisibility> {
+        let mut table: Vec<ToolVisibility> = self
+            .latest()
+            .map(|declaration| ToolVisibility {
+                name: declaration.name.clone(),
+                model_visible: declaration.model_visible,
+                host_callable: declaration.host_callable,
+            })
+            .collect();
+        table.sort_by(|a, b| a.name.cmp(&b.name));
+        table
     }
 
     /// The catalog families this registry reserves but does not make callable, with the
@@ -205,16 +272,21 @@ impl ToolRegistry {
         self.declarations.is_empty()
     }
 
-    /// The tools a projection exposes, in configuration order.
+    /// The tools a projection exposes **to a model**, in configuration order.
+    ///
+    /// A tool is exposed when the projection's grants cover it *and* it is model-visible (ADP-008). The
+    /// second condition is checked after the first and no input changes it: a host-only tool is absent
+    /// whatever the projection holds, which is how "capability only narrows" holds across the split.
     #[must_use]
     pub fn exposed_to(
         &self,
         projection: &CapabilityProjection,
         now: DateTime<Utc>,
     ) -> Vec<&ToolDeclaration> {
-        self.declarations
-            .iter()
-            .filter(|declaration| declaration.covered_by(&projection.grants, now))
+        self.latest()
+            .filter(|declaration| {
+                declaration.model_visible && declaration.covered_by(&projection.grants, now)
+            })
             .collect()
     }
 

@@ -1,0 +1,265 @@
+{
+ "task_id": "ADP-008",
+ "git_commit": "5fd12e8412660dc35d5204b7cbd8b4de69eb85c0",
+ "recorded_at": "2026-10-07T18:31:16Z",
+ "commands": [
+  {
+   "command": "cargo fmt --all --check && cargo clippy -p quansio-tools -p quansio-server -p quansio-cli -p quansio-contracts -p quansio-machine --all-targets -- -D warnings; ruff check, ruff format --check, mypy intelligence; tsc -p apps/desktop; eslint --max-warnings 0 apps/desktop  # clean",
+   "exit_code": 0,
+   "result": "PASS",
+   "log": "evidence/ADP-008/2026-10-07T19-00-00Z/lint.log"
+  },
+  {
+   "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test -p quansio-tools -p quansio-server -p quansio-cli -p quansio-contracts -p quansio-machine --no-fail-fast  # 1041 passed, 0 failed",
+   "exit_code": 0,
+   "result": "PASS",
+   "log": "evidence/ADP-008/2026-10-07T19-00-00Z/rust-tests.log"
+  },
+  {
+   "command": "cargo test -p quansio-tools --test visibility --test tool_check_binary  # 16 passed: projection narrowing over every subset of a grant pool, host-only absence, caller checks, flag parsing, source scans, the quansio-tool-check binary",
+   "exit_code": 0,
+   "result": "PASS",
+   "log": "evidence/ADP-008/2026-10-07T19-00-00Z/tools-suites.log"
+  },
+  {
+   "command": "cargo test -p quansio-server --test tool_visibility --test outputs_preview --test intelligence_gateway --test pack_install  # 36 passed (5, 13, 5, 13) against real PostgreSQL, the real dispatcher and the real Python plane process",
+   "exit_code": 0,
+   "result": "PASS",
+   "log": "evidence/ADP-008/2026-10-07T19-00-00Z/server-suites.log"
+  },
+  {
+   "command": "uv run --frozen pytest -q (python/)  # 776 passed, 93 skipped (real-boundary variables absent); includes test_pack_install and test_tool_visibility",
+   "exit_code": 0,
+   "result": "PASS",
+   "log": "evidence/ADP-008/2026-10-07T19-00-00Z/python-tests.log"
+  },
+  {
+   "command": "vitest run (apps/desktop)  # 560 passed, 45 skipped; packs.test.ts 9 new",
+   "exit_code": 0,
+   "result": "PASS",
+   "log": "evidence/ADP-008/2026-10-07T19-00-00Z/desktop-tests.log"
+  },
+  {
+   "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current  # 246 passed, 1 deselected (the Rust contract generator cannot run from a worktree; it runs in the finalize dry-run clone)",
+   "exit_code": 0,
+   "result": "PASS",
+   "log": "evidence/ADP-008/2026-10-07T19-00-00Z/repo-tests.log"
+  },
+  {
+   "command": "python3 scripts/validate_v81.py; arch_check; workspace_check; check_authority --check; pack_records  # clean",
+   "exit_code": 0,
+   "result": "PASS",
+   "log": "evidence/ADP-008/2026-10-07T19-00-00Z/static-gates.log"
+  },
+  {
+   "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 31 mutants in the final script, all KILLED after CONTROL-PASSED and COMPILES; the first run's log also holds one survivor (equivalent by layering, replaced) and four stale-pattern NO-VERDICTs that were re-run",
+   "exit_code": 0,
+   "result": "PASS",
+   "log": "evidence/ADP-008/2026-10-07T19-00-00Z/mutation-checks.log"
+  }
+ ],
+ "results": [
+  {
+   "command": "cargo fmt --all --check && cargo clippy -p quansio-tools -p quansio-server -p quansio-cli -p quansio-contracts -p quansio-machine --all-targets -- -D warnings; ruff check, ruff format --check, mypy intelligence; tsc -p apps/desktop; eslint --max-warnings 0 apps/desktop  # clean",
+   "exit_code": 0,
+   "result": "PASS"
+  },
+  {
+   "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test -p quansio-tools -p quansio-server -p quansio-cli -p quansio-contracts -p quansio-machine --no-fail-fast  # 1041 passed, 0 failed",
+   "exit_code": 0,
+   "result": "PASS"
+  },
+  {
+   "command": "cargo test -p quansio-tools --test visibility --test tool_check_binary  # 16 passed: projection narrowing over every subset of a grant pool, host-only absence, caller checks, flag parsing, source scans, the quansio-tool-check binary",
+   "exit_code": 0,
+   "result": "PASS"
+  },
+  {
+   "command": "cargo test -p quansio-server --test tool_visibility --test outputs_preview --test intelligence_gateway --test pack_install  # 36 passed (5, 13, 5, 13) against real PostgreSQL, the real dispatcher and the real Python plane process",
+   "exit_code": 0,
+   "result": "PASS"
+  },
+  {
+   "command": "uv run --frozen pytest -q (python/)  # 776 passed, 93 skipped (real-boundary variables absent); includes test_pack_install and test_tool_visibility",
+   "exit_code": 0,
+   "result": "PASS"
+  },
+  {
+   "command": "vitest run (apps/desktop)  # 560 passed, 45 skipped; packs.test.ts 9 new",
+   "exit_code": 0,
+   "result": "PASS"
+  },
+  {
+   "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current  # 246 passed, 1 deselected (the Rust contract generator cannot run from a worktree; it runs in the finalize dry-run clone)",
+   "exit_code": 0,
+   "result": "PASS"
+  },
+  {
+   "command": "python3 scripts/validate_v81.py; arch_check; workspace_check; check_authority --check; pack_records  # clean",
+   "exit_code": 0,
+   "result": "PASS"
+  },
+  {
+   "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 31 mutants in the final script, all KILLED after CONTROL-PASSED and COMPILES; the first run's log also holds one survivor (equivalent by layering, replaced) and four stale-pattern NO-VERDICTs that were re-run",
+   "exit_code": 0,
+   "result": "PASS"
+  }
+ ],
+ "artifacts": [
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/lint.log",
+   "sha256": "635fca974fa9d1e8032f5bd8cb1c5b91f5ba42573e033ab63a77f1d017a0c707",
+   "bytes": 185
+  },
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/rust-tests.log",
+   "sha256": "f842b61bf74bf99d15dc8bd39e1e386cec4e3a0d57f0d9eceb0039f766cb6967",
+   "bytes": 110389
+  },
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/tools-suites.log",
+   "sha256": "fc8ec2ce967e524260729dea0794e7e7a962b9e65bfe1056836a993e00b2dfca",
+   "bytes": 1833
+  },
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/server-suites.log",
+   "sha256": "8180512f83e1f7dfd3b4251e4365dc73b810c06d1da8bcf6aca59aa087133c25",
+   "bytes": 3887
+  },
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/python-tests.log",
+   "sha256": "04903a731be1ecebed064a7397442c450eaba914faaeca06ded8d5c419282391",
+   "bytes": 1080
+  },
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/desktop-tests.log",
+   "sha256": "76feed0b3fa88e8f1ad0f5210d953ee4534bffe4bd538615ee418ade35617f6b",
+   "bytes": 3632
+  },
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/repo-tests.log",
+   "sha256": "a00589eb96cdf473d7794e1b4aa9a8d6416dfe3014edf706b591414853d98bda",
+   "bytes": 362
+  },
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/static-gates.log",
+   "sha256": "2bcc78a5e6faf177fbe1c95d6bdbef99a09c04ac2ec47ff60590f0ee3dee9053",
+   "bytes": 259
+  },
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/mutation-checks.log",
+   "sha256": "2d5e5274548c4a77afd63503d69c5924f77426db0c2416ede848e8888b564225",
+   "bytes": 8676
+  },
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/mutation-checks.py",
+   "sha256": "cc46b9a954530e0563ad8394350c8ef0bc88b1a98a6c19621d0276dcbb8b0152",
+   "bytes": 14469
+  },
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/TESTS.txt",
+   "sha256": "405b1293abd64b03d299c3866b672cbfc5e5e3d6c2eb295e50a215f80e0b8406",
+   "bytes": 4001
+  },
+  {
+   "path": "evidence/ADP-008/2026-10-07T19-00-00Z/PROGRESS_NOTES.txt",
+   "sha256": "3b568a959ba439db91292b75eec45a78f64fcf15d5e2a040991fd7caf2a2d5ac",
+   "bytes": 1344
+  },
+  {
+   "path": "evidence/ADP-008/RECONCILIATION.md",
+   "sha256": "49d60fc3d8c9fdc530f8542ca6302998423dff8a40d2448489dd42789e0cefc6",
+   "bytes": 6400
+  },
+  {
+   "path": "evidence/ADP-008/PLAN.md",
+   "sha256": "5177713b15587ebcfcad84b9d7e1e0d7cbc2b9516a095499e7fadd8d45e17ebf",
+   "bytes": 2409
+  },
+  {
+   "path": "evidence/ADP-008/NOTES.md",
+   "sha256": "5e41a065a3adf5afb60c597e28bcadfe82aa974cfd7ae8d3bd6c2a3dc1b4fd2d",
+   "bytes": 8852
+  },
+  {
+   "path": "migrations/0029_tool_visibility_pack_revisions.sql",
+   "sha256": "38e10a0b3b0798312ba8fe2682e738c0c8555f35db7c93c3f2e0adbd877e56f2",
+   "bytes": 3664
+  },
+  {
+   "path": "config/pack-install.yaml",
+   "sha256": "a9baeae8c9c8db2f45ecc41ded63da51197aafbb2783bb1714c90c5ab13177fd",
+   "bytes": 1612
+  },
+  {
+   "path": "schemas/json/pack-install-config.schema.json",
+   "sha256": "f0e7bcaa12a0cddf583a27439d06d31ebe58f855f0d0f202c7da9b6b0df7f80e",
+   "bytes": 1935
+  },
+  {
+   "path": "crates/tools/src/call.rs",
+   "sha256": "0ad768b8d1c032e0630ea035662a8798d3b0b7b96957234a6e442f27a4841b4f",
+   "bytes": 13691
+  },
+  {
+   "path": "crates/tools/src/declaration.rs",
+   "sha256": "75c5cb1cb973c2002494690392b50c93986e474da4d215ef32c11926299ed296",
+   "bytes": 23667
+  },
+  {
+   "path": "crates/tools/src/registry.rs",
+   "sha256": "0cbd74beebb8fc23e028e57d2d3d1b87982c045cc724e09ad992bea726e237c8",
+   "bytes": 15420
+  },
+  {
+   "path": "crates/tools/tests/visibility.rs",
+   "sha256": "a3242764a7ddeefc8e79aacd50711d5da5cc7dab2a8021eca8fd9e9428dbbf2d",
+   "bytes": 17862
+  },
+  {
+   "path": "crates/server/tests/tool_visibility.rs",
+   "sha256": "18003672d316605571ab30231075d62ce9c9f7fee9c009a99e365f1876d0b985",
+   "bytes": 7794
+  },
+  {
+   "path": "crates/server/tests/pack_install.rs",
+   "sha256": "6fc62363e43213c203e693865b31385a68f82d81ca5440d772bc6e3fbadb715d",
+   "bytes": 45700
+  },
+  {
+   "path": "crates/server/src/control/packs/store.rs",
+   "sha256": "c753f0d8dafcb2a65174fe62329bdc26e712060fc5f0cf3f8795b77a221f45ef",
+   "bytes": 41918
+  },
+  {
+   "path": "crates/server/src/control/packs/install.rs",
+   "sha256": "54058682df73e10970cc71bcc5913b7e54a4eeae872fd7708b1e010ae4d9b28d",
+   "bytes": 13609
+  },
+  {
+   "path": "python/intelligence/capability_compiler/install.py",
+   "sha256": "b5efbac8c6ee4ec5806c10c4e450dc54e39746882fb084802ac928015e12275d",
+   "bytes": 20103
+  },
+  {
+   "path": "python/tests/capability_compiler/test_pack_install.py",
+   "sha256": "bfb05eda6c4cb5410b6ed947055e51e1cac756a33a06bf0d4c586a9a5691bd7b",
+   "bytes": 15019
+  },
+  {
+   "path": "python/tests/intelligence/test_tool_visibility.py",
+   "sha256": "1ce3621dc6dbdbde06e77e5cb350a2a18dbecc7dc4936a2f9b504d7c71e5b0af",
+   "bytes": 4094
+  },
+  {
+   "path": "apps/desktop/src/knowledge/packs.ts",
+   "sha256": "a4e9a9c3c07777283dfc289a32255e01d051e21f072d62e143124dba67669892",
+   "bytes": 7507
+  },
+  {
+   "path": "apps/desktop/tests/packs.test.ts",
+   "sha256": "d852f89949a58ad46a68e75dffda4a1bb1b678a117b9e644f6b7d81a3b700d04",
+   "bytes": 7107
+  }
+ ]
+}

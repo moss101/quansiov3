@@ -18,5 +18,6 @@ pub use authority::{
 pub use clock::{Clock, ManualClock, SystemClock};
 pub use serve::{content_type, resolve_file, segments_of, FileError};
 pub use service::{
-    clean_directory, Active, OpenError, Opened, PreviewService, Renewed, ScopeError, StageError,
+    clean_directory, Active, Listed, OpenError, Opened, PreviewService, Renewed, ScopeError,
+    StageError,
 };

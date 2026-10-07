@@ -94,6 +94,8 @@ describe("preload bridge", () => {
         "installSkill",
         "promoteSkillVersion",
         "disableSkill",
+        "listPacks",
+        "rollbackPack",
         "runCapabilities",
         "listTeammates",
         "createTeammate",
@@ -240,6 +242,8 @@ describe("preload bridge", () => {
     await api.installSkill({ scope: "workspace", name: "notes", version: { semver: "1.0.0", manifest: {} } });
     await api.promoteSkillVersion("sklv_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", "candidate");
     await api.disableSkill("skl_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.listPacks();
+    await api.rollbackPack("coding");
     await api.runCapabilities("run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.listTeammates();
     await api.createTeammate({ workspace_id: "ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", template_id: "engineer" });

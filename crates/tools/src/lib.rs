@@ -16,7 +16,7 @@ pub mod registry;
 pub mod schema;
 pub mod side_effect;
 
-pub use call::{plan_call, CallContext, ToolCallPlan};
+pub use call::{plan_call, CallContext, Caller, ToolCallPlan};
 pub use canonical::canonical_json;
 pub use declaration::{
     EffectClassRule, EvidenceCapture, IdempotencyRule, NamedDerivation, RawEvidenceCapture,
@@ -24,7 +24,7 @@ pub use declaration::{
     ToolDeclaration, ToolHost,
 };
 pub use error::ToolError;
-pub use registry::{RawFamilyReservation, ToolRegistry};
+pub use registry::{RawFamilyReservation, ToolRegistry, ToolVisibility};
 pub use schema::{check_vocabulary, first_violation, validate_instance, SchemaViolation};
 pub use side_effect::{SideEffectClass, SideEffectMapping, SideEffectRow};
 

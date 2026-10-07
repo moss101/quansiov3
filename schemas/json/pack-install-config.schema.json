@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/pack-install-config.schema.json",
+  "title": "Quansio pack install (config/pack-install.yaml)",
+  "description": "Bounds for installing a Business Capability Pack by content-hash revision and for its install reports (DOMAIN.md 11.6). A pack and its history are bounded, a report is bounded and expires, and the previous revision is always retained.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "install", "reports"],
+  "properties": {
+    "version": { "const": 1 },
+    "install": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_content_bytes", "max_files", "max_file_bytes", "retain_previous_revisions", "running_grace_seconds", "builtin_root"],
+      "properties": {
+        "max_content_bytes": { "type": "integer", "minimum": 1024, "maximum": 16777216 },
+        "max_files": { "type": "integer", "minimum": 1, "maximum": 512 },
+        "max_file_bytes": { "type": "integer", "minimum": 256, "maximum": 4194304 },
+        "retain_previous_revisions": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "running_grace_seconds": { "type": "integer", "minimum": 30, "maximum": 86400 },
+        "builtin_root": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "reports": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["retention_days", "max_diagnostics", "max_diagnostic_bytes", "max_listed"],
+      "properties": {
+        "retention_days": { "type": "integer", "minimum": 1, "maximum": 365 },
+        "max_diagnostics": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "max_diagnostic_bytes": { "type": "integer", "minimum": 64, "maximum": 4096 },
+        "max_listed": { "type": "integer", "minimum": 1, "maximum": 500 }
+      }
+    }
+  }
+}

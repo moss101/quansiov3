@@ -33,6 +33,10 @@ glossary:
 - Effect class
 - Tool
 - ToolCall
+- Model-visible tool
+- Pack revision
+- Install report
+- Host-callable tool
 - ExecutionTarget
 - ComputerControl
 - Substrate

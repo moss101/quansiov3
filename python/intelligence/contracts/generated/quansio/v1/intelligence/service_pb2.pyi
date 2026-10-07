@@ -223,6 +223,30 @@ class CompileRecordingResponse(_message.Message):
     proposal_json: str
     def __init__(self, schema_version: _Optional[str] = ..., proposal_json: _Optional[str] = ...) -> None: ...
 
+class CompilePackRequest(_message.Message):
+    __slots__ = ("schema_version", "scope", "request_id", "pack_json", "tools_json", "settings_json")
+    SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
+    SCOPE_FIELD_NUMBER: _ClassVar[int]
+    REQUEST_ID_FIELD_NUMBER: _ClassVar[int]
+    PACK_JSON_FIELD_NUMBER: _ClassVar[int]
+    TOOLS_JSON_FIELD_NUMBER: _ClassVar[int]
+    SETTINGS_JSON_FIELD_NUMBER: _ClassVar[int]
+    schema_version: str
+    scope: ScopeContext
+    request_id: str
+    pack_json: str
+    tools_json: _containers.RepeatedScalarFieldContainer[str]
+    settings_json: str
+    def __init__(self, schema_version: _Optional[str] = ..., scope: _Optional[_Union[ScopeContext, _Mapping]] = ..., request_id: _Optional[str] = ..., pack_json: _Optional[str] = ..., tools_json: _Optional[_Iterable[str]] = ..., settings_json: _Optional[str] = ...) -> None: ...
+
+class CompilePackResponse(_message.Message):
+    __slots__ = ("schema_version", "compilation_json")
+    SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]
+    COMPILATION_JSON_FIELD_NUMBER: _ClassVar[int]
+    schema_version: str
+    compilation_json: str
+    def __init__(self, schema_version: _Optional[str] = ..., compilation_json: _Optional[str] = ...) -> None: ...
+
 class CompletionVerificationRequest(_message.Message):
     __slots__ = ("schema_version", "scope", "run_id", "work_node_id", "claim_summary", "rubric_id", "evidence_ids", "independent_model", "claimant_model", "max_output_tokens")
     SCHEMA_VERSION_FIELD_NUMBER: _ClassVar[int]

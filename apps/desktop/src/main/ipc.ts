@@ -281,6 +281,8 @@ export class DesktopBridge {
       "skills.install": (payload) => settled(Promise.resolve(payload).then((raw) => this.installSkill(raw))),
       "skills.promote": (payload) => settled(Promise.resolve(payload).then((raw) => this.promoteSkillVersion(raw))),
       "skills.disable": (payload) => settled(Promise.resolve(payload).then((raw) => this.disableSkill(raw))),
+      "packs.list": () => this.server.packs(),
+      "packs.rollback": (payload) => settled(Promise.resolve(payload).then((raw) => this.rollbackPack(raw))),
       "runs.capabilities": (payload) => Promise.resolve(payload).then((raw) => this.server.run(asRunId(raw, "runs.capabilities"))),
       // The teammate roster (APP-014): definition commands return refusals as data (an
       // archived teammate, a need that is not an effect class, a role that may not).
@@ -603,6 +605,15 @@ export class DesktopBridge {
       throw new Error("skills.disable needs a skl_ id");
     }
     return (await this.server.invoke("DisableSkill", newCommandId(), { skill_id: skillId })).result;
+  }
+
+  /** `RollbackPack` for a pack by name (ADP-008); the server refuses when there is nothing to roll back to. */
+  async rollbackPack(raw: unknown): Promise<unknown> {
+    const pack = asRecord(raw, "packs.rollback")["pack"];
+    if (typeof pack !== "string" || !/^[a-z][a-z0-9_-]{0,63}$/.test(pack)) {
+      throw new Error("packs.rollback needs a pack name");
+    }
+    return (await this.server.invoke("RollbackPack", newCommandId(), { pack })).result;
   }
 
   // ---- approvals, effects and evidence (APP-006) ----

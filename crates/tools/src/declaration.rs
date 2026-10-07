@@ -13,6 +13,7 @@ use quansio_capability::{EffectClass, Grant};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::call::Caller;
 use crate::error::ToolError;
 use crate::schema::check_vocabulary;
 use crate::side_effect::SideEffectClass;
@@ -301,6 +302,16 @@ pub struct ToolDeclaration {
     /// What kind of thing the tool does to the world (ADP-001). A browser tool must declare one;
     /// `config/effects.yaml` maps it onto the effect class the Effect Ledger records.
     pub side_effect: Option<SideEffectClass>,
+    /// Whether the tool may appear in anything meant for a model: the tool list, a prompt, a schema
+    /// export, a tool-search result, an MCP or SDK export (ADP-008, DOMAIN.md §7.5). A tool that is
+    /// not model-visible is refused when a model proposes it, and no grant, projection layer, pack
+    /// or skill can change that.
+    pub model_visible: bool,
+    /// Whether the trusted runtime or the person's own surface may call the tool without a model
+    /// proposing it (ADP-008). A host call goes down the same policy and Effect Ledger path; it only
+    /// differs in who asked. Off unless declared, so a tool is never reachable from a host surface by
+    /// accident.
+    pub host_callable: bool,
 }
 
 impl ToolDeclaration {
@@ -353,6 +364,12 @@ impl ToolDeclaration {
             .map(SideEffectClass::parse)
             .transpose()
             .map_err(&malformed)?;
+        if !raw.model_visible && !raw.host_callable {
+            return Err(malformed(
+                "a tool that is neither model_visible nor host_callable can never be called"
+                    .to_string(),
+            ));
+        }
         let grant_templates = parse_grant_templates(&tool, &raw.grant_templates)?;
         if grant_templates.is_empty() {
             return Err(malformed(
@@ -393,7 +410,18 @@ impl ToolDeclaration {
             evidence,
             grant_templates,
             side_effect,
+            model_visible: raw.model_visible,
+            host_callable: raw.host_callable,
         })
+    }
+
+    /// Whether `caller` may propose this tool at all. Grants and policy decide the rest.
+    #[must_use]
+    pub const fn callable_by(&self, caller: Caller) -> bool {
+        match caller {
+            Caller::Model => self.model_visible,
+            Caller::Host => self.host_callable,
+        }
     }
 
     /// Whether one grant in a projection can expose this tool.
@@ -543,7 +571,10 @@ fn parse_grant_templates(tool: &str, raw: &[Value]) -> Result<Vec<Grant>, ToolEr
 }
 
 /// The YAML/JSON shape of a declaration in `config/tools.yaml`.
+///
+/// Unknown fields are refused: a misspelt `model_visible` must not leave a tool visible to the model.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct RawToolDeclaration {
     /// Namespaced tool name.
     pub name: String,
@@ -584,6 +615,12 @@ pub struct RawToolDeclaration {
     /// What kind of thing the tool does to the world (ADP-001); see `config/effects.yaml`.
     #[serde(default)]
     pub side_effect: Option<String>,
+    /// Whether a model may be offered, or may propose, the tool (ADP-008). Defaults to true.
+    #[serde(default = "default_true")]
+    pub model_visible: bool,
+    /// Whether the trusted runtime or the person's surface may call the tool (ADP-008). Defaults to false.
+    #[serde(default)]
+    pub host_callable: bool,
 }
 
 /// The YAML/JSON shape of a resource rule.

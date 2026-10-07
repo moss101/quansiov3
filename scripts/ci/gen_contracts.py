@@ -162,6 +162,44 @@ DEFINED_PARAMS: Dict[str, Dict[str, object]] = {
             },
         },
     },
+    "InstallPack": {
+        "type": "object",
+        "required": ["workspace_id", "source"],
+        "properties": {
+            "workspace_id": {"type": "string", "description": "The workspace the administrator acts from; the pack is the tenant's (DOMAIN.md 11.6 B)."},
+            "source": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "required": ["kind", "manifest"],
+                        "additionalProperties": False,
+                        "properties": {
+                            "kind": {"const": "inline"},
+                            "manifest": {"type": "object"},
+                            "files": {"type": "object", "additionalProperties": {"type": "string"}},
+                        },
+                    },
+                    {
+                        "type": "object",
+                        "required": ["kind", "name"],
+                        "additionalProperties": False,
+                        "properties": {"kind": {"const": "builtin"}, "name": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"}},
+                    },
+                ],
+                "description": "Where the pack's content comes from.",
+            },
+            "expected_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "description": "The revision the content is expected to have; another is refused at verify."},
+            "expected_active_revision": {"type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$", "description": "The revision the caller believes is active (null: none); another is CONFLICT_REVISION."},
+        },
+    },
+    "RollbackPack": {
+        "type": "object",
+        "required": ["pack"],
+        "properties": {
+            "pack": {"type": "string", "description": "The pack's name."},
+            "expected_active_revision": {"type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$"},
+        },
+    },
 }
 
 

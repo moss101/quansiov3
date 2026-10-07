@@ -25,9 +25,9 @@ use serde_json::json;
 use crate::observability::{metrics, Span, TRACEPARENT};
 use quansio_contracts::generated::intelligence::intelligence_gateway_client::IntelligenceGatewayClient;
 use quansio_contracts::generated::intelligence::{
-    CompileRecordingRequest, CompletionVerdict, CompletionVerificationRequest, ContextBuildRequest,
-    ContextProjection, MemoryCandidate, ModelCallRequest, ModelEvent, ProposalAck, ScopeContext,
-    SkillCandidatesRequest, TrustClassifyRequest, TrustClassifyResponse,
+    CompilePackRequest, CompileRecordingRequest, CompletionVerdict, CompletionVerificationRequest,
+    ContextBuildRequest, ContextProjection, MemoryCandidate, ModelCallRequest, ModelEvent,
+    ProposalAck, ScopeContext, SkillCandidatesRequest, TrustClassifyRequest, TrustClassifyResponse,
 };
 use tonic::metadata::MetadataValue;
 use tonic::transport::{Channel, Endpoint, Uri};
@@ -350,6 +350,40 @@ impl IntelligenceClient {
             Ok(Ok(response)) => Ok(response.into_inner().proposal_json),
         };
         finish(span, "CompileSkillRecording", &result);
+        result
+    }
+
+    /// `CompilePack` (ADP-008): verify and compile one pack's content for install. The answer is a proposal: the
+    /// runtime recomputes the revision, decides the phase and activates; the plane writes nothing.
+    ///
+    /// # Errors
+    /// The typed refusal, or an unreachable or late gateway.
+    pub async fn compile_pack(
+        &mut self,
+        scope: &CallScope,
+        request_id: &str,
+        pack_json: String,
+        tools_json: Vec<String>,
+        settings_json: String,
+    ) -> Result<String, IntelligenceError> {
+        let request = CompilePackRequest {
+            schema_version: SCHEMA_VERSION.to_string(),
+            scope: Some(scope.context()),
+            request_id: request_id.to_string(),
+            pack_json,
+            tools_json,
+            settings_json,
+        };
+        let span = rpc_span("CompilePack", scope);
+        let call = self
+            .inner
+            .compile_pack(Self::request(scope, request, &span));
+        let result = match tokio::time::timeout(scope.deadline, call).await {
+            Err(_) => Err(IntelligenceError::DeadlineExceeded),
+            Ok(Err(status)) => Err(refused(&status)),
+            Ok(Ok(response)) => Ok(response.into_inner().compilation_json),
+        };
+        finish(span, "CompilePack", &result);
         result
     }
 

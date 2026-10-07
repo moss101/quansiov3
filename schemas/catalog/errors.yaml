@@ -196,6 +196,15 @@ errors:
 - code: PREVIEW_SCOPE_LAPSED
   family: Output
   http_status: 403/409/503
+- code: TOOL_NOT_MODEL_VISIBLE
+  family: Tool
+  http_status: '403'
+- code: TOOL_NOT_HOST_CALLABLE
+  family: Tool
+  http_status: '403'
+- code: PACK_INSTALL_FAILED
+  family: Pack
+  http_status: '422'
 - code: AUTOMATION_TIMEZONE_UNKNOWN
   family: Automation
   http_status: 400/413/422

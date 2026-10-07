@@ -55,6 +55,8 @@ export const BRIDGE_CHANNELS = [
   "skills.install",
   "skills.promote",
   "skills.disable",
+  "packs.list",
+  "packs.rollback",
   "runs.capabilities",
   "teammates.list",
   "teammates.create",
@@ -276,6 +278,9 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     installSkill: (params: Record<string, unknown>) => send("skills.install", params),
     promoteSkillVersion: (skillVersionId: string, to: string) => send("skills.promote", { skillVersionId, to }),
     disableSkill: (skillId: string) => send("skills.disable", { skillId }),
+    // Capability packs (ADP-008): the projection (revisions, install reports) and the one control, a rollback.
+    listPacks: () => send("packs.list", {}),
+    rollbackPack: (pack: string) => send("packs.rollback", { pack }),
     runCapabilities: (runId: string) => send("runs.capabilities", { runId }),
     // The teammate roster (APP-014): the projection and the three definition commands.
     listTeammates: () => send("teammates.list", {}),

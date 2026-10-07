@@ -122,10 +122,12 @@ impl ToolSummary {
     }
 }
 
-/// Every callable tool of a registry with its effect classes, sorted by name.
+/// Every tool of a registry **a model may be offered**, with its effect classes, sorted by name. The compiler
+/// is a model-facing surface: a host-only tool (ADP-008) is not described to it, so a compiled skill cannot
+/// name one.
 #[must_use]
 pub fn tool_summaries(registry: &ToolRegistry) -> Vec<ToolSummary> {
-    let mut names = registry.callable_names();
+    let mut names = registry.model_visible_names();
     names.sort_unstable();
     names
         .into_iter()

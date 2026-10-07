@@ -2678,6 +2678,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/commands/InstallPack:
+    post:
+      operationId: InstallPack
+      summary: 'Skills & packs: InstallPack'
+      tags:
+      - Skills & packs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/commands/RollbackPack:
     post:
       operationId: RollbackPack
@@ -6084,6 +6126,9 @@ components:
           - DECK_NOT_DELIVERABLE
           - ADAPTER_UNAVAILABLE
           - PREVIEW_SCOPE_LAPSED
+          - TOOL_NOT_MODEL_VISIBLE
+          - TOOL_NOT_HOST_CALLABLE
+          - PACK_INSTALL_FAILED
           - AUTOMATION_TIMEZONE_UNKNOWN
           - AUTOMATION_LIMIT_EXCEEDED
           - AUTOMATION_PAYLOAD_TOO_LARGE
@@ -6514,12 +6559,70 @@ components:
       description: 'Skills & packs command PublishPack. The concrete parameter schema is owned by the implementing task and
         must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
       x-quansio-params-defined: false
+    InstallPackParams:
+      type: object
+      required:
+      - workspace_id
+      - source
+      properties:
+        workspace_id:
+          type: string
+          description: The workspace the administrator acts from; the pack is the tenant's (DOMAIN.md 11.6 B).
+        source:
+          oneOf:
+          - type: object
+            required:
+            - kind
+            - manifest
+            additionalProperties: false
+            properties:
+              kind:
+                const: inline
+              manifest:
+                type: object
+              files:
+                type: object
+                additionalProperties:
+                  type: string
+          - type: object
+            required:
+            - kind
+            - name
+            additionalProperties: false
+            properties:
+              kind:
+                const: builtin
+              name:
+                type: string
+                pattern: ^[a-z][a-z0-9_-]{0,63}$
+          description: Where the pack's content comes from.
+        expected_revision:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+          description: The revision the content is expected to have; another is refused at verify.
+        expected_active_revision:
+          type:
+          - string
+          - 'null'
+          pattern: ^sha256:[0-9a-f]{64}$
+          description: 'The revision the caller believes is active (null: none); another is CONFLICT_REVISION.'
+      description: Skills & packs command InstallPack.
+      x-quansio-params-defined: true
     RollbackPackParams:
       type: object
-      additionalProperties: true
-      description: 'Skills & packs command RollbackPack. The concrete parameter schema is owned by the implementing task and
-        must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
-      x-quansio-params-defined: false
+      required:
+      - pack
+      properties:
+        pack:
+          type: string
+          description: The pack's name.
+        expected_active_revision:
+          type:
+          - string
+          - 'null'
+          pattern: ^sha256:[0-9a-f]{64}$
+      description: Skills & packs command RollbackPack.
+      x-quansio-params-defined: true
     StartRecordingParams:
       type: object
       required:
@@ -7068,6 +7171,9 @@ x-quansio-error-http-map:
   DECK_NOT_DELIVERABLE: 403/409/503
   ADAPTER_UNAVAILABLE: 403/409/503
   PREVIEW_SCOPE_LAPSED: 403/409/503
+  TOOL_NOT_MODEL_VISIBLE: '403'
+  TOOL_NOT_HOST_CALLABLE: '403'
+  PACK_INSTALL_FAILED: '422'
   AUTOMATION_TIMEZONE_UNKNOWN: 400/413/422
   AUTOMATION_LIMIT_EXCEEDED: 400/413/422
   AUTOMATION_PAYLOAD_TOO_LARGE: 400/413/422

@@ -108,6 +108,19 @@ struct Scope {
     lock: Arc<tokio::sync::Mutex<()>>,
 }
 
+/// One live scope as the person's preview panel lists it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Listed {
+    /// `pvs_` and the first 16 hex digits of the token's digest.
+    pub scope_id: String,
+    /// The directory, relative to the workspace root.
+    pub directory: String,
+    /// When the scope lapses unless renewed, in epoch milliseconds.
+    pub expires_ms: u64,
+    /// Time left, in milliseconds.
+    pub ttl_ms: u64,
+}
+
 #[derive(Debug, Clone)]
 struct Tomb {
     scope_id: String,
@@ -310,6 +323,53 @@ impl Inner {
         } else {
             Err(ScopeError::Forbidden)
         }
+    }
+
+    /// The live scopes the caller may act on, oldest first. Never a token. Each candidate's authority is
+    /// resolved again first (as a request to it would), so a scope whose run ended, member left or root changed
+    /// is closed here and not listed.
+    pub(super) async fn list(
+        &self,
+        dispatch: &HostDispatch,
+        directory: Option<&str>,
+    ) -> Result<Vec<Listed>, ScopeError> {
+        let candidates: Vec<(u64, String, String)> = {
+            let mut registry = self.registry();
+            self.sweep(&mut registry);
+            registry
+                .live
+                .iter()
+                .filter(|(_, scope)| {
+                    scope.binding.tenant_id == dispatch.tenant_id
+                        && scope.binding.workspace_id == dispatch.workspace_id
+                        && binding_principal(&scope.binding) == principal_of(dispatch)
+                        && directory.is_none_or(|wanted| scope.directory == wanted)
+                })
+                .map(|(token, scope)| (scope.created_ms, scope.scope_id.clone(), token.clone()))
+                .collect()
+        };
+        let mut candidates = candidates;
+        candidates.sort();
+        let mut listed = Vec::with_capacity(candidates.len());
+        for (_, _, token) in candidates {
+            match self.activate(&token).await {
+                Ok(active) => {
+                    let registry = self.registry();
+                    if let Some(scope) = registry.live.get(&token) {
+                        listed.push(Listed {
+                            scope_id: active.scope_id,
+                            directory: scope.directory.clone(),
+                            expires_ms: scope.expires_ms,
+                            ttl_ms: scope.expires_ms.saturating_sub(self.clock.now_ms()),
+                        });
+                    }
+                }
+                // Lapsed or gone while we looked: not live, so not listed.
+                Err(ScopeError::Lapsed { .. } | ScopeError::Unknown) => {}
+                Err(other) => return Err(other),
+            }
+        }
+        Ok(listed)
     }
 
     fn sweep(&self, registry: &mut Registry) {
@@ -635,6 +695,19 @@ impl PreviewService {
         directory: &str,
     ) -> Result<Opened, OpenError> {
         self.inner.open(dispatch, directory).await
+    }
+
+    /// The live scopes the caller opened (or, without an acting member, the caller's run), optionally on
+    /// one directory. The host-only `webdev.preview_scopes` tool reads this; it never returns a token.
+    ///
+    /// # Errors
+    /// [`ScopeError::Unavailable`] when the authority cannot be read.
+    pub async fn list(
+        &self,
+        dispatch: &HostDispatch,
+        directory: Option<&str>,
+    ) -> Result<Vec<Listed>, ScopeError> {
+        self.inner.list(dispatch, directory).await
     }
 
     /// Extend a scope.

@@ -1,0 +1,253 @@
+{
+ "cases": [
+  {
+   "name": "the coding built-in pack, no files",
+   "manifest": {
+    "schema_version": "v1",
+    "id": "pck_coding",
+    "name": "coding",
+    "owner": "product",
+    "semver": "1.0.0",
+    "status": "published",
+    "provenance": {
+     "kind": "builtin",
+     "ref": "pack://quansio.builtin.coding",
+     "source": "builtin-repository",
+     "digest": "sha256:f7bd205b11720483b5e45047d20e0d6da915d327947a86dc05369deffda0bc5a"
+    },
+    "quarantine": {
+     "status": "cleared",
+     "imported_at": "2026-09-15T04:50:55Z"
+    },
+    "review": {
+     "reviewed_by": "quansio-cap007-governance",
+     "reviewed_at": "2026-09-24T01:42:50Z",
+     "outcome": "approved"
+    },
+    "normalization": {
+     "normalized_at": "2026-09-24T01:42:50Z",
+     "normalizer": "CAP-007 built-in pack pipeline (packs/capabilities schema_version v1)"
+    },
+    "evaluation": {
+     "eval_suite_id": "eval_coding",
+     "result": "pass",
+     "evaluated_at": "2026-09-24T01:42:50Z"
+    },
+    "approved": {
+     "approved_by": "quansio-cap007-governance",
+     "approved_at": "2026-09-24T01:42:50Z"
+    },
+    "contents": {
+     "knowledge_ids": [],
+     "skill_version_ids": [
+      "sklv_coding_1"
+     ],
+     "tool_names": [
+      "fs.read",
+      "fs.patch",
+      "terminal.exec"
+     ],
+     "connector_requirements": [],
+     "policy_requirements": [],
+     "rbac_requirements": [],
+     "approval_requirements": [],
+     "workflow_templates": [],
+     "examples": [
+      "implement the change",
+      "open a pull request"
+     ],
+     "eval_suite_id": "eval_coding",
+     "compatibility": [
+      "v8.1"
+     ]
+    },
+    "evidence_requirements": [
+     "diff",
+     "test_result"
+    ],
+    "installs_daemon": false,
+    "bypasses_runtime_policy": false
+   },
+   "files": {},
+   "canonical": "{\"files\":{},\"manifest\":{\"bypasses_runtime_policy\":false,\"contents\":{\"approval_requirements\":[],\"compatibility\":[\"v8.1\"],\"connector_requirements\":[],\"eval_suite_id\":\"eval_coding\",\"examples\":[\"implement the change\",\"open a pull request\"],\"knowledge_ids\":[],\"policy_requirements\":[],\"rbac_requirements\":[],\"skill_version_ids\":[\"sklv_coding_1\"],\"tool_names\":[\"fs.read\",\"fs.patch\",\"terminal.exec\"],\"workflow_templates\":[]},\"evidence_requirements\":[\"diff\",\"test_result\"],\"id\":\"pck_coding\",\"installs_daemon\":false,\"name\":\"coding\",\"owner\":\"product\",\"provenance\":{\"kind\":\"builtin\",\"ref\":\"pack://quansio.builtin.coding\",\"source\":\"builtin-repository\"},\"schema_version\":\"v1\",\"semver\":\"1.0.0\",\"status\":\"published\"}}",
+   "revision": "sha256:a1db4d945ccc02b71afa46315f96918cc54d16a53766768c7d948e4de587bb73",
+   "manifest_digest": "sha256:f7bd205b11720483b5e45047d20e0d6da915d327947a86dc05369deffda0bc5a"
+  },
+  {
+   "name": "unicode, escapes and a file",
+   "manifest": {
+    "schema_version": "v1",
+    "id": "pck_fixture",
+    "name": "fixture",
+    "owner": "product",
+    "semver": "1.2.3",
+    "status": "published",
+    "provenance": {
+     "kind": "builtin",
+     "ref": "pack://fixture",
+     "source": "x",
+     "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "quarantine": {
+     "status": "cleared",
+     "imported_at": "2026-01-01T00:00:00Z"
+    },
+    "review": {
+     "reviewed_by": "r",
+     "reviewed_at": "2026-01-01T00:00:00Z",
+     "outcome": "approved"
+    },
+    "evaluation": {
+     "eval_suite_id": "eval_fixture",
+     "result": "pass",
+     "evaluated_at": "2026-01-01T00:00:00Z"
+    },
+    "approved": {
+     "approved_by": "a",
+     "approved_at": "2026-01-01T00:00:00Z"
+    },
+    "contents": {
+     "tool_names": [
+      "fs.read"
+     ],
+     "examples": [
+      "ünïcode \"quoted\" \\ back \t tab   ✓ 😀",
+      "slash / tilde ~ nul-free"
+     ],
+     "eval_suite_id": "eval_fixture"
+    },
+    "installs_daemon": false,
+    "bypasses_runtime_policy": false
+   },
+   "files": {
+    "notes/readme.md": "# Title\n\nline \"two\" \\   ✓ 😀\n",
+    "a.txt": ""
+   },
+   "canonical": "{\"files\":{\"a.txt\":\"\",\"notes/readme.md\":\"# Title\\n\\nline \\\"two\\\" \\\\   ✓ 😀\\n\"},\"manifest\":{\"bypasses_runtime_policy\":false,\"contents\":{\"eval_suite_id\":\"eval_fixture\",\"examples\":[\"ünïcode \\\"quoted\\\" \\\\ back \\t tab   ✓ 😀\",\"slash / tilde ~ nul-free\"],\"tool_names\":[\"fs.read\"]},\"id\":\"pck_fixture\",\"installs_daemon\":false,\"name\":\"fixture\",\"owner\":\"product\",\"provenance\":{\"kind\":\"builtin\",\"ref\":\"pack://fixture\",\"source\":\"x\"},\"schema_version\":\"v1\",\"semver\":\"1.2.3\",\"status\":\"published\"}}",
+   "revision": "sha256:ab783a28e2326a80f14cc9bc3e5001441252a9a1fe6b5545581c6bcb0162304c",
+   "manifest_digest": "sha256:1989ba9041b2115b4299937336c851b82ac6c93fcd2c1bf8e8f76ffae4a7481e"
+  },
+  {
+   "name": "a re-review changes the record and the recorded digest, not the revision",
+   "manifest": {
+    "schema_version": "v1",
+    "id": "pck_fixture",
+    "name": "fixture",
+    "owner": "product",
+    "semver": "1.2.3",
+    "status": "published",
+    "provenance": {
+     "kind": "builtin",
+     "ref": "pack://fixture",
+     "source": "x",
+     "digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    "quarantine": {
+     "status": "cleared",
+     "imported_at": "2026-01-01T00:00:00Z"
+    },
+    "review": {
+     "reviewed_by": "r",
+     "reviewed_at": "2027-02-02T00:00:00Z",
+     "outcome": "approved"
+    },
+    "evaluation": {
+     "eval_suite_id": "eval_fixture",
+     "result": "pass",
+     "evaluated_at": "2026-01-01T00:00:00Z"
+    },
+    "approved": {
+     "approved_by": "a",
+     "approved_at": "2026-01-01T00:00:00Z"
+    },
+    "contents": {
+     "tool_names": [
+      "fs.read"
+     ],
+     "examples": [
+      "ünïcode \"quoted\" \\ back \t tab   ✓ 😀",
+      "slash / tilde ~ nul-free"
+     ],
+     "eval_suite_id": "eval_fixture"
+    },
+    "installs_daemon": false,
+    "bypasses_runtime_policy": false
+   },
+   "files": {
+    "notes/readme.md": "# Title\n\nline \"two\" \\   ✓ 😀\n",
+    "a.txt": ""
+   },
+   "canonical": "{\"files\":{\"a.txt\":\"\",\"notes/readme.md\":\"# Title\\n\\nline \\\"two\\\" \\\\   ✓ 😀\\n\"},\"manifest\":{\"bypasses_runtime_policy\":false,\"contents\":{\"eval_suite_id\":\"eval_fixture\",\"examples\":[\"ünïcode \\\"quoted\\\" \\\\ back \\t tab   ✓ 😀\",\"slash / tilde ~ nul-free\"],\"tool_names\":[\"fs.read\"]},\"id\":\"pck_fixture\",\"installs_daemon\":false,\"name\":\"fixture\",\"owner\":\"product\",\"provenance\":{\"kind\":\"builtin\",\"ref\":\"pack://fixture\",\"source\":\"x\"},\"schema_version\":\"v1\",\"semver\":\"1.2.3\",\"status\":\"published\"}}",
+   "revision": "sha256:ab783a28e2326a80f14cc9bc3e5001441252a9a1fe6b5545581c6bcb0162304c",
+   "manifest_digest": "sha256:1989ba9041b2115b4299937336c851b82ac6c93fcd2c1bf8e8f76ffae4a7481e"
+  },
+  {
+   "name": "nested keys sort by code point; arrays keep their order",
+   "manifest": {
+    "schema_version": "v1",
+    "id": "pck_fixture",
+    "name": "fixture",
+    "owner": "product",
+    "semver": "1.2.3",
+    "status": "published",
+    "provenance": {
+     "kind": "builtin",
+     "ref": "pack://fixture",
+     "source": "x",
+     "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "quarantine": {
+     "status": "cleared",
+     "imported_at": "2026-01-01T00:00:00Z"
+    },
+    "review": {
+     "reviewed_by": "r",
+     "reviewed_at": "2026-01-01T00:00:00Z",
+     "outcome": "approved"
+    },
+    "evaluation": {
+     "eval_suite_id": "eval_fixture",
+     "result": "pass",
+     "evaluated_at": "2026-01-01T00:00:00Z"
+    },
+    "approved": {
+     "approved_by": "a",
+     "approved_at": "2026-01-01T00:00:00Z"
+    },
+    "contents": {
+     "tool_names": [
+      "fs.read"
+     ],
+     "examples": [
+      "b",
+      "a"
+     ],
+     "eval_suite_id": "eval_fixture",
+     "knowledge_ids": [],
+     "workflow_templates": [
+      {
+       "b": 1,
+       "a": {
+        "z": [
+         3,
+         2,
+         1
+        ],
+        "Z": true,
+        "é": "x",
+        "~": null,
+        "/": "slash"
+       }
+      }
+     ]
+    },
+    "installs_daemon": false,
+    "bypasses_runtime_policy": false
+   },
+   "files": {},
+   "canonical": "{\"files\":{},\"manifest\":{\"bypasses_runtime_policy\":false,\"contents\":{\"eval_suite_id\":\"eval_fixture\",\"examples\":[\"b\",\"a\"],\"knowledge_ids\":[],\"tool_names\":[\"fs.read\"],\"workflow_templates\":[{\"a\":{\"/\":\"slash\",\"Z\":true,\"z\":[3,2,1],\"~\":null,\"é\":\"x\"},\"b\":1}]},\"id\":\"pck_fixture\",\"installs_daemon\":false,\"name\":\"fixture\",\"owner\":\"product\",\"provenance\":{\"kind\":\"builtin\",\"ref\":\"pack://fixture\",\"source\":\"x\"},\"schema_version\":\"v1\",\"semver\":\"1.2.3\",\"status\":\"published\"}}",
+   "revision": "sha256:c447aaf7af7684bec635ab5f09a2e4171540d214803741cfbff69459d361e926",
+   "manifest_digest": "sha256:049ad245967b5adf79db2edab18347e8f7138d80946d144b46f4abc76528ec79"
+  }
+ ]
+}

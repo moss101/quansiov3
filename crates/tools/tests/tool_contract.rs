@@ -6,7 +6,7 @@ use chrono::{Duration, Utc};
 use quansio_capability::projection::CapabilityProjection;
 use quansio_capability::{EffectClass, Grant, SubjectKind, Tier};
 use quansio_core::{CanonicalId, Prefix, UlidGenerator};
-use quansio_tools::call::CallContext;
+use quansio_tools::call::{CallContext, Caller};
 use quansio_tools::{plan_call, ToolError, ToolHost, ToolRegistry};
 use serde_json::{json, Value};
 
@@ -58,6 +58,7 @@ fn grant(effect_class: &str, kind: &str, selector: &str) -> Grant {
 
 fn context() -> CallContext<'static> {
     CallContext {
+        caller: Caller::Model,
         workspace_id: "ws_test",
         run_id: Some("run_test"),
         fs_root: Some("/work/root"),

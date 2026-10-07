@@ -40,6 +40,7 @@ pub const TOOLS: &[&str] = &[
     "webdev.preview_renew",
     "webdev.preview_close",
     "webdev.preview_suggestions",
+    "webdev.preview_scopes",
 ];
 
 /// Whether a tool is one of this host's.
@@ -135,6 +136,9 @@ impl ToolHostPort for OutputToolHost {
             "document.export_pdf" => docs_host::export_pdf(&ctx).await,
             "audio.transcribe" => transcribe_host::transcribe(&ctx).await,
             "webdev.preview_open" => preview_host::open(&ctx, self.env.preview.as_deref()).await,
+            "webdev.preview_scopes" => {
+                preview_host::scopes(&ctx, self.env.preview.as_deref()).await
+            }
             "webdev.preview_renew" => preview_host::renew(&ctx, self.env.preview.as_deref()).await,
             "webdev.preview_close" => preview_host::close(&ctx, self.env.preview.as_deref()).await,
             "webdev.preview_suggestions" => {

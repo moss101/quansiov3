@@ -9,7 +9,9 @@
  * "Activate" is offered to an APPROVED version and refused for anything else before the
  * command is sent, and the server refuses it again. A run's capability resolution lays
  * out the ten layers in order with the inputs it had and the grants that resulted; the
- * active skills are visibly an input that contributes no grant.
+ * active skills are visibly an input that contributes no grant. Capability packs (ADP-008) show their active
+ * revision and the revisions kept for rollback, with one control — roll back — and, for a tenant administrator,
+ * the install reports: state, the phase reached and the outcome, with the redacted findings as plain text.
  */
 
 import { useCallback, useEffect, useState, type ReactElement } from "react";
@@ -28,6 +30,7 @@ import {
   type KnowledgeView,
   type MemoryView,
 } from "../knowledge/entries.js";
+import { decodePacks, retained, rollback, shortRevision, summarizeReport, type PacksView } from "../knowledge/packs.js";
 import { activation, decodeSkills, disable, install, promotion, type SkillStatus, type SkillView } from "../knowledge/skills.js";
 import { Recording } from "./Recording.js";
 
@@ -51,6 +54,7 @@ export function Knowledge({ workspaceId, runId = null }: KnowledgeProps): ReactE
   const [memory, setMemory] = useState<readonly MemoryView[]>([]);
   const [refusedMemory, setRefusedMemory] = useState(0);
   const [skills, setSkills] = useState<readonly SkillView[]>([]);
+  const [packs, setPacks] = useState<PacksView>({ packs: [], reports: null });
   const [resolution, setResolution] = useState<CapabilityResolution | null>(null);
   const [showDeleted, setShowDeleted] = useState(false);
   const [superseding, setSuperseding] = useState<KnowledgeView | null>(null);
@@ -60,16 +64,18 @@ export function Knowledge({ workspaceId, runId = null }: KnowledgeProps): ReactE
 
   const reload = useCallback(async () => {
     try {
-      const [knowledgePayload, memoryPayload, skillsPayload] = await Promise.all([
+      const [knowledgePayload, memoryPayload, skillsPayload, packsPayload] = await Promise.all([
         window.quansio.listKnowledge({ includeDeleted: showDeleted }),
         window.quansio.listMemory({ includeDeleted: showDeleted }),
         window.quansio.listSkills(),
+        window.quansio.listPacks(),
       ]);
       setKnowledge(decodeKnowledge(knowledgePayload));
       const decoded = decodeMemory(memoryPayload);
       setMemory(decoded.entries);
       setRefusedMemory(decoded.refused.length);
       setSkills(decodeSkills(skillsPayload));
+      setPacks(decodePacks(packsPayload));
       setResolution(runId ? decodeCapabilityResolution(await window.quansio.runCapabilities(runId)) : null);
       setStale(false);
     } catch (error) {
@@ -93,7 +99,7 @@ export function Knowledge({ workspaceId, runId = null }: KnowledgeProps): ReactE
         const record = frame && typeof frame === "object" ? (frame as Record<string, unknown>) : {};
         const event = record["event"] && typeof record["event"] === "object" ? (record["event"] as Record<string, unknown>) : null;
         const type = event && typeof event["type"] === "string" ? event["type"] : "";
-        if (type.startsWith("knowledge.") || type.startsWith("memory.") || type.startsWith("skill.") || type.startsWith("capability.")) {
+        if (type.startsWith("knowledge.") || type.startsWith("memory.") || type.startsWith("skill.") || type.startsWith("capability.") || type.startsWith("pack.")) {
           setStale(true);
         }
       }),
@@ -156,6 +162,17 @@ export function Knowledge({ workspaceId, runId = null }: KnowledgeProps): ReactE
       return;
     }
     const settled = (await window.quansio.disableSkill(skill.id)) as SettledPayload;
+    setNotice(refusal(settled));
+    setStale(true);
+  }, []);
+
+  const rollBack = useCallback(async (pack: PacksView["packs"][number]) => {
+    const control = rollback(pack);
+    if (!control.ok) {
+      setNotice(`${t("refused")} ${control.code}: ${control.reason}`);
+      return;
+    }
+    const settled = (await window.quansio.rollbackPack(control.params.pack)) as SettledPayload;
     setNotice(refusal(settled));
     setStale(true);
   }, []);
@@ -266,6 +283,46 @@ export function Knowledge({ workspaceId, runId = null }: KnowledgeProps): ReactE
           <textarea aria-label={t("instructions")} placeholder={t("instructions")} value={draft.instructions} onChange={(event) => { setDraft({ ...draft, instructions: event.target.value }); }} />
           <button type="submit">{t("installSkill")}</button>
         </form>
+      </div>
+      <div className="packs">
+        <h2>{t("packs")}</h2>
+        <ul>
+          {packs.packs.map((pack) => (
+            <li key={pack.id} className="pack" data-pack={pack.id} data-active-revision={pack.active?.revision ?? undefined}>
+              <strong>{pack.name}</strong> · {t("activeRevision")}:{" "}
+              {pack.active ? <code>{shortRevision(pack.active.revision)}</code> : t("noActiveRevision")}
+              {pack.active ? ` · ${pack.active.semver}` : ""}
+              {retained(pack).length > 0 ? (
+                <>
+                  <p className="retained">
+                    {t("retainedRevisions")}: {retained(pack).map((revision) => shortRevision(revision.revision)).join(", ")}
+                  </p>
+                  <button type="button" className="rollback" onClick={() => void rollBack(pack)}>{t("rollBack")}</button>
+                </>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+        <h3>{t("installReports")}</h3>
+        {packs.reports === null ? <p className="hint">{t("reportsAdminOnly")}</p> : null}
+        {packs.reports !== null && packs.reports.length === 0 ? <p className="hint">{t("noReports")}</p> : null}
+        <ul className="reports">
+          {(packs.reports ?? []).map((report) => (
+            <li key={report.requestId} className={`report report-${report.state}`} data-report={report.requestId} data-state={report.state} data-phase={report.phase} data-outcome={report.outcome ?? undefined}>
+              <strong>{report.pack}</strong> · {report.state} · {t("phase")} {report.phase} · {t("outcome")} {report.outcome ?? "—"}
+              <p className="summary">{summarizeReport(report)}</p>
+              <ul className="diagnostics">
+                {report.diagnostics.map((finding, index) => (
+                  <li key={`${finding.rule}-${String(index)}`} className={`finding finding-${finding.severity}`} data-rule={finding.rule}>
+                    {finding.severity} · {finding.phase} · {finding.rule}: {finding.message}
+                    {finding.pointer ? <code> {finding.pointer}</code> : null}
+                  </li>
+                ))}
+              </ul>
+              {report.diagnosticsOmitted > 0 ? <p className="omitted">{String(report.diagnosticsOmitted)} {t("diagnosticsOmitted")}</p> : null}
+            </li>
+          ))}
+        </ul>
       </div>
       <div className="capabilities">
         <h2>{t("capabilities")}</h2>

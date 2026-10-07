@@ -287,6 +287,8 @@ pub struct Outcome {
     pub status: String,
     /// The call row's result: the tool's output, or the error it was refused with.
     pub result: Value,
+    /// Who the call row says proposed it (`model` or `host`).
+    pub caller: String,
 }
 
 impl Outcome {
@@ -334,6 +336,8 @@ pub struct Harness {
     pub identity: RuntimeIdentity,
     pub objects: Arc<dyn ObjectStore>,
     pub engine: RuntimeEngine,
+    /// The dispatcher the engine uses, for a host call (ADP-008).
+    pub dispatcher: Arc<ToolDispatchService>,
     moves: Arc<Mutex<VecDeque<(String, Value)>>>,
     target: Mutex<Option<String>>,
     last_run: Mutex<Option<String>>,
@@ -431,12 +435,13 @@ impl Harness {
             Arc::clone(&delegation),
         )
         .expect("dispatch");
+        let dispatcher = Arc::new(dispatcher);
         let engine = RuntimeEngine::new(pool.clone(), identity.clone())
             .expect("engine")
             .with_model_source(Arc::new(Scripted {
                 moves: Arc::clone(&moves),
             }))
-            .with_tool_dispatch(Arc::new(dispatcher))
+            .with_tool_dispatch(dispatcher.clone())
             .with_delegation(delegation);
         Some(Self {
             name,
@@ -444,6 +449,7 @@ impl Harness {
             identity,
             objects,
             engine,
+            dispatcher,
             moves,
             target: Mutex::new(None),
             last_run: Mutex::new(None),
@@ -519,12 +525,17 @@ impl Harness {
             )
             .await
             .expect("turn");
+        self.latest_call(tool).await
+    }
+
+    /// The newest call row of a tool, as an [`Outcome`].
+    pub async fn latest_call(&self, tool: &str) -> Outcome {
         let mut tx = self.pool.begin().await.expect("begin");
         schema::set_tenant_context(&mut tx, TENANT)
             .await
             .expect("tenant");
-        let (status, result): (String, Option<Value>) = sqlx::query_as(
-            "SELECT status, result FROM tool_calls WHERE tenant_id = $1 AND tool_name = $2 \
+        let (status, result, caller): (String, Option<Value>, String) = sqlx::query_as(
+            "SELECT status, result, caller FROM tool_calls WHERE tenant_id = $1 AND tool_name = $2 \
              ORDER BY created_at DESC, id DESC LIMIT 1",
         )
         .bind(TENANT)
@@ -537,25 +548,123 @@ impl Harness {
             tool: tool.to_string(),
             status,
             result: result.unwrap_or(Value::Null),
+            caller,
         }
     }
 
+    /// Make one **host call** (ADP-008) in a fresh run: the trusted runtime, not a model, calls `tool`
+    /// through the same dispatcher, recorded under the model-call step of a turn that proposed nothing.
+    pub async fn host_call(&self, tool: &str, arguments: Value) -> Outcome {
+        self.host_call_with(
+            tool,
+            arguments,
+            &[
+                ("read.internal", "fs", "**"),
+                ("read.internal", "artifact", "*"),
+                ("content.upload", "artifact", "*"),
+            ],
+        )
+        .await
+    }
+
+    /// Like [`Harness::host_call`], on a run whose projection holds exactly `grants`.
+    pub async fn host_call_with(
+        &self,
+        tool: &str,
+        arguments: Value,
+        grants: &[(&str, &str, &str)],
+    ) -> Outcome {
+        let run = self
+            .engine
+            .create_run(NewRun::new(
+                WORKSPACE,
+                CanonicalId::parse_typed(WORK_NODE, Prefix::WorkNode).expect("node"),
+                CanonicalId::parse_typed(AGENT, Prefix::AgentThread).expect("agent"),
+                RunTriggerKind::Manual,
+            ))
+            .await
+            .expect("run");
+        *self.last_run.lock().expect("last run") = Some(run.id.to_string());
+        let run = self
+            .engine
+            .enqueue(&run.id, run.generation)
+            .await
+            .expect("enqueue");
+        let run = self
+            .engine
+            .start(&run.id, run.generation)
+            .await
+            .expect("start");
+        self.seed_projection_with(&run.id.to_string(), grants).await;
+        let current = self.engine.store().load_run(&run.id).await.expect("run");
+        let _ = self
+            .engine
+            .run_turn(
+                &run.id,
+                current.generation,
+                TurnInput::new(RunTriggerKind::Manual),
+            )
+            .await
+            .expect("turn");
+        let mut tx = self.pool.begin().await.expect("begin");
+        schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .expect("tenant");
+        let (turn_id, step_id): (String, String) = sqlx::query_as(
+            "SELECT t.id, s.id FROM steps s JOIN turns t ON t.id = s.turn_id \
+             WHERE t.run_id = $1 AND t.tenant_id = $2 ORDER BY s.created_at LIMIT 1",
+        )
+        .bind(run.id.to_string())
+        .bind(TENANT)
+        .fetch_one(&mut *tx)
+        .await
+        .expect("the turn recorded a step");
+        tx.commit().await.expect("commit");
+        let current = self.engine.store().load_run(&run.id).await.expect("run");
+        let n = UlidGenerator::new().generate().to_string();
+        let _ = self
+            .dispatcher
+            .dispatch_as_host(
+                &format!("host_{n}"),
+                tool,
+                arguments,
+                quansio_server::runtime::state_machine::ToolDispatchRequest {
+                    run_id: run.id.to_string(),
+                    turn_id,
+                    step_id,
+                    generation: current.generation.get(),
+                },
+            )
+            .await
+            .expect("the host call is answered");
+        self.latest_call(tool).await
+    }
+
     async fn seed_projection(&self, run_id: &str) {
-        let grants: Vec<Grant> = [
-            ("read.internal", "fs", "**"),
-            ("read.internal", "artifact", "*"),
-            ("content.upload", "artifact", "*"),
-        ]
-        .into_iter()
-        .map(|(class, kind, selector)| {
-            Grant::from_json(&json!({
-                "effect_class": class,
-                "resource": { "kind": kind, "selector": selector },
-                "constraints": {},
-            }))
-            .expect("grant")
-        })
-        .collect();
+        self.seed_projection_with(
+            run_id,
+            &[
+                ("read.internal", "fs", "**"),
+                ("read.internal", "artifact", "*"),
+                ("content.upload", "artifact", "*"),
+            ],
+        )
+        .await;
+    }
+
+    /// Store the run's CapabilityProjection with exactly these grants.
+    pub async fn seed_projection_with(&self, run_id: &str, grants: &[(&str, &str, &str)]) {
+        let grants: Vec<Grant> = grants
+            .iter()
+            .map(|&(class, kind, selector)| {
+                Grant::from_json(&json!({
+                    "effect_class": class,
+                    "resource": { "kind": kind, "selector": selector },
+                    "constraints": {},
+                }))
+                .expect("grant")
+            })
+            .collect();
         let projection = CapabilityProjection::from_parts(
             CanonicalId::generate(Prefix::CapabilityProjection, &mut UlidGenerator::new()),
             ProjectionSubject::new(SubjectKind::Run, run_id),

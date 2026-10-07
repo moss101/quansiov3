@@ -1,0 +1,10 @@
+fmt exit=0
+clippy exit=0
+All checks passed!
+ruff exit=0
+199 files already formatted
+ruff format exit=0
+Success: no issues found in 121 source files
+mypy exit=0
+tsc exit=0
+eslint exit=0
