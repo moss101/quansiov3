@@ -88,13 +88,15 @@ final class RecorderSessionTests: XCTestCase {
         let document = try archive(finished)
         let actions = try XCTUnwrap(document["actions"] as? [[String: Any]])
         XCTAssertEqual(actions.count, 2, "the secure typing burst and the click; the keystroke left nothing")
-        XCTAssertNil(actions[0]["text"])
-        XCTAssertEqual(actions[0]["secure"] as? Bool, true)
+        // Read through `first` so a wrong count fails this test by name instead of trapping the whole process.
+        let burst = try XCTUnwrap(actions.first, "the secure typing burst is recorded")
+        XCTAssertNil(burst["text"])
+        XCTAssertEqual(burst["secure"] as? Bool, true)
         let counts = try XCTUnwrap((document["redaction"] as? [String: Any])?["counts"] as? [String: Int])
         XCTAssertEqual(counts["password_field"], 1)
         let paused = try XCTUnwrap(document["paused"] as? [[String: Any]])
         XCTAssertEqual(paused.count, 1)
-        XCTAssertEqual(paused[0]["reason"] as? String, "secure_field")
+        XCTAssertEqual(paused.first?["reason"] as? String, "secure_field")
     }
 
     func testCaptureStopsWhileSecureInputIsOnAndResumesAfter() throws {
