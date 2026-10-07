@@ -3240,11 +3240,11 @@
       "notes": "Desktop shell (D-019, DOMAIN.md 13.6): the server reports a maintenance status (GET /v1/maintenance: idle, active Turns, in-flight actions, open terminals, derived from existing rows through the Run store, the Effect Ledger and the terminal store; no new store); the desktop has four window types (main, pop-out, quick entry, activity indicator) on one sandboxed baseline, and every IPC invoke is authorised in main before a handler runs (sender URL, managed window, window-type channel table, a pop-out acts on its own thread only; an untrusted sender is a logged no-op). Rebindable window shortcuts and global shortcuts with a strict grammar, conflict detection, typed rollback when the OS declines a registration, a recording mode that pauses shortcuts and the menu; keep-awake only on AC power while a Turn runs; quit and update ask before interrupting running work (an unreadable status is asked about, never assumed idle); the offline grace (10 s, config/desktop-shell.yaml) feeds the one existing reconnect; events sent before a renderer subscribes wait in a bounded per-window queue. Not exercised live (evidence NOTES.md): the Windows/Linux tray, a global shortcut fired from another application, power-source changes, a second display, mouse click-through, drag-out. Deferred: schema validation of the older channels, start-up hydration of the activity list."
     },
     "ADP-005": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "PARTIAL",
+      "status": "RECONCILING",
+      "claimed_by": "agent:adp-005",
+      "started_at": "2026-10-07T06:53:01Z",
+      "updated_at": "2026-10-07T06:53:01Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
