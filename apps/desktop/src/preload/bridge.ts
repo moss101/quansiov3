@@ -314,8 +314,9 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     removeParticipant: (params: Record<string, unknown>) => send("participants.remove", params),
     react: (params: { message_id: string; emoji: string; remove: boolean }) => send("messages.react", params),
     handOffThread: (params: Record<string, unknown>) => send("threads.handoff", params),
-    // Routines and notifications (APP-010): the projections, one routine command (create,
-    // update, pause, resume, delete, trigger now), and the person's own notifications.
+    // Routines and notifications (APP-010, ADP-007): the projections, one routine command (create,
+    // update, pause, resume, delete, trigger now, dry run, rotate an inbound hook's secret), and the
+    // person's own notifications.
     listRoutines: () => send("routines.list", {}),
     routineCommand: (name: string, params: Record<string, unknown>) => send("routines.command", { name, params }),
     listNotifications: (unreadOnly = false) => send("notifications.list", { unreadOnly }),

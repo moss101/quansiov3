@@ -367,12 +367,14 @@ export class DesktopBridge {
   async routineCommand(raw: unknown): Promise<unknown> {
     const record = asRecord(raw, "routines.command");
     const name = record["name"];
-    const allowed = ["CreateRoutine", "UpdateRoutine", "PauseRoutine", "ResumeRoutine", "DeleteRoutine", "TriggerRoutineNow"];
+    const allowed = ["CreateRoutine", "UpdateRoutine", "PauseRoutine", "ResumeRoutine", "DeleteRoutine", "TriggerRoutineNow", "DryRunRoutine", "RotateRoutineHook"];
     if (typeof name !== "string" || !allowed.includes(name)) {
       throw new Error("routines.command names a routine command");
     }
     const params = { ...asRecord(record["params"], "routines.command params") };
-    if (name === "CreateRoutine") {
+    // A dry run of a draft names a definition instead of a routine; it is still the workspace main acts in.
+    const draftDryRun = name === "DryRunRoutine" && params["routine_id"] === undefined;
+    if (name === "CreateRoutine" || draftDryRun) {
       params["workspace_id"] = this.#requireWorkspace();
     } else if (typeof params["routine_id"] !== "string" || !params["routine_id"].startsWith("rtn_")) {
       throw new Error(`${name} needs an rtn_ routine_id`);

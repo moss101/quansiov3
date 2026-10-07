@@ -481,7 +481,13 @@ function Shell(): ReactElement {
     ) : page === "collaboration" ? (
       <Collaboration key={`collaboration-${workspaceId}`} workspaceId={workspaceId} />
     ) : page === "automations" ? (
-      <Automations key={`automations-${workspaceId}`} workspaceId={workspaceId} />
+      <Automations
+        key={`automations-${workspaceId}`}
+        workspaceId={workspaceId}
+        onOpenApprovals={() => {
+          openPage("approvals");
+        }}
+      />
     ) : page === "settings" ? (
       <Settings key={`settings-${workspaceId}`} workspaceId={workspaceId} />
     ) : (

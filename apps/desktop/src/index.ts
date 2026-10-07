@@ -363,8 +363,47 @@ export {
   viewerFrom,
 } from "./collaboration/thread.js";
 export type { AttentionView, Mention, Mentionable, ParticipantView, Reaction, ReactionSummary, ThreadListEntry, ThreadMessage, ThreadState, ThreadView } from "./collaboration/thread.js";
-export { createRoutineParams, decodeRoutines, draftProblem, routineControls, summarizeFires } from "./automation/routines.js";
-export type { AbsencePolicy, FireSummary, FireView, RoutineControl, RoutineDraft, RoutineStatus, RoutineTrigger, RoutineView, TriggerKind } from "./automation/routines.js";
+export {
+  controlParams,
+  createRoutineParams,
+  decodeRoutines,
+  draftOf,
+  draftProblem,
+  draftsDiffer,
+  dryRunDraftParams,
+  dryRunRoutineParams,
+  rotateHookParams,
+  routineControls,
+  summarizeFires,
+  updateRoutineParams,
+} from "./automation/routines.js";
+export type { AbsencePolicy, FireSummary, FireView, HookView, RoutineControl, RoutineDraft, RoutineStatus, RoutineTrigger, RoutineView, TriggerKind } from "./automation/routines.js";
+export {
+  HOOK_OPS,
+  addCondition,
+  addGroup,
+  describeFilters,
+  emptyCondition,
+  filterProblem,
+  filtersFromWire,
+  filtersToWire,
+  literalText,
+  parseLiteral,
+  removeCondition,
+  removeGroup,
+  updateCondition,
+  valueKind,
+} from "./automation/hooks.js";
+export type { FilterCondition, FilterDraft, FilterGroup, HookConditionWire, HookOp, ValueKind } from "./automation/hooks.js";
+export { FALLBACK_ZONES, filterZones, isFixedOffset, offsetLabel, supportedZones, viewerZone } from "./automation/timezones.js";
+export { canSave, conflictOf, decodeSettled, editDraft, failureText, fieldErrorsOf, markConflict, reviewAfterReload, startEdit } from "./automation/failures.js";
+export type { Conflict, EditSession, FieldErrors, Failure, Settled as RoutineSettled } from "./automation/failures.js";
+export { NOTHING_SHOWN, copyText, dismiss as dismissSecret, revealFrom, withoutSecret } from "./automation/secret-once.js";
+export type { CopyTarget, RevealKind, SecretReveal, SecretState } from "./automation/secret-once.js";
+export { DRAFT_TARGET, MAX_SAMPLE_BYTES, decodeDryRun, dryRunRefusal, filterVerdict, parseSamplePayload } from "./automation/dryrun.js";
+export type { DryRunProblem, DryRunScript, DryRunState, DryRunView, InstructionBlock, SampleResult } from "./automation/dryrun.js";
+export { attentionOf, budgetOf, decodeOutline, decodeScriptRuns, itemProgress, latestRun, stepRows } from "./automation/script-view.js";
+export type { Attention as ScriptAttention, Budget, BudgetLevel, GateKind, OpenGate, OutlineStep, RunStatus, RunStep, ScriptOutline, ScriptRun, StepKind, StepRow, StepStatus } from "./automation/script-view.js";
 export {
   NOTIFICATION_CHANNELS,
   NOTIFICATION_KINDS,
