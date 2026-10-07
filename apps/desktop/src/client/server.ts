@@ -383,6 +383,11 @@ export class ServerClient {
     return this.#request("GET", `${this.origin}/v1/skills`);
   }
 
+  /** Capability packs with their revisions and, for an administrator, the install reports (ADP-008). */
+  packs(): Promise<unknown> {
+    return this.#request("GET", `${this.origin}/v1/packs`);
+  }
+
   // ---- skill recording (ADP-003): the caller's own recordings ----
 
   recordings(): Promise<unknown> {

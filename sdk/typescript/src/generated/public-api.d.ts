@@ -1075,6 +1075,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/commands/InstallPack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Skills & packs: InstallPack */
+        post: operations["InstallPack"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/commands/RollbackPack": {
         parameters: {
             query?: never;
@@ -2755,9 +2772,33 @@ export interface components {
         PublishPackParams: {
             [key: string]: unknown;
         };
-        /** @description Skills & packs command RollbackPack. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        /** @description Skills & packs command InstallPack. */
+        InstallPackParams: {
+            /** @description The workspace the administrator acts from; the pack is the tenant's (DOMAIN.md 11.6 B). */
+            workspace_id: string;
+            /** @description Where the pack's content comes from. */
+            source: {
+                /** @constant */
+                kind: "inline";
+                manifest: Record<string, never>;
+                files?: {
+                    [key: string]: string;
+                };
+            } | {
+                /** @constant */
+                kind: "builtin";
+                name: string;
+            };
+            /** @description The revision the content is expected to have; another is refused at verify. */
+            expected_revision?: string;
+            /** @description The revision the caller believes is active (null: none); another is CONFLICT_REVISION. */
+            expected_active_revision?: string | null;
+        };
+        /** @description Skills & packs command RollbackPack. */
         RollbackPackParams: {
-            [key: string]: unknown;
+            /** @description The pack's name. */
+            pack: string;
+            expected_active_revision?: string | null;
         };
         /** @description Recording command StartRecording. */
         StartRecordingParams: {
@@ -5421,6 +5462,45 @@ export interface operations {
         };
     };
     PublishPack: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    InstallPack: {
         parameters: {
             query?: never;
             header?: never;

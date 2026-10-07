@@ -74,6 +74,7 @@ commands:
   - SubmitPack
   - QualifyPack
   - PublishPack
+  - InstallPack
   - RollbackPack
   Recording:
   - StartRecording

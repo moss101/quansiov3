@@ -24,7 +24,7 @@ pub use declaration::{
     ToolDeclaration, ToolHost,
 };
 pub use error::ToolError;
-pub use registry::{RawFamilyReservation, ToolRegistry};
+pub use registry::{RawFamilyReservation, ToolRegistry, ToolVisibility};
 pub use schema::{check_vocabulary, first_violation, validate_instance, SchemaViolation};
 pub use side_effect::{SideEffectClass, SideEffectMapping, SideEffectRow};
 

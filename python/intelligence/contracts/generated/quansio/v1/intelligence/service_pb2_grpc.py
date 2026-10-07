@@ -85,6 +85,11 @@ class IntelligenceGatewayStub:
                 request_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompileRecordingRequest.SerializeToString,
                 response_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompileRecordingResponse.FromString,
                 _registered_method=True)
+        self.CompilePack = channel.unary_unary(
+                '/quansio.v1.intelligence.IntelligenceGateway/CompilePack',
+                request_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompilePackRequest.SerializeToString,
+                response_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompilePackResponse.FromString,
+                _registered_method=True)
 
 
 class IntelligenceGatewayServicer:
@@ -150,6 +155,12 @@ class IntelligenceGatewayServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def CompilePack(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_IntelligenceGatewayServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -202,6 +213,11 @@ def add_IntelligenceGatewayServicer_to_server(servicer, server):
                     servicer.CompileSkillRecording,
                     request_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompileRecordingRequest.FromString,
                     response_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompileRecordingResponse.SerializeToString,
+            ),
+            'CompilePack': grpc.unary_unary_rpc_method_handler(
+                    servicer.CompilePack,
+                    request_deserializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompilePackRequest.FromString,
+                    response_serializer=quansio_dot_v1_dot_intelligence_dot_service__pb2.CompilePackResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -474,6 +490,33 @@ class IntelligenceGateway:
             '/quansio.v1.intelligence.IntelligenceGateway/CompileSkillRecording',
             quansio_dot_v1_dot_intelligence_dot_service__pb2.CompileRecordingRequest.SerializeToString,
             quansio_dot_v1_dot_intelligence_dot_service__pb2.CompileRecordingResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CompilePack(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/quansio.v1.intelligence.IntelligenceGateway/CompilePack',
+            quansio_dot_v1_dot_intelligence_dot_service__pb2.CompilePackRequest.SerializeToString,
+            quansio_dot_v1_dot_intelligence_dot_service__pb2.CompilePackResponse.FromString,
             options,
             channel_credentials,
             insecure,

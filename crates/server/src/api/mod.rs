@@ -31,6 +31,7 @@ pub mod live;
 pub mod live_sessions;
 pub mod maintenance;
 pub mod ops;
+pub mod packs;
 pub mod projections;
 pub mod rbac;
 pub mod recordings;
@@ -904,6 +905,7 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/knowledge", get(knowledge::knowledge))
         .route("/v1/memory", get(knowledge::memory))
         .route("/v1/skills", get(knowledge::skills))
+        .route("/v1/packs", get(packs::packs))
         .route("/v1/recordings", get(recordings::recordings))
         .route("/v1/recordings/:id", get(recordings::recording))
         .route("/v1/members", get(admin::members))

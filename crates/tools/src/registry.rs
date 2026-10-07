@@ -41,6 +41,17 @@ pub struct RawFamilyReservation {
     pub materialized_by: String,
 }
 
+/// Who may propose one tool (ADP-008).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ToolVisibility {
+    /// The tool's name.
+    pub name: String,
+    /// A model may be offered it and may propose it.
+    pub model_visible: bool,
+    /// The host may call it with no model proposing it.
+    pub host_callable: bool,
+}
+
 /// The generated catalog YAML shape.
 #[derive(Debug, Deserialize)]
 struct CatalogDocument {
@@ -223,6 +234,23 @@ impl ToolRegistry {
         names.sort_unstable();
         names.dedup();
         names
+    }
+
+    /// Who may propose each tool, for an **administrator-facing** check such as compiling a pack (ADP-008): the
+    /// newest declaration of every tool, sorted by name. It names host-only tools, so it is never a list to show
+    /// a model: use [`ToolRegistry::model_visible_names`] or [`ToolRegistry::exposed_names`] for that.
+    #[must_use]
+    pub fn visibility(&self) -> Vec<ToolVisibility> {
+        let mut table: Vec<ToolVisibility> = self
+            .latest()
+            .map(|declaration| ToolVisibility {
+                name: declaration.name.clone(),
+                model_visible: declaration.model_visible,
+                host_callable: declaration.host_callable,
+            })
+            .collect();
+        table.sort_by(|a, b| a.name.cmp(&b.name));
+        table
     }
 
     /// The catalog families this registry reserves but does not make callable, with the

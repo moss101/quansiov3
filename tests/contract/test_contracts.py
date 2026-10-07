@@ -253,6 +253,8 @@ def test_json_schemas_validate_real_artifacts():
     validator("outputs-config").validate(outputs)
     automation = yaml.safe_load((ROOT / "config" / "automation.yaml").read_text())
     validator("automation-config").validate(automation)
+    pack_install = yaml.safe_load((ROOT / "config" / "pack-install.yaml").read_text())
+    validator("pack-install-config").validate(pack_install)
 
     summaries = sorted((ROOT / "evidence").glob("*/*/summary.json"))
     assert summaries, "at least one task evidence bundle must exist"
@@ -498,3 +500,35 @@ def test_automation_schema_keeps_hooks_small_and_the_approval_threshold_on():
     assert broken(lambda d: d["tenant_overrides"].update({"not-a-tenant": {"max_enabled_triggers": 5}}))
     assert broken(lambda d: d.update(unknown_section={}))
     assert not broken(lambda d: d["tenant_overrides"].update({"tn_01J8Z3K6F1N8VQ2X5W9Y0ABCDE": {"max_enabled_triggers": 5}}))
+
+
+def test_pack_install_schema_keeps_history_and_reports_bounded():
+    """A configuration cannot keep an unbounded history or report, drop the retained previous revision, or let a report
+    live forever (ADP-008, DOMAIN.md 11.6)."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "pack-install-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "pack-install.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+    assert good["install"]["retain_previous_revisions"] >= 1, "the previous revision is always retained"
+    assert good["reports"]["retention_days"] == 30
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    assert broken(lambda d: d["install"].update(retain_previous_revisions=0))
+    assert broken(lambda d: d["install"].update(retain_previous_revisions=21))
+    assert broken(lambda d: d["install"].update(max_content_bytes=64 * 1024 * 1024))
+    assert broken(lambda d: d["install"].update(max_files=0))
+    assert broken(lambda d: d["install"].update(running_grace_seconds=1))
+    assert broken(lambda d: d["reports"].update(retention_days=0))
+    assert broken(lambda d: d["reports"].update(retention_days=3650))
+    assert broken(lambda d: d["reports"].update(max_diagnostics=0))
+    assert broken(lambda d: d["reports"].update(max_diagnostic_bytes=1_000_000))
+    assert broken(lambda d: d.update(unknown_section={}))
+    assert broken(lambda d: d["reports"].pop("retention_days"))

@@ -1260,6 +1260,37 @@ pub struct CompileRecordingResponse {
     pub proposal_json: ::prost::alloc::string::String,
 }
 /// Served by python/intelligence. Rust is the only caller.
+/// Pack install (ADP-008, DOMAIN.md §11.6): the runtime hands over one pack's content (manifest and files,
+/// bounded) and the Tool Registry's visibility table; the plane returns its revision, its diagnostics and what
+/// the pack resolves to. It verifies (shape, digest, quarantine record, credentials) and compiles (tools a model
+/// can see, the evaluation gate). It writes nothing: activation, retention and the install report are the runtime's.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CompilePackRequest {
+    #[prost(string, tag = "100")]
+    pub schema_version: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "1")]
+    pub scope: ::core::option::Option<ScopeContext>,
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+    /// {manifest, files}: the pack's content.
+    #[prost(string, tag = "3")]
+    pub pack_json: ::prost::alloc::string::String,
+    /// \[{name, model_visible, host_callable}\] for every tool the registry declares.
+    #[prost(string, repeated, tag = "4")]
+    pub tools_json: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// {expected_revision?, max_files, max_file_bytes, max_content_bytes}
+    #[prost(string, tag = "5")]
+    pub settings_json: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CompilePackResponse {
+    #[prost(string, tag = "100")]
+    pub schema_version: ::prost::alloc::string::String,
+    /// {ok, failed_phase, revision, manifest_digest, diagnostics\[\], resolution}
+    #[prost(string, tag = "1")]
+    pub compilation_json: ::prost::alloc::string::String,
+}
+/// Served by python/intelligence. Rust is the only caller.
 /// Independent semantic verification of a completion claim (RUN-008, DOMAIN.md §4.4): the plane
 /// asks a model that is not the claimant and returns its verdict. A refusal (malformed verdict,
 /// unavailable model, unprovable independence) is a typed error, never a verdict.
@@ -1675,6 +1706,35 @@ pub mod intelligence_gateway_client {
                 );
             self.inner.unary(req, path, codec).await
         }
+        pub async fn compile_pack(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CompilePackRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::CompilePackResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/quansio.v1.intelligence.IntelligenceGateway/CompilePack",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "quansio.v1.intelligence.IntelligenceGateway",
+                        "CompilePack",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -1755,6 +1815,13 @@ pub mod intelligence_gateway_server {
             request: tonic::Request<super::CompileRecordingRequest>,
         ) -> std::result::Result<
             tonic::Response<super::CompileRecordingResponse>,
+            tonic::Status,
+        >;
+        async fn compile_pack(
+            &self,
+            request: tonic::Request<super::CompilePackRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::CompilePackResponse>,
             tonic::Status,
         >;
     }
@@ -2285,6 +2352,52 @@ pub mod intelligence_gateway_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = CompileSkillRecordingSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/quansio.v1.intelligence.IntelligenceGateway/CompilePack" => {
+                    #[allow(non_camel_case_types)]
+                    struct CompilePackSvc<T: IntelligenceGateway>(pub Arc<T>);
+                    impl<
+                        T: IntelligenceGateway,
+                    > tonic::server::UnaryService<super::CompilePackRequest>
+                    for CompilePackSvc<T> {
+                        type Response = super::CompilePackResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CompilePackRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as IntelligenceGateway>::compile_pack(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = CompilePackSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

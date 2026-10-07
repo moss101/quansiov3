@@ -151,6 +151,29 @@ message CompileRecordingResponse {
 }
 
 // Served by python/intelligence. Rust is the only caller.
+// Pack install (ADP-008, DOMAIN.md §11.6): the runtime hands over one pack's content (manifest and files,
+// bounded) and the Tool Registry's visibility table; the plane returns its revision, its diagnostics and what
+// the pack resolves to. It verifies (shape, digest, quarantine record, credentials) and compiles (tools a model
+// can see, the evaluation gate). It writes nothing: activation, retention and the install report are the runtime's.
+message CompilePackRequest {
+  string schema_version = 100;
+  ScopeContext scope = 1;
+  string request_id = 2;
+  // {manifest, files}: the pack's content.
+  string pack_json = 3;
+  // [{name, model_visible, host_callable}] for every tool the registry declares.
+  repeated string tools_json = 4;
+  // {expected_revision?, max_files, max_file_bytes, max_content_bytes}
+  string settings_json = 5;
+}
+
+message CompilePackResponse {
+  string schema_version = 100;
+  // {ok, failed_phase, revision, manifest_digest, diagnostics[], resolution}
+  string compilation_json = 1;
+}
+
+// Served by python/intelligence. Rust is the only caller.
 // Independent semantic verification of a completion claim (RUN-008, DOMAIN.md §4.4): the plane
 // asks a model that is not the claimant and returns its verdict. A refusal (malformed verdict,
 // unavailable model, unprovable independence) is a typed error, never a verdict.
@@ -185,4 +208,5 @@ service IntelligenceGateway {
   rpc ProposeSkillCandidates(SkillCandidatesRequest) returns (SkillCandidatesResponse);
   rpc VerifyCompletion(CompletionVerificationRequest) returns (CompletionVerdict);
   rpc CompileSkillRecording(CompileRecordingRequest) returns (CompileRecordingResponse);
+  rpc CompilePack(CompilePackRequest) returns (CompilePackResponse);
 }

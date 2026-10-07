@@ -322,6 +322,11 @@ OPERATIONS: dict[str, dict[str, str]] = {
         "path": "/v1/commands/PublishPack",
         "family": "Skills & packs",
     },
+    "InstallPack": {
+        "method": "POST",
+        "path": "/v1/commands/InstallPack",
+        "family": "Skills & packs",
+    },
     "RollbackPack": {
         "method": "POST",
         "path": "/v1/commands/RollbackPack",

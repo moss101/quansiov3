@@ -66,6 +66,7 @@ export const OPERATIONS = {
   SubmitPack: { method: "POST", path: "/v1/commands/SubmitPack", family: "Skills & packs" },
   QualifyPack: { method: "POST", path: "/v1/commands/QualifyPack", family: "Skills & packs" },
   PublishPack: { method: "POST", path: "/v1/commands/PublishPack", family: "Skills & packs" },
+  InstallPack: { method: "POST", path: "/v1/commands/InstallPack", family: "Skills & packs" },
   RollbackPack: { method: "POST", path: "/v1/commands/RollbackPack", family: "Skills & packs" },
   StartRecording: { method: "POST", path: "/v1/commands/StartRecording", family: "Recording" },
   FinishRecording: { method: "POST", path: "/v1/commands/FinishRecording", family: "Recording" },

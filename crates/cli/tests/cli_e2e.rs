@@ -601,10 +601,13 @@ fn the_cli_is_a_scoped_client_of_the_public_api_and_nothing_else() {
     // The routines projection (APP-010), in its served shape.
     let routines = owner.ok(&["--json", "routines", "list"]).json();
     assert_eq!(routines["items"], serde_json::json!([]), "{routines}");
-    // Unserved projections are the server's typed refusal, never an invention.
-    let packs = owner.run(&["--json", "api", "get", "/v1/packs"]);
-    assert_eq!(packs.status, 1);
-    assert_eq!(packs.error()["status"], 404, "{}", packs.stderr);
+    // The packs projection (ADP-008), in its served shape; a path nothing serves is the server's typed refusal,
+    // never an invention.
+    let packs = owner.ok(&["--json", "api", "get", "/v1/packs"]).json();
+    assert_eq!(packs["packs"], serde_json::json!([]), "{packs}");
+    let unserved = owner.run(&["--json", "api", "get", "/v1/unserved-projection"]);
+    assert_eq!(unserved.status, 1);
+    assert_eq!(unserved.error()["status"], 404, "{}", unserved.stderr);
 
     // 6. An invited viewer signs in with their own link (the invitation is accepted by the
     //    sign-in), holds a viewer's role, and the server refuses what a viewer may not do —

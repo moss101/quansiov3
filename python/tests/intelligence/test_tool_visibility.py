@@ -59,7 +59,7 @@ def test_the_shipped_source_holds_every_model_visible_tool_and_no_host_only_one(
 
 def test_a_host_only_tool_cannot_be_offered_to_a_provider() -> None:
     source = RegistryToolSchemaSource.load()
-    # Offered alone, or among the model's own tools, the name is refused: a typo and a host-only tool look alike.
+    # Offered alone or among the model's own tools, the name is refused: a host-only tool looks like a typo.
     for names in ([HOST_ONLY], ["fs.read", HOST_ONLY]):
         with pytest.raises(GatewayError) as error:
             resolve_tools(names, source, MODEL_TOOLS)

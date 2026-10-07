@@ -1,0 +1,28 @@
+# Installing a Business Capability Pack by content-hash revision (ADP-008, DOMAIN.md 11.6). Policy lives here, never as a source
+# constant (D-018). crates/server/src/control/packs/config.rs reads this file; schemas/json/pack-install-config.schema.json bounds
+# every value, so a configuration cannot keep an unbounded history, an unbounded report or a report that never expires.
+version: 1
+
+install:
+  # A pack (its manifest and every file, after decoding) is at most this many bytes, and at most this many files of at most
+  # `max_file_bytes` each. The plane checks the same bounds again.
+  max_content_bytes: 1048576
+  max_files: 64
+  max_file_bytes: 262144
+  # After an activation the revision it replaced stays installed, ready for `RollbackPack`, and so do this many before it. An older
+  # one keeps its row (its history) and loses its content.
+  retain_previous_revisions: 2
+  # A report left `running` this long (the server stopped between phases) is closed as failed, with the previous revision retained.
+  running_grace_seconds: 600
+  # Where `source: builtin` packs are read from, relative to the server's working directory (QUANSIO_PACKS_ROOT replaces it).
+  builtin_root: packs/capabilities
+
+reports:
+  # An install report is kept this long, then purged by the next install or read (the repository's lazy sweep: no timer, no daemon).
+  retention_days: 30
+  # What one report keeps of its findings: at most this many, each at most this many bytes, after redaction. The count left out is
+  # recorded.
+  max_diagnostics: 20
+  max_diagnostic_bytes: 512
+  # Reports one read returns.
+  max_listed: 50

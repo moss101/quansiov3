@@ -245,6 +245,8 @@ export {
 export type { Control, DecodedMemory, KnowledgeStatus, KnowledgeView, MemoryStatus, MemoryView, Provenance } from "./knowledge/entries.js";
 export { DISABLE_COMMAND, INSTALL_COMMAND, PROMOTE_COMMAND, SKILL_LADDER, activation, activeVersions, decodeSkills, disable, install, promotion } from "./knowledge/skills.js";
 export type { CapabilityNeed, Disable, Install, InstallInput, Promotion, SkillManifest, SkillStatus, SkillVersionView, SkillView } from "./knowledge/skills.js";
+export { INSTALL_PHASES, ROLLBACK_COMMAND, decodePacks, retained, rollback, shortRevision, summarizeReport } from "./knowledge/packs.js";
+export type { DiagnosticView, InstallOutcome, InstallPhase, InstallReportView, InstallState, PackView, PacksView, RevisionView, Rollback } from "./knowledge/packs.js";
 export {
   CANCEL_COMMAND as CANCEL_RECORDING_COMMAND,
   COMPILE_COMMAND as COMPILE_RECORDING_COMMAND,

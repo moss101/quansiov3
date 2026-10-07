@@ -396,6 +396,45 @@ async fn dispatch(
             )
             .await?
         }
+        // Pack installs (ADP-008): what a tenant may use changes for everyone, so both are a tenant
+        // administrator's, like installing a skill.
+        "InstallPack" => {
+            super::rbac::Authorization::check(
+                state.pool(),
+                scope,
+                None,
+                crate::policy::rbac::ActionFamily::ManageTenant,
+                correlation,
+            )
+            .await?;
+            super::packs::install_pack(
+                state,
+                identity,
+                command_id,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "RollbackPack" => {
+            super::rbac::Authorization::check(
+                state.pool(),
+                scope,
+                None,
+                crate::policy::rbac::ActionFamily::ManageTenant,
+                correlation,
+            )
+            .await?;
+            super::packs::rollback_pack(
+                state,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
         "PromoteSkillVersion" => {
             // Promotion changes what enters production context: a tenant administrator's call.
             super::rbac::Authorization::check(

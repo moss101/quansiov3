@@ -58,6 +58,11 @@ from typing import ClassVar, NoReturn
 import grpc
 from quansio.v1.intelligence import intelligence_pb2, service_pb2
 
+from intelligence.capability_compiler.install import (
+    InstallSettings,
+    ToolVisibility,
+    compile_install,
+)
 from intelligence.context.projection import ContextError
 from intelligence.context.turn import build_turn_context
 from intelligence.embeddings.provider import (
@@ -122,6 +127,7 @@ IMPLEMENTED_METHODS: frozenset[str] = frozenset(
         "ProposeSkillCandidates",
         "VerifyCompletion",
         "CompileSkillRecording",
+        "CompilePack",
     }
 )
 
@@ -501,6 +507,44 @@ class IntelligenceGatewayServicer:
             return service_pb2.CompileRecordingResponse(
                 schema_version=SCHEMA_VERSION,
                 proposal_json=json.dumps(proposal, sort_keys=True, separators=(",", ":")),
+            )
+        finally:
+            self._end_call(span)
+
+    def CompilePack(
+        self, request: service_pb2.CompilePackRequest, context: grpc.ServicerContext
+    ) -> service_pb2.CompilePackResponse:
+        """Verify and compile one pack for install (ADP-008, DOMAIN.md 11.6).
+
+        Returns the pack's content-hash revision, its diagnostics (each tagged with the phase that found it:
+        a bad pack is a result, not an error) and what it resolves to. A request the plane cannot read is a
+        typed refusal. Nothing here writes: the runtime activates, retains and reports.
+        """
+        span = self._begin_call(context, "CompilePack")
+        try:
+            scope = self._validated_scope("CompilePack", request, context)
+            self._ensure_live("CompilePack", context)
+            try:
+                content = json.loads(request.pack_json)
+                tools = [ToolVisibility.parse(raw) for raw in request.tools_json]
+                settings = InstallSettings.parse(request.settings_json or None)
+                if not isinstance(content, dict) or not request.request_id:
+                    raise ValueError("a {manifest, files} object and a request id are required")
+            except (ValueError, KeyError, TypeError) as malformed:
+                abort_with(
+                    context,
+                    ErrorEnvelope(
+                        code=ErrorCode.VALIDATION_SCHEMA,
+                        message=f"the pack request is malformed: {malformed}",
+                        correlation_id=scope.correlation_id,
+                        details=(ErrorDetail("owner_task", "ADP-008"),),
+                    ),
+                )
+            compilation = compile_install(content.get("manifest"), content.get("files", {}), tools, settings)
+            self._ensure_live("CompilePack", context)
+            return service_pb2.CompilePackResponse(
+                schema_version=SCHEMA_VERSION,
+                compilation_json=json.dumps(compilation.as_mapping(), sort_keys=True, separators=(",", ":")),
             )
         finally:
             self._end_call(span)
