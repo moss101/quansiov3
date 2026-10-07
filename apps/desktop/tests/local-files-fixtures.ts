@@ -3,7 +3,7 @@
  * clock that moves only when the test moves it. Nothing about the filesystem is simulated.
  */
 
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, realpathSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -54,6 +54,11 @@ export function link(target: string, at: string): string {
   mkdirSync(dirname(at), { recursive: true });
   symlinkSync(target, at);
   return at;
+}
+
+/** How many file descriptors this process holds now (a leak shows here, where the registries' own counts cannot see it). */
+export function openFds(): number {
+  return readdirSync(existsSync("/proc/self/fd") ? "/proc/self/fd" : "/dev/fd").length;
 }
 
 /** Wait until `check` returns something other than `undefined`, polling real time. */

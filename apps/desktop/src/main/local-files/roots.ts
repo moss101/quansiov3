@@ -153,6 +153,15 @@ export class RootRegistry {
     this.#onReleased(root.windowId, root.rootId);
   }
 
+  /** How many entry ids `windowId` holds (a release or a closing window empties them). */
+  entryCount(windowId: number): number {
+    let count = 0;
+    for (const entry of this.#entries.values()) {
+      count += entry.windowId === windowId ? 1 : 0;
+    }
+    return count;
+  }
+
   /** The roots `windowId` holds. */
   rootsOf(windowId: number): RootView[] {
     return [...this.#roots.values()].filter((root) => root.windowId === windowId).map((root) => ({ rootId: root.rootId, name: root.name }));

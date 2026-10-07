@@ -297,18 +297,33 @@ impl FileHost {
             path: path.relative().to_string(),
             detail: error.to_string(),
         };
-        let temporary = temporary_beside(path.absolute());
-        let written = (|| -> Result<(), std::io::Error> {
-            let mut file = std::fs::OpenOptions::new()
+        // Exclusive: a name that already exists (another writer's, or a planted link) is never opened or removed;
+        // the next name is tried.
+        let mut attempts = 0;
+        let (temporary, mut file) = loop {
+            let candidate = temporary_beside(path.absolute());
+            match std::fs::OpenOptions::new()
                 .write(true)
                 .create_new(true)
-                .open(&temporary)?;
+                .open(&candidate)
+            {
+                Ok(file) => break (candidate, file),
+                Err(error)
+                    if error.kind() == std::io::ErrorKind::AlreadyExists && attempts < 64 =>
+                {
+                    attempts += 1;
+                }
+                Err(error) => return Err(io(error)),
+            }
+        };
+        let written = (|| -> Result<(), std::io::Error> {
             if let Ok(metadata) = std::fs::metadata(path.absolute()) {
                 file.set_permissions(metadata.permissions())?;
             }
             file.write_all(content)?;
             file.sync_all()
         })();
+        drop(file);
         if let Err(error) = written {
             let _ = std::fs::remove_file(&temporary);
             return Err(io(error));
@@ -510,18 +525,33 @@ fn current_digest(absolute: &Path, relative: &str) -> Result<String, ToolError> 
     }
 }
 
-/// A fresh temporary path beside `target`: hidden, unique per process and call, never reused.
-fn temporary_beside(target: &Path) -> PathBuf {
-    static COUNTER: AtomicU64 = AtomicU64::new(0);
+static TEMPORARY_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+/// The sequence number the next temporary name will carry (a test seam: it is how a test plants names that are
+/// already taken, to show a write never opens or removes a file it did not create).
+#[doc(hidden)]
+#[must_use]
+pub fn next_temporary_sequence() -> u64 {
+    TEMPORARY_COUNTER.load(Ordering::Relaxed)
+}
+
+/// The name a temporary file beside `target` carries for sequence number `sequence` in this process.
+#[doc(hidden)]
+#[must_use]
+pub fn temporary_name(target: &Path, sequence: u64) -> PathBuf {
     let name = target
         .file_name()
         .and_then(|name| name.to_str())
         .unwrap_or("file");
-    let sequence = COUNTER.fetch_add(1, Ordering::Relaxed);
     target.with_file_name(format!(
         ".{name}.qworkerd-{}-{sequence}.partial",
         std::process::id()
     ))
+}
+
+/// A fresh temporary path beside `target`: hidden, unique per process and call, never reused.
+fn temporary_beside(target: &Path) -> PathBuf {
+    temporary_name(target, TEMPORARY_COUNTER.fetch_add(1, Ordering::Relaxed))
 }
 
 struct AppliedPatch {

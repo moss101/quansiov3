@@ -80,8 +80,10 @@ describe("granting a root", () => {
     // Another window has its own allowance.
     expect(registry.grant(B, roots[2] ?? "").ok).toBe(true);
     const listed = entries(registry, A, first.rootId);
+    expect(registry.entryCount(A)).toBe(1);
     expect(registry.release(B, first.rootId)).toBe(false);
     expect(registry.release(A, first.rootId)).toBe(true);
+    expect(registry.entryCount(A), "its entry ids went with it").toBe(0);
     expect(released).toEqual([first.rootId]);
     // Its entry ids went with it.
     const file = listed.entries[0];
@@ -218,7 +220,9 @@ describe("a path outside the granted roots is refused", () => {
     put(project, "a.txt", "a");
     const root = granted(registry, A, project);
     const file = entries(registry, A, root.rootId).entries[0]?.entryId ?? "";
+    expect(registry.entryCount(A)).toBe(1);
     registry.revokeWindow(A);
+    expect(registry.entryCount(A)).toBe(0);
     expect(registry.rootsOf(A)).toEqual([]);
     expect(registry.resolve(A, file)).toMatchObject({ ok: false, error: { code: "FILE_OUTSIDE_ROOTS" } });
     expect(registry.list(A, root.rootId, null)).toMatchObject({ ok: false });

@@ -256,12 +256,16 @@ describe("a token that is not a capability", () => {
     const expiring = grantOf(r.grants, A, put(r.dir, "expiring.txt", "e"));
     const urls = [claimed, discarded, expiring].map((grant) => mintForGrant(r, A, grant));
     expect(urls.map((url) => r.media.handle(get(url)).status)).toEqual([200, 200, 200]);
+    expect(r.media.count(A)).toBe(3);
     const claim = r.grants.claim(A, claimed.token);
     expect(r.media.handle(get(urls[0] ?? "")).status).toBe(404);
+    expect(r.media.count(A), "the token itself is gone, not only unusable").toBe(2);
     expect(r.grants.discard(A, discarded.token)).toBe(true);
     expect(r.media.handle(get(urls[1] ?? "")).status).toBe(404);
+    expect(r.media.count(A)).toBe(1);
     r.clock.advance(60_000);
     expect(r.media.handle(get(urls[2] ?? "")).status).toBe(404);
+    expect(r.media.count(A)).toBe(0);
     if (claim.ok) {
       claim.files.forEach((file) => { file.close(); });
     }

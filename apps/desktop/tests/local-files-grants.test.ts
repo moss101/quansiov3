@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
 
 import { GrantRegistry, grantKey, type GrantLimits } from "../src/main/local-files/grants.js";
 
-import { CONFIG, link, put, schedulerOf, scratch } from "./local-files-fixtures.js";
+import { CONFIG, link, openFds, put, schedulerOf, scratch } from "./local-files-fixtures.js";
 import { Clock } from "./shell-fakes.js";
 
 const LIMITS: GrantLimits = {
@@ -209,6 +209,7 @@ describe("what a grant will not hold", () => {
     const linked = link(real, join(dir, "link.txt"));
     const fifo = join(dir, "pipe");
     execFileSync("mkfifo", [fifo]);
+    const before = openFds();
     for (const [path, reason, name] of [
       [folder, "not_regular", "folder"],
       [linked, "symlink", "link.txt"],
@@ -217,9 +218,10 @@ describe("what a grant will not hold", () => {
     ] as const) {
       expect(registry.create(A, [real, path]), name).toEqual({ ok: false, failure: { reason, name } });
     }
-    // A refused grant leaves nothing open and nothing live.
+    // A refused grant leaves nothing open and nothing live: not in the registry, and not in the process either.
     expect(registry.openDescriptors()).toBe(0);
     expect(registry.liveCount()).toBe(0);
+    expect(openFds(), "the descriptors a refused grant opened were closed").toBe(before);
   });
 
   it("does not follow a link at the end of the picked path, even to a file inside the same folder", () => {

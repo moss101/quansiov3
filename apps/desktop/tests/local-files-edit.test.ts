@@ -305,6 +305,15 @@ describe("saveWithBaseline and readForEdit directly", () => {
     // The old baseline is stale now (same size, new time): a second save from it is a conflict.
     expect(saveWithBaseline(path, Buffer.from("again"), read.baseline, "fail")).toMatchObject({ ok: false, kind: "conflict" });
     expect(saveWithBaseline(dir, Buffer.from("x"), read.baseline, "fail")).toMatchObject({ ok: false, kind: "refused", reason: "not_regular" });
+    // A target that is a link is refused as one and the file it points at is never written, whatever its size and time.
+    const target = put(dir, "target.txt", "hello");
+    const linked = link(target, join(dir, "linked.txt"));
+    const targetRead = readForEdit(target, 100);
+    if (!targetRead.ok) {
+      throw new Error("not readable");
+    }
+    expect(saveWithBaseline(linked, Buffer.from("HELLO"), targetRead.baseline, "fail")).toMatchObject({ ok: false, kind: "refused", reason: "symlink" });
+    expect(readFileSync(target, "utf8")).toBe("hello");
     expect(readForEdit(join(dir, "missing"), 100)).toMatchObject({ ok: false });
   });
 });

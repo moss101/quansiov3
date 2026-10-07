@@ -122,6 +122,7 @@ describe("one OS watch per directory", () => {
     watch(r, A, dir);
     watch(r, B, dir);
     r.hub.revokeWindow(A);
+    expect([r.hub.subscriberCount(A), r.hub.subscriberCount(B)]).toEqual([0, 1]);
     expect(r.hub.watchCount()).toBe(1);
     r.hub.revokeRoot("lroot_" + "a".repeat(32));
     expect(r.hub.watchCount()).toBe(0);

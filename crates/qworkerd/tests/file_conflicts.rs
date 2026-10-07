@@ -11,6 +11,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use quansio_core::Digest;
+use quansio_qworkerd::tools::files::{next_temporary_sequence, temporary_name};
 use quansio_qworkerd::tools::{FileHost, RootScope, Sandbox, ToolContext, ToolError};
 
 fn context() -> ToolContext<'static> {
@@ -407,4 +408,43 @@ fn the_conflict_is_what_a_second_concurrent_writer_sees_and_the_code_is_the_one_
         }
     }
     assert!(tree.leftovers().is_empty());
+}
+
+#[test]
+fn a_temporary_name_that_is_already_taken_is_never_opened_or_removed() {
+    // A link planted at the names the next writes would use, pointing at a file that must not change.
+    let tree = Tree::new();
+    let victim = tree.root.join("victim.txt");
+    std::fs::write(&victim, "precious").expect("victim");
+    std::fs::write(tree.root.join("doc.txt"), "base\n").expect("seed");
+    let target = tree.root.join("doc.txt");
+    let first = next_temporary_sequence();
+    let planted: Vec<PathBuf> = (first..first + 40)
+        .map(|sequence| temporary_name(&target, sequence))
+        .collect();
+    for name in &planted {
+        std::os::unix::fs::symlink(&victim, name).expect("plant a link");
+    }
+    let host = tree.host();
+    let text = "the real write\n";
+    host.write(
+        &context(),
+        RootScope::Workspace,
+        "doc.txt",
+        text.as_bytes(),
+        &digest(text),
+    )
+    .expect("the write goes on to a free name");
+    assert_eq!(std::fs::read_to_string(&target).expect("read"), text);
+    assert_eq!(
+        std::fs::read_to_string(&victim).expect("victim"),
+        "precious",
+        "nothing was written through a planted name"
+    );
+    // And none of the planted names was removed: they were not this write's to remove.
+    let still: usize = planted
+        .iter()
+        .filter(|name| std::fs::symlink_metadata(name).is_ok())
+        .count();
+    assert_eq!(still, 40);
 }

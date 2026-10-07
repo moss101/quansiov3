@@ -74,13 +74,14 @@ MUTANTS = [
     ("grant: another window may claim", "vitest", LF + "grants.ts",
      "if (grant === undefined || grant.windowId !== windowId) {", "if (grant === undefined) {"),
     ("grant: the clock is not consulted at claim", "vitest", LF + "grants.ts",
-     "    if (this.#deps.now() >= grant.expiresAt) {\n      this.#remove(grant, true);\n      return \"expired\";", "    if (false) {\n      this.#remove(grant, true);\n      return \"expired\";"),
+     "    if (this.#deps.now() >= grant.expiresAt) {\n      this.#remove(grant, true);\n      return \"expired\";", "    if (this.#deps.now() >= grant.expiresAt + 1e15) {\n      this.#remove(grant, true);\n      return \"expired\";"),
     ("grant: links are followed", "vitest", LF + "fs-ops.ts",
-     "const NOFOLLOW: number = (constants as { O_NOFOLLOW?: number }).O_NOFOLLOW ?? 0;", "const NOFOLLOW: number = 0;\nvoid NOFOLLOW;"),
+     ["const NOFOLLOW: number = (constants as { O_NOFOLLOW?: number }).O_NOFOLLOW ?? 0;", "if (NOFOLLOW === 0 && lstatSync(path).isSymbolicLink()) {"],
+     ["const NOFOLLOW: number = 0;", "if (NOFOLLOW === 7 && lstatSync(path).isSymbolicLink()) {"]),
     ("grant: a file one byte over the limit is accepted", "vitest", LF + "grants.ts",
      "if (opened.facts.sizeBytes > limits.maxFileBytes) {", "if (opened.facts.sizeBytes > limits.maxFileBytes + 1) {"),
     ("grant: the total is not limited", "vitest", LF + "grants.ts",
-     "if (total > limits.maxTotalBytes) {", "if (false) {"),
+     "if (total > limits.maxTotalBytes) {", "if (total > limits.maxTotalBytes * 1e6) {"),
     ("grant: the live-grant count is not limited", "vitest", LF + "grants.ts",
      "if (this.#live.size >= limits.maxLive) {", "if (false) {"),
     ("grant: a closing window leaves the files it was handed open", "vitest", LF + "grants.ts",
@@ -91,7 +92,8 @@ MUTANTS = [
      "  return createHash(\"sha256\").update(token).digest(\"hex\");", "  return token;"),
     # ---- roots and entries
     ("roots: another window's entry id resolves", "vitest", LF + "roots.ts",
-     "    if (entry?.windowId !== windowId) {\n      return outside();\n    }\n    const root = this.#roots.get(entry.rootId);", "    if (entry === undefined) {\n      return outside();\n    }\n    const root = this.#roots.get(entry.rootId);"),
+     "    if (entry?.windowId !== windowId) {\n      return outside();\n    }\n    const root = this.#roots.get(entry.rootId);\n    if (root?.windowId !== windowId) {\n      return outside();\n    }",
+     "    if (entry === undefined) {\n      return outside();\n    }\n    const root = this.#roots.get(entry.rootId);\n    if (root === undefined) {\n      return outside();\n    }"),
     ("roots: a link that leaves the root is followed", "vitest", LF + "fs-ops.ts",
      "    if (!within(rootReal, parentReal)) {\n      return { ok: false, reason: \"outside\" };\n    }", ""),
     ("roots: a link as the last element is accepted", "vitest", LF + "fs-ops.ts",
@@ -131,9 +133,9 @@ MUTANTS = [
      "    for (const [key] of own.slice(0, Math.max(0, own.length - this.#deps.maxTokens))) {", "    for (const [key] of own.slice(0, 0)) {"),
     # ---- safe edits
     ("edit: the re-check after the temporary file is skipped", "vitest", LF + "safe-edit.ts",
-     "  const second = statNow(target);\n  if (!unchanged(second, effective)) {", "  const second = statNow(target);\n  if (false) {"),
+     "  const second = statNow(target);\n  if (!unchanged(second, effective)) {", "  const second = statNow(target);\n  if (!unchanged(second, effective) && second === undefined) {"),
     ("edit: the baseline is not compared before the write", "vitest", LF + "safe-edit.ts",
-     "  if (!unchanged(first, effective)) {\n    if (onConflict", "  if (first === null) {\n    if (onConflict"),
+     "  if (!unchanged(first, effective)) {\n    if (onConflict", "  if (!unchanged(first, effective) && first === null) {\n    if (onConflict"),
     ("edit: an existing backup is replaced", "vitest", LF + "safe-edit.ts",
      "copyFileSync(target, candidate, constants.COPYFILE_EXCL);", "copyFileSync(target, candidate);"),
     ("edit: the file's permissions are not kept", "vitest", LF + "safe-edit.ts",
@@ -174,6 +176,9 @@ MUTANTS = [
      "    if (this.#dialogs.has(id)) {\n      this.#o.log(", "    if (false) {\n      this.#o.log("),
     ("host: a closing window keeps its grants", "vitest", LF + "host.ts",
      "    this.grants.revokeWindow(id);\n    this.roots.revokeWindow(id);", "    this.roots.revokeWindow(id);"),
+    ("host: a closing window keeps its watches and a released root keeps its watches", "vitest", LF + "host.ts",
+     ["    this.watcher.revokeWindow(id);\n    this.#dialogs.delete(id);", "        watcher?.revokeRoot(rootId);"],
+     ["    this.#dialogs.delete(id);", "        void watcher;"]),
     ("host: a closing window keeps its watches", "vitest", LF + "host.ts",
      "    this.watcher.revokeWindow(id);\n    this.#dialogs.delete(id);", "    this.#dialogs.delete(id);"),
     ("host: the attach leaves the claimed files open", "vitest", LF + "host.ts",
@@ -246,10 +251,15 @@ MUTANTS = [
     ("agent write: a patch is applied to bytes other than the ones it was checked against", "rust", QW + "files.rs",
      "self.replace_atomically(&path, applied.content.as_bytes(), Some(&read_digest))?;", "self.replace_atomically(&path, applied.content.as_bytes(), None)?;"),
     ("agent write: the temporary file is not created exclusively", "rust", QW + "files.rs",
-     "                .create_new(true)\n                .open(&temporary)?;", "                .create(true)\n                .truncate(true)\n                .open(&temporary)?;"),
+     "                .create_new(true)\n                .open(&candidate)\n            {", "                .create(true)\n                .truncate(true)\n                .open(&candidate)\n            {"),
     ("agent write: the file's permissions are not kept", "rust", QW + "files.rs",
      "                file.set_permissions(metadata.permissions())?;", "                let _ = &metadata;"),
 ]
+
+
+def as_list(value):
+    """A mutant's `old`/`new` is one string, or a list of strings when a guard has a second layer that must go too."""
+    return value if isinstance(value, list) else [value]
 
 
 def git(*args: str) -> str:
@@ -273,7 +283,7 @@ def main() -> None:
     if CHECK_ONLY:
         bad = 0
         for name, _tool, file, old, _new in MUTANTS:
-            count = (REPO / file).read_text().count(old)
+            count = min((REPO / file).read_text().count(part) for part in as_list(old))
             if count != 1:
                 bad += 1
                 say(f"PATTERN {count} {name}")
@@ -297,12 +307,15 @@ def main() -> None:
                 say(text[-3000:])
         path = REPO / file
         original = path.read_text()
-        if original.count(old) != 1:
-            say(f"NO-VERDICT (pattern found {original.count(old)} times) {name}")
+        if any(original.count(part) != 1 for part in as_list(old)):
+            say(f"NO-VERDICT (pattern not found exactly once) {name}")
             nov += 1
             continue
         try:
-            path.write_text(original.replace(old, new, 1))
+            mutated = original
+            for part, replacement in zip(as_list(old), as_list(new)):
+                mutated = mutated.replace(part, replacement, 1)
+            path.write_text(mutated)
             code, text = run(build_cmd, cwd)
             if code != 0:
                 say(f"NO-VERDICT (does not compile) {name}")
