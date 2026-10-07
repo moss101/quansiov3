@@ -79,3 +79,18 @@ def diagram_render_call(artifact_id: str, svg: str) -> OutputCall:
 def document_export_pdf_call(artifact_id: str, html: str) -> OutputCall:
     """`document.export_pdf`: the HTML body rendered from a document's Markdown, to be printed."""
     return OutputCall(DOCUMENT_EXPORT_PDF, {"artifact_id": artifact_id, "html": html})
+
+
+AUDIO_TRANSCRIBE = "audio.transcribe"
+
+
+def transcribe_call(
+    artifact_id: str, request_id: str, *, language: str | None = None, wait_ms: int | None = None
+) -> OutputCall:
+    """`audio.transcribe`: submit (or poll) the transcription of an audio artifact under a request id."""
+    arguments: dict[str, Any] = {"artifact_id": artifact_id, "request_id": request_id}
+    if language is not None:
+        arguments["language"] = language
+    if wait_ms is not None:
+        arguments["wait_ms"] = wait_ms
+    return OutputCall(AUDIO_TRANSCRIBE, arguments)

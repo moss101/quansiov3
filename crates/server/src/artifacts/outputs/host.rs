@@ -16,6 +16,8 @@ use super::docs_host;
 use super::media::MediaJobPort;
 use super::ports::RenderPort;
 use super::support::{Ctx, Env};
+use super::transcribe_host;
+use super::transcription::TranscriptionPort;
 use super::video_host;
 use crate::artifacts::ObjectStore;
 use crate::runtime::turn_loop::{HostDispatch, HostFailure, HostOutcome, ToolHostPort};
@@ -68,6 +70,7 @@ impl OutputToolHost {
                 config: Arc::new(OutputsConfig::shipped()),
                 render: None,
                 media: None,
+                transcription: None,
             },
         }
     }
@@ -83,6 +86,13 @@ impl OutputToolHost {
     #[must_use]
     pub fn with_media(mut self, port: Arc<dyn MediaJobPort>) -> Self {
         self.env.media = Some(port);
+        self
+    }
+
+    /// Compose the gateway's transcription route.
+    #[must_use]
+    pub fn with_transcription(mut self, port: Arc<dyn TranscriptionPort>) -> Self {
+        self.env.transcription = Some(port);
         self
     }
 
@@ -107,6 +117,7 @@ impl ToolHostPort for OutputToolHost {
             "video.render" => video_host::render(&ctx).await,
             "video.inspect" => video_host::inspect(&ctx).await,
             "document.export_pdf" => docs_host::export_pdf(&ctx).await,
+            "audio.transcribe" => transcribe_host::transcribe(&ctx).await,
             other if is_output_tool(other) => Err(HostFailure::Unavailable {
                 owner: crate::runtime::turn_loop::dispatch::OUTPUT_HOST_OWNER,
                 detail: format!("{other} is not wired in this build yet"),

@@ -92,3 +92,16 @@ models:
     # capability must declare its width, and the derived index refuses a route whose width
     # differs from the width it pins, so failover can never cross embedding spaces.
     embedding_dimensions: 1536
+  # The transcription route (ADP-006, DOMAIN.md 10.4 E). A model that declares the `transcription` capability
+  # is a speech-to-text route: the gateway's `transcribe` takes the first one on an enabled provider, in this
+  # order, so adding a provider is adding a row. It is never a chat route (it declares no `tools` or
+  # `streaming`) and not in `routing.fallback_order`. The segment timestamps the transcript carries need a
+  # model whose answer includes them (`verbose_json` with segment granularity). `context_window` is the
+  # endpoint's maximum input in bytes (25 MiB), as the embedding route's is its maximum input length.
+  - id: openai-whisper
+    provider: openai
+    model_id: whisper-1
+    capabilities: [transcription]
+    context_window: 26214400
+    cost_class: low
+    dlp_eligible: true

@@ -15,6 +15,7 @@ use super::config::OutputsConfig;
 use super::media::MediaJobPort;
 use super::ports::RenderPort;
 use super::quality::{Input, QualityRecord};
+use super::transcription::TranscriptionPort;
 use crate::artifacts::CapturedBy;
 use crate::artifacts::{
     Artifact, ArtifactError, ArtifactGrant, ArtifactId, ArtifactKind, ArtifactStore,
@@ -37,6 +38,8 @@ pub struct Env {
     pub render: Option<Arc<dyn RenderPort>>,
     /// The supervised `ffmpeg` jobs of a target, when one is composed.
     pub media: Option<Arc<dyn MediaJobPort>>,
+    /// The gateway's transcription route, when one is composed.
+    pub transcription: Option<Arc<dyn TranscriptionPort>>,
 }
 
 /// One call.
