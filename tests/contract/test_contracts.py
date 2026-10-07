@@ -242,6 +242,8 @@ def test_json_schemas_validate_real_artifacts():
     validator("computer-use-config").validate(computer_use)
     skill_recording = yaml.safe_load((ROOT / "config" / "recording.yaml").read_text())
     validator("recording-config").validate(skill_recording)
+    desktop_shell = yaml.safe_load((ROOT / "config" / "desktop-shell.yaml").read_text())
+    validator("desktop-shell-config").validate(desktop_shell)
 
     summaries = sorted((ROOT / "evidence").glob("*/*/summary.json"))
     assert summaries, "at least one task evidence bundle must exist"
@@ -340,3 +342,29 @@ def test_skill_recording_schema_keeps_every_limit_bounded():
     assert broken(lambda d: d["limits"].update(unbounded=True))
     assert broken(lambda d: d["tool_paths"][0].update(tool_prefix="connector.slack."))  # tools and prefix together
     assert broken(lambda d: d["tool_paths"].append({"id": "x", "bundle_ids": ["com.example.app"]}))
+
+
+def test_desktop_shell_schema_keeps_every_value_bounded():
+    """A configuration cannot make the shell's queues or timings unbounded (ADP-004, DOMAIN.md 13.6)."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "desktop-shell-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "desktop-shell.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    assert broken(lambda d: d.update({"pending.queue_cap": 100000}))
+    assert broken(lambda d: d.update({"connectivity.offline_grace_ms": 1}))
+    assert broken(lambda d: d.update({"shortcut.max_length": 4096}))
+    assert broken(lambda d: d.update({"global_shortcut.toggle_default": "Cmd+Q"}))
+    assert broken(lambda d: d.update({"quit.confirm_when_busy": False}))  # the confirmation is not a setting
+    assert broken(lambda d: d.update({"update.defer_while_busy": False}))  # nor is the deferral
+    assert not broken(lambda d: d.update({"global_shortcut.toggle_default": None}))
+

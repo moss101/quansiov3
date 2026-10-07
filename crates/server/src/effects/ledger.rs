@@ -1086,6 +1086,31 @@ impl EffectLedger {
         Ok(records)
     }
 
+    /// How many effects are in flight (ADP-004, DOMAIN.md §13.6 A): reserved, dispatched or being
+    /// reconciled, in this tenant and, when named, one workspace.
+    ///
+    /// An `OUTCOME_UNKNOWN` effect is unresolved but nothing is executing it, so it is not counted: waiting
+    /// for it would block a restart for as long as a person leaves it unreconciled, and a restart changes
+    /// nothing about it (the ledger, not the process, is where it is resolved).
+    ///
+    /// # Errors
+    /// Returns a database error when the query fails.
+    pub async fn count_in_flight(&self, workspace_id: Option<&str>) -> Result<i64, EffectError> {
+        let tenant_id = self.identity.tenant_id.clone();
+        let mut tx = self.events.begin_tenant_transaction(&tenant_id).await?;
+        let count: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM effect_records WHERE tenant_id = $1 \
+             AND status IN ('RESERVED', 'DISPATCHED', 'RECONCILING') \
+             AND ($2::text IS NULL OR workspace_id = $2)",
+        )
+        .bind(&tenant_id)
+        .bind(workspace_id)
+        .fetch_one(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(count)
+    }
+
     /// Every effect of a workspace, newest first, optionally filtered by status.
     ///
     /// # Errors

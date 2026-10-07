@@ -523,6 +523,7 @@ READ_PROJECTIONS: tuple[str, ...] = (
     "/v1/search?q=",
     "/v1/webhooks",
     "/v1/webhooks/{id}/deliveries",
+    "/v1/maintenance",
     "/v1/ops/switches",
     "/v1/diagnostics/bundle",
     "/v1/stream",

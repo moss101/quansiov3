@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/desktop-shell-config.schema.json",
+  "title": "Quansio desktop shell (config/desktop-shell.yaml)",
+  "description": "The desktop shell's timings, queue bounds, the default global shortcut and the secondary-window switches (DOMAIN.md 13.6). Every number is bounded, and no key can switch off the quit confirmation or the update deferral.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "connectivity.offline_grace_ms",
+    "connectivity.reconnect_min_gap_ms",
+    "pending.queue_cap",
+    "shortcut.max_length",
+    "global_shortcut.toggle_default",
+    "keep_awake.default_enabled",
+    "activity.max_items",
+    "activity.completed_ttl_ms",
+    "popout.always_on_top_allowed",
+    "quick_entry.enabled",
+    "indicator.enabled",
+    "update.install_when_idle_default",
+    "update.idle_poll_ms"
+  ],
+  "properties": {
+    "version": { "const": 1 },
+    "connectivity.offline_grace_ms": { "type": "integer", "minimum": 1000, "maximum": 60000 },
+    "connectivity.reconnect_min_gap_ms": { "type": "integer", "minimum": 250, "maximum": 30000 },
+    "pending.queue_cap": { "type": "integer", "minimum": 1, "maximum": 256 },
+    "shortcut.max_length": { "type": "integer", "minimum": 8, "maximum": 64 },
+    "global_shortcut.toggle_default": {
+      "type": ["string", "null"],
+      "maxLength": 64,
+      "pattern": "^(mod\\+)?(ctrl\\+)?(alt\\+)?(shift\\+)?[a-z0-9]+$"
+    },
+    "keep_awake.default_enabled": { "type": "boolean" },
+    "activity.max_items": { "type": "integer", "minimum": 4, "maximum": 100 },
+    "activity.completed_ttl_ms": { "type": "integer", "minimum": 10000, "maximum": 86400000 },
+    "popout.always_on_top_allowed": { "type": "boolean" },
+    "quick_entry.enabled": { "type": "boolean" },
+    "indicator.enabled": { "type": "boolean" },
+    "update.install_when_idle_default": { "type": "boolean" },
+    "update.idle_poll_ms": { "type": "integer", "minimum": 5000, "maximum": 600000 }
+  }
+}

@@ -250,6 +250,29 @@ impl TerminalStore {
         rows.iter().map(row_to_session).collect()
     }
 
+    /// How many sessions are open (ADP-004, DOMAIN.md §13.6 A): in this tenant and, when named, on the
+    /// targets of one workspace.
+    ///
+    /// # Errors
+    /// Returns [`TerminalError::Database`] when the read fails.
+    pub async fn count_open(
+        conn: &mut PgConnection,
+        tenant_id: &str,
+        workspace_id: Option<&str>,
+    ) -> Result<i64, TerminalError> {
+        let count: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM terminal_sessions s \
+             JOIN execution_targets t ON t.tenant_id = s.tenant_id AND t.id = s.target_id \
+             WHERE s.tenant_id = $1 AND s.status = 'open' \
+             AND ($2::text IS NULL OR t.workspace_id = $2)",
+        )
+        .bind(tenant_id)
+        .bind(workspace_id)
+        .fetch_one(&mut *conn)
+        .await?;
+        Ok(count)
+    }
+
     /// Attach to a session, deciding whether the command runs.
     ///
     /// The decision and the record of it are one transaction, and the row is locked while it is taken:

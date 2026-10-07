@@ -28,6 +28,7 @@ pub mod knowledge;
 pub mod limits;
 pub mod live;
 pub mod live_sessions;
+pub mod maintenance;
 pub mod ops;
 pub mod projections;
 pub mod rbac;
@@ -834,6 +835,7 @@ pub fn router(state: ApiState) -> Router {
         .route("/app", get(web::index))
         .route("/app/", get(web::index))
         .route("/app/*path", get(web::asset))
+        .route("/v1/maintenance", get(maintenance::status))
         .route("/v1/ops/switches", get(ops::switches))
         .route("/v1/diagnostics/bundle", get(diagnostics::bundle))
         .route("/metrics", get(diagnostics::metrics_endpoint))
