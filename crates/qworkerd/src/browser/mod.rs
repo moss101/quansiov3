@@ -43,6 +43,7 @@ pub mod fault;
 pub mod fence;
 pub mod journal;
 pub mod origin;
+pub mod render;
 pub mod secrets;
 pub mod tab;
 pub mod tools;
