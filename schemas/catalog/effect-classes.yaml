@@ -17,6 +17,10 @@ effect_classes:
   tier: '3'
   default_policy: ask
   reconciliation: query (stat/digest)
+- effect_class: fs.delete.workspace
+  tier: '2'
+  default_policy: 'ask (a sweep of fully clean managed worktrees: allow+log)'
+  reconciliation: query (path and recovery record)
 - effect_class: process.exec.sandboxed
   tier: '1'
   default_policy: allow

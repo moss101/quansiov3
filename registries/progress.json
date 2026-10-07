@@ -3241,10 +3241,10 @@
     },
     "ADP-005": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "IN_PROGRESS",
       "claimed_by": "agent:adp-005",
       "started_at": "2026-10-07T06:53:01Z",
-      "updated_at": "2026-10-07T06:53:01Z",
+      "updated_at": "2026-10-07T07:03:34Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],

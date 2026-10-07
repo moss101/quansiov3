@@ -23,11 +23,17 @@ CATALOG_DIR = ROOT / "schemas" / "catalog"
 
 
 def _section(text: str, heading: str) -> str:
-    """Body of `heading` up to the next `## ` heading."""
+    """Body of `heading` up to the next heading of the same or a higher level.
+
+    A `## ` section runs to the next `## `; a `### ` section stops at the next `### ` as well, so what a later
+    subsection says (a header name, an endpoint) is never read as part of an earlier one (ADP-005: §13.7 names the
+    `quansio-media` scheme, which the §13.5 webhook-header scan took for a webhook header).
+    """
     start = text.index(heading)
     rest = text[start + len(heading) :]
-    end = rest.find("\n## ")
-    return rest if end == -1 else rest[:end]
+    stops = ["\n## "] + (["\n### "] if heading.startswith("### ") else [])
+    ends = [position for position in (rest.find(stop) for stop in stops) if position != -1]
+    return rest[: min(ends)] if ends else rest
 
 
 def _table_rows(body: str) -> List[List[str]]:
@@ -131,7 +137,7 @@ def parse_errors(text: str) -> List[Dict[str, str]]:
         if not family or family.lower() == "family":
             continue
         status = ""
-        status_match = re.search(r"\(([0-9]{3}(?:/[0-9]{3})?)\)", family)
+        status_match = re.search(r"\(([0-9]{3}(?:/[0-9]{3})*)\)", family)
         if status_match:
             status = status_match.group(1)
             family = family[: status_match.start()].strip()

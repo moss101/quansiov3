@@ -138,6 +138,19 @@ pub enum ApiErrorCode {
     RecordingUnredacted,
     /// The plane's proposal broke a skill-recording rule.
     RecordingProposalRejected,
+    // Files (ADP-005)
+    /// A file grant token is unknown, used, another window's or expired.
+    FileGrantInvalid,
+    /// An entry, root or path is not one the window was granted.
+    FileOutsideRoots,
+    /// A local file or an agent's target changed after it was read.
+    FileEditConflict,
+    /// A picked or listed file breaks a rule.
+    FileRefused,
+    /// A worktree retention token is unknown, expired or for another set.
+    WorktreeTokenInvalid,
+    /// A managed worktree's checkout is gone and a recovery record names it.
+    WorktreeMissing,
     // Model
     /// The provider could not be reached.
     ProviderUnavailable,
@@ -162,7 +175,7 @@ pub enum ApiErrorCode {
 
 impl ApiErrorCode {
     /// Every code in the table, so a caller can check one against it without a list of its own.
-    pub const ALL: [ApiErrorCode; 65] = [
+    pub const ALL: [ApiErrorCode; 71] = [
         ApiErrorCode::AuthRequired,
         ApiErrorCode::AuthInvalidToken,
         ApiErrorCode::AuthExpired,
@@ -219,6 +232,12 @@ impl ApiErrorCode {
         ApiErrorCode::RecordingNotFinished,
         ApiErrorCode::RecordingUnredacted,
         ApiErrorCode::RecordingProposalRejected,
+        ApiErrorCode::FileGrantInvalid,
+        ApiErrorCode::FileOutsideRoots,
+        ApiErrorCode::FileEditConflict,
+        ApiErrorCode::FileRefused,
+        ApiErrorCode::WorktreeTokenInvalid,
+        ApiErrorCode::WorktreeMissing,
         ApiErrorCode::ProviderUnavailable,
         ApiErrorCode::ProviderRateLimited,
         ApiErrorCode::ProviderRefusal,
@@ -290,6 +309,12 @@ impl ApiErrorCode {
             Self::RecordingNotFinished => "RECORDING_NOT_FINISHED",
             Self::RecordingUnredacted => "RECORDING_UNREDACTED",
             Self::RecordingProposalRejected => "RECORDING_PROPOSAL_REJECTED",
+            Self::FileGrantInvalid => "FILE_GRANT_INVALID",
+            Self::FileOutsideRoots => "FILE_OUTSIDE_ROOTS",
+            Self::FileEditConflict => "FILE_EDIT_CONFLICT",
+            Self::FileRefused => "FILE_REFUSED",
+            Self::WorktreeTokenInvalid => "WORKTREE_TOKEN_INVALID",
+            Self::WorktreeMissing => "WORKTREE_MISSING",
             Self::ProviderUnavailable => "PROVIDER_UNAVAILABLE",
             Self::ProviderRateLimited => "PROVIDER_RATE_LIMITED",
             Self::ProviderRefusal => "PROVIDER_REFUSAL",
@@ -362,6 +387,12 @@ impl ApiErrorCode {
             | Self::RecordingNotFinished
             | Self::RecordingUnredacted
             | Self::RecordingProposalRejected => "Recording",
+            Self::FileGrantInvalid
+            | Self::FileOutsideRoots
+            | Self::FileEditConflict
+            | Self::FileRefused
+            | Self::WorktreeTokenInvalid
+            | Self::WorktreeMissing => "Files",
             Self::ProviderUnavailable
             | Self::ProviderRateLimited
             | Self::ProviderRefusal
@@ -448,6 +479,14 @@ impl ApiErrorCode {
             Self::RecordingUnredacted | Self::RecordingProposalRejected => {
                 StatusCode::UNPROCESSABLE_ENTITY
             }
+            // Files (403/409/422): a grant or root the caller does not hold is forbidden; a file that
+            // changed under an edit, a stale retention token and a worktree that is gone conflict with
+            // the state the call assumed; a file that breaks a rule is unprocessable as picked.
+            Self::FileGrantInvalid | Self::FileOutsideRoots => StatusCode::FORBIDDEN,
+            Self::FileEditConflict | Self::WorktreeTokenInvalid | Self::WorktreeMissing => {
+                StatusCode::CONFLICT
+            }
+            Self::FileRefused => StatusCode::UNPROCESSABLE_ENTITY,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::StreamBackpressure => StatusCode::SERVICE_UNAVAILABLE,

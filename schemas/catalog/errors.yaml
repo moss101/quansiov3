@@ -169,6 +169,24 @@ errors:
 - code: RECORDING_PROPOSAL_REJECTED
   family: Recording
   http_status: 409/422
+- code: FILE_GRANT_INVALID
+  family: Files
+  http_status: 403/409/422
+- code: FILE_OUTSIDE_ROOTS
+  family: Files
+  http_status: 403/409/422
+- code: FILE_EDIT_CONFLICT
+  family: Files
+  http_status: 403/409/422
+- code: FILE_REFUSED
+  family: Files
+  http_status: 403/409/422
+- code: WORKTREE_TOKEN_INVALID
+  family: Files
+  http_status: 403/409/422
+- code: WORKTREE_MISSING
+  family: Files
+  http_status: 403/409/422
 - code: PROVIDER_UNAVAILABLE
   family: Model
   http_status: 502/503

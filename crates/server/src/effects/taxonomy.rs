@@ -23,6 +23,7 @@ pub const DOMAIN_EFFECT_CLASSES: &[&str] = &[
     "read.external",
     "fs.write.workspace",
     "fs.write.host",
+    "fs.delete.workspace",
     "process.exec.sandboxed",
     "process.exec.host",
     "network.egress.new_destination",

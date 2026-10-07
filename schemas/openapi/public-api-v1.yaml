@@ -5927,6 +5927,12 @@ components:
           - RECORDING_NOT_FINISHED
           - RECORDING_UNREDACTED
           - RECORDING_PROPOSAL_REJECTED
+          - FILE_GRANT_INVALID
+          - FILE_OUTSIDE_ROOTS
+          - FILE_EDIT_CONFLICT
+          - FILE_REFUSED
+          - WORKTREE_TOKEN_INVALID
+          - WORKTREE_MISSING
           - PROVIDER_UNAVAILABLE
           - PROVIDER_RATE_LIMITED
           - PROVIDER_REFUSAL
@@ -6886,6 +6892,12 @@ x-quansio-error-http-map:
   RECORDING_NOT_FINISHED: 409/422
   RECORDING_UNREDACTED: 409/422
   RECORDING_PROPOSAL_REJECTED: 409/422
+  FILE_GRANT_INVALID: 403/409/422
+  FILE_OUTSIDE_ROOTS: 403/409/422
+  FILE_EDIT_CONFLICT: 403/409/422
+  FILE_REFUSED: 403/409/422
+  WORKTREE_TOKEN_INVALID: 403/409/422
+  WORKTREE_MISSING: 403/409/422
   PROVIDER_UNAVAILABLE: 502/503
   PROVIDER_RATE_LIMITED: 502/503
   PROVIDER_REFUSAL: 502/503
@@ -6937,6 +6949,7 @@ x-quansio-effect-classes:
 - read.external
 - fs.write.workspace
 - fs.write.host
+- fs.delete.workspace
 - process.exec.sandboxed
 - process.exec.host
 - network.egress.new_destination

@@ -1,0 +1,37 @@
+# Local files (ADP-005, DOMAIN.md 13.7). Policy lives here, never as a source constant (D-018).
+# A flat map of dotted keys to scalars: the desktop ships this file beside its main bundle and reads it with the
+# shell's small parser, and schemas/json/local-files-config.schema.json bounds every value so a configuration cannot
+# make a grant immortal, a file unbounded or a watch unlimited. Nothing here widens what a renderer may name: no key
+# accepts a path.
+version: 1
+
+# Off: every local-file channel answers POLICY_DENIED and no native dialog is opened.
+local_files.enabled: true
+
+# One-time file grants (13.7 A): the token's lifetime, and how many grants, files and bytes one window may hold.
+local_files.grant_ttl_ms: 60000
+local_files.grant_max_live: 32
+local_files.grant_max_files: 20
+local_files.grant_max_file_bytes: 52428800
+local_files.grant_max_total_bytes: 104857600
+
+# Granted roots and the opaque entry ids main hands out for them (13.7 B).
+local_files.roots_max: 8
+local_files.entries_max: 4096
+
+# Capability-token media URLs per window (13.7 C).
+local_files.media_max_tokens: 256
+
+# Safe local edits (13.7 D): the largest text file opened for editing, the edit sessions per window, and how long a
+# write the watcher caused is remembered so the change it makes is not reported back.
+local_files.edit_max_bytes: 1048576
+local_files.edit_max_sessions: 16
+local_files.self_write_ttl_ms: 2000
+
+# The shared workspace file watcher (13.7 E): the debounce, the OS watches in all and subscribers per window, the
+# queued changes per subscriber before an overflow signal, and the largest directory a watch is taken on.
+local_files.watch_debounce_ms: 300
+local_files.watch_max_dirs: 64
+local_files.watch_max_subscribers: 16
+local_files.watch_queue_max: 256
+local_files.watch_max_entries: 5000

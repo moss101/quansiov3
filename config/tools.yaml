@@ -82,6 +82,9 @@ tools:
         path: { type: string, minLength: 1 }
         content: { type: string }
         content_digest: { type: string, minLength: 1 }
+        # The digest of the file as the caller last read it (DOMAIN.md 8.7 G): a different digest at write time is
+        # FILE_EDIT_CONFLICT and the file is untouched. Absent, the write is unconditional, as before.
+        base_digest: { type: string, minLength: 1 }
       required: [path, content, content_digest]
     output_schema:
       type: object
@@ -115,6 +118,8 @@ tools:
       properties:
         path: { type: string, minLength: 1 }
         patch: { type: string, minLength: 1 }
+        # The digest of the file as the caller last read it (DOMAIN.md 8.7 G); see fs.write.
+        base_digest: { type: string, minLength: 1 }
       required: [path, patch]
     output_schema:
       type: object

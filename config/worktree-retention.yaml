@@ -1,0 +1,23 @@
+# Worktree retention (ADP-005, DOMAIN.md 8.7). Policy lives here, never as a source constant (D-018).
+# qworkerd reads this file (crates/qworkerd/src/tools/scm/retention.rs); schemas/json/worktree-retention-config.schema.json
+# bounds every value, so a configuration cannot turn the automatic sweep into one that removes work with changes, or
+# move the recovery refs into a namespace a user's branches live in.
+version: 1
+
+# A retention token (a previewed set of worktrees) is honoured this long after `prepare`.
+prepare_ttl_ms: 600000
+
+# More managed worktrees than this makes the oldest idle, fully clean ones candidates for the automatic sweep.
+max_resident: 8
+
+# Where recovery refs live: refs/quansio/recovery/<worktree id>/{head,index,snapshot}. Never a branch or tag namespace.
+ref_namespace: refs/quansio/recovery
+
+# The directory under the managed root that holds recovery records and prepared sets.
+state_dir: .quansio
+
+sweep:
+  # A worktree must have been idle this long before the sweep may remove it.
+  min_idle_ms: 3600000
+  # At most this many worktrees are removed by one sweep.
+  max_per_run: 4
