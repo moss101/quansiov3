@@ -23,6 +23,7 @@ pub mod routine;
 pub mod timer;
 pub mod timezone;
 pub mod wait;
+pub mod workflow;
 
 use quansio_events::EventError;
 
@@ -45,6 +46,7 @@ pub use timer::{
 };
 pub use timezone::ScheduleZone;
 pub use wait::{WaitError, WaitRegistry};
+pub use workflow::{WorkflowExecutor, WorkflowPort};
 
 /// Errors returned by the scheduler.
 #[derive(Debug, thiserror::Error)]

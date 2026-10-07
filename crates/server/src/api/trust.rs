@@ -432,6 +432,18 @@ pub async fn approve_effect(
         "granted_at": receipt.granted_at,
         "expires_at": receipt.expires_at,
     });
+    // A workflow script's gate (ADP-007) is decided here and carried out by the script's executor: the run it releases makes no
+    // model turn, because a script run has none.
+    if crate::scheduler::workflow::is_gate_effect(
+        state.pool(),
+        &identity.tenant_id,
+        &receipt.effect_id,
+    )
+    .await
+    .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?
+    {
+        return Ok(result);
+    }
     // The released run continues: the resumed turn consumes the receipt (after the command is
     // accepted, when served — `commands::continue_run`).
     let engine = next_turn(state, identity.clone())
@@ -620,6 +632,19 @@ pub async fn deny_effect(
         .map_err(|error| {
             ApiError::new(ApiErrorCode::ConflictState, error.to_string(), correlation)
         })?;
+    let mut result = json!({
+        "approval_request_id": request_id,
+        "effect_id": effect.id,
+        "effect_status": effect.status.as_str(),
+        "run_id": request.run_id,
+    });
+    // A denied script gate ends the script (its executor sees the decision); no model turn follows.
+    if crate::scheduler::workflow::is_gate_effect(state.pool(), &identity.tenant_id, &effect.id)
+        .await
+        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?
+    {
+        return Ok(result);
+    }
     let engine = next_turn(state, identity.clone())
         .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
     let turn = resumed_turn(
@@ -633,12 +658,6 @@ pub async fn deny_effect(
         run.agent_thread_id.to_string(),
         correlation,
     );
-    let mut result = json!({
-        "approval_request_id": request_id,
-        "effect_id": effect.id,
-        "effect_status": effect.status.as_str(),
-        "run_id": request.run_id,
-    });
     if let Some((outcome, reply)) = super::commands::continue_run(state, turn).await? {
         result["turn"] = super::commands::turn_json(&outcome);
         result["reply_message_id"] = json!(reply);

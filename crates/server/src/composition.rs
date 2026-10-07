@@ -337,6 +337,7 @@ impl Composition {
                 ),
             );
             tokio::spawn(background.clone().run_webhooks(interval));
+            tokio::spawn(background.clone().run_workflows(interval));
             match self.config.nats_url.as_deref() {
                 Some(url) => {
                     let config = quansio_events::NatsConfig::parse(url)
@@ -653,6 +654,8 @@ pub struct Background {
     instance: String,
     /// Wakes the routine fire executor after a pass; `None` executes fires inside the pass.
     fires: Option<Arc<tokio::sync::Notify>>,
+    /// Drives workflow script runs (ADP-007): one worker Run per call, from the journal.
+    workflows: crate::scheduler::WorkflowExecutor,
 }
 
 impl Background {
@@ -670,7 +673,52 @@ impl Background {
                 quansio_core::UlidGenerator::new().generate()
             ),
             fires: None,
+            workflows: crate::api::workflow::executor(&api),
         }
+    }
+
+    /// Run workflow scripts forever, one pass per `interval`. They run beside the main loop rather than in it: a call lasts as
+    /// long as a model takes, and it must not hold back a routine window, a notification or an email.
+    pub async fn run_workflows(self, interval: Duration) {
+        loop {
+            tokio::time::sleep(interval).await;
+            if let Err(message) = self.workflow_pass().await {
+                crate::observability::notice(
+                    crate::observability::Level::Warn,
+                    &format!("workflow pass: {message}"),
+                );
+            }
+        }
+    }
+
+    /// One pass over every tenant's unfinished script runs.
+    ///
+    /// # Errors
+    /// Returns a message when the tenants cannot be listed. A run that fails is logged and the others go on.
+    pub async fn workflow_pass(&self) -> Result<(), String> {
+        let tenants: Vec<String> = sqlx::query_scalar("SELECT background_tenants()")
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|error| format!("cannot list tenants: {error}"))?;
+        for tenant in tenants {
+            match self.workflows.drive_tenant(&tenant).await {
+                Ok(reports) => {
+                    for (run, report) in reports {
+                        if let Err(error) = report {
+                            crate::observability::notice(
+                                crate::observability::Level::Warn,
+                                &format!("workflow run {run} of {tenant}: {error}"),
+                            );
+                        }
+                    }
+                }
+                Err(error) => crate::observability::notice(
+                    crate::observability::Level::Warn,
+                    &format!("workflow runs of {tenant}: {error}"),
+                ),
+            }
+        }
+        Ok(())
     }
 
     /// A routine fire executor over this loop's pool and dispatch; the loop's passes then only

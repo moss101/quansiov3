@@ -59,10 +59,38 @@ async fn serve(state: &ApiState) -> SocketAddr {
 }
 
 async fn prepare(prefix: &str, edit: impl FnOnce(&mut AutomationConfig)) -> Option<Harness> {
+    prepare_as(prefix, edit, false).await
+}
+
+/// A pool whose every connection acts as `quansio_app`, the role a deployment serves as, so row-level security applies.
+async fn app_role_pool(name: &str) -> sqlx::PgPool {
+    sqlx::postgres::PgPoolOptions::new()
+        .max_connections(8)
+        .after_connect(|conn, _meta| {
+            Box::pin(async move {
+                sqlx::query("SET ROLE quansio_app").execute(conn).await?;
+                Ok(())
+            })
+        })
+        .connect(&common::scratch_url(name))
+        .await
+        .expect("app-role pool")
+}
+
+async fn prepare_as(
+    prefix: &str,
+    edit: impl FnOnce(&mut AutomationConfig),
+    as_app: bool,
+) -> Option<Harness> {
     let name = common::scratch_name(prefix);
     let pool = common::fresh_database(&name).await?;
     schema::migrate(&pool).await.expect("migrate");
     common::seed_tenant(&pool, TENANT, OWNER, WORKSPACE, NODE).await;
+    let pool = if as_app {
+        app_role_pool(&name).await
+    } else {
+        pool
+    };
     let mut config = AutomationConfig::shipped();
     edit(&mut config);
     let state = ApiState::new(pool.clone())
@@ -334,6 +362,61 @@ async fn a_replayed_webhook_does_not_fire_twice() {
     );
     assert_eq!(h.fires(&routine).await, 2);
     restarted.finish().await;
+}
+
+/// The hook path as the least-privileged role: the endpoint lookup has no tenant, and every other statement needs one. The dev
+/// superuser would hide a statement that runs without it.
+#[tokio::test]
+async fn the_hook_path_works_as_the_least_privileged_role() {
+    let Some(h) = prepare_as("hook_app_role", |_| {}, true).await else {
+        common::blocked_marker();
+        return;
+    };
+    let (routine, path, secret, _) = create_hook(&h, 1, json!({})).await;
+    let body = r#"{"action":"opened"}"#;
+    let ts = now();
+    let (status, first) = h.deliver(&path, &secret, ts, body, Some("evt-1")).await;
+    assert_eq!(
+        (status, first["status"].as_str()),
+        (202, Some("accepted")),
+        "{first}"
+    );
+    let (status, again) = h.deliver(&path, &secret, ts, body, Some("evt-1")).await;
+    assert_eq!(
+        (status, again["status"].as_str()),
+        (200, Some("duplicate")),
+        "{again}"
+    );
+    let (status, filtered_out) = h.deliver(&path, "whsec_wrong", ts, body, None).await;
+    assert_eq!(status, 401, "{filtered_out}");
+    assert_eq!(h.execute().await, 1);
+    assert_eq!(h.runs(&routine).await, 1);
+    let (status, rotated) = h
+        .command("RotateRoutineHook", 2, json!({ "routine_id": routine }))
+        .await;
+    assert_eq!(status, 200, "{rotated}");
+    let new_secret = rotated["result"]["secret"]
+        .as_str()
+        .expect("secret")
+        .to_string();
+    let (status, answer) = h.deliver(&path, &secret, now(), body, Some("evt-2")).await;
+    assert_eq!(status, 401, "{answer}");
+    let (status, answer) = h
+        .deliver(&path, &new_secret, now(), body, Some("evt-3"))
+        .await;
+    assert_eq!(
+        (status, answer["status"].as_str()),
+        (202, Some("accepted")),
+        "{answer}"
+    );
+    let projection = h
+        .get(&format!("/v1/routines?workspace_id={WORKSPACE}"))
+        .await;
+    assert_eq!(
+        projection["items"][0]["hook"]["deliveries"],
+        json!({ "accepted": 2, "filtered": 0 })
+    );
+    h.finish().await;
 }
 
 #[tokio::test]

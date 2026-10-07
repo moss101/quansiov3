@@ -716,12 +716,36 @@ pub async fn routines(
             .map_err(|error| internal(error, "projection"))?;
         let mut item = routine.to_json();
         item["fires"] = Value::Array(fires.iter().map(|fire| fire.to_json()).collect());
+        if routine
+            .objective_template
+            .get("workflow")
+            .is_some_and(|workflow| !workflow.is_null())
+        {
+            // The script runs of its latest fires, derived from their journals: status, the call budget and every step.
+            let executor = super::workflow::executor(&state);
+            let mut runs = Vec::new();
+            for fire in fires.iter().filter(|fire| fire.run_id.is_some()).take(5) {
+                let run_id = fire.run_id.clone().unwrap_or_default();
+                if let Some(mut overview) = executor
+                    .overview(&scope.tenant_id, &run_id)
+                    .await
+                    .map_err(|error| internal(error, "projection"))?
+                {
+                    overview["fire_id"] = json!(fire.id);
+                    overview["run_id"] = json!(run_id);
+                    overview["objective_id"] = json!(fire.objective_id);
+                    runs.push(overview);
+                }
+            }
+            item["script_runs"] = Value::Array(runs);
+        }
         if routine.hook_endpoint_id.is_some() {
             // What the hook's ledger holds for the last day: counts, never a body.
-            let (accepted, filtered) = HookLedger::new(state.pool().clone(), scope.tenant_id.clone())
-                .summary(&routine.id, Utc::now() - chrono::Duration::hours(24))
-                .await
-                .map_err(|error| internal(error, "projection"))?;
+            let (accepted, filtered) =
+                HookLedger::new(state.pool().clone(), scope.tenant_id.clone())
+                    .summary(&routine.id, Utc::now() - chrono::Duration::hours(24))
+                    .await
+                    .map_err(|error| internal(error, "projection"))?;
             item["hook"]["deliveries"] = json!({ "accepted": accepted, "filtered": filtered });
         }
         items.push(item);
@@ -1028,57 +1052,55 @@ async fn fire_routine(
     //    turned exactly as PostMessage does, continuing from where a previous attempt stopped.
     let engine =
         chat_engine(state, identity.clone()).map_err(|error| internal(error, &correlation))?;
-    let existing = existing_run(state, &request.tenant_id, &message.id, &correlation).await?;
-    let run = match existing {
-        Some(run_id) => engine
-            .store()
-            .load_run(&run_id)
+    let run = fire_run(
+        state,
+        request,
+        &identity,
+        &ledger,
+        &fire,
+        objective_id,
+        agent_thread,
+        teammate.as_ref(),
+        &message,
+        &engine,
+        &correlation,
+    )
+    .await?;
+    // A routine with a workflow script (ADP-007) does not take a turn: the script run is driven by the workflow executor,
+    // one worker Run per call, from its journal.
+    if let Some(workflow) = request
+        .objective_template
+        .get("workflow")
+        .filter(|workflow| !workflow.is_null())
+    {
+        let definition = crate::control::routines::script::WorkflowScript::parse(workflow)
+            .map_err(|error| {
+                ApiError::new(
+                    ApiErrorCode::ValidationSchema,
+                    error.to_string(),
+                    &correlation,
+                )
+            })?;
+        let script = crate::scheduler::workflow::ScriptRef {
+            tenant_id: request.tenant_id.clone(),
+            workspace_id: request.workspace_id.clone(),
+            routine_id: request.routine_id.clone(),
+            owner_user_id: request.owner_user_id.clone(),
+            title: title.clone(),
+            fire_key: request.fire_key.clone(),
+            run_id: run.id.to_string(),
+            objective_id: objective_id.to_string(),
+            agent_thread_id: agent_thread.to_string(),
+            teammate_id: request.teammate_id.clone(),
+        };
+        super::workflow::executor(state)
+            .begin(&script, &definition, request.payload.as_ref())
             .await
-            .map_err(|error| runtime_error(error, &correlation))?,
-        None => {
-            let mut new_run = NewRun::new(
-                request.workspace_id.clone(),
-                objective_id,
-                agent_thread,
-                RunTriggerKind::Routine,
-            );
-            new_run.trigger_ref = Some(message.id.clone());
-            let preferred = teammate
-                .as_ref()
-                .and_then(|teammate| teammate.default_execution_target_id.clone());
-            if let Some(target) = preferred {
-                new_run.execution_target_id = Some(target);
-            } else if let Some(target) =
-                load_target(state, &request.tenant_id, &request.workspace_id).await?
-            {
-                new_run.execution_target_id = Some(target);
-            }
-            let run = engine
-                .create_run(new_run)
-                .await
-                .map_err(|error| runtime_error(error, &correlation))?;
-            seed_projection(state, &identity, &request.workspace_id, &run)
-                .await
-                .map_err(|error| internal(error, &correlation))?;
-            run
-        }
-    };
-    ledger
-        .record_step(&fire.id, None, None, None, Some(&run.id.to_string()))
-        .await
-        .map_err(|error| internal(error, &correlation))?;
-    let mut run = run;
-    if run.status == RunStatus::Created {
-        run = engine
-            .enqueue(&run.id, run.generation)
-            .await
-            .map_err(|error| runtime_error(error, &correlation))?;
-    }
-    if run.status == RunStatus::Queued {
-        run = engine
-            .start(&run.id, run.generation)
-            .await
-            .map_err(|error| runtime_error(error, &correlation))?;
+            .map_err(|error| internal(error, &correlation))?;
+        return Ok(RoutineFireOutcome {
+            objective_id: objective_id.to_string(),
+            run_id: run.id.to_string(),
+        });
     }
     let turns = engine
         .store()
@@ -1108,6 +1130,75 @@ async fn fire_routine(
         objective_id: objective_id.to_string(),
         run_id: run.id.to_string(),
     })
+}
+
+/// The Run a fire's message started: found by its trigger or created, given its capability projection, queued and started.
+#[allow(clippy::too_many_arguments)]
+async fn fire_run(
+    state: &ApiState,
+    request: &RoutineFireRequest,
+    identity: &RuntimeIdentity,
+    ledger: &FireLedger,
+    fire: &crate::control::routines::Fire,
+    objective_id: CanonicalId,
+    agent_thread: CanonicalId,
+    teammate: Option<&crate::control::teammates::Teammate>,
+    message: &crate::control::conversation::Message,
+    engine: &crate::runtime::state_machine::RuntimeEngine,
+    correlation: &str,
+) -> Result<crate::runtime::state_machine::Run, ApiError> {
+    let existing = existing_run(state, &request.tenant_id, &message.id, correlation).await?;
+    let run = match existing {
+        Some(run_id) => engine
+            .store()
+            .load_run(&run_id)
+            .await
+            .map_err(|error| runtime_error(error, correlation))?,
+        None => {
+            let mut new_run = NewRun::new(
+                request.workspace_id.clone(),
+                objective_id,
+                agent_thread,
+                RunTriggerKind::Routine,
+            );
+            new_run.trigger_ref = Some(message.id.clone());
+            let preferred =
+                teammate.and_then(|teammate| teammate.default_execution_target_id.clone());
+            if let Some(target) = preferred {
+                new_run.execution_target_id = Some(target);
+            } else if let Some(target) =
+                load_target(state, &request.tenant_id, &request.workspace_id).await?
+            {
+                new_run.execution_target_id = Some(target);
+            }
+            let run = engine
+                .create_run(new_run)
+                .await
+                .map_err(|error| runtime_error(error, correlation))?;
+            seed_projection(state, identity, &request.workspace_id, &run)
+                .await
+                .map_err(|error| internal(error, correlation))?;
+            run
+        }
+    };
+    ledger
+        .record_step(&fire.id, None, None, None, Some(&run.id.to_string()))
+        .await
+        .map_err(|error| internal(error, correlation))?;
+    let mut run = run;
+    if run.status == RunStatus::Created {
+        run = engine
+            .enqueue(&run.id, run.generation)
+            .await
+            .map_err(|error| runtime_error(error, correlation))?;
+    }
+    if run.status == RunStatus::Queued {
+        run = engine
+            .start(&run.id, run.generation)
+            .await
+            .map_err(|error| runtime_error(error, correlation))?;
+    }
+    Ok(run)
 }
 
 async fn existing_objective(
@@ -1143,7 +1234,7 @@ async fn existing_objective(
     .transpose()
 }
 
-async fn existing_run(
+pub(super) async fn existing_run(
     state: &ApiState,
     tenant_id: &str,
     message_id: &str,
