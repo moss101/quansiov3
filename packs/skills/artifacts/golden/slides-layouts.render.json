@@ -1,0 +1,77 @@
+{
+  "css": ".slide{font-family:\"Helvetica Neue\",Helvetica,Arial,sans-serif;background:#ffffff;color:#1a1a1a;padding:56px 72px;display:flex;flex-direction:column}\n.slide h1{margin:0 0 28px;font-size:52px;line-height:1.1;font-weight:700;color:#14355c}\n.slide .body{font-size:32px;line-height:1.35}\n.slide .body p{margin:0 0 14px}\n.slide .body ul{margin:0 0 14px;padding-left:40px}\n.slide .body li{margin:0 0 10px}\n.slide.d2 .body{font-size:26px}\n.slide.d2 h1{font-size:46px;margin-bottom:22px}\n.slide.d3 .body{font-size:21px;line-height:1.3}\n.slide.d3 h1{font-size:40px;margin-bottom:18px}\n.slide.layout-title,.slide.layout-section{background:#1f2a44;color:#ffffff;justify-content:center}\n.slide.layout-title h1,.slide.layout-section h1{color:#ffffff;font-size:68px}\n.slide.layout-title{align-items:center;text-align:center}\n.slide.layout-title .body{font-size:34px}\n.slide.layout-section h1{font-size:76px}\n.slide .cols{display:flex;gap:56px}\n.slide .cols .col{flex:1 1 0;min-width:0}\n.slide .media{display:flex;gap:48px;align-items:flex-start}\n.slide .media figure{margin:0;flex:0 0 auto}\n.slide .media img{display:block;max-width:560px;max-height:400px}\n.slide .media .body{flex:1 1 0;min-width:0}\n.slide.layout-quote{justify-content:center}\n.slide.layout-quote h1{font-size:28px;font-weight:400;color:#1f4e79;margin-bottom:36px}\n.slide.layout-quote blockquote{margin:0;border-left:8px solid #1f4e79;padding-left:36px;font-size:44px;line-height:1.25;font-style:italic}\n.slide.layout-quote blockquote p{margin:0 0 12px}\n.slide.layout-quote .cite{margin:28px 0 0 44px;font-size:28px;color:#14355c}\n.slide .chart{margin:0 0 18px}\n.slide .chart svg{display:block;width:760px;height:360px}\n.slide .chart text{fill:#1a1a1a}",
+  "pages": [
+    {
+      "fragment": "<section class=\"slide layout-title d1\" data-slide=\"0\" data-layout=\"title\"><h1>Quarterly review</h1><div class=\"body\"><p>Revenue grew in every region.</p></div></section>",
+      "index": 0
+    },
+    {
+      "fragment": "<section class=\"slide layout-content d1\" data-slide=\"1\" data-layout=\"content\"><h1>Where we are</h1><div class=\"body\"><ul><li>Revenue is up 12 percent</li><li>Churn is down to 2.1 percent</li><li>Support load is flat</li></ul></div></section>",
+      "index": 1
+    },
+    {
+      "fragment": "<section class=\"slide layout-two_column d1\" data-slide=\"2\" data-layout=\"two_column\"><h1>Two views</h1><div class=\"body cols\"><div class=\"col\"><p>Before the change</p><ul><li>Slow onboarding</li></ul></div><div class=\"col\"><p>After the change</p><ul><li>A first run in ten minutes</li></ul></div></div></section>",
+      "index": 2
+    },
+    {
+      "fragment": "<section class=\"slide layout-image d1\" data-slide=\"3\" data-layout=\"image\"><h1>The product</h1><div class=\"media\"><figure><img src=\"data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==\" alt=\"A single white pixel, enlarged\"></figure><div class=\"body\"><p>A single pixel, enlarged for the test.</p></div></div></section>",
+      "index": 3
+    },
+    {
+      "fragment": "<section class=\"slide layout-chart d1\" data-slide=\"4\" data-layout=\"chart\"><h1>Revenue by region</h1><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 760 360\" width=\"760\" height=\"360\" role=\"img\" aria-label=\"Bar chart: North 12, South 9, East 15, West 7 million\"><title>Bar chart: North 12, South 9, East 15, West 7 million</title><line x1=\"56\" y1=\"304.0\" x2=\"744\" y2=\"304.0\" stroke=\"#1a1a1a\" stroke-width=\"2\"/><line x1=\"56\" y1=\"28\" x2=\"56\" y2=\"304\" stroke=\"#1a1a1a\" stroke-width=\"2\"/><rect x=\"90.4\" y=\"83.2\" width=\"103.2\" height=\"220.8\" fill=\"#1f4e79\"/><text x=\"142.0\" y=\"75.2\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">12M</text><text x=\"142.0\" y=\"338\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">North</text><rect x=\"262.4\" y=\"138.4\" width=\"103.2\" height=\"165.6\" fill=\"#1f4e79\"/><text x=\"314.0\" y=\"130.4\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">9M</text><text x=\"314.0\" y=\"338\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">South</text><rect x=\"434.4\" y=\"28.0\" width=\"103.2\" height=\"276.0\" fill=\"#1f4e79\"/><text x=\"486.0\" y=\"20.0\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">15M</text><text x=\"486.0\" y=\"338\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">East</text><rect x=\"606.4\" y=\"175.2\" width=\"103.2\" height=\"128.8\" fill=\"#1f4e79\"/><text x=\"658.0\" y=\"167.2\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">7M</text><text x=\"658.0\" y=\"338\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">West</text></svg></div><div class=\"body\"><p>Figures are in millions.</p></div></section>",
+      "index": 4
+    },
+    {
+      "fragment": "<section class=\"slide layout-quote d1\" data-slide=\"5\" data-layout=\"quote\"><h1>In their words</h1><blockquote><p>The first tool that did not get in my way.</p></blockquote><p class=\"cite\">— A customer</p></section>",
+      "index": 5
+    },
+    {
+      "fragment": "<section class=\"slide layout-section d1\" data-slide=\"6\" data-layout=\"section\"><h1>Next steps</h1><div class=\"body\"><p>Ship the onboarding change.</p></div></section>",
+      "index": 6
+    }
+  ],
+  "pptx_parts": {
+    "[Content_Types].xml": "ce4077f656158eacd06d8f6000788a23e7eac50b334b657e1b28f99ed2be2f83",
+    "_rels/.rels": "b565c9400b93135bbb5ec294b47b8785b74bdbb1b69239415ca89565577acde7",
+    "docProps/app.xml": "8d36b4750282bec8b7a72e26739423a35fd3bb0443a92b98e642a12544120606",
+    "docProps/core.xml": "b91bdc2db27787647fa404965aa2517dc700f8ccdee742046c7b020f5dc2660c",
+    "ppt/_rels/presentation.xml.rels": "5d6549088e267f54f6200218106bda3409a6f2b9c9bfb6521376ba242976e389",
+    "ppt/media/image4.gif": "bb229a48bee31f5d54ca12dc9bd960c63a671f0d4be86a054c1d324a44499d96",
+    "ppt/notesMasters/_rels/notesMaster1.xml.rels": "a8f9f9d3bb19a7c2b8848b9108b282597d8962781eb1971d4c50bd13ce7b2ebf",
+    "ppt/notesMasters/notesMaster1.xml": "541c330b38cd250431a6f8b9beb3acc478b73b64999fde6483d88018bdc211a5",
+    "ppt/notesSlides/_rels/notesSlide2.xml.rels": "1d2a99bea0b7bb7ebac9b884e5ab3811ca7a2b3cc85ca78179bd07294257c89d",
+    "ppt/notesSlides/notesSlide2.xml": "050c4fde85c05c9188be67e34814d303f2c7625cc9571842a3c0917e813bf737",
+    "ppt/presentation.xml": "720ee756e4ca9201b9907b7092a19d5ae7b36d836612772c0247d5cfd9500dfc",
+    "ppt/slideLayouts/_rels/slideLayout1.xml.rels": "661facc4260c5e3dced3f8f470814019803454684902d6fc7a1f33b90c28be3d",
+    "ppt/slideLayouts/slideLayout1.xml": "83fb2979f09f2863d6b7ca9b19d56845dfe1716a5803850a63f72c6ff0acf5fd",
+    "ppt/slideMasters/_rels/slideMaster1.xml.rels": "591c9728fae9ebabc9ced79b5ad03c9060648eb4755c9651904525b58ba3e0c0",
+    "ppt/slideMasters/slideMaster1.xml": "cd22f5f461df25302070dc0edb18890503be6022ec138df26ef872fa4f4d889a",
+    "ppt/slides/_rels/slide1.xml.rels": "4603dbf1423124c3ade361d93d92bf369e57701c904107ce24e1b73ba0b549a3",
+    "ppt/slides/_rels/slide2.xml.rels": "a288befaccd3154ddb24969d6c2cb7033ed8b81388db7fe79a28a8a690b48dca",
+    "ppt/slides/_rels/slide3.xml.rels": "4603dbf1423124c3ade361d93d92bf369e57701c904107ce24e1b73ba0b549a3",
+    "ppt/slides/_rels/slide4.xml.rels": "49e9ac3cbf0c5c1845ea3afd14f79ae40f6377096468feee4e81574e0e092eed",
+    "ppt/slides/_rels/slide5.xml.rels": "4603dbf1423124c3ade361d93d92bf369e57701c904107ce24e1b73ba0b549a3",
+    "ppt/slides/_rels/slide6.xml.rels": "4603dbf1423124c3ade361d93d92bf369e57701c904107ce24e1b73ba0b549a3",
+    "ppt/slides/_rels/slide7.xml.rels": "4603dbf1423124c3ade361d93d92bf369e57701c904107ce24e1b73ba0b549a3",
+    "ppt/slides/slide1.xml": "f133ffd354ae9f8cf7f529c6d514f0a188ab6736a1a52f7c503048a6f88a1dad",
+    "ppt/slides/slide2.xml": "601b367f223547444cf2492f39c11793359f04a53afc21ad2caa37cea1a8c1ef",
+    "ppt/slides/slide3.xml": "683c8967834cdbfcba6ae2965edcd3e0bbe8e7e25f6e593b040203cdff58aad2",
+    "ppt/slides/slide4.xml": "520e657a365e8ef3ad1c927bc9585f68b1b2a137b48078083b9ad08cdb27cc7f",
+    "ppt/slides/slide5.xml": "1a7f5aea9cdb3e304fc6a851f97a1be7ac5e4398b3dc4e751ac27acfaefbb7f5",
+    "ppt/slides/slide6.xml": "8aa898afb22e2d3b03614530a4757bb8a29842e886c63af4a0f35ec53e2ea4b7",
+    "ppt/slides/slide7.xml": "11efabb50100b5276e87d1210f98e40f38960815816162ec41d3566e7ef2e06d",
+    "ppt/theme/theme1.xml": "b94f5649f55313e5bc50730699df7b906f81e1537fcad0d5562ddb478b788d93",
+    "ppt/theme/theme2.xml": "c6c8d72ac72377c0c3c7d8eade8cecadd8ee3df59ec3e7c959451057142c9728"
+  },
+  "pptx_sha256": "ca96b8ae13e074acc2e93854dabd42baa77ea04eb860fe7c73bef23f628b1fa1",
+  "source_digests": [
+    "7abecb8aece7c64d8ec83fa0250fa109c6afce413d86908f81aedc3fe85e5f8c",
+    "f84cced73a1dcebb1ba9266ab3d8c13ce86ff0e4f1ee198666b7d480860bc4a5",
+    "749c7744e00d655d9f65e361e705356258f7f9bfb566f8811b566b2e1b940ed5",
+    "ca6311e37d727e667b1fdd3febd6dc6a173b9ebb82da8c0da375ce188f6194dc",
+    "224e32f3e5ee0421ee40a026b991531bc4064c93e1984ccbaa40d54a20f8ce68",
+    "772222f00b397e591396502c1df282dc4a6ac110b17ea1cee131cc94ce3bcfc2",
+    "8814b585935f045ff995a7b714ad461b982f89790d4c4b8cfef984478d574f22"
+  ],
+  "template_version": "v1"
+}

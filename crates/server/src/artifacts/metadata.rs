@@ -161,6 +161,9 @@ pub struct ArtifactVersion {
     /// The source-format check recorded when the version was added (CAP-003):
     /// `{ok, rule, detail}`; `None` for a version stored before checks existed.
     pub format_check: Option<serde_json::Value>,
+    /// The checks an output adapter's version passed (ADP-006, DOMAIN.md §10.4 A); `None` for every version
+    /// an output tool did not make.
+    pub quality_record: Option<serde_json::Value>,
     /// Creation timestamp.
     pub created_at: DateTime<Utc>,
 }
@@ -195,6 +198,9 @@ pub struct NewVersion {
     pub expected_digest: Option<Digest>,
     /// Producing run/step/user.
     pub produced_by: ProducedBy,
+    /// The quality record the authority wrote for an output adapter's version (§10.4 A); `None` for any
+    /// other version. Only the output tool host sets it, from checks it ran itself.
+    pub quality_record: Option<serde_json::Value>,
 }
 
 /// Result of adding a version: the stored version and whether it was a replay.
@@ -429,6 +435,94 @@ impl<'a> ArtifactStore<'a> {
         Ok(artifact)
     }
 
+    /// The newest live artifact **made by a run** in a workspace with this role that the principal may
+    /// read (an upload with the same role is not a candidate).
+    ///
+    /// Output tools find the artifact they own for a source by role (`deck_pages:<deck id>`): the role
+    /// is how a tool-owned artifact is tied to its source without a table of its own.
+    ///
+    /// # Errors
+    /// Returns [`ArtifactError::AccessDenied`] when the newest such artifact is not readable by the
+    /// principal.
+    pub async fn find_by_role(
+        &self,
+        conn: &mut PgConnection,
+        tenant_id: &str,
+        principal: &str,
+        workspace_id: &str,
+        role: &str,
+    ) -> Result<Option<Artifact>, ArtifactError> {
+        set_tenant_context_conn(conn, tenant_id).await?;
+        let found: Option<String> = sqlx::query_scalar(
+            "SELECT id FROM artifacts WHERE tenant_id = $1 AND workspace_id = $2 AND role = $3 \
+             AND deleted_at IS NULL AND origin ->> 'kind' = 'run' \
+             ORDER BY created_at DESC, id DESC LIMIT 1",
+        )
+        .bind(tenant_id)
+        .bind(workspace_id)
+        .bind(role)
+        .fetch_optional(&mut *conn)
+        .await?;
+        let Some(id) = found else {
+            return Ok(None);
+        };
+        let id: ArtifactId = parse_id("artifact", &id)?;
+        let artifact = fetch_artifact(&mut *conn, tenant_id, &id).await?;
+        authorize(&artifact, principal, GrantLevel::Read)?;
+        Ok(Some(artifact))
+    }
+
+    /// One version's metadata (with its `format_check` and `quality_record`), for a principal who may
+    /// read its artifact.
+    ///
+    /// # Errors
+    /// Returns [`ArtifactError::NotFound`] or [`ArtifactError::AccessDenied`].
+    pub async fn load_version(
+        &self,
+        conn: &mut PgConnection,
+        tenant_id: &str,
+        principal: &str,
+        version_id: &ArtifactVersionId,
+    ) -> Result<ArtifactVersion, ArtifactError> {
+        set_tenant_context_conn(conn, tenant_id).await?;
+        let version = fetch_version(&mut *conn, tenant_id, version_id).await?;
+        let artifact = fetch_artifact(&mut *conn, tenant_id, &version.artifact_id).await?;
+        authorize(&artifact, principal, GrantLevel::Read)?;
+        Ok(version)
+    }
+
+    /// The version of an artifact with this sequence number, if there is one.
+    ///
+    /// # Errors
+    /// Returns [`ArtifactError::AccessDenied`] without a read grant.
+    pub async fn version_by_seq(
+        &self,
+        conn: &mut PgConnection,
+        tenant_id: &str,
+        principal: &str,
+        artifact_id: &ArtifactId,
+        seq: i32,
+    ) -> Result<Option<ArtifactVersion>, ArtifactError> {
+        set_tenant_context_conn(conn, tenant_id).await?;
+        let artifact = fetch_artifact(&mut *conn, tenant_id, artifact_id).await?;
+        authorize(&artifact, principal, GrantLevel::Read)?;
+        let id: Option<String> = sqlx::query_scalar(
+            "SELECT id FROM artifact_versions WHERE artifact_id = $1 AND tenant_id = $2 AND seq = $3",
+        )
+        .bind(artifact_id.to_canonical())
+        .bind(tenant_id)
+        .bind(seq)
+        .fetch_optional(&mut *conn)
+        .await?;
+        match id {
+            None => Ok(None),
+            Some(id) => {
+                let id: ArtifactVersionId = parse_id("artifact version", &id)?;
+                Ok(Some(fetch_version(&mut *conn, tenant_id, &id).await?))
+            }
+        }
+    }
+
     /// Add an immutable version, or return the existing one for identical bytes.
     ///
     /// The object key embeds the sha256, so bytes are content-addressed and can never
@@ -496,8 +590,8 @@ impl<'a> ArtifactStore<'a> {
         sqlx::query(
             "INSERT INTO artifact_versions (id, tenant_id, artifact_id, seq, content_digest, \
              size_bytes, media_type, object_key, produced_by_run_id, produced_by_step_id, \
-             produced_by_user_id, parent_version_id, format_check) \
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+             produced_by_user_id, parent_version_id, format_check, quality_record) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
         )
         .bind(version_id.to_canonical())
         .bind(tenant_id)
@@ -512,6 +606,7 @@ impl<'a> ArtifactStore<'a> {
         .bind(&input.produced_by.user_id)
         .bind(artifact.current_version_id.map(|id| id.to_canonical()))
         .bind(super::formats::check(artifact.kind, &input.media_type, &input.bytes).to_json())
+        .bind(&input.quality_record)
         .execute(&mut *conn)
         .await?;
 
@@ -1024,7 +1119,7 @@ async fn fetch_version(
     let row = sqlx::query(
         "SELECT id, tenant_id, artifact_id, seq, content_digest, size_bytes, media_type, \
          object_key, produced_by_run_id, produced_by_step_id, produced_by_user_id, \
-         parent_version_id, format_check, created_at FROM artifact_versions WHERE id = $1 AND tenant_id = $2",
+         parent_version_id, format_check, quality_record, created_at FROM artifact_versions WHERE id = $1 AND tenant_id = $2",
     )
     .bind(&id)
     .bind(tenant_id)
@@ -1046,7 +1141,7 @@ async fn find_version_by_digest(
     let row = sqlx::query(
         "SELECT id, tenant_id, artifact_id, seq, content_digest, size_bytes, media_type, \
          object_key, produced_by_run_id, produced_by_step_id, produced_by_user_id, \
-         parent_version_id, format_check, created_at FROM artifact_versions \
+         parent_version_id, format_check, quality_record, created_at FROM artifact_versions \
          WHERE artifact_id = $1 AND tenant_id = $2 AND content_digest = $3 \
          ORDER BY seq LIMIT 1",
     )
@@ -1200,6 +1295,9 @@ fn decode_version(row: &PgRow) -> Result<ArtifactVersion, ArtifactError> {
             .transpose()?,
         format_check: row
             .try_get("format_check")
+            .map_err(|e| decode_error("artifact version", e))?,
+        quality_record: row
+            .try_get("quality_record")
             .map_err(|e| decode_error("artifact version", e))?,
         created_at: row
             .try_get("created_at")

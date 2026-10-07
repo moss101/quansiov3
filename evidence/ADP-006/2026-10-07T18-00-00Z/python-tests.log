@@ -1,0 +1,24 @@
+All checks passed!
+196 files already formatted
+Success: no issues found in 120 source files
+........................................................................ [  8%]
+........................................................................ [ 17%]
+........................................................................ [ 26%]
+........................................................................ [ 34%]
+........................................................................ [ 43%]
+..................................................sssssssssssss......... [ 52%]
+........................................................................ [ 60%]
+.............sss........................................................ [ 69%]
+........................................................................ [ 78%]
+...............................................ss....................... [ 87%]
+........................................................................ [ 95%]
+...................................                                      [100%]
+=========================== short test summary info ============================
+SKIPPED [4] tests/intelligence/test_model_gateway_live.py:160: BLOCKED_EXTERNAL: QUANSIO_TEST_ANTHROPIC_API_KEY is not set; live anthropic conformance requires it
+SKIPPED [4] tests/intelligence/test_model_gateway_live.py:160: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_API_KEY is not set; live openai conformance requires it
+SKIPPED [4] tests/intelligence/test_model_gateway_live.py:160: BLOCKED_EXTERNAL: QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID is not set; live openai_compatible conformance requires it
+SKIPPED [1] tests/intelligence/test_model_gateway_live.py:195: BLOCKED_EXTERNAL: 0 of 3 live providers configured; at least 2 are required. Unconfigured: anthropic (QUANSIO_TEST_ANTHROPIC_API_KEY); openai (QUANSIO_TEST_OPENAI_API_KEY); openai_compatible (QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL, QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY, QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID)
+SKIPPED [3] tests/intelligence/test_model_routing_live.py:66: BLOCKED_EXTERNAL: no live provider is configured; set the QUANSIO_TEST_* variables of any one provider (see test_model_gateway_live.py)
+SKIPPED [2] tests/intelligence/test_transcription_live.py:52: BLOCKED_EXTERNAL: QUANSIO_TEST_STT_API_KEY, QUANSIO_TEST_STT_AUDIO, QUANSIO_TEST_STT_EXPECT not set; the live transcription suite did not run
+809 passed, 18 skipped in 54.16s
+exit=0

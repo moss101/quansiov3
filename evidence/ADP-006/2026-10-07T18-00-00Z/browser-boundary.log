@@ -1,0 +1,25 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-adb62c7a7e357fa11/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 19.49s
+     Running tests/outputs_deck.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outputs_deck-fd6dde46941beb52)
+
+running 5 tests
+test a_deliverable_deck_exports_a_printed_pdf_and_a_verified_pptx ... ok
+test a_pending_or_failing_page_blocks_delivery_until_every_page_is_ready ... ok
+test pages_the_authority_did_not_render_are_not_pages ... ok
+test what_the_plane_builds_passes_the_authoritys_own_checks ... ok
+test without_a_render_host_nothing_is_laid_out_and_nothing_is_delivered ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.68s
+
+     Running tests/outputs_documents.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outputs_documents-bedf0dd5e315f26b)
+
+running 5 tests
+test a_diagram_is_stored_only_when_the_svg_draws_its_source ... ok
+test a_document_is_printed_by_the_managed_browser_and_the_printed_text_is_the_documents ... ok
+test markup_outside_the_allowlist_never_reaches_the_sandbox ... ok
+test the_documents_and_diagrams_the_plane_builds_pass_the_authoritys_checks ... ok
+test without_a_render_host_a_document_is_not_printed ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.85s
+
+exit=0

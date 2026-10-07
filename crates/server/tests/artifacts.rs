@@ -145,6 +145,7 @@ fn new_version(bytes: &[u8]) -> NewVersion {
         media_type: "text/plain".to_string(),
         expected_digest: None,
         produced_by: ProducedBy::default(),
+        quality_record: None,
     }
 }
 

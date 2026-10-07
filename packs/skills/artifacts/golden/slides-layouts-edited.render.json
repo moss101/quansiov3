@@ -1,0 +1,43 @@
+{
+  "css": ".slide{font-family:\"Helvetica Neue\",Helvetica,Arial,sans-serif;background:#ffffff;color:#1a1a1a;padding:56px 72px;display:flex;flex-direction:column}\n.slide h1{margin:0 0 28px;font-size:52px;line-height:1.1;font-weight:700;color:#14355c}\n.slide .body{font-size:32px;line-height:1.35}\n.slide .body p{margin:0 0 14px}\n.slide .body ul{margin:0 0 14px;padding-left:40px}\n.slide .body li{margin:0 0 10px}\n.slide.d2 .body{font-size:26px}\n.slide.d2 h1{font-size:46px;margin-bottom:22px}\n.slide.d3 .body{font-size:21px;line-height:1.3}\n.slide.d3 h1{font-size:40px;margin-bottom:18px}\n.slide.layout-title,.slide.layout-section{background:#1f2a44;color:#ffffff;justify-content:center}\n.slide.layout-title h1,.slide.layout-section h1{color:#ffffff;font-size:68px}\n.slide.layout-title{align-items:center;text-align:center}\n.slide.layout-title .body{font-size:34px}\n.slide.layout-section h1{font-size:76px}\n.slide .cols{display:flex;gap:56px}\n.slide .cols .col{flex:1 1 0;min-width:0}\n.slide .media{display:flex;gap:48px;align-items:flex-start}\n.slide .media figure{margin:0;flex:0 0 auto}\n.slide .media img{display:block;max-width:560px;max-height:400px}\n.slide .media .body{flex:1 1 0;min-width:0}\n.slide.layout-quote{justify-content:center}\n.slide.layout-quote h1{font-size:28px;font-weight:400;color:#1f4e79;margin-bottom:36px}\n.slide.layout-quote blockquote{margin:0;border-left:8px solid #1f4e79;padding-left:36px;font-size:44px;line-height:1.25;font-style:italic}\n.slide.layout-quote blockquote p{margin:0 0 12px}\n.slide.layout-quote .cite{margin:28px 0 0 44px;font-size:28px;color:#14355c}\n.slide .chart{margin:0 0 18px}\n.slide .chart svg{display:block;width:760px;height:360px}\n.slide .chart text{fill:#1a1a1a}",
+  "pages": [
+    {
+      "fragment": "<section class=\"slide layout-title d1\" data-slide=\"0\" data-layout=\"title\"><h1>Quarterly review</h1><div class=\"body\"><p>Revenue grew in every region.</p></div></section>",
+      "index": 0
+    },
+    {
+      "fragment": "<section class=\"slide layout-content d1\" data-slide=\"1\" data-layout=\"content\"><h1>Where we are</h1><div class=\"body\"><ul><li>Revenue is up 14 percent</li><li>Churn is down to 1.9 percent</li><li>Support load is flat</li></ul></div></section>",
+      "index": 1
+    },
+    {
+      "fragment": "<section class=\"slide layout-two_column d1\" data-slide=\"2\" data-layout=\"two_column\"><h1>Two views</h1><div class=\"body cols\"><div class=\"col\"><p>Before the change</p><ul><li>Slow onboarding</li></ul></div><div class=\"col\"><p>After the change</p><ul><li>A first run in ten minutes</li></ul></div></div></section>",
+      "index": 2
+    },
+    {
+      "fragment": "<section class=\"slide layout-image d1\" data-slide=\"3\" data-layout=\"image\"><h1>The product</h1><div class=\"media\"><figure><img src=\"data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==\" alt=\"A single white pixel, enlarged\"></figure><div class=\"body\"><p>A single pixel, enlarged for the test.</p></div></div></section>",
+      "index": 3
+    },
+    {
+      "fragment": "<section class=\"slide layout-chart d1\" data-slide=\"4\" data-layout=\"chart\"><h1>Revenue by region</h1><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 760 360\" width=\"760\" height=\"360\" role=\"img\" aria-label=\"Bar chart: North 12, South 9, East 15, West 7 million\"><title>Bar chart: North 12, South 9, East 15, West 7 million</title><line x1=\"56\" y1=\"304.0\" x2=\"744\" y2=\"304.0\" stroke=\"#1a1a1a\" stroke-width=\"2\"/><line x1=\"56\" y1=\"28\" x2=\"56\" y2=\"304\" stroke=\"#1a1a1a\" stroke-width=\"2\"/><rect x=\"90.4\" y=\"83.2\" width=\"103.2\" height=\"220.8\" fill=\"#1f4e79\"/><text x=\"142.0\" y=\"75.2\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">12M</text><text x=\"142.0\" y=\"338\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">North</text><rect x=\"262.4\" y=\"138.4\" width=\"103.2\" height=\"165.6\" fill=\"#1f4e79\"/><text x=\"314.0\" y=\"130.4\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">9M</text><text x=\"314.0\" y=\"338\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">South</text><rect x=\"434.4\" y=\"28.0\" width=\"103.2\" height=\"276.0\" fill=\"#1f4e79\"/><text x=\"486.0\" y=\"20.0\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">15M</text><text x=\"486.0\" y=\"338\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">East</text><rect x=\"606.4\" y=\"175.2\" width=\"103.2\" height=\"128.8\" fill=\"#1f4e79\"/><text x=\"658.0\" y=\"167.2\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">7M</text><text x=\"658.0\" y=\"338\" text-anchor=\"middle\" font-size=\"16\" fill=\"#1a1a1a\">West</text></svg></div><div class=\"body\"><p>Figures are in millions.</p></div></section>",
+      "index": 4
+    },
+    {
+      "fragment": "<section class=\"slide layout-quote d1\" data-slide=\"5\" data-layout=\"quote\"><h1>In their words</h1><blockquote><p>The first tool that did not get in my way.</p></blockquote><p class=\"cite\">— A customer</p></section>",
+      "index": 5
+    },
+    {
+      "fragment": "<section class=\"slide layout-section d1\" data-slide=\"6\" data-layout=\"section\"><h1>Next steps</h1><div class=\"body\"><p>Ship the onboarding change.</p></div></section>",
+      "index": 6
+    }
+  ],
+  "source_digests": [
+    "7abecb8aece7c64d8ec83fa0250fa109c6afce413d86908f81aedc3fe85e5f8c",
+    "50bbb4581e973a391d5736f1288a331760f16f394e3a5981eb9f5b20e58dfef1",
+    "749c7744e00d655d9f65e361e705356258f7f9bfb566f8811b566b2e1b940ed5",
+    "ca6311e37d727e667b1fdd3febd6dc6a173b9ebb82da8c0da375ce188f6194dc",
+    "224e32f3e5ee0421ee40a026b991531bc4064c93e1984ccbaa40d54a20f8ce68",
+    "772222f00b397e591396502c1df282dc4a6ac110b17ea1cee131cc94ce3bcfc2",
+    "8814b585935f045ff995a7b714ad461b982f89790d4c4b8cfef984478d574f22"
+  ],
+  "template_version": "v1"
+}

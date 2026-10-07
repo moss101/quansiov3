@@ -1,0 +1,76 @@
+job 499c6beb02ebcd9ec5e1d9c00d7186dace2644ac67f5f0bef312b49120bcdc24
+inputs
+  m_talk.mp4 talk 000000000000000000000000000000000000000000000000000000000000talk
+  m_music.mp3 music 00000000000000000000000000000000000000000000000000000000000music
+  m_logo.png logo 000000000000000000000000000000000000000000000000000000000000logo
+argv
+  -y
+  -hide_banner
+  -nostdin
+  -nostats
+  -progress
+  progress.txt
+  -i
+  m_talk.mp4
+  -i
+  m_music.mp3
+  -loop
+  1
+  -framerate
+  25
+  -t
+  10.000
+  -i
+  m_logo.png
+  -i
+  subs.srt
+  -filter_complex_script
+  graph.txt
+  -map
+  [vout]
+  -map
+  [aout]
+  -map
+  3:s
+  -c:s
+  mov_text
+  -metadata:s:s:0
+  language=eng
+  -c:v
+  libx264
+  -preset
+  medium
+  -crf
+  20
+  -pix_fmt
+  yuv420p
+  -r
+  25
+  -c:a
+  aac
+  -b:a
+  160k
+  -ar
+  48000
+  -ac
+  2
+  -movflags
+  +faststart
+  -t
+  8.000
+  out.mp4
+--- graph.txt
+color=c=black:s=640x360:r=25:d=8.000[base0];
+[0:v:0]trim=start=2.000:end=7.000,setpts=PTS-STARTPTS,fps=25,scale=640:360:force_original_aspect_ratio=decrease,pad=640:360:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,format=yuv420p,setpts=PTS+0.000/TB[v0];
+[base0][v0]overlay=eof_action=pass:enable='between(t,0.000,5.000)'[base1];
+[0:a:0]atrim=start=2.000:end=7.000,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay=0|0[a0];
+[2:v:0]trim=start=0.000:end=3.000,setpts=PTS-STARTPTS,fps=25,scale=640:360:force_original_aspect_ratio=decrease,pad=640:360:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,format=yuv420p,setpts=PTS+5.000/TB[v1];
+[base1][v1]overlay=eof_action=pass:enable='between(t,5.000,8.000)'[base2];
+[1:a:0]atrim=start=0.000:end=8.000,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume='if(lt(t,0),0,if(lt(t,1),0+0.5*(t-0),0.5))':eval=frame,adelay=0|0[a2];
+[base2]format=yuv420p[vout];
+[a0][a2]amix=inputs=2:duration=longest:dropout_transition=0:normalize=0,apad=whole_dur=8.000,atrim=0:8.000[aout]
+--- subs.srt
+1
+00:00:00,500 --> 00:00:02,500
+Hello
+

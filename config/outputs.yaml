@@ -1,0 +1,104 @@
+# Output generators (ADP-006, DOMAIN.md 10.4). Limits, binaries and timeouts live here, never as source constants (D-018).
+# The server reads this file (crates/server/src/artifacts/outputs/config.rs) and the intelligence plane's adapters read the
+# same bounds (python/intelligence/artifacts/outputs/limits.py), so a deliverable the plane builds is one the authority will
+# accept. schemas/json/outputs-config.schema.json bounds every value: a configuration cannot switch off a check, widen the
+# render sandbox or make a preview scope immortal.
+version: 1
+
+# The record every output version carries (10.4 A).
+quality:
+  record_version: 1
+
+# The throwaway browser context an output is laid out in (10.4 C).
+render:
+  deadline_ms: 90000
+  viewport: { width: 1280, height: 720 }
+  screenshot_max_bytes: 4194304
+
+deck:
+  template_version: v1
+  max_slides: 100
+  # One page's markup and the shared stylesheet, after the plane built them.
+  page_max_bytes: 262144
+  css_max_bytes: 131072
+  # An image carried in a slide as a data: URI.
+  image_max_bytes: 1048576
+  # Layout slack, in CSS pixels, before content counts as overflowing.
+  overflow_tolerance_px: 1
+  # WCAG-style ratios: body text, and text at least 24 px (or bold at least 18.66 px).
+  min_contrast_text: 4.5
+  min_contrast_large: 3.0
+  pdf:
+    paper_width_in: 13.333
+    paper_height_in: 7.5
+    max_bytes: 33554432
+  pptx:
+    # The package travels in a tool call as base64, so this stays below what the call schema allows.
+    max_bytes: 16777216
+    # The most parts and the most uncompressed bytes the verifier will read from one package.
+    max_parts: 2048
+    max_part_bytes: 8388608
+
+pdf:
+  document:
+    # Letter, portrait; the margin is on every side.
+    paper_width_in: 8.5
+    paper_height_in: 11
+    margin_in: 0.75
+    html_max_bytes: 2097152
+    max_bytes: 33554432
+    max_pages: 200
+    # The share of the source's words that must appear in the rendered text.
+    min_text_coverage: 0.98
+
+diagram:
+  max_nodes: 200
+  max_edges: 400
+  svg_max_bytes: 1048576
+
+video:
+  max_ops_per_batch: 64
+  max_tracks: 16
+  max_clips: 2000
+  max_media: 200
+  max_keyframes_per_clip: 64
+  max_subtitles: 5000
+  max_duration_ms: 3600000
+  max_dimension: 7680
+  max_fps: 120
+  # The environment variable that names the ffmpeg binary; ffprobe is looked up beside it.
+  ffmpeg_bin_env: QUANSIO_FFMPEG_BIN
+  duration_tolerance_ms: 250
+  render:
+    timeout_ms: 1800000
+    max_output_bytes: 2147483648
+    # The media a render reads, staged on the target (a plan names the files; their bytes travel with the job).
+    max_input_bytes: 536870912
+  inspect:
+    max_frames: 24
+    columns: 6
+    thumbnail_width: 320
+    timeout_ms: 120000
+
+transcription:
+  # The model gateway capability the route must declare (config/models.yaml).
+  capability: transcription
+  max_audio_bytes: 26214400
+  wait_max_ms: 30000
+  poll_after_ms: 2000
+  job_ttl_ms: 3600000
+  max_segments: 20000
+  segment_overlap_ms: 250
+
+preview:
+  # A scope lives this long after it was opened or last renewed, and no longer than max_lifetime_ms in all.
+  ttl_ms: 300000
+  max_lifetime_ms: 3600000
+  token_bytes: 24
+  max_scopes: 16
+  max_file_bytes: 33554432
+  max_suggestions: 50
+  suggestion_max_bytes: 8192
+  # Applied to every preview response. The scope serves the person's own project files; the sandbox keeps them
+  # from reading the app's origin.
+  csp: "sandbox allow-scripts allow-forms allow-popups allow-modals"

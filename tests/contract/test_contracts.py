@@ -44,7 +44,7 @@ def test_domain_derivation_covers_commands_errors_effects_events_trust(catalog):
     # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15), the
     # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15), the 4 `RECORDING_*` codes (ADP-003, §15) and the
     # 6 file and worktree codes (ADP-005, §15).
-    assert len(catalog["errors"]) == 71
+    assert len(catalog["errors"]) == 74
     assert len(catalog["effect_classes"]) == 24  # + fs.delete.workspace (ADP-005)
     assert len(catalog["event_families"]) == 36  # + webhook.* (APP-015), recording.* (ADP-003)
     assert catalog["trust_levels"] == [
@@ -249,6 +249,8 @@ def test_json_schemas_validate_real_artifacts():
     validator("local-files-config").validate(local_files)
     worktree_retention = yaml.safe_load((ROOT / "config" / "worktree-retention.yaml").read_text())
     validator("worktree-retention-config").validate(worktree_retention)
+    outputs = yaml.safe_load((ROOT / "config" / "outputs.yaml").read_text())
+    validator("outputs-config").validate(outputs)
 
     summaries = sorted((ROOT / "evidence").glob("*/*/summary.json"))
     assert summaries, "at least one task evidence bundle must exist"
@@ -427,3 +429,37 @@ def test_worktree_retention_schema_keeps_recovery_refs_private():
     assert broken(lambda d: d["sweep"].update(include_dirty=True))  # the sweep never removes work with changes
     assert broken(lambda d: d.update(state_dir="../outside"))
 
+
+
+def test_outputs_schema_keeps_the_checks_on_and_the_preview_scope_short():
+    """A configuration cannot disable a deck check, open the sandbox or make a preview immortal (ADP-006, DOMAIN.md 10.4)."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "outputs-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "outputs.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+    assert good["preview"]["ttl_ms"] <= 300_000, "a preview scope lives at most five minutes between renewals"
+    assert good["video"]["max_ops_per_batch"] <= 64
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    assert broken(lambda d: d["preview"].update(ttl_ms=3_600_000))
+    assert broken(lambda d: d["preview"].update(max_lifetime_ms=10**9))
+    assert broken(lambda d: d["preview"].update(csp="sandbox allow-same-origin allow-scripts"))
+    assert broken(lambda d: d["preview"].update(csp="default-src *"))
+    assert broken(lambda d: d["video"].update(max_ops_per_batch=65))
+    assert broken(lambda d: d["deck"].update(min_contrast_text=1.0))
+    assert broken(lambda d: d["deck"].update(min_contrast_large=2.0))
+    assert broken(lambda d: d["deck"].update(overflow_tolerance_px=100))
+    assert broken(lambda d: d["render"]["viewport"].update(width=800))
+    assert broken(lambda d: d["transcription"].update(max_audio_bytes=100 * 1024 * 1024))
+    assert broken(lambda d: d["transcription"].update(capability="chat"))
+    assert broken(lambda d: d["pdf"]["document"].update(min_text_coverage=0.2))
+    assert broken(lambda d: d["video"].update(ffmpeg_bin_env="PATH"))
+    assert broken(lambda d: d.update(sandbox={"network": True}))

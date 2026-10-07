@@ -204,7 +204,26 @@ impl Composition {
             let objects: Arc<dyn ObjectStore> = Arc::new(
                 S3ObjectStore::new(store).map_err(|error| format!("object store: {error}"))?,
             );
-            api = api.with_object_store(objects);
+            api = api.with_object_store(Arc::clone(&objects));
+            // The preview of a workspace's files (ADP-006): a loopback listener on an ephemeral port that serves
+            // short-lived scopes, with every request re-checked against the run, the member and the root. The
+            // render, media and transcription ports are not composed here; those tools fail ADAPTER_UNAVAILABLE.
+            let outputs = crate::artifacts::outputs::config::OutputsConfig::shipped();
+            let preview = crate::artifacts::outputs::preview::PreviewService::start(
+                pool.clone(),
+                Arc::clone(&objects),
+                &outputs,
+                Arc::new(crate::artifacts::outputs::preview::DbPreviewAuthority::new(
+                    pool.clone(),
+                )),
+                Arc::new(crate::artifacts::outputs::preview::SystemClock),
+            )
+            .await
+            .map_err(|error| format!("preview server: {error}"))?;
+            api = api.with_output_host(
+                crate::artifacts::outputs::OutputToolHost::new(pool.clone(), objects)
+                    .with_preview(Arc::new(preview)),
+            );
         }
         if let Some(root) = config.search_index_root.as_deref() {
             // Derived files only: the index is rebuilt from the canonical tables and the

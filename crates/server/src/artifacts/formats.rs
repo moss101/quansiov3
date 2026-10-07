@@ -310,47 +310,21 @@ fn spreadsheet(payload: &[u8]) -> Result<Option<Refusal>, Refusal> {
     Ok(None)
 }
 
-fn text_field<'a>(map: &'a Map<String, Value>, key: &str) -> Result<&'a str, ()> {
-    match map.get(key) {
-        None => Ok(""),
-        Some(Value::String(text)) => Ok(text),
-        Some(_) => Err(()),
-    }
-}
-
 fn presentation(payload: &[u8]) -> Result<Option<Refusal>, Refusal> {
-    let map = json_object(payload, "presentation")?;
-    closed_keys(&map, &["schema_version", "slides"], "presentation")?;
-    schema_version(&map, "presentation")?;
-    let slides = map
-        .get("slides")
-        .and_then(Value::as_array)
-        .ok_or_else(|| format("presentation slides must be a list"))?;
-    let mut quality = None;
-    for (index, slide) in slides.iter().enumerate() {
-        let slide = slide
-            .as_object()
-            .ok_or_else(|| format(format!("slide {index} is not an object")))?;
-        closed_keys(
-            slide,
-            &["title", "body", "notes"],
-            &format!("slide {index}"),
-        )?;
-        let title = slide.get("title").and_then(Value::as_str).unwrap_or("");
-        if title.trim().is_empty() {
-            return Err(format(format!("slide {index} needs a title")));
-        }
-        let (Ok(body), Ok(_notes)) = (text_field(slide, "body"), text_field(slide, "notes")) else {
-            return Err(format(format!("slide {index} body/notes must be text")));
-        };
-        if body.trim().is_empty() && quality.is_none() {
-            quality = Some((RULE_QUALITY, "every slide needs a body".to_string()));
-        }
+    // The slide shape, with the optional layout, alt, image and chart keys (DOMAIN.md §10.4 B), is one
+    // parser shared with the deck tools, so a deck the store accepts is a deck the deck tools can read.
+    let image_max = super::outputs::config::OutputsConfig::shipped()
+        .deck
+        .image_max_bytes;
+    let source = super::outputs::deck::parse_presentation(payload, image_max).map_err(format)?;
+    if source
+        .slides
+        .iter()
+        .any(|slide| slide.body.trim().is_empty())
+    {
+        return Ok(Some((RULE_QUALITY, "every slide needs a body".to_string())));
     }
-    if slides.is_empty() {
-        return Err(format("presentation needs at least one slide"));
-    }
-    Ok(quality)
+    Ok(None)
 }
 
 fn safe_path(path: &str) -> bool {
@@ -464,6 +438,9 @@ fn data(payload: &[u8]) -> Result<Option<Refusal>, Refusal> {
 pub fn check(kind: ArtifactKind, media_type: &str, payload: &[u8]) -> FormatCheck {
     let outcome = check_media_type(kind, media_type).and_then(|()| {
         refuse_chat_blob(payload)?;
+        if let Some(verdict) = super::outputs::shapes::check(kind, media_type, payload) {
+            return verdict.map(|()| None);
+        }
         match kind {
             ArtifactKind::Document => document(payload),
             ArtifactKind::Spreadsheet => spreadsheet(payload),

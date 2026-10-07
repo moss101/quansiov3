@@ -660,6 +660,7 @@ async fn a_malformed_deliverable_blocks_completion_until_a_valid_version_is_adde
                     step_id: None,
                     user_id: Some(USER.to_string()),
                 },
+                quality_record: None,
             },
         )
         .await

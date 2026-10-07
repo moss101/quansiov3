@@ -15,6 +15,7 @@
 
 pub mod browser;
 pub mod host;
+pub mod media;
 pub mod tools;
 
 /// Repository path of this crate's canonical owner, used by the workspace

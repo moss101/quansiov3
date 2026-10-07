@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useReducer, useState, type ReactElement } from "react";
 
+import { deckPagesRole, qualityLabel, summarizeOutput } from "../artifacts/outputs.js";
 import { imageDataUrl, isTextLike, openAllowed, textPreview, type PreviewPlan } from "../artifacts/preview.js";
 import { decodeSearch, type SearchChannel, type SearchResults } from "../artifacts/search.js";
 import {
@@ -30,6 +31,7 @@ import {
   type LoadedPreview,
 } from "../artifacts/workspace.js";
 import { t } from "../i18n/strings.js";
+import { DeckPagesLink, OutputSummaryPanel, QualityPanel } from "./OutputPanels.js";
 
 interface ArtifactsProps {
   readonly workspaceId: string;
@@ -196,7 +198,7 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
     if (!version) {
       return;
     }
-    for (const evidenceId of version.evidenceIds) {
+    for (const evidenceId of [...version.evidenceIds, ...(version.qualityRecord?.evidenceIds ?? [])]) {
       if (evidenceId in state.evidence) {
         continue;
       }
@@ -267,6 +269,14 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
 
   const diff = version && other && state.preview?.text !== null && state.preview?.text !== undefined && compareText?.versionId === other.id
     ? diffLines(compareText.text, state.preview.text)
+    : null;
+  // What the output tools made, shown from the text the preview already fetched.
+  const outputSummary =
+    version && state.preview?.versionId === version.id && state.preview.text !== null
+      ? summarizeOutput(version.mediaType, state.preview.text)
+      : null;
+  const deckPages = state.history
+    ? (state.artifacts.find((row) => row.role === deckPagesRole(state.history?.artifactId ?? "")) ?? null)
     : null;
 
   return (
@@ -372,6 +382,11 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
                     <small className="format-check" data-ok={candidate.formatCheck ? String(candidate.formatCheck.ok) : "unknown"} title={t("formatCheck")}>
                       {formatCheckLabel(candidate.formatCheck)}
                     </small>
+                    {candidate.qualityRecord ? (
+                      <small className="quality-label" data-ok={String(candidate.qualityRecord.ok)} title={t("qualityRecord")}>
+                        {qualityLabel(candidate.qualityRecord)}
+                      </small>
+                    ) : null}
                     {candidate.id !== version.id ? (
                       <button type="button" className="link" onClick={() => { dispatch({ type: "version.compare", versionId: candidate.id }); }}>
                         {t("compare")}
@@ -389,6 +404,19 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
               ) : null}
               <code className="digest">{version.contentDigest}</code>
             </div>
+            {version.qualityRecord ? (
+              <QualityPanel
+                quality={version.qualityRecord}
+                evidenceSummary={(evidenceId) => {
+                  const link = state.evidence[evidenceId];
+                  return link ? `${link.kind}: ${link.summary ?? evidenceId}` : evidenceId;
+                }}
+              />
+            ) : null}
+            {state.history.kind === "presentation" && deckPages ? (
+              <DeckPagesLink onOpen={() => { dispatch({ type: "select", artifactId: deckPages.id }); }} />
+            ) : null}
+            <OutputSummaryPanel summary={outputSummary} />
             {version.evidenceIds.length > 0 ? (
               <div className="evidence">
                 <h3>{t("evidence")}</h3>

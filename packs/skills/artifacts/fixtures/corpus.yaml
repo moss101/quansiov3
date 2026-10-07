@@ -6,6 +6,11 @@ sources:
   - {file: document.md, kind: document, media_type: text/markdown, ok: true}
   - {file: spreadsheet.csv, kind: spreadsheet, media_type: text/csv, ok: true}
   - {file: slides.json, kind: presentation, media_type: application/vnd.quansio.slides+json, ok: true}
+  - {file: slides-layouts.json, kind: presentation, media_type: application/vnd.quansio.slides+json, ok: true}
+  - {file: malformed/slides-image-without-alt.json, kind: presentation, media_type: application/vnd.quansio.slides+json, ok: false, rule: artifact.format}
+  - {file: malformed/slides-unknown-layout.json, kind: presentation, media_type: application/vnd.quansio.slides+json, ok: false, rule: artifact.format}
+  - {file: malformed/slides-chart-mismatched.json, kind: presentation, media_type: application/vnd.quansio.slides+json, ok: false, rule: artifact.format}
+  - {file: malformed/slides-alt-on-content.json, kind: presentation, media_type: application/vnd.quansio.slides+json, ok: false, rule: artifact.format}
   - {file: code.json, kind: code, media_type: application/vnd.quansio.code+json, ok: true}
   - {file: data.json, kind: data, media_type: application/json, ok: true}
   - {file: malformed/document-no-heading.md, kind: document, media_type: text/markdown, ok: false, rule: artifact.format}

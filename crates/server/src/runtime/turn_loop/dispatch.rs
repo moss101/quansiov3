@@ -68,6 +68,9 @@ pub const CONNECTOR_HOST_OWNER: &str = "EXEC-011";
 pub const SCM_HOST_OWNER: &str = "EXEC-012";
 /// The task that owns workspace artifacts (server-hosted artifact tools).
 pub const ARTIFACT_HOST_OWNER: &str = "CORE-007";
+/// The task that owns the output generators (deck, diagram, PDF, video, transcription and
+/// web-dev preview tools, all server-hosted).
+pub const OUTPUT_HOST_OWNER: &str = "ADP-006";
 /// The task that owns ACTIVE knowledge (the server-hosted citation tool).
 pub const KNOWLEDGE_HOST_OWNER: &str = "INT-006";
 /// The task that resolves the acting user's roles and identity.
@@ -79,6 +82,16 @@ pub fn host_owner(tool: &str) -> &'static str {
     match tool {
         "artifact.create" | "artifact.update" => ARTIFACT_HOST_OWNER,
         "knowledge.cite" => KNOWLEDGE_HOST_OWNER,
+        "deck.render"
+        | "deck.export"
+        | "deck.deliver"
+        | "diagram.render"
+        | "document.export_pdf"
+        | "video.edit"
+        | "video.render"
+        | "video.inspect"
+        | "audio.transcribe" => OUTPUT_HOST_OWNER,
+        _ if tool.starts_with("webdev.") => OUTPUT_HOST_OWNER,
         _ if tool.starts_with("browser.") => BROWSER_TOOL_HOST_OWNER,
         _ if tool.starts_with("computer.") => COMPUTER_TOOL_HOST_OWNER,
         "web.search" | "web.fetch" => CONNECTOR_HOST_OWNER,

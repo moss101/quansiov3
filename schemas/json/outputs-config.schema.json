@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/outputs-config.schema.json",
+  "title": "Quansio output generators (config/outputs.yaml)",
+  "description": "Bounds for the output adapters (DOMAIN.md 10.4): deck pages and their quality thresholds, printing, diagrams, video edit batches and jobs, transcription and the web-dev preview scope. Every number is bounded so a configuration cannot disable a check, widen the render sandbox or make a preview scope immortal.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "quality", "render", "deck", "pdf", "diagram", "video", "transcription", "preview"],
+  "properties": {
+    "version": { "const": 1 },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_version"],
+      "properties": { "record_version": { "const": 1 } }
+    },
+    "render": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deadline_ms", "viewport", "screenshot_max_bytes"],
+      "properties": {
+        "deadline_ms": { "type": "integer", "minimum": 1000, "maximum": 600000 },
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "const": 1280 },
+            "height": { "const": 720 }
+          }
+        },
+        "screenshot_max_bytes": { "type": "integer", "minimum": 65536, "maximum": 33554432 }
+      }
+    },
+    "deck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["template_version", "max_slides", "page_max_bytes", "css_max_bytes", "image_max_bytes", "overflow_tolerance_px", "min_contrast_text", "min_contrast_large", "pdf", "pptx"],
+      "properties": {
+        "template_version": { "type": "string", "pattern": "^v[0-9]+$" },
+        "max_slides": { "type": "integer", "minimum": 1, "maximum": 500 },
+        "page_max_bytes": { "type": "integer", "minimum": 4096, "maximum": 4194304 },
+        "css_max_bytes": { "type": "integer", "minimum": 1024, "maximum": 1048576 },
+        "image_max_bytes": { "type": "integer", "minimum": 1024, "maximum": 8388608 },
+        "overflow_tolerance_px": { "type": "number", "minimum": 0, "maximum": 4 },
+        "min_contrast_text": { "type": "number", "minimum": 4.5, "maximum": 21 },
+        "min_contrast_large": { "type": "number", "minimum": 3, "maximum": 21 },
+        "pdf": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["paper_width_in", "paper_height_in", "max_bytes"],
+          "properties": {
+            "paper_width_in": { "type": "number", "minimum": 1, "maximum": 60 },
+            "paper_height_in": { "type": "number", "minimum": 1, "maximum": 60 },
+            "max_bytes": { "type": "integer", "minimum": 65536, "maximum": 268435456 }
+          }
+        },
+        "pptx": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["max_bytes", "max_parts", "max_part_bytes"],
+          "properties": {
+            "max_bytes": { "type": "integer", "minimum": 65536, "maximum": 268435456 },
+            "max_parts": { "type": "integer", "minimum": 16, "maximum": 8192 },
+            "max_part_bytes": { "type": "integer", "minimum": 65536, "maximum": 67108864 }
+          }
+        }
+      }
+    },
+    "pdf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document"],
+      "properties": {
+        "document": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["paper_width_in", "paper_height_in", "margin_in", "html_max_bytes", "max_bytes", "max_pages", "min_text_coverage"],
+          "properties": {
+            "paper_width_in": { "type": "number", "minimum": 1, "maximum": 60 },
+            "paper_height_in": { "type": "number", "minimum": 1, "maximum": 60 },
+            "margin_in": { "type": "number", "minimum": 0, "maximum": 4 },
+            "html_max_bytes": { "type": "integer", "minimum": 4096, "maximum": 16777216 },
+            "max_bytes": { "type": "integer", "minimum": 65536, "maximum": 268435456 },
+            "max_pages": { "type": "integer", "minimum": 1, "maximum": 2000 },
+            "min_text_coverage": { "type": "number", "minimum": 0.9, "maximum": 1 }
+          }
+        }
+      }
+    },
+    "diagram": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_nodes", "max_edges", "svg_max_bytes"],
+      "properties": {
+        "max_nodes": { "type": "integer", "minimum": 1, "maximum": 2000 },
+        "max_edges": { "type": "integer", "minimum": 1, "maximum": 8000 },
+        "svg_max_bytes": { "type": "integer", "minimum": 4096, "maximum": 8388608 }
+      }
+    },
+    "video": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_ops_per_batch", "max_tracks", "max_clips", "max_media", "max_keyframes_per_clip", "max_subtitles", "max_duration_ms", "max_dimension", "max_fps", "ffmpeg_bin_env", "duration_tolerance_ms", "render", "inspect"],
+      "properties": {
+        "max_ops_per_batch": { "type": "integer", "minimum": 1, "maximum": 64 },
+        "max_tracks": { "type": "integer", "minimum": 1, "maximum": 64 },
+        "max_clips": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "max_media": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "max_keyframes_per_clip": { "type": "integer", "minimum": 1, "maximum": 512 },
+        "max_subtitles": { "type": "integer", "minimum": 1, "maximum": 50000 },
+        "max_duration_ms": { "type": "integer", "minimum": 1000, "maximum": 86400000 },
+        "max_dimension": { "type": "integer", "minimum": 16, "maximum": 7680 },
+        "max_fps": { "type": "integer", "minimum": 1, "maximum": 240 },
+        "ffmpeg_bin_env": { "type": "string", "pattern": "^QUANSIO_[A-Z0-9_]+$" },
+        "duration_tolerance_ms": { "type": "integer", "minimum": 0, "maximum": 5000 },
+        "render": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["timeout_ms", "max_output_bytes", "max_input_bytes"],
+          "properties": {
+            "timeout_ms": { "type": "integer", "minimum": 1000, "maximum": 21600000 },
+            "max_output_bytes": { "type": "integer", "minimum": 1048576, "maximum": 17179869184 },
+            "max_input_bytes": { "type": "integer", "minimum": 1048576, "maximum": 4294967296 }
+          }
+        },
+        "inspect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["max_frames", "columns", "thumbnail_width", "timeout_ms"],
+          "properties": {
+            "max_frames": { "type": "integer", "minimum": 1, "maximum": 64 },
+            "columns": { "type": "integer", "minimum": 1, "maximum": 16 },
+            "thumbnail_width": { "type": "integer", "minimum": 64, "maximum": 1280 },
+            "timeout_ms": { "type": "integer", "minimum": 1000, "maximum": 3600000 }
+          }
+        }
+      }
+    },
+    "transcription": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability", "max_audio_bytes", "wait_max_ms", "poll_after_ms", "job_ttl_ms", "max_segments", "segment_overlap_ms"],
+      "properties": {
+        "capability": { "const": "transcription" },
+        "max_audio_bytes": { "type": "integer", "minimum": 1024, "maximum": 26214400 },
+        "wait_max_ms": { "type": "integer", "minimum": 0, "maximum": 120000 },
+        "poll_after_ms": { "type": "integer", "minimum": 100, "maximum": 60000 },
+        "job_ttl_ms": { "type": "integer", "minimum": 60000, "maximum": 86400000 },
+        "max_segments": { "type": "integer", "minimum": 1, "maximum": 100000 },
+        "segment_overlap_ms": { "type": "integer", "minimum": 0, "maximum": 5000 }
+      }
+    },
+    "preview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ttl_ms", "max_lifetime_ms", "token_bytes", "max_scopes", "max_file_bytes", "max_suggestions", "suggestion_max_bytes", "csp"],
+      "properties": {
+        "ttl_ms": { "type": "integer", "minimum": 1000, "maximum": 300000 },
+        "max_lifetime_ms": { "type": "integer", "minimum": 60000, "maximum": 14400000 },
+        "token_bytes": { "type": "integer", "minimum": 16, "maximum": 64 },
+        "max_scopes": { "type": "integer", "minimum": 1, "maximum": 256 },
+        "max_file_bytes": { "type": "integer", "minimum": 1024, "maximum": 268435456 },
+        "max_suggestions": { "type": "integer", "minimum": 1, "maximum": 500 },
+        "suggestion_max_bytes": { "type": "integer", "minimum": 256, "maximum": 65536 },
+        "csp": { "type": "string", "pattern": "^sandbox(?!.*allow-same-origin)(?!.*allow-top-navigation)( allow-[a-z-]+)*$" }
+      }
+    }
+  }
+}

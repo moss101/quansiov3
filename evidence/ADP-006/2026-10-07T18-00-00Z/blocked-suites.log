@@ -1,0 +1,24 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-adb62c7a7e357fa11/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.96s
+     Running tests/outputs_video_ffmpeg.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outputs_video_ffmpeg-be6c384c93859994)
+
+running 1 test
+BLOCKED_EXTERNAL: QUANSIO_TEST_FFMPEG_BIN is not set; the suite did not run
+test a_timeline_renders_to_the_video_it_describes_and_the_frames_show_it ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-adb62c7a7e357fa11/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-adb62c7a7e357fa11/python
+configfile: pyproject.toml
+collecting ... collected 2 items
+
+tests/intelligence/test_transcription_live.py::test_a_real_recording_is_transcribed_through_the_gateway SKIPPED [ 50%]
+tests/intelligence/test_transcription_live.py::test_the_submit_and_poll_job_finishes_a_real_transcription_once SKIPPED [100%]
+
+=========================== short test summary info ============================
+SKIPPED [2] tests/intelligence/test_transcription_live.py:52: BLOCKED_EXTERNAL: QUANSIO_TEST_STT_API_KEY, QUANSIO_TEST_STT_AUDIO, QUANSIO_TEST_STT_EXPECT not set; the live transcription suite did not run
+============================== 2 skipped in 0.10s ==============================
+exit=0

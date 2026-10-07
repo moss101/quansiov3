@@ -1,0 +1,170 @@
+# ADP-006 mutation checks at 37b0822
+CONTROL-PASSED lib
+COMPILES quality: a record that checked nothing is ok
+KILLED quality: a record that checked nothing is ok <- artifacts::outputs::quality::tests::ok_is_derived_from_the_checks_and_an_empty_record_is_not_ok
+COMPILES quality: one passing check makes a record ok
+KILLED quality: one passing check makes a record ok <- artifacts::outputs::quality::tests::ok_is_derived_from_the_checks_and_an_empty_record_is_not_ok
+COMPILES deck gate: a changed slide stays what it was
+KILLED deck gate: a changed slide stays what it was <- artifacts::outputs::deck::tests::an_edited_slide_is_edited_whatever_the_stored_state_says
+COMPILES deck gate: pages for another count of slides deliver
+KILLED deck gate: pages for another count of slides deliver <- artifacts::outputs::deck::tests::an_edited_slide_is_edited_whatever_the_stored_state_says
+COMPILES deck gate: one ready page delivers the deck
+KILLED deck gate: one ready page delivers the deck <- artifacts::outputs::deck::tests::a_deck_is_deliverable_only_when_every_page_of_the_current_version_is_ready
+COMPILES deck gate: pages from another template version are used
+KILLED deck gate: pages from another template version are used <- artifacts::outputs::deck::tests::pages_from_another_template_version_are_not_trusted
+COMPILES deck pages: a ready page with a failing check is accepted
+KILLED deck pages: a ready page with a failing check is accepted <- artifacts::outputs::deck::tests::stored_pages_are_shape_checked_so_a_hand_made_manifest_cannot_pass_as_ready
+COMPILES deck pages: a failed page with no failing check is accepted
+KILLED deck pages: a failed page with no failing check is accepted <- artifacts::outputs::deck::tests::stored_pages_are_shape_checked_so_a_hand_made_manifest_cannot_pass_as_ready
+CONTROL-PASSED deck
+COMPILES deck host: pages an upload made are the authority's own
+KILLED deck host: pages an upload made are the authority's own <- pages_the_authority_did_not_render_are_not_pages
+COMPILES deck host: a carried page need not match its slide
+KILLED deck host: a carried page need not match its slide <- a_pending_or_failing_page_blocks_delivery_until_every_page_is_ready
+CONTROL-PASSED stt
+COMPILES support: an artifact of another workspace is read
+KILLED support: an artifact of another workspace is read <- inputs_are_checked_before_the_route_is_asked
+COMPILES support: another kind of artifact is read
+KILLED support: another kind of artifact is read <- inputs_are_checked_before_the_route_is_asked
+COMPILES tool owned: artifact.create may use a reserved role
+KILLED tool owned: artifact.create may use a reserved role <- pages_the_authority_did_not_render_are_not_pages
+COMPILES tool owned: artifact.create may store deck pages
+KILLED tool owned: artifact.create may store deck pages <- pages_the_authority_did_not_render_are_not_pages
+CONTROL-PASSED video
+COMPILES tool owned: artifact.update may change a timeline
+KILLED tool owned: artifact.update may change a timeline <- a_batch_applies_whole_or_not_at_all_against_an_exact_revision
+COMPILES pdf: a file that is not a PDF is accepted
+KILLED pdf: a file that is not a PDF is accepted <- artifacts::outputs::pdf::tests::something_that_is_not_a_pdf_or_is_cut_short_is_refused
+COMPILES pdf: a cut-short file is accepted
+KILLED pdf: a cut-short file is accepted <- artifacts::outputs::pdf::tests::something_that_is_not_a_pdf_or_is_cut_short_is_refused
+COMPILES video edit: a stale revision is applied
+KILLED video edit: a stale revision is applied <- a_batch_applies_whole_or_not_at_all_against_an_exact_revision
+COMPILES video edit: a dry run commits
+KILLED video edit: a dry run commits <- a_batch_applies_whole_or_not_at_all_against_an_exact_revision
+COMPILES video edit: a medium of the wrong kind is imported
+KILLED video edit: a medium of the wrong kind is imported <- a_batch_applies_whole_or_not_at_all_against_an_exact_revision
+COMPILES video edit: a version that is not its own revision is edited
+KILLED video edit: a version that is not its own revision is edited <- a_version_that_video_edit_did_not_make_is_not_edited
+COMPILES video edit: a batch is not bounded
+KILLED video edit: a batch is not bounded <- the_host_bounds_a_batch_by_itself_whatever_the_schema_says
+COMPILES video ops: a later operation is not checked against the earlier ones
+KILLED video ops: a later operation is not checked against the earlier ones <- a_batch_applies_whole_or_not_at_all_against_an_exact_revision
+COMPILES stt: a transcript of other audio is accepted
+KILLED stt: a transcript of other audio is accepted <- an_answer_that_is_not_a_transcript_of_this_audio_is_refused_and_nothing_is_stored
+COMPILES stt: the same id for another language is the same job
+KILLED stt: the same id for another language is the same job <- a_request_id_cannot_be_reused_for_other_audio_or_another_language
+COMPILES stt: the same id for other audio is the same job
+KILLED stt: the same id for other audio is the same job <- a_request_id_cannot_be_reused_for_other_audio_or_another_language
+COMPILES stt: audio over the limit is sent
+KILLED stt: audio over the limit is sent <- inputs_are_checked_before_the_route_is_asked
+COMPILES stt: any request id is accepted
+KILLED stt: any request id is accepted <- inputs_are_checked_before_the_route_is_asked
+COMPILES stt: an unknown error code is passed to the model
+KILLED stt: an unknown error code is passed to the model <- a_failed_job_is_reported_with_its_code_and_the_id_is_free_again
+COMPILES stt: an answer is stored without the transcript rules
+KILLED stt: an answer is stored without the transcript rules <- an_answer_that_is_not_a_transcript_of_this_audio_is_refused_and_nothing_is_stored
+COMPILES transcript: the untrusted label may be dropped
+KILLED transcript: the untrusted label may be dropped <- artifacts::outputs::transcript::tests::every_invariant_is_checked
+COMPILES transcript: segments may overlap
+KILLED transcript: segments may overlap <- artifacts::outputs::transcript::tests::every_invariant_is_checked
+CONTROL-PASSED preview
+COMPILES preview: a scope does not expire
+KILLED preview: a scope does not expire <- a_pages_suggestions_are_stored_as_untrusted_data_and_read_back_through_the_tool
+COMPILES preview: the authority is not asked again
+KILLED preview: the authority is not asked again <- a_file_over_the_bound_is_not_served
+COMPILES preview: a changed root keeps its scope
+KILLED preview: a changed root keeps its scope <- a_scope_lapses_when_the_run_ends_the_member_is_removed_or_the_root_changes
+COMPILES preview: a lapse is forgotten
+KILLED preview: a lapse is forgotten <- a_scope_lapses_when_its_time_runs_out_and_stays_lapsed
+COMPILES preview: a renewal passes the maximum lifetime
+KILLED preview: a renewal passes the maximum lifetime <- renewing_extends_a_scope_but_never_past_its_maximum_lifetime
+COMPILES preview: another member may renew, close or read a scope
+KILLED preview: another member may renew, close or read a scope <- a_scope_is_the_openers_to_renew_close_or_read
+COMPILES preview: the scope limit is not applied
+KILLED preview: the scope limit is not applied <- nothing_is_opened_for_a_bad_directory_a_run_without_a_root_or_too_many_scopes
+COMPILES preview: a directory may climb out of the root
+KILLED preview: a directory may climb out of the root <- nothing_is_opened_for_a_bad_directory_a_run_without_a_root_or_too_many_scopes
+COMPILES preview: a hidden directory may be opened
+KILLED preview: a hidden directory may be opened <- nothing_is_opened_for_a_bad_directory_a_run_without_a_root_or_too_many_scopes
+COMPILES preview: a directory behind a link out of the root is opened
+KILLED preview: a directory behind a link out of the root is opened <- nothing_is_opened_for_a_bad_directory_a_run_without_a_root_or_too_many_scopes
+COMPILES preview authority: a removed member is served
+KILLED preview authority: a removed member is served <- a_scope_lapses_when_the_run_ends_the_member_is_removed_or_the_root_changes
+COMPILES preview authority: a run that ended is served
+KILLED preview authority: a run that ended is served <- a_scope_lapses_when_the_run_ends_the_member_is_removed_or_the_root_changes
+COMPILES preview authority: a destroyed target is served
+KILLED preview authority: a destroyed target is served <- a_scope_lapses_when_the_run_ends_the_member_is_removed_or_the_root_changes
+COMPILES preview serve: a dotfile path is served
+KILLED preview serve: a dotfile path is served <- artifacts::outputs::preview::serve::tests::a_path_is_split_and_every_unsafe_shape_is_refused
+COMPILES preview serve: an escaped separator is allowed
+KILLED preview serve: an escaped separator is allowed <- artifacts::outputs::preview::serve::tests::a_path_is_split_and_every_unsafe_shape_is_refused
+COMPILES preview serve: a link that leaves the directory is followed
+KILLED preview serve: a link that leaves the directory is followed <- a_scope_serves_its_directory_with_sandboxing_headers_and_nothing_else
+COMPILES preview serve: a link to a dotfile is served
+KILLED preview serve: a link to a dotfile is served <- a_scope_serves_its_directory_with_sandboxing_headers_and_nothing_else
+COMPILES preview serve: a request for another host is answered
+KILLED preview serve: a request for another host is answered <- a_token_that_was_never_issued_and_a_foreign_host_are_refused_alike
+COMPILES preview serve: the sandbox policy is dropped
+KILLED preview serve: the sandbox policy is dropped <- a_scope_serves_its_directory_with_sandboxing_headers_and_nothing_else
+COMPILES preview serve: sniffing is allowed
+KILLED preview serve: sniffing is allowed <- a_scope_serves_its_directory_with_sandboxing_headers_and_nothing_else
+COMPILES preview serve: a file over the limit is served
+KILLED preview serve: a file over the limit is served <- a_file_over_the_bound_is_not_served
+COMPILES preview suggestions: a suggestion that says nothing is stored
+KILLED preview suggestions: a suggestion that says nothing is stored <- a_pages_suggestions_are_stored_as_untrusted_data_and_read_back_through_the_tool
+COMPILES preview suggestions: an oversized field is stored
+KILLED preview suggestions: an oversized field is stored <- a_pages_suggestions_are_stored_as_untrusted_data_and_read_back_through_the_tool
+COMPILES preview suggestions: a scope takes any number
+KILLED preview suggestions: a scope takes any number <- a_pages_suggestions_are_stored_as_untrusted_data_and_read_back_through_the_tool
+COMPILES preview suggestions: two at once may overwrite each other
+KILLED preview suggestions: two at once may overwrite each other <- suggestions_posted_at_once_are_all_kept_in_order
+CONTROL-PASSED qworkerd-render-lib
+COMPILES render: a request outside the pinned assets is answered
+KILLED render: a request outside the pinned assets is answered <- browser::render::tests::only_the_pinned_host_serves_a_pinned_asset
+CONTROL-PASSED qworkerd-render
+COMPILES render: script is not disabled
+KILLED render: script is not disabled <- a_script_in_the_document_does_not_run
+CONTROL-PASSED qworkerd-lib
+COMPILES media: a path in a file name is accepted
+KILLED media: a path in a file name is accepted <- media::tests::file_names_and_ids_are_plain
+COMPILES media: an id that is not a digest is accepted
+KILLED media: an id that is not a digest is accepted <- media::tests::file_names_and_ids_are_plain
+CONTROL-PASSED qworkerd-media
+COMPILES media: a job outruns its timeout
+KILLED media: a job outruns its timeout <- a_job_that_outruns_its_bound_is_killed
+COMPILES media: a cancelled job's children survive
+KILLED media: a cancelled job's children survive <- a_cancel_kills_the_whole_process_group_and_discards_the_partial_output
+CONTROL-PASSED python
+COMPILES python: a slide's digest depends on key order
+KILLED python: a slide's digest depends on key order <- tests/intelligence/test_deck_outputs.py::test_an_edited_deck_has_one_new_slide_digest_and_one_new_page
+COMPILES python: Markdown text is not escaped
+KILLED python: Markdown text is not escaped <- tests/intelligence/test_document_diagram_outputs.py::test_the_rich_document_renders_to_the_golden_html
+COMPILES python: a remote image is fetched when printed
+KILLED python: a remote image is fetched when printed <- tests/intelligence/test_document_diagram_outputs.py::test_raw_html_is_text_and_nothing_in_the_source_becomes_m
+COMPILES python: a diagram title is not escaped
+KILLED python: a diagram title is not escaped <- tests/intelligence/test_document_diagram_outputs.py::test_a_label_text_is_escaped_and_a_long_one_wraps_back_in
+COMPILES python: a package with a bad checksum is accepted
+KILLED python: a package with a bad checksum is accepted <- tests/intelligence/test_deck_outputs.py::test_a_package_for_another_deck_or_a_corrupt_zip_fails
+COMPILES python: audio over the limit is sent to a provider
+KILLED python: audio over the limit is sent to a provider <- tests/intelligence/test_transcription_outputs.py::test_what_is_wrong_with_the_request_is_refused_before_any_re
+COMPILES python: the data policy is not checked before a transcription is built
+KILLED python: the data policy is not checked before a transcription is built <- tests/intelligence/test_transcription_outputs.py::test_a_data_class_the_provider_is_not_cleared_for_is_denied_
+COMPILES python: a request id for other audio starts a second job
+KILLED python: a request id for other audio starts a second job <- tests/intelligence/test_transcription_outputs.py::test_the_same_request_id_with_other_audio_or_language_is_a_c
+COMPILES python: a transcript segment may run past the recording
+KILLED python: a transcript segment may run past the recording <- tests/intelligence/test_transcription_outputs.py::test_a_provider_answer_that_cannot_be_a_transcript_is_an_err
+CONTROL-PASSED vitest
+COMPILES desktop: a record that lists a failing check is ok
+KILLED desktop: a record that lists a failing check is ok <- tests/outputs.test.ts > quality records > never say ok over a failing check, nor over no checks at all
+COMPILES desktop: an unknown page state counts as ready
+KILLED desktop: an unknown page state counts as ready <- tests/outputs.test.ts > deck pages > treat a state the browser does not know as not rendered, never as ready
+COMPILES desktop: outside content is not labelled
+KILLED desktop: outside content is not labelled <- tests/outputs.test.ts > quality records > decode what the authority stored
+COMPILES desktop: structured output is not shown as text
+KILLED desktop: structured output is not shown as text <- tests/outputs.test.ts > what the output tools made is previewed as text > shows structured +json media as text
+# mutants: 76  killed: 76  survived: 0  no-verdict: 0
+# ADP-006 mutation checks at 62a68dc
+CONTROL-PASSED compose
+COMPILES composition: the preview server is not mounted in the deployable
+KILLED composition: the preview server is not mounted in the deployable <- the_deployable_starts_a_loopback_preview_server_when_it_has_an_object_store
+# mutants: 1  killed: 1  survived: 0  no-verdict: 0

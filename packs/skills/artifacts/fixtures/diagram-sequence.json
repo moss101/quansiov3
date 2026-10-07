@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "kind": "sequence",
+  "title": "A request through the API",
+  "nodes": [
+    {"id": "user", "label": "User", "shape": "actor"},
+    {"id": "api", "label": "API server"},
+    {"id": "db", "label": "Database"}
+  ],
+  "edges": [
+    {"from": "user", "to": "api", "label": "request"},
+    {"from": "api", "to": "db", "label": "query"},
+    {"from": "db", "to": "api", "label": "rows"},
+    {"from": "api", "to": "api", "label": "format"},
+    {"from": "api", "to": "user", "label": "response"}
+  ]
+}

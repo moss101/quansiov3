@@ -9,6 +9,7 @@
 //! because the local development stack (`scripts/dev/up`) is not running.
 
 pub mod intelligence;
+pub mod outputs;
 
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Executor, PgPool};

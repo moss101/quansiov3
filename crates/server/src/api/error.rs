@@ -151,6 +151,13 @@ pub enum ApiErrorCode {
     WorktreeTokenInvalid,
     /// A managed worktree's checkout is gone and a recovery record names it.
     WorktreeMissing,
+    // Output (ADP-006)
+    /// A deck page is pending, edited or failed its quality check, or the pages are stale.
+    DeckNotDeliverable,
+    /// A worker-side operation or provider an output needs is not composed here.
+    AdapterUnavailable,
+    /// A preview scope's authority no longer holds.
+    PreviewScopeLapsed,
     // Model
     /// The provider could not be reached.
     ProviderUnavailable,
@@ -175,7 +182,7 @@ pub enum ApiErrorCode {
 
 impl ApiErrorCode {
     /// Every code in the table, so a caller can check one against it without a list of its own.
-    pub const ALL: [ApiErrorCode; 71] = [
+    pub const ALL: [ApiErrorCode; 74] = [
         ApiErrorCode::AuthRequired,
         ApiErrorCode::AuthInvalidToken,
         ApiErrorCode::AuthExpired,
@@ -238,6 +245,9 @@ impl ApiErrorCode {
         ApiErrorCode::FileRefused,
         ApiErrorCode::WorktreeTokenInvalid,
         ApiErrorCode::WorktreeMissing,
+        ApiErrorCode::DeckNotDeliverable,
+        ApiErrorCode::AdapterUnavailable,
+        ApiErrorCode::PreviewScopeLapsed,
         ApiErrorCode::ProviderUnavailable,
         ApiErrorCode::ProviderRateLimited,
         ApiErrorCode::ProviderRefusal,
@@ -315,6 +325,9 @@ impl ApiErrorCode {
             Self::FileRefused => "FILE_REFUSED",
             Self::WorktreeTokenInvalid => "WORKTREE_TOKEN_INVALID",
             Self::WorktreeMissing => "WORKTREE_MISSING",
+            Self::DeckNotDeliverable => "DECK_NOT_DELIVERABLE",
+            Self::AdapterUnavailable => "ADAPTER_UNAVAILABLE",
+            Self::PreviewScopeLapsed => "PREVIEW_SCOPE_LAPSED",
             Self::ProviderUnavailable => "PROVIDER_UNAVAILABLE",
             Self::ProviderRateLimited => "PROVIDER_RATE_LIMITED",
             Self::ProviderRefusal => "PROVIDER_REFUSAL",
@@ -393,6 +406,9 @@ impl ApiErrorCode {
             | Self::FileRefused
             | Self::WorktreeTokenInvalid
             | Self::WorktreeMissing => "Files",
+            Self::DeckNotDeliverable | Self::AdapterUnavailable | Self::PreviewScopeLapsed => {
+                "Output"
+            }
             Self::ProviderUnavailable
             | Self::ProviderRateLimited
             | Self::ProviderRefusal
@@ -487,6 +503,11 @@ impl ApiErrorCode {
                 StatusCode::CONFLICT
             }
             Self::FileRefused => StatusCode::UNPROCESSABLE_ENTITY,
+            // Output (403/409/503): a deck that is not ready conflicts with delivering it; an adapter that
+            // is not composed is unavailable, not the caller's fault; a lapsed preview scope is forbidden.
+            Self::DeckNotDeliverable => StatusCode::CONFLICT,
+            Self::AdapterUnavailable => StatusCode::SERVICE_UNAVAILABLE,
+            Self::PreviewScopeLapsed => StatusCode::FORBIDDEN,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::StreamBackpressure => StatusCode::SERVICE_UNAVAILABLE,

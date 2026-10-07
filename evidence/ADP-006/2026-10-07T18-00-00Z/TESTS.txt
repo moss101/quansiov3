@@ -1,0 +1,11 @@
+cargo test --workspace --no-fail-fast (1264 passed, 0 failed); this task: outputs:: unit tests 84, outputs_deck 5, outputs_documents 5, outputs_video 8, outputs_transcribe 7, outputs_preview 12, outputs_compose 1, qworkerd render 10 and media 12
+deck gate test: a_pending_or_failing_page_blocks_delivery_until_every_page_is_ready, pages_the_authority_did_not_render_are_not_pages (three forgeries), a_deliverable_deck_exports_a_printed_pdf_and_a_verified_pptx (real Chrome)
+adapter golden-output tests: slides, PPTX, Markdown HTML, diagram IR and SVG goldens in both planes (python/tests/intelligence/test_deck_outputs.py, test_document_diagram_outputs.py, test_video_outputs.py, test_transcription_outputs.py: 89 passed); render plan golden
+video op revision/dry-run test: a_batch_applies_whole_or_not_at_all_against_an_exact_revision, the_host_bounds_a_batch_by_itself_whatever_the_schema_says, a_version_that_video_edit_did_not_make_is_not_edited
+preview scope expiry test: a_scope_lapses_when_its_time_runs_out_and_stays_lapsed, renewing_extends_a_scope_but_never_past_its_maximum_lifetime, a_scope_lapses_when_the_run_ends_the_member_is_removed_or_the_root_changes
+cd python && uv run pytest tests (809 passed, 18 skipped, every skip BLOCKED_EXTERNAL); ruff, ruff format and mypy intelligence clean
+uv run --project python pytest tests/architecture tests/contract tests/ci (244 passed, the Rust bindings check deselected in the worktree)
+desktop: vitest run (481 passed, 45 skipped), tsc and eslint clean; tests/outputs.test.ts 14
+python3 mutation-checks.py (77 mutants, every one compiled, controls passed, 77 killed, 0 survived)
+cargo fmt --check and clippy -D warnings clean; validate_v81, arch_check, workspace_check, inventory, check_authority, legacy_map_check, supply_chain, gen_contracts --check all clean
+BLOCKED_EXTERNAL (did not run): crates/server/tests/outputs_video_ffmpeg.rs needs QUANSIO_TEST_FFMPEG_BIN; python/tests/intelligence/test_transcription_live.py needs QUANSIO_TEST_STT_API_KEY, QUANSIO_TEST_STT_AUDIO, QUANSIO_TEST_STT_EXPECT

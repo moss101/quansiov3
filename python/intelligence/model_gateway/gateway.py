@@ -72,6 +72,18 @@ from intelligence.model_gateway.tooling import (
     ToolSchemaSource,
     resolve_tools,
 )
+from intelligence.model_gateway.transcription import (
+    CAPABILITY as TRANSCRIPTION_CAPABILITY,
+)
+from intelligence.model_gateway.transcription import (
+    RESPONSE_MAX_BYTES as TRANSCRIPTION_RESPONSE_MAX_BYTES,
+)
+from intelligence.model_gateway.transcription import (
+    ProviderTranscript,
+    TranscriptionCallContext,
+    validate_input,
+    wire_for_kind,
+)
 from intelligence.model_gateway.transport import (
     HttpRequest,
     HttpTransport,
@@ -86,6 +98,9 @@ LOGGER_NAME = "intelligence.model_gateway"
 
 #: Default wall-clock bound for one embedding call when the caller names none.
 DEFAULT_EMBEDDING_TIMEOUT_MS = 60_000
+
+#: Default wall-clock bound for one transcription call when the caller names none.
+DEFAULT_TRANSCRIPTION_TIMEOUT_MS = 300_000
 
 
 #: The route rule a call records when an operator-disabled provider made it fail over (OPS-008).
@@ -115,6 +130,17 @@ class EmbeddingOutcome:
     dimensions: int
     vectors: tuple[tuple[float, ...], ...]
     chosen_by: str
+
+
+@dataclass(frozen=True, slots=True)
+class TranscriptionOutcome:
+    """One fulfilled transcription: the provider's segments and the route that produced them."""
+
+    model_catalog_id: str
+    wire_model_id: str
+    provider: str
+    route_id: str
+    transcript: ProviderTranscript
 
 
 @dataclass(frozen=True, slots=True)
@@ -586,6 +612,167 @@ class ModelGateway:
         except TransportError as error:
             raise GatewayError(
                 GatewayErrorCode.PROVIDER_UNAVAILABLE, "embedding provider is unreachable", retryable=True
+            ) from error
+        finally:
+            if response is not None:
+                with contextlib.suppress(OSError):
+                    response.close()
+
+    def transcription_routes(self, *, disabled_providers: Sequence[str] = ()) -> tuple[str, ...]:
+        """Catalog ids a transcription call may use, in catalog order: the models that declare the
+        `transcription` capability, on providers an operator has not disabled."""
+        disabled = {name.strip() for name in disabled_providers if name.strip()}
+        return tuple(
+            model.id
+            for model in self._catalog.models.values()
+            if model.supports(TRANSCRIPTION_CAPABILITY)
+            and self._catalog.provider_for(model).name not in disabled
+        )
+
+    def transcribe(
+        self,
+        audio: bytes,
+        media_type: str,
+        *,
+        language: str | None = None,
+        max_audio_bytes: int,
+        model_hint: str = "",
+        call_id: str = "",
+        dlp_profile: str = "",
+        disabled_providers: Sequence[str] = (),
+        timeout_ms: int = DEFAULT_TRANSCRIPTION_TIMEOUT_MS,
+        deadline_ms: int | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
+    ) -> TranscriptionOutcome:
+        """Transcribe `audio` through the first catalog route that declares `transcription`.
+
+        The order is a chat call's: deterministic route resolution (no model call to choose a model),
+        the data-policy guard **before** anything is built for transmission, credential custody at the
+        moment the request is signed, one bounded request over the pinned transport. Every failure is
+        a typed `GatewayError`. The result is what the provider said, decoded strictly; labelling it
+        untrusted and checking it again is the caller's, and the authority's.
+        """
+        validate_input(audio, media_type, language, max_bytes=max_audio_bytes)
+        if timeout_ms <= 0:
+            raise GatewayError(
+                GatewayErrorCode.VALIDATION_SCHEMA, "timeout_ms is required for a transcription call"
+            )
+        remaining_ms: int | None = None
+        if deadline_ms is not None:
+            remaining_ms = deadline_ms - int(self._clock() * 1000)
+            if remaining_ms <= 0:
+                raise GatewayError(
+                    GatewayErrorCode.TOOL_TIMEOUT,
+                    "call deadline expired before the transcription call",
+                    retryable=False,
+                )
+        budget_ms = timeout_ms if remaining_ms is None else min(timeout_ms, remaining_ms)
+        routes = self.transcription_routes(disabled_providers=disabled_providers)
+        hint = model_hint.strip()
+        if hint:
+            if hint not in routes:
+                raise GatewayError(
+                    GatewayErrorCode.ROUTE_UNAVAILABLE, f"model {hint!r} is not a transcription route"
+                )
+            routes = (hint,)
+        if not routes:
+            raise GatewayError(
+                GatewayErrorCode.ROUTE_UNAVAILABLE,
+                f"no catalog model declares the {TRANSCRIPTION_CAPABILITY!r} capability on an enabled "
+                "provider",
+            )
+        model = self._catalog.model(routes[0])
+        provider = self._catalog.provider_for(model)
+        request = intelligence_pb2.ModelCallRequest(
+            schema_version="v1",
+            call_id=call_id.strip() or f"tc_{new_ulid()}",
+            route_hint=model.id,
+            max_output_tokens=0,
+            dlp_profile=dlp_profile,
+            timeout_ms=budget_ms,
+        )
+        if self._dlp is not None:
+            self._dlp_decision = self._dlp.check(request, model, provider)
+        base_url = provider.resolve_base_url(self._environ)
+        credential = self._credentials.resolve(provider)
+        wire = wire_for_kind(provider.kind)
+        prepared = wire.build_request(
+            TranscriptionCallContext(
+                model_catalog_id=model.id,
+                wire_model_id=model.model_id,
+                provider=provider.name,
+                credential=credential,
+                base_url=base_url,
+                audio=audio,
+                media_type=media_type,
+                language=language,
+                timeout_seconds=max(budget_ms / 1000.0, 0.001),
+            )
+        )
+        body = self._post_bounded(
+            prepared.as_http_request(),
+            budget=TRANSCRIPTION_RESPONSE_MAX_BYTES,
+            what="transcription",
+            is_cancelled=is_cancelled,
+        )
+        return TranscriptionOutcome(
+            model_catalog_id=model.id,
+            wire_model_id=model.model_id,
+            provider=provider.name,
+            route_id=f"mr_{new_ulid(seed=f'{request.call_id}|{model.id}|transcription')}",
+            transcript=wire.decode(prepared, body),
+        )
+
+    def _post_bounded(
+        self,
+        request: HttpRequest,
+        *,
+        budget: int,
+        what: str,
+        is_cancelled: Callable[[], bool] | None,
+    ) -> bytes:
+        """Send one request and read its bounded body, or raise a typed error.
+
+        A non-2xx status is classified by the shared provider-error mapping and never parsed as
+        data, because an error body can echo the request.
+        """
+        deadline = time.monotonic() + max(request.timeout_seconds, 0.001)
+        cancelled = is_cancelled if is_cancelled is not None else _never_cancelled
+        response: StreamResponse | None = None
+        chunks: list[bytes] = []
+        total = 0
+        try:
+            response = self._transport.open(request)
+            status = response.status
+            if status < 200 or status >= 300:
+                result = http_error_result(status, b"")
+                raise GatewayError(
+                    GatewayErrorCode(result.error_code or str(GatewayErrorCode.PROVIDER_UNAVAILABLE)),
+                    f"{what} provider answered HTTP {status}",
+                    retryable=result.retryable,
+                )
+            while True:
+                line = response.read_line(deadline=deadline, cancelled=cancelled)
+                if line is None:
+                    break
+                total += len(line)
+                if total > budget:
+                    raise GatewayError(
+                        GatewayErrorCode.VALIDATION_BOUNDS, f"{what} response exceeded {budget} bytes"
+                    )
+                chunks.append(line)
+            return b"".join(chunks)
+        except StreamCancelledError as error:
+            raise GatewayError(
+                GatewayErrorCode.TOOL_TIMEOUT, f"{what} call was cancelled", retryable=False
+            ) from error
+        except TransportTimeoutError as error:
+            raise GatewayError(
+                GatewayErrorCode.TOOL_TIMEOUT, f"{what} provider did not answer in time", retryable=True
+            ) from error
+        except TransportError as error:
+            raise GatewayError(
+                GatewayErrorCode.PROVIDER_UNAVAILABLE, f"{what} provider is unreachable", retryable=True
             ) from error
         finally:
             if response is not None:
