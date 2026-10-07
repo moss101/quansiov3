@@ -27,6 +27,7 @@ use serde_json::{json, Value};
 use sqlx::PgPool;
 
 use super::formats::{self, default_media_type};
+use super::outputs::{is_output_tool, tool_owned, OutputToolHost};
 use super::{
     ArtifactError, ArtifactGrant, ArtifactId, ArtifactKind, ArtifactStore, GrantLevel, NewArtifact,
     NewVersion, ObjectStore, Origin, OriginKind, ProducedBy, Retention,
@@ -175,6 +176,9 @@ impl ArtifactToolHost {
             .get("media_type")
             .and_then(Value::as_str)
             .map_or_else(|| default_media_type(kind).to_string(), str::to_string);
+        if let Some(reason) = tool_owned::refuses_create(role, &media_type) {
+            return Ok(refusal("VALIDATION_SCHEMA", "artifact.tool_owned", reason));
+        }
         let check = formats::check(kind, &media_type, &bytes);
         if !check.ok {
             return Ok(refusal(
@@ -279,24 +283,28 @@ impl ArtifactToolHost {
                 ),
             ));
         }
-        let media_type = match args.get("media_type").and_then(Value::as_str) {
-            Some(media_type) => media_type.to_string(),
-            None => {
-                let current = match artifact.current_version_id.as_ref() {
-                    Some(version) => sqlx::query_scalar::<_, String>(
-                        "SELECT media_type FROM artifact_versions WHERE id = $1 AND tenant_id = $2",
-                    )
-                    .bind(version.to_canonical())
-                    .bind(&dispatch.tenant_id)
-                    .fetch_optional(&mut *conn)
-                    .await
-                    .ok()
-                    .flatten(),
-                    None => None,
-                };
-                current.unwrap_or_else(|| default_media_type(artifact.kind).to_string())
-            }
-        };
+        let current = match artifact.current_version_id.as_ref() {
+            Some(version) => sqlx::query_scalar::<_, String>(
+                "SELECT media_type FROM artifact_versions WHERE id = $1 AND tenant_id = $2",
+            )
+            .bind(version.to_canonical())
+            .bind(&dispatch.tenant_id)
+            .fetch_optional(&mut *conn)
+            .await
+            .ok()
+            .flatten(),
+            None => None,
+        }
+        .unwrap_or_else(|| default_media_type(artifact.kind).to_string());
+        let media_type = args
+            .get("media_type")
+            .and_then(Value::as_str)
+            .map_or_else(|| current.clone(), str::to_string);
+        if let Some(reason) =
+            tool_owned::refuses_update(artifact.role.as_deref(), &current, &media_type)
+        {
+            return Ok(refusal("VALIDATION_SCHEMA", "artifact.tool_owned", reason));
+        }
         let check = formats::check(artifact.kind, &media_type, &bytes);
         if !check.ok {
             return Ok(refusal(
@@ -404,6 +412,7 @@ impl ToolHostPort for ArtifactToolHost {
 #[derive(Clone)]
 pub struct ServerToolHost {
     artifacts: ArtifactToolHost,
+    outputs: Option<OutputToolHost>,
     other: Arc<dyn ToolHostPort>,
 }
 
@@ -417,7 +426,19 @@ impl ServerToolHost {
     /// Route artifact tools to `artifacts`, the rest to `other`.
     #[must_use]
     pub fn new(artifacts: ArtifactToolHost, other: Arc<dyn ToolHostPort>) -> Self {
-        Self { artifacts, other }
+        Self {
+            artifacts,
+            outputs: None,
+            other,
+        }
+    }
+
+    /// Also host the output tools (ADP-006): decks, diagrams, printed documents, video,
+    /// transcription and the web-dev preview.
+    #[must_use]
+    pub fn with_outputs(mut self, outputs: OutputToolHost) -> Self {
+        self.outputs = Some(outputs);
+        self
     }
 }
 
@@ -429,6 +450,12 @@ impl ToolHostPort for ServerToolHost {
             "artifact.create" | "artifact.update"
         ) {
             self.artifacts.execute(dispatch).await
+        } else if let Some(outputs) = self
+            .outputs
+            .as_ref()
+            .filter(|_| is_output_tool(&dispatch.tool))
+        {
+            outputs.execute(dispatch).await
         } else {
             self.other.execute(dispatch).await
         }

@@ -1,0 +1,10 @@
+{
+  "schema_version": "v1",
+  "slides": [
+    {
+      "title": "Hero",
+      "body": "There is no hero layout.",
+      "layout": "hero"
+    }
+  ]
+}

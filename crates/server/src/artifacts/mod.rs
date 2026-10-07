@@ -41,6 +41,7 @@ pub mod formats;
 mod metadata;
 mod model;
 mod object_store;
+pub mod outputs;
 pub(crate) mod sigv4;
 pub mod tool_host;
 

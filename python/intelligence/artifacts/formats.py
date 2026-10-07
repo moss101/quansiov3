@@ -11,6 +11,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -37,7 +38,11 @@ DOCUMENT_SCRIPT_MARKERS: tuple[str, ...] = (
     "onload=",
 )
 
-SLIDE_KEYS: frozenset[str] = frozenset({"title", "body", "notes"})
+SLIDE_KEYS: frozenset[str] = frozenset({"title", "body", "notes", "layout", "alt", "image", "chart"})
+SLIDE_LAYOUTS: tuple[str, ...] = ("title", "section", "content", "two_column", "image", "quote", "chart")
+CHART_KEYS: frozenset[str] = frozenset({"kind", "labels", "values", "unit"})
+MAX_CHART_POINTS = 24
+INLINE_IMAGE_RE = re.compile(r"^data:image/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$")
 SLIDE_DOC_KEYS: frozenset[str] = frozenset({"schema_version", "slides"})
 CODE_FILE_KEYS: frozenset[str] = frozenset({"path", "content"})
 CODE_DOC_KEYS: frozenset[str] = frozenset({"schema_version", "language", "files"})
@@ -70,15 +75,34 @@ class SpreadsheetSource:
 
 @dataclass(frozen=True, slots=True)
 class Slide:
+    """One slide. The optional keys (DOMAIN.md §10.4 B) are written only when set, so a deck that does
+    not use them serializes byte-for-byte as it did before they existed."""
+
     title: str
     body: str = ""
     notes: str = ""
+    layout: str | None = None
+    alt: str | None = None
+    image: str | None = None
+    chart: Mapping[str, Any] | None = None
 
-    def as_mapping(self) -> dict[str, str]:
-        payload = {"title": self.title, "body": self.body}
+    def as_mapping(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {"title": self.title, "body": self.body}
         if self.notes:
             payload["notes"] = self.notes
+        if self.layout is not None:
+            payload["layout"] = self.layout
+        if self.alt is not None:
+            payload["alt"] = self.alt
+        if self.image is not None:
+            payload["image"] = self.image
+        if self.chart is not None:
+            payload["chart"] = {key: value for key, value in self.chart.items()}
         return payload
+
+    @property
+    def effective_layout(self) -> str:
+        return self.layout or "content"
 
 
 @dataclass(frozen=True, slots=True)
@@ -249,26 +273,105 @@ def parse_presentation(payload: bytes) -> PresentationSource:
     slides_raw = raw.get("slides")
     if not isinstance(slides_raw, Sequence) or isinstance(slides_raw, (str, bytes)):
         raise ArtifactError("VALIDATION_SCHEMA", RULE_FORMAT, "presentation slides must be a list")
-    slides: list[Slide] = []
-    for index, entry in enumerate(slides_raw):
-        if not isinstance(entry, Mapping):
-            raise ArtifactError("VALIDATION_SCHEMA", RULE_FORMAT, f"slide {index} is not an object")
-        extra = sorted(set(entry) - SLIDE_KEYS)
-        if extra:
-            raise ArtifactError(
-                "VALIDATION_SCHEMA", RULE_FORMAT, f"slide {index} has unknown keys: {', '.join(extra)}"
-            )
-        title = entry.get("title")
-        if not isinstance(title, str) or not title.strip():
-            raise ArtifactError("VALIDATION_SCHEMA", RULE_FORMAT, f"slide {index} needs a title")
-        body = entry.get("body", "")
-        notes = entry.get("notes", "")
-        if not isinstance(body, str) or not isinstance(notes, str):
-            raise ArtifactError("VALIDATION_SCHEMA", RULE_FORMAT, f"slide {index} body/notes must be text")
-        slides.append(Slide(title=title.strip(), body=body, notes=notes))
+    slides = [_parse_slide(index, entry) for index, entry in enumerate(slides_raw)]
     if not slides:
         raise ArtifactError("VALIDATION_SCHEMA", RULE_FORMAT, "presentation needs at least one slide")
     return PresentationSource(slides=tuple(slides))
+
+
+def _slide_error(detail: str) -> ArtifactError:
+    return ArtifactError("VALIDATION_SCHEMA", RULE_FORMAT, detail)
+
+
+def _parse_slide(index: int, entry: object) -> Slide:
+    """One slide, by the rules the authority applies (``outputs::deck::SlideSource::parse``)."""
+    label = f"slide {index}"
+    if not isinstance(entry, Mapping):
+        raise _slide_error(f"{label} is not an object")
+    extra = sorted(set(entry) - SLIDE_KEYS)
+    if extra:
+        raise _slide_error(f"{label} has unknown keys: {', '.join(extra)}")
+    title = entry.get("title")
+    if not isinstance(title, str) or not title.strip():
+        raise _slide_error(f"{label} needs a title")
+    body = entry.get("body", "")
+    notes = entry.get("notes", "")
+    if not isinstance(body, str) or not isinstance(notes, str):
+        raise _slide_error(f"{label} body/notes must be text")
+    layout = entry.get("layout")
+    if layout is not None and (not isinstance(layout, str) or layout not in SLIDE_LAYOUTS):
+        raise _slide_error(f"{label}: {layout!r} is not a layout")
+    alt = entry.get("alt")
+    if alt is not None:
+        if not isinstance(alt, str):
+            raise _slide_error(f"{label}: alt must be text")
+        if len(alt) > 300:
+            raise _slide_error(f"{label}: alt is at most 300 characters")
+    image = entry.get("image")
+    if image is not None and not isinstance(image, str):
+        raise _slide_error(f"{label}: image must be text")
+    chart = _parse_chart(entry["chart"], label) if "chart" in entry else None
+    effective = layout or "content"
+    has_alt = isinstance(alt, str) and bool(alt.strip())
+    if effective == "image":
+        if image is None:
+            raise _slide_error(f"{label}: an image layout needs an image")
+        if not INLINE_IMAGE_RE.fullmatch(image):
+            raise _slide_error(f"{label}: image must be an inline png, jpeg, gif or webp data: URI")
+        from intelligence.artifacts.outputs.limits import shipped_config
+
+        limit = int(shipped_config().deck["image_max_bytes"])
+        if len(image.split(";base64,", 1)[1]) // 4 * 3 > limit:
+            raise _slide_error(f"{label}: the image is over {limit} bytes")
+        if not has_alt:
+            raise _slide_error(f"{label}: an image layout needs alt text")
+        if chart is not None:
+            raise _slide_error(f"{label}: chart is only for the chart layout")
+    elif effective == "chart":
+        if chart is None:
+            raise _slide_error(f"{label}: a chart layout needs a chart")
+        if not has_alt:
+            raise _slide_error(f"{label}: a chart layout needs alt text")
+        if image is not None:
+            raise _slide_error(f"{label}: image is only for the image layout")
+    elif image is not None or chart is not None or alt is not None:
+        raise _slide_error(f"{label}: image, chart and alt belong to the image and chart layouts")
+    return Slide(
+        title=title.strip(), body=body, notes=notes, layout=layout, alt=alt, image=image, chart=chart
+    )
+
+
+def _parse_chart(value: object, label: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise _slide_error(f"{label}: chart must be an object")
+    extra = sorted(set(value) - CHART_KEYS)
+    if extra:
+        raise _slide_error(f"{label}: chart has unknown keys: {', '.join(extra)}")
+    if value.get("kind") not in ("bar", "line"):
+        raise _slide_error(f"{label}: chart kind must be bar or line")
+    labels = value.get("labels")
+    values = value.get("values")
+    if not isinstance(labels, list) or not isinstance(values, list):
+        raise _slide_error(f"{label}: chart labels and values must be lists")
+    for item in labels:
+        if not isinstance(item, str) or not item.strip() or len(item) > 40:
+            raise _slide_error(f"{label}: a chart label is 1 to 40 characters")
+    for number in values:
+        if (
+            isinstance(number, bool)
+            or not isinstance(number, (int, float))
+            or not (number == number and abs(number) < 1e12)
+            or not (number == 0 or abs(number) >= 1e-4)
+        ):
+            raise _slide_error(f"{label}: a chart value is a number of magnitude 0.0001 to 1e12")
+    if not labels or len(labels) > MAX_CHART_POINTS or len(labels) != len(values):
+        raise _slide_error(
+            f"{label}: a chart has 1 to {MAX_CHART_POINTS} points, one label for each value"
+        )
+    unit = value.get("unit")
+    if unit is not None and (not isinstance(unit, str) or len(unit) > 12):
+        raise _slide_error(f"{label}: chart unit is text of at most 12 characters")
+    return dict(value)
 
 
 def parse_code(payload: bytes) -> CodeSource:

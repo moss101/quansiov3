@@ -1,0 +1,49 @@
+{
+  "schema_version": "v1",
+  "slides": [
+    {
+      "title": "Quarterly review",
+      "body": "Revenue grew in every region.",
+      "layout": "title"
+    },
+    {
+      "title": "Where we are",
+      "body": "- Revenue is up 12 percent\n- Churn is down to 2.1 percent\n- Support load is flat",
+      "notes": "Lead with the churn number."
+    },
+    {
+      "title": "Two views",
+      "body": "Before the change\n- Slow onboarding\n---\nAfter the change\n- A first run in ten minutes",
+      "layout": "two_column"
+    },
+    {
+      "title": "The product",
+      "body": "A single pixel, enlarged for the test.",
+      "layout": "image",
+      "alt": "A single white pixel, enlarged",
+      "image": "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+    },
+    {
+      "title": "Revenue by region",
+      "body": "Figures are in millions.",
+      "layout": "chart",
+      "alt": "Bar chart: North 12, South 9, East 15, West 7 million",
+      "chart": {
+        "kind": "bar",
+        "labels": ["North", "South", "East", "West"],
+        "values": [12, 9, 15, 7],
+        "unit": "M"
+      }
+    },
+    {
+      "title": "In their words",
+      "body": "The first tool that did not get in my way.\n— A customer",
+      "layout": "quote"
+    },
+    {
+      "title": "Next steps",
+      "body": "Ship the onboarding change.",
+      "layout": "section"
+    }
+  ]
+}
