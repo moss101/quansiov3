@@ -13,14 +13,12 @@
  * files it was handed, its roots and entries, its edit sessions, its media tokens and its watches.
  */
 
-import { realpathSync } from "node:fs";
-import { dirname, sep } from "node:path";
-
 import type { FileChannel } from "../../preload/bridge.js";
 import type { WindowHandler } from "../ipc-trust.js";
 import * as s from "../schema.js";
 import { THREAD_ID, type ManagedWindow } from "../windows.js";
 import { type LocalFilesConfig } from "./config.js";
+import { inside, realOrNull } from "./fs-ops.js";
 import { GrantRegistry, REAL_SCHEDULER, type GrantView, type Scheduler } from "./grants.js";
 import { MediaRegistry, type MediaRequest, type MediaResponse } from "./media.js";
 import { done, refuse, refusedFile, type Answer, type Refusal } from "./results.js";
@@ -372,24 +370,6 @@ export class LocalFilesHost {
       "files.watch.unsubscribe": guarded(UNSUBSCRIBE, (window, input) => done({ unsubscribed: this.watcher.unsubscribe(windowId(window), input.subscriptionId) })),
     };
   }
-}
-
-function realOrNull(path: string): string | null {
-  try {
-    return realpathSync(path);
-  } catch {
-    try {
-      // A file that is not there yet cannot be inside anything; its folder can.
-      return realpathSync(dirname(path));
-    } catch {
-      return null;
-    }
-  }
-}
-
-/** Is `path` the folder `directory` or below it? */
-function inside(path: string, directory: string): boolean {
-  return path === directory || path.startsWith(directory.endsWith(sep) ? directory : `${directory}${sep}`);
 }
 
 function invalidGrant(reason: "invalid" | "expired"): Refusal {

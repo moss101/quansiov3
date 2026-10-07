@@ -169,3 +169,21 @@ export function realDirectory(path: string): string | null {
     return null;
   }
 }
+
+export function realOrNull(path: string): string | null {
+  try {
+    return realpathSync(path);
+  } catch {
+    try {
+      // A file that is not there yet cannot be inside anything; its folder can.
+      return realpathSync(dirname(path));
+    } catch {
+      return null;
+    }
+  }
+}
+
+/** Is `path` the folder `directory` or below it? */
+export function inside(path: string, directory: string): boolean {
+  return path === directory || path.startsWith(directory.endsWith(sep) ? directory : `${directory}${sep}`);
+}
