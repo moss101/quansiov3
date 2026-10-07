@@ -420,6 +420,14 @@ export class ServerClient {
     return this.#request("GET", `${this.origin}/v1/browser-sessions/${encodeURIComponent(sessionId)}`);
   }
 
+  // ---- the desktop shell (ADP-004) ----
+
+  /** `GET /v1/maintenance`: what a restart would interrupt (DOMAIN.md §13.6 A); narrowed to a workspace when named. */
+  maintenance(workspaceId?: string): Promise<unknown> {
+    const query = workspaceId ? `?workspace_id=${encodeURIComponent(workspaceId)}` : "";
+    return this.#request("GET", `${this.origin}/v1/maintenance${query}`);
+  }
+
   // ---- the plan / WorkGraph surface (APP-005) ----
 
   workgraph(workspaceId: string): Promise<unknown> {

@@ -133,6 +133,32 @@ describe("preload bridge", () => {
         "onDeepLink",
         "onUpdateStatus",
         "onLiveFrame",
+        // The desktop shell (ADP-004)
+        "windowContext",
+        "consumePending",
+        "reportConnectivity",
+        "shortcuts",
+        "setShortcut",
+        "resetShortcut",
+        "beginShortcutRecording",
+        "endShortcutRecording",
+        "shellPreferences",
+        "setShellPreferences",
+        "openPopout",
+        "pinPopout",
+        "closeWindow",
+        "quickEntrySubmit",
+        "activityItems",
+        "dismissActivity",
+        "openActivity",
+        "setIndicatorInteractive",
+        "moveIndicator",
+        "installUpdate",
+        "onShellCommand",
+        "onActivity",
+        "onConnectivity",
+        "onShortcuts",
+        "onShortcutRecordingEnded",
       ].sort(),
     );
     for (const key of Object.keys(api)) {
@@ -230,6 +256,26 @@ describe("preload bridge", () => {
     await api.setNotificationPreference({ kind: "mention", channels: ["in_app"] });
     await api.exportDiagnostics();
     await api.setAppearance("dark");
+    await api.windowContext();
+    await api.consumePending();
+    await api.reportConnectivity(true);
+    await api.shortcuts();
+    await api.setShortcut("find", "mod+k");
+    await api.resetShortcut("find");
+    await api.beginShortcutRecording();
+    await api.endShortcutRecording();
+    await api.shellPreferences();
+    await api.setShellPreferences({ keepAwake: true });
+    await api.openPopout({ threadId: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.pinPopout(true);
+    await api.closeWindow();
+    await api.quickEntrySubmit({ content: "hello" });
+    await api.activityItems();
+    await api.dismissActivity("run:run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.openActivity("run:run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.setIndicatorInteractive(true);
+    await api.moveIndicator(10, 20);
+    await api.installUpdate("now");
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

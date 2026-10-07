@@ -133,6 +133,8 @@ export interface DesktopNotice {
   readonly notificationId: string;
   readonly title: string;
   readonly body: string;
+  /** What the notification points at (`thread_id`, `run_id`, `approval_id`…): where a click on it goes (ADP-004). */
+  readonly ref: Readonly<Record<string, unknown>>;
 }
 
 /** The native notification a durable event asks for, or `null`: only `notification.created` with `desktop: true`. */
@@ -147,5 +149,5 @@ export function desktopNotice(event: Record<string, unknown>): DesktopNotice | n
   }
   const kind = typeof payload["kind"] === "string" ? payload["kind"] : "system";
   const title = typeof payload["title"] === "string" && payload["title"] ? payload["title"] : "Quansio";
-  return { notificationId: id, title, body: kind.replace(/_/g, " ") };
+  return { notificationId: id, title, body: kind.replace(/_/g, " "), ref: record(payload["ref"]) };
 }

@@ -26,6 +26,9 @@ interface RendererWebPreferences {
   readonly enableRemoteModule: boolean;
   readonly preload: string;
   readonly webviewTag: boolean;
+  /** Same-origin policy stays on; the shell never strips CORS or widens the CSP (ADP-004). */
+  readonly webSecurity: boolean;
+  readonly allowRunningInsecureContent: boolean;
 }
 
 /** Electron webPreferences the main process applies to every renderer. */
@@ -38,6 +41,8 @@ export const RENDERER_WEB_PREFERENCES: RendererWebPreferences = {
   enableRemoteModule: false,
   preload: "preload.cjs",
   webviewTag: false,
+  webSecurity: true,
+  allowRunningInsecureContent: false,
 };
 
 /** Permission handler: deny everything the renderer asks the OS for. */
@@ -68,6 +73,8 @@ export function rendererSecurityBaselineHolds(): boolean {
     RENDERER_WEB_PREFERENCES.sandbox &&
     !RENDERER_WEB_PREFERENCES.enableRemoteModule &&
     !RENDERER_WEB_PREFERENCES.webviewTag &&
+    RENDERER_WEB_PREFERENCES.webSecurity &&
+    !RENDERER_WEB_PREFERENCES.allowRunningInsecureContent &&
     RENDERER_CSP.includes("object-src 'none'") &&
     RENDERER_CSP.includes("script-src 'self'")
   );

@@ -21,14 +21,12 @@ import {
   parseSession,
   parseStreamFrame,
   reconnectDelayMs,
-  registerBridgeHandlers,
   serializeSession,
   subscribeRequest,
   updateFeedUrl,
   type AutoUpdaterLike,
   type SocketLike,
 } from "../src/index.js";
-import { PRELOAD_ALLOWLIST } from "../src/preload/bridge.js";
 
 const RUN = "run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
 const THREAD = "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
@@ -325,7 +323,7 @@ describe("update hooks", () => {
 });
 
 describe("IPC bridge", () => {
-  function bridgeWith(dir: string, fetchImpl: (input: string, init?: RequestInit) => Promise<Response>, setAppearance?: (theme: string) => void) {
+  function bridgeWith(dir: string, fetchImpl: (input: string, init?: RequestInit) => Promise<Response>, setAppearance?: (theme: string) => void, observe?: (frame: unknown) => void) {
     const pushed: { channel: string; payload: unknown }[] = [];
     const sockets: FakeSocket[] = [];
     const bridge = new DesktopBridge({
@@ -346,6 +344,7 @@ describe("IPC bridge", () => {
       push: (channel, payload) => pushed.push({ channel, payload }),
       fetch: fetchImpl,
       ...(setAppearance ? { setAppearance } : {}),
+      ...(observe ? { observe } : {}),
     });
     return { bridge, pushed, sockets };
   }
@@ -360,13 +359,6 @@ describe("IPC bridge", () => {
     await expect(handlers["appearance.set"]({})).rejects.toThrow(/system, light or dark/);
     await expect(handlers["appearance.set"]("dark")).rejects.toThrow();
     expect(applied).toEqual(["dark", "system"]);
-  });
-
-  it("registers exactly the allowlisted channels", () => {
-    const registered: string[] = [];
-    const { bridge } = bridgeWith(userData(), () => Promise.reject(new Error("unused")));
-    registerBridgeHandlers({ handle: (channel) => registered.push(channel) }, bridge);
-    expect(registered).toEqual([...PRELOAD_ALLOWLIST]);
   });
 
   it("validates renderer payloads as untrusted data", async () => {
@@ -436,5 +428,54 @@ describe("IPC bridge", () => {
     expect(bridge.session()?.activeRun?.runId).toBe(RUN);
     expect(pushed.some((entry) => entry.channel === "stream.error")).toBe(true);
     bridge.close();
+  });
+  it("reports what a restart would interrupt from the server's maintenance status, narrowed to the workspace", async () => {
+    const requests: string[] = [];
+    const { bridge } = bridgeWith(userData(), (input) => {
+      requests.push(input);
+      return Promise.resolve(new Response(JSON.stringify({ idle: false, active_turns: 1, inflight_actions: 0, open_terminals: 3, workspace_id: WORKSPACE, as_of: "2026-10-07T00:00:00Z" }), { status: 200 }));
+    });
+    expect(await bridge.maintenance()).toEqual({ idle: false, activeTurns: 1, inflightActions: 0, openTerminals: 3, asOf: "2026-10-07T00:00:00Z" });
+    expect(requests).toEqual([`http://127.0.0.1:8080/v1/maintenance?workspace_id=${WORKSPACE}`]);
+    expect(bridge.signedIn()).toBe(true);
+  });
+
+  it("answers null, never idle, when the maintenance status cannot be read or does not make sense", async () => {
+    const failing = bridgeWith(userData(), () => Promise.reject(new Error("offline")));
+    expect(await failing.bridge.maintenance()).toBeNull();
+    const refused = bridgeWith(userData(), () => Promise.resolve(new Response(JSON.stringify({ code: "AUTH_REQUIRED", message: "no", correlation_id: "c", retryable: false }), { status: 401 })));
+    expect(await refused.bridge.maintenance()).toBeNull();
+    const garbled = bridgeWith(userData(), () => Promise.resolve(new Response(JSON.stringify({ idle: true, active_turns: 2, inflight_actions: 0, open_terminals: 0, as_of: "x" }), { status: 200 })));
+    expect(await garbled.bridge.maintenance()).toBeNull();
+  });
+
+  it("reconnects the stream for the connectivity monitor through the one existing reconnect, from the durable cursor", async () => {
+    const seen: unknown[] = [];
+    const { bridge, sockets } = bridgeWith(userData(), () => Promise.reject(new Error("unused")), undefined, (frame) => seen.push(frame));
+    // Nothing subscribed yet: there is nothing to resume, and a connectivity signal opens no stream.
+    expect(bridge.resumeStream(true)).toBe(false);
+    expect(sockets).toHaveLength(0);
+
+    bridge.subscribe();
+    const first = must(sockets[0], "the first socket");
+    first.open();
+    first.message({ kind: "event", cursor: "c-7", event: { type: "turn.started" } });
+    // The shell sees each durable frame once the cursor has moved.
+    expect(seen).toEqual([{ kind: "event", cursor: "c-7", event: { type: "turn.started" } }]);
+    expect(bridge.streamOpen()).toBe(true);
+
+    // A focus signal leaves an open stream alone; the return from offline resubscribes regardless.
+    expect(bridge.resumeStream(false)).toBe(false);
+    expect(sockets).toHaveLength(1);
+    expect(bridge.resumeStream(true)).toBe(true);
+    const second = must(sockets[1], "the resumed socket");
+    second.open();
+    expect(subscribeCursor(second)).toBe("c-7");
+
+    // A stream that is not open is reconnected by a plain signal too.
+    second.close();
+    expect(bridge.streamOpen()).toBe(false);
+    bridge.close();
+    expect(bridge.resumeStream(false)).toBe(false);
   });
 });

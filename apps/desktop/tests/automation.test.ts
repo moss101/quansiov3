@@ -117,7 +117,7 @@ describe("notifications", () => {
   });
 
   it("asks for a native notification only when the event selects the desktop channel", () => {
-    expect(desktopNotice({ type: "notification.created", payload: { notification_id: "ntf_1", desktop: true, title: "You were mentioned", kind: "mention" } })).toEqual({ notificationId: "ntf_1", title: "You were mentioned", body: "mention" });
+    expect(desktopNotice({ type: "notification.created", payload: { notification_id: "ntf_1", desktop: true, title: "You were mentioned", kind: "mention" } })).toEqual({ notificationId: "ntf_1", title: "You were mentioned", body: "mention", ref: {} });
     expect(desktopNotice({ type: "notification.created", payload: { notification_id: "ntf_1", desktop: false } })).toBeNull();
     expect(desktopNotice({ type: "notification.read", payload: { notification_id: "ntf_1", desktop: true } })).toBeNull();
   });
