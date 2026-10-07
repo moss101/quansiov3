@@ -574,6 +574,12 @@ impl ApiState {
         self
     }
 
+    /// The host of the output tools, when the deployment has an object store.
+    #[must_use]
+    pub fn output_host(&self) -> Option<&crate::artifacts::outputs::OutputToolHost> {
+        self.outputs.as_ref()
+    }
+
     /// Replace the host of the output tools, for a deployment that has composed worker ports
     /// (a render host, an `ffmpeg` target, a transcription route).
     #[must_use]

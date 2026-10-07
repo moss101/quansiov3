@@ -289,7 +289,7 @@ def test_a_route_on_a_provider_with_no_transcription_endpoint_is_a_routing_error
     raw = yaml.safe_load((ROOT / "config" / "models.yaml").read_text(encoding="utf-8"))
     raw["models"].append(
         {
-            "id": "claude-listen",
+            "id": "listen-route",
             "provider": "anthropic",
             "model_id": "x",
             "capabilities": ["transcription"],

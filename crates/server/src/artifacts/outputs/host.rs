@@ -99,6 +99,12 @@ impl OutputToolHost {
         self
     }
 
+    /// The preview server this host opens scopes on, when one is composed.
+    #[must_use]
+    pub fn preview(&self) -> Option<&PreviewService> {
+        self.env.preview.as_deref()
+    }
+
     /// Compose the loopback preview server.
     #[must_use]
     pub fn with_preview(mut self, service: Arc<PreviewService>) -> Self {
