@@ -2170,6 +2170,31 @@ form label:has(textarea) {
 .artifacts .format-check { margin-left: 6px; color: var(--fg-2); }
 .artifacts .format-check[data-ok="false"] { color: var(--danger); }
 .artifacts .format-check[data-ok="true"] { color: var(--ok); }
+.artifacts .quality-label { margin-left: 6px; color: var(--fg-2); }
+.artifacts .quality-label[data-ok="false"] { color: var(--danger); }
+.artifacts .quality-label[data-ok="true"] { color: var(--ok); }
+.artifacts .quality,
+.artifacts .output-summary {
+  margin: var(--s2) 0;
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.artifacts .quality[data-ok="false"] { border-color: var(--danger); }
+.artifacts .quality h3,
+.artifacts .output-summary h3 { font-size: 14px; line-height: 22px; font-weight: var(--weight-semibold); color: var(--fg); }
+.artifacts .quality .verdict { font-weight: var(--weight-semibold); }
+.artifacts .quality[data-ok="true"] .verdict { color: var(--ok); }
+.artifacts .quality[data-ok="false"] .verdict { color: var(--danger); }
+.artifacts .quality .checks { list-style: none; margin: var(--s2) 0; display: grid; gap: 2px; }
+.artifacts .quality .checks li[data-ok="false"] { color: var(--danger); }
+.artifacts .quality .checks li[data-ok="true"] { color: var(--fg-2); }
+.artifacts .untrusted { color: var(--warn, var(--danger)); font-size: 12px; }
+.artifacts .output-summary .states { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.artifacts .output-summary .state-ready { color: var(--ok); }
+.artifacts .output-summary .state-failed_quality { color: var(--danger); }
+.artifacts .output-summary .blockers { list-style: none; margin: var(--s2) 0; display: grid; gap: 2px; }
+.artifacts .output-summary .segments { margin: var(--s2) 0; padding-left: var(--s4); display: grid; gap: 2px; }
 .artifacts .edit-source textarea { width: 100%; font-family: var(--mono); font-size: 12px; }
 .artifacts .edit-source button { margin-right: 6px; }
 .artifacts .actions { display: flex; gap: var(--s2); align-items: center; margin: var(--s3) 0; flex-wrap: wrap; }

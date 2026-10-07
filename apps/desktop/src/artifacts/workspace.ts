@@ -8,6 +8,7 @@
  * `preview.ts`'s.
  */
 
+import { decodeQualityRecord, type QualityRecord } from "./outputs.js";
 import type { PreviewPlan } from "./preview.js";
 
 export type ArtifactKind =
@@ -67,6 +68,8 @@ export interface ArtifactVersion {
   readonly parentVersionId: string | null;
   /** The authority's source-format check for this version (CAP-003); null when never checked. */
   readonly formatCheck: FormatCheck | null;
+  /** The checks an output tool ran to make this version (ADP-006); null for a version no output tool made. */
+  readonly qualityRecord: QualityRecord | null;
   readonly createdAt: string;
 }
 
@@ -367,6 +370,7 @@ export function decodeHistory(payload: unknown): ArtifactHistory {
       evidenceIds: list(row["evidence_ids"]).filter((item): item is string => typeof item === "string"),
       parentVersionId: text(row["parent_version_id"]),
       formatCheck: formatCheck(row["format_check"]),
+      qualityRecord: decodeQualityRecord(row["quality_record"]),
       createdAt: text(row["created_at"]) ?? "",
     });
   }

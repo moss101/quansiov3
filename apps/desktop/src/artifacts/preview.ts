@@ -101,7 +101,8 @@ export function isExecutable(mediaType: string): boolean {
 /** Whether the preview shows the bytes as text. */
 export function isTextLike(mediaType: string): boolean {
   const kind = mediaKind(mediaType);
-  return kind.startsWith("text/") || TEXT_TYPES.has(kind) || (isActiveContent(kind) && kind !== "application/pdf");
+  // A structured `+json` type (the output generators' decks, timelines and transcripts) is JSON text.
+  return kind.startsWith("text/") || TEXT_TYPES.has(kind) || kind.endsWith("+json") || (isActiveContent(kind) && kind !== "application/pdf");
 }
 
 /** Decide how a version is previewed. The decision depends on media type and size only. */

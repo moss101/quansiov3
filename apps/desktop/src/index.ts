@@ -120,6 +120,28 @@ export {
   initialArtifactWorkspace,
   selectedVersion,
 } from "./artifacts/workspace.js";
+export {
+  DECK_PAGES_MEDIA_TYPE,
+  TIMELINE_MEDIA_TYPE,
+  TRANSCRIPT_MEDIA_TYPE,
+  clockTime,
+  decodeQualityRecord,
+  deckPagesRole,
+  isUntrusted,
+  orderedChecks,
+  qualityLabel,
+  summarizeOutput,
+} from "./artifacts/outputs.js";
+export type {
+  DeckPageSummary,
+  OutputSummary,
+  PageState,
+  QualityCheck,
+  QualityInput,
+  QualityRecord,
+  TimelineSummary,
+  TranscriptSummary,
+} from "./artifacts/outputs.js";
 export type {
   ArtifactHistory,
   ArtifactKind,
