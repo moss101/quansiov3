@@ -310,14 +310,6 @@ fn spreadsheet(payload: &[u8]) -> Result<Option<Refusal>, Refusal> {
     Ok(None)
 }
 
-fn text_field<'a>(map: &'a Map<String, Value>, key: &str) -> Result<&'a str, ()> {
-    match map.get(key) {
-        None => Ok(""),
-        Some(Value::String(text)) => Ok(text),
-        Some(_) => Err(()),
-    }
-}
-
 fn presentation(payload: &[u8]) -> Result<Option<Refusal>, Refusal> {
     // The slide shape, with the optional layout, alt, image and chart keys (DOMAIN.md §10.4 B), is one
     // parser shared with the deck tools, so a deck the store accepts is a deck the deck tools can read.

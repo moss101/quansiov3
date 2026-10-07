@@ -43,6 +43,9 @@ tower = { version = "0.5", features = ["util"] }
 futures-util = "0.3"
 
 [dev-dependencies]
+# The real-boundary tests lay pages out on the managed browser the worker drives (ADP-006): the server
+# never depends on the worker in its own code, only its tests do.
+quansio-qworkerd = { path = "../qworkerd" }
 async-trait = "0.1"
 futures-util = "0.3"
 tower = { version = "0.5", features = ["util"] }

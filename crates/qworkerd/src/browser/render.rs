@@ -478,6 +478,19 @@ fn decode(data: Option<&str>) -> Result<Vec<u8>, RenderError> {
         .ok_or_else(|| RenderError::Unexpected("an output was not base64".to_string()))
 }
 
+/// The next event of a subscription, skipping the gap a lagging subscriber is told about.
+async fn next_event(
+    events: &mut tokio::sync::broadcast::Receiver<super::cdp::CdpEvent>,
+) -> Option<super::cdp::CdpEvent> {
+    loop {
+        match events.recv().await {
+            Ok(event) => return Some(event),
+            Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {}
+            Err(tokio::sync::broadcast::error::RecvError::Closed) => return None,
+        }
+    }
+}
+
 /// Answer every paused request: a pinned asset from memory, anything else refused and recorded.
 fn spawn_interceptor(
     page: Arc<CdpConnection>,
@@ -486,12 +499,7 @@ fn spawn_interceptor(
 ) -> tokio::task::JoinHandle<()> {
     let mut events = page.subscribe();
     tokio::spawn(async move {
-        loop {
-            let event = match events.recv().await {
-                Ok(event) => event,
-                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
-                Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
-            };
+        while let Some(event) = next_event(&mut events).await {
             if event.method != "Fetch.requestPaused" {
                 continue;
             }

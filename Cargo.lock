@@ -1885,6 +1885,7 @@ dependencies = [
  "quansio-graph",
  "quansio-indexer",
  "quansio-machine",
+ "quansio-qworkerd",
  "quansio-tools",
  "regex",
  "reqwest",

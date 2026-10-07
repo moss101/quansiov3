@@ -368,6 +368,10 @@ pub struct ApiState {
     limits: RateLimiter,
     model: Arc<dyn ModelProposalSource>,
     host: Arc<dyn ToolHostPort>,
+    /// The host the artifact and output tools wrap, kept so a worker port composed later can rebuild
+    /// the server-hosted layer over it.
+    inner_host: Arc<dyn ToolHostPort>,
+    outputs: Option<crate::artifacts::outputs::OutputToolHost>,
     roles: Arc<dyn RoleProvider>,
     auth: Arc<AuthStore>,
     auth_file: Arc<AuthFile>,
@@ -415,6 +419,8 @@ impl ApiState {
             ),
             limits: RateLimiter::from_env(),
             model,
+            inner_host: Arc::clone(&host),
+            outputs: None,
             host,
             roles,
             auth: Arc::new(auth),
@@ -558,12 +564,37 @@ impl ApiState {
     pub fn with_object_store(mut self, objects: Arc<dyn ObjectStore>) -> Self {
         // With a store, the server hosts the artifact tools itself (CAP-003); every other
         // tool still goes to the host it had.
-        self.host = Arc::new(crate::artifacts::tool_host::ServerToolHost::new(
-            crate::artifacts::tool_host::ArtifactToolHost::new(self.pool.clone(), objects.clone()),
-            Arc::clone(&self.host),
-        ));
+        // The output tools (ADP-006) are hosted beside them. No worker port is composed here, so a tool
+        // that needs a browser or `ffmpeg` fails ADAPTER_UNAVAILABLE until `with_output_host` supplies one.
+        let outputs =
+            crate::artifacts::outputs::OutputToolHost::new(self.pool.clone(), objects.clone());
+        self.outputs = Some(outputs);
         self.objects = Some(objects);
+        self.rebuild_host();
         self
+    }
+
+    /// Replace the host of the output tools, for a deployment that has composed worker ports
+    /// (a render host, an `ffmpeg` target, a transcription route).
+    #[must_use]
+    pub fn with_output_host(mut self, outputs: crate::artifacts::outputs::OutputToolHost) -> Self {
+        self.outputs = Some(outputs);
+        self.rebuild_host();
+        self
+    }
+
+    fn rebuild_host(&mut self) {
+        let Some(objects) = self.objects.clone() else {
+            return;
+        };
+        let mut host = crate::artifacts::tool_host::ServerToolHost::new(
+            crate::artifacts::tool_host::ArtifactToolHost::new(self.pool.clone(), objects),
+            Arc::clone(&self.inner_host),
+        );
+        if let Some(outputs) = self.outputs.clone() {
+            host = host.with_outputs(outputs);
+        }
+        self.host = Arc::new(host);
     }
 
     /// The live-frame hub `/v1/stream` forwards from and the runtime publishes to.

@@ -455,7 +455,7 @@ impl<'a> ArtifactStore<'a> {
         set_tenant_context_conn(conn, tenant_id).await?;
         let found: Option<String> = sqlx::query_scalar(
             "SELECT id FROM artifacts WHERE tenant_id = $1 AND workspace_id = $2 AND role = $3 \
-             AND deleted_at IS NULL AND origin ->> 'kind' = 'run' \\
+             AND deleted_at IS NULL AND origin ->> 'kind' = 'run' \
              ORDER BY created_at DESC, id DESC LIMIT 1",
         )
         .bind(tenant_id)

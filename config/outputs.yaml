@@ -33,7 +33,8 @@ deck:
     paper_height_in: 7.5
     max_bytes: 33554432
   pptx:
-    max_bytes: 33554432
+    # The package travels in a tool call as base64, so this stays below what the call schema allows.
+    max_bytes: 16777216
     # The most parts and the most uncompressed bytes the verifier will read from one package.
     max_parts: 2048
     max_part_bytes: 8388608
