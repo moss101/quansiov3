@@ -10,6 +10,9 @@ use super::deck::{DeckPages, PAGES_MEDIA_TYPE, PDF_MEDIA_TYPE, PPTX_MEDIA_TYPE};
 use super::ooxml::{self, PackageLimits};
 use super::pdf;
 use super::svg::{self, DiagramIr, DiagramLimits};
+use super::tool_owned::TIMELINE_MEDIA_TYPE;
+use super::transcript::{self, Transcript};
+use super::video::timeline::Timeline;
 use crate::artifacts::ArtifactKind;
 
 /// The diagram IR's media type.
@@ -66,6 +69,16 @@ pub fn check(
             )
             .map(|_| ())
             .or_else(format),
+        )),
+        TIMELINE_MEDIA_TYPE => Some(other_only(
+            Timeline::parse(payload, &config.video)
+                .map(|_| ())
+                .or_else(format),
+        )),
+        transcript::MEDIA_TYPE => Some(other_only(
+            Transcript::parse(payload, &config.transcription)
+                .map(|_| ())
+                .or_else(format),
         )),
         "image/svg+xml" if kind == ArtifactKind::Image => {
             let verdict = svg::check_safe(payload, config.diagram.svg_max_bytes);

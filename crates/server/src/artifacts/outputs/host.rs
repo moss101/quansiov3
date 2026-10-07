@@ -13,8 +13,10 @@ use async_trait::async_trait;
 use super::config::OutputsConfig;
 use super::deck_host;
 use super::docs_host;
+use super::media::MediaJobPort;
 use super::ports::RenderPort;
 use super::support::{Ctx, Env};
+use super::video_host;
 use crate::artifacts::ObjectStore;
 use crate::runtime::turn_loop::{HostDispatch, HostFailure, HostOutcome, ToolHostPort};
 use sqlx::PgPool;
@@ -65,6 +67,7 @@ impl OutputToolHost {
                 objects,
                 config: Arc::new(OutputsConfig::shipped()),
                 render: None,
+                media: None,
             },
         }
     }
@@ -73,6 +76,13 @@ impl OutputToolHost {
     #[must_use]
     pub fn with_config(mut self, config: OutputsConfig) -> Self {
         self.env.config = Arc::new(config);
+        self
+    }
+
+    /// Compose the supervised `ffmpeg` jobs of an execution target.
+    #[must_use]
+    pub fn with_media(mut self, port: Arc<dyn MediaJobPort>) -> Self {
+        self.env.media = Some(port);
         self
     }
 
@@ -93,6 +103,9 @@ impl ToolHostPort for OutputToolHost {
             "deck.export" => deck_host::export(&ctx).await,
             "deck.deliver" => deck_host::deliver(&ctx).await,
             "diagram.render" => docs_host::render_diagram(&ctx).await,
+            "video.edit" => video_host::edit(&ctx).await,
+            "video.render" => video_host::render(&ctx).await,
+            "video.inspect" => video_host::inspect(&ctx).await,
             "document.export_pdf" => docs_host::export_pdf(&ctx).await,
             other if is_output_tool(other) => Err(HostFailure::Unavailable {
                 owner: crate::runtime::turn_loop::dispatch::OUTPUT_HOST_OWNER,

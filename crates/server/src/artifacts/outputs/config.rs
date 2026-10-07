@@ -191,6 +191,8 @@ pub struct VideoRender {
     pub timeout_ms: u64,
     /// The largest output.
     pub max_output_bytes: u64,
+    /// The most media bytes a render stages.
+    pub max_input_bytes: u64,
 }
 
 /// `video.inspect`.

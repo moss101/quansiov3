@@ -18,6 +18,9 @@ use async_trait::async_trait;
 use quansio_capability::projection::{CapabilityProjection, ProjectionSubject, SubjectKind};
 use quansio_capability::Grant;
 use quansio_core::{CanonicalId, CorrelationId, Digest, Prefix, UlidGenerator};
+use quansio_server::artifacts::outputs::media::{
+    FrameInfo, InspectJobSpec, InspectedMedia, MediaJobPort, Probe, RenderJobSpec, RenderedMedia,
+};
 use quansio_server::artifacts::outputs::ports::{
     Blocked, MeasureSpec, PdfSpec, PortError, RenderJob, RenderPort, RenderResult,
 };
@@ -668,4 +671,139 @@ fn content_args_for_update(media_type: &str, source: &[u8]) -> Value {
             "media_type": media_type,
         }),
     }
+}
+
+// ---------------------------------------------------------------------------------------------
+// The worker's media supervisor behind the media port
+// ---------------------------------------------------------------------------------------------
+
+/// The media port, implemented by the worker's own supervisor (`quansio_qworkerd::media`): the
+/// composition the deployable will make over the machine gateway.
+pub struct SupervisedMedia {
+    pub supervisor: quansio_qworkerd::media::MediaSupervisor,
+}
+
+impl SupervisedMedia {
+    pub fn new(supervisor: quansio_qworkerd::media::MediaSupervisor) -> Arc<Self> {
+        Arc::new(Self { supervisor })
+    }
+}
+
+fn port_error(error: quansio_qworkerd::media::MediaError) -> PortError {
+    use quansio_qworkerd::media::MediaError;
+    match error {
+        MediaError::Unavailable(detail) => PortError::Unavailable {
+            adapter: "ffmpeg",
+            detail,
+        },
+        MediaError::TooLarge(detail) => PortError::TooLarge(detail),
+        other => PortError::Failed(other.to_string()),
+    }
+}
+
+fn staged(
+    files: Vec<quansio_server::artifacts::outputs::media::MediaFile>,
+) -> Vec<quansio_qworkerd::media::StagedFile> {
+    files
+        .into_iter()
+        .map(|file| quansio_qworkerd::media::StagedFile {
+            name: file.name,
+            bytes: file.bytes,
+        })
+        .collect()
+}
+
+#[async_trait]
+impl MediaJobPort for SupervisedMedia {
+    async fn toolchain(&self) -> Result<String, PortError> {
+        self.supervisor.toolchain().await.map_err(port_error)
+    }
+
+    async fn render(&self, job: RenderJobSpec) -> Result<RenderedMedia, PortError> {
+        let rendered = self
+            .supervisor
+            .render(quansio_qworkerd::media::RenderJob {
+                job_id: job.job_id,
+                inputs: staged(job.inputs),
+                files: staged(job.files),
+                argv: job.argv,
+                output: job.output,
+                timeout: Duration::from_millis(job.timeout_ms),
+                max_output_bytes: job.max_output_bytes,
+            })
+            .await
+            .map_err(port_error)?;
+        Ok(RenderedMedia {
+            bytes: rendered.bytes.clone(),
+            probe: Probe {
+                duration_ms: rendered.probe.duration_ms,
+                width: rendered.probe.width,
+                height: rendered.probe.height,
+                video_streams: rendered.probe.video_streams,
+                audio_streams: rendered.probe.audio_streams,
+                subtitle_streams: rendered.probe.subtitle_streams,
+                format: rendered.probe.format.clone(),
+            },
+            tool: rendered.tool.clone(),
+        })
+    }
+
+    async fn inspect(&self, job: InspectJobSpec) -> Result<InspectedMedia, PortError> {
+        let inspected = self
+            .supervisor
+            .inspect(quansio_qworkerd::media::InspectJob {
+                job_id: job.job_id,
+                input: quansio_qworkerd::media::StagedFile {
+                    name: job.input.name,
+                    bytes: job.input.bytes,
+                },
+                times_ms: job.times_ms,
+                thumbnail_width: job.thumbnail_width,
+                columns: job.columns,
+                timeout: Duration::from_millis(job.timeout_ms),
+            })
+            .await
+            .map_err(port_error)?;
+        Ok(InspectedMedia {
+            sheet: inspected.sheet.clone(),
+            sheet_width: inspected.sheet_width,
+            sheet_height: inspected.sheet_height,
+            frames: inspected
+                .frames
+                .iter()
+                .map(|frame| FrameInfo {
+                    time_ms: frame.time_ms,
+                    digest: frame.digest.clone(),
+                    uniform: frame.uniform,
+                    width: frame.width,
+                    height: frame.height,
+                })
+                .collect(),
+            tool: inspected.tool.clone(),
+        })
+    }
+
+    async fn cancel(&self, job_id: &str) {
+        self.supervisor.cancel(job_id).await;
+    }
+}
+
+/// A directory holding the stand-in `ffmpeg` and `ffprobe` scripts of the supervisor's own tests
+/// (`crates/qworkerd/tests/support/`). They are not ffmpeg; the real renders are
+/// `outputs_video_ffmpeg.rs`.
+pub fn stand_in_toolchain(dir: &std::path::Path) -> std::path::PathBuf {
+    use std::os::unix::fs::PermissionsExt;
+    let support =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../qworkerd/tests/support");
+    let bin = dir.join("bin");
+    std::fs::create_dir_all(&bin).expect("bin");
+    for (from, to) in [
+        ("stand-in-ffmpeg.sh", "ffmpeg"),
+        ("stand-in-ffprobe.sh", "ffprobe"),
+    ] {
+        let target = bin.join(to);
+        std::fs::copy(support.join(from), &target).expect("copy the stand-in");
+        std::fs::set_permissions(&target, std::fs::Permissions::from_mode(0o755)).expect("chmod");
+    }
+    bin.join("ffmpeg")
 }

@@ -12,6 +12,7 @@ use serde_json::{json, Value};
 use sqlx::PgPool;
 
 use super::config::OutputsConfig;
+use super::media::MediaJobPort;
 use super::ports::RenderPort;
 use super::quality::{Input, QualityRecord};
 use crate::artifacts::CapturedBy;
@@ -34,6 +35,8 @@ pub struct Env {
     pub config: Arc<OutputsConfig>,
     /// The worker-side layout, when one is composed.
     pub render: Option<Arc<dyn RenderPort>>,
+    /// The supervised `ffmpeg` jobs of a target, when one is composed.
+    pub media: Option<Arc<dyn MediaJobPort>>,
 }
 
 /// One call.
@@ -499,4 +502,109 @@ pub async fn record_screenshot(
         .await
         .map_err(|error| database_failure(&error))?;
     Ok(evidence.id.to_canonical())
+}
+
+/// Add a version, with its quality record, to an artifact the caller already knows (the timeline an
+/// edit is of, rather than an artifact found by role).
+///
+/// # Errors
+/// A refusal outcome.
+pub async fn add_version_to(
+    ctx: &Ctx<'_>,
+    artifact_id: &ArtifactId,
+    media_type: &str,
+    bytes: Vec<u8>,
+    record: &QualityRecord,
+) -> Result<Committed, HostOutcome> {
+    let store = ArtifactStore::new(ctx.env.objects.as_ref());
+    let tenant = &ctx.dispatch.tenant_id;
+    let mut tx = begin(ctx).await?;
+    let stored = store
+        .add_version(
+            &mut tx,
+            tenant,
+            &ctx.principal,
+            artifact_id,
+            &NewVersion {
+                bytes,
+                media_type: media_type.to_string(),
+                expected_digest: None,
+                produced_by: ProducedBy {
+                    run_id: Some(ctx.dispatch.run_id.clone()),
+                    step_id: Some(ctx.dispatch.step_id.clone()),
+                    user_id: ctx.dispatch.acting_user_id.clone(),
+                },
+                quality_record: Some(record.to_json()),
+            },
+        )
+        .await
+        .map_err(|error| store_failure(&error))?;
+    tx.commit()
+        .await
+        .map_err(|error| database_failure(&error))?;
+    Ok(Committed {
+        artifact_id: *artifact_id,
+        version: stored.version,
+        replayed: stored.replayed,
+    })
+}
+
+/// A version of an artifact by its number, with its bytes, if there is one.
+///
+/// # Errors
+/// A refusal outcome.
+pub async fn read_seq(
+    ctx: &Ctx<'_>,
+    artifact_id: &ArtifactId,
+    seq: i32,
+) -> Result<Option<(ArtifactVersion, Vec<u8>)>, HostOutcome> {
+    let store = ArtifactStore::new(ctx.env.objects.as_ref());
+    let tenant = &ctx.dispatch.tenant_id;
+    let mut tx = begin(ctx).await?;
+    let Some(version) = store
+        .version_by_seq(&mut tx, tenant, &ctx.principal, artifact_id, seq)
+        .await
+        .map_err(|error| store_failure(&error))?
+    else {
+        return Ok(None);
+    };
+    let bytes = store
+        .fetch_bytes(&mut tx, tenant, &ctx.principal, &version.id)
+        .await
+        .map_err(|error| store_failure(&error))?;
+    tx.commit()
+        .await
+        .map_err(|error| database_failure(&error))?;
+    Ok(Some((version, bytes)))
+}
+
+/// An artifact the principal may read, in the run's workspace.
+///
+/// # Errors
+/// A refusal outcome.
+pub async fn artifact_info(ctx: &Ctx<'_>, artifact_id: &str) -> Result<Artifact, HostOutcome> {
+    let id = ArtifactId::parse(artifact_id).map_err(|_| {
+        refuse(
+            "VALIDATION_SCHEMA",
+            "artifact.id",
+            format!("{artifact_id:?} is not an artifact id"),
+        )
+    })?;
+    let store = ArtifactStore::new(ctx.env.objects.as_ref());
+    let mut tx = begin(ctx).await?;
+    let artifact = store
+        .load(&mut tx, &ctx.dispatch.tenant_id, &ctx.principal, &id)
+        .await
+        .map_err(|error| store_failure(&error))?;
+    tx.commit()
+        .await
+        .map_err(|error| database_failure(&error))?;
+    if artifact.workspace_id != ctx.dispatch.workspace_id {
+        return Err(refuse(
+            "SCOPE_FORBIDDEN",
+            "artifact.workspace",
+            format!("{artifact_id} is not an artifact of this run's workspace"),
+        ));
+    }
+    Ok(artifact)
 }

@@ -21,7 +21,7 @@ serde_yaml = "0.9"
 thiserror = "2"
 futures-util = { version = "0.3", default-features = false, features = ["sink", "alloc"] }
 tokio-tungstenite = "0.26"
-tokio = { version = "1", features = ["macros", "rt", "sync", "process", "io-util", "time", "net"] }
+tokio = { version = "1", features = ["macros", "rt", "sync", "process", "io-util", "time", "net", "fs"] }
 
 [dev-dependencies]
 quansio-machine = { path = "../machine", features = ["test-support"] }

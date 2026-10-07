@@ -72,6 +72,8 @@ video:
   render:
     timeout_ms: 1800000
     max_output_bytes: 2147483648
+    # The media a render reads, staged on the target (a plan names the files; their bytes travel with the job).
+    max_input_bytes: 536870912
   inspect:
     max_frames: 24
     columns: 6

@@ -125,7 +125,7 @@ mod tests {
 
     #[test]
     fn source_markers_that_a_printed_page_does_not_show_are_not_words() {
-        let source = "# Title\n\n1. first\n2) second\n\n```rust\nlet x = 1;\n```\n\n![alt text](data:image/png;base64,AAAA)\n\nText after.";
+        let source = "# Title\n\n1. first\n2) second\n\n```rust\nlet x = y;\n```\n\n![alt text](data:image/png;base64,AAAA)\n\nText after.";
         let counted = markdown_words(source);
         assert!(!counted.contains_key("rust"), "the fence's language");
         assert!(
@@ -135,7 +135,7 @@ mod tests {
         assert!(!counted.contains_key("aaaa"));
         assert!(!counted.contains_key("1"), "a list's own number");
         assert!(!counted.contains_key("2"));
-        for word in ["title", "first", "second", "let", "x", "text", "after"] {
+        for word in ["title", "first", "second", "let", "x", "y", "text", "after"] {
             assert!(counted.contains_key(word), "{word}");
         }
     }

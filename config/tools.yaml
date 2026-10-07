@@ -1327,7 +1327,7 @@ tools:
               artifact_id: { type: string }
               transcript_artifact_id: { type: string }
               id_prefix: { type: string, maxLength: 24 }
-              kind: { type: string, enum: [video, audio, image, subtitle] }
+              kind: { type: string, enum: [video, audio, image] }
               has_audio: { type: boolean }
               duration_ms: { type: integer, minimum: 1 }
               at_ms: { type: integer, minimum: 0 }
@@ -1363,7 +1363,7 @@ tools:
                   additionalProperties: false
                   properties:
                     at_ms: { type: integer, minimum: 0 }
-                    property: { type: string, enum: [opacity, volume, scale, x, y] }
+                    property: { type: string, enum: [volume] }
                     value: { type: number }
                   required: [at_ms, property, value]
               subtitles:
@@ -1488,7 +1488,8 @@ tools:
             properties:
               time_ms: { type: integer }
               digest: { type: string }
-            required: [time_ms, digest]
+              uniform: { type: boolean }
+            required: [time_ms, digest, uniform]
         evidence_ids: { type: array, items: { type: string } }
         replayed: { type: boolean }
         trust: { type: string }

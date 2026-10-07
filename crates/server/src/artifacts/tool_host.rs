@@ -179,6 +179,20 @@ impl ArtifactToolHost {
         if let Some(reason) = tool_owned::refuses_create(role, &media_type) {
             return Ok(refusal("VALIDATION_SCHEMA", "artifact.tool_owned", reason));
         }
+        if media_type == tool_owned::TIMELINE_MEDIA_TYPE {
+            // A timeline starts at revision 1; every later revision is made by `video.edit`.
+            let starts_at_one = serde_json::from_slice::<Value>(&bytes)
+                .ok()
+                .and_then(|value| value.get("revision").and_then(Value::as_u64))
+                == Some(1);
+            if !starts_at_one {
+                return Ok(refusal(
+                    "VALIDATION_SCHEMA",
+                    "output.video.revision",
+                    "a video timeline is created at revision 1",
+                ));
+            }
+        }
         let check = formats::check(kind, &media_type, &bytes);
         if !check.ok {
             return Ok(refusal(

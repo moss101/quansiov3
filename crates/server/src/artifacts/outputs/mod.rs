@@ -14,6 +14,7 @@ mod docs_host;
 pub mod document;
 mod host;
 pub mod html;
+pub mod media;
 pub mod ooxml;
 pub mod pdf;
 pub mod ports;
@@ -22,6 +23,9 @@ pub mod shapes;
 pub mod support;
 pub mod svg;
 pub mod tool_owned;
+pub mod transcript;
+pub mod video;
+mod video_host;
 pub mod xml;
 
 pub use host::{is_output_tool, OutputToolHost, TOOLS};
