@@ -241,6 +241,7 @@ def test_a_label_text_is_escaped_and_a_long_one_wraps_back_into_itself():
     )
     svg = diagrams.to_svg(diagrams.validate(ir))
     assert "<script" not in svg and "&lt;script&gt;" in svg
+    assert "<title>a &lt;b&gt; &amp; c</title>" in svg and "<b>" not in svg
     assert (
         diagrams._wrap(ir.nodes[0].label) and "".join(diagrams._wrap(ir.nodes[0].label)) == ir.nodes[0].label
     )

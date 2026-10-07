@@ -58,6 +58,15 @@ impl Fixture {
             .collect()
     }
 
+    /// The stalled child processes the stand-in started (`child <pid>` lines).
+    fn children(&self) -> Vec<u32> {
+        std::fs::read_to_string(&self.log)
+            .unwrap_or_default()
+            .lines()
+            .filter_map(|line| line.strip_prefix("child ")?.trim().parse().ok())
+            .collect()
+    }
+
     fn job(&self, label: &str, extra: &[&str]) -> RenderJob {
         let mut argv: Vec<String> = ["-y", "-i", "m_talk.mp4"]
             .into_iter()
@@ -202,12 +211,22 @@ async fn a_cancel_kills_the_whole_process_group_and_discards_the_partial_output(
     );
     let (pid, dir) = f.runs()[0].clone();
     assert!(alive(pid), "the process is running");
+    assert!(
+        eventually(Duration::from_secs(5), || f.children().len() == 1).await,
+        "it started a child of its own"
+    );
+    let child = f.children()[0];
+    assert!(alive(child), "the child is running");
     supervisor.cancel(&id).await;
     let outcome = running.await.expect("join");
     assert_eq!(outcome.expect_err("cancelled"), MediaError::Cancelled);
     assert!(
         eventually(Duration::from_secs(5), || !alive(pid)).await,
         "the process is gone"
+    );
+    assert!(
+        eventually(Duration::from_secs(5), || !alive(child)).await,
+        "and so is the child it started: the whole group was killed"
     );
     assert!(
         !Path::new(&dir).exists(),
@@ -229,6 +248,11 @@ async fn a_job_that_outruns_its_bound_is_killed() {
     assert!(
         eventually(Duration::from_secs(5), || !alive(pid)).await,
         "the process was killed"
+    );
+    let child = f.children()[0];
+    assert!(
+        eventually(Duration::from_secs(5), || !alive(child)).await,
+        "and its child with it"
     );
 }
 

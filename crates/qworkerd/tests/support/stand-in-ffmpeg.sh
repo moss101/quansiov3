@@ -6,7 +6,7 @@
 # QUANSIO_TEST_FFMPEG_BIN and is BLOCKED_EXTERNAL without it.
 #
 # Test-only arguments the plan builder never produces:
-#   --stand-in-stall        hang (a child that shares the process group)
+#   --stand-in-stall        hang (a child that shares the process group; its pid is logged as `child <pid>`)
 #   --stand-in-slow         take a second
 #   --stand-in-fail         exit 3 with a message on stderr
 #   --stand-in-log=<file>   append "<pid> <cwd>" to <file>
@@ -15,7 +15,7 @@ log=$(echo "$*" | sed -n 's/.*--stand-in-log=\([^ ]*\).*/\1/p')
 [ -n "$log" ] && echo "$$ $PWD" >> "$log"
 for last; do :; done
 case "$*" in
-  *--stand-in-stall*) sleep 60 & wait;;
+  *--stand-in-stall*) sleep 60 & [ -n "$log" ] && echo "child $!" >> "$log"; wait;;
   *--stand-in-slow*) sleep 1;;
   *--stand-in-fail*) echo "boom: stand-in failure" >&2; exit 3;;
 esac

@@ -81,13 +81,20 @@ async fn fixture(name: &str, tweak: impl FnOnce(&mut OutputsConfig)) -> Option<F
         return None;
     };
     let service = slot.lock().expect("slot").clone().expect("service");
-    let dir = tempfile::tempdir().expect("tempdir");
+    // A name with no leading dot: the default temporary directory is `.tmpXXXX`, which would hide every path
+    // below it from the dotfile rule and mask the guards under test.
+    let dir = tempfile::Builder::new()
+        .prefix("preview-")
+        .tempdir()
+        .expect("tempdir");
     let root = std::fs::canonicalize(dir.path()).expect("canonical");
     write(&root, "site/index.html", "<h1>Home</h1>");
     write(&root, "site/app.js", "console.log('hi')");
     write(&root, "site/assets/style.css", "body { color: #123 }");
     write(&root, "site/.env", "SECRET=1");
     write(&root, "site/docs/readme.txt", "docs");
+    write(&root, "site/.hidden/page.html", "<p>hidden</p>");
+    write(&root, ".git/config", "[core]");
     write(&root, "secret.txt", "outside the directory");
     write(&root, "other/page.html", "<p>other</p>");
     std::os::unix::fs::symlink(root.join("secret.txt"), root.join("site/link-out")).expect("link");
@@ -418,6 +425,28 @@ async fn a_token_that_was_never_issued_and_a_foreign_host_are_refused_alike() {
         f.h.call("webdev.preview_renew", json!({ "scope_id": scope.token }))
             .await;
     assert_eq!(renew.code(), Some("NOT_FOUND"), "{renew:#?}");
+    f.h.finish().await;
+}
+
+#[tokio::test]
+async fn a_file_over_the_bound_is_not_served() {
+    let Some(f) = fixture("adp006_pv_bound", |config| {
+        config.preview.max_file_bytes = 20
+    })
+    .await
+    else {
+        return;
+    };
+    write(&f.root, "site/big.txt", &"x".repeat(100));
+    let scope = f.open("site").await;
+    assert_eq!(
+        f.get(&scope.url, "").await.status,
+        StatusCode::OK,
+        "13 bytes"
+    );
+    let big = f.get(&scope.url, "big.txt").await;
+    assert_eq!(big.status, StatusCode::PAYLOAD_TOO_LARGE);
+    assert_eq!(big.code().as_deref(), Some("VALIDATION_BOUNDS"));
     f.h.finish().await;
 }
 

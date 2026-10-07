@@ -29,7 +29,7 @@ use serde_json::{json, Value};
 
 mod common;
 use common::blocked_marker;
-use common::outputs::Harness;
+use common::outputs::{Harness, TENANT, USER};
 
 /// What the double answers with when a job finishes.
 #[derive(Clone, Copy)]
@@ -158,6 +158,67 @@ async fn harness(name: &str, gateway: Option<Arc<GatewayDouble>>) -> Option<Harn
 async fn audio(h: &Harness, title: &str, bytes: &[u8]) -> String {
     h.create("audio", "source", title, "audio/mpeg", bytes)
         .await
+}
+
+/// An audio artifact the person may read that belongs to another workspace of the same tenant.
+async fn foreign_audio(h: &Harness) -> String {
+    use quansio_server::artifacts::{
+        ArtifactGrant, ArtifactKind, ArtifactStore, GrantLevel, NewArtifact, NewVersion, Origin,
+        OriginKind, ProducedBy, Retention,
+    };
+    let other = "ws_01J8Z3K6F1N8VQ2X5W9YADP777";
+    let mut tx = h.pool.begin().await.expect("begin");
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant");
+    sqlx::query("INSERT INTO workspaces (id, tenant_id, name) VALUES ($1, $2, 'elsewhere')")
+        .bind(other)
+        .bind(TENANT)
+        .execute(&mut *tx)
+        .await
+        .expect("workspace");
+    let store = ArtifactStore::new(h.objects.as_ref());
+    let created = store
+        .create(
+            &mut tx,
+            TENANT,
+            USER,
+            &NewArtifact {
+                workspace_id: other.to_string(),
+                kind: ArtifactKind::Audio,
+                title: "Elsewhere".to_string(),
+                role: None,
+                origin: Origin {
+                    kind: OriginKind::Upload,
+                    reference: USER.to_string(),
+                },
+                grants: vec![ArtifactGrant {
+                    principal: USER.to_string(),
+                    level: GrantLevel::Write,
+                }],
+                retention: Retention::default(),
+            },
+        )
+        .await
+        .expect("artifact");
+    store
+        .add_version(
+            &mut tx,
+            TENANT,
+            USER,
+            &created.id,
+            &NewVersion {
+                bytes: b"ID3 elsewhere".to_vec(),
+                media_type: "audio/mpeg".to_string(),
+                expected_digest: None,
+                produced_by: ProducedBy::default(),
+                quality_record: None,
+            },
+        )
+        .await
+        .expect("version");
+    tx.commit().await.expect("commit");
+    created.id.to_canonical()
 }
 
 fn args(artifact: &str, request_id: &str) -> Value {
@@ -385,8 +446,14 @@ async fn inputs_are_checked_before_the_route_is_asked() {
         )
         .await;
 
+    let foreign = foreign_audio(&h).await;
     let cases = [
         ("short id", args(&small, "short"), "VALIDATION_SCHEMA"),
+        (
+            "another workspace's audio",
+            args(&foreign, "inputs-0005"),
+            "SCOPE_FORBIDDEN",
+        ),
         (
             "odd id",
             args(&small, "has spaces in it"),

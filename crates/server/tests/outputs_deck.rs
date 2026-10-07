@@ -482,6 +482,24 @@ async fn a_pending_or_failing_page_blocks_delivery_until_every_page_is_ready() {
         Some(true)
     );
     let edited_golden = golden_json("slides-layouts-edited.render.json");
+    // Rendering some other page does not make the edited one ready: its old entry is not carried over, the
+    // pages say it is edited, and the render does not call the deck whole.
+    let elsewhere = h
+        .call(
+            "deck.render",
+            render_args(&deck_id, &edited_golden, Some(&[0]), &[]),
+        )
+        .await;
+    assert!(elsewhere.ok(), "{elsewhere:#?}");
+    assert_eq!(elsewhere.result["deliverable"], false, "{elsewhere:#?}");
+    assert_eq!(
+        states(&elsewhere)
+            .iter()
+            .map(|(_, state)| state.as_str())
+            .collect::<Vec<_>>(),
+        ["ready", "edited", "ready", "ready", "ready", "ready", "ready"],
+        "{elsewhere:#?}"
+    );
     let refreshed = h
         .call(
             "deck.render",
@@ -591,6 +609,23 @@ async fn pages_the_authority_did_not_render_are_not_pages() {
     assert!(
         !by_role.ok() && by_role.names("artifact.tool_owned"),
         "{by_role:#?}"
+    );
+    // The role alone is enough: a reserved role with an ordinary media type is refused too.
+    let by_plain_role = h
+        .call(
+            "artifact.create",
+            common::outputs::content_args(
+                "other",
+                &format!("deck_pdf:{deck_id}"),
+                "a pdf that is not one",
+                "text/plain",
+                b"not a printed deck",
+            ),
+        )
+        .await;
+    assert!(
+        !by_plain_role.ok() && by_plain_role.names("artifact.tool_owned"),
+        "{by_plain_role:#?}"
     );
     let by_media = h
         .call(

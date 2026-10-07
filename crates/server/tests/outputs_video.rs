@@ -28,7 +28,7 @@ use quansio_server::artifacts::outputs::ports::PortError;
 use quansio_server::artifacts::outputs::transcript::{self, Segment, Source, Transcript};
 use quansio_server::artifacts::outputs::video::timeline::{Output, Timeline};
 use quansio_server::artifacts::outputs::{OutputToolHost, TOOLS};
-use quansio_server::runtime::turn_loop::{HostDispatch, ToolHostPort};
+use quansio_server::runtime::turn_loop::{HostDispatch, HostOutcome, ToolHostPort};
 use serde_json::{json, Value};
 
 mod common;
@@ -112,6 +112,57 @@ async fn timeline_at(h: &Harness, artifact: &str, seq: usize) -> Timeline {
 // ---------------------------------------------------------------------------------------------
 // Edits
 // ---------------------------------------------------------------------------------------------
+
+/// The tool's schema already bounds a batch, so the dispatcher refuses an oversize one first; the host
+/// keeps its own bound for the day it is called some other way, and this calls it directly.
+#[tokio::test]
+async fn the_host_bounds_a_batch_by_itself_whatever_the_schema_says() {
+    let Some(h) = Harness::prepare("adp006_batch", |host| host).await else {
+        blocked_marker();
+        return;
+    };
+    let host = OutputToolHost::new(h.pool.clone(), Arc::clone(&h.objects));
+    let most = quansio_server::artifacts::outputs::config::OutputsConfig::shipped()
+        .video
+        .max_ops_per_batch;
+    let ops: Vec<Value> = (0..=most)
+        .map(|n| json!({ "op": "add_track", "id": format!("t{n}"), "kind": "video" }))
+        .collect();
+    let dispatch = |ops: Vec<Value>| HostDispatch {
+        tool_call_id: "tc_01J8Z3K6F1N8VQ2X5W9YADP006".to_string(),
+        tool: "video.edit".to_string(),
+        version: 1,
+        args: edit(
+            "art_01J8Z3K6F1N8VQ2X5W9YADP006",
+            1,
+            false,
+            Value::Array(ops),
+        ),
+        effect_id: "eff_01J8Z3K6F1N8VQ2X5W9YADP006".to_string(),
+        dispatch_token: "t".to_string(),
+        run_id: "run_01J8Z3K6F1N8VQ2X5W9YADP006".to_string(),
+        step_id: "stp_01J8Z3K6F1N8VQ2X5W9YADP006".to_string(),
+        workspace_id: WORKSPACE.to_string(),
+        tenant_id: TENANT.to_string(),
+        acting_user_id: Some(USER.to_string()),
+        max_output_bytes: 65_536,
+        timeout_ms: 1_000,
+    };
+    let Ok(HostOutcome::Failure { error, .. }) = host.execute(dispatch(ops)).await else {
+        panic!("an oversize batch is refused");
+    };
+    assert_eq!(error["code"], "VALIDATION_BOUNDS", "{error:#?}");
+    assert_eq!(error["rule"], "output.video.op.batch", "{error:#?}");
+    // One fewer is not refused for its size (it fails later, on the artifact that does not exist).
+    let fewer: Vec<Value> = (0..most)
+        .map(|n| json!({ "op": "add_track", "id": format!("t{n}"), "kind": "video" }))
+        .collect();
+    let Ok(HostOutcome::Failure { error, .. }) = host.execute(dispatch(fewer)).await else {
+        panic!("the artifact does not exist");
+    };
+    assert_ne!(error["rule"], "output.video.op.batch", "{error:#?}");
+    h.finish().await;
+}
 
 #[tokio::test]
 async fn a_batch_applies_whole_or_not_at_all_against_an_exact_revision() {
