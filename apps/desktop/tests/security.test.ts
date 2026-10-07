@@ -16,6 +16,7 @@ import {
   permissionRequestDecision,
   preloadPath,
   rendererSecurityBaselineHolds,
+  MEDIA_RESPONSE_CSP,
   RENDERER_CSP,
   RENDERER_ENTRY_URL,
   RENDERER_WEB_PREFERENCES,
@@ -53,6 +54,21 @@ describe("renderer security baseline", () => {
     expect(Object.keys(responseHeaders).filter((key) => key.toLowerCase() === "content-security-policy")).toHaveLength(1);
     expect(responseHeaders["X-Other"]).toEqual(["1"]);
     expect(withContentSecurityPolicy({ url: RENDERER_ENTRY_URL }).responseHeaders["Content-Security-Policy"]).toEqual([RENDERER_CSP]);
+  });
+
+  it("lets the page show local media and nothing else of that scheme, and keeps a media response sandboxed (ADP-005)", () => {
+    const directives = Object.fromEntries(RENDERER_CSP.split(";").map((part) => part.trim().split(/\s+/)).map(([name, ...values]) => [name, values])) as Record<string, string[]>;
+    // Only images and audio/video elements may load it: not script, style, frames, fetch or anything by default.
+    const allowing = Object.entries(directives).filter(([, values]) => values.includes("quansio-media:")).map(([name]) => name);
+    expect(allowing.sort()).toEqual(["img-src", "media-src"]);
+    expect(RENDERER_CSP).not.toContain("*");
+    // A media response is a file, not a page: the page's policy does not replace the sandbox, and nothing else is added.
+    const media = withContentSecurityPolicy({ url: `quansio-media://m/${"0".repeat(64)}/a.png`, responseHeaders: { "Content-Security-Policy": ["default-src *"] } });
+    expect(media.responseHeaders["Content-Security-Policy"]).toEqual([MEDIA_RESPONSE_CSP]);
+    expect(MEDIA_RESPONSE_CSP).toBe("sandbox");
+    // The page cannot navigate to it or open it in a window.
+    expect(navigationAllowed(`quansio-media://m/${"0".repeat(64)}/a.png`)).toBe(false);
+    expect(windowOpenDecision(`quansio-media://m/${"0".repeat(64)}/a.png`)).toEqual({ action: "deny", openExternally: false });
   });
 
   it("denies device permissions and pins navigation to the bundled renderer", () => {

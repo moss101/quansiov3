@@ -106,6 +106,17 @@ pub enum ToolError {
         /// What the content hashes to.
         actual: String,
     },
+    /// The file is not what the caller read: it changed after it was read (`FILE_EDIT_CONFLICT`,
+    /// DOMAIN.md §8.7 G). The target is untouched.
+    #[error("FILE_EDIT_CONFLICT: {path} changed after it was read (expected {expected_digest}, found {actual_digest})")]
+    EditConflict {
+        /// The path.
+        path: String,
+        /// The digest the caller expected (the one it read).
+        expected_digest: String,
+        /// The digest the file has now, or `absent`.
+        actual_digest: String,
+    },
     /// A patch did not apply.
     #[error("the patch did not apply to {path}: {detail}")]
     PatchRejected {

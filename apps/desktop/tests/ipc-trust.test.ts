@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { BRIDGE_CHANNELS, PRELOAD_ALLOWLIST, SHELL_CHANNELS, type PreloadChannel } from "../src/preload/bridge.js";
+import { BRIDGE_CHANNELS, FILE_CHANNELS, PRELOAD_ALLOWLIST, SHELL_CHANNELS, type PreloadChannel } from "../src/preload/bridge.js";
 import { IpcGuard, POLICY, registerGuardedHandlers, senderOf, type WindowHandler } from "../src/main/ipc-trust.js";
 import { parseShellConfig } from "../src/main/shell-config.js";
 import { WindowManager, type ManagedWindow, type WindowType } from "../src/main/windows.js";
@@ -145,13 +145,15 @@ describe("a trusted sender", () => {
 
   it("registers exactly the allowlist (and the policy covers exactly it)", () => {
     expect(Object.keys(POLICY).sort()).toEqual([...PRELOAD_ALLOWLIST].sort());
-    expect([...BRIDGE_CHANNELS, ...SHELL_CHANNELS]).toEqual([...PRELOAD_ALLOWLIST]);
+    expect([...BRIDGE_CHANNELS, ...SHELL_CHANNELS, ...FILE_CHANNELS]).toEqual([...PRELOAD_ALLOWLIST]);
   });
 });
 
 // The expected reach of each window type, written out here rather than read from the policy under test.
 const POPOUT_BRIDGE = ["session.state", "session.me", "session.activeRun", "stream.subscribe", "appearance.set", "update.status", "threads.messages", "threads.view", "questions.list", "questions.answer", "turns.cancel", "runs.timeline", "messages.post", "artifacts.upload", "teammates.list"];
 const POPOUT_SHELL = ["shell.window.context", "shell.pending.consume", "shell.popout.pin", "shell.window.close"];
+// The composer's attach control (ADP-005): a pop-out may ask for a native dialog for its own thread; folders, edits and watches are main only.
+const POPOUT_FILES = ["files.pick", "files.grant.attach", "files.grant.discard", "files.grant.preview"];
 const QUICK_BRIDGE = ["session.state", "session.me", "appearance.set", "teammates.list"];
 const QUICK_SHELL = ["shell.window.context", "shell.pending.consume", "shell.window.close", "shell.quickEntry.submit"];
 const INDICATOR = ["shell.window.context", "shell.pending.consume", "shell.activity.list", "shell.activity.dismiss", "shell.activity.open", "shell.indicator.interactive", "shell.indicator.moveTo"];
@@ -162,7 +164,7 @@ describe("window types", () => {
     const r = rig();
     const expected: Record<WindowType, Set<string>> = {
       main: new Set(PRELOAD_ALLOWLIST.filter((channel) => !MAIN_NEVER.includes(channel))),
-      popout: new Set([...POPOUT_BRIDGE, ...POPOUT_SHELL]),
+      popout: new Set([...POPOUT_BRIDGE, ...POPOUT_SHELL, ...POPOUT_FILES]),
       quick_entry: new Set([...QUICK_BRIDGE, ...QUICK_SHELL]),
       indicator: new Set(INDICATOR),
     };

@@ -57,6 +57,25 @@ describe("no door around the guard", () => {
     }
   });
 
+  it("the local-file host reads no file itself, and nothing in main or the renderer keeps a grant token (ADP-005)", () => {
+    // The handlers (host.ts) work through the registries; only the modules that hold descriptors import the filesystem,
+    // so there is no handler that could read a path a page supplied. None of them imports Electron.
+    const files = sources("main/local-files");
+    expect(files.map((file) => file.path).sort()).toEqual(
+      ["config", "fs-ops", "grants", "host", "media", "results", "roots", "safe-edit", "watcher"].map((name) => `main/local-files/${name}.ts`),
+    );
+    for (const file of files) {
+      expect(file.code, file.path).not.toMatch(/from "electron"|require\("electron"\)|ipcMain|ipcRenderer|\bwebContents\b/);
+      expect(file.code, file.path).not.toMatch(/refresh_?token|accessToken|TokenStore|safeStorage|authorization/i);
+    }
+    const importsFs = files.filter((file) => /from "node:fs"/.test(file.code)).map((file) => file.path.replace("main/local-files/", ""));
+    expect(importsFs.sort()).toEqual(["config.ts", "fs-ops.ts", "media.ts", "roots.ts", "safe-edit.ts", "watcher.ts"]);
+    // A grant token is held in memory by the page and main only: the renderer files that handle one never persist anything.
+    for (const file of sources("renderer").filter((candidate) => /pickLocalFiles|attachLocalFiles|onFileGrant|discardLocalFiles/.test(candidate.code))) {
+      expect(file.code, file.path).not.toMatch(/localStorage|sessionStorage|indexedDB|document\.cookie|caches\./);
+    }
+  });
+
   it("the shell never relaxes the page's security: no CORS stripping, no wider CSP, no webSecurity off", () => {
     const text = sources("main").map((file) => file.code).join("\n");
     expect(text).not.toMatch(/webSecurity\s*:\s*false/);

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/worktree-retention-config.schema.json",
+  "title": "Quansio worktree retention (config/worktree-retention.yaml)",
+  "description": "Retention policy for managed worktrees (DOMAIN.md 8.7): the preview token lifetime, the resident limit, the private recovery ref namespace and the automatic sweep's bounds. The namespace cannot be a branch or tag namespace.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "prepare_ttl_ms", "max_resident", "ref_namespace", "managed_dir", "state_dir", "sweep"],
+  "properties": {
+    "version": { "const": 1 },
+    "prepare_ttl_ms": { "type": "integer", "minimum": 1000, "maximum": 86400000 },
+    "max_resident": { "type": "integer", "minimum": 1, "maximum": 256 },
+    "ref_namespace": { "type": "string", "pattern": "^refs/quansio/[a-z][a-z0-9_-]*(/[a-z][a-z0-9_-]*)*$", "maxLength": 96 },
+    "managed_dir": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$", "maxLength": 32 },
+    "state_dir": { "type": "string", "pattern": "^\\.[a-z][a-z0-9_-]*$", "maxLength": 32 },
+    "sweep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min_idle_ms", "max_per_run"],
+      "properties": {
+        "min_idle_ms": { "type": "integer", "minimum": 60000, "maximum": 2592000000 },
+        "max_per_run": { "type": "integer", "minimum": 1, "maximum": 64 }
+      }
+    }
+  }
+}

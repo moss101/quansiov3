@@ -118,11 +118,34 @@ export const SHELL_CHANNELS = [
   "update.install",
 ] as const;
 
+/**
+ * Channels for the person's local files (ADP-005, DOMAIN.md §13.7). A payload names an opaque id main issued (a grant
+ * token, a root, an entry, an edit session, a subscription) and never a path; main validates each against a schema and
+ * authorises it per window type (`main/ipc-trust.ts`), and the answers are data: `{ok, result}` or `{ok: false, error}`.
+ */
+export const FILE_CHANNELS = [
+  "files.pick",
+  "files.grant.attach",
+  "files.grant.discard",
+  "files.grant.preview",
+  "files.root.pick",
+  "files.root.list",
+  "files.root.release",
+  "files.root.entries",
+  "files.media.url",
+  "files.edit.open",
+  "files.edit.save",
+  "files.edit.close",
+  "files.watch.subscribe",
+  "files.watch.unsubscribe",
+] as const;
+
 /** Channels the renderer may invoke (renderer → main, request/response). */
-export const PRELOAD_ALLOWLIST = [...BRIDGE_CHANNELS, ...SHELL_CHANNELS] as const;
+export const PRELOAD_ALLOWLIST = [...BRIDGE_CHANNELS, ...SHELL_CHANNELS, ...FILE_CHANNELS] as const;
 
 export type BridgeChannel = (typeof BRIDGE_CHANNELS)[number];
 export type ShellChannel = (typeof SHELL_CHANNELS)[number];
+export type FileChannel = (typeof FILE_CHANNELS)[number];
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
 
 /** Channels main may push on (main → renderer, fire and forget). */
@@ -140,6 +163,9 @@ export const PRELOAD_PUSH_CHANNELS = [
   "shell.connectivity",
   "shell.shortcuts",
   "shell.recording.ended",
+  // Local files (ADP-005): what changed in a watched folder, and a grant that a deep link asked the shell to open a dialog for.
+  "files.changes",
+  "files.grant",
 ] as const;
 
 export type PushChannel = (typeof PRELOAD_PUSH_CHANNELS)[number];
@@ -335,6 +361,24 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     onConnectivity: (listener: (payload: unknown) => void) => subscribe("shell.connectivity", listener),
     onShortcuts: (listener: (payload: unknown) => void) => subscribe("shell.shortcuts", listener),
     onShortcutRecordingEnded: (listener: (payload: unknown) => void) => subscribe("shell.recording.ended", listener),
+    // Local files (ADP-005). The page asks main to open a native dialog and is told what was picked as names, sizes and
+    // an opaque token; it never names a path. A grant is claimed once, by the window that holds it.
+    pickLocalFiles: (request: { threadId?: string | null } = {}) => send("files.pick", request),
+    attachLocalFiles: (request: { token: string; threadId?: string | null }) => send("files.grant.attach", request),
+    discardLocalFiles: (token: string) => send("files.grant.discard", { token }),
+    previewLocalFile: (token: string, index: number) => send("files.grant.preview", { token, index }),
+    pickFolder: () => send("files.root.pick", {}),
+    listFolders: () => send("files.root.list", {}),
+    releaseFolder: (rootId: string) => send("files.root.release", { rootId }),
+    folderEntries: (rootId: string, entryId?: string | null) => send("files.root.entries", { rootId, entryId: entryId ?? null }),
+    fileMediaUrl: (entryId: string) => send("files.media.url", { entryId }),
+    openFileForEdit: (entryId: string) => send("files.edit.open", { entryId }),
+    saveEditedFile: (request: { editId: string; text: string; onConflict?: "fail" | "overwrite" }) => send("files.edit.save", { onConflict: "fail", ...request }),
+    closeFileEdit: (editId: string) => send("files.edit.close", { editId }),
+    watchFolder: (rootId: string, entryId?: string | null) => send("files.watch.subscribe", { rootId, entryId: entryId ?? null }),
+    unwatchFolder: (subscriptionId: string) => send("files.watch.unsubscribe", { subscriptionId }),
+    onFileChanges: (listener: (payload: unknown) => void) => subscribe("files.changes", listener),
+    onFileGrant: (listener: (payload: unknown) => void) => subscribe("files.grant", listener),
   };
 }
 

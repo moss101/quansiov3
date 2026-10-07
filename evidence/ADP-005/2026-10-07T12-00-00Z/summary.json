@@ -1,0 +1,175 @@
+{
+  "task_id": "ADP-005",
+  "git_commit": "59ffe16",
+  "recorded_at": "2026-10-07T09:15:21Z",
+  "commands": [
+    {
+      "command": "cargo test --workspace --no-fail-fast (private PostgreSQL)  # 1099 passed, 13 failed: all 13 are calls to the artifact/evidence object store at 127.0.0.1:59010 (MinIO was not running; the same 13 ADP-002 to ADP-004 recorded; none touches this task). This task's own: qworkerd retention 21 (real Git, six real SIGKILLs of a child process mid-cleanup), file_conflicts 7, the server error-table and effect-taxonomy tests (71 codes, 24 classes)",
+      "exit_code": 101,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/ADP-005/2026-10-07T12-00-00Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-005/2026-10-07T12-00-00Z/lint.log"
+    },
+    {
+      "command": "cd apps/desktop && npx vitest run --exclude tests/work.e2e.test.ts; npx tsc -p tsconfig.json; npx eslint apps/desktop tests/e2e  # 55 files, 494 passed, 4 skipped; local-files grants 17, roots 13, media 16, edit 15, watcher 18, host 21, links 3, config 3, attach 7; typecheck and eslint clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-005/2026-10-07T12-00-00Z/desktop-tests.log"
+    },
+    {
+      "command": "vitest run --config tests/e2e/vitest.config.ts tests/e2e/files.e2e.spec.ts  # 6 passed: the real Electron binary and the real server on a private PostgreSQL: a grant bound to its window (another window's claim, preview, discard and media URL refused; a real <img> in a second window does not load it; the main process cannot fetch it), grants revoked with their window, refused grants hold nothing, no call takes a path, the attach deep link and path-carrying links, a granted folder with a conflict-checked edit and a watch quiet about its own save. The claimed file's upload is refused by the server (the object store is not running): reported BLOCKED_EXTERNAL in the run, not counted as passed",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/ADP-005/2026-10-07T12-00-00Z/files-e2e.log"
+    },
+    {
+      "command": "vitest run --config tests/e2e/vitest.config.ts tests/e2e/shell.e2e.spec.ts  # 7 passed, 1 failed (the activity indicator lists a second, Working, item); the control run on main's sources with the same server binary fails the same way (shell-e2e-main-control.log), so it is not caused by this task",
+      "exit_code": 1,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/ADP-005/2026-10-07T12-00-00Z/shell-e2e.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect test_generated_bindings_are_current  # 243 passed (the Rust contract generator cannot run from a worktree under .claude/worktrees; it is run in the finalize dry-run clone); local-files and worktree-retention config schemas bounded",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-005/2026-10-07T12-00-00Z/repo-tests.log"
+    },
+    {
+      "command": "cd python && uv run pytest tests  # 710 passed, 21 skipped",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-005/2026-10-07T12-00-00Z/python-tests.log"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 85 mutants of the guards across the desktop and qworkerd, every one COMPILES and CONTROL-PASSED, 85 KILLED by a named test, 0 survived, 0 no-verdict (earlier runs found nine holes, each closed by a test; see NOTES.md)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-005/2026-10-07T12-00-00Z/mutation-checks.log"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py; python3.12 arch_check.py; workspace_check.py; python3 inventory.py --scan; check_authority.py; legacy_map_check.py; gen_contracts.py --check --only catalog,openapi,ts,sdk; supply_chain/check.py (uv python)  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-005/2026-10-07T12-00-00Z/static-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test --workspace --no-fail-fast (private PostgreSQL)  # 1099 passed, 13 failed: all 13 are calls to the artifact/evidence object store at 127.0.0.1:59010 (MinIO was not running; the same 13 ADP-002 to ADP-004 recorded; none touches this task). This task's own: qworkerd retention 21 (real Git, six real SIGKILLs of a child process mid-cleanup), file_conflicts 7, the server error-table and effect-taxonomy tests (71 codes, 24 classes)",
+      "exit_code": 101,
+      "result": "BLOCKED_EXTERNAL"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && npx vitest run --exclude tests/work.e2e.test.ts; npx tsc -p tsconfig.json; npx eslint apps/desktop tests/e2e  # 55 files, 494 passed, 4 skipped; local-files grants 17, roots 13, media 16, edit 15, watcher 18, host 21, links 3, config 3, attach 7; typecheck and eslint clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "vitest run --config tests/e2e/vitest.config.ts tests/e2e/files.e2e.spec.ts  # 6 passed: the real Electron binary and the real server on a private PostgreSQL: a grant bound to its window (another window's claim, preview, discard and media URL refused; a real <img> in a second window does not load it; the main process cannot fetch it), grants revoked with their window, refused grants hold nothing, no call takes a path, the attach deep link and path-carrying links, a granted folder with a conflict-checked edit and a watch quiet about its own save. The claimed file's upload is refused by the server (the object store is not running): reported BLOCKED_EXTERNAL in the run, not counted as passed",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL"
+    },
+    {
+      "command": "vitest run --config tests/e2e/vitest.config.ts tests/e2e/shell.e2e.spec.ts  # 7 passed, 1 failed (the activity indicator lists a second, Working, item); the control run on main's sources with the same server binary fails the same way (shell-e2e-main-control.log), so it is not caused by this task",
+      "exit_code": 1,
+      "result": "BLOCKED_EXTERNAL"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect test_generated_bindings_are_current  # 243 passed (the Rust contract generator cannot run from a worktree under .claude/worktrees; it is run in the finalize dry-run clone); local-files and worktree-retention config schemas bounded",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd python && uv run pytest tests  # 710 passed, 21 skipped",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 85 mutants of the guards across the desktop and qworkerd, every one COMPILES and CONTROL-PASSED, 85 KILLED by a named test, 0 survived, 0 no-verdict (earlier runs found nine holes, each closed by a test; see NOTES.md)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py; python3.12 arch_check.py; workspace_check.py; python3 inventory.py --scan; check_authority.py; legacy_map_check.py; gen_contracts.py --check --only catalog,openapi,ts,sdk; supply_chain/check.py (uv python)  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/ADP-005/2026-10-07T12-00-00Z/workspace-tests.log",
+      "sha256": "6d7849890cf1ab707652c96b730dba0810854e627a7e5480b9ef943c4a40a17d",
+      "bytes": 133500
+    },
+    {
+      "path": "evidence/ADP-005/2026-10-07T12-00-00Z/lint.log",
+      "sha256": "8e6c6f6565af21f959794a8d393a3bcb72d45b1ce4513d1b0af720237b12b485",
+      "bytes": 25
+    },
+    {
+      "path": "evidence/ADP-005/2026-10-07T12-00-00Z/desktop-tests.log",
+      "sha256": "a537a02e0e04be772218b9e4579f7ae88c0421e60e7b5d833a2cf920b0ca82be",
+      "bytes": 2512
+    },
+    {
+      "path": "evidence/ADP-005/2026-10-07T12-00-00Z/files-e2e.log",
+      "sha256": "e644d3c0916cce2370e9601292ef5b331a82529f0f91798804ea428bc16a7223",
+      "bytes": 1046
+    },
+    {
+      "path": "evidence/ADP-005/2026-10-07T12-00-00Z/shell-e2e.log",
+      "sha256": "6bdfb8ced4b06c5022fc97251101336a4f8f4153e1a4223a76987864ca6b5fa1",
+      "bytes": 2838
+    },
+    {
+      "path": "evidence/ADP-005/2026-10-07T12-00-00Z/repo-tests.log",
+      "sha256": "e1c0debe3999b7b6d8694762980fc1355bdd68970dda03f6f4c51553f3ffd67e",
+      "bytes": 362
+    },
+    {
+      "path": "evidence/ADP-005/2026-10-07T12-00-00Z/python-tests.log",
+      "sha256": "592a52b9a417f058b369d9e0084cef6ca45b8e74860d0ee974e2e26c5aa21f0c",
+      "bytes": 920
+    },
+    {
+      "path": "evidence/ADP-005/2026-10-07T12-00-00Z/mutation-checks.log",
+      "sha256": "f2713c858a112e8e6fb1ee305bb1881600aa142cb1b0e9b623692c5832a3ce42",
+      "bytes": 18238
+    },
+    {
+      "path": "evidence/ADP-005/2026-10-07T12-00-00Z/static-gates.log",
+      "sha256": "dbd03c59a5e9791e6dec1369aa2dbde56c5d50fe612d832ded9e3f47cdd52559",
+      "bytes": 1973
+    },
+    {
+      "path": "evidence/ADP-005/2026-10-07T12-00-00Z/mutation-checks.py",
+      "sha256": "8a67daf3d93d6ecc3443f36ed4ddfe4dbe893c5bd9ca31cfda96df98a7a74967",
+      "bytes": 26067
+    },
+    {
+      "path": "evidence/ADP-005/2026-10-07T12-00-00Z/shell-e2e-main-control.log",
+      "sha256": "b18911788de16b762a668b0570ca269be99d185f53a9a93e0d900f8b32584910",
+      "bytes": 3052
+    },
+    {
+      "path": "evidence/ADP-005/NOTES.md",
+      "sha256": "82b6a9ae47155114d7d444331028d75883c60df516da915dc48c0096ed436df6",
+      "bytes": 12655
+    },
+    {
+      "path": "evidence/ADP-005/RECONCILIATION.md",
+      "sha256": "822e4b9fc49775d858e3394797b6fec1e0f56ec6d69e112e2e862af5ce29307a",
+      "bytes": 8126
+    }
+  ]
+}

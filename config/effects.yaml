@@ -40,6 +40,18 @@ browser_side_effects:
     settles_as: computer.input.privileged
     journaled: true
 
+# Worktree retention operations (ADP-005, DOMAIN.md 8.7 G). qworkerd's retention host settles each operation as the
+# effect class named here; a test holds `crates/qworkerd` to this map, and every class named must be in the taxonomy
+# below, so an operation cannot lower its tier by changing its class. `prepare` changes nothing; removal settles the
+# tier-2 `fs.delete.workspace` because the Git-visible state is restorable from the recovery refs and ignored files
+# are not captured; creation and restore write inside the target's managed root.
+worktree_operations:
+  create: fs.write.workspace
+  prepare: read.internal
+  cleanup_manual: fs.delete.workspace
+  cleanup_auto: fs.delete.workspace
+  restore: fs.write.workspace
+
 effect_classes:
   - effect_class: read.internal
     tier: 0
@@ -57,6 +69,10 @@ effect_classes:
     tier: 3
     default_decision: ask
     reconciliation: query (stat/digest)
+  - effect_class: fs.delete.workspace
+    tier: 2
+    default_decision: 'ask (a sweep of fully clean managed worktrees: allow+log)'
+    reconciliation: query (path and recovery record)
   - effect_class: process.exec.sandboxed
     tier: 1
     default_decision: allow

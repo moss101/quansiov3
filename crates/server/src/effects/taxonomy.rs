@@ -23,6 +23,7 @@ pub const DOMAIN_EFFECT_CLASSES: &[&str] = &[
     "read.external",
     "fs.write.workspace",
     "fs.write.host",
+    "fs.delete.workspace",
     "process.exec.sandboxed",
     "process.exec.host",
     "network.egress.new_destination",
@@ -261,7 +262,7 @@ mod tests {
     fn builtin_matches_the_generated_catalog() {
         let taxonomy = EffectTaxonomy::builtin();
         let catalog = catalog();
-        assert_eq!(catalog.effect_classes.len(), 23);
+        assert_eq!(catalog.effect_classes.len(), 24);
         for row in &catalog.effect_classes {
             let entry = taxonomy.get(&row.effect_class).unwrap_or_else(|| {
                 panic!("{} is missing from config/effects.yaml", row.effect_class)

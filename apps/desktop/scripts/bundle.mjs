@@ -48,4 +48,6 @@ copyFileSync(join(root, "src/renderer/index.html"), join(out, "renderer", "index
 copyFileSync(join(root, "src/renderer/index.css"), join(out, "renderer", "index.css"));
 // The shell's policy values (ADP-004, D-018): the main process reads this file beside its bundle.
 copyFileSync(join(root, "..", "..", "config", "desktop-shell.yaml"), join(out, "desktop-shell.yaml"));
+// The local-file limits (ADP-005, D-018): read the same way.
+copyFileSync(join(root, "..", "..", "config", "local-files.yaml"), join(out, "local-files.yaml"));
 console.log(`desktop bundle written to ${out}`);

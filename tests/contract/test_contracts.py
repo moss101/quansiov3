@@ -42,9 +42,10 @@ def test_catalog_is_derived_from_domain_and_current(catalog):
 def test_domain_derivation_covers_commands_errors_effects_events_trust(catalog):
     assert sum(len(v) for v in catalog["commands"].values()) >= 70
     # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15), the
-    # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15) and the 4 `RECORDING_*` codes (ADP-003, §15).
-    assert len(catalog["errors"]) == 65
-    assert len(catalog["effect_classes"]) == 23
+    # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15), the 4 `RECORDING_*` codes (ADP-003, §15) and the
+    # 6 file and worktree codes (ADP-005, §15).
+    assert len(catalog["errors"]) == 71
+    assert len(catalog["effect_classes"]) == 24  # + fs.delete.workspace (ADP-005)
     assert len(catalog["event_families"]) == 36  # + webhook.* (APP-015), recording.* (ADP-003)
     assert catalog["trust_levels"] == [
         "TRUSTED_SYSTEM",
@@ -244,6 +245,10 @@ def test_json_schemas_validate_real_artifacts():
     validator("recording-config").validate(skill_recording)
     desktop_shell = yaml.safe_load((ROOT / "config" / "desktop-shell.yaml").read_text())
     validator("desktop-shell-config").validate(desktop_shell)
+    local_files = yaml.safe_load((ROOT / "config" / "local-files.yaml").read_text())
+    validator("local-files-config").validate(local_files)
+    worktree_retention = yaml.safe_load((ROOT / "config" / "worktree-retention.yaml").read_text())
+    validator("worktree-retention-config").validate(worktree_retention)
 
     summaries = sorted((ROOT / "evidence").glob("*/*/summary.json"))
     assert summaries, "at least one task evidence bundle must exist"
@@ -367,4 +372,58 @@ def test_desktop_shell_schema_keeps_every_value_bounded():
     assert broken(lambda d: d.update({"quit.confirm_when_busy": False}))  # the confirmation is not a setting
     assert broken(lambda d: d.update({"update.defer_while_busy": False}))  # nor is the deferral
     assert not broken(lambda d: d.update({"global_shortcut.toggle_default": None}))
+
+
+def test_local_files_schema_keeps_every_value_bounded():
+    """A configuration cannot make a grant immortal or a file, a watch or a queue unbounded (ADP-005, DOMAIN.md 13.7)."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "local-files-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "local-files.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    assert broken(lambda d: d.update({"local_files.grant_ttl_ms": 24 * 3600 * 1000}))  # a grant is not a standing permission
+    assert broken(lambda d: d.update({"local_files.grant_max_files": 10_000}))
+    assert broken(lambda d: d.update({"local_files.grant_max_file_bytes": 10**12}))
+    assert broken(lambda d: d.update({"local_files.watch_debounce_ms": 1}))
+    assert broken(lambda d: d.update({"local_files.watch_queue_max": 10**7}))
+    assert broken(lambda d: d.update({"local_files.allowed_paths": ["/"]}))  # no key accepts a path
+    assert broken(lambda d: d.pop("local_files.watch_max_dirs"))
+    assert not broken(lambda d: d.update({"local_files.enabled": False}))
+
+
+def test_worktree_retention_schema_keeps_recovery_refs_private():
+    """The sweep is bounded and recovery refs can never live where a user's branches do (ADP-005, DOMAIN.md 8.7)."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "worktree-retention-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "worktree-retention.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+    assert good["ref_namespace"].startswith("refs/quansio/")
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    assert broken(lambda d: d.update(ref_namespace="refs/heads/recovery"))
+    assert broken(lambda d: d.update(ref_namespace="refs/tags/recovery"))
+    assert broken(lambda d: d.update(ref_namespace="refs/stash"))
+    assert broken(lambda d: d.update(ref_namespace="refs/quansio/../heads"))
+    assert broken(lambda d: d.update(max_resident=0))
+    assert broken(lambda d: d["sweep"].update(max_per_run=10_000))
+    assert broken(lambda d: d["sweep"].update(min_idle_ms=1))  # a worktree that was just used is not swept
+    assert broken(lambda d: d["sweep"].update(include_dirty=True))  # the sweep never removes work with changes
+    assert broken(lambda d: d.update(state_dir="../outside"))
 

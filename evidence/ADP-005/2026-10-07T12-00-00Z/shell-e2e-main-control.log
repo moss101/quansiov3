@@ -1,0 +1,42 @@
+desktop bundle written to /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/66f285fe-b59d-4c10-87a8-fe7310b75e93/scratchpad/adp005/mainsrc/apps/desktop/dist/app
+
+ RUN  v2.1.9 /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/66f285fe-b59d-4c10-87a8-fe7310b75e93/scratchpad/adp005/mainsrc
+
+ ❯ |qa-e2e| tests/e2e/shell.e2e.spec.ts (8 tests | 1 failed) 2504ms
+   ✓ desktop shell (real Electron, real server) > creates the windows with the sandboxed baseline, each knowing only what main says it is 300ms
+   × desktop shell (real Electron, real server) > the activity indicator lists what needs the person and a dismissal removes it 11ms
+     → locator.click: Error: strict mode violation: getByRole('button', { name: 'Dismiss' }) resolved to 2 elements:
+    1) <button type="button" data-tip="Dismiss" aria-label="Dismiss" class="icon-button ghost tiny">…</button> aka getByRole('listitem').filter({ hasText: 'Needs your approvalOpen' }).getByLabel('Dismiss')
+    2) <button type="button" data-tip="Dismiss" aria-label="Dismiss" class="icon-button ghost tiny">…</button> aka getByRole('listitem').filter({ hasText: 'WorkingOpen' }).getByLabel('Dismiss')
+
+Call log:
+  - waiting for getByRole('button', { name: 'Dismiss' })
+
+   ✓ desktop shell (real Electron, real server) > never quits over running work without the person's answer, asks when the status cannot be read, and quits quietly when idle 676ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL |qa-e2e|  tests/e2e/shell.e2e.spec.ts > desktop shell (real Electron, real server) > the activity indicator lists what needs the person and a dismissal removes it
+Error: locator.click: Error: strict mode violation: getByRole('button', { name: 'Dismiss' }) resolved to 2 elements:
+    1) <button type="button" data-tip="Dismiss" aria-label="Dismiss" class="icon-button ghost tiny">…</button> aka getByRole('listitem').filter({ hasText: 'Needs your approvalOpen' }).getByLabel('Dismiss')
+    2) <button type="button" data-tip="Dismiss" aria-label="Dismiss" class="icon-button ghost tiny">…</button> aka getByRole('listitem').filter({ hasText: 'WorkingOpen' }).getByLabel('Dismiss')
+
+Call log:
+  - waiting for getByRole('button', { name: 'Dismiss' })
+
+ ❯ tests/e2e/shell.e2e.spec.ts:183:62
+    181|     await indicator.getByText("Needs your approval").waitFor({ timeout…
+    182|     expect(await indicator.getByText("Waiting for you").count()).toBe(…
+    183|     await indicator.getByRole("button", { name: "Dismiss" }).click();
+       |                                                              ^
+    184|     await waitFor(async () => (await desktop.app.evaluate(() => (globa…
+    185|     await indicator.getByText("Nothing needs you.").waitFor({ timeout:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  12:14:40
+   Duration  2.76s (transform 25ms, setup 0ms, collect 123ms, tests 2.50s, environment 0ms, prepare 28ms)
+
+exit=1
