@@ -7,8 +7,8 @@
  * on `window.quansio` through `contextBridge`.
  */
 
-/** Channels the renderer may invoke (renderer → main, request/response). */
-export const PRELOAD_ALLOWLIST = [
+/** Channels `DesktopBridge` implements (server-facing: commands, projections, session). */
+export const BRIDGE_CHANNELS = [
   "commands.invoke",
   "stream.subscribe",
   "stream.reconnect",
@@ -90,6 +90,39 @@ export const PRELOAD_ALLOWLIST = [
   "appearance.set",
 ] as const;
 
+/**
+ * Channels the desktop shell implements (ADP-004): window context, pending events, connectivity, shortcuts,
+ * preferences, secondary windows, the activity list and update installation. Which window type may call which
+ * is `main/ipc-trust.ts`'s table, and the shell's handlers validate every payload against a schema.
+ */
+export const SHELL_CHANNELS = [
+  "shell.window.context",
+  "shell.pending.consume",
+  "shell.connectivity.report",
+  "shell.shortcuts.get",
+  "shell.shortcuts.set",
+  "shell.shortcuts.reset",
+  "shell.recording.begin",
+  "shell.recording.end",
+  "shell.preferences.get",
+  "shell.preferences.set",
+  "shell.popout.open",
+  "shell.popout.pin",
+  "shell.window.close",
+  "shell.quickEntry.submit",
+  "shell.activity.list",
+  "shell.activity.dismiss",
+  "shell.activity.open",
+  "shell.indicator.interactive",
+  "shell.indicator.moveTo",
+  "update.install",
+] as const;
+
+/** Channels the renderer may invoke (renderer → main, request/response). */
+export const PRELOAD_ALLOWLIST = [...BRIDGE_CHANNELS, ...SHELL_CHANNELS] as const;
+
+export type BridgeChannel = (typeof BRIDGE_CHANNELS)[number];
+export type ShellChannel = (typeof SHELL_CHANNELS)[number];
 export type PreloadChannel = (typeof PRELOAD_ALLOWLIST)[number];
 
 /** Channels main may push on (main → renderer, fire and forget). */
@@ -101,6 +134,12 @@ export const PRELOAD_PUSH_CHANNELS = [
   "deepLink.intent",
   "update.status",
   "live.frame",
+  // The desktop shell (ADP-004): menu and navigation commands, the activity list, connectivity, shortcuts.
+  "shell.command",
+  "shell.activity",
+  "shell.connectivity",
+  "shell.shortcuts",
+  "shell.recording.ended",
 ] as const;
 
 export type PushChannel = (typeof PRELOAD_PUSH_CHANNELS)[number];
@@ -268,6 +307,34 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     onDeepLink: (listener: (payload: unknown) => void) => subscribe("deepLink.intent", listener),
     onUpdateStatus: (listener: (payload: unknown) => void) => subscribe("update.status", listener),
     onLiveFrame: (listener: (payload: unknown) => void) => subscribe("live.frame", listener),
+    // The desktop shell (ADP-004). The page learns what kind of window it is from main (never from its URL),
+    // pulls what was queued before it subscribed, and reports connectivity; everything else is a request main
+    // validates and may refuse for this window type.
+    windowContext: () => send("shell.window.context", {}),
+    consumePending: () => send("shell.pending.consume", {}),
+    reportConnectivity: (online: boolean) => send("shell.connectivity.report", { online }),
+    shortcuts: () => send("shell.shortcuts.get", {}),
+    setShortcut: (id: string, binding: string | null) => send("shell.shortcuts.set", { id, binding }),
+    resetShortcut: (id: string) => send("shell.shortcuts.reset", { id }),
+    beginShortcutRecording: () => send("shell.recording.begin", {}),
+    endShortcutRecording: () => send("shell.recording.end", {}),
+    shellPreferences: () => send("shell.preferences.get", {}),
+    setShellPreferences: (changes: { keepAwake?: boolean; installWhenIdle?: boolean }) => send("shell.preferences.set", changes),
+    openPopout: (request: { threadId: string; tab?: string; sidebar?: boolean; x?: number; y?: number }) => send("shell.popout.open", request),
+    pinPopout: (pinned: boolean) => send("shell.popout.pin", { pinned }),
+    closeWindow: () => send("shell.window.close", {}),
+    quickEntrySubmit: (request: { content: string; teammateId?: string | null }) => send("shell.quickEntry.submit", request),
+    activityItems: () => send("shell.activity.list", {}),
+    dismissActivity: (key: string) => send("shell.activity.dismiss", { key }),
+    openActivity: (key: string) => send("shell.activity.open", { key }),
+    setIndicatorInteractive: (active: boolean) => send("shell.indicator.interactive", { active }),
+    moveIndicator: (x: number, y: number) => send("shell.indicator.moveTo", { x, y }),
+    installUpdate: (mode: "now" | "when_idle" | "cancel_when_idle") => send("update.install", { mode }),
+    onShellCommand: (listener: (payload: unknown) => void) => subscribe("shell.command", listener),
+    onActivity: (listener: (payload: unknown) => void) => subscribe("shell.activity", listener),
+    onConnectivity: (listener: (payload: unknown) => void) => subscribe("shell.connectivity", listener),
+    onShortcuts: (listener: (payload: unknown) => void) => subscribe("shell.shortcuts", listener),
+    onShortcutRecordingEnded: (listener: (payload: unknown) => void) => subscribe("shell.recording.ended", listener),
   };
 }
 

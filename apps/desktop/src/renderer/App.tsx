@@ -21,6 +21,8 @@ import {
 import { applyTheme, themeFromMe } from "../appearance.js";
 import { decodeMessages, type ConversationMessage } from "../conversation/state.js";
 import { t } from "../i18n/strings.js";
+import { parseShellCommand, type ShellCommand } from "../shell-command.js";
+import { connectivityOf, decodeActivity, decodePending, groupActivity, GROUP_HEADINGS, type ActivityRow } from "../shell-ui.js";
 import { decodeRoster } from "../teammates/roster.js";
 import { DESKTOP_SURFACES } from "../surfaces.js";
 import { Artifacts } from "./Artifacts.js";
@@ -28,7 +30,7 @@ import { Automations } from "./Automations.js";
 import { Collaboration } from "./Collaboration.js";
 import { Conversation } from "./Conversation.js";
 import { Faces } from "./Face.js";
-import { ChevronRightIcon, CloseIcon, GearIcon, LeaveIcon, PanelIcon, PlusIcon, PulseIcon } from "./icons.js";
+import { ChevronRightIcon, CloseIcon, GearIcon, LeaveIcon, PanelIcon, PlusIcon, PulseIcon, WindowIcon } from "./icons.js";
 import { Knowledge } from "./Knowledge.js";
 import { Live } from "./Live.js";
 import { OPENS, PAGE_ENTRY, SURFACE_ICONS, SURFACE_LABELS, type Page } from "./navigation.js";
@@ -172,6 +174,9 @@ function Shell(): ReactElement {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
+  // The desktop shell (ADP-004): whether the shell has decided the machine is offline, and what needs the person.
+  const [offline, setOffline] = useState(false);
+  const [activityRows, setActivityRows] = useState<readonly ActivityRow[]>([]);
   const readRef = useRef(read);
   readRef.current = read;
   const baseline = useRef(false);
@@ -324,6 +329,94 @@ function Shell(): ReactElement {
     setPage(next);
   }, []);
 
+  const threadIdRef = useRef(threadId);
+  threadIdRef.current = threadId;
+  /** Carry out what the menu, the tray, a notification, a link or the activity indicator asked for. */
+  const runCommand = useCallback(
+    (command: ShellCommand) => {
+      switch (command.kind) {
+        case "new-thread":
+          openThread(null);
+          break;
+        case "find":
+          setPaletteOpen(true);
+          break;
+        case "open-settings":
+          openPage("settings");
+          break;
+        case "popout-current-thread": {
+          const id = threadIdRef.current;
+          if (id) {
+            void window.quansio.openPopout({ threadId: id });
+          }
+          break;
+        }
+        case "open-thread":
+          openThread(command.threadId);
+          break;
+        case "open-approval":
+          openPage("approvals");
+          break;
+        case "open-run": {
+          // The thread a run belongs to is the one whose messages name it; unknown, the conversation page opens.
+          const found = [...readRef.current].find(([, known]) => known.messages.some((message) => message.runId === command.runId));
+          if (found) {
+            openThread(found[0]);
+          } else {
+            openPage("conversation");
+          }
+          break;
+        }
+      }
+    },
+    [openThread, openPage],
+  );
+
+  // The shell's pushes (ADP-004). Listeners come first and the queue is pulled after, so an event that arrived
+  // before the page subscribed (a deep link that launched the app, a notification click) is not lost.
+  useEffect(() => {
+    const handle = (channel: string, payload: unknown): void => {
+      if (channel === "deepLink.intent" && (payload as { kind?: unknown } | null)?.kind === "open-artifact") {
+        openPage("artifacts");
+        return;
+      }
+      if (channel === "shell.command" || channel === "deepLink.intent") {
+        const command = parseShellCommand(payload);
+        if (command) {
+          runCommand(command);
+        }
+      }
+    };
+    const offs = [
+      window.quansio.onShellCommand((payload) => { handle("shell.command", payload); }),
+      window.quansio.onDeepLink((payload) => { handle("deepLink.intent", payload); }),
+      window.quansio.onConnectivity((payload) => { setOffline(connectivityOf(payload) === "offline"); }),
+      window.quansio.onActivity((payload) => { setActivityRows(decodeActivity(payload)); }),
+    ];
+    void window.quansio.consumePending().then((answer) => {
+      for (const event of decodePending(answer)) {
+        handle(event.channel, event.payload);
+      }
+    });
+    void window.quansio.activityItems().then((answer) => { setActivityRows(decodeActivity(answer)); });
+    // The renderer reports what the browser engine knows; main holds the 10-second grace and does the reconnecting.
+    const report = (): void => {
+      void window.quansio.reportConnectivity(navigator.onLine);
+    };
+    window.addEventListener("online", report);
+    window.addEventListener("offline", report);
+    if (!navigator.onLine) {
+      report();
+    }
+    return () => {
+      for (const off of offs) {
+        off();
+      }
+      window.removeEventListener("online", report);
+      window.removeEventListener("offline", report);
+    };
+  }, [runCommand, openPage]);
+
   const signOut = useCallback(() => {
     void window.quansio.signOut();
   }, []);
@@ -365,11 +458,12 @@ function Shell(): ReactElement {
     const actions: PaletteItem[] = [
       { key: "action-new", group: t("actions"), label: t("newThread"), icon: <PlusIcon />, run: () => { openThread(null); } },
       { key: "action-settings", group: t("actions"), label: t("settings"), icon: <GearIcon />, run: () => { openPage("settings"); } },
+      ...(threadId ? [{ key: "action-popout", group: t("actions"), label: t("popoutOpenWindow"), icon: <WindowIcon />, run: () => { void window.quansio.openPopout({ threadId }); } }] : []),
       { key: "action-stream", group: t("actions"), label: t("streamTitle"), icon: <PulseIcon />, run: () => { setActivityOpen(true); } },
       { key: "action-sign-out", group: t("actions"), label: t("signOut"), icon: <LeaveIcon />, run: signOut },
     ];
     return [...conversations, ...pages, ...actions];
-  }, [rows, openThread, openPage, signOut]);
+  }, [rows, openThread, openPage, signOut, threadId]);
 
   const content = workspaceId ? (
     page === "artifacts" ? (
@@ -425,6 +519,7 @@ function Shell(): ReactElement {
         onOpenThread={openThread}
         onOpenPage={openPage}
         onSearch={() => { setPaletteOpen(true); }}
+        onPopout={(id, point) => { void window.quansio.openPopout({ threadId: id, ...(point ?? {}) }); }}
         initials={person.initials}
         onSignOut={signOut}
       />
@@ -432,6 +527,7 @@ function Shell(): ReactElement {
       <div className={`pane pane-${page === "conversation" ? "chat" : "page"}`}>
         <header className="pane-header">
           <div className="pane-lead">
+            {offline ? <span className="status status-offline" role="status">{t("offlineBanner")}</span> : null}
             {connection === "open" ? (
               <span className="sr-only" role="status">{connectionLabel(connection)}</span>
             ) : (
@@ -476,6 +572,24 @@ function Shell(): ReactElement {
                 <CloseIcon size={14} />
               </button>
             </header>
+            {activityRows.length > 0 ? (
+              <div className="attention-list">
+                {groupActivity(activityRows).map((entry) => (
+                  <div key={entry.group}>
+                    <h3>{t(GROUP_HEADINGS[entry.group])}</h3>
+                    <ul>
+                      {entry.rows.map((row) => (
+                        <li key={row.key}>
+                          <span>{row.title}</span>
+                          <button type="button" className="link" onClick={() => { void window.quansio.openActivity(row.key); }}>{t("indicatorOpen")}</button>
+                          <button type="button" className="link" onClick={() => { void window.quansio.dismissActivity(row.key); }}>{t("indicatorDismiss")}</button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : null}
             {log.length === 0 ? (
               <p>{t("streamEmpty")}</p>
             ) : (

@@ -1,0 +1,14 @@
+desktop bundle written to /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a1c9346a29d79b76e/apps/desktop/dist/app
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a1c9346a29d79b76e
+
+ ✓ |qa-e2e| tests/e2e/shell.e2e.spec.ts (8 tests) 4269ms
+   ✓ desktop shell (real Electron, real server) > creates the windows with the sandboxed baseline, each knowing only what main says it is 403ms
+   ✓ desktop shell (real Electron, real server) > never quits over running work without the person's answer, asks when the status cannot be read, and quits quietly when idle 614ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  09:27:27
+   Duration  4.61s (transform 29ms, setup 0ms, collect 157ms, tests 4.27s, environment 0ms, prepare 43ms)
+
+shell e2e exit=0

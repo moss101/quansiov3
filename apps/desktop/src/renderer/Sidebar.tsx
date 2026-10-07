@@ -25,12 +25,14 @@ interface SidebarProps {
   readonly onOpenThread: (threadId: string | null) => void;
   readonly onOpenPage: (page: Page) => void;
   readonly onSearch: () => void;
+  /** A conversation was dragged out of the window: open it in its own window, at the drop point when known. */
+  readonly onPopout: (threadId: string, point: { readonly x: number; readonly y: number } | null) => void;
   readonly initials: string;
   readonly onSignOut: () => void;
 }
 
 export function Sidebar(props: SidebarProps): ReactElement {
-  const { view, onView, rows, openThreadId, page, onOpenThread, onOpenPage, onSearch, initials, onSignOut } = props;
+  const { view, onView, rows, openThreadId, page, onOpenThread, onOpenPage, onSearch, onPopout, initials, onSignOut } = props;
   const [accountOpen, setAccountOpen] = useState(false);
   const anchor = useRef<HTMLDivElement | null>(null);
 
@@ -83,6 +85,19 @@ export function Sidebar(props: SidebarProps): ReactElement {
                       type="button"
                       className={selected ? "chat-row selected" : "chat-row"}
                       aria-current={selected ? "page" : undefined}
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData("text/plain", row.name ?? "");
+                        event.dataTransfer.effectAllowed = "copy";
+                      }}
+                      onDragEnd={(event) => {
+                        // Dropped outside this window: it opens in a window of its own, where it was dropped.
+                        const outside = event.clientX < 0 || event.clientY < 0 || event.clientX > window.innerWidth || event.clientY > window.innerHeight;
+                        if (outside) {
+                          const known = event.screenX !== 0 || event.screenY !== 0;
+                          onPopout(row.id, known ? { x: event.screenX, y: event.screenY } : null);
+                        }
+                      }}
                       onClick={() => { onOpenThread(row.id); }}
                     >
                       <Faces faces={row.faces} more={row.more} />

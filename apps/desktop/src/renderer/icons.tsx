@@ -239,3 +239,16 @@ export const ChipIcon = ({ size }: IconProps): ReactElement => (
     <path d="M10 10h4v4h-4zM9.5 3.5v3M14.5 3.5v3M9.5 17.5v3M14.5 17.5v3M3.5 9.5h3M3.5 14.5h3M17.5 9.5h3M17.5 14.5h3" />
   </Icon>
 );
+
+export const PinIcon = ({ size }: IconProps): ReactElement => (
+  <Icon size={size}>
+    <path d="M9 4h6l-1 5 3 3H7l3-3-1-5ZM12 12v8" />
+  </Icon>
+);
+
+export const WindowIcon = ({ size }: IconProps): ReactElement => (
+  <Icon size={size}>
+    <rect x="3.5" y="5" width="17" height="14" rx="2.5" />
+    <path d="M3.5 9.5h17" />
+  </Icon>
+);

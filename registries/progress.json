@@ -3216,14 +3216,16 @@
       "notes": "Skill recording (D-019): a person demonstrates a workflow once. The macOS recorder (native/macos Recording/ + quansio-recorder) watches with a listen-only event tap, names each click's control by accessibility attributes, redacts before it keeps anything (rule set v1: keys/tokens, bearer credentials, 13+ digit card numbers, verification codes, secure/password fields; screenshots judged by their recognised text and withheld whole), pauses on secure input, fences every call by tenant+user+epoch and answers one authenticated Unix-socket channel opened with a one-time token from a 0600 file it deletes. The server owns the session row (skill_recordings, migration 0026): StartRecording/FinishRecording/CancelRecording/CompileRecording/SubmitRecordingSkill are a person's commands (never a service principal), finish is the only way out of recording, the owner fence (user, sign-in family, epoch) aborts a stale session's recording and refuses a stranger without aborting, an archive that still holds anything redaction removes is refused and nothing is stored (RECORDING_UNREDACTED names categories and pointers, never text), the archive is an owner-only Artifact, the Python plane compiles the text-only projection into a proposal (bundle ids and accessibility attributes, input slots left for the person, pre/postconditions and recovery that never repeats blind, Tools before pixels, untrusted-origin labelling) and the server validates it independently before keeping it; submission creates one DRAFT version through the Skill Registry (promotion stays ManageTenant). Deferred (evidence NOTES.md): live narration capture, user-data export/deletion of recordings (no DeleteUserData/ExportTenantData handler exists yet), the Windows recorder."
     },
     "ADP-004": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "PARTIAL",
+      "status": "IN_PROGRESS",
+      "claimed_by": "agent:adp-004",
+      "started_at": "2026-10-07T05:38:53Z",
+      "updated_at": "2026-10-07T06:48:00Z",
       "git_commit": null,
       "tests": [],
-      "artifacts": [],
+      "artifacts": [
+        "evidence/ADP-004/2026-10-07T07-00-00Z/summary.json"
+      ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,

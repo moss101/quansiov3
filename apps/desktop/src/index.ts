@@ -22,7 +22,7 @@ export {
 } from "./main/security.js";
 export { createDesktopShell } from "./main/shell.js";
 export type { DesktopShell, ShellConfig } from "./main/shell.js";
-export { DesktopBridge, MAX_FILE_BYTES, MAX_PREVIEW_FETCH_BYTES, registerBridgeHandlers, suggestedFilename } from "./main/ipc.js";
+export { DesktopBridge, MAX_FILE_BYTES, MAX_PREVIEW_FETCH_BYTES, settled, suggestedFilename } from "./main/ipc.js";
 export type { ActiveRunProjection, DesktopBridgeOptions, DesktopFiles, IpcMainLike, PushSender, Settled } from "./main/ipc.js";
 export { SessionFile, parseSession, serializeSession } from "./main/session-file.js";
 export type { ActiveRunSession, DesktopSession } from "./main/session-file.js";
@@ -353,3 +353,33 @@ export {
   toggleChannel,
 } from "./automation/notifications.js";
 export type { Channel, DesktopNotice, NotificationCenter, NotificationKind, NotificationView, Preference } from "./automation/notifications.js";
+
+// The desktop shell (ADP-004).
+export { SchemaError, safeParse } from "./main/schema.js";
+export * as schema from "./main/schema.js";
+export { loadShellConfig, parseFlatYaml, parseShellConfig, shellConfigFrom, NUMERIC_BOUNDS } from "./main/shell-config.js";
+export type { DesktopShellConfig } from "./main/shell-config.js";
+export { KEY_NAMES, bindingFromKeyEvent, bindingProblem, displayBinding, parseBinding, toAccelerator } from "./shortcut-grammar.js";
+export type { Binding as ShortcutBinding, BindingProblem } from "./shortcut-grammar.js";
+export { FIXED_BINDINGS, GLOBAL_SHORTCUTS, ShortcutRegistry, WINDOW_DEFAULTS, WINDOW_SHORTCUTS } from "./main/shortcuts.js";
+export type { GlobalShortcutAdapter, SetResult, ShortcutSnapshot, ShortcutView } from "./main/shortcuts.js";
+export { DEFAULT_PREFERENCES, PreferencesFile, parsePreferences } from "./main/preferences.js";
+export type { ShellPreferences } from "./main/preferences.js";
+export { KeepAwake, shouldHold } from "./main/keep-awake.js";
+export { ConnectivityMonitor } from "./main/connectivity.js";
+export { QuitGate } from "./main/quit.js";
+export { UpdateGate } from "./main/update-gate.js";
+export { describeWork, decodeMaintenance, workStatus } from "./main/work-status.js";
+export type { MaintenanceStatus, WorkStatus } from "./main/work-status.js";
+export { ActivityTracker, compareActivity } from "./main/activity.js";
+export type { ActivityItem, ActivityKind } from "./main/activity.js";
+export { WindowManager, PendingQueue, ManagedWindow, windowSpec, specMeetsBaseline, WINDOW_TYPES, clampOrigin, defaultIndicatorOrigin, indicatorOrigin, indicatorPosition } from "./main/windows.js";
+export type { DisplayAdapter, DisplayInfo, WindowFactory, WindowHandle, WindowType, WindowSpec } from "./main/windows.js";
+export { IpcGuard, POLICY, registerGuardedHandlers, senderOf } from "./main/ipc-trust.js";
+export type { WindowHandler } from "./main/ipc-trust.js";
+export { ShellHost, commandForItem, commandForNotice, shortcutResult } from "./main/shell-host.js";
+export type { ShellBridge } from "./main/shell-host.js";
+export { buildMenu, acceleratorsOf } from "./main/menu.js";
+export type { MenuItem, ShellCommand } from "./main/menu.js";
+export { closeBehaviour, trayIconPng, trayMenu, wantsTray } from "./main/tray.js";
+export { quitChosen, quitDialog, updateChoiceOf, updateDialog } from "./main/dialogs.js";

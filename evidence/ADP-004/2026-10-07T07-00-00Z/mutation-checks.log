@@ -1,0 +1,120 @@
+CONTROL-PASSED  rust-int
+COMPILES    status: a run that is waiting counts as a Turn in flight
+KILLED      status: a run that is waiting counts as a Turn in flight -- it_counts_exactly_what_a_restart_would_interrupt
+COMPILES    status: a completed Turn counts
+KILLED      status: a completed Turn counts -- it_counts_exactly_what_a_restart_would_interrupt
+COMPILES    status: an unknown outcome counts as in flight
+KILLED      status: an unknown outcome counts as in flight -- it_counts_exactly_what_a_restart_would_interrupt
+COMPILES    status: the workspace does not narrow the effect count
+KILLED      status: the workspace does not narrow the effect count -- a_workspace_narrows_the_counts_and_another_tenant_never_counts
+COMPILES    status: a closed terminal counts
+KILLED      status: a closed terminal counts -- it_counts_exactly_what_a_restart_would_interrupt
+COMPILES    status: idle ignores the actions in flight
+KILLED      status: idle ignores the actions in flight -- it_counts_exactly_what_a_restart_would_interrupt
+COMPILES    status: a malformed workspace id is accepted
+KILLED      status: a malformed workspace id is accepted -- it_refuses_an_unauthenticated_caller_and_a_malformed_workspace
+CONTROL-PASSED  vitest
+COMPILES    keep-awake: held on battery
+KILLED      keep-awake: held on battery -- tests/shell-gates.test.ts > keep-awake > holds exactly when a Turn is active, the machine is on AC power and the person has not turned it off (+3 more)
+COMPILES    keep-awake: held after the person turned it off
+KILLED      keep-awake: held after the person turned it off -- tests/shell-gates.test.ts > keep-awake > holds exactly when a Turn is active, the machine is on AC power and the person has not turned it off (+2 more)
+COMPILES    connectivity: a flap inside the grace reconnects
+KILLED      connectivity: a flap inside the grace reconnects -- tests/shell-gates.test.ts > connectivity grace > absorbs a flap shorter than the grace: nothing reconnects and the state never reaches offline (+1 more)
+COMPILES    connectivity: signals together reconnect more than once
+KILLED      connectivity: signals together reconnect more than once -- tests/shell-gates.test.ts > connectivity grace > calls the one reconnect once however many signals arrive together (+1 more)
+COMPILES    connectivity: the offline grace is not held
+KILLED      connectivity: the offline grace is not held -- tests/shell-gates.test.ts > connectivity grace > absorbs a flap shorter than the grace: nothing reconnects and the state never reaches offline (+2 more)
+COMPILES    quit: running work is read as idle
+KILLED      quit: running work is read as idle -- tests/shell-gates.test.ts > quit confirmation > an update that already asked can allow its own quit, and revoke it (+3 more)
+COMPILES    quit: a status that cannot be read is read as idle
+KILLED      quit: a status that cannot be read is read as idle -- tests/shell-gates.test.ts > quit confirmation > asks when the status cannot be read: a failed read is never idle
+COMPILES    quit: overlapping requests each ask
+KILLED      quit: overlapping requests each ask -- tests/shell-gates.test.ts > quit confirmation > shares one question between quit requests that overlap
+COMPILES    update: installs over running work without asking
+KILLED      update: installs over running work without asking -- tests/shell-gates.test.ts > update deferral > does not install over running work without the person's choice: deferred by default (+3 more)
+COMPILES    update: install-when-idle installs while busy
+KILLED      update: install-when-idle installs while busy -- tests/shell-gates.test.ts > update deferral > installs when idle: polls without an interval, never installs while busy or unreadable, and stops after installing (+1 more)
+COMPILES    update: a failed install leaves the permission to quit
+KILLED      update: a failed install leaves the permission to quit -- tests/shell-gates.test.ts > update deferral > a failed install turns install-on-quit off and takes back the permission to quit
+COMPILES    update: a failed installer leaves install-on-quit on
+KILLED      update: a failed installer leaves install-on-quit on -- tests/shell-gates.test.ts > update deferral > an installer that fails after it started also turns install-on-quit off
+COMPILES    status: a response that contradicts itself is trusted as idle
+KILLED      status: a response that contradicts itself is trusted as idle -- tests/shell-gates.test.ts > work status > decodes the projection and refuses one that contradicts itself (+1 more)
+COMPILES    status: an unreadable status is idle
+KILLED      status: an unreadable status is idle -- tests/shell-gates.test.ts > work status > is busy if either source says so, idle only when the server says idle, and unknown when it cannot be read (+1 more)
+COMPILES    dialog: quitting is the default button
+KILLED      dialog: quitting is the default button -- tests/shell-gates.test.ts > the words of the two questions > say the work is paused, not lost, and make the safe choice the default and the way out
+COMPILES    shortcut: a menu accelerator can be taken
+KILLED      shortcut: a menu accelerator can be taken -- tests/shortcuts.test.ts > setting a binding > refuses a binding that is a menu accelerator, naming it
+COMPILES    shortcut: another shortcut's binding can be taken
+KILLED      shortcut: another shortcut's binding can be taken -- tests/shell-host.test.ts > shortcuts through the channels > applies a free binding, answers a conflict and a system refusal with typed errors, and keeps the previous binding each time (+1 more)
+COMPILES    shortcut: a declined registration does not restore the previous binding
+KILLED      shortcut: a declined registration does not restore the previous binding -- tests/shell-host.test.ts > shortcuts through the channels > applies a free binding, answers a conflict and a system refusal with typed errors, and keeps the previous binding each time (+2 more)
+COMPILES    shortcut: a binding the person cleared comes back as the default
+KILLED      shortcut: a binding the person cleared comes back as the default -- tests/shortcuts.test.ts > registering > registers nothing for a shortcut the person cleared, and never the default again (+1 more)
+COMPILES    shortcut: recording leaves the global shortcuts registered
+KILLED      shortcut: recording leaves the global shortcuts registered -- tests/shell-host.test.ts > shortcuts through the channels > recording pauses the shortcuts and the menu, and ends by itself when the window loses focus (+1 more)
+COMPILES    shortcut: recording leaves the menu's bindings
+KILLED      shortcut: recording leaves the menu's bindings -- tests/shortcuts.test.ts > recording mode > pauses every global shortcut and the menu's accelerators, and restores them when it ends
+COMPILES    shortcut: recording does not end when the window loses focus
+KILLED      shortcut: recording does not end when the window loses focus -- tests/shell-host.test.ts > shortcuts through the channels > recording pauses the shortcuts and the menu, and ends by itself when the window loses focus (+1 more)
+COMPILES    grammar: a bare letter is a shortcut
+KILLED      grammar: a bare letter is a shortcut -- tests/shortcuts.test.ts > the binding grammar > accepts the documented spellings and nothing else (+1 more)
+COMPILES    grammar: upper case is accepted
+KILLED      grammar: upper case is accepted -- tests/shell-host.test.ts > shortcuts through the channels > applies a free binding, answers a conflict and a system refusal with typed errors, and keeps the previous binding each time (+2 more)
+COMPILES    ipc: an untrusted URL is trusted
+KILLED      ipc: an untrusted URL is trusted -- tests/ipc-trust.test.ts > an untrusted sender > is a logged no-op on every channel: the handler never runs and nothing is answered (+1 more)
+COMPILES    ipc: a subframe is trusted
+KILLED      ipc: a subframe is trusted -- tests/ipc-trust.test.ts > an untrusted sender > is a logged no-op on every channel: the handler never runs and nothing is answered
+COMPILES    ipc: a window's type does not limit its channels
+KILLED      ipc: a window's type does not limit its channels -- tests/ipc-trust.test.ts > window types > a quick-entry window cannot call settings, commands, approvals or anything beyond posting a new thread (+3 more)
+COMPILES    ipc: a pop-out is not kept to its own thread
+KILLED      ipc: a pop-out is not kept to its own thread -- tests/ipc-trust.test.ts > a pop-out > answers, cancels and inspects only what its own thread's reads returned (+3 more)
+COMPILES    ipc: a channel nobody listed is open to every window type
+KILLED      ipc: a channel nobody listed is open to every window type -- tests/ipc-trust.test.ts > window types > a quick-entry window cannot call settings, commands, approvals or anything beyond posting a new thread (+3 more)
+COMPILES    windows: launch data accepts any thread id
+KILLED      windows: launch data accepts any thread id -- tests/shell-windows.test.ts > the pop-out > refuses launch data that is not exactly a thread, a tab and a sidebar state, and creates no window
+COMPILES    windows: the baseline lets webSecurity off
+KILLED      windows: the baseline lets webSecurity off -- tests/ipc-sources.test.ts > no door around the guard > the shell never relaxes the page's security: no CORS stripping, no wider CSP, no webSecurity off (+53 more)
+COMPILES    windows: the pending queue is unbounded
+KILLED      windows: the pending queue is unbounded -- tests/shell-windows.test.ts > events sent before a renderer subscribes > the queue itself is bounded by its cap (+1 more)
+COMPILES    windows: a closed window keeps its queue
+KILLED      windows: a closed window keeps its queue -- tests/shell-windows.test.ts > events sent before a renderer subscribes > are cleared when the window is destroyed
+COMPILES    windows: pulling the queue does not mark the page subscribed
+KILLED      windows: pulling the queue does not mark the page subscribed -- tests/shell-host.test.ts > activity, keep-awake and the indicator > opening an item brings the main window forward on it; dismissing removes it (+2 more)
+COMPILES    windows: the indicator is not click-through
+KILLED      windows: the indicator is not click-through -- tests/shell-host.test.ts > activity, keep-awake and the indicator > only the list and the anchor take the mouse: the page says when the pointer is over them (+1 more)
+COMPILES    windows: a new page keeps the old page's subscription
+KILLED      windows: a new page keeps the old page's subscription -- tests/shell-windows.test.ts > events sent before a renderer subscribes > a page that navigates is a new page: events wait for it again
+COMPILES    indicator: the position is saved under one key for every display
+KILLED      indicator: the position is saved under one key for every display -- tests/shell-host.test.ts > activity, keep-awake and the indicator > is placed in the top-right corner, remembered per display when dragged, and put back inside a display that changed
+COMPILES    activity: the groups are in another order
+KILLED      activity: the groups are in another order -- tests/shell-activity.test.ts > dismissal, expiry and the bound > stays within its bound, dropping completed first, then errors, then running, and never an item waiting for you (+2 more)
+COMPILES    activity: a replay brings back a dismissed item
+KILLED      activity: a replay brings back a dismissed item -- tests/shell-activity.test.ts > dismissal, expiry and the bound > a dismissed item is gone and a replay of its event does not bring it back
+COMPILES    activity: an item waiting for the person can be dropped for room
+KILLED      activity: an item waiting for the person can be dropped for room -- tests/shell-activity.test.ts > dismissal, expiry and the bound > stays within its bound, dropping completed first, then errors, then running, and never an item waiting for you
+COMPILES    activity: a Turn that aborts stays running
+KILLED      activity: a Turn that aborts stays running -- tests/shell-activity.test.ts > deriving items from events > lists a Turn as running from turn.started until it completes or aborts, whatever the Run's status
+COMPILES    host: a refused quick-entry post still hides the window
+KILLED      host: a refused quick-entry post still hides the window -- tests/shell-host.test.ts > quick entry > shows the server's refusal as data and stays open so nothing typed is lost
+COMPILES    host: the connectivity report is dropped
+KILLED      host: the connectivity report is dropped -- tests/shell-host.test.ts > connectivity and updates through the channels > the renderer's offline report is held for the grace, then the return reconnects through the one reconnect
+COMPILES    host: turning keep-awake off does not release the blocker
+KILLED      host: turning keep-awake off does not release the blocker -- tests/shell-host.test.ts > activity, keep-awake and the indicator > the person's setting turns keep-awake off and on, and survives a restart
+COMPILES    host: any window can end another window's recording
+KILLED      host: any window can end another window's recording -- tests/shell-host.test.ts > shortcuts through the channels > recording pauses the shortcuts and the menu, and ends by itself when the window loses focus
+COMPILES    host: indicator hides never
+KILLED      host: indicator hides never -- tests/shell-host.test.ts > activity, keep-awake and the indicator > shows the indicator without focus when something needs the person and they are not looking, and hides it when they look
+COMPILES    menu: the recording menu keeps its roles and accelerators
+KILLED      menu: the recording menu keeps its roles and accelerators -- tests/shell-host.test.ts > shortcuts through the channels > recording pauses the shortcuts and the menu, and ends by itself when the window loses focus (+1 more)
+COMPILES    tray: a window with no tray is hidden where it cannot be brought back
+KILLED      tray: a window with no tray is hidden where it cannot be brought back -- tests/shell-menu.test.ts > the tray > hides the window to the tray when there is one, and minimizes it when there is not
+COMPILES    bridge: a focus signal reconnects an open stream
+KILLED      bridge: a focus signal reconnects an open stream -- tests/shell-modules.test.ts > IPC bridge > reconnects the stream for the connectivity monitor through the one existing reconnect, from the durable cursor
+COMPILES    config: the queue cap has no upper bound
+KILLED      config: the queue cap has no upper bound -- tests/shell-config.test.ts > config/desktop-shell.yaml > is bounded exactly as the JSON schema bounds it
+COMPILES    schema: an unknown field passes through a payload
+KILLED      schema: an unknown field passes through a payload -- tests/shell-config.test.ts > payload schemas > refuses an unknown field instead of passing it through (+4 more)
+SUMMARY killed=58 survived=0 no_verdict=0 total=58
+mutation exit=0

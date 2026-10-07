@@ -19,7 +19,7 @@
 
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { generateKeyPairSync } from "node:crypto";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -255,25 +255,43 @@ export class Stack {
 export interface Desktop {
   readonly app: ElectronApplication;
   readonly page: Page;
+  /** The throwaway profile directory (the shell's own files live here). */
+  readonly userData: string;
+  /** What the main process wrote to stderr (the shell logs what it refuses there). */
+  readonly stderr: string[];
   close(): Promise<void>;
 }
 
+export interface LaunchOptions {
+  /** Extra environment for the main process (for example `QUANSIO_DESKTOP_TEST_HOOKS=1`). */
+  readonly env?: Record<string, string>;
+  /** Files written into the profile before launch, by name (for example the shell's preferences). */
+  readonly profileFiles?: Record<string, string>;
+}
+
 /** The real desktop binary against `origin`, with a mock keychain and a throwaway profile. */
-export async function launchDesktop(origin: string): Promise<Desktop> {
+export async function launchDesktop(origin: string, options: LaunchOptions = {}): Promise<Desktop> {
   const userData = mkdtempSync(join(tmpdir(), "qa008-desktop-"));
+  for (const [name, content] of Object.entries(options.profileFiles ?? {})) {
+    writeFileSync(join(userData, name), content, { mode: 0o600 });
+  }
   const app = await electron.launch({
     executablePath: ELECTRON,
     args: [DESKTOP_MAIN, "--use-mock-keychain", `--user-data-dir=${userData}`],
-    env: { ...process.env, QUANSIO_SERVER_ORIGIN: origin },
+    env: { ...process.env, QUANSIO_SERVER_ORIGIN: origin, ...options.env },
     timeout: 60_000,
   });
+  const stderr: string[] = [];
+  app.process().stderr?.on("data", (chunk: Buffer) => stderr.push(chunk.toString()));
   const page = await app.firstWindow();
   await page.waitForLoadState("domcontentloaded");
   return {
     app,
     page,
+    userData,
+    stderr,
     close: async () => {
-      await app.close();
+      await app.close().catch(() => undefined);
       rmSync(userData, { recursive: true, force: true });
     },
   };

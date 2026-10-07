@@ -1,0 +1,36 @@
+# Desktop shell (ADP-004, DOMAIN.md 13.6). Policy lives here, never as a source constant (D-018).
+# A flat map of dotted keys to scalars: the desktop ships this file beside its main bundle and reads it with
+# a small parser (no YAML dependency in the shell), and schemas/json/desktop-shell-config.schema.json bounds
+# every value so a configuration cannot disable a safety property (quitting always asks while work runs;
+# a binding is never registered unless it is stored).
+version: 1
+
+# How long a renderer's "offline" report is held before the shell acts on it, so a brief flap is absorbed.
+connectivity.offline_grace_ms: 10000
+# At most one stream reconnect per this window, however many signals (online, resume, focus) arrive together.
+connectivity.reconnect_min_gap_ms: 2000
+
+# Events (a deep link, a notification click) that arrive before a window has subscribed wait here, per window.
+pending.queue_cap: 64
+
+# A rebindable window shortcut: its longest accepted text.
+shortcut.max_length: 64
+# The one global shortcut registered before the person has chosen anything (toggle the main window). The
+# person may clear or replace it; quick entry has none until the person sets one. null: none.
+global_shortcut.toggle_default: mod+alt+q
+
+# Keep the machine awake while a Turn is active and it is on AC power (the person can turn it off).
+keep_awake.default_enabled: true
+
+# The activity list (DOMAIN.md 13.6 C).
+activity.max_items: 24
+activity.completed_ttl_ms: 600000
+
+# Secondary windows.
+popout.always_on_top_allowed: true
+quick_entry.enabled: true
+indicator.enabled: true
+
+# Updates (DOMAIN.md 13.6 G): re-read the maintenance status this often while an update waits for idle.
+update.install_when_idle_default: false
+update.idle_poll_ms: 30000

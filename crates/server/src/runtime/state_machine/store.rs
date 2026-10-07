@@ -1398,6 +1398,33 @@ impl RuntimeStore {
         Ok(turns)
     }
 
+    /// How many Turns are executing now (ADP-004, DOMAIN.md §13.6 A): `active` Turns of Runs that are
+    /// `RUNNING` or `VERIFYING`, in this tenant and, when named, one workspace.
+    ///
+    /// A Run that waits (for an approval, an answer, a timer, a child or a person's takeover) holds no
+    /// computation, and a Run is `RUNNING` between Turns, so neither is counted: only a Turn in flight is.
+    ///
+    /// # Errors
+    /// Returns a database error when the query fails.
+    pub async fn count_active_turns(
+        &self,
+        workspace_id: Option<&str>,
+    ) -> Result<i64, RuntimeError> {
+        let tenant_id = self.identity.tenant_id.clone();
+        let mut tx = self.events.begin_tenant_transaction(&tenant_id).await?;
+        let count: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM turns t JOIN runs r ON r.tenant_id = t.tenant_id AND r.id = t.run_id \
+             WHERE t.tenant_id = $1 AND t.status = 'active' AND r.status IN ('RUNNING', 'VERIFYING') \
+             AND ($2::text IS NULL OR r.workspace_id = $2)",
+        )
+        .bind(&tenant_id)
+        .bind(workspace_id)
+        .fetch_one(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(count)
+    }
+
     /// List a Turn's Steps in sequence order.
     ///
     /// # Errors

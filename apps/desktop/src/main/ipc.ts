@@ -11,7 +11,7 @@
 import { LocalRuntimeClient } from "../client/local-runtime.js";
 import { ApiError, ServerClient, type CommandResponse, type Credential, type FetchLike, type OAuthProvider, type SessionScope } from "../client/server.js";
 import { StreamClient, type EventFrame, type LiveFrame, type SocketFactory, type StreamErrorFrame, type StreamState } from "../client/stream.js";
-import { PRELOAD_ALLOWLIST, PRELOAD_PUSH_CHANNELS, type BridgeCommand, type PreloadChannel, type PushChannel } from "../preload/bridge.js";
+import { PRELOAD_PUSH_CHANNELS, type BridgeChannel, type BridgeCommand, type PushChannel } from "../preload/bridge.js";
 import { newCommandId } from "../client/ids.js";
 import { ANSWER_COMMAND, CANCEL_COMMAND, MAX_UPLOAD_BYTES, POST_COMMAND, UPLOAD_COMMAND, answerParams, cancelParams } from "../conversation/composer.js";
 import { MAX_IMAGE_PREVIEW_BYTES, MAX_TEXT_PREVIEW_BYTES, isActiveContent, isExecutable, mediaKind, openAllowed, previewPlan } from "../artifacts/preview.js";
@@ -27,6 +27,7 @@ import { SessionFile, type ActiveRunSession, type DesktopSession } from "./sessi
 import { SessionManager, type SessionState } from "./session-manager.js";
 import type { TokenStore } from "./token-store.js";
 import type { UpdateHooks, UpdateStatus } from "./updates.js";
+import { decodeMaintenance, type MaintenanceStatus } from "./work-status.js";
 
 /** The slice of `ipcMain` the bridge registers on. */
 export interface IpcMainLike {
@@ -61,6 +62,11 @@ export interface DesktopBridgeOptions {
   readonly updates: UpdateHooks;
   readonly consumer: string;
   readonly push: PushSender;
+  /**
+   * Sees every durable event frame after the cursor has advanced (ADP-004: the shell derives its activity list
+   * and keep-awake from the stream main already holds). It cannot change the frame.
+   */
+  readonly observe?: (frame: EventFrame) => void;
   /** Opens an OAuth authorization URL in the system browser (main supplies `shell.openExternal`). */
   readonly openExternal?: (url: string) => Promise<void>;
   /**
@@ -207,7 +213,7 @@ export class DesktopBridge {
   }
 
   /** The handlers, keyed by allowlisted channel; `registerBridgeHandlers` installs them. */
-  handlers(): Record<PreloadChannel, (payload: unknown) => Promise<unknown>> {
+  handlers(): Record<BridgeChannel, (payload: unknown) => Promise<unknown>> {
     return {
       // Every handler is async so a refused payload is a rejection the renderer sees as an
       // error result, never an exception escaping into the IPC layer.
@@ -968,6 +974,46 @@ export class DesktopBridge {
     };
   }
 
+  /** Whether a person is signed in (the harness mode counts as signed in). */
+  signedIn(): boolean {
+    return this.sessions === null || this.sessions.state().kind === "signed-in";
+  }
+
+  /** Whether the stream is open now. */
+  streamOpen(): boolean {
+    return this.#streamState === "open";
+  }
+
+  /**
+   * The connectivity monitor's reconnect (ADP-004): the one existing reconnect, only when a subscription is
+   * wanted (the renderer subscribed and the person has not signed out). `force` resubscribes even when the stream
+   * claims to be open (it may be half-dead after the network went away); otherwise an open stream is left alone.
+   * Returns whether it reconnected.
+   */
+  resumeStream(force: boolean): boolean {
+    if (this.#stream === null || !this.signedIn()) {
+      return false;
+    }
+    if (!force && this.#streamState === "open") {
+      return false;
+    }
+    this.reconnect();
+    return true;
+  }
+
+  /**
+   * What a restart would interrupt, from the server's maintenance status; `null` when it cannot be read (not an
+   * error to the caller: the gates treat it as unknown and ask the person).
+   */
+  async maintenance(): Promise<MaintenanceStatus | null> {
+    try {
+      const workspaceId = this.workspaceId();
+      return decodeMaintenance(await this.server.maintenance(workspaceId ?? undefined));
+    } catch {
+      return null;
+    }
+  }
+
   /** Parse a deep link and, when valid, tell the renderer where to go. */
   openDeepLink(url: string): DeepLinkIntent | null {
     const intent = parseDeepLink(url);
@@ -1094,6 +1140,7 @@ export class DesktopBridge {
   #onEvent(frame: EventFrame): void {
     this.#options.session.advance(frame.cursor);
     this.#options.push("stream.frame", frame);
+    this.#options.observe?.(frame);
     // The server delivers a person's notification events to that person only; one that
     // asks for the desktop channel becomes a native notification here (APP-010).
     const notice = desktopNotice(frame.event);
@@ -1114,7 +1161,7 @@ export type Settled<T> =
   | { readonly ok: true; readonly result: T }
   | { readonly ok: false; readonly error: { readonly code: string; readonly message: string; readonly retryable: boolean; readonly details: unknown } };
 
-async function settled<T>(work: Promise<T>): Promise<Settled<T>> {
+export async function settled<T>(work: Promise<T>): Promise<Settled<T>> {
   try {
     return { ok: true, result: await work };
   } catch (error) {
@@ -1123,17 +1170,6 @@ async function settled<T>(work: Promise<T>): Promise<Settled<T>> {
     }
     return { ok: false, error: { code: "INTERNAL", message: error instanceof Error ? error.message : String(error), retryable: false, details: null } };
   }
-}
-
-/** Install one handler per allowlisted channel and nothing else. */
-export function registerBridgeHandlers(ipc: IpcMainLike, bridge: DesktopBridge): readonly string[] {
-  const handlers = bridge.handlers();
-  const registered: string[] = [];
-  for (const channel of PRELOAD_ALLOWLIST) {
-    ipc.handle(channel, (_event, payload) => handlers[channel](payload));
-    registered.push(channel);
-  }
-  return registered;
 }
 
 export { PRELOAD_PUSH_CHANNELS };
