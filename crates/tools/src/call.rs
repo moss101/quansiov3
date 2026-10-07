@@ -18,9 +18,49 @@ use crate::error::ToolError;
 use crate::registry::ToolRegistry;
 use crate::schema::first_violation;
 
+/// Who proposed a call (ADP-008, DOMAIN.md §7.5).
+///
+/// A model proposes through its tool list; the trusted runtime or the person's own surface calls through
+/// the host path. The two are different questions of the same declaration: [`ToolDeclaration::model_visible`]
+/// and [`ToolDeclaration::host_callable`]. The default is the model, the stricter reading, so a caller that
+/// forgets to say who it is can never reach a host-only tool.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+pub enum Caller {
+    /// A model proposed the call.
+    #[default]
+    Model,
+    /// The trusted runtime, or the person through their own surface, made the call.
+    Host,
+}
+
+impl Caller {
+    /// The canonical spelling stored on the `tool_calls` row.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Model => "model",
+            Self::Host => "host",
+        }
+    }
+
+    /// Parse the canonical spelling.
+    ///
+    /// # Errors
+    /// Returns the offending value when it is not a caller.
+    pub fn parse(value: &str) -> Result<Self, String> {
+        match value {
+            "model" => Ok(Self::Model),
+            "host" => Ok(Self::Host),
+            other => Err(format!("caller {other:?} is not model or host")),
+        }
+    }
+}
+
 /// What the runtime knows about the call site, used by context-sensitive derivations.
 #[derive(Debug, Clone, Default)]
 pub struct CallContext<'a> {
+    /// Who proposed the call. [`Caller::Model`] unless a trusted host path says otherwise.
+    pub caller: Caller,
     /// Workspace the run belongs to.
     pub workspace_id: &'a str,
     /// Run that proposed the call, when it is a run-scoped call.
@@ -73,7 +113,8 @@ pub struct ToolCallPlan {
 ///
 /// # Errors
 /// Returns [`ToolError::UnknownTool`] or [`ToolError::UnknownToolVersion`] when the tool
-/// is not registered, [`ToolError::InvalidArguments`] for the first schema violation
+/// is not registered, [`ToolError::NotModelVisible`] or [`ToolError::NotHostCallable`] when the
+/// caller may not propose it, [`ToolError::InvalidArguments`] for the first schema violation
 /// (an unknown field is a violation because every object schema closes its property set),
 /// and [`ToolError::UnknownEffectClass`] when the derived class has no tier.
 pub fn plan_call(
@@ -96,6 +137,19 @@ pub fn plan_call(
                 name: name.to_string(),
             })?,
         };
+
+    // Visibility is decided before the arguments are looked at: what a caller may not propose is not
+    // validated, derived or described to it.
+    if !declaration.callable_by(context.caller) {
+        return Err(match context.caller {
+            Caller::Model => ToolError::NotModelVisible {
+                tool: name.to_string(),
+            },
+            Caller::Host => ToolError::NotHostCallable {
+                tool: name.to_string(),
+            },
+        });
+    }
 
     if let Some(violation) = first_violation(&declaration.input_schema, args) {
         return Err(ToolError::InvalidArguments {

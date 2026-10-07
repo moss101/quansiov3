@@ -352,3 +352,47 @@ async fn the_plane_refuses_a_turn_it_cannot_render() {
     }
     drop(service);
 }
+
+#[tokio::test]
+async fn the_plane_never_offers_a_provider_a_host_only_tool() {
+    // ADP-008: `webdev.preview_scopes` is declared in the same `config/tools.yaml` the gateway reads, but it is
+    // not model-visible, so the gateway has no schema to offer for it: the call is refused before any provider is
+    // reached, exactly as for a name the registry never declared. The model's own tool still goes through.
+    let Some(service) = start().await else {
+        return;
+    };
+    let mut client = IntelligenceClient::connect(&service.endpoint)
+        .await
+        .expect("connect");
+
+    let mut ordinary = model_call("call_adp008_ok", "", "");
+    ordinary.tools = vec!["webdev.preview_open".to_string()];
+    let events = client
+        .fulfill_model(&scope(), ordinary)
+        .await
+        .expect("a model-visible tool is offered");
+    assert!(
+        events.iter().all(|event| event.kind() != Kind::Error),
+        "{events:?}"
+    );
+
+    for names in [
+        vec!["webdev.preview_scopes".to_string()],
+        vec![
+            "webdev.preview_open".to_string(),
+            "webdev.preview_scopes".to_string(),
+        ],
+        vec!["webdev.preview_never_declared".to_string()],
+    ] {
+        let mut call = model_call("call_adp008_host", "", "");
+        call.tools = names.clone();
+        match client.fulfill_model(&scope(), call).await {
+            Err(IntelligenceError::Refused { code, message }) => {
+                assert_eq!(code, "VALIDATION_SCHEMA", "{names:?}: {message}");
+                assert!(message.contains("no registered strict schema"), "{message}");
+            }
+            other => panic!("{names:?} must be refused by the gateway: {other:?}"),
+        }
+    }
+    drop(service);
+}

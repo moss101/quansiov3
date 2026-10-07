@@ -10,6 +10,18 @@
 # `grant_templates` state the minimum authority that exposes the tool to a model; the
 # capability projection must hold a grant of the same effect class whose resource region
 # overlaps the template.
+#
+# Visibility (ADP-008, DOMAIN.md 7.5). Two flags say who may propose a tool:
+#   model_visible  (default true)   the tool may be offered to, and proposed by, a model. When false it is
+#                                   in no model-facing list, prompt, schema or export, and a model that names
+#                                   it anyway is refused with TOOL_NOT_MODEL_VISIBLE and the refusal is recorded.
+#   host_callable  (default false)  the trusted runtime or the person's own surface may call it with no model
+#                                   proposing it. It still passes the capability projection, policy and the
+#                                   Effect Ledger; only the caller differs.
+# A declaration must be at least one of the two. Both flags only narrow: no projection layer, pack or skill
+# makes a model_visible: false tool visible. The 44 tools declared before ADP-008 are all things a model
+# proposes to do, so they keep the defaults; webdev.preview_scopes is host-only. An unknown key is refused,
+# so a misspelt flag cannot leave a tool visible.
 version: 1
 
 # Catalog families reserved for later materialization. These names appear in the generated
@@ -1680,6 +1692,48 @@ tools:
         omitted: { type: integer, minimum: 0, description: "Older suggestions left out to keep the result inside its size bound." }
         trust: { type: string }
       required: [suggestions, trust]
+
+  - name: webdev.preview_scopes
+    version: 1
+    description: >-
+      List the live preview scopes the acting member opened in this workspace, for the person's own preview panel.
+      Host-only: a model learns the id of a scope it opened from webdev.preview_open and is never offered this tool.
+    model_visible: false
+    host_callable: true
+    host: server
+    source_trust: untrusted_external
+    effect_class: read.internal
+    resource: { kind: fs, selector: "**" }
+    idempotency: { digest_args: [directory] }
+    max_output_bytes: 16384
+    timeout_ms: 30000
+    cancellable: false
+    evidence: { kinds: [artifact_ref], redact: [] }
+    grant_templates:
+      - effect_class: read.internal
+        resource: { kind: fs, selector: "**" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        directory: { type: string, maxLength: 512, description: "Only the scopes on this directory; omit for all." }
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        scopes:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              scope_id: { type: string }
+              directory: { type: string }
+              expires_at: { type: string }
+              lifetime_remaining_ms: { type: integer }
+            required: [scope_id, directory, expires_at, lifetime_remaining_ms]
+      required: [scopes]
 
   - name: work.propose_plan
     version: 1

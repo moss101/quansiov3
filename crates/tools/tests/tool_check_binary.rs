@@ -92,3 +92,20 @@ fn blank_lines_are_skipped_and_order_is_kept() {
     assert_eq!(verdicts[1]["tool"], "fs.read");
     assert_eq!(verdicts[1]["valid"], true);
 }
+
+#[test]
+fn a_host_only_tool_is_not_a_tool_a_model_may_propose() {
+    // The campaign's proposer is a model (ADP-008): a tool that is not model-visible is refused before its
+    // arguments are read, exactly as `plan_call` refuses it for a model.
+    let verdicts = check(&[
+        r#"{"tool": "webdev.preview_scopes", "args": {}}"#,
+        r#"{"tool": "webdev.preview_scopes", "args": {"bogus": 1}}"#,
+        r#"{"tool": "webdev.preview_open", "args": {"directory": "."}}"#,
+    ]);
+    let rules: Vec<&str> = verdicts
+        .iter()
+        .map(|verdict| verdict["rule"].as_str().expect("rule"))
+        .collect();
+    assert_eq!(rules, vec!["not_model_visible", "not_model_visible", "ok"]);
+    assert_eq!(verdicts[0]["valid"], false);
+}

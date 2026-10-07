@@ -15,6 +15,11 @@ The production source is `RegistryToolSchemaSource`: a read-only view of the sam
 the runtime validates the proposal against, and a name the registry does not declare (a reserved
 family, a typo) has no schema here either.
 
+It holds only the **model-visible** declarations (ADP-008). A declaration with `model_visible: false`
+is a host-only tool: it is skipped on load, so `definition()` answers `None` for it exactly as for a
+typo, `resolve_tools` refuses the name, and no provider is ever sent its schema. `model_visible`
+must be a boolean when present; anything else fails the load (the registry fails closed too).
+
 Registry names are namespaced with dots (`fs.read`); both first-party wire formats accept only
 `[A-Za-z0-9_-]` in a tool name. `wire_tool_name` encodes a registry name for the wire (`fs__read`)
 and `registry_tool_name` decodes what a provider returns, so a proposal always names the registry
@@ -146,6 +151,14 @@ class RegistryToolSchemaSource:
                 raise GatewayError(
                     GatewayErrorCode.INTERNAL, f"tool registry {resolved} has a malformed declaration"
                 )
+            visible = entry.get("model_visible", True)
+            if not isinstance(visible, bool):
+                raise GatewayError(
+                    GatewayErrorCode.INTERNAL,
+                    f"tool registry {resolved}: {name} has a model_visible that is not a boolean",
+                )
+            if not visible:
+                continue
             definitions[name] = ToolDefinition(
                 name=name, description=str(entry.get("description", "")), input_schema=schema
             )

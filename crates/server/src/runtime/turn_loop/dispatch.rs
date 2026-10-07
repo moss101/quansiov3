@@ -29,7 +29,7 @@ use quansio_core::{CanonicalId, Digest, Generation, Prefix, UlidGenerator};
 use quansio_events::event_type::EventType;
 use quansio_events::{EventDraft, EventStore};
 use quansio_tools::{
-    canonical_json, plan_call, CallContext, SourceTrust, ToolCallPlan, ToolRegistry,
+    canonical_json, plan_call, CallContext, Caller, SourceTrust, ToolCallPlan, ToolRegistry,
 };
 use serde_json::{json, Value};
 use sqlx::{PgPool, Row};
@@ -491,10 +491,42 @@ impl ToolDispatchService {
         self
     }
 
+    /// Plan against another registry than the shipped one. Tests build a registry from fixture YAML and
+    /// leak it to prove a declaration's behaviour through the real dispatch path; the deployable never
+    /// calls this.
+    #[must_use]
+    pub fn with_registry(mut self, registry: &'static ToolRegistry) -> Self {
+        self.registry = registry;
+        self
+    }
+
     /// The registry this service plans against.
     #[must_use]
     pub fn registry(&self) -> &'static ToolRegistry {
         self.registry
+    }
+
+    /// Make a **host call** (ADP-008, DOMAIN.md §7.5): the trusted runtime, or the person through their
+    /// own surface, calls a `host_callable` tool with no model proposing it. The call is validated,
+    /// authorized against the run's CapabilityProjection, evaluated by policy, reserved on the Effect
+    /// Ledger, dispatched and settled exactly as a model's is; it is recorded with `caller: host`.
+    ///
+    /// # Errors
+    /// The same errors as [`ToolDispatchPort::dispatch`]. A tool that is not `host_callable` comes back
+    /// as `Rejected { code: "TOOL_NOT_HOST_CALLABLE" }`, not as an error.
+    pub async fn dispatch_as_host(
+        &self,
+        call_id: &str,
+        tool: &str,
+        args: Value,
+        request: ToolDispatchRequest,
+    ) -> Result<ToolDispatchOutcome, RuntimeError> {
+        ToolDispatchPort::dispatch(
+            self,
+            ProposedToolCall::from_host(call_id, tool, args),
+            request,
+        )
+        .await
     }
 
     /// The Effect Ledger every consequential call reserves through.
@@ -756,7 +788,7 @@ impl ToolDispatchPort for ToolDispatchService {
                 current: run.generation.get(),
             });
         }
-        let context = self.call_context(&run).await?;
+        let context = self.call_context(&run, call.caller).await?;
         // Operator kill switches (OPS-008) are read once per call.
         let gate = OpsGate::load(&self.pool, &self.identity.tenant_id).await?;
         if let Some(target) = run
@@ -897,7 +929,7 @@ impl ToolDispatchPort for ToolDispatchService {
 
         // 4. Consequential work goes through the Effect Ledger from here on.
         let tool_call_id = self
-            .insert_tool_call(&run, &request, &plan, "validated", None)
+            .insert_tool_call(&run, &request, &plan, "validated", None, call.caller)
             .await?;
         let decision = self
             .policies
@@ -1430,8 +1462,13 @@ impl ToolDispatchService {
         .await
     }
 
-    async fn call_context(&self, run: &Run) -> Result<CallContextOwned, RuntimeError> {
+    async fn call_context(
+        &self,
+        run: &Run,
+        caller: Caller,
+    ) -> Result<CallContextOwned, RuntimeError> {
         Ok(CallContextOwned {
+            caller,
             workspace_id: run.workspace_id.clone(),
             run_id: Some(run.id.to_string()),
             fs_root: self.execution_root(run).await?,
@@ -1627,6 +1664,7 @@ impl ToolDispatchService {
                 "rejected",
                 Some(json!({ "code": code, "detail": detail })),
                 SourceTrust::UntrustedExternal.rank(),
+                call.caller,
             )
             .await?;
         self.emit_tool_event(
@@ -1639,6 +1677,7 @@ impl ToolDispatchService {
                 "tool": call.tool,
                 "code": code,
                 "detail": detail,
+                "caller": call.caller.as_str(),
             }),
         )
         .await?;
@@ -1655,6 +1694,7 @@ impl ToolDispatchService {
         plan: &ToolCallPlan,
         status: &str,
         result: Option<Value>,
+        caller: Caller,
     ) -> Result<String, RuntimeError> {
         let _ = run;
         self.insert_raw_call(
@@ -1665,6 +1705,7 @@ impl ToolDispatchService {
             status,
             result,
             plan.source_trust.rank(),
+            caller,
         )
         .await
     }
@@ -1679,6 +1720,7 @@ impl ToolDispatchService {
         status: &str,
         result: Option<Value>,
         trust_rank: u8,
+        caller: Caller,
     ) -> Result<String, RuntimeError> {
         let mut generator = UlidGenerator::new();
         let id = CanonicalId::generate(Prefix::ToolCall, &mut generator).to_string();
@@ -1687,8 +1729,8 @@ impl ToolDispatchService {
         schema::set_tenant_context(&mut tx, &self.identity.tenant_id).await?;
         sqlx::query(
             "INSERT INTO tool_calls (id, tenant_id, step_id, tool_name, args, args_digest, \
-             status, result, trust_level, declaration_version) \
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+             status, result, trust_level, declaration_version, caller) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
         )
         .bind(&id)
         .bind(&self.identity.tenant_id)
@@ -1700,6 +1742,7 @@ impl ToolDispatchService {
         .bind(&result)
         .bind(i16::from(trust_rank))
         .bind(i32::try_from(declaration_version).unwrap_or(1))
+        .bind(caller.as_str())
         .execute(&mut *tx)
         .await?;
         tx.commit().await?;
@@ -1738,7 +1781,7 @@ impl ToolDispatchService {
         let mut tx = self.pool.begin().await?;
         schema::set_tenant_context(&mut tx, &self.identity.tenant_id).await?;
         let row = sqlx::query(
-            "SELECT tc.id, tc.tool_name, tc.args, tc.declaration_version, s.turn_id, t.run_id \
+            "SELECT tc.id, tc.tool_name, tc.args, tc.declaration_version, tc.caller, s.turn_id, t.run_id \
              FROM tool_calls tc \
              JOIN steps s ON s.id = tc.step_id \
              JOIN turns t ON t.id = s.turn_id \
@@ -1758,7 +1801,10 @@ impl ToolDispatchService {
             .runs
             .load_run(&CanonicalId::parse_typed(&run_id, Prefix::Run)?)
             .await?;
-        let context = self.call_context(&run).await?;
+        // The caller is the one the call row recorded: a host call that parked resumes as a host call.
+        let caller = Caller::parse(&row.try_get::<String, _>("caller")?)
+            .map_err(RuntimeError::InvalidArgument)?;
+        let context = self.call_context(&run, caller).await?;
         Ok(Some(StoredCall {
             id: row.try_get("id")?,
             tool_name: row.try_get("tool_name")?,
@@ -1848,6 +1894,7 @@ struct StoredCall {
 
 /// Owned form of [`CallContext`], which borrows the run it was built from.
 struct CallContextOwned {
+    caller: Caller,
     workspace_id: String,
     run_id: Option<String>,
     fs_root: Option<String>,
@@ -1857,6 +1904,7 @@ struct CallContextOwned {
 impl CallContextOwned {
     fn as_context(&self) -> CallContext<'_> {
         CallContext {
+            caller: self.caller,
             workspace_id: &self.workspace_id,
             run_id: self.run_id.as_deref(),
             fs_root: self.fs_root.as_deref(),

@@ -1,5 +1,6 @@
-//! `webdev.preview_open`, `webdev.preview_renew`, `webdev.preview_close` and
-//! `webdev.preview_suggestions` (ADP-006, DOMAIN.md §10.4 F).
+//! `webdev.preview_open`, `webdev.preview_renew`, `webdev.preview_close`,
+//! `webdev.preview_suggestions` (ADP-006, DOMAIN.md §10.4 F) and the host-only `webdev.preview_scopes`
+//! (ADP-008, DOMAIN.md §7.5).
 
 use serde_json::{json, Value};
 
@@ -102,6 +103,51 @@ pub async fn open(
             format!("at most {most} preview scopes are open at once; close one first"),
         ),
     })
+}
+
+/// `webdev.preview_scopes`: the live scopes of the acting member, for the person's own preview panel. The
+/// tool is host-only (`model_visible: false`), so this runs only for a host call; it names no token and no URL.
+///
+/// # Errors
+/// Never: every refusal is a [`HostOutcome`].
+pub async fn scopes(
+    ctx: &Ctx<'_>,
+    service: Option<&PreviewService>,
+) -> Result<HostOutcome, HostFailure> {
+    let Some(service) = service else {
+        return Ok(no_preview());
+    };
+    // A scope is stored under its cleaned directory, so the filter is cleaned the same way.
+    let wanted = match ctx
+        .arg_str("directory")
+        .map(super::preview::clean_directory)
+    {
+        Some(Err(detail)) => {
+            return Ok(refuse(
+                "VALIDATION_SCHEMA",
+                "output.webdev.preview.directory",
+                detail,
+            ))
+        }
+        Some(Ok(directory)) => Some(directory),
+        None => None,
+    };
+    let found = match service.list(ctx.dispatch, wanted.as_deref()).await {
+        Ok(found) => found,
+        Err(error) => return Ok(scope_failure(error)),
+    };
+    let listed: Vec<Value> = found
+        .into_iter()
+        .map(|scope| {
+            json!({
+                "scope_id": scope.scope_id,
+                "directory": scope.directory,
+                "expires_at": rfc3339(scope.expires_ms),
+                "lifetime_remaining_ms": scope.ttl_ms,
+            })
+        })
+        .collect();
+    Ok(success(json!({ "scopes": listed }), Vec::new(), None))
 }
 
 /// `webdev.preview_renew`.

@@ -39,6 +39,7 @@ tools:
 - webdev.preview_renew
 - webdev.preview_close
 - webdev.preview_suggestions
+- webdev.preview_scopes
 - work.propose_plan
 - work.delegate
 - work.complete

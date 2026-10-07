@@ -11,7 +11,7 @@
 //!   is one key and a fresh observation is another.
 
 use quansio_capability::{EffectClass, Tier};
-use quansio_tools::call::CallContext;
+use quansio_tools::call::{CallContext, Caller};
 use quansio_tools::{
     plan_call, SideEffectClass, SideEffectMapping, SourceTrust, ToolHost, ToolRegistry,
 };
@@ -29,6 +29,7 @@ fn tier_of(class: &EffectClass) -> Option<Tier> {
 
 fn context() -> CallContext<'static> {
     CallContext {
+        caller: Caller::Model,
         workspace_id: "ws_01J8Z3K6F1N8VQ2X5W9Y0FFFFF",
         run_id: Some("run_01J8Z3K6F1N8VQ2X5W9Y0FFFFF"),
         fs_root: None,

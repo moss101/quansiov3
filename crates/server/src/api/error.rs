@@ -167,6 +167,14 @@ pub enum ApiErrorCode {
     AutomationPayloadTooLarge,
     /// A workflow worker's reply is not JSON or does not satisfy the step's output schema.
     WorkflowResultInvalid,
+    // Tool (ADP-008)
+    /// A model proposed a Tool that is not model-visible.
+    ToolNotModelVisible,
+    /// The host proposed a Tool that is not host-callable.
+    ToolNotHostCallable,
+    // Pack (ADP-008)
+    /// A pack install failed at one of its phases; the previous revision stays active.
+    PackInstallFailed,
     // Model
     /// The provider could not be reached.
     ProviderUnavailable,
@@ -191,7 +199,7 @@ pub enum ApiErrorCode {
 
 impl ApiErrorCode {
     /// Every code in the table, so a caller can check one against it without a list of its own.
-    pub const ALL: [ApiErrorCode; 78] = [
+    pub const ALL: [ApiErrorCode; 81] = [
         ApiErrorCode::AuthRequired,
         ApiErrorCode::AuthInvalidToken,
         ApiErrorCode::AuthExpired,
@@ -261,6 +269,9 @@ impl ApiErrorCode {
         ApiErrorCode::AutomationLimitExceeded,
         ApiErrorCode::AutomationPayloadTooLarge,
         ApiErrorCode::WorkflowResultInvalid,
+        ApiErrorCode::ToolNotModelVisible,
+        ApiErrorCode::ToolNotHostCallable,
+        ApiErrorCode::PackInstallFailed,
         ApiErrorCode::ProviderUnavailable,
         ApiErrorCode::ProviderRateLimited,
         ApiErrorCode::ProviderRefusal,
@@ -345,6 +356,9 @@ impl ApiErrorCode {
             Self::AutomationLimitExceeded => "AUTOMATION_LIMIT_EXCEEDED",
             Self::AutomationPayloadTooLarge => "AUTOMATION_PAYLOAD_TOO_LARGE",
             Self::WorkflowResultInvalid => "WORKFLOW_RESULT_INVALID",
+            Self::ToolNotModelVisible => "TOOL_NOT_MODEL_VISIBLE",
+            Self::ToolNotHostCallable => "TOOL_NOT_HOST_CALLABLE",
+            Self::PackInstallFailed => "PACK_INSTALL_FAILED",
             Self::ProviderUnavailable => "PROVIDER_UNAVAILABLE",
             Self::ProviderRateLimited => "PROVIDER_RATE_LIMITED",
             Self::ProviderRefusal => "PROVIDER_REFUSAL",
@@ -430,6 +444,8 @@ impl ApiErrorCode {
             | Self::AutomationLimitExceeded
             | Self::AutomationPayloadTooLarge
             | Self::WorkflowResultInvalid => "Automation",
+            Self::ToolNotModelVisible | Self::ToolNotHostCallable => "Tool",
+            Self::PackInstallFailed => "Pack",
             Self::ProviderUnavailable
             | Self::ProviderRateLimited
             | Self::ProviderRefusal
@@ -536,6 +552,10 @@ impl ApiErrorCode {
             Self::AutomationLimitExceeded | Self::WorkflowResultInvalid => {
                 StatusCode::UNPROCESSABLE_ENTITY
             }
+            // Tool (403): the tool exists and the caller may not propose it; no grant would help.
+            Self::ToolNotModelVisible | Self::ToolNotHostCallable => StatusCode::FORBIDDEN,
+            // Pack (422): the content as sent cannot be installed; the previous revision is untouched.
+            Self::PackInstallFailed => StatusCode::UNPROCESSABLE_ENTITY,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::StreamBackpressure => StatusCode::SERVICE_UNAVAILABLE,

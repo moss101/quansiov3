@@ -44,7 +44,7 @@ def test_domain_derivation_covers_commands_errors_effects_events_trust(catalog):
     # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15), the
     # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15), the 4 `RECORDING_*` codes (ADP-003, §15) and the
     # 6 file and worktree codes (ADP-005, §15).
-    assert len(catalog["errors"]) == 78  # + the 4 automation codes (ADP-007, §15)
+    assert len(catalog["errors"]) == 81  # + the 4 automation codes (ADP-007), 2 tool codes and PACK_INSTALL_FAILED (ADP-008, §15)
     assert len(catalog["effect_classes"]) == 24  # + fs.delete.workspace (ADP-005)
     assert len(catalog["event_families"]) == 36  # + webhook.* (APP-015), recording.* (ADP-003)
     assert catalog["trust_levels"] == [

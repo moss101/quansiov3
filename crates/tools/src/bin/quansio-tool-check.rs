@@ -7,14 +7,17 @@
 //! version, when one is named) and its arguments must pass [`first_violation`] against the
 //! declared input schema — and nothing else. It reads, derives nothing and writes no state.
 //!
+//! The proposer is a model, so a tool that is not model-visible (ADP-008) is refused the way
+//! `plan_call` refuses it for a model, before its arguments are looked at.
+//!
 //! Input (stdin): one JSON object per line, `{"tool": "fs.read", "version": 1?, "args": {...}}`.
 //! Output (stdout): one JSON object per input line, in order,
 //! `{"tool", "valid", "rule", "path"?, "detail"?}` where `rule` is `ok`, `unknown_tool`,
-//! `unknown_tool_version`, `invalid_arguments` or `malformed_proposal`.
+//! `unknown_tool_version`, `not_model_visible`, `invalid_arguments` or `malformed_proposal`.
 
 use std::io::{self, BufRead, Write};
 
-use quansio_tools::{first_violation, ToolRegistry};
+use quansio_tools::{first_violation, Caller, ToolRegistry};
 use serde_json::{json, Value};
 
 fn verdict(registry: &ToolRegistry, line: &str) -> Value {
@@ -46,6 +49,10 @@ fn verdict(registry: &ToolRegistry, line: &str) -> Value {
             }
         },
     };
+    if !declaration.callable_by(Caller::Model) {
+        return json!({"tool": tool, "valid": false, "rule": "not_model_visible",
+                      "detail": format!("{tool} is not available to a model")});
+    }
     match first_violation(&declaration.input_schema, &args) {
         None => json!({"tool": tool, "valid": true, "rule": "ok"}),
         Some(violation) => json!({"tool": tool, "valid": false, "rule": "invalid_arguments",

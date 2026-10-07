@@ -616,6 +616,84 @@ async fn closing_a_scope_ends_it_at_once_and_is_idempotent() {
     f.h.finish().await;
 }
 
+#[tokio::test]
+async fn the_host_lists_the_scopes_a_member_opened_and_a_model_is_never_offered_the_tool() {
+    // `webdev.preview_scopes` is host-only (ADP-008): the person's preview panel lists their scopes through a
+    // host call; it names no token and no URL, drops a scope the moment it closes or lapses, and a model that
+    // asks for it is refused.
+    let Some(f) = fixture("adp008_pv_scopes", |_| {}).await else {
+        return;
+    };
+    let site = f.open("site").await;
+    let docs = f.open("site/docs").await;
+
+    let listed = f.h.host_call("webdev.preview_scopes", json!({})).await;
+    assert!(listed.ok(), "{listed:#?}");
+    assert_eq!(listed.caller, "host");
+    let mut ids: Vec<String> = listed.result["scopes"]
+        .as_array()
+        .expect("scopes")
+        .iter()
+        .map(|scope| scope["scope_id"].as_str().expect("id").to_string())
+        .collect();
+    ids.sort();
+    let mut expected = vec![site.scope_id.clone(), docs.scope_id.clone()];
+    expected.sort();
+    assert_eq!(ids, expected);
+    let text = listed.result.to_string();
+    assert!(
+        !text.contains(&site.token) && !text.contains(&docs.token) && !text.contains("http"),
+        "a listing names no capability: {text}"
+    );
+    let first = &listed.result["scopes"][0];
+    assert!(first["directory"].is_string() && first["expires_at"].is_string());
+    assert!(first["lifetime_remaining_ms"].as_u64().expect("ttl") > 0);
+
+    // A directory filter is cleaned the way a scope's directory is; an escape is refused.
+    let only_docs =
+        f.h.host_call(
+            "webdev.preview_scopes",
+            json!({ "directory": "site/docs/" }),
+        )
+        .await;
+    assert!(only_docs.ok(), "{only_docs:#?}");
+    assert_eq!(
+        only_docs.result["scopes"].as_array().expect("scopes").len(),
+        1
+    );
+    assert_eq!(only_docs.result["scopes"][0]["scope_id"], docs.scope_id);
+    let escape =
+        f.h.host_call("webdev.preview_scopes", json!({ "directory": "../x" }))
+            .await;
+    assert_eq!(escape.code(), Some("VALIDATION_SCHEMA"), "{escape:#?}");
+
+    // A closed scope and a lapsed one leave the list.
+    let closed =
+        f.h.call("webdev.preview_close", json!({ "scope_id": site.scope_id }))
+            .await;
+    assert!(closed.ok(), "{closed:#?}");
+    f.clock.advance(f.config.preview.ttl_ms + 1);
+    let after = f.h.host_call("webdev.preview_scopes", json!({})).await;
+    assert!(after.ok(), "{after:#?}");
+    assert!(
+        after.result["scopes"]
+            .as_array()
+            .expect("scopes")
+            .is_empty(),
+        "closed and expired scopes are not listed: {after:#?}"
+    );
+
+    // The model is refused, whatever the projection holds.
+    let by_model = f.h.call("webdev.preview_scopes", json!({})).await;
+    assert_eq!(
+        by_model.code(),
+        Some("TOOL_NOT_MODEL_VISIBLE"),
+        "{by_model:#?}"
+    );
+    assert_eq!(by_model.caller, "model");
+    f.h.finish().await;
+}
+
 // ---------------------------------------------------------------------------------------------
 // Authority
 // ---------------------------------------------------------------------------------------------

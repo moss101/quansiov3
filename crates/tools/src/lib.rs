@@ -16,7 +16,7 @@ pub mod registry;
 pub mod schema;
 pub mod side_effect;
 
-pub use call::{plan_call, CallContext, ToolCallPlan};
+pub use call::{plan_call, CallContext, Caller, ToolCallPlan};
 pub use canonical::canonical_json;
 pub use declaration::{
     EffectClassRule, EvidenceCapture, IdempotencyRule, NamedDerivation, RawEvidenceCapture,

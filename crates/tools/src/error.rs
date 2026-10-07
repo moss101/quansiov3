@@ -71,6 +71,19 @@ pub enum ToolError {
         /// Which direction diverged and on which name.
         detail: String,
     },
+    /// A model proposed a tool that is not model-visible (ADP-008). The tool exists; the model may not
+    /// call it, whether or not any grant would cover it.
+    #[error("tool {tool} is not available to a model")]
+    NotModelVisible {
+        /// Tool name.
+        tool: String,
+    },
+    /// The host proposed a tool that is not host-callable (ADP-008).
+    #[error("tool {tool} is not callable from the host")]
+    NotHostCallable {
+        /// Tool name.
+        tool: String,
+    },
     /// The tool is not exposed by the subject's capability projection.
     #[error("tool {tool} is not in the capability projection")]
     NotExposed {
@@ -106,6 +119,8 @@ impl ToolError {
             | Self::UnsupportedSchemaKeyword { .. }
             | Self::InvalidArguments { .. } => "VALIDATION_SCHEMA",
             Self::NotExposed { .. } | Self::CapabilityDenied { .. } => "CAPABILITY_DENIED",
+            Self::NotModelVisible { .. } => "TOOL_NOT_MODEL_VISIBLE",
+            Self::NotHostCallable { .. } => "TOOL_NOT_HOST_CALLABLE",
             Self::Config(_)
             | Self::CatalogDivergence { .. }
             | Self::UnknownEffectClass { .. }

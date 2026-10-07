@@ -12,6 +12,7 @@
 //! default [`ModelProposalSource`] reports that owner.
 
 use async_trait::async_trait;
+use quansio_tools::Caller;
 use serde_json::Value;
 
 use super::store::Run;
@@ -49,7 +50,7 @@ pub struct ModelCallRequest {
     pub step_seq: i32,
 }
 
-/// One tool call proposed by the model (DOMAIN.md §7.4).
+/// One tool call proposed by the model, or made by the host (DOMAIN.md §7.4, §7.5).
 #[derive(Debug, Clone, PartialEq)]
 pub struct ProposedToolCall {
     /// Model-supplied call id.
@@ -58,6 +59,9 @@ pub struct ProposedToolCall {
     pub tool: String,
     /// Proposed arguments; validated by the owning tool contract, never here.
     pub args: Value,
+    /// Who proposed it. Only trusted runtime code builds a [`Caller::Host`] call (ADP-008); nothing a
+    /// model produces reaches this field, and [`ProposedToolCall::new`] is always the model's.
+    pub caller: Caller,
 }
 
 impl ProposedToolCall {
@@ -68,6 +72,17 @@ impl ProposedToolCall {
             call_id: call_id.into(),
             tool: tool.into(),
             args,
+            caller: Caller::Model,
+        }
+    }
+
+    /// A call the trusted runtime or the person's own surface makes (ADP-008): it can reach a
+    /// `host_callable` tool and takes the same capability, policy and Effect Ledger path as a model's.
+    #[must_use]
+    pub fn from_host(call_id: impl Into<String>, tool: impl Into<String>, args: Value) -> Self {
+        Self {
+            caller: Caller::Host,
+            ..Self::new(call_id, tool, args)
         }
     }
 }
