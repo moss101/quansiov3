@@ -1068,3 +1068,45 @@ async fn a_script_run_cancelled_from_outside_makes_no_further_call() {
     assert_eq!(open, 1, "every node of the script is settled");
     h.finish().await;
 }
+
+#[tokio::test]
+async fn a_script_run_another_instance_is_driving_is_left_alone() {
+    let Some(h) = prepare("wf_lock", Arc::new(happy), |_| {}).await else {
+        common::blocked_marker();
+        return;
+    };
+    let (_routine, run) = h.start_script(1, script(12, 5, 5)).await;
+    // Another instance holds the run's lock (a transaction that has taken it and not yet finished).
+    let mut holder = h.pool.begin().await.expect("begin");
+    let got: bool = sqlx::query_scalar("SELECT pg_try_advisory_xact_lock(hashtextextended($1, 0))")
+        .bind(format!("workflow:{TENANT}:{run}"))
+        .fetch_one(&mut *holder)
+        .await
+        .expect("lock");
+    assert!(got);
+    let executor = quansio_server::api::workflow::executor(&h.state);
+    let report = executor.drive_run(TENANT, &run).await.expect("drive");
+    assert_eq!(
+        report.status,
+        quansio_server::scheduler::workflow::DriveStatus::Busy
+    );
+    assert_eq!(h.total_hits(), 0, "the second instance made no call");
+    assert!(h
+        .journal(&run)
+        .await
+        .entries
+        .iter()
+        .all(|e| e["entry"] != "call_started"));
+    // Released, the run is driven to its end by whoever comes next.
+    holder.commit().await.expect("release");
+    h.pass().await.expect("pass");
+    assert_eq!(
+        h.journal(&run)
+            .await
+            .ended()
+            .map(|end| end["status"].clone()),
+        Some(json!("succeeded"))
+    );
+    assert_eq!(h.total_hits(), 5, "each call reached the model once");
+    h.finish().await;
+}
