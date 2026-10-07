@@ -3265,11 +3265,11 @@
       "notes": "Local files (D-019, DOMAIN.md 13.7 and 8.7): one-time file grants (a native dialog's picks held as descriptors under a 32-byte token bound to the asking window, single use, 60 s, limits on count and bytes, links and special files refused, claimed by the attach step through the existing CreateArtifact upload, revoked with the window; a deep link carries no path); granted folders and opaque entry ids (no channel takes a path; containment proved on real paths at each use; Quansio's own data directory is never reachable); capability-token media URLs (quansio-media, GET/HEAD, Range, sandbox policy, bound to a window by webRequest attribution, revoked with the window, grant or root); conflict-checked local edits (baseline from the read descriptor, new bytes in an exclusive temporary file, re-check after it is written, atomic rename, exclusive backup on overwrite, self-write suppression); a shared debounced watcher (one OS watch per device and inode, identity checks, typed overflow); and in qworkerd worktree retention (two-phase prepare/cleanup with a 64-hex token bound to the exact set and state, every id accounted for, a recovery snapshot under refs/quansio/recovery before a manual removal, an automatic sweep of clean idle worktrees only, recover() after a crash, restore from the snapshot) and base_digest conflict checks on fs.write and fs.patch. New: effect class fs.delete.workspace (tier 2), six FILE_*/WORKTREE_* error codes, two configs with schemas. Not exercised live (evidence NOTES.md): the native dialogs themselves, the object-store hop of the attach (MinIO), Windows and Linux, a real video element. Deferred: the runtime call sites for retention (create at Run start, acquire/release, scheduling sweep and recover, a cleanup command and control, effect reservation), base_digest in the tool dispatcher, uploads above the server's 8 MiB bound."
     },
     "ADP-006": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "PARTIAL",
+      "status": "RECONCILING",
+      "claimed_by": "agent:adp-006",
+      "started_at": "2026-10-07T09:22:13Z",
+      "updated_at": "2026-10-07T09:22:13Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
