@@ -24,7 +24,7 @@ use chrono::Utc;
 use quansio_contracts::generated::intelligence::model_event::Kind;
 use quansio_contracts::generated::intelligence::model_route::RequestClass;
 use quansio_contracts::generated::intelligence::{ModelCallRequest as WireCall, ModelEvent};
-use quansio_tools::{SourceTrust, ToolRegistry};
+use quansio_tools::{RegistryHandle, SourceTrust};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::{PgPool, Row};
@@ -131,6 +131,9 @@ pub struct GatewayModelSource {
     client: IntelligenceClient,
     context: Arc<dyn ContextBridgePort>,
     settings: ModelCallSettings,
+    /// The registry the run's projection is filtered through to make the model's tool list: the same handle
+    /// the dispatcher plans against, so a model is offered what the dispatcher will accept (ADP-009).
+    registry: RegistryHandle,
 }
 
 impl std::fmt::Debug for GatewayModelSource {
@@ -156,7 +159,15 @@ impl GatewayModelSource {
             client,
             context,
             settings,
+            registry: RegistryHandle::builtin(),
         }
+    }
+
+    /// Offer the tools of this registry handle (the one the dispatcher uses) rather than only the shipped ones.
+    #[must_use]
+    pub fn with_registry_handle(mut self, registry: RegistryHandle) -> Self {
+        self.registry = registry;
+        self
     }
 }
 
@@ -317,7 +328,8 @@ impl GatewayModelSource {
         let mut tools: Vec<String> = projection
             .as_ref()
             .map(|projection| {
-                ToolRegistry::builtin()
+                self.registry
+                    .current()
                     .exposed_names(projection, Utc::now())
                     .into_iter()
                     .map(str::to_string)

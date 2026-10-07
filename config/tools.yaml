@@ -35,6 +35,11 @@ families:
     materialized_by: EXEC-009
   - name: scm.pr.<op>
     materialized_by: EXEC-009
+  # External tools an MCP server offers (ADP-009, DOMAIN.md 7.5 "External tools"). The runtime declares them from
+  # `config/mcp.yaml` and what a server offers; none is declared here, and the registry refuses a name outside
+  # `mcp.<server>.<tool>` or one that collides with a built-in tool.
+  - name: mcp.<server>.<tool>
+    materialized_by: ADP-009
 
 tools:
   - name: fs.read

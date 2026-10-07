@@ -1,0 +1,57 @@
+# The MCP client (ADP-009, DOMAIN.md 7.5 "External tools", DOSSIER.md D-019). Policy lives here, never as a source constant (D-018).
+# crates/tools/src/mcp.rs reads this file and turns what a server offers into Tool declarations; crates/qworkerd/src/mcp/ runs the
+# transports. schemas/json/mcp-config.schema.json bounds every value.
+#
+# An external tool server is an effect path like any other: every tool it offers is registered in the Tool Registry as
+# `mcp.<server>.<tool>`, exposed to a model only through a Capability Projection (a grant on `connector:mcp.<server>/<tool>`),
+# classified here and nowhere else, and dispatched through the turn loop and the Effect Ledger. What a server says about itself
+# (a description, an annotation such as `readOnlyHint`, a schema default) never classifies, widens or describes a tool: it is data.
+#
+# No server ships configured. A deployment adds its servers to its own copy of this file (QUANSIO_MCP_CONFIG names it).
+version: 1
+
+# Master switch for the client. Off, nothing connects and nothing is registered. It is a rollout flag: it can never widen authority.
+enabled: true
+
+limits:
+  # At most this many servers and, per server, this many tools are registered; the rest are refused and reported.
+  max_servers: 16
+  max_tools_per_server: 64
+  # One tool's input schema, after normalisation, is at most this many bytes, nests at most this deep and names at most this many properties.
+  max_schema_bytes: 16384
+  max_schema_depth: 6
+  max_schema_properties: 64
+  # Names that reach a model (a property name, an enum value) are at most this long.
+  max_name_chars: 64
+  # What a result may carry back: the text is cut here (and said to be cut), and every other content block is counted, not returned.
+  max_result_bytes: 65536
+  # One protocol message (a line on stdio, an HTTP body, an event) is at most this large; a bigger one ends the call.
+  max_message_bytes: 1048576
+  # Pages of `tools/list` that one refresh reads.
+  max_list_pages: 8
+  # A call that is not answered in this long is cut. For a tool that is not a read, a call cut after it was sent is an unknown outcome.
+  call_timeout_ms: 30000
+  call_timeout_max_ms: 120000
+  initialize_timeout_ms: 10000
+  # Calls one server serves at once, and how long another waits for a place before it is refused.
+  max_concurrent_calls: 4
+  queue_timeout_ms: 5000
+
+restart:
+  # A stdio server that exits is started again, with this much delay before each of its restarts, and only this many times
+  # before the server is reported unavailable until the worker is restarted.
+  max_restarts: 3
+  backoff_ms: [250, 1000, 4000]
+
+# What a tool the configuration does not classify settles as. It is the highest-risk class that needs an approval and never accepts
+# an `always` rule (DOMAIN.md 7.1, tier 4): a tool nobody classified is never a read by default.
+unclassified:
+  effect_class: data.upload.protected
+
+stdio:
+  # Environment names a stdio server may inherit from the worker, in addition to the `env` its entry lists. Everything else is dropped:
+  # the child never sees a provider key, a connector token or the worker's own configuration. A name containing KEY, TOKEN, SECRET,
+  # PASSWORD, CREDENTIAL or AUTH, or starting with QUANSIO_, is refused in any list.
+  inherit_env: [PATH, LANG, LC_ALL, TMPDIR]
+
+servers: []

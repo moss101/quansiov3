@@ -205,6 +205,33 @@ errors:
 - code: PACK_INSTALL_FAILED
   family: Pack
   http_status: '422'
+- code: MCP_SERVER_UNAVAILABLE
+  family: MCP
+  http_status: 409/422/502/503
+- code: MCP_TOOL_NOT_REGISTERED
+  family: MCP
+  http_status: 409/422/502/503
+- code: MCP_TOOL_CHANGED
+  family: MCP
+  http_status: 409/422/502/503
+- code: MCP_INVALID_REQUEST
+  family: MCP
+  http_status: 409/422/502/503
+- code: MCP_PROTOCOL_ERROR
+  family: MCP
+  http_status: 409/422/502/503
+- code: MCP_TOOL_ERROR
+  family: MCP
+  http_status: 409/422/502/503
+- code: MCP_RESULT_INVALID
+  family: MCP
+  http_status: 409/422/502/503
+- code: MCP_BUSY
+  family: MCP
+  http_status: 409/422/502/503
+- code: MCP_CALL_IN_DOUBT
+  family: MCP
+  http_status: 409/422/502/503
 - code: AUTOMATION_TIMEZONE_UNKNOWN
   family: Automation
   http_status: 400/413/422

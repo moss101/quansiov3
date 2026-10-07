@@ -1879,10 +1879,13 @@ name = "quansio-qworkerd"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "chrono",
  "futures-util",
+ "quansio-capability",
  "quansio-core",
  "quansio-machine",
  "quansio-tools",
+ "reqwest",
  "serde",
  "serde_json",
  "serde_yaml",

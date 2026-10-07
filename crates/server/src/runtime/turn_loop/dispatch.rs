@@ -29,7 +29,8 @@ use quansio_core::{CanonicalId, Digest, Generation, Prefix, UlidGenerator};
 use quansio_events::event_type::EventType;
 use quansio_events::{EventDraft, EventStore};
 use quansio_tools::{
-    canonical_json, plan_call, CallContext, Caller, SourceTrust, ToolCallPlan, ToolRegistry,
+    canonical_json, plan_call, CallContext, Caller, RegistryHandle, SourceTrust, ToolCallPlan,
+    ToolRegistry,
 };
 use serde_json::{json, Value};
 use sqlx::{PgPool, Row};
@@ -71,6 +72,8 @@ pub const ARTIFACT_HOST_OWNER: &str = "CORE-007";
 /// The task that owns the output generators (deck, diagram, PDF, video, transcription and
 /// web-dev preview tools, all server-hosted).
 pub const OUTPUT_HOST_OWNER: &str = "ADP-006";
+/// The task that owns the MCP client: external tool servers run in the execution target (qworkerd).
+pub const MCP_HOST_OWNER: &str = "ADP-009";
 /// The task that owns ACTIVE knowledge (the server-hosted citation tool).
 pub const KNOWLEDGE_HOST_OWNER: &str = "INT-006";
 /// The task that resolves the acting user's roles and identity.
@@ -92,6 +95,7 @@ pub fn host_owner(tool: &str) -> &'static str {
         | "video.inspect"
         | "audio.transcribe" => OUTPUT_HOST_OWNER,
         _ if tool.starts_with("webdev.") => OUTPUT_HOST_OWNER,
+        _ if tool.starts_with("mcp.") => MCP_HOST_OWNER,
         _ if tool.starts_with("browser.") => BROWSER_TOOL_HOST_OWNER,
         _ if tool.starts_with("computer.") => COMPUTER_TOOL_HOST_OWNER,
         "web.search" | "web.fetch" => CONNECTOR_HOST_OWNER,
@@ -409,7 +413,9 @@ impl MemoryProposalPort for UnavailableMemoryProposals {
 pub struct ToolDispatchService {
     pool: PgPool,
     identity: RuntimeIdentity,
-    registry: &'static ToolRegistry,
+    /// The registry calls are planned and tools exposed against: the shipped one, plus the external tools an
+    /// MCP server currently offers (ADP-009). One handle, shared with the model's tool offer.
+    registry: RegistryHandle,
     runs: RuntimeStore,
     events: EventStore,
     ledger: EffectLedger,
@@ -448,7 +454,7 @@ impl ToolDispatchService {
             runs: RuntimeStore::new(pool.clone(), identity.clone())?,
             pool,
             identity,
-            registry: ToolRegistry::builtin(),
+            registry: RegistryHandle::builtin(),
             ledger,
             policies,
             projections,
@@ -496,14 +502,24 @@ impl ToolDispatchService {
     /// calls this.
     #[must_use]
     pub fn with_registry(mut self, registry: &'static ToolRegistry) -> Self {
+        self.registry = RegistryHandle::fixed(registry.clone());
+        self
+    }
+
+    /// Plan, expose and dispatch against a registry the caller keeps current: the MCP client replaces one
+    /// server's external tools in the handle when its tool list changes (ADP-009), and the service sees the
+    /// change on its next call. The model's tool offer must be given the same handle, so what a model is
+    /// offered is what the dispatcher will accept.
+    #[must_use]
+    pub fn with_registry_handle(mut self, registry: RegistryHandle) -> Self {
         self.registry = registry;
         self
     }
 
-    /// The registry this service plans against.
+    /// The registry this service plans against, as it is now.
     #[must_use]
-    pub fn registry(&self) -> &'static ToolRegistry {
-        self.registry
+    pub fn registry(&self) -> Arc<ToolRegistry> {
+        self.registry.current()
     }
 
     /// Make a **host call** (ADP-008, DOMAIN.md §7.5): the trusted runtime, or the person through their
@@ -553,8 +569,8 @@ impl ToolDispatchService {
         let Some(projection) = self.projections.projection_for_run(run_id).await? else {
             return Ok(Vec::new());
         };
-        let mut names: Vec<String> = self
-            .registry
+        let registry = self.registry.current();
+        let mut names: Vec<String> = registry
             .exposed_names(&projection, now)
             .into_iter()
             .map(str::to_string)
@@ -602,8 +618,9 @@ impl ToolDispatchService {
                 detail: format!("the tool call for effect {} is gone", pending.effect_id),
             });
         };
+        let registry = self.registry.current();
         let plan = match plan_call(
-            self.registry,
+            &registry,
             &stored.tool_name,
             Some(stored.version),
             &stored.args,
@@ -808,8 +825,9 @@ impl ToolDispatchPort for ToolDispatchService {
         }
 
         // 1. Resolve and validate strictly. Nothing is written when this refuses.
+        let registry = self.registry.current();
         let plan = match plan_call(
-            self.registry,
+            &registry,
             &call.tool,
             None,
             &call.args,

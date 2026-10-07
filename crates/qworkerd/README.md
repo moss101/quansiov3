@@ -12,4 +12,9 @@ side-effecting actions idempotent and an unknown outcome *in doubt* (never retri
 resolved only through the runtime's secret port, and dialogs, downloads, permissions, certificates and
 the user-gesture rule as typed state. Its tests drive a real headless Chrome (`BLOCKED_EXTERNAL` without one).
 
+The MCP client (`src/mcp/`, ADP-009) connects to the servers `config/mcp.yaml` names, over stdio (a subprocess with a
+cleared environment) or streamable HTTP (through the egress broker's rules), registers what they offer as external tools
+(`mcp.<server>.<tool>`, classified by the configuration, results `UNTRUSTED_EXTERNAL`) and dispatches planned calls; a call sent
+and not answered is in doubt, never retried. Its tests run a real MCP server process (`BLOCKED_EXTERNAL` without `python3`).
+
 Build: `cargo test -p quansio-qworkerd`

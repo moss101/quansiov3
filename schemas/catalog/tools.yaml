@@ -22,6 +22,7 @@ tools:
 - computer.clipboard
 - computer.system_key
 - connector.<id>.<op>
+- mcp.<server>.<tool>
 - scm.git.<op>
 - scm.pr.<op>
 - artifact.create

@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/mcp-config.schema.json",
+  "title": "Quansio MCP client (config/mcp.yaml)",
+  "description": "Servers, bounds, restart policy and the classification of external MCP tools (DOMAIN.md 7.5 External tools, D-019). A server's tools are classified here and nowhere else; an unclassified tool settles as a tier 4 effect; no list may hold a name that looks like a credential.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "enabled", "limits", "restart", "unclassified", "stdio", "servers"],
+  "$defs": {
+    "environmentName": {
+      "type": "string",
+      "pattern": "^(?!QUANSIO_)(?!.*(?i:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|AUTH))[A-Za-z_][A-Za-z0-9_]{0,63}$"
+    },
+    "effectClass": {
+      "type": "string",
+      "enum": [
+        "read.internal", "read.external", "fs.write.workspace", "fs.write.host", "fs.delete.workspace",
+        "process.exec.sandboxed", "process.exec.host", "network.egress.new_destination", "content.upload",
+        "record.create", "record.update", "record.delete", "message.send", "content.publish", "scm.remote.write",
+        "computer.input.privileged", "browser.session.import", "payment.execute", "data.upload.protected",
+        "credential.access", "identity.change", "memory.write", "knowledge.write", "skill.promote", "pack.publish",
+        "runtime.control"
+      ]
+    },
+    "toolPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect_class"],
+      "properties": {
+        "effect_class": { "$ref": "#/$defs/effectClass" },
+        "description": { "type": "string", "minLength": 1, "maxLength": 400 }
+      }
+    },
+    "server": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "transport"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,31}$" },
+        "transport": { "enum": ["stdio", "http"] },
+        "command": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "args": { "type": "array", "maxItems": 32, "items": { "type": "string", "maxLength": 512 } },
+        "cwd": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "env": {
+          "type": "object",
+          "maxProperties": 32,
+          "propertyNames": { "$ref": "#/$defs/environmentName" },
+          "additionalProperties": { "type": "string", "maxLength": 512 }
+        },
+        "inherit_env": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/environmentName" } },
+        "url": { "type": "string", "pattern": "^https?://[^@\\s]+$", "maxLength": 1024 },
+        "call_timeout_ms": { "type": "integer", "minimum": 100, "maximum": 120000 },
+        "max_concurrent_calls": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "tools": {
+          "type": "object",
+          "maxProperties": 256,
+          "additionalProperties": { "$ref": "#/$defs/toolPolicy" }
+        }
+      }
+    }
+  },
+  "properties": {
+    "version": { "const": 1 },
+    "enabled": { "type": "boolean" },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_servers", "max_tools_per_server", "max_schema_bytes", "max_schema_depth", "max_schema_properties",
+        "max_name_chars", "max_result_bytes", "max_message_bytes", "max_list_pages", "call_timeout_ms",
+        "call_timeout_max_ms", "initialize_timeout_ms", "max_concurrent_calls", "queue_timeout_ms"
+      ],
+      "properties": {
+        "max_servers": { "type": "integer", "minimum": 1, "maximum": 64 },
+        "max_tools_per_server": { "type": "integer", "minimum": 1, "maximum": 256 },
+        "max_schema_bytes": { "type": "integer", "minimum": 256, "maximum": 65536 },
+        "max_schema_depth": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "max_schema_properties": { "type": "integer", "minimum": 1, "maximum": 128 },
+        "max_name_chars": { "type": "integer", "minimum": 8, "maximum": 128 },
+        "max_result_bytes": { "type": "integer", "minimum": 1024, "maximum": 1048576 },
+        "max_message_bytes": { "type": "integer", "minimum": 4096, "maximum": 8388608 },
+        "max_list_pages": { "type": "integer", "minimum": 1, "maximum": 32 },
+        "call_timeout_ms": { "type": "integer", "minimum": 100, "maximum": 120000 },
+        "call_timeout_max_ms": { "type": "integer", "minimum": 100, "maximum": 300000 },
+        "initialize_timeout_ms": { "type": "integer", "minimum": 100, "maximum": 60000 },
+        "max_concurrent_calls": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "queue_timeout_ms": { "type": "integer", "minimum": 0, "maximum": 60000 }
+      }
+    },
+    "restart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_restarts", "backoff_ms"],
+      "properties": {
+        "max_restarts": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "backoff_ms": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": { "type": "integer", "minimum": 0, "maximum": 60000 }
+        }
+      }
+    },
+    "unclassified": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect_class"],
+      "properties": {
+        "effect_class": {
+          "description": "Never a read: only a class that needs an approval and refuses an always rule (tier 3 or 4).",
+          "enum": [
+            "message.send", "content.publish", "scm.remote.write", "computer.input.privileged", "process.exec.host",
+            "fs.write.host", "record.delete", "browser.session.import", "payment.execute", "data.upload.protected",
+            "credential.access", "identity.change"
+          ]
+        }
+      }
+    },
+    "stdio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inherit_env"],
+      "properties": {
+        "inherit_env": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/environmentName" } }
+      }
+    },
+    "servers": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/server" } }
+  }
+}

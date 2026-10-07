@@ -175,6 +175,25 @@ pub enum ApiErrorCode {
     // Pack (ADP-008)
     /// A pack install failed at one of its phases; the previous revision stays active.
     PackInstallFailed,
+    // MCP (ADP-009)
+    /// The external tool server cannot be reached, is switched off, or exhausted its restart budget.
+    McpServerUnavailable,
+    /// No external tool is registered under the name and version (it was retired, or never offered).
+    McpToolNotRegistered,
+    /// The server changed the tool after the call was planned; plan it again.
+    McpToolChanged,
+    /// The arguments do not match the external tool's schema.
+    McpInvalidRequest,
+    /// The server answered with a protocol error.
+    McpProtocolError,
+    /// The server ran the tool and reported a failure.
+    McpToolError,
+    /// The server's result is not a shape the client can reduce.
+    McpResultInvalid,
+    /// The server is serving as many calls as it may.
+    McpBusy,
+    /// The call reached the server and no answer came back; the outcome is unknown and is not retried.
+    McpCallInDoubt,
     // Model
     /// The provider could not be reached.
     ProviderUnavailable,
@@ -199,7 +218,7 @@ pub enum ApiErrorCode {
 
 impl ApiErrorCode {
     /// Every code in the table, so a caller can check one against it without a list of its own.
-    pub const ALL: [ApiErrorCode; 81] = [
+    pub const ALL: [ApiErrorCode; 90] = [
         ApiErrorCode::AuthRequired,
         ApiErrorCode::AuthInvalidToken,
         ApiErrorCode::AuthExpired,
@@ -272,6 +291,15 @@ impl ApiErrorCode {
         ApiErrorCode::ToolNotModelVisible,
         ApiErrorCode::ToolNotHostCallable,
         ApiErrorCode::PackInstallFailed,
+        ApiErrorCode::McpServerUnavailable,
+        ApiErrorCode::McpToolNotRegistered,
+        ApiErrorCode::McpToolChanged,
+        ApiErrorCode::McpInvalidRequest,
+        ApiErrorCode::McpProtocolError,
+        ApiErrorCode::McpToolError,
+        ApiErrorCode::McpResultInvalid,
+        ApiErrorCode::McpBusy,
+        ApiErrorCode::McpCallInDoubt,
         ApiErrorCode::ProviderUnavailable,
         ApiErrorCode::ProviderRateLimited,
         ApiErrorCode::ProviderRefusal,
@@ -359,6 +387,15 @@ impl ApiErrorCode {
             Self::ToolNotModelVisible => "TOOL_NOT_MODEL_VISIBLE",
             Self::ToolNotHostCallable => "TOOL_NOT_HOST_CALLABLE",
             Self::PackInstallFailed => "PACK_INSTALL_FAILED",
+            Self::McpServerUnavailable => "MCP_SERVER_UNAVAILABLE",
+            Self::McpToolNotRegistered => "MCP_TOOL_NOT_REGISTERED",
+            Self::McpToolChanged => "MCP_TOOL_CHANGED",
+            Self::McpInvalidRequest => "MCP_INVALID_REQUEST",
+            Self::McpProtocolError => "MCP_PROTOCOL_ERROR",
+            Self::McpToolError => "MCP_TOOL_ERROR",
+            Self::McpResultInvalid => "MCP_RESULT_INVALID",
+            Self::McpBusy => "MCP_BUSY",
+            Self::McpCallInDoubt => "MCP_CALL_IN_DOUBT",
             Self::ProviderUnavailable => "PROVIDER_UNAVAILABLE",
             Self::ProviderRateLimited => "PROVIDER_RATE_LIMITED",
             Self::ProviderRefusal => "PROVIDER_REFUSAL",
@@ -446,6 +483,15 @@ impl ApiErrorCode {
             | Self::WorkflowResultInvalid => "Automation",
             Self::ToolNotModelVisible | Self::ToolNotHostCallable => "Tool",
             Self::PackInstallFailed => "Pack",
+            Self::McpServerUnavailable
+            | Self::McpToolNotRegistered
+            | Self::McpToolChanged
+            | Self::McpInvalidRequest
+            | Self::McpProtocolError
+            | Self::McpToolError
+            | Self::McpResultInvalid
+            | Self::McpBusy
+            | Self::McpCallInDoubt => "MCP",
             Self::ProviderUnavailable
             | Self::ProviderRateLimited
             | Self::ProviderRefusal
@@ -556,6 +602,16 @@ impl ApiErrorCode {
             Self::ToolNotModelVisible | Self::ToolNotHostCallable => StatusCode::FORBIDDEN,
             // Pack (422): the content as sent cannot be installed; the previous revision is untouched.
             Self::PackInstallFailed => StatusCode::UNPROCESSABLE_ENTITY,
+            // MCP (409/422/502/503): a tool that was retired or changed and a call in doubt conflict with the state the
+            // call assumed; arguments the schema refuses and a tool that reported failure are unprocessable as sent; a
+            // server that cannot be reached or is busy is unavailable; a server that breaks the protocol or sends a result
+            // that cannot be read is a bad gateway.
+            Self::McpToolNotRegistered | Self::McpToolChanged | Self::McpCallInDoubt => {
+                StatusCode::CONFLICT
+            }
+            Self::McpInvalidRequest | Self::McpToolError => StatusCode::UNPROCESSABLE_ENTITY,
+            Self::McpServerUnavailable | Self::McpBusy => StatusCode::SERVICE_UNAVAILABLE,
+            Self::McpProtocolError | Self::McpResultInvalid => StatusCode::BAD_GATEWAY,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::StreamBackpressure => StatusCode::SERVICE_UNAVAILABLE,

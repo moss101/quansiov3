@@ -15,6 +15,7 @@
 
 pub mod browser;
 pub mod host;
+pub mod mcp;
 pub mod media;
 pub mod tools;
 

@@ -44,7 +44,7 @@ def test_domain_derivation_covers_commands_errors_effects_events_trust(catalog):
     # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15), the
     # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15), the 4 `RECORDING_*` codes (ADP-003, §15) and the
     # 6 file and worktree codes (ADP-005, §15).
-    assert len(catalog["errors"]) == 81  # + the 4 automation codes (ADP-007), 2 tool codes and PACK_INSTALL_FAILED (ADP-008, §15)
+    assert len(catalog["errors"]) == 90  # + the 4 automation codes (ADP-007), 2 tool codes and PACK_INSTALL_FAILED (ADP-008), 9 MCP codes (ADP-009, §15)
     assert len(catalog["effect_classes"]) == 24  # + fs.delete.workspace (ADP-005)
     assert len(catalog["event_families"]) == 36  # + webhook.* (APP-015), recording.* (ADP-003)
     assert catalog["trust_levels"] == [
@@ -255,6 +255,8 @@ def test_json_schemas_validate_real_artifacts():
     validator("automation-config").validate(automation)
     pack_install = yaml.safe_load((ROOT / "config" / "pack-install.yaml").read_text())
     validator("pack-install-config").validate(pack_install)
+    mcp = yaml.safe_load((ROOT / "config" / "mcp.yaml").read_text())
+    validator("mcp-config").validate(mcp)
 
     summaries = sorted((ROOT / "evidence").glob("*/*/summary.json"))
     assert summaries, "at least one task evidence bundle must exist"
@@ -532,3 +534,56 @@ def test_pack_install_schema_keeps_history_and_reports_bounded():
     assert broken(lambda d: d["reports"].update(max_diagnostic_bytes=1_000_000))
     assert broken(lambda d: d.update(unknown_section={}))
     assert broken(lambda d: d["reports"].pop("retention_days"))
+
+
+def test_mcp_config_schema_keeps_external_tools_classified_bounded_and_credential_free():
+    """A configuration cannot classify an unclassified tool as a read, hand a server a credential-shaped environment
+    name, point an http server at a URL with credentials, or leave a bound open (ADP-009, DOMAIN.md 7.5)."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "mcp-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "mcp.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+    assert good["servers"] == [], "no server ships configured"
+    assert good["unclassified"]["effect_class"] == "data.upload.protected"
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    def with_server(**server):
+        base = {"name": "demo", "transport": "stdio", "command": "/bin/true"}
+        base.update(server)
+        return lambda d: d.update(servers=[base])
+
+    assert not broken(with_server())
+    assert not broken(with_server(tools={"read": {"effect_class": "read.external"}}))
+    # An unclassified tool is never a read, whatever the file says.
+    assert broken(lambda d: d["unclassified"].update(effect_class="read.external"))
+    assert broken(lambda d: d["unclassified"].update(effect_class="read.internal"))
+    assert broken(lambda d: d["unclassified"].update(effect_class="content.upload"))
+    # No credential-shaped or worker-owned environment name, anywhere.
+    for name in ("ANTHROPIC_API_KEY", "GITHUB_TOKEN", "db_password", "QUANSIO_SERVER_URL", "AWS_SECRET_ACCESS_KEY", "X_AUTH"):
+        assert broken(with_server(env={name: "x"})), name
+        assert broken(with_server(inherit_env=[name])), name
+        assert broken(lambda d, n=name: d["stdio"].update(inherit_env=[n])), name
+    assert not broken(with_server(env={"DEMO_MODE": "fixture"}))
+    # A tool's class is a DOMAIN 7.1 class, a server name is a plain identifier, a url has no credentials.
+    assert broken(with_server(tools={"x": {"effect_class": "made.up"}}))
+    assert broken(with_server(name="Bad-Name"))
+    assert broken(with_server(transport="http", url="https://user:pw@example.com/mcp"))
+    assert not broken(with_server(transport="http", url="https://example.com/mcp"))
+    assert broken(with_server(transport="websocket"))
+    assert broken(with_server(unknown_key=1))
+    # Bounds stay bounded.
+    assert broken(lambda d: d["limits"].update(call_timeout_max_ms=10_000_000))
+    assert broken(lambda d: d["limits"].update(max_result_bytes=64 * 1024 * 1024))
+    assert broken(lambda d: d["limits"].update(max_concurrent_calls=0))
+    assert broken(lambda d: d["restart"].update(max_restarts=1000))
+    assert broken(lambda d: d["restart"].update(backoff_ms=[]))
+    assert broken(lambda d: d.update(unknown_section={}))
+    assert broken(lambda d: d["limits"].pop("max_schema_bytes"))

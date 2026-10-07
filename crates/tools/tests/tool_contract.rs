@@ -82,8 +82,8 @@ fn builtin_registry_covers_the_generated_tool_catalog() {
         .expect("registry and catalog agree");
     assert_eq!(
         registry.families().len(),
-        3,
-        "three reserved catalog families"
+        4,
+        "four reserved catalog families (connector, two scm, and the external mcp tools)"
     );
     assert!(
         !registry.is_empty(),

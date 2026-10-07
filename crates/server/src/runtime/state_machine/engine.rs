@@ -502,6 +502,9 @@ impl RuntimeEngine {
             .is_some()
         {
             call.tool.clone()
+        } else if call.tool.starts_with("mcp.") {
+            // External tools are many and named by servers: one bounded label, not one per tool.
+            "mcp".to_string()
         } else {
             "unregistered".to_string()
         };

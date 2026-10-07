@@ -36,6 +36,7 @@ glossary:
 - Model-visible tool
 - Pack revision
 - Install report
+- External tool
 - Host-callable tool
 - ExecutionTarget
 - ComputerControl
