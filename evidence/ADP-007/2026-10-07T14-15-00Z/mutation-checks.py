@@ -182,9 +182,9 @@ def git(*args: str) -> str:
 
 
 def run(cmd: list[str], cwd: str) -> tuple[int, str]:
-    # A mutant may loop; a run that does not end in 20 minutes is cut off and has no named failing test.
+    # A mutant may loop; a run that does not end in 15 minutes is cut off and has no named failing test.
     try:
-        result = subprocess.run(cmd, cwd=REPO / cwd, env=ENV, capture_output=True, text=True, timeout=1200)
+        result = subprocess.run(cmd, cwd=REPO / cwd, env=ENV, capture_output=True, text=True, timeout=900)
     except subprocess.TimeoutExpired as error:
         return 124, f"TIMEOUT {error}"
     return result.returncode, result.stdout + result.stderr
