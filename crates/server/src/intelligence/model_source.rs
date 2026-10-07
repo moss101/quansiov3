@@ -188,6 +188,8 @@ struct RunFacts {
     work_node_id: String,
     agent_thread_id: String,
     trigger_ref: Option<String>,
+    /// The route class a workflow step asked for (`low`, `medium`, `high`), kept in the run's budget snapshot (ADP-007).
+    effort: Option<String>,
 }
 
 /// One tool call this run made, as the runtime recorded it.
@@ -412,7 +414,7 @@ impl GatewayModelSource {
             messages: validated.messages.clone(),
             tools,
             output_constraints_json: String::new(),
-            effort: String::new(),
+            effort: run.effort.clone().unwrap_or_default(),
             max_output_tokens: self.settings.max_output_tokens,
             stream: true,
             dlp_profile: String::new(),
@@ -507,7 +509,8 @@ impl GatewayModelSource {
         let mut tx = self.pool.begin().await?;
         schema::set_tenant_context(&mut tx, &request.tenant_id).await?;
         let row = sqlx::query(
-            "SELECT workspace_id, work_node_id, agent_thread_id, trigger_ref FROM runs \
+            "SELECT workspace_id, work_node_id, agent_thread_id, trigger_ref, \
+                    budget_snapshot ->> 'effort' AS effort FROM runs \
              WHERE tenant_id = $1 AND id = $2",
         )
         .bind(&request.tenant_id)
@@ -525,6 +528,7 @@ impl GatewayModelSource {
             work_node_id: row.try_get("work_node_id")?,
             agent_thread_id: row.try_get("agent_thread_id")?,
             trigger_ref: row.try_get("trigger_ref")?,
+            effort: row.try_get("effort")?,
         })
     }
 
@@ -596,10 +600,6 @@ impl GatewayModelSource {
         let mut task_text = String::new();
         let mut seq: u32 = 1;
         for message in &messages {
-            let text = message_text(&message.try_get::<Value, _>("content_blocks")?);
-            if text.trim().is_empty() {
-                continue;
-            }
             let id: String = message.try_get("id")?;
             let author: String = message.try_get("author_kind")?;
             let (role, trust_hint) = match author.as_str() {
@@ -609,20 +609,37 @@ impl GatewayModelSource {
                 _ => (SegmentRole::User, Some(SourceTrust::AgentGenerated)),
             };
             let trigger = run.trigger_ref.as_deref() == Some(id.as_str());
-            if trigger {
-                task_text.clone_from(&text);
+            // A message is the author's text and, in a message the runtime made from outside data (a trigger payload, a
+            // value a workflow step substitutes), blocks of untrusted data. Each untrusted block is a segment of its own
+            // with an untrusted label (DOMAIN.md 12 rule 9), so the plane renders it inside the typed boundary and the
+            // text around it keeps the message's own label.
+            for part in message_parts(&message.try_get::<Value, _>("content_blocks")?) {
+                if part.text.trim().is_empty() {
+                    continue;
+                }
+                if trigger && !part.untrusted {
+                    // What the task is (it selects skills) never includes outside data.
+                    if !task_text.is_empty() {
+                        task_text.push('\n');
+                    }
+                    task_text.push_str(&part.text);
+                }
+                segments.push(SegmentRequest {
+                    seq,
+                    source: SegmentSource::Thread,
+                    required: trigger,
+                    source_ref: id.clone(),
+                    role,
+                    content: Value::String(part.text),
+                    trust_hint: if part.untrusted {
+                        Some(SourceTrust::UntrustedExternal)
+                    } else {
+                        trust_hint
+                    },
+                    snapshot_ref: snapshot.clone(),
+                });
+                seq += 1;
             }
-            segments.push(SegmentRequest {
-                seq,
-                source: SegmentSource::Thread,
-                required: trigger,
-                source_ref: id,
-                role,
-                content: Value::String(text),
-                trust_hint,
-                snapshot_ref: snapshot.clone(),
-            });
-            seq += 1;
         }
 
         // This run's tool rounds: the calls following each model_call step, with their results.
@@ -693,18 +710,34 @@ impl GatewayModelSource {
     }
 }
 
-/// The text of a message's content blocks.
-fn message_text(blocks: &Value) -> String {
-    blocks
-        .as_array()
-        .map(|blocks| {
-            blocks
-                .iter()
-                .filter_map(|block| block.get("text").and_then(Value::as_str))
-                .collect::<Vec<_>>()
-                .join("\n")
-        })
-        .unwrap_or_default()
+/// A run of a message's content that is all of one trust.
+struct MessagePart {
+    text: String,
+    /// Whether it came from outside the workspace (`untrusted_data` blocks).
+    untrusted: bool,
+}
+
+/// A message's content blocks as parts, in order: consecutive blocks of the author's own text are joined as they always were,
+/// and each `untrusted_data` block stands alone.
+fn message_parts(blocks: &Value) -> Vec<MessagePart> {
+    let mut parts: Vec<MessagePart> = Vec::new();
+    for block in blocks.as_array().into_iter().flatten() {
+        let Some(text) = block.get("text").and_then(Value::as_str) else {
+            continue;
+        };
+        let untrusted = block.get("type").and_then(Value::as_str) == Some("untrusted_data");
+        match parts.last_mut() {
+            Some(last) if !untrusted && !last.untrusted => {
+                last.text.push('\n');
+                last.text.push_str(text);
+            }
+            _ => parts.push(MessagePart {
+                text: text.to_string(),
+                untrusted,
+            }),
+        }
+    }
+    parts
 }
 
 /// Recorded arguments as the object a tool call carries (a non-object is wrapped, never dropped).

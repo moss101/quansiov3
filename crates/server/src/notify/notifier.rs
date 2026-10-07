@@ -11,6 +11,7 @@
 //! | `routine.fire_completed` | `completed` | the routine's owner |
 //! | `routine.fire_failed` | `failed` | the routine's owner |
 //! | `run.blocked` / `run.failed` of a routine's run | `blocked` / `failed` | the routine's owner |
+//! | `routine.script_paused` (a workflow script at its call budget) | `attention` | the routine's owner |
 //!
 //! The notifications and the cursor advance commit together, and a notification is unique
 //! per (event, user, kind), so consuming an event twice notifies once.
@@ -207,6 +208,23 @@ async fn recipients(
                 kind,
                 line,
                 json!({ "routine_id": routine_id, "run_id": text(payload, "run_id"), "fire_id": text(payload, "fire_id") }),
+            )]
+        }
+        // A workflow script that stopped at its call budget (ADP-007): paused, not failed, and waiting on a person.
+        "routine.script_paused" => {
+            let Some(owner) = text(payload, "owner_user_id") else {
+                return Ok(Vec::new());
+            };
+            let routine_id = text(payload, "routine_id").unwrap_or(&event.aggregate_id);
+            let title = routine_title(conn, tenant_id, routine_id).await?;
+            vec![one(
+                owner,
+                "attention",
+                format!(
+                    "Script \u{201c}{title}\u{201d} is paused: {}",
+                    text(payload, "reason").unwrap_or("it needs a decision")
+                ),
+                json!({ "routine_id": routine_id, "run_id": text(payload, "run_id") }),
             )]
         }
         "run.blocked" | "run.failed" => {

@@ -158,6 +158,15 @@ pub enum ApiErrorCode {
     AdapterUnavailable,
     /// A preview scope's authority no longer holds.
     PreviewScopeLapsed,
+    // Automation (ADP-007)
+    /// A routine's timezone is not UTC, a fixed offset or an IANA name.
+    AutomationTimezoneUnknown,
+    /// A configured automation limit refuses the change.
+    AutomationLimitExceeded,
+    /// An inbound hook's body is over the bound.
+    AutomationPayloadTooLarge,
+    /// A workflow worker's reply is not JSON or does not satisfy the step's output schema.
+    WorkflowResultInvalid,
     // Model
     /// The provider could not be reached.
     ProviderUnavailable,
@@ -182,7 +191,7 @@ pub enum ApiErrorCode {
 
 impl ApiErrorCode {
     /// Every code in the table, so a caller can check one against it without a list of its own.
-    pub const ALL: [ApiErrorCode; 74] = [
+    pub const ALL: [ApiErrorCode; 78] = [
         ApiErrorCode::AuthRequired,
         ApiErrorCode::AuthInvalidToken,
         ApiErrorCode::AuthExpired,
@@ -248,6 +257,10 @@ impl ApiErrorCode {
         ApiErrorCode::DeckNotDeliverable,
         ApiErrorCode::AdapterUnavailable,
         ApiErrorCode::PreviewScopeLapsed,
+        ApiErrorCode::AutomationTimezoneUnknown,
+        ApiErrorCode::AutomationLimitExceeded,
+        ApiErrorCode::AutomationPayloadTooLarge,
+        ApiErrorCode::WorkflowResultInvalid,
         ApiErrorCode::ProviderUnavailable,
         ApiErrorCode::ProviderRateLimited,
         ApiErrorCode::ProviderRefusal,
@@ -328,6 +341,10 @@ impl ApiErrorCode {
             Self::DeckNotDeliverable => "DECK_NOT_DELIVERABLE",
             Self::AdapterUnavailable => "ADAPTER_UNAVAILABLE",
             Self::PreviewScopeLapsed => "PREVIEW_SCOPE_LAPSED",
+            Self::AutomationTimezoneUnknown => "AUTOMATION_TIMEZONE_UNKNOWN",
+            Self::AutomationLimitExceeded => "AUTOMATION_LIMIT_EXCEEDED",
+            Self::AutomationPayloadTooLarge => "AUTOMATION_PAYLOAD_TOO_LARGE",
+            Self::WorkflowResultInvalid => "WORKFLOW_RESULT_INVALID",
             Self::ProviderUnavailable => "PROVIDER_UNAVAILABLE",
             Self::ProviderRateLimited => "PROVIDER_RATE_LIMITED",
             Self::ProviderRefusal => "PROVIDER_REFUSAL",
@@ -409,6 +426,10 @@ impl ApiErrorCode {
             Self::DeckNotDeliverable | Self::AdapterUnavailable | Self::PreviewScopeLapsed => {
                 "Output"
             }
+            Self::AutomationTimezoneUnknown
+            | Self::AutomationLimitExceeded
+            | Self::AutomationPayloadTooLarge
+            | Self::WorkflowResultInvalid => "Automation",
             Self::ProviderUnavailable
             | Self::ProviderRateLimited
             | Self::ProviderRefusal
@@ -508,6 +529,13 @@ impl ApiErrorCode {
             Self::DeckNotDeliverable => StatusCode::CONFLICT,
             Self::AdapterUnavailable => StatusCode::SERVICE_UNAVAILABLE,
             Self::PreviewScopeLapsed => StatusCode::FORBIDDEN,
+            // Automation (400/413/422): a zone nobody can resolve is a malformed request; a body over the bound is
+            // too large; a refused limit and a worker reply that breaks its schema are unprocessable as sent.
+            Self::AutomationTimezoneUnknown => StatusCode::BAD_REQUEST,
+            Self::AutomationPayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
+            Self::AutomationLimitExceeded | Self::WorkflowResultInvalid => {
+                StatusCode::UNPROCESSABLE_ENTITY
+            }
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::StreamBackpressure => StatusCode::SERVICE_UNAVAILABLE,

@@ -382,6 +382,16 @@ OPERATIONS: dict[str, dict[str, str]] = {
         "path": "/v1/commands/DeleteRoutine",
         "family": "Routines",
     },
+    "DryRunRoutine": {
+        "method": "POST",
+        "path": "/v1/commands/DryRunRoutine",
+        "family": "Routines",
+    },
+    "RotateRoutineHook": {
+        "method": "POST",
+        "path": "/v1/commands/RotateRoutineHook",
+        "family": "Routines",
+    },
     "BeginConnectorAuth": {
         "method": "POST",
         "path": "/v1/commands/BeginConnectorAuth",
@@ -596,6 +606,10 @@ ERROR_CODES: tuple[str, ...] = (
     "DECK_NOT_DELIVERABLE",
     "ADAPTER_UNAVAILABLE",
     "PREVIEW_SCOPE_LAPSED",
+    "AUTOMATION_TIMEZONE_UNKNOWN",
+    "AUTOMATION_LIMIT_EXCEEDED",
+    "AUTOMATION_PAYLOAD_TOO_LARGE",
+    "WORKFLOW_RESULT_INVALID",
     "PROVIDER_UNAVAILABLE",
     "PROVIDER_RATE_LIMITED",
     "PROVIDER_REFUSAL",

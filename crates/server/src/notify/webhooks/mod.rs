@@ -9,6 +9,8 @@
 //! * [`deliverer`] — leases due deliveries and attempts each through the egress broker under
 //!   the network policy as it is at the attempt, signs the redacted envelope, and records the
 //!   outcome: delivered, retried after backoff, or dead-lettered.
+//! * [`inbound`] — the other direction (ADP-007): authenticating a signed request to a routine's inbound hook with the same
+//!   scheme and the secret broker, before the routine owner records the delivery and claims its fire.
 //! * [`signature`] and [`redact`] — the `quansio-signature` scheme and payload redaction.
 //!
 //! Delivery is at-least-once under a stable `event_id`. Events of the `webhook` family are
@@ -16,6 +18,7 @@
 
 pub mod deliverer;
 pub mod fanout;
+pub mod inbound;
 pub mod redact;
 pub mod signature;
 pub mod store;

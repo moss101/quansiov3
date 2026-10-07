@@ -76,6 +76,9 @@ pub struct RoutineFireRequest {
     pub fire_window: DateTime<Utc>,
     /// Stable identity of this firing for command-path idempotency.
     pub fire_key: String,
+    /// The accepted body of the inbound hook delivery that caused this firing (ADP-007): untrusted data, which reaches the
+    /// run only as an `untrusted_data` block.
+    pub payload: Option<Value>,
 }
 
 /// Identity of the work a Routine firing created.

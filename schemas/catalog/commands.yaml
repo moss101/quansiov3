@@ -88,6 +88,8 @@ commands:
   - ResumeRoutine
   - TriggerRoutineNow
   - DeleteRoutine
+  - DryRunRoutine
+  - RotateRoutineHook
   Connectors:
   - BeginConnectorAuth
   - CompleteConnectorAuth

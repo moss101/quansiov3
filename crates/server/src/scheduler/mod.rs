@@ -21,6 +21,7 @@ pub mod executor;
 pub mod graph_dispatch;
 pub mod routine;
 pub mod timer;
+pub mod timezone;
 pub mod wait;
 
 use quansio_events::EventError;
@@ -42,6 +43,7 @@ pub use routine::{
 pub use timer::{
     ClaimedTimer, DurableTimer, FenceReason, FireOutcome, NewTimer, TimerStatus, TimerStore,
 };
+pub use timezone::ScheduleZone;
 pub use wait::{WaitError, WaitRegistry};
 
 /// Errors returned by the scheduler.
@@ -101,9 +103,9 @@ pub enum SchedulerError {
         /// Routine identity.
         routine_id: String,
     },
-    /// A timezone is not resolvable by this timing seam.
-    #[error("unsupported timezone {0:?}; use UTC or a fixed offset such as +02:00")]
-    UnsupportedTimezone(String),
+    /// A timezone is neither UTC, a fixed offset nor a name in the IANA database.
+    #[error("unknown timezone {0:?}; use UTC, a fixed offset such as +02:00 or an IANA name such as Europe/Paris")]
+    UnknownTimezone(String),
     /// A configuration or stored value is not valid.
     #[error("invalid scheduler configuration: {0}")]
     InvalidConfig(String),

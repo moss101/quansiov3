@@ -13,14 +13,16 @@
 //! the fire instead of repeating the window, and a failed execution is retried with
 //! backoff (APP-010).
 //!
-//! Timezones are UTC or a fixed `±HH:MM` offset. An IANA zone name fails closed with
-//! [`SchedulerError::UnsupportedTimezone`] instead of silently scheduling in UTC; full
-//! zone-database support is a later concern (it needs a tz database dependency).
+//! Timezones are UTC, a fixed `±HH:MM` offset or an IANA zone name with its daylight-saving
+//! rules ([`super::timezone`], ADP-007): a wall-clock time a zone skips fires at the first
+//! valid instant after the gap, one a zone repeats fires once at its first occurrence, and a
+//! name that is none of these fails closed with [`SchedulerError::UnknownTimezone`] instead of
+//! silently scheduling in UTC.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use chrono::{DateTime, Datelike, Duration, FixedOffset, TimeZone, Timelike, Utc};
+use chrono::{DateTime, Datelike, Duration, Timelike, Utc};
 use futures_util::StreamExt;
 use quansio_core::{CorrelationId, UlidGenerator};
 use quansio_events::{Actor, EventDraft, EventError, EventStore, EventType};
@@ -29,6 +31,7 @@ use serde_json::{json, Value};
 use sqlx::{PgPool, Row};
 
 use super::dispatch::{RoutineFireRequest, RunDispatch};
+use super::timezone::ScheduleZone;
 use super::SchedulerError;
 
 /// How a Routine is triggered (DOMAIN.md §13.1).
@@ -41,6 +44,8 @@ pub enum RoutineTriggerKind {
     Interval,
     /// External event subscription.
     Event,
+    /// An inbound hook: a signed HTTP request to the routine's endpoint (ADP-007).
+    Webhook,
 }
 
 /// A Routine trigger as persisted in `routines.trigger`.
@@ -48,11 +53,16 @@ pub enum RoutineTriggerKind {
 pub struct RoutineTrigger {
     /// Trigger kind.
     pub kind: RoutineTriggerKind,
-    /// Cron expression (`cron`), interval (`interval`) or event name (`event`).
+    /// Cron expression (`cron`), interval (`interval`) or event name (`event`); empty for a `webhook`.
+    #[serde(default)]
     pub spec: String,
     /// Timezone for `cron`, defaulting to UTC.
     #[serde(default)]
     pub timezone: String,
+    /// For `webhook`: the groups of conditions a delivery's payload must satisfy, any group (OR) of every
+    /// condition in it (AND). Empty passes every authenticated delivery.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub filters: Vec<Vec<crate::control::routines::hooks::HookCondition>>,
 }
 
 impl RoutineTrigger {
@@ -60,18 +70,49 @@ impl RoutineTrigger {
     ///
     /// # Errors
     /// Returns [`SchedulerError::InvalidTrigger`] for a malformed spec and
-    /// [`SchedulerError::UnsupportedTimezone`] for a zone this seam cannot resolve.
+    /// [`SchedulerError::UnknownTimezone`] for a zone this seam cannot resolve.
     pub fn next_due_after(
         &self,
         after: DateTime<Utc>,
     ) -> Result<Option<DateTime<Utc>>, SchedulerError> {
         match self.kind {
             RoutineTriggerKind::Cron => {
-                let offset = parse_timezone(&self.timezone)?;
-                Ok(Some(self.cron()?.next_after(after, offset)?))
+                let zone = ScheduleZone::parse(&self.timezone)?;
+                Ok(Some(self.cron()?.next_after(after, zone)?))
             }
             RoutineTriggerKind::Interval => Ok(Some(after + parse_interval(&self.spec)?)),
-            RoutineTriggerKind::Event => Ok(None),
+            RoutineTriggerKind::Event | RoutineTriggerKind::Webhook => Ok(None),
+        }
+    }
+
+    /// The shortest gap between this schedule's next `windows` windows after `from`: the interval itself for an interval
+    /// trigger, the smallest of the consecutive gaps for a cron trigger, `None` for a trigger with no windows.
+    ///
+    /// # Errors
+    /// See [`RoutineTrigger::next_due_after`].
+    pub fn shortest_gap(
+        &self,
+        from: DateTime<Utc>,
+        windows: usize,
+    ) -> Result<Option<Duration>, SchedulerError> {
+        match self.kind {
+            RoutineTriggerKind::Interval => Ok(Some(parse_interval(&self.spec)?)),
+            RoutineTriggerKind::Cron => {
+                let mut previous = from;
+                let mut shortest: Option<Duration> = None;
+                for _ in 0..windows {
+                    let Some(next) = self.next_due_after(previous)? else {
+                        break;
+                    };
+                    if previous != from {
+                        let gap = next - previous;
+                        shortest = Some(shortest.map_or(gap, |known| known.min(gap)));
+                    }
+                    previous = next;
+                }
+                Ok(shortest)
+            }
+            RoutineTriggerKind::Event | RoutineTriggerKind::Webhook => Ok(None),
         }
     }
 
@@ -92,11 +133,11 @@ impl RoutineTrigger {
         match self.kind {
             RoutineTriggerKind::Cron => {
                 let _ = self.cron()?;
-                let _ = parse_timezone(&self.timezone)?;
+                let _ = ScheduleZone::parse(&self.timezone)?;
                 Ok(())
             }
             RoutineTriggerKind::Interval => parse_interval(&self.spec).map(|_| ()),
-            RoutineTriggerKind::Event => Ok(()),
+            RoutineTriggerKind::Event | RoutineTriggerKind::Webhook => Ok(()),
         }
     }
 
@@ -366,6 +407,7 @@ impl RoutineScheduler {
         routine: &Routine,
         window: DateTime<Utc>,
         fire_key: &str,
+        payload: Option<Value>,
     ) -> RoutineFireRequest {
         RoutineFireRequest {
             tenant_id: self.tenant_id.clone(),
@@ -376,6 +418,7 @@ impl RoutineScheduler {
             objective_template: routine.objective_template.clone(),
             fire_window: window,
             fire_key: fire_key.to_string(),
+            payload,
         }
     }
 
@@ -421,6 +464,7 @@ impl RoutineScheduler {
                         &key,
                         crate::control::routines::FireSource::Schedule,
                         Some(window),
+                        None,
                         None,
                     )
                     .await?
@@ -497,7 +541,7 @@ impl RoutineScheduler {
         }
         let window = fire.window_at.unwrap_or(now);
         match dispatch
-            .fire_routine(self.fire_request(&routine, window, &fire.fire_key))
+            .fire_routine(self.fire_request(&routine, window, &fire.fire_key, fire.payload.clone()))
             .await
         {
             Ok(outcome) => {
@@ -646,13 +690,16 @@ fn parse_interval(spec: &str) -> Result<Duration, SchedulerError> {
     }
     let (value, unit) = spec.split_at(spec.len() - 1);
     let value: i64 = value.parse().map_err(|_| invalid("expected a number"))?;
-    let seconds = match unit {
-        "s" => value,
-        "m" => value * 60,
-        "h" => value * 3600,
-        "d" => value * 86_400,
+    let factor: i64 = match unit {
+        "s" => 1,
+        "m" => 60,
+        "h" => 3600,
+        "d" => 86_400,
         _ => return Err(invalid("expected a suffix of s, m, h or d")),
     };
+    let seconds = value
+        .checked_mul(factor)
+        .ok_or_else(|| invalid("interval is too long"))?;
     positive_interval(seconds, &invalid)
 }
 
@@ -664,32 +711,6 @@ fn positive_interval(
         return Err(invalid("interval must be positive"));
     }
     Ok(Duration::seconds(seconds))
-}
-
-/// Parse `UTC`, `Z` or a fixed `±HH:MM` offset. Anything else fails closed.
-fn parse_timezone(timezone: &str) -> Result<FixedOffset, SchedulerError> {
-    let unsupported = || SchedulerError::UnsupportedTimezone(timezone.to_string());
-    let tz = timezone.trim();
-    if tz.is_empty() || tz.eq_ignore_ascii_case("utc") || tz.eq_ignore_ascii_case("z") {
-        return FixedOffset::east_opt(0).ok_or_else(unsupported);
-    }
-    let bytes = tz.as_bytes();
-    if bytes.len() < 3 || (bytes[0] != b'+' && bytes[0] != b'-') {
-        return Err(unsupported());
-    }
-    let sign = if bytes[0] == b'+' { 1 } else { -1 };
-    let rest = &tz[1..];
-    let (hours, minutes) = match rest.split_once(':') {
-        Some((hours, minutes)) => (hours, minutes),
-        None if rest.len() == 4 => (&rest[..2], &rest[2..]),
-        None => (rest, "0"),
-    };
-    let hours: i32 = hours.parse().map_err(|_| unsupported())?;
-    let minutes: i32 = minutes.parse().map_err(|_| unsupported())?;
-    if hours > 23 || minutes > 59 {
-        return Err(unsupported());
-    }
-    FixedOffset::east_opt(sign * (hours * 3600 + minutes * 60)).ok_or_else(unsupported)
 }
 
 /// A parsed five-field cron expression: `minute hour day-of-month month day-of-week`.
@@ -756,14 +777,17 @@ impl CronSpec {
             && self.months.contains(&candidate.month())
     }
 
+    /// The first window strictly after `after` in `zone`. A wall-clock minute the zone skips
+    /// stands for the first valid instant after its gap, and one it repeats for its first
+    /// occurrence ([`ScheduleZone::resolve`]); the walk goes by wall-clock minutes, so a
+    /// schedule that matches several minutes of one gap fires once, at the end of it.
     fn next_after(
         &self,
         after: DateTime<Utc>,
-        offset: FixedOffset,
+        zone: ScheduleZone,
     ) -> Result<DateTime<Utc>, SchedulerError> {
-        let mut candidate = offset
-            .from_utc_datetime(&after.naive_utc())
-            .naive_local()
+        let mut candidate = zone
+            .local(after)
             .with_second(0)
             .and_then(|value| value.with_nanosecond(0))
             .unwrap_or_else(|| after.naive_utc())
@@ -771,8 +795,10 @@ impl CronSpec {
         let limit = candidate + Duration::days(366);
         while candidate <= limit {
             if self.matches(candidate) {
-                if let Some(next) = offset.from_local_datetime(&candidate).single() {
-                    return Ok(next.with_timezone(&Utc));
+                if let Some(instant) = zone.resolve(candidate) {
+                    if instant > after {
+                        return Ok(instant);
+                    }
                 }
             }
             candidate += Duration::minutes(1);
@@ -846,6 +872,7 @@ mod tests {
             kind,
             spec: spec.to_string(),
             timezone: timezone.to_string(),
+            filters: Vec::new(),
         }
     }
 
@@ -874,31 +901,6 @@ mod tests {
         assert!(parse_interval("0s").is_err());
         assert!(parse_interval("5x").is_err());
         assert!(parse_interval("").is_err());
-    }
-
-    #[test]
-    fn timezones_are_utc_or_fixed_offsets_and_fail_closed_otherwise() {
-        assert_eq!(
-            parse_timezone("UTC").expect("utc"),
-            FixedOffset::east_opt(0).unwrap()
-        );
-        assert_eq!(
-            parse_timezone("").expect("default"),
-            FixedOffset::east_opt(0).unwrap()
-        );
-        assert_eq!(
-            parse_timezone("+02:00").expect("offset"),
-            FixedOffset::east_opt(7200).unwrap()
-        );
-        assert_eq!(
-            parse_timezone("-0530").expect("offset"),
-            FixedOffset::east_opt(-(5 * 3600 + 30 * 60)).unwrap()
-        );
-        assert!(matches!(
-            parse_timezone("America/New_York"),
-            Err(SchedulerError::UnsupportedTimezone(_))
-        ));
-        assert!(parse_timezone("+25:00").is_err());
     }
 
     #[test]
@@ -957,6 +959,211 @@ mod tests {
         assert!(trigger(RoutineTriggerKind::Cron, "* * * *", "UTC")
             .validate()
             .is_err());
+    }
+
+    fn instant(text: &str) -> DateTime<Utc> {
+        DateTime::parse_from_rfc3339(text)
+            .expect("instant")
+            .with_timezone(&Utc)
+    }
+
+    /// Every due window of a cron schedule in `zone` between `from` and `until`, by repeated
+    /// `next_due_after`, the way the scheduler walks it.
+    fn windows(spec: &str, zone: &str, from: &str, until: &str) -> Vec<String> {
+        let schedule = trigger(RoutineTriggerKind::Cron, spec, zone);
+        let (mut cursor, until) = (instant(from), instant(until));
+        let mut out = Vec::new();
+        while let Some(next) = schedule.next_due_after(cursor).expect("next") {
+            if next > until {
+                break;
+            }
+            out.push(next.format("%Y-%m-%dT%H:%M:%SZ").to_string());
+            cursor = next;
+        }
+        out
+    }
+
+    #[test]
+    fn a_spring_forward_gap_fires_once_at_the_end_of_the_gap() {
+        // New York, 2026-03-08: 02:30 does not exist; the daily 02:30 window fires at 03:00 EDT.
+        assert_eq!(
+            windows(
+                "30 2 * * *",
+                "America/New_York",
+                "2026-03-06T12:00:00Z",
+                "2026-03-10T12:00:00Z"
+            ),
+            [
+                "2026-03-07T07:30:00Z",
+                "2026-03-08T07:00:00Z",
+                "2026-03-09T06:30:00Z",
+                "2026-03-10T06:30:00Z"
+            ]
+        );
+        // London, 2026-03-29: 01:30 does not exist; fires at 02:00 BST (01:00Z).
+        assert_eq!(
+            windows(
+                "30 1 * * *",
+                "Europe/London",
+                "2026-03-27T12:00:00Z",
+                "2026-03-31T12:00:00Z"
+            ),
+            [
+                "2026-03-28T01:30:00Z",
+                "2026-03-29T01:00:00Z",
+                "2026-03-30T00:30:00Z",
+                "2026-03-31T00:30:00Z"
+            ]
+        );
+        // Auckland, 2026-09-27: 02:30 NZST does not exist; fires at 03:00 NZDT (14:00Z the day before).
+        assert_eq!(
+            windows(
+                "30 2 * * *",
+                "Pacific/Auckland",
+                "2026-09-25T00:00:00Z",
+                "2026-09-29T00:00:00Z"
+            ),
+            [
+                "2026-09-25T14:30:00Z",
+                "2026-09-26T14:00:00Z",
+                "2026-09-27T13:30:00Z",
+                "2026-09-28T13:30:00Z"
+            ]
+        );
+        // Lord Howe, a thirty-minute shift: 02:15 does not exist on 2026-10-04; fires at 02:30 (15:30Z).
+        assert_eq!(
+            windows(
+                "15 2 * * *",
+                "Australia/Lord_Howe",
+                "2026-10-02T00:00:00Z",
+                "2026-10-06T00:00:00Z"
+            ),
+            [
+                "2026-10-02T15:45:00Z",
+                "2026-10-03T15:30:00Z",
+                "2026-10-04T15:15:00Z",
+                "2026-10-05T15:15:00Z"
+            ]
+        );
+        // A schedule that matches several minutes of the gap still fires once.
+        assert_eq!(
+            windows(
+                "*/15 2 * * *",
+                "America/New_York",
+                "2026-03-08T00:00:00Z",
+                "2026-03-08T12:00:00Z"
+            ),
+            ["2026-03-08T07:00:00Z"]
+        );
+    }
+
+    #[test]
+    fn a_fall_back_repeat_fires_once_at_the_first_occurrence() {
+        // New York, 2026-11-01: 01:30 happens at 05:30Z (EDT) and 06:30Z (EST); only the first is a window.
+        assert_eq!(
+            windows(
+                "30 1 * * *",
+                "America/New_York",
+                "2026-10-30T12:00:00Z",
+                "2026-11-03T12:00:00Z"
+            ),
+            [
+                "2026-10-31T05:30:00Z",
+                "2026-11-01T05:30:00Z",
+                "2026-11-02T06:30:00Z",
+                "2026-11-03T06:30:00Z"
+            ]
+        );
+        // London, 2026-10-25: 01:30 happens at 00:30Z (BST) and 01:30Z (GMT).
+        assert_eq!(
+            windows(
+                "30 1 * * *",
+                "Europe/London",
+                "2026-10-23T12:00:00Z",
+                "2026-10-27T12:00:00Z"
+            ),
+            [
+                "2026-10-24T00:30:00Z",
+                "2026-10-25T00:30:00Z",
+                "2026-10-26T01:30:00Z",
+                "2026-10-27T01:30:00Z"
+            ]
+        );
+        // After the first occurrence has fired, the second one an hour later is not found.
+        let schedule = trigger(RoutineTriggerKind::Cron, "30 1 * * *", "America/New_York");
+        assert_eq!(
+            schedule
+                .next_due_after(instant("2026-11-01T05:30:00Z"))
+                .expect("next"),
+            Some(instant("2026-11-02T06:30:00Z"))
+        );
+        // An unaffected hour is untouched on the same day.
+        assert_eq!(
+            windows(
+                "0 9 * * *",
+                "America/New_York",
+                "2026-10-31T12:00:00Z",
+                "2026-11-02T12:00:00Z"
+            ),
+            ["2026-10-31T13:00:00Z", "2026-11-01T14:00:00Z"]
+        );
+    }
+
+    #[test]
+    fn zones_without_daylight_saving_and_utc_do_not_shift() {
+        assert_eq!(
+            windows(
+                "0 9 * * *",
+                "Asia/Kolkata",
+                "2026-03-06T00:00:00Z",
+                "2026-03-09T00:00:00Z"
+            ),
+            [
+                "2026-03-06T03:30:00Z",
+                "2026-03-07T03:30:00Z",
+                "2026-03-08T03:30:00Z"
+            ]
+        );
+        assert_eq!(
+            windows(
+                "0 9 * * *",
+                "America/Sao_Paulo",
+                "2026-03-06T00:00:00Z",
+                "2026-03-09T00:00:00Z"
+            ),
+            [
+                "2026-03-06T12:00:00Z",
+                "2026-03-07T12:00:00Z",
+                "2026-03-08T12:00:00Z"
+            ]
+        );
+        assert_eq!(
+            windows(
+                "0 9 * * *",
+                "UTC",
+                "2026-03-06T00:00:00Z",
+                "2026-03-08T00:00:00Z"
+            ),
+            ["2026-03-06T09:00:00Z", "2026-03-07T09:00:00Z"]
+        );
+    }
+
+    #[test]
+    fn an_unknown_zone_fails_closed_when_the_trigger_is_validated() {
+        let bad = trigger(RoutineTriggerKind::Cron, "0 9 * * *", "Mars/Olympus_Mons");
+        assert!(matches!(
+            bad.validate(),
+            Err(SchedulerError::UnknownTimezone(_))
+        ));
+        assert!(matches!(
+            bad.next_due_after(Utc::now()),
+            Err(SchedulerError::UnknownTimezone(_))
+        ));
+        assert!(
+            trigger(RoutineTriggerKind::Cron, "0 9 * * *", "Europe/Paris")
+                .validate()
+                .is_ok()
+        );
     }
 
     #[test]

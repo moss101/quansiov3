@@ -1,0 +1,53 @@
+# Automation triggers and workflow scripts (ADP-007, DOMAIN.md 13.8). Policy lives here, never as a source constant (D-018).
+# crates/server/src/control/routines/config.rs reads this file; schemas/json/automation-config.schema.json bounds every value,
+# so a configuration cannot make an inbound hook accept unsigned or enormous requests, lift the call ceiling past what a
+# person can review, or turn the approval threshold off.
+version: 1
+
+# Inbound hooks (13.8 A).
+hooks:
+  # A request body over this is refused before the secret is touched.
+  max_body_bytes: 65536
+  # A signature timestamp this far from the server's clock, either way, is refused (the same default as the SDK verifiers).
+  tolerance_seconds: 300
+  # Requests per endpoint per minute, bad requests included.
+  rate_per_minute: 60
+  # How long a delivery's identity is remembered, so a replay of an old one still fires nothing (never below the tolerance).
+  delivery_retention_days: 30
+
+# Limits by plan (13.8 C). The plan is `personal` for a personal tenant and `organization` for any other.
+limits:
+  personal:
+    # Active routines (every trigger kind) a workspace may hold at once.
+    max_enabled_triggers: 25
+    # The shortest an interval trigger, or the gap between two windows of a cron trigger, may be.
+    min_interval_seconds: 300
+  organization:
+    max_enabled_triggers: 250
+    min_interval_seconds: 60
+
+# Limits for one tenant, by tenant id; a key here replaces the plan's value for that tenant. Empty by default.
+tenant_overrides: {}
+
+# DryRunRoutine (13.8 C).
+dry_run:
+  # Dry runs a tenant may make a minute.
+  rate_per_minute: 30
+  # Upcoming windows shown for a schedule.
+  next_windows: 5
+
+# Workflow scripts (13.8 E to H).
+script:
+  max_steps: 32
+  # Items a `parallel` step may fan out to, and the most a script may declare.
+  max_items: 100
+  # The most calls a script may declare as its hard cap, and the most an approval may raise it to.
+  max_agent_calls_ceiling: 200
+  # A script whose estimated or projected calls pass this holds a gate before it fans out.
+  approval_threshold_calls: 20
+  # The largest reply a worker may return and still count as a result.
+  max_result_bytes: 65536
+  # Workers one script run executes at once.
+  max_parallel_calls: 4
+  # How long an approval for a gate stays open.
+  gate_ttl_seconds: 86400
