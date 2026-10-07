@@ -437,7 +437,12 @@ async fn a_restart_resumes_a_script_from_its_journal_without_repeating_a_complet
             completed: AtomicUsize::new(0),
         }),
     );
-    let died = dying.drive_run(TENANT, &run).await;
+    let died = tokio::time::timeout(
+        std::time::Duration::from_secs(90),
+        dying.drive_run(TENANT, &run),
+    )
+    .await
+    .unwrap_or_else(|_| panic!("the first process's pass did not end within 90 s"));
     assert!(matches!(died, Err(WorkflowError::Port(_))), "{died:?}");
     let journal = h.journal(&run).await;
     let finished = journal
