@@ -3217,13 +3217,15 @@
     },
     "ADP-004": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "IN_PROGRESS",
       "claimed_by": "agent:adp-004",
       "started_at": "2026-10-07T05:38:53Z",
-      "updated_at": "2026-10-07T05:38:53Z",
+      "updated_at": "2026-10-07T06:48:00Z",
       "git_commit": null,
       "tests": [],
-      "artifacts": [],
+      "artifacts": [
+        "evidence/ADP-004/2026-10-07T07-00-00Z/summary.json"
+      ],
       "real_boundary_evidence": [],
       "implementation_complete": false,
       "blocker": null,

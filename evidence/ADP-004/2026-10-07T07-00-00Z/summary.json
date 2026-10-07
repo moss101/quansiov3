@@ -1,0 +1,138 @@
+{
+  "task_id": "ADP-004",
+  "git_commit": "d3de9f90de3d6d902ad4ca239292134d57101458",
+  "recorded_at": "2026-10-07T06:47:51Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1071 passed, 13 failed: all 13 are calls to the artifact/evidence object store at 127.0.0.1:59010 (MinIO was not running; none touches this task; ADP-002 and ADP-003 recorded the same 13). This task's server suite passes: maintenance 4 (real PostgreSQL: what a restart would interrupt is counted, nothing cached, workspace narrowing, tenant isolation, auth and bounds)",
+      "exit_code": 101,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/ADP-004/2026-10-07T07-00-00Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-004/2026-10-07T07-00-00Z/lint.log"
+    },
+    {
+      "command": "cd apps/desktop && vitest run --exclude tests/work.e2e.test.ts; tsc -p tsconfig.json; eslint apps/desktop tests/e2e  # 46 files, 379 passed, 4 skipped (ADP-003's recorder binary is not built here); typecheck and eslint clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-004/2026-10-07T07-00-00Z/desktop-tests.log"
+    },
+    {
+      "command": "vitest run --config tests/e2e/vitest.config.ts tests/e2e/shell.e2e.spec.ts  # 8 passed: the real Electron binary against the real quansio-server on a private PostgreSQL (windows and baseline, quick entry through PostMessage, the activity indicator, per-window authority, untrusted-URL and unmanaged-window IPC refusals, real globalShortcut rollback and recording pause, update and quit gating including an unreadable status)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-004/2026-10-07T07-00-00Z/shell-e2e.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect test_generated_bindings_are_current  # 241 passed (the Rust contract generator cannot run from a worktree under .claude/worktrees; it is run in the finalize dry-run clone)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-004/2026-10-07T07-00-00Z/repo-tests.log"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 58 mutants of the guards, every one COMPILES and CONTROL-PASSED; 58 KILLED by a named test, 0 survived, 0 no-verdict",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-004/2026-10-07T07-00-00Z/mutation-checks.log"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py; arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py (uv python); gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-004/2026-10-07T07-00-00Z/static-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1071 passed, 13 failed: all 13 are calls to the artifact/evidence object store at 127.0.0.1:59010 (MinIO was not running; none touches this task; ADP-002 and ADP-003 recorded the same 13). This task's server suite passes: maintenance 4 (real PostgreSQL: what a restart would interrupt is counted, nothing cached, workspace narrowing, tenant isolation, auth and bounds)",
+      "exit_code": 101,
+      "result": "BLOCKED_EXTERNAL"
+    },
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && vitest run --exclude tests/work.e2e.test.ts; tsc -p tsconfig.json; eslint apps/desktop tests/e2e  # 46 files, 379 passed, 4 skipped (ADP-003's recorder binary is not built here); typecheck and eslint clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "vitest run --config tests/e2e/vitest.config.ts tests/e2e/shell.e2e.spec.ts  # 8 passed: the real Electron binary against the real quansio-server on a private PostgreSQL (windows and baseline, quick entry through PostMessage, the activity indicator, per-window authority, untrusted-URL and unmanaged-window IPC refusals, real globalShortcut rollback and recording pause, update and quit gating including an unreadable status)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect test_generated_bindings_are_current  # 241 passed (the Rust contract generator cannot run from a worktree under .claude/worktrees; it is run in the finalize dry-run clone)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 58 mutants of the guards, every one COMPILES and CONTROL-PASSED; 58 KILLED by a named test, 0 survived, 0 no-verdict",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py; arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py (uv python); gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/ADP-004/2026-10-07T07-00-00Z/workspace-tests.log",
+      "sha256": "b4c866efd484e91611ec8e68599bad3874df922e12ef3eb659be3d91f97b749d",
+      "bytes": 131801
+    },
+    {
+      "path": "evidence/ADP-004/2026-10-07T07-00-00Z/lint.log",
+      "sha256": "dcf5e006d1544d90ffa32bb85079756dd70bcb66952029442275f9b43cf6cd28",
+      "bytes": 223
+    },
+    {
+      "path": "evidence/ADP-004/2026-10-07T07-00-00Z/desktop-tests.log",
+      "sha256": "f5b894eed832b0d248c9fe4840394216be7aa58e4ea566306c5de614f760c6cc",
+      "bytes": 7499
+    },
+    {
+      "path": "evidence/ADP-004/2026-10-07T07-00-00Z/shell-e2e.log",
+      "sha256": "551a2432e1d1e65faf90368421fd01b6a73daa4656d524904dd0abbc7704eff3",
+      "bytes": 799
+    },
+    {
+      "path": "evidence/ADP-004/2026-10-07T07-00-00Z/repo-tests.log",
+      "sha256": "52a89f77809cab45fc699117a2c2d4bd01071577c6b35666e99b8936c4994f81",
+      "bytes": 369
+    },
+    {
+      "path": "evidence/ADP-004/2026-10-07T07-00-00Z/mutation-checks.log",
+      "sha256": "b7ed33373776a919ad8da0d0b10561b1673761488eb422a969a54dd284aba8bc",
+      "bytes": 14996
+    },
+    {
+      "path": "evidence/ADP-004/2026-10-07T07-00-00Z/static-gates.log",
+      "sha256": "30c7b6e614270e26c0e6ae9fd95badc92e71ce466f4e96d3cf275d63fdf226f2",
+      "bytes": 1967
+    },
+    {
+      "path": "evidence/ADP-004/2026-10-07T07-00-00Z/mutation-checks.py",
+      "sha256": "a81e8664903a0749cf9fa108802c6c50d131d2439b871fa2d237d1b2dfbc00da",
+      "bytes": 17613
+    },
+    {
+      "path": "evidence/ADP-004/NOTES.md",
+      "sha256": "e2289b53ebb2c3c26f60e9c0f470b29fed27c224884ccc10a4a8e4481920fa04",
+      "bytes": 12164
+    },
+    {
+      "path": "evidence/ADP-004/RECONCILIATION.md",
+      "sha256": "bbe6a2382a5e82e99d15a007af20163b88cd011d7f3ccf6fc366c3fea5112ee5",
+      "bytes": 7427
+    }
+  ]
+}
