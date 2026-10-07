@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/payment-inputs-config.schema.json",
+  "title": "Quansio one-time payment inputs (config/payment-inputs.yaml)",
+  "description": "Bounds for the values a person supplies out of band for one checkout (DOMAIN.md 13.9 C): how long one waits to be used, how many fields a supply carries, how long a value may be. A supplied value is never kept past its time.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "enabled", "ttl_seconds", "max_ttl_seconds", "max_fields", "max_value_chars"],
+  "properties": {
+    "version": { "const": 1 },
+    "enabled": { "type": "boolean" },
+    "ttl_seconds": { "type": "integer", "minimum": 10, "maximum": 900 },
+    "max_ttl_seconds": { "type": "integer", "minimum": 10, "maximum": 900 },
+    "max_fields": { "type": "integer", "minimum": 1, "maximum": 16 },
+    "max_value_chars": { "type": "integer", "minimum": 4, "maximum": 256 }
+  }
+}

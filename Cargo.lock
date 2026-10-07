@@ -1862,6 +1862,7 @@ dependencies = [
  "chacha20poly1305",
  "quansio-core",
  "quansio-tools",
+ "serde",
  "serde_json",
  "serde_yaml",
  "sha2",

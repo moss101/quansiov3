@@ -50,6 +50,7 @@ export const OPERATIONS = {
   GrantComputerTier: { method: "POST", path: "/v1/commands/GrantComputerTier", family: "Browser/computer" },
   ResolveBrowserCertificate: { method: "POST", path: "/v1/commands/ResolveBrowserCertificate", family: "Browser/computer" },
   DecideBrowserPermission: { method: "POST", path: "/v1/commands/DecideBrowserPermission", family: "Browser/computer" },
+  SupplyPaymentInput: { method: "POST", path: "/v1/commands/SupplyPaymentInput", family: "Browser/computer" },
   CreateArtifact: { method: "POST", path: "/v1/commands/CreateArtifact", family: "Artifacts" },
   AddArtifactVersion: { method: "POST", path: "/v1/commands/AddArtifactVersion", family: "Artifacts" },
   GrantArtifactAccess: { method: "POST", path: "/v1/commands/GrantArtifactAccess", family: "Artifacts" },

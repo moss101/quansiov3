@@ -32,6 +32,7 @@ pub mod live_sessions;
 pub mod maintenance;
 pub mod ops;
 pub mod packs;
+pub mod payment_inputs;
 pub mod projections;
 pub mod rbac;
 pub mod recordings;

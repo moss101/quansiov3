@@ -42,6 +42,8 @@ use super::secrets::{
 use super::tab::{CertificateStatus, PendingDialog};
 use super::{classify_input, classify_navigation, Classified};
 
+mod payment;
+
 /// One CDP call of an action.
 struct Step {
     method: &'static str,

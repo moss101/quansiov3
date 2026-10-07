@@ -23,6 +23,8 @@ import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { parseOpenSettings, parsePermissionRequest, readSnapshot, settingsUrl, notApplicable, type PermissionSnapshot, type PermissionSource } from "./permissions.js";
 import { RECORDING_COMMANDS } from "../recording/state.js";
 import { RecordingHost } from "./recorder.js";
+import type { LocalSecretsConfig } from "./secrets/config.js";
+import { PaymentSupplier, PaymentSupplyError } from "./secrets/payments.js";
 import { SessionFile, type ActiveRunSession, type DesktopSession } from "./session-file.js";
 import { SessionManager, type SessionState } from "./session-manager.js";
 import type { TokenStore } from "./token-store.js";
@@ -104,6 +106,11 @@ export interface DesktopBridgeOptions {
    * `RECORDER_UNAVAILABLE`; nothing else about the desktop changes.
    */
   readonly recorderBinary?: string | null;
+  /**
+   * The local-secrets limits (ADP-009, `config/local-secrets.yaml`). Absent, `payment.supply` answers `POLICY_DENIED`
+   * and the payment form is the only thing that does not work.
+   */
+  readonly localSecrets?: LocalSecretsConfig;
 }
 
 /** The slice of the host's file/shell surface the bridge uses; main supplies the real one. */
@@ -124,6 +131,8 @@ export class DesktopBridge {
   readonly sessions: SessionManager | null;
   /** The person's recorder (ADP-003): started, finished and cancelled only through the recording channels. */
   readonly recording: RecordingHost;
+  /** The person's one-time payment values (ADP-009): supplied only through `payment.supply`, never the generic command path. */
+  readonly payments: PaymentSupplier;
   readonly #options: DesktopBridgeOptions;
   #stream: StreamClient | null = null;
   #accountKey: string | null = null;
@@ -159,6 +168,12 @@ export class DesktopBridge {
       server: this.server,
       binary: options.recorderBinary ?? null,
       identity: () => this.#identity(),
+    });
+    this.payments = new PaymentSupplier({
+      config: options.localSecrets ?? null,
+      server: this.server,
+      workspaceId: () => this.#requireWorkspace(),
+      newCommandId,
     });
   }
 
@@ -306,6 +321,8 @@ export class DesktopBridge {
       "recording.list": () => this.server.recordings(),
       "recording.compile": (payload) => settled(Promise.resolve(payload).then((raw) => this.recordingCommand("CompileRecording", raw))),
       "recording.submit": (payload) => settled(Promise.resolve(payload).then((raw) => this.recordingCommand("SubmitRecordingSkill", raw))),
+      // One-time payment values (ADP-009, DOMAIN.md 13.9 C): the answer names fields and times, never a value.
+      "payment.supply": (payload) => settled(Promise.resolve(payload).then((raw) => this.payments.supply(raw))),
       "live.attach": (payload) => Promise.resolve(payload).then((raw) => this.attachLive(asTargetId(raw, "live.attach"))),
       "live.detach": () => Promise.resolve().then(() => this.detachLive()),
       // Collaboration (APP-009): a protected thread refuses a non-participant, and the
@@ -891,6 +908,10 @@ export class DesktopBridge {
   }
 
   async invoke(command: BridgeCommand): Promise<CommandResponse> {
+    if (command.name === "SupplyPaymentInput") {
+      // A payment value goes through its own channel: schema-checked, bounded, and never echoed.
+      throw new Error("SupplyPaymentInput goes through the payment channel");
+    }
     if (RECORDING_COMMANDS.includes(command.name)) {
       // A recording command carries the owner fence and (for the finish) a click: the recording channels
       // add them; the generic command path does not.
@@ -1180,6 +1201,10 @@ export async function settled<T>(work: Promise<T>): Promise<Settled<T>> {
   } catch (error) {
     if (error instanceof ApiError) {
       return { ok: false, error: { code: error.code, message: error.message, retryable: error.retryable, details: error.details } };
+    }
+    if (error instanceof PaymentSupplyError) {
+      // A refusal of a payment supply names a rule, never a value (payments.ts).
+      return { ok: false, error: { code: error.code, message: error.message, retryable: false, details: null } };
     }
     return { ok: false, error: { code: "INTERNAL", message: error instanceof Error ? error.message : String(error), retryable: false, details: null } };
   }

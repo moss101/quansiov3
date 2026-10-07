@@ -52,6 +52,7 @@ import { quitChosen, quitDialog, updateChoiceOf, updateDialog, type MessageBox }
 import { DesktopBridge, type DesktopAuth } from "./ipc.js";
 import { IpcGuard, registerGuardedHandlers, type WindowHandler } from "./ipc-trust.js";
 import { loadLocalFilesConfig } from "./local-files/config.js";
+import { loadLocalSecretsConfig } from "./secrets/config.js";
 import { LocalFilesHost, type LocalFileDialogs } from "./local-files/host.js";
 import { MEDIA_SCHEME } from "./local-files/media.js";
 import { MAX_UPLOAD_BYTES } from "../conversation/composer.js";
@@ -463,6 +464,8 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
   const bridge = new DesktopBridge({
     serverOrigin: environment.serverOrigin,
     auth,
+    // One-time payment values (ADP-009): the limits the payment form and its channel run on.
+    localSecrets: loadLocalSecretsConfig(join(bundleRoot, "local-secrets.yaml")),
     // OAuth: the authorization URL opens in the system browser, never in the renderer.
     openExternal: (url) => shell.openExternal(url),
     // The theme preference also drives the native chrome (traffic lights, menus, scrollbars).

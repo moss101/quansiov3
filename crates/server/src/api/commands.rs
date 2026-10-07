@@ -70,7 +70,14 @@ pub async fn invoke(
         ));
     }
 
-    let params_digest = Digest::of_canonical_json(&request.params.to_string())
+    // The command log keeps a digest of the params. A payment value is short enough to be recovered from its digest, so
+    // the digest of `SupplyPaymentInput` covers the params without their values.
+    let digested = if command.eq_ignore_ascii_case("SupplyPaymentInput") {
+        super::payment_inputs::redacted_params(&request.params)
+    } else {
+        request.params.clone()
+    };
+    let params_digest = Digest::of_canonical_json(&digested.to_string())
         .as_str()
         .to_string();
     let known = state
@@ -656,6 +663,17 @@ async fn dispatch(
                 state,
                 scope,
                 identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        // A person's one-time payment values for one checkout (ADP-009): sealed, usable once, never returned.
+        "SupplyPaymentInput" => {
+            super::payment_inputs::supply_payment_input(
+                state,
+                scope,
                 user_id.as_deref(),
                 &request.params,
                 correlation,

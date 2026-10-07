@@ -563,6 +563,86 @@ tools:
             decided_by: { type: [string, "null"] }
       required: [typed]
 
+  # One-time payment input (ADP-009, DOMAIN.md 13.9 C). The model names a field from a fixed list and the element that is that
+  # field; it never writes a value. The person supplied the value out of band, once: the runtime matches the element's live
+  # autocomplete token, masks it, inserts, verifies and deletes the value. The ledger arguments and every result hold the
+  # placeholder form, never a value.
+  - name: browser.fill_payment_field
+    version: 1
+    description: >-
+      Fill one payment field the model observed, with the value the person supplied for it out of band. Name the field from the
+      list (card_number, cvc, expiry, expiry_month, expiry_year, card_holder_name, address_line, city, region, postal_code,
+      country) and the element; the page must label the element with the matching autocomplete token. You never write or see the
+      value, it can be used once, and only on the origin the person supplied it for.
+    host: browser
+    source_trust: untrusted_external
+    side_effect: potential_external_effect
+    effect_class: computer.input.privileged
+    resource: { kind: domain, selector: "*" }
+    idempotency: { digest_args: [session_id, tab_id, expected_document_revision, snapshot_id, ref, capture_id, x, y, field] }
+    max_output_bytes: 65536
+    timeout_ms: 60000
+    cancellable: false
+    evidence: { kinds: [browser_action], redact: [] }
+    grant_templates:
+      - effect_class: computer.input.privileged
+        resource: { kind: domain, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        session_id: { type: string, minLength: 1 }
+        tab_id: { type: string, minLength: 1 }
+        expected_document_revision: { type: string, minLength: 1 }
+        snapshot_id: { type: string, minLength: 1 }
+        ref: { type: string, minLength: 1 }
+        capture_id: { type: string, minLength: 1 }
+        x: { type: number }
+        y: { type: number }
+        field:
+          type: string
+          enum: [card_number, cvc, expiry, expiry_month, expiry_year, card_holder_name, address_line, city, region, postal_code, country]
+      required: [session_id, tab_id, expected_document_revision, field]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        filled: { type: boolean }
+        field: { type: string }
+        stage: { type: string }
+        masked: { type: boolean }
+        verified: { type: boolean }
+        completed: { type: boolean }
+        tab_id: { type: string }
+        url: { type: string }
+        document_revision: { type: string }
+        loading: { type: boolean }
+        input_origin: { type: string }
+        warnings: { type: array, items: { type: string } }
+        dialog_pending:
+          type: object
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            kind: { type: string }
+            message: { type: string }
+            url: { type: string }
+            default_prompt: { type: string }
+            document_revision: { type: string }
+        certificate_decision_required:
+          type: object
+          additionalProperties: false
+          properties:
+            id: { type: string }
+            origin: { type: string }
+            error_type: { type: string }
+            url: { type: string }
+            status: { type: string }
+            certificate_sha256: { type: [string, "null"] }
+            decided_by: { type: [string, "null"] }
+      required: [filled]
+
   - name: browser.press_key
     version: 1
     description: Press a key (Enter, Tab, Escape, an arrow, a single character, or a chord such as Control+a) in a tab. A printable key is refused while focus is in a password, one-time-code or card field.

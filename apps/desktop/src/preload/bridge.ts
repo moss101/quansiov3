@@ -77,6 +77,7 @@ export const BRIDGE_CHANNELS = [
   "recording.compile",
   "recording.submit",
   "live.detach",
+  "payment.supply",
   "threads.view",
   "threads.create",
   "participants.add",
@@ -300,6 +301,9 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     computerPermissions: (request: { needs?: readonly string[]; pauseInput?: boolean } = {}) => send("computer.permissions", request),
     openComputerSettings: (permission: string) => send("computer.openSettings", { permission }),
     detachLive: () => send("live.detach", {}),
+    // One-time payment values for one checkout (ADP-009, DOMAIN.md 13.9 C): the origin and the fields the person typed. The
+    // answer names fields and expiry times and never a value; there is no call that reads one back.
+    supplyPayment: (request: { origin: string; fields: Record<string, string> }) => send("payment.supply", request),
     // Skill recording (ADP-003): the recorder's own state, start, the person's finish (a genuine click
     // only; the page passes `gesture`), cancel, the caller's recordings, compile and submit as DRAFT.
     // The renderer never supplies the owner fence: main holds it.

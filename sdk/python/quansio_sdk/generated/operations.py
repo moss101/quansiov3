@@ -242,6 +242,11 @@ OPERATIONS: dict[str, dict[str, str]] = {
         "path": "/v1/commands/DecideBrowserPermission",
         "family": "Browser/computer",
     },
+    "SupplyPaymentInput": {
+        "method": "POST",
+        "path": "/v1/commands/SupplyPaymentInput",
+        "family": "Browser/computer",
+    },
     "CreateArtifact": {
         "method": "POST",
         "path": "/v1/commands/CreateArtifact",

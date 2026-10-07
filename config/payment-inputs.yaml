@@ -1,0 +1,19 @@
+# One-time payment inputs (ADP-009, DOMAIN.md 13.9 C). Policy lives here, never as a source constant (D-018).
+# crates/machine/src/secrets/payment.rs reads this file; schemas/json/payment-inputs-config.schema.json bounds every value, so a
+# configuration cannot keep a person's card number waiting for hours or accept an unbounded field.
+#
+# The person supplies the values for one checkout out of band (`SupplyPaymentInput`); each is sealed as an ordinary SecretHandle
+# (provider `payment_input`), is usable once for `browser.fill_payment_field` on the origin it was supplied for, and is overwritten
+# (re-sealed empty and revoked) the moment it is taken or when its time runs out. There is no wallet and no stored card.
+version: 1
+
+# Switch. Off, a supply is refused with POLICY_DENIED and nothing is sealed.
+enabled: true
+
+# How long a supplied value waits to be used, by default and at most (seconds).
+ttl_seconds: 300
+max_ttl_seconds: 900
+
+# The most fields in one supply, and the longest value (characters).
+max_fields: 12
+max_value_chars: 128

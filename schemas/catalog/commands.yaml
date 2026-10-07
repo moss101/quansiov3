@@ -55,6 +55,7 @@ commands:
   - GrantComputerTier
   - ResolveBrowserCertificate
   - DecideBrowserPermission
+  - SupplyPaymentInput
   Artifacts:
   - CreateArtifact
   - AddArtifactVersion

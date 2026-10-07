@@ -116,6 +116,7 @@ describe("preload bridge", () => {
         "compileRecording",
         "submitRecordingSkill",
         "detachLive",
+        "supplyPayment",
         "viewThread",
         "createThread",
         "addParticipant",
@@ -264,6 +265,7 @@ describe("preload bridge", () => {
     await api.compileRecording("rec_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.submitRecordingSkill({ recordingId: "rec_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", name: "make-a-note", semver: "1.0.0", slots: [] });
     await api.detachLive();
+    await api.supplyPayment({ origin: "https://shop.example", fields: { card_number: "4242424242424242" } });
     await api.viewThread("thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.createThread({ kind: "group", title: "launch", participants: [] });
     await api.addParticipant({ thread_id: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", kind: "user", id: "usr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });

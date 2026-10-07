@@ -22,6 +22,7 @@
 //! value is worth anything; that is why materializations are short-lived rather than convenient.
 
 mod key_provider;
+pub mod payment;
 
 use sqlx::{PgConnection, Row};
 

@@ -50,4 +50,6 @@ copyFileSync(join(root, "src/renderer/index.css"), join(out, "renderer", "index.
 copyFileSync(join(root, "..", "..", "config", "desktop-shell.yaml"), join(out, "desktop-shell.yaml"));
 // The local-file limits (ADP-005, D-018): read the same way.
 copyFileSync(join(root, "..", "..", "config", "local-files.yaml"), join(out, "local-files.yaml"));
+// The local-secrets limits (ADP-009, D-018): read the same way.
+copyFileSync(join(root, "..", "..", "config", "local-secrets.yaml"), join(out, "local-secrets.yaml"));
 console.log(`desktop bundle written to ${out}`);

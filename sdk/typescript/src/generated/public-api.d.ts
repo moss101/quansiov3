@@ -803,6 +803,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/commands/SupplyPaymentInput": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Browser/computer: SupplyPaymentInput */
+        post: operations["SupplyPaymentInput"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/commands/CreateArtifact": {
         parameters: {
             query?: never;
@@ -2705,6 +2722,10 @@ export interface components {
         };
         /** @description Browser/computer command DecideBrowserPermission. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
         DecideBrowserPermissionParams: {
+            [key: string]: unknown;
+        };
+        /** @description Browser/computer command SupplyPaymentInput. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        SupplyPaymentInputParams: {
             [key: string]: unknown;
         };
         /** @description Artifacts command CreateArtifact. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
@@ -4838,6 +4859,45 @@ export interface operations {
         };
     };
     DecideBrowserPermission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    SupplyPaymentInput: {
         parameters: {
             query?: never;
             header?: never;

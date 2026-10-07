@@ -10,6 +10,7 @@ tools:
 - browser.observe
 - browser.click
 - browser.type
+- browser.fill_payment_field
 - browser.press_key
 - browser.handle_dialog
 - browser.extract
