@@ -3310,11 +3310,11 @@
       "notes": "Output generators (DOMAIN.md 10.4): every adapter output is a versioned Artifact whose quality record the server wrote from checks it ran. Decks: a render sandbox in qworkerd (fresh browser context, only pinned assets answered, no script) measures every page; pages are pending, edited, failed_quality or ready, derived from the stored sources by digest; deck.deliver and deck.export refuse until every page is ready (DECK_NOT_DELIVERABLE), and pages an upload made are not the authority's pages. PPTX is written in Python and re-read by an independent verifier; PDFs are canonicalised so a replay is the same version. Documents (safe Markdown to PDF) and diagrams (IR, Mermaid subset, SVG checked). Video: a timeline Artifact whose version number is its revision, typed atomic edit operations with expected_revision, dry_run and replay, a render plan as typed data, and a supervised ffmpeg job (attach by id, cancel kills the process group, restart recovery). Speech-to-text: a gateway route chosen from the catalog, data-policy guard before a byte is built, submit and poll idempotent by request_id, transcript labelled UNTRUSTED_EXTERNAL and validated again by the server. Web-dev preview: scopes with a random capability token, five-minute renewable lifetime and a maximum, authority re-resolved on every request (run, member, workspace, root), loopback only, lapses are final, suggestions staged as untrusted data; composed in the deployable. Desktop: quality records, deck page states, transcript and timeline summaries as text. BLOCKED_EXTERNAL because two real-boundary suites did not run: the ffmpeg suite (QUANSIO_TEST_FFMPEG_BIN) and the speech-to-text provider suite (QUANSIO_TEST_STT_API_KEY, QUANSIO_TEST_STT_AUDIO, QUANSIO_TEST_STT_EXPECT). Deferred (evidence NOTES.md): the gRPC transport for audio.transcribe, composing the render, media and transcription ports in the deployable, the in-iframe edit runtime and dev-server proxy (outside the contract)."
     },
     "ADP-007": {
-      "coverage": null,
-      "status": "NOT_STARTED",
-      "claimed_by": null,
-      "started_at": null,
-      "updated_at": null,
+      "coverage": "PARTIAL",
+      "status": "RECONCILING",
+      "claimed_by": "agent:adp-007",
+      "started_at": "2026-10-07T12:54:56Z",
+      "updated_at": "2026-10-07T12:54:56Z",
       "git_commit": null,
       "tests": [],
       "artifacts": [],
