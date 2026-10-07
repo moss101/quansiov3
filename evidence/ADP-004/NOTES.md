@@ -40,9 +40,13 @@ and fails differently on different runs of the same code (observed 2 of 4 runs h
 
 ## Mutation checks
 
-`mutation-checks.log` (script `mutation-checks.py`, run from a committed tree): see the summary line at the end of the log.
-Every mutant COMPILES (`tsc` for the TypeScript ones, `cargo test --no-run` for the Rust ones), the unmutated suite passes
-first (CONTROL-PASSED), and a named test then fails.
+`mutation-checks.log` (script `mutation-checks.py`, run from a committed tree): 58 mutants of the guards across the server's
+counts, keep-awake, connectivity, quit, update, shortcut, IPC-trust, window, activity, menu, tray, bridge, config, grammar and
+schema code. Every mutant COMPILES (`tsc` for the TypeScript ones, `cargo test --no-run` for the Rust ones), the unmutated suite
+passes first (CONTROL-PASSED for both toolchains), and a named test then fails: 58 killed, 0 survived, 0 no-verdict. The first
+full run found one survivor (the status's `idle` flag ignoring in-flight actions: no test had actions in flight with no Turn);
+`maintenance.rs` now has that case, and five mutants that did not compile were rewritten to compile; the log is the final run.
+`workspace-tests.log` predates that one added assertion (same four tests).
 
 ## Not exercised live (stated, not claimed)
 
