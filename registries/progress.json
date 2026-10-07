@@ -3217,19 +3217,27 @@
     },
     "ADP-004": {
       "coverage": "PARTIAL",
-      "status": "IN_PROGRESS",
+      "status": "PASS",
       "claimed_by": "agent:adp-004",
       "started_at": "2026-10-07T05:38:53Z",
-      "updated_at": "2026-10-07T06:48:00Z",
-      "git_commit": null,
-      "tests": [],
+      "updated_at": "2026-10-07T06:49:32Z",
+      "git_commit": "c7bff50d1f2fb35b0004f15283f6043dedfa7fb5",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test maintenance (4: real PostgreSQL; Turns, effects and terminals a restart would interrupt are counted, nothing cached, workspace narrowing, tenant isolation, auth and bounds)",
+        "cargo test --workspace --no-fail-fast (1071 passed, 13 failed: object-store calls to MinIO, which was not running; the same 13 ADP-002 and ADP-003 recorded; none touches this task)",
+        "cd apps/desktop && vitest run --exclude tests/work.e2e.test.ts (46 files, 379 passed, 4 skipped; shell-config, shortcuts, shell-gates, shell-windows, shell-activity, shell-menu, shell-host, shell-ui, ipc-trust, ipc-sources, shell-modules), tsc and eslint clean",
+        "vitest run --config tests/e2e/vitest.config.ts tests/e2e/shell.e2e.spec.ts (8 passed: the real Electron binary against the real quansio-server: window baseline, quick entry through PostMessage, indicator, per-window authority, untrusted-URL and unmanaged-window IPC refusals, real globalShortcut rollback and recording pause, update and quit gating with an unreadable status)",
+        "uv run --project python pytest tests/architecture tests/contract tests/ci (241 passed; desktop-shell config schema bounds)",
+        "python3 mutation-checks.py (58 mutants, every one compiled, controls passed, 58 killed, 0 survived)",
+        "cargo fmt --check and clippy -D warnings clean; validate_v81, arch_check, workspace_check, inventory, check_authority, legacy_map_check, supply_chain, gen_contracts --check all clean"
+      ],
       "artifacts": [
         "evidence/ADP-004/2026-10-07T07-00-00Z/summary.json"
       ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Desktop shell (D-019, DOMAIN.md 13.6): the server reports a maintenance status (GET /v1/maintenance: idle, active Turns, in-flight actions, open terminals, derived from existing rows through the Run store, the Effect Ledger and the terminal store; no new store); the desktop has four window types (main, pop-out, quick entry, activity indicator) on one sandboxed baseline, and every IPC invoke is authorised in main before a handler runs (sender URL, managed window, window-type channel table, a pop-out acts on its own thread only; an untrusted sender is a logged no-op). Rebindable window shortcuts and global shortcuts with a strict grammar, conflict detection, typed rollback when the OS declines a registration, a recording mode that pauses shortcuts and the menu; keep-awake only on AC power while a Turn runs; quit and update ask before interrupting running work (an unreadable status is asked about, never assumed idle); the offline grace (10 s, config/desktop-shell.yaml) feeds the one existing reconnect; events sent before a renderer subscribes wait in a bounded per-window queue. Not exercised live (evidence NOTES.md): the Windows/Linux tray, a global shortcut fired from another application, power-source changes, a second display, mouse click-through, drag-out. Deferred: schema validation of the older channels, start-up hydration of the activity list."
     },
     "ADP-005": {
       "coverage": null,
