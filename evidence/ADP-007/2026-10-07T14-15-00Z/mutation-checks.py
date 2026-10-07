@@ -88,9 +88,13 @@ MUTANTS = [
      "    if routine.status == \"paused\" {", "    if false && routine.status == \"paused\" {"),
     ("auth: a malformed delivery id is accepted", "trig", SRV + "notify/webhooks/inbound.rs",
      "        Some(id) if valid_delivery_id(id) => id.to_string(),", "        Some(id) => id.to_string(),"),
-    ("bounds: the body is not capped", "trig", API + "hooks.rs",
-     ["if declared.is_some_and(|length| length > config.max_body_bytes) {", "axum::body::to_bytes(body, config.max_body_bytes + 1)"],
-     ["if false && declared.is_some_and(|length| length > config.max_body_bytes) {", "axum::body::to_bytes(body, usize::MAX)"]),
+    # The cap has three layers (the declared length, the stream's own limit, and the authenticator); removing one leaves the
+    # others holding, so the mutant removes all three.
+    ("bounds: the body is not capped", "trig", (API + "hooks.rs", SRV + "notify/webhooks/inbound.rs"),
+     (["if declared.is_some_and(|length| length > config.max_body_bytes) {", "axum::body::to_bytes(body, config.max_body_bytes + 1)"],
+      "    if body.len() > config.max_body_bytes {"),
+     (["if false && declared.is_some_and(|length| length > config.max_body_bytes) {", "axum::body::to_bytes(body, usize::MAX)"],
+      "    if false && body.len() > config.max_body_bytes {")),
     ("bounds: an endpoint has no rate limit", "trig", API + "hooks.rs",
      "    if !state.hook_limits().allow(&endpoint) {", "    if false && !state.hook_limits().allow(&endpoint) {"),
     # ---- B. management
@@ -178,7 +182,11 @@ def git(*args: str) -> str:
 
 
 def run(cmd: list[str], cwd: str) -> tuple[int, str]:
-    result = subprocess.run(cmd, cwd=REPO / cwd, env=ENV, capture_output=True, text=True)
+    # A mutant may loop; a run that does not end in 20 minutes is cut off and has no named failing test.
+    try:
+        result = subprocess.run(cmd, cwd=REPO / cwd, env=ENV, capture_output=True, text=True, timeout=1200)
+    except subprocess.TimeoutExpired as error:
+        return 124, f"TIMEOUT {error}"
     return result.returncode, result.stdout + result.stderr
 
 
@@ -194,7 +202,9 @@ def main() -> None:
     if CHECK_ONLY:
         bad = 0
         for name, _tool, file, old, _new in MUTANTS:
-            count = min((REPO / file).read_text().count(part) for part in as_list(old))
+            fs = file if isinstance(file, tuple) else (file,)
+            os_ = old if isinstance(file, tuple) else (old,)
+            count = min((REPO / f).read_text().count(part) for f, o in zip(fs, os_) for part in as_list(o))
             if count != 1:
                 bad += 1
                 say(f"PATTERN {count} {name}")
@@ -216,17 +226,20 @@ def main() -> None:
             say(f"CONTROL-{'PASSED' if code == 0 else 'FAILED'} {tool}")
             if code != 0:
                 say(text[-3000:])
-        path = REPO / file
-        original = path.read_text()
-        if any(original.count(part) != 1 for part in as_list(old)):
+        files = file if isinstance(file, tuple) else (file,)
+        olds = old if isinstance(file, tuple) else (old,)
+        news = new if isinstance(file, tuple) else (new,)
+        originals = {f: (REPO / f).read_text() for f in files}
+        if any(originals[f].count(part) != 1 for f, o in zip(files, olds) for part in as_list(o)):
             say(f"NO-VERDICT (pattern not found exactly once) {name}")
             nov += 1
             continue
         try:
-            mutated = original
-            for part, replacement in zip(as_list(old), as_list(new)):
-                mutated = mutated.replace(part, replacement, 1)
-            path.write_text(mutated)
+            for f, o, n in zip(files, olds, news):
+                mutated = originals[f]
+                for part, replacement in zip(as_list(o), as_list(n)):
+                    mutated = mutated.replace(part, replacement, 1)
+                (REPO / f).write_text(mutated)
             code, text = run(build_cmd, cwd)
             if code != 0:
                 say(f"NO-VERDICT (does not compile) {name}")
@@ -249,7 +262,7 @@ def main() -> None:
                 survived += 1
                 say(f"SURVIVED {name}")
         finally:
-            subprocess.run(["git", "checkout", "--", file], cwd=REPO, check=True)
+            subprocess.run(["git", "checkout", "--", *files], cwd=REPO, check=True)
     say(f"# mutants: {killed + survived + nov}  killed: {killed}  survived: {survived}  no-verdict: {nov}")
 
 

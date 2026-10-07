@@ -343,9 +343,13 @@ impl Harness {
 
     /// Drive the script run until it ends or waits, through the deployable's background pass.
     async fn pass(&self) -> Result<(), String> {
-        Background::new(self.pool.clone(), self.state.clone())
-            .workflow_pass()
-            .await
+        // A pass over a stub model ends in seconds; one that does not is a loop, and a loop is a failure with a name.
+        tokio::time::timeout(
+            std::time::Duration::from_secs(90),
+            Background::new(self.pool.clone(), self.state.clone()).workflow_pass(),
+        )
+        .await
+        .unwrap_or_else(|_| panic!("the workflow pass did not end within 90 s"))
     }
 
     async fn run_status(&self, run: &str) -> String {
@@ -489,6 +493,20 @@ async fn a_restart_resumes_a_script_from_its_journal_without_repeating_a_complet
     let mut distinct = started.clone();
     distinct.sort_unstable();
     distinct.dedup();
+    let finished_keys: Vec<&str> = journal
+        .entries
+        .iter()
+        .filter(|e| e["entry"] == "call_finished")
+        .filter_map(|e| e["key"].as_str())
+        .collect();
+    let mut distinct_finished = finished_keys.clone();
+    distinct_finished.sort_unstable();
+    distinct_finished.dedup();
+    assert_eq!(
+        finished_keys.len(),
+        distinct_finished.len(),
+        "no call was recorded as finished twice: {finished_keys:?}"
+    );
     assert_eq!(
         started.len(),
         distinct.len(),
