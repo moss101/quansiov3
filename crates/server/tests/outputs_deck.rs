@@ -27,6 +27,8 @@ mod common;
 use common::blocked_marker;
 use common::outputs::{Chrome, ChromeRender, Harness, Outcome};
 
+type Parts = BTreeMap<String, Vec<u8>>;
+
 const SLIDES: &str = "application/vnd.quansio.slides+json";
 
 fn root() -> PathBuf {
@@ -64,7 +66,7 @@ fn render_args(
         .expect("pages")
         .iter()
         .filter(|page| {
-            only.map_or(true, |only| {
+            only.is_none_or(|only| {
                 only.contains(&(page["index"].as_u64().expect("index") as usize))
             })
         })
@@ -871,6 +873,11 @@ async fn a_deliverable_deck_exports_a_printed_pdf_and_a_verified_pptx() {
         )
         .await;
     assert!(again.ok(), "{again:#?}");
+    assert_eq!(
+        again.result["replayed"], true,
+        "a PDF printed twice from the same pages is the same bytes: {again:#?}"
+    );
+    assert_eq!(again.result["version_id"], pdf.result["version_id"]);
 
     // --- PPTX: opened part by part ---------------------------------------------------------------
     let pptx = h.call("deck.export", pptx_args(&deck_id, &package)).await;
@@ -921,7 +928,7 @@ async fn a_deliverable_deck_exports_a_printed_pdf_and_a_verified_pptx() {
     )
     .expect("golden package")
     .parts;
-    let mutate = |edit: &dyn Fn(&mut BTreeMap<String, Vec<u8>>)| {
+    let mutate = |edit: &dyn Fn(&mut Parts)| {
         let mut parts = parts.clone();
         edit(&mut parts);
         rezip(&parts)

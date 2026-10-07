@@ -124,7 +124,7 @@ pub fn read_zip(bytes: &[u8], limits: PackageLimits) -> Result<Package, ZipError
     }
     if directory_at
         .checked_add(directory_size)
-        .map_or(true, |end| end > eocd)
+        .is_none_or(|end| end > eocd)
     {
         return zip_error("the central directory is out of range");
     }

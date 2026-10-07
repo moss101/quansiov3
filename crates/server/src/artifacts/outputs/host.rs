@@ -12,6 +12,7 @@ use async_trait::async_trait;
 
 use super::config::OutputsConfig;
 use super::deck_host;
+use super::docs_host;
 use super::ports::RenderPort;
 use super::support::{Ctx, Env};
 use crate::artifacts::ObjectStore;
@@ -91,6 +92,8 @@ impl ToolHostPort for OutputToolHost {
             "deck.render" => deck_host::render(&ctx).await,
             "deck.export" => deck_host::export(&ctx).await,
             "deck.deliver" => deck_host::deliver(&ctx).await,
+            "diagram.render" => docs_host::render_diagram(&ctx).await,
+            "document.export_pdf" => docs_host::export_pdf(&ctx).await,
             other if is_output_tool(other) => Err(HostFailure::Unavailable {
                 owner: crate::runtime::turn_loop::dispatch::OUTPUT_HOST_OWNER,
                 detail: format!("{other} is not wired in this build yet"),

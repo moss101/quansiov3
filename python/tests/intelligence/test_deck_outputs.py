@@ -39,7 +39,10 @@ def _render_golden() -> dict:
     rendered = decks.render_deck(deck)
     package = pptx.build_pptx(deck, title="Layouts")
     with zipfile.ZipFile(io.BytesIO(package)) as archive:
-        parts = {info.filename: hashlib.sha256(archive.read(info.filename)).hexdigest() for info in archive.infolist()}
+        parts = {
+            info.filename: hashlib.sha256(archive.read(info.filename)).hexdigest()
+            for info in archive.infolist()
+        }
     return {
         "template_version": rendered.template_version,
         "css": rendered.css,
@@ -67,11 +70,15 @@ def test_the_plane_produces_the_golden_pages_digests_and_package_parts():
 
 
 def test_an_edited_deck_has_one_new_slide_digest_and_one_new_page():
-    """The deck after one slide was edited (`slides-layouts-edited.json`): the digests of the others do not move."""
+    """The deck after one slide was edited (`slides-layouts-edited.json`): the other digests do not move."""
     before = json.loads((GOLDEN / "slides-layouts.render.json").read_text(encoding="utf-8"))
     edited_bytes = (FIXTURES / "slides-layouts-edited.json").read_bytes()
     rendered = decks.render_deck(edited_bytes)
-    changed = [i for i, (a, b) in enumerate(zip(before["source_digests"], rendered.source_digests, strict=True)) if a != b]
+    changed = [
+        i
+        for i, (a, b) in enumerate(zip(before["source_digests"], rendered.source_digests, strict=True))
+        if a != b
+    ]
     assert changed == [1]
     assert [p.fragment for i, p in enumerate(rendered.pages) if i != 1] == [
         p["fragment"] for i, p in enumerate(before["pages"]) if i != 1
@@ -114,7 +121,7 @@ def test_slide_text_is_escaped_and_never_read_as_markup():
         "schema_version": "v1",
         "slides": [
             {
-                "title": "<script>alert(1)</script> & \"quotes\"",
+                "title": '<script>alert(1)</script> & "quotes"',
                 "body": "- <img src=x onerror=alert(1)>\n- javascript:alert(1)\n- a < b > c",
                 "notes": "<b>notes</b>",
             }
@@ -147,10 +154,20 @@ def test_alt_text_is_an_attribute_and_cannot_close_it():
 
 
 def test_a_denser_slide_gets_a_denser_class_so_a_normal_slide_fits():
-    short = decks.render_slide(parse_presentation(json.dumps({"schema_version": "v1", "slides": [{"title": "T", "body": "short"}]}).encode()).slides[0], 0)
+    short = decks.render_slide(
+        parse_presentation(
+            json.dumps({"schema_version": "v1", "slides": [{"title": "T", "body": "short"}]}).encode()
+        ).slides[0],
+        0,
+    )
     long_body = "\n".join(f"- point number {n} that says something quite long indeed" for n in range(12))
-    long = decks.render_slide(parse_presentation(json.dumps({"schema_version": "v1", "slides": [{"title": "T", "body": long_body}]}).encode()).slides[0], 0)
-    assert " d1\"" in short and " d3\"" in long
+    long = decks.render_slide(
+        parse_presentation(
+            json.dumps({"schema_version": "v1", "slides": [{"title": "T", "body": long_body}]}).encode()
+        ).slides[0],
+        0,
+    )
+    assert ' d1"' in short and ' d3"' in long
 
 
 def test_slide_digests_follow_the_stored_mapping_and_match_the_authority():
@@ -159,8 +176,12 @@ def test_slide_digests_follow_the_stored_mapping_and_match_the_authority():
     # The same value the authority's unit test pins for `{"body":"x","title":"Plan"}`.
     one = json.dumps({"schema_version": "v1", "slides": [{"title": "Plan", "body": "x"}]}).encode()
     assert decks.slide_digests(one) == [hashlib.sha256(b'{"body":"x","title":"Plan"}').hexdigest()]
-    non_ascii = json.dumps({"schema_version": "v1", "slides": [{"title": "Café", "body": "—"}]}, ensure_ascii=False).encode()
-    assert decks.slide_digests(non_ascii) == [hashlib.sha256('{"body":"—","title":"Café"}'.encode()).hexdigest()]
+    non_ascii = json.dumps(
+        {"schema_version": "v1", "slides": [{"title": "Café", "body": "—"}]}, ensure_ascii=False
+    ).encode()
+    assert decks.slide_digests(non_ascii) == [
+        hashlib.sha256('{"body":"—","title":"Café"}'.encode()).hexdigest()
+    ]
 
 
 def test_body_lines_are_what_a_page_must_say():
@@ -185,7 +206,10 @@ def _package() -> bytes:
 
 def _rewrite(package: bytes, edit) -> bytes:
     out = io.BytesIO()
-    with zipfile.ZipFile(io.BytesIO(package)) as source, zipfile.ZipFile(out, "w", zipfile.ZIP_STORED) as target:
+    with (
+        zipfile.ZipFile(io.BytesIO(package)) as source,
+        zipfile.ZipFile(out, "w", zipfile.ZIP_STORED) as target,
+    ):
         for info in source.infolist():
             data = edit(info.filename, source.read(info.filename))
             if data is not None:
@@ -199,7 +223,9 @@ def test_a_package_is_a_stored_zip_with_every_part_the_deck_needs():
         names = archive.namelist()
         assert names[0] == "[Content_Types].xml"
         assert all(info.compress_type == zipfile.ZIP_STORED for info in archive.infolist())
-        assert [n for n in names if n.startswith("ppt/slides/slide")] == [f"ppt/slides/slide{i}.xml" for i in range(1, 8)]
+        assert [n for n in names if n.startswith("ppt/slides/slide")] == [
+            f"ppt/slides/slide{i}.xml" for i in range(1, 8)
+        ]
         assert "ppt/notesSlides/notesSlide2.xml" in names, "the second slide has speaker notes"
         assert "ppt/notesSlides/notesSlide1.xml" not in names
         assert "ppt/media/image4.gif" in names, "the image slide embeds its picture"
@@ -227,13 +253,57 @@ def test_speaker_notes_are_in_the_notes_part_not_on_the_slide():
 @pytest.mark.parametrize(
     ("label", "edit", "expect"),
     [
-        ("a slide's text is changed", lambda n, d: d.replace(b"Churn is down", b"Churn is up") if n == "ppt/slides/slide2.xml" else d, "does not say"),
-        ("a slide part is dropped", lambda n, d: None if n == "ppt/slides/slide3.xml" else d, "which is not in the package"),
+        (
+            "a slide's text is changed",
+            lambda n, d: d.replace(b"Churn is down", b"Churn is up") if n == "ppt/slides/slide2.xml" else d,
+            "does not say",
+        ),
+        (
+            "a slide part is dropped",
+            lambda n, d: None if n == "ppt/slides/slide3.xml" else d,
+            "which is not in the package",
+        ),
         ("an xml part is broken", lambda n, d: d + b"<" if n == "ppt/theme/theme1.xml" else d, "theme1.xml"),
-        ("a content type is lost", lambda n, d: d.replace(b'<Default Extension="gif"', b'<Default Extension="zzz"') if n == "[Content_Types].xml" else d, "no content type"),
-        ("a relationship leaves the package", lambda n, d: d.replace(b'Target="../slideLayouts/slideLayout1.xml"', b'Target="https://example.com/x" TargetMode="External"', 1) if n == "ppt/slides/_rels/slide1.xml.rels" else d, "leaves the package"),
-        ("a relationship points at nothing", lambda n, d: d.replace(b"slideLayout1.xml", b"missing.xml", 1) if n == "ppt/slides/_rels/slide1.xml.rels" else d, "not in the package"),
-        ("the notes are emptied", lambda n, d: d.replace(b"Lead with the churn number.", b"x") if n == "ppt/notesSlides/notesSlide2.xml" else d, "notes part"),
+        (
+            "a content type is lost",
+            lambda n, d: (
+                d.replace(b'<Default Extension="gif"', b'<Default Extension="zzz"')
+                if n == "[Content_Types].xml"
+                else d
+            ),
+            "no content type",
+        ),
+        (
+            "a relationship leaves the package",
+            lambda n, d: (
+                d.replace(
+                    b'Target="../slideLayouts/slideLayout1.xml"',
+                    b'Target="https://example.com/x" TargetMode="External"',
+                    1,
+                )
+                if n == "ppt/slides/_rels/slide1.xml.rels"
+                else d
+            ),
+            "leaves the package",
+        ),
+        (
+            "a relationship points at nothing",
+            lambda n, d: (
+                d.replace(b"slideLayout1.xml", b"missing.xml", 1)
+                if n == "ppt/slides/_rels/slide1.xml.rels"
+                else d
+            ),
+            "not in the package",
+        ),
+        (
+            "the notes are emptied",
+            lambda n, d: (
+                d.replace(b"Lead with the churn number.", b"x")
+                if n == "ppt/notesSlides/notesSlide2.xml"
+                else d
+            ),
+            "notes part",
+        ),
     ],
 )
 def test_a_damaged_package_fails_the_writers_own_check(label, edit, expect):
@@ -244,7 +314,9 @@ def test_a_damaged_package_fails_the_writers_own_check(label, edit, expect):
 
 
 def test_a_package_for_another_deck_or_a_corrupt_zip_fails():
-    other = parse_presentation(json.dumps({"schema_version": "v1", "slides": [{"title": "Other", "body": "deck"}]}).encode())
+    other = parse_presentation(
+        json.dumps({"schema_version": "v1", "slides": [{"title": "Other", "body": "deck"}]}).encode()
+    )
     assert any("lists 7 slides" in p for p in pptx.verify_package(_package(), other))
     assert pptx.verify_package(b"not a zip", _deck())
     package = bytearray(_package())

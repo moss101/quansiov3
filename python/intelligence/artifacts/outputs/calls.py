@@ -29,8 +29,10 @@ class OutputCall:
     arguments: Mapping[str, Any]
 
 
-def deck_render_call(artifact_id: str, rendered: RenderedDeck, pages: Sequence[Page] | None = None) -> OutputCall:
-    """`deck.render`: the shared stylesheet and the pages to lay out (all of them unless a subset is given)."""
+def deck_render_call(
+    artifact_id: str, rendered: RenderedDeck, pages: Sequence[Page] | None = None
+) -> OutputCall:
+    """`deck.render`: the shared stylesheet and the pages to lay out (all, unless a subset is given)."""
     chosen = rendered.pages if pages is None else tuple(pages)
     return OutputCall(
         DECK_RENDER,
@@ -63,3 +65,17 @@ def deck_export_pptx_call(artifact_id: str, package: bytes) -> OutputCall:
 def deck_deliver_call(artifact_id: str) -> OutputCall:
     """`deck.deliver`: the completion gate."""
     return OutputCall(DECK_DELIVER, {"artifact_id": artifact_id})
+
+
+DIAGRAM_RENDER = "diagram.render"
+DOCUMENT_EXPORT_PDF = "document.export_pdf"
+
+
+def diagram_render_call(artifact_id: str, svg: str) -> OutputCall:
+    """`diagram.render`: the SVG laid out for a diagram source, to be checked against that source."""
+    return OutputCall(DIAGRAM_RENDER, {"artifact_id": artifact_id, "svg": svg})
+
+
+def document_export_pdf_call(artifact_id: str, html: str) -> OutputCall:
+    """`document.export_pdf`: the HTML body rendered from a document's Markdown, to be printed."""
+    return OutputCall(DOCUMENT_EXPORT_PDF, {"artifact_id": artifact_id, "html": html})

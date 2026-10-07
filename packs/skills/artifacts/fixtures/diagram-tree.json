@@ -1,0 +1,20 @@
+{
+  "schema_version": "v1",
+  "kind": "tree",
+  "title": "Team structure",
+  "nodes": [
+    {"id": "root", "label": "Head of Engineering"},
+    {"id": "platform", "label": "Platform lead"},
+    {"id": "product", "label": "Product lead"},
+    {"id": "infra", "label": "Infrastructure"},
+    {"id": "apps", "label": "Applications team with a long name"},
+    {"id": "data", "label": "Data"}
+  ],
+  "edges": [
+    {"from": "root", "to": "platform"},
+    {"from": "root", "to": "product"},
+    {"from": "platform", "to": "infra"},
+    {"from": "platform", "to": "data"},
+    {"from": "product", "to": "apps"}
+  ]
+}

@@ -305,6 +305,15 @@ impl Outcome {
     }
 }
 
+type VersionColumns = (
+    i32,
+    String,
+    String,
+    Option<String>,
+    Option<Value>,
+    Option<Value>,
+);
+
 /// A version row.
 #[derive(Debug, Clone)]
 pub struct VersionRow {
@@ -555,7 +564,7 @@ impl Harness {
         schema::set_tenant_context(&mut tx, TENANT)
             .await
             .expect("tenant");
-        let rows: Vec<(i32, String, String, Option<String>, Option<Value>, Option<Value>)> = sqlx::query_as(
+        let rows: Vec<VersionColumns> = sqlx::query_as(
             "SELECT seq, id, media_type, parent_version_id, format_check, quality_record FROM artifact_versions \
              WHERE artifact_id = $1 AND tenant_id = $2 ORDER BY seq",
         )

@@ -246,7 +246,7 @@ async fn only_a_pinned_asset_is_served_and_only_from_its_own_host() {
     let Some(browser) = Browser::launch() else {
         return blocked("no Chrome on this host");
     };
-    let mut req = request(format!(
+    let mut req = request(String::from(
         "<!doctype html><html><head><link rel=\"stylesheet\" href=\"https://assets.quansio.invalid/hide.css\">\
          <link rel=\"stylesheet\" href=\"https://assets.quansio.invalid/unpinned.css\"></head><body>\
          <section data-slide=\"0\"><p class=\"probe\">visible only without the pinned css</p>\
@@ -357,12 +357,11 @@ async fn a_deck_prints_one_pdf_page_per_slide_and_the_text_is_in_it() {
     );
     let text = String::from_utf8_lossy(&extracted.stdout).into_owned();
     let pages: Vec<&str> = text.split('\u{c}').collect();
-    for n in 0..3 {
+    for (n, page) in pages.iter().enumerate().take(3) {
         assert!(
-            pages[n].contains(&format!("Slide number {n}"))
-                && pages[n].contains(&format!("Finding {n} is sound.")),
-            "page {n} says {:?}",
-            pages[n]
+            page.contains(&format!("Slide number {n}"))
+                && page.contains(&format!("Finding {n} is sound.")),
+            "page {n} says {page:?}"
         );
     }
 }

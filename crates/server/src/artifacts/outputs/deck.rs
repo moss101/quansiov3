@@ -153,7 +153,7 @@ impl SlideSource {
                         "{label}: the image is over {image_max_bytes} bytes"
                     ));
                 }
-                if alt.as_deref().map_or(true, |alt| alt.trim().is_empty()) {
+                if alt.as_deref().is_none_or(|alt| alt.trim().is_empty()) {
                     return Err(format!("{label}: an image layout needs alt text"));
                 }
                 if chart.is_some() {
@@ -164,7 +164,7 @@ impl SlideSource {
                 if chart.is_none() {
                     return Err(format!("{label}: a chart layout needs a chart"));
                 }
-                if alt.as_deref().map_or(true, |alt| alt.trim().is_empty()) {
+                if alt.as_deref().is_none_or(|alt| alt.trim().is_empty()) {
                     return Err(format!("{label}: a chart layout needs alt text"));
                 }
                 if image.is_some() {
@@ -576,7 +576,7 @@ pub fn gate(
     }
     // A stale page set: for another version of the deck, or for a deck that has since got shorter or
     // longer. Unchanged slides keep their standing; the count must still match.
-    let stale = usable.map_or(true, |pages| {
+    let stale = usable.is_none_or(|pages| {
         pages.deck.version_id != current_version_id || pages.deck.slide_count != deck.slides.len()
     });
     let deliverable = !slides.is_empty()

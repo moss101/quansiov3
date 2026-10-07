@@ -97,7 +97,7 @@ class Slide:
         if self.image is not None:
             payload["image"] = self.image
         if self.chart is not None:
-            payload["chart"] = {key: value for key, value in self.chart.items()}
+            payload["chart"] = dict(self.chart)
         return payload
 
     @property
@@ -365,9 +365,7 @@ def _parse_chart(value: object, label: str) -> Mapping[str, Any]:
         ):
             raise _slide_error(f"{label}: a chart value is a number of magnitude 0.0001 to 1e12")
     if not labels or len(labels) > MAX_CHART_POINTS or len(labels) != len(values):
-        raise _slide_error(
-            f"{label}: a chart has 1 to {MAX_CHART_POINTS} points, one label for each value"
-        )
+        raise _slide_error(f"{label}: a chart has 1 to {MAX_CHART_POINTS} points, one label for each value")
     unit = value.get("unit")
     if unit is not None and (not isinstance(unit, str) or len(unit) > 12):
         raise _slide_error(f"{label}: chart unit is text of at most 12 characters")

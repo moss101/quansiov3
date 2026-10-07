@@ -219,7 +219,7 @@ pub async fn read_source(
             ),
         ));
     }
-    let Some(version_id) = artifact.current_version_id.clone() else {
+    let Some(version_id) = artifact.current_version_id else {
         return Err(refuse(
             "CONFLICT_STATE",
             "artifact.version",
@@ -425,7 +425,7 @@ pub async fn find_output(
     let Some(artifact) = found else {
         return Ok(None);
     };
-    let Some(version_id) = artifact.current_version_id.clone() else {
+    let Some(version_id) = artifact.current_version_id else {
         return Ok(None);
     };
     let version = store

@@ -259,9 +259,7 @@ def render_slide(slide: Slide, index: int) -> str:
         )
     else:  # content, title, section
         inner = f'{title}<div class="body">{_blocks(body)}</div>'
-    return (
-        f'<section class="slide layout-{layout} {density}" data-slide="{index}" data-layout="{layout}">{inner}</section>'
-    )
+    return f'<section class="slide layout-{layout} {density}" data-slide="{index}" data-layout="{layout}">{inner}</section>'
 
 
 def render_deck(source: PresentationSource | bytes) -> RenderedDeck:

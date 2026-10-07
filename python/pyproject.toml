@@ -51,6 +51,12 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RUF"]
 # The servicer implements the generated gRPC contract, whose method names are fixed by
 # quansio.v1.intelligence.IntelligenceGateway and cannot be lower-cased.
 "intelligence/server/servicer.py" = ["N802"]
+# PresentationML parts are written as literal XML strings: a line break inside a tag would change the
+# part's bytes and the goldens that pin them (ADP-006).
+"intelligence/artifacts/outputs/pptx.py" = ["E501"]
+# The slide templates write CSS and SVG as literal strings for the same reason.
+"intelligence/artifacts/outputs/decks.py" = ["E501"]
+"intelligence/artifacts/outputs/diagrams.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"

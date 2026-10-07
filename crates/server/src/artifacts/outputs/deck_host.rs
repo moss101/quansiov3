@@ -79,7 +79,7 @@ async fn authentic_pages(
         pages,
         Committed2 {
             artifact_id: artifact.id.to_canonical(),
-            version_id: version.id.clone(),
+            version_id: version.id,
         },
     )))
 }
@@ -308,7 +308,7 @@ fn judge_page(
     (checks, deck::sha256_hex(&flat_text))
 }
 
-fn render_failure(error: PortError) -> HostOutcome {
+pub(super) fn render_failure(error: PortError) -> HostOutcome {
     match error {
         PortError::Unavailable { adapter, detail } => unavailable(adapter, detail, None),
         PortError::Failed(detail) => HostOutcome::Failure {
@@ -893,13 +893,14 @@ async fn print_deck(
         })
         .await
         .map_err(render_failure)?;
-    let Some(bytes) = result.pdf else {
+    let Some(printed) = result.pdf else {
         return Err(refuse(
             "INTERNAL",
             "output.deck.pdf",
             "the render produced no PDF",
         ));
     };
+    let bytes = pdf::canonicalise(printed);
     let slide_roots = result
         .measurements
         .get("slide_roots")

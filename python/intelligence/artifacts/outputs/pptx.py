@@ -75,8 +75,16 @@ def _run(text: str, *, size: int, bold: bool = False, italic: bool = False, colo
     )
 
 
-def _paragraph(text: str, *, size: int, bullet: bool = False, bold: bool = False, italic: bool = False,
-               color: str = INK, align: str = "l") -> str:
+def _paragraph(
+    text: str,
+    *,
+    size: int,
+    bullet: bool = False,
+    bold: bool = False,
+    italic: bool = False,
+    color: str = INK,
+    align: str = "l",
+) -> str:
     if bullet:
         props = (
             f'<a:pPr marL="342900" indent="-342900" algn="{align}"><a:spcBef><a:spcPts val="600"/></a:spcBef>'
@@ -91,8 +99,18 @@ def _xfrm(x: float, y: float, w: float, h: float) -> str:
     return f'<a:xfrm><a:off x="{_px(x)}" y="{_px(y)}"/><a:ext cx="{_px(w)}" cy="{_px(h)}"/></a:xfrm>'
 
 
-def _title(shape_id: int, text: str, *, size: int, color: str, x: float, y: float, w: float, h: float,
-           align: str = "l") -> str:
+def _title(
+    shape_id: int,
+    text: str,
+    *,
+    size: int,
+    color: str,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    align: str = "l",
+) -> str:
     return (
         f'<p:sp><p:nvSpPr><p:cNvPr id="{shape_id}" name="Title {shape_id}"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>'
         f'<p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr><p:spPr>{_xfrm(x, y, w, h)}</p:spPr>'
@@ -101,8 +119,17 @@ def _title(shape_id: int, text: str, *, size: int, color: str, x: float, y: floa
     )
 
 
-def _textbox(shape_id: int, name: str, paragraphs: list[str], *, x: float, y: float, w: float, h: float,
-             anchor: str = "t") -> str:
+def _textbox(
+    shape_id: int,
+    name: str,
+    paragraphs: list[str],
+    *,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    anchor: str = "t",
+) -> str:
     inner = "".join(paragraphs) or '<a:p><a:endParaRPr lang="en-US"/></a:p>'
     return (
         f'<p:sp><p:nvSpPr><p:cNvPr id="{shape_id}" name={quoteattr(name)}/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>'
@@ -121,7 +148,9 @@ def _rect(shape_id: int, name: str, *, x: float, y: float, w: float, h: float, f
     )
 
 
-def _line(shape_id: int, name: str, *, x1: float, y1: float, x2: float, y2: float, color: str, width_px: float) -> str:
+def _line(
+    shape_id: int, name: str, *, x1: float, y1: float, x2: float, y2: float, color: str, width_px: float
+) -> str:
     x, y = min(x1, x2), min(y1, y2)
     w, h = abs(x2 - x1), abs(y2 - y1)
     flip = ' flipV="1"' if (y2 < y1) != (x2 < x1) else ""
@@ -142,7 +171,9 @@ def _picture(shape_id: int, rel_id: str, alt: str, *, x: float, y: float, w: flo
     )
 
 
-def _group(shape_id: int, name: str, alt: str, children: str, *, x: float, y: float, w: float, h: float) -> str:
+def _group(
+    shape_id: int, name: str, alt: str, children: str, *, x: float, y: float, w: float, h: float
+) -> str:
     off = f'<a:off x="{_px(x)}" y="{_px(y)}"/><a:ext cx="{_px(w)}" cy="{_px(h)}"/>'
     return (
         f'<p:grpSp><p:nvGrpSpPr><p:cNvPr id="{shape_id}" name={quoteattr(name)} descr={quoteattr(alt)}/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>'
@@ -155,7 +186,9 @@ def _fmt(value: float) -> str:
     return str(int(value)) if float(value).is_integer() else f"{value:g}"
 
 
-def _chart_shapes(first_id: int, chart: Mapping[str, Any], alt: str, *, x: float, y: float, w: float, h: float) -> str:
+def _chart_shapes(
+    first_id: int, chart: Mapping[str, Any], alt: str, *, x: float, y: float, w: float, h: float
+) -> str:
     labels = [str(item) for item in chart["labels"]]
     values = [float(item) for item in chart["values"]]
     unit = str(chart.get("unit") or "")
@@ -180,26 +213,58 @@ def _chart_shapes(first_id: int, chart: Mapping[str, Any], alt: str, *, x: float
         if chart["kind"] == "bar":
             bar_w = step * 0.6
             out.append(
-                _rect(shape_id, f"Bar {position + 1}", x=centre - bar_w / 2, y=min(top_y, zero),
-                      w=bar_w, h=max(abs(zero - top_y), 1.0), fill=ACCENT)
+                _rect(
+                    shape_id,
+                    f"Bar {position + 1}",
+                    x=centre - bar_w / 2,
+                    y=min(top_y, zero),
+                    w=bar_w,
+                    h=max(abs(zero - top_y), 1.0),
+                    fill=ACCENT,
+                )
             )
         else:
             if previous is not None:
-                out.append(_line(shape_id, f"Segment {position}", x1=previous[0], y1=previous[1], x2=centre,
-                                 y2=top_y, color=ACCENT, width_px=4))
+                out.append(
+                    _line(
+                        shape_id,
+                        f"Segment {position}",
+                        x1=previous[0],
+                        y1=previous[1],
+                        x2=centre,
+                        y2=top_y,
+                        color=ACCENT,
+                        width_px=4,
+                    )
+                )
                 shape_id += 1
-            out.append(_rect(shape_id, f"Point {position + 1}", x=centre - 5, y=top_y - 5, w=10, h=10, fill=ACCENT))
+            out.append(
+                _rect(shape_id, f"Point {position + 1}", x=centre - 5, y=top_y - 5, w=10, h=10, fill=ACCENT)
+            )
             previous = (centre, top_y)
         shape_id += 1
         out.append(
-            _textbox(shape_id, f"Value {position + 1}",
-                     [_paragraph(f"{_fmt(value)}{unit}", size=12, align="ctr")],
-                     x=centre - step / 2, y=max(top_y - 24, y), w=step, h=20)
+            _textbox(
+                shape_id,
+                f"Value {position + 1}",
+                [_paragraph(f"{_fmt(value)}{unit}", size=12, align="ctr")],
+                x=centre - step / 2,
+                y=max(top_y - 24, y),
+                w=step,
+                h=20,
+            )
         )
         shape_id += 1
         out.append(
-            _textbox(shape_id, f"Label {position + 1}", [_paragraph(label, size=12, align="ctr")],
-                     x=centre - step / 2, y=y + h - bottom + 8, w=step, h=24)
+            _textbox(
+                shape_id,
+                f"Label {position + 1}",
+                [_paragraph(label, size=12, align="ctr")],
+                x=centre - step / 2,
+                y=y + h - bottom + 8,
+                w=step,
+                h=24,
+            )
         )
         shape_id += 1
     return _group(first_id - 1, "Chart", alt, "".join(out), x=x, y=y, w=w, h=h)
@@ -249,33 +314,72 @@ def _slide_xml(slide: Slide, index: int) -> _SlidePart:
     margin_x, margin_y = 56.0, 44.0
     usable_w = 1280 - 2 * margin_x
     if layout in {"title", "section"}:
-        background = (
-            f'<p:bg><p:bgPr><a:solidFill><a:srgbClr val="{_hex(BAND)}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>'
-        )
+        background = f'<p:bg><p:bgPr><a:solidFill><a:srgbClr val="{_hex(BAND)}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>'
         centred = layout == "title"
         shapes.append(
-            _title(2, slide.title, size=48 if centred else 54, color=BAND_INK, x=margin_x, y=200, w=usable_w, h=130,
-                   align="ctr" if centred else "l")
+            _title(
+                2,
+                slide.title,
+                size=48 if centred else 54,
+                color=BAND_INK,
+                x=margin_x,
+                y=200,
+                w=usable_w,
+                h=130,
+                align="ctr" if centred else "l",
+            )
         )
         shapes.append(
-            _textbox(3, "Body", _body_paragraphs(slide.body, size=26, color=BAND_INK, align="ctr" if centred else "l"),
-                     x=margin_x, y=350, w=usable_w, h=240)
+            _textbox(
+                3,
+                "Body",
+                _body_paragraphs(slide.body, size=26, color=BAND_INK, align="ctr" if centred else "l"),
+                x=margin_x,
+                y=350,
+                w=usable_w,
+                h=240,
+            )
         )
     elif layout == "two_column":
-        shapes.append(_title(2, slide.title, size=36, color=HEADING, x=margin_x, y=margin_y, w=usable_w, h=90))
+        shapes.append(
+            _title(2, slide.title, size=36, color=HEADING, x=margin_x, y=margin_y, w=usable_w, h=90)
+        )
         left, _, right = slide.body.partition("\n---\n")
         col_w = (usable_w - 40) / 2
-        shapes.append(_textbox(3, "Left column", _body_paragraphs(left, size=size), x=margin_x, y=160, w=col_w, h=480))
-        shapes.append(_textbox(4, "Right column", _body_paragraphs(right, size=size), x=margin_x + col_w + 40, y=160,
-                               w=col_w, h=480))
+        shapes.append(
+            _textbox(3, "Left column", _body_paragraphs(left, size=size), x=margin_x, y=160, w=col_w, h=480)
+        )
+        shapes.append(
+            _textbox(
+                4,
+                "Right column",
+                _body_paragraphs(right, size=size),
+                x=margin_x + col_w + 40,
+                y=160,
+                w=col_w,
+                h=480,
+            )
+        )
     elif layout == "image":
         assert slide.image is not None and slide.alt is not None
         header, _, payload = slide.image.partition(";base64,")
         extension = header.removeprefix("data:image/")
         media.append((f"ppt/media/image{index + 1}.{extension}", extension, base64.b64decode(payload)))
-        shapes.append(_title(2, slide.title, size=36, color=HEADING, x=margin_x, y=margin_y, w=usable_w, h=90))
+        shapes.append(
+            _title(2, slide.title, size=36, color=HEADING, x=margin_x, y=margin_y, w=usable_w, h=90)
+        )
         shapes.append(_picture(3, "rId2", slide.alt, x=margin_x, y=160, w=520, h=390))
-        shapes.append(_textbox(4, "Body", _body_paragraphs(slide.body, size=size), x=margin_x + 560, y=160, w=usable_w - 560, h=480))
+        shapes.append(
+            _textbox(
+                4,
+                "Body",
+                _body_paragraphs(slide.body, size=size),
+                x=margin_x + 560,
+                y=160,
+                w=usable_w - 560,
+                h=480,
+            )
+        )
     elif layout == "quote":
         lines = [line for line in slide.body.splitlines() if line.strip()]
         cite = ""
@@ -284,17 +388,37 @@ def _slide_xml(slide: Slide, index: int) -> _SlidePart:
             lines = lines[:-1]
         shapes.append(_title(2, slide.title, size=22, color=ACCENT, x=margin_x, y=margin_y, w=usable_w, h=60))
         paragraphs = [_paragraph(line.strip(), size=34, italic=True) for line in lines]
-        shapes.append(_textbox(3, "Quote", paragraphs, x=margin_x + 40, y=200, w=usable_w - 80, h=300, anchor="ctr"))
+        shapes.append(
+            _textbox(3, "Quote", paragraphs, x=margin_x + 40, y=200, w=usable_w - 80, h=300, anchor="ctr")
+        )
         if cite:
-            shapes.append(_textbox(4, "Attribution", [_paragraph(cite, size=22, color=HEADING)], x=margin_x + 40, y=520, w=usable_w - 80, h=60))
+            shapes.append(
+                _textbox(
+                    4,
+                    "Attribution",
+                    [_paragraph(cite, size=22, color=HEADING)],
+                    x=margin_x + 40,
+                    y=520,
+                    w=usable_w - 80,
+                    h=60,
+                )
+            )
     elif layout == "chart":
         assert slide.chart is not None and slide.alt is not None
-        shapes.append(_title(2, slide.title, size=36, color=HEADING, x=margin_x, y=margin_y, w=usable_w, h=90))
+        shapes.append(
+            _title(2, slide.title, size=36, color=HEADING, x=margin_x, y=margin_y, w=usable_w, h=90)
+        )
         shapes.append(_chart_shapes(10, slide.chart, slide.alt, x=margin_x, y=150, w=700, h=380))
-        shapes.append(_textbox(3, "Body", _body_paragraphs(slide.body, size=size), x=margin_x, y=550, w=usable_w, h=130))
+        shapes.append(
+            _textbox(3, "Body", _body_paragraphs(slide.body, size=size), x=margin_x, y=550, w=usable_w, h=130)
+        )
     else:  # content
-        shapes.append(_title(2, slide.title, size=36, color=HEADING, x=margin_x, y=margin_y, w=usable_w, h=90))
-        shapes.append(_textbox(3, "Body", _body_paragraphs(slide.body, size=size), x=margin_x, y=160, w=usable_w, h=480))
+        shapes.append(
+            _title(2, slide.title, size=36, color=HEADING, x=margin_x, y=margin_y, w=usable_w, h=90)
+        )
+        shapes.append(
+            _textbox(3, "Body", _body_paragraphs(slide.body, size=size), x=margin_x, y=160, w=usable_w, h=480)
+        )
     xml = (
         f"{XML_DECL}<p:sld {ROOT_NS}><p:cSld>{background}<p:spTree>{_SPTREE_HEAD}{''.join(shapes)}</p:spTree></p:cSld>"
         "<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>"
@@ -331,9 +455,18 @@ _COLOR_MAP = (
 
 def _theme_xml(name: str) -> str:
     colors = (
-        ("dk1", "000000"), ("lt1", "FFFFFF"), ("dk2", "1F2A44"), ("lt2", "EEF1F6"), ("accent1", "1F4E79"),
-        ("accent2", "2E75B6"), ("accent3", "5B9BD5"), ("accent4", "A5A5A5"), ("accent5", "ED7D31"),
-        ("accent6", "70AD47"), ("hlink", "0563C1"), ("folHlink", "954F72"),
+        ("dk1", "000000"),
+        ("lt1", "FFFFFF"),
+        ("dk2", "1F2A44"),
+        ("lt2", "EEF1F6"),
+        ("accent1", "1F4E79"),
+        ("accent2", "2E75B6"),
+        ("accent3", "5B9BD5"),
+        ("accent4", "A5A5A5"),
+        ("accent5", "ED7D31"),
+        ("accent6", "70AD47"),
+        ("hlink", "0563C1"),
+        ("folHlink", "954F72"),
     )
     scheme = "".join(f'<a:{tag}><a:srgbClr val="{value}"/></a:{tag}>' for tag, value in colors)
     fill = '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>'
@@ -345,7 +478,7 @@ def _theme_xml(name: str) -> str:
         '<a:minorFont><a:latin typeface="Helvetica Neue"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme>'
         f'<a:fmtScheme name="Quansio"><a:fillStyleLst>{fill}{fill}{fill}</a:fillStyleLst>'
         f"<a:lnStyleLst>{line}{line}{line}</a:lnStyleLst>"
-        '<a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle>'
+        "<a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle>"
         "<a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst>"
         f"<a:bgFillStyleLst>{fill}{fill}{fill}</a:bgFillStyleLst></a:fmtScheme></a:themeElements>"
         "<a:objectDefaults/><a:extraClrSchemeLst/></a:theme>"
@@ -358,11 +491,26 @@ def _master_xml() -> str:
         '<p:nvPr><p:ph type="{type}"{idx}/></p:nvPr></p:nvSpPr><p:spPr>{xfrm}<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>'
         '<p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="en-US"/><a:t>{text}</a:t></a:r></a:p></p:txBody></p:sp>'
     )
-    title = placeholder.format(id=2, name="Title Placeholder 1", type="title", idx="", xfrm=_xfrm(56, 44, 1168, 90), text="Title")
-    body = placeholder.format(id=3, name="Text Placeholder 2", type="body", idx=' idx="1"', xfrm=_xfrm(56, 160, 1168, 480), text="Text")
-    style = lambda size: f'<a:lvl1pPr algn="l"><a:defRPr sz="{size}"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill></a:defRPr></a:lvl1pPr>'  # noqa: E731
+    title = placeholder.format(
+        id=2, name="Title Placeholder 1", type="title", idx="", xfrm=_xfrm(56, 44, 1168, 90), text="Title"
+    )
+    body = placeholder.format(
+        id=3,
+        name="Text Placeholder 2",
+        type="body",
+        idx=' idx="1"',
+        xfrm=_xfrm(56, 160, 1168, 480),
+        text="Text",
+    )
+
+    def style(size: int) -> str:
+        return (
+            f'<a:lvl1pPr algn="l"><a:defRPr sz="{size}"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill>'
+            "</a:defRPr></a:lvl1pPr>"
+        )
+
     return (
-        f"{XML_DECL}<p:sldMaster {ROOT_NS}><p:cSld><p:bg><p:bgRef idx=\"1001\"><a:schemeClr val=\"bg1\"/></p:bgRef></p:bg>"
+        f'{XML_DECL}<p:sldMaster {ROOT_NS}><p:cSld><p:bg><p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef></p:bg>'
         f"<p:spTree>{_SPTREE_HEAD}{title}{body}</p:spTree></p:cSld><p:clrMap {_COLOR_MAP}/>"
         '<p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst>'
         f"<p:txStyles><p:titleStyle>{style(3600)}</p:titleStyle><p:bodyStyle>{style(2400)}</p:bodyStyle>"
@@ -382,7 +530,7 @@ def _layout_xml() -> str:
 
 def _notes_master_xml() -> str:
     return (
-        f"{XML_DECL}<p:notesMaster {ROOT_NS}><p:cSld><p:bg><p:bgRef idx=\"1001\"><a:schemeClr val=\"bg1\"/></p:bgRef></p:bg>"
+        f'{XML_DECL}<p:notesMaster {ROOT_NS}><p:cSld><p:bg><p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef></p:bg>'
         f"<p:spTree>{_SPTREE_HEAD}"
         '<p:sp><p:nvSpPr><p:cNvPr id="2" name="Slide Image Placeholder 1"/><p:cNvSpPr><a:spLocks noGrp="1" noRot="1" noChangeAspect="1"/></p:cNvSpPr>'
         f'<p:nvPr><p:ph type="sldImg" idx="2"/></p:nvPr></p:nvSpPr><p:spPr>{_xfrm(96, 112, 576, 324)}<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:sp>'
@@ -394,7 +542,9 @@ def _notes_master_xml() -> str:
 
 
 def _rels(items: list[tuple[str, str, str]]) -> str:
-    body = "".join(f'<Relationship Id="{rid}" Type="{kind}" Target="{target}"/>' for rid, kind, target in items)
+    body = "".join(
+        f'<Relationship Id="{rid}" Type="{kind}" Target="{target}"/>' for rid, kind, target in items
+    )
     return f'{XML_DECL}<Relationships xmlns="{NS_REL}">{body}</Relationships>'
 
 
@@ -434,7 +584,9 @@ def build_pptx(source: PresentationSource | bytes, *, title: str = "Presentation
     extensions: set[str] = set()
     has_notes = any(slide.notes.strip() for slide in deck.slides)
 
-    presentation_rels: list[tuple[str, str, str]] = [("rId1", f"{REL}/slideMaster", "slideMasters/slideMaster1.xml")]
+    presentation_rels: list[tuple[str, str, str]] = [
+        ("rId1", f"{REL}/slideMaster", "slideMasters/slideMaster1.xml")
+    ]
     next_rid = 2
     slide_ids: list[str] = []
     slide_xml: list[tuple[int, _SlidePart, Slide]] = []
@@ -452,30 +604,55 @@ def build_pptx(source: PresentationSource | bytes, *, title: str = "Presentation
     presentation_rels.append((f"rId{next_rid}", f"{REL}/theme", "theme/theme1.xml"))
 
     presentation = (
-        f"{XML_DECL}<p:presentation {ROOT_NS} saveSubsetFonts=\"1\">"
+        f'{XML_DECL}<p:presentation {ROOT_NS} saveSubsetFonts="1">'
         '<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst>'
-        f'{notes_master_id}<p:sldIdLst>{"".join(slide_ids)}</p:sldIdLst>'
+        f"{notes_master_id}<p:sldIdLst>{''.join(slide_ids)}</p:sldIdLst>"
         f'<p:sldSz cx="{SLIDE_W}" cy="{SLIDE_H}"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>'
     )
 
-    parts.append(("_rels/.rels", _rels([
-        ("rId1", f"{REL}/officeDocument", "ppt/presentation.xml"),
-        ("rId2", "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties", "docProps/core.xml"),
-        ("rId3", f"{REL}/extended-properties", "docProps/app.xml"),
-    ])))
+    parts.append(
+        (
+            "_rels/.rels",
+            _rels(
+                [
+                    ("rId1", f"{REL}/officeDocument", "ppt/presentation.xml"),
+                    (
+                        "rId2",
+                        "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties",
+                        "docProps/core.xml",
+                    ),
+                    ("rId3", f"{REL}/extended-properties", "docProps/app.xml"),
+                ]
+            ),
+        )
+    )
     parts.append(("docProps/core.xml", _core_xml(title)))
     parts.append(("docProps/app.xml", _app_xml(len(deck.slides))))
     parts.append(("ppt/presentation.xml", presentation))
     parts.append(("ppt/_rels/presentation.xml.rels", _rels(presentation_rels)))
     parts.append(("ppt/slideMasters/slideMaster1.xml", _master_xml()))
-    parts.append(("ppt/slideMasters/_rels/slideMaster1.xml.rels", _rels([
-        ("rId1", f"{REL}/slideLayout", "../slideLayouts/slideLayout1.xml"),
-        ("rId2", f"{REL}/theme", "../theme/theme1.xml"),
-    ])))
+    parts.append(
+        (
+            "ppt/slideMasters/_rels/slideMaster1.xml.rels",
+            _rels(
+                [
+                    ("rId1", f"{REL}/slideLayout", "../slideLayouts/slideLayout1.xml"),
+                    ("rId2", f"{REL}/theme", "../theme/theme1.xml"),
+                ]
+            ),
+        )
+    )
     parts.append(("ppt/slideLayouts/slideLayout1.xml", _layout_xml()))
-    parts.append(("ppt/slideLayouts/_rels/slideLayout1.xml.rels", _rels([
-        ("rId1", f"{REL}/slideMaster", "../slideMasters/slideMaster1.xml"),
-    ])))
+    parts.append(
+        (
+            "ppt/slideLayouts/_rels/slideLayout1.xml.rels",
+            _rels(
+                [
+                    ("rId1", f"{REL}/slideMaster", "../slideMasters/slideMaster1.xml"),
+                ]
+            ),
+        )
+    )
     parts.append(("ppt/theme/theme1.xml", _theme_xml("Quansio")))
     overrides += [
         ("/ppt/presentation.xml", CT_PRESENTATION),
@@ -487,11 +664,21 @@ def build_pptx(source: PresentationSource | bytes, *, title: str = "Presentation
     ]
     if has_notes:
         parts.append(("ppt/notesMasters/notesMaster1.xml", _notes_master_xml()))
-        parts.append(("ppt/notesMasters/_rels/notesMaster1.xml.rels", _rels([
-            ("rId1", f"{REL}/theme", "../theme/theme2.xml"),
-        ])))
+        parts.append(
+            (
+                "ppt/notesMasters/_rels/notesMaster1.xml.rels",
+                _rels(
+                    [
+                        ("rId1", f"{REL}/theme", "../theme/theme2.xml"),
+                    ]
+                ),
+            )
+        )
         parts.append(("ppt/theme/theme2.xml", _theme_xml("Quansio notes")))
-        overrides += [("/ppt/notesMasters/notesMaster1.xml", CT_NOTES_MASTER), ("/ppt/theme/theme2.xml", CT_THEME)]
+        overrides += [
+            ("/ppt/notesMasters/notesMaster1.xml", CT_NOTES_MASTER),
+            ("/ppt/theme/theme2.xml", CT_THEME),
+        ]
 
     for index, part, slide in slide_xml:
         number = index + 1
@@ -501,12 +688,21 @@ def build_pptx(source: PresentationSource | bytes, *, title: str = "Presentation
             extensions.add(extension)
             rels.append(("rId2", f"{REL}/image", f"../media/{name.rsplit('/', 1)[1]}"))
         if slide.notes.strip():
-            rels.append((f"rId{len(rels) + 1}", f"{REL}/notesSlide", f"../notesSlides/notesSlide{number}.xml"))
+            rels.append(
+                (f"rId{len(rels) + 1}", f"{REL}/notesSlide", f"../notesSlides/notesSlide{number}.xml")
+            )
             parts.append((f"ppt/notesSlides/notesSlide{number}.xml", _notes_xml(slide.notes)))
-            parts.append((f"ppt/notesSlides/_rels/notesSlide{number}.xml.rels", _rels([
-                ("rId1", f"{REL}/notesMaster", "../notesMasters/notesMaster1.xml"),
-                ("rId2", f"{REL}/slide", f"../slides/slide{number}.xml"),
-            ])))
+            parts.append(
+                (
+                    f"ppt/notesSlides/_rels/notesSlide{number}.xml.rels",
+                    _rels(
+                        [
+                            ("rId1", f"{REL}/notesMaster", "../notesMasters/notesMaster1.xml"),
+                            ("rId2", f"{REL}/slide", f"../slides/slide{number}.xml"),
+                        ]
+                    ),
+                )
+            )
             overrides.append((f"/ppt/notesSlides/notesSlide{number}.xml", CT_NOTES))
         parts.append((f"ppt/slides/slide{number}.xml", part.xml))
         parts.append((f"ppt/slides/_rels/slide{number}.xml.rels", _rels(rels)))
@@ -524,10 +720,10 @@ def build_pptx(source: PresentationSource | bytes, *, title: str = "Presentation
 
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_STORED) as archive:
-        for name, data in [("[Content_Types].xml", content_types), *parts]:
-            _write(archive, name, data.encode("utf-8"))
-        for name, data in binaries:
-            _write(archive, name, data)
+        for part_name, text in [("[Content_Types].xml", content_types), *parts]:
+            _write(archive, part_name, text.encode("utf-8"))
+        for part_name, data in binaries:
+            _write(archive, part_name, data)
     package = buffer.getvalue()
     problems = verify_package(package, deck)
     if problems:
@@ -605,7 +801,11 @@ def verify_package(package: bytes, source: PresentationSource) -> list[str]:
     defaults = {el.get("Extension", "").lower() for el in content_types if _local(el.tag) == "Default"}
     overrides = {el.get("PartName", "").lstrip("/") for el in content_types if _local(el.tag) == "Override"}
     for name in names:
-        if name != "[Content_Types].xml" and name not in overrides and name.rsplit(".", 1)[-1].lower() not in defaults:
+        if (
+            name != "[Content_Types].xml"
+            and name not in overrides
+            and name.rsplit(".", 1)[-1].lower() not in defaults
+        ):
             problems.append(f"{name} has no content type")
     for name in overrides:
         if name not in names:
@@ -640,30 +840,39 @@ def verify_package(package: bytes, source: PresentationSource) -> list[str]:
         else:
             slide_parts.append(rels[rid])
     if len(slide_parts) != len(source.slides):
-        problems.append(f"the presentation lists {len(slide_parts)} slides, the deck has {len(source.slides)}")
+        problems.append(
+            f"the presentation lists {len(slide_parts)} slides, the deck has {len(source.slides)}"
+        )
         return problems
     for number, (part, slide) in enumerate(zip(slide_parts, source.slides, strict=True), start=1):
         if part != f"ppt/slides/slide{number}.xml":
             problems.append(f"slide {number} is {part}")
-        root = trees.get(part)
-        if root is None or _local(root.tag) != "sld":
+        slide_root = trees.get(part)
+        if slide_root is None or _local(slide_root.tag) != "sld":
             problems.append(f"{part} is not a p:sld")
             continue
-        text = " ".join(" ".join((t.text or "") for t in root.iter(f"{{{NS_A}}}t")).split())
+        text = " ".join(" ".join((t.text or "") for t in slide_root.iter(f"{{{NS_A}}}t")).split())
         for wanted in [slide.title, *body_lines(slide.body)]:
             if " ".join(wanted.split()) not in text:
                 problems.append(f"slide {number} does not say {wanted[:40]!r}")
-        ids = [el.get("id") for el in root.iter(f"{{{NS_P}}}cNvPr")]
+        ids = [el.get("id") for el in slide_root.iter(f"{{{NS_P}}}cNvPr")]
         if len(ids) != len(set(ids)):
             problems.append(f"slide {number} repeats a shape id")
         if slide.notes.strip():
             notes_part = next(
-                (target for _, kind, target in rel_targets.get(f"ppt/slides/_rels/slide{number}.xml.rels", [])
-                 if kind.endswith("/notesSlide")),
+                (
+                    target
+                    for _, kind, target in rel_targets.get(f"ppt/slides/_rels/slide{number}.xml.rels", [])
+                    if kind.endswith("/notesSlide")
+                ),
                 None,
             )
             notes_root = trees.get(notes_part or "")
-            notes_text = " ".join(" ".join((t.text or "") for t in notes_root.iter(f"{{{NS_A}}}t")).split()) if notes_root is not None else ""
+            notes_text = (
+                " ".join(" ".join((t.text or "") for t in notes_root.iter(f"{{{NS_A}}}t")).split())
+                if notes_root is not None
+                else ""
+            )
             for line in slide.notes.splitlines():
                 if line.strip() and " ".join(line.split()) not in notes_text:
                     problems.append(f"slide {number}: the notes part does not hold {line.strip()[:40]!r}")

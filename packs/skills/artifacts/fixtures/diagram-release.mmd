@@ -1,0 +1,7 @@
+%% The release path, in the supported Mermaid subset.
+flowchart LR
+    A[Commit] --> B(Build)
+    B --> C{Tests pass?}
+    C -->|yes| D[Deploy]
+    C -- no --> A
+    D --> E((Done))

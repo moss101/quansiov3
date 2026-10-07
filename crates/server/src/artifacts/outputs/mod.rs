@@ -10,6 +10,8 @@
 pub mod config;
 pub mod deck;
 mod deck_host;
+mod docs_host;
+pub mod document;
 mod host;
 pub mod html;
 pub mod ooxml;

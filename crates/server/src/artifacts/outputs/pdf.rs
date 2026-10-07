@@ -83,6 +83,28 @@ pub fn inspect(bytes: &[u8]) -> Result<PdfInfo, String> {
     })
 }
 
+/// Make a printed PDF deterministic: the browser stamps `CreationDate` and `ModDate` with the second
+/// it printed in, so the same pages printed twice would be two different files (and two versions).
+/// The fourteen digits after `D:` are replaced with a fixed instant. The replacement is the same
+/// length, so no offset in the cross-reference table moves, and nothing else is touched.
+#[must_use]
+pub fn canonicalise(mut bytes: Vec<u8>) -> Vec<u8> {
+    for key in [&b"/CreationDate (D:"[..], &b"/ModDate (D:"[..]] {
+        let mut from = 0;
+        while let Some(found) = bytes[from..]
+            .windows(key.len())
+            .position(|window| window == key)
+        {
+            let at = from + found + key.len();
+            if bytes.len() >= at + 14 && bytes[at..at + 14].iter().all(u8::is_ascii_digit) {
+                bytes[at..at + 14].copy_from_slice(b"19800101000000");
+            }
+            from = at;
+        }
+    }
+    bytes
+}
+
 fn contains(haystack: &[u8], needle: &[u8]) -> bool {
     haystack
         .windows(needle.len())
@@ -194,6 +216,29 @@ mod tests {
         ] {
             assert!(inspect(&pdf(1, extra)).is_err(), "{extra}");
         }
+    }
+
+    #[test]
+    fn printing_the_same_pages_twice_gives_the_same_bytes_once_the_dates_are_fixed() {
+        let stamped = |date: &str| {
+            let mut text = String::from_utf8(pdf(2, "")).expect("text");
+            text = text.replace(
+                "1 0 obj\n<</Type /Catalog",
+                &format!("0 0 obj\n<</CreationDate (D:{date}+00'00') /ModDate (D:{date}+00'00')>>\nendobj\n1 0 obj\n<</Type /Catalog"),
+            );
+            text.into_bytes()
+        };
+        let (a, b) = (stamped("20261007092819"), stamped("20261007092842"));
+        assert_ne!(a, b);
+        let (a, b) = (canonicalise(a), canonicalise(b));
+        assert_eq!(a, b);
+        assert_eq!(inspect(&a).expect("still a pdf").pages, 2);
+        assert!(String::from_utf8_lossy(&a).contains("D:19800101000000+00'00'"));
+        // Bytes with no date are left alone, and so is a date that is not fourteen digits.
+        let plain = pdf(1, "");
+        assert_eq!(canonicalise(plain.clone()), plain);
+        let odd = b"/CreationDate (D:2026)".to_vec();
+        assert_eq!(canonicalise(odd.clone()), odd);
     }
 
     #[test]
