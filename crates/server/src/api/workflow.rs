@@ -23,7 +23,8 @@ use crate::runtime::agents::{
     AgentKind, AgentStore, NewAgentThread, NewDelegation, StructuralDelegationCheck,
 };
 use crate::runtime::state_machine::{
-    NewRun, RunStatus, RunTriggerKind, RuntimeIdentity, TurnInput, TurnStatus,
+    AttemptStatus, NewRun, RecoveryOutcome, Run, RunStatus, RunTriggerKind, RuntimeEngine,
+    RuntimeError, RuntimeIdentity, StepKind, StepStatus, Turn, TurnInput, TurnStatus,
 };
 use crate::scheduler::workflow::{
     AgentCall, CallProgress, WorkflowError, WorkflowExecutor, WorkflowPort,
@@ -218,15 +219,29 @@ async fn run_call(state: &ApiState, call: &AgentCall) -> Result<CallProgress, Ap
         let last = turns.last().map(|turn| turn.status);
         match last {
             Some(TurnStatus::Active) => {
-                engine
+                // A turn still active when this pass reaches it was cut short with the process that ran it: the script run's
+                // lock admits one driver, and a call's turn runs inside its pass. Recovery reads only durable state; unless it
+                // finds an effect to reconcile or a wait to honour, the turn proved nothing, so it is abandoned and the model
+                // is asked again (a model call is a read, not an external effect).
+                let outcome = engine
                     .recover(&run.id)
                     .await
                     .map_err(|error| runtime_error(error, &correlation))?;
+                if matches!(outcome, RecoveryOutcome::Continue { .. }) {
+                    if let Some(turn) = turns.last() {
+                        abandon_turn(&engine, &run, turn)
+                            .await
+                            .map_err(|error| runtime_error(error, &correlation))?;
+                    }
+                }
                 run = engine
                     .store()
                     .load_run(&run.id)
                     .await
                     .map_err(|error| runtime_error(error, &correlation))?;
+                if !matches!(outcome, RecoveryOutcome::Continue { .. }) {
+                    break;
+                }
             }
             None | Some(TurnStatus::Aborted) if run.status == RunStatus::Running => {
                 let outcome = engine
@@ -301,6 +316,37 @@ async fn run_call(state: &ApiState, call: &AgentCall) -> Result<CallProgress, Ap
             message: "the worker finished its turn without a reply".to_string(),
         }),
     }
+}
+
+/// End a turn a stopped process left active: its in-flight model step failed (nothing answered it), then the turn aborted.
+async fn abandon_turn(engine: &RuntimeEngine, run: &Run, turn: &Turn) -> Result<(), RuntimeError> {
+    let store = engine.store();
+    for step in store.list_steps(&turn.id).await? {
+        if step.kind != StepKind::ModelCall
+            || !matches!(step.status, StepStatus::Pending | StepStatus::Dispatched)
+        {
+            continue;
+        }
+        for attempt in store.list_attempts(&step.id).await? {
+            if attempt.status == AttemptStatus::Started {
+                store
+                    .complete_step(
+                        &step.id,
+                        run.generation,
+                        &attempt.id,
+                        StepStatus::Failed,
+                        AttemptStatus::Failed,
+                        Some(json!({ "error": "the process stopped before the model answered" })),
+                        Vec::new(),
+                    )
+                    .await?;
+            }
+        }
+    }
+    engine
+        .finish_turn(&turn.id, run.generation, TurnStatus::Aborted)
+        .await?;
+    Ok(())
 }
 
 /// Join the worker to its parent and end it. A worker another path already ended is not an error.
