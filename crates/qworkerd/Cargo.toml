@@ -21,6 +21,11 @@ serde_yaml = "0.9"
 thiserror = "2"
 futures-util = { version = "0.3", default-features = false, features = ["sink", "alloc"] }
 tokio-tungstenite = "0.26"
+# The composition sandbox's interpreter (ADP-009, DOMAIN.md 7.5 "Composition sandbox"): QuickJS, embedded, with a memory limit, a
+# stack limit and an interrupt handler. MIT (the QuickJS-ng engine it bundles is MIT too); no network, file or process access exists
+# in it unless the host hands one over, and the host hands over none. Chosen over a WebAssembly or a V8 runtime for its size, its
+# bounded-memory allocator and its interrupt hook; see evidence/ADP-009/RECONCILIATION.md for the dependency record.
+rquickjs = { version = "0.13", default-features = false, features = ["std"] }
 # The MCP client's streamable-HTTP transport (ADP-009). Already in the workspace for webhook delivery; TLS is rustls, as there.
 # Redirects and system proxies are switched off per request and every request goes to addresses the egress gate vetted.
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }

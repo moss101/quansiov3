@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/composition-config.schema.json",
+  "title": "Quansio composition sandbox (config/composition.yaml)",
+  "description": "Limits of the composition sandbox and the host-call error codes that end a cell (DOMAIN.md 7.5 Composition sandbox, D-019). Every limit has a ceiling; the terminal conditions of a takeover, a revoked permission, a user stop and a spent budget cannot be removed.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "enabled", "limits", "terminal_codes"],
+  "properties": {
+    "version": { "const": 1 },
+    "enabled": { "type": "boolean" },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "memory_bytes", "stack_bytes", "deadline_ms", "deadline_max_ms", "host_call_budget", "host_call_budget_max",
+        "max_script_bytes", "max_args_bytes", "max_host_result_bytes", "output_text_bytes", "output_images",
+        "image_ref_bytes", "state_max_bytes", "idle_timeout_ms", "max_sessions"
+      ],
+      "properties": {
+        "memory_bytes": { "type": "integer", "minimum": 1048576, "maximum": 268435456 },
+        "stack_bytes": { "type": "integer", "minimum": 65536, "maximum": 1048576 },
+        "deadline_ms": { "type": "integer", "minimum": 100, "maximum": 120000 },
+        "deadline_max_ms": { "type": "integer", "minimum": 100, "maximum": 120000 },
+        "host_call_budget": { "type": "integer", "minimum": 1, "maximum": 512 },
+        "host_call_budget_max": { "type": "integer", "minimum": 1, "maximum": 512 },
+        "max_script_bytes": { "type": "integer", "minimum": 256, "maximum": 262144 },
+        "max_args_bytes": { "type": "integer", "minimum": 256, "maximum": 1048576 },
+        "max_host_result_bytes": { "type": "integer", "minimum": 1024, "maximum": 4194304 },
+        "output_text_bytes": { "type": "integer", "minimum": 1024, "maximum": 65536 },
+        "output_images": { "type": "integer", "minimum": 0, "maximum": 8 },
+        "image_ref_bytes": { "type": "integer", "minimum": 16, "maximum": 8192 },
+        "state_max_bytes": { "type": "integer", "minimum": 1024, "maximum": 4194304 },
+        "idle_timeout_ms": { "type": "integer", "minimum": 1000, "maximum": 86400000 },
+        "max_sessions": { "type": "integer", "minimum": 1, "maximum": 64 }
+      }
+    },
+    "terminal_codes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}$" },
+      "allOf": [
+        { "contains": { "const": "COMPUTER_TAKEOVER_ACTIVE" } },
+        { "contains": { "const": "COMPUTER_PERMISSION_REVOKED" } },
+        { "contains": { "const": "COMPUTER_STOPPED_BY_USER" } },
+        { "contains": { "const": "BUDGET_EXHAUSTED" } },
+        { "contains": { "const": "BROWSER_INPUT_FENCED" } }
+      ]
+    }
+  }
+}

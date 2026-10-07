@@ -26,7 +26,7 @@ mod http;
 mod stdio;
 mod transport;
 
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
 
@@ -44,6 +44,7 @@ pub use http::{broker_gate, BrokerEgressGate, EgressGate};
 use transport::{Transport, TransportError};
 
 use crate::browser::tools::ReplyStatus;
+use crate::replay::{Replay, ReplayJournal};
 
 /// The label every external result carries (DOMAIN.md §12).
 pub const RESULT_TRUST: &str = "UNTRUSTED_EXTERNAL";
@@ -185,13 +186,6 @@ struct Link {
     unavailable: bool,
 }
 
-#[derive(Default)]
-struct Journal {
-    done: BTreeMap<String, McpReply>,
-    order: VecDeque<String>,
-    started: BTreeSet<String>,
-}
-
 /// The MCP client of one worker.
 pub struct McpHost {
     config: Arc<McpConfig>,
@@ -200,7 +194,7 @@ pub struct McpHost {
     /// The worker's environment, cut down to the names some server may inherit: nothing else is ever kept.
     environment: BTreeMap<String, String>,
     slots: BTreeMap<String, Arc<Slot>>,
-    journal: Mutex<Journal>,
+    journal: ReplayJournal<McpReply>,
 }
 
 impl std::fmt::Debug for McpHost {
@@ -244,7 +238,7 @@ impl McpHost {
             egress,
             environment,
             slots,
-            journal: Mutex::new(Journal::default()),
+            journal: ReplayJournal::new(MAX_JOURNAL),
         }
     }
 
@@ -328,55 +322,21 @@ impl McpHost {
         args: &Value,
         context: &McpCallContext<'_>,
     ) -> McpReply {
-        if let Some(stored) = self.recorded(context.dispatch_token) {
-            return stored;
-        }
-        let reply = self.dispatch_once(tool, version, args, context).await;
-        self.record(context.dispatch_token, &reply);
-        reply
-    }
-
-    fn recorded(&self, token: &str) -> Option<McpReply> {
-        let journal = self.journal.lock().unwrap_or_else(PoisonError::into_inner);
-        if let Some(stored) = journal.done.get(token) {
-            let mut stored = stored.clone();
-            stored.replayed = true;
-            return Some(stored);
-        }
-        if journal.started.contains(token) {
-            // A delivery that was started and has no recorded outcome: it may have reached the server.
-            let mut reply = McpReply::in_doubt(
-                "",
-                "this dispatch was already sent to the server and has no recorded outcome; it is not sent again",
-            );
-            reply.replayed = true;
-            return Some(reply);
-        }
-        None
-    }
-
-    fn start(&self, token: &str) -> bool {
-        self.journal
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .started
-            .insert(token.to_string())
-    }
-
-    fn record(&self, token: &str, reply: &McpReply) {
-        let mut journal = self.journal.lock().unwrap_or_else(PoisonError::into_inner);
-        journal.started.remove(token);
-        if journal
-            .done
-            .insert(token.to_string(), reply.clone())
-            .is_none()
-        {
-            journal.order.push_back(token.to_string());
-        }
-        while journal.order.len() > MAX_JOURNAL {
-            if let Some(oldest) = journal.order.pop_front() {
-                journal.done.remove(&oldest);
+        match self.journal.lookup(context.dispatch_token) {
+            Replay::Done(mut stored) => {
+                stored.replayed = true;
+                stored
             }
+            Replay::Started => {
+                // A delivery that was sent and has no recorded outcome: it may have reached the server.
+                let mut reply = McpReply::in_doubt(
+                    tool,
+                    "this dispatch was already sent to the server and has no recorded outcome; it is not sent again",
+                );
+                reply.replayed = true;
+                reply
+            }
+            Replay::Fresh => self.dispatch_once(tool, version, args, context).await,
         }
     }
 
@@ -502,7 +462,7 @@ impl McpHost {
             );
         }
 
-        if !self.start(context.dispatch_token) {
+        if !self.journal.start(context.dispatch_token) {
             return McpReply::in_doubt(
                 tool,
                 "this dispatch is already in flight; it is not sent twice",
@@ -519,6 +479,7 @@ impl McpHost {
             "effect_id": context.effect_id,
         });
         let evidence = Some(serde_json::to_vec(&record).unwrap_or_default());
+        let reached = answer.is_ok() || answer.as_ref().is_err_and(TransportError::sent);
         let mut reply = match answer {
             Ok(result) => {
                 self.reset_restarts(slot).await;
@@ -527,6 +488,12 @@ impl McpHost {
             Err(error) => failure_reply(tool, &error, read_only),
         };
         reply.evidence = evidence;
+        if reached {
+            self.journal.finish(context.dispatch_token, reply.clone());
+        } else {
+            // Nothing reached the server, so the same dispatch may be delivered again.
+            self.journal.abandon(context.dispatch_token);
+        }
         reply
     }
 

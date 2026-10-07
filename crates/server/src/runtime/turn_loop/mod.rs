@@ -17,10 +17,10 @@ pub mod usage;
 
 pub use dispatch::{
     is_internal_tool, ActingActor, HostDispatch, HostFailure, HostOutcome, MemoryProposalContext,
-    MemoryProposalPort, PlanApplicationContext, PlanApplicationPort, ProjectionProvider,
-    ProposalTrustSource, RoleProvider, StoredProjectionProvider, ToolDispatchService, ToolHostPort,
-    UnavailableMemoryProposals, UnavailablePlanApplication, UnavailableProposalTrust,
-    UnavailableRoles, UnavailableToolHost, INTERNAL_TOOLS,
+    MemoryProposalPort, NestedOutcome, PlanApplicationContext, PlanApplicationPort,
+    ProjectionProvider, ProposalTrustSource, RoleProvider, StoredProjectionProvider,
+    ToolDispatchService, ToolHostPort, UnavailableMemoryProposals, UnavailablePlanApplication,
+    UnavailableProposalTrust, UnavailableRoles, UnavailableToolHost, COMPOSE_TOOL, INTERNAL_TOOLS,
 };
 pub use model_calls::{ModelCallLedger, RecordedCall};
 pub use parallel::{is_control_tool, join_all, plan_rounds, COMPLETION_TOOL, CONTROL_TOOLS};

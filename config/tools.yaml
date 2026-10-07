@@ -1939,3 +1939,62 @@ tools:
       properties:
         title: { type: string }
       required: [title]
+
+  # The composition sandbox (ADP-009, DOMAIN.md 7.5 "Composition sandbox"). The call itself changes nothing: the script it carries
+  # acts only through `call(tool, args)`, and each of those is a governed call of its own (its own schema check, projection, policy and
+  # Effect Ledger record), so this declaration is a read and grants nothing a script could not be granted call by call. Its output is
+  # made of tool results, so it is data.
+  - name: compose.run
+    version: 1
+    description: >-
+      Run one script that composes several tool calls in a bounded interpreter with no network, files, process or timers. The script
+      is the body of an async function; it calls `await call(tool, args)` (every call is a normal governed tool call), writes with
+      `log(...)` and `image(ref)`, keeps data between runs of one session in the `state` object, and returns a JSON value. It is
+      cut off at its deadline, its host-call budget and its memory limit, and a takeover, a revoked permission, a stop or a spent
+      budget ends it for good.
+    host: qworkerd
+    source_trust: untrusted_external
+    effect_class: read.internal
+    resource: { kind: target, selector: "*" }
+    idempotency: { digest_args: [script, session_id, reset, deadline_ms, max_host_calls] }
+    max_output_bytes: 65536
+    timeout_ms: 130000
+    cancellable: false
+    evidence: { kinds: [compose_cell], redact: [] }
+    grant_templates:
+      - effect_class: read.internal
+        resource: { kind: target, selector: "*" }
+        constraints: {}
+    input_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        script: { type: string, minLength: 1, maxLength: 65536 }
+        session_id: { type: string, minLength: 1, maxLength: 64 }
+        reset: { type: boolean }
+        deadline_ms: { type: integer, minimum: 100, maximum: 120000 }
+        max_host_calls: { type: integer, minimum: 1, maximum: 512 }
+      required: [script]
+    output_schema:
+      type: object
+      additionalProperties: false
+      properties:
+        ok: { type: boolean }
+        result_json: { type: [string, "null"] }
+        logs: { type: string }
+        images: { type: array, maxItems: 8, items: { type: string } }
+        host_calls: { type: integer, minimum: 0 }
+        truncated: { type: boolean }
+        state_bytes: { type: integer, minimum: 0 }
+        session_id: { type: string }
+        error:
+          type: [object, "null"]
+          additionalProperties: false
+          properties:
+            code: { type: string }
+            message: { type: string }
+            limit: { type: string }
+            condition: { type: string }
+            host_code: { type: string }
+        trust: { type: string, const: UNTRUSTED_EXTERNAL }
+      required: [ok, result_json, logs, images, host_calls, truncated, state_bytes, session_id, error, trust]

@@ -44,7 +44,7 @@ def test_domain_derivation_covers_commands_errors_effects_events_trust(catalog):
     # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15), the
     # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15), the 4 `RECORDING_*` codes (ADP-003, §15) and the
     # 6 file and worktree codes (ADP-005, §15).
-    assert len(catalog["errors"]) == 90  # + the 4 automation codes (ADP-007), 2 tool codes and PACK_INSTALL_FAILED (ADP-008), 9 MCP codes (ADP-009, §15)
+    assert len(catalog["errors"]) == 93  # + the 4 automation codes (ADP-007), 2 tool codes and PACK_INSTALL_FAILED (ADP-008), 9 MCP and 3 Compose codes (ADP-009, §15)
     assert len(catalog["effect_classes"]) == 24  # + fs.delete.workspace (ADP-005)
     assert len(catalog["event_families"]) == 36  # + webhook.* (APP-015), recording.* (ADP-003)
     assert catalog["trust_levels"] == [
@@ -257,6 +257,8 @@ def test_json_schemas_validate_real_artifacts():
     validator("pack-install-config").validate(pack_install)
     mcp = yaml.safe_load((ROOT / "config" / "mcp.yaml").read_text())
     validator("mcp-config").validate(mcp)
+    compose = yaml.safe_load((ROOT / "config" / "composition.yaml").read_text())
+    validator("composition-config").validate(compose)
 
     summaries = sorted((ROOT / "evidence").glob("*/*/summary.json"))
     assert summaries, "at least one task evidence bundle must exist"
@@ -587,3 +589,46 @@ def test_mcp_config_schema_keeps_external_tools_classified_bounded_and_credentia
     assert broken(lambda d: d["restart"].update(backoff_ms=[]))
     assert broken(lambda d: d.update(unknown_section={}))
     assert broken(lambda d: d["limits"].pop("max_schema_bytes"))
+
+
+def test_compose_config_schema_keeps_the_sandbox_bounded_and_its_terminal_conditions_mandatory():
+    """A configuration cannot lift a limit past its ceiling, and cannot drop the terminal conditions of a takeover,
+    a revoked permission, a user stop, a spent budget or a fenced browser (ADP-009, DOMAIN.md 7.5)."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "composition-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "composition.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+    limits = good["limits"]
+    assert limits["memory_bytes"] == 64 * 1024 * 1024 and limits["deadline_ms"] == 30_000 and limits["host_call_budget"] == 64
+    assert limits["output_text_bytes"] == 38 * 1024 and limits["output_images"] == 3 and limits["idle_timeout_ms"] == 30 * 60 * 1000
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    for mandatory in (
+        "COMPUTER_TAKEOVER_ACTIVE",
+        "COMPUTER_PERMISSION_REVOKED",
+        "COMPUTER_STOPPED_BY_USER",
+        "BUDGET_EXHAUSTED",
+        "BROWSER_INPUT_FENCED",
+    ):
+        assert broken(lambda d, code=mandatory: d["terminal_codes"].remove(code)), mandatory
+    assert not broken(lambda d: d["terminal_codes"].append("SOMETHING_ELSE_ENDS_IT"))
+    assert broken(lambda d: d["terminal_codes"].append("not a code"))
+    assert broken(lambda d: d["terminal_codes"].append("BUDGET_EXHAUSTED"))
+    assert broken(lambda d: d["limits"].update(deadline_max_ms=600_000))
+    assert broken(lambda d: d["limits"].update(deadline_ms=0))
+    assert broken(lambda d: d["limits"].update(host_call_budget_max=100_000))
+    assert broken(lambda d: d["limits"].update(memory_bytes=8 * 1024 * 1024 * 1024))
+    assert broken(lambda d: d["limits"].update(output_images=100))
+    assert broken(lambda d: d["limits"].update(max_script_bytes=64 * 1024 * 1024))
+    assert broken(lambda d: d["limits"].update(max_sessions=0))
+    assert broken(lambda d: d["limits"].pop("host_call_budget"))
+    assert broken(lambda d: d.update(unknown_section={}))
+    assert broken(lambda d: d["limits"].update(allow_network=True))

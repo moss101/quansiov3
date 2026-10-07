@@ -194,6 +194,13 @@ pub enum ApiErrorCode {
     McpBusy,
     /// The call reached the server and no answer came back; the outcome is unknown and is not retried.
     McpCallInDoubt,
+    // Compose (ADP-009)
+    /// A composition script threw, did not compile or did not settle.
+    ComposeScriptError,
+    /// A limit of the composition sandbox ended the cell.
+    ComposeLimitExceeded,
+    /// A terminal condition ended the cell.
+    ComposeTerminated,
     // Model
     /// The provider could not be reached.
     ProviderUnavailable,
@@ -218,7 +225,7 @@ pub enum ApiErrorCode {
 
 impl ApiErrorCode {
     /// Every code in the table, so a caller can check one against it without a list of its own.
-    pub const ALL: [ApiErrorCode; 90] = [
+    pub const ALL: [ApiErrorCode; 93] = [
         ApiErrorCode::AuthRequired,
         ApiErrorCode::AuthInvalidToken,
         ApiErrorCode::AuthExpired,
@@ -300,6 +307,9 @@ impl ApiErrorCode {
         ApiErrorCode::McpResultInvalid,
         ApiErrorCode::McpBusy,
         ApiErrorCode::McpCallInDoubt,
+        ApiErrorCode::ComposeScriptError,
+        ApiErrorCode::ComposeLimitExceeded,
+        ApiErrorCode::ComposeTerminated,
         ApiErrorCode::ProviderUnavailable,
         ApiErrorCode::ProviderRateLimited,
         ApiErrorCode::ProviderRefusal,
@@ -396,6 +406,9 @@ impl ApiErrorCode {
             Self::McpResultInvalid => "MCP_RESULT_INVALID",
             Self::McpBusy => "MCP_BUSY",
             Self::McpCallInDoubt => "MCP_CALL_IN_DOUBT",
+            Self::ComposeScriptError => "COMPOSE_SCRIPT_ERROR",
+            Self::ComposeLimitExceeded => "COMPOSE_LIMIT_EXCEEDED",
+            Self::ComposeTerminated => "COMPOSE_TERMINATED",
             Self::ProviderUnavailable => "PROVIDER_UNAVAILABLE",
             Self::ProviderRateLimited => "PROVIDER_RATE_LIMITED",
             Self::ProviderRefusal => "PROVIDER_REFUSAL",
@@ -492,6 +505,9 @@ impl ApiErrorCode {
             | Self::McpResultInvalid
             | Self::McpBusy
             | Self::McpCallInDoubt => "MCP",
+            Self::ComposeScriptError | Self::ComposeLimitExceeded | Self::ComposeTerminated => {
+                "Compose"
+            }
             Self::ProviderUnavailable
             | Self::ProviderRateLimited
             | Self::ProviderRefusal
@@ -612,6 +628,12 @@ impl ApiErrorCode {
             Self::McpInvalidRequest | Self::McpToolError => StatusCode::UNPROCESSABLE_ENTITY,
             Self::McpServerUnavailable | Self::McpBusy => StatusCode::SERVICE_UNAVAILABLE,
             Self::McpProtocolError | Self::McpResultInvalid => StatusCode::BAD_GATEWAY,
+            // Compose (409/422): a script the sandbox could not run to the end, or a limit it hit, is unprocessable as
+            // sent; a terminal condition conflicts with the state the script assumed (a person has the machine).
+            Self::ComposeScriptError | Self::ComposeLimitExceeded => {
+                StatusCode::UNPROCESSABLE_ENTITY
+            }
+            Self::ComposeTerminated => StatusCode::CONFLICT,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             Self::StreamBackpressure => StatusCode::SERVICE_UNAVAILABLE,
