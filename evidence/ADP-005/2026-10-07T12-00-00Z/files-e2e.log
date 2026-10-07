@@ -1,0 +1,16 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a6c9c3bd9f717dc9f
+
+stdout | tests/e2e/files.e2e.spec.ts > local files (real Electron, real server) > a grant is bound to the window that asked: another window cannot claim it, preview it or load its media URL
+BLOCKED_EXTERNAL: the upload of the claimed file was refused by the server (INTERNAL: the artifact store failed; try again); the object store is not running
+
+ ✓ |qa-e2e| tests/e2e/files.e2e.spec.ts (6 tests) 3605ms
+   ✓ local files (real Electron, real server) > the attach deep link opens the dialog and hands the page a grant; a link with a path is refused and opens nothing 515ms
+   ✓ local files (real Electron, real server) > a granted folder: opaque entries, a media URL for a file in it, a conflict-checked edit and a watch that is quiet about its own save 1375ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  12:07:39
+   Duration  3.87s (transform 26ms, setup 0ms, collect 125ms, tests 3.60s, environment 0ms, prepare 27ms)
+
+exit=0

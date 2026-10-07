@@ -34,15 +34,35 @@ directory is never a pick.
 
 ## Counts
 
-See `desktop-tests.log`, `workspace-tests.log`, `lint.log`, `repo-tests.log`, `python-tests.log`, `static-gates.log` and
-`files-e2e.log` in this bundle (the counts are the logs'; none is repeated here to avoid drifting from them).
+`desktop-tests.log`: 55 files, 494 passed, 4 skipped (the run had the private PostgreSQL and the server binaries in its environment, so
+the existing `*.e2e.test.ts` journeys ran live too; `tests/work.e2e.test.ts` is excluded as in ADP-003 and ADP-004: it asserts exact
+workspace revision numbers and fails differently on different runs); `tsc` and `eslint` clean over `apps/desktop` and `tests/e2e`.
+This task's files: `local-files-{config,grants,roots,media,edit,watcher,host,links}.test.ts` and `local-attach.test.ts`
+(config 3, grants 17, roots 13, media 16, edit 15, watcher 18, host 21, links 3, attach 7), plus the extended `ipc-trust`,
+`ipc-sources`, `security` and `preload` tests. `files-e2e.log`: the real-Electron spec, 6 passed (one `BLOCKED_EXTERNAL` line for
+the object store, below). `workspace-tests.log`: `cargo test --workspace --no-fail-fast` 1099 passed, 13 failed: the same 13 calls to the
+artifact/evidence object store at `127.0.0.1:59010` that ADP-002 to ADP-004 recorded (MinIO is not running); this task adds
+`retention` (21, including six real SIGKILLs of a child process), `file_conflicts` (7) and the server's error-table and taxonomy
+tests now cover 71 codes and 24 effect classes. `repo-tests.log`: 243 passed (`tests/architecture`, `tests/contract`, `tests/ci`;
+the Rust contract generator cannot run from a worktree under `.claude/worktrees`, so `test_generated_bindings_are_current` is
+run in the finalize dry-run clone). `python-tests.log`: 710 passed, 21 skipped. `lint.log`: `cargo fmt --check` and `clippy -D
+warnings` clean. `static-gates.log`: validator, arch, workspace, inventory, authority, legacy map, contract regeneration (catalog,
+openapi, ts, sdk) and supply chain, all clean. `shell-e2e.log` and `shell-e2e-main-control.log`: the ADP-004 shell smoke on this branch and on
+main's sources, both 7 of 8 (below).
 
 ## Mutation checks
 
-`mutation-checks.log` (script `mutation-checks.py`, from a committed tree): every mutant COMPILES, the unmutated suite passes
-first (CONTROL-PASSED for both toolchains) and a named test then fails. The first run found one survivor (a window that closed kept
-its watch: the hub test held the other window's subscription, so the watch stayed open either way) and a failing control
-(`ipc-sources`, after the protected-path helper had been put in the host module); both fixed and re-run, the log is the final run.
+`mutation-checks.log` (script `mutation-checks.py`, run from a committed tree): 85 mutants of the guards across grants, roots and
+entries, media, safe edits, the watcher, the host, the IPC policy, deep links, the CSP, worktree retention and agent writes. Every
+mutant COMPILES (`tsc` or `cargo test --no-run`), the unmutated suite passes first (CONTROL-PASSED for both toolchains), and a
+named test then fails: 85 killed, 0 survived, 0 no-verdict. The first full runs found real holes, each now closed by a test:
+a refused grant could leak the descriptors it had opened (no count could see it: the test now counts the process's own open
+descriptors), a closing window's watch, a claimed grant's media token and a released root's entry ids were not observed
+directly (counts added), a save onto a link was untested at the function (now direct), an early conflict wrote a temporary file
+(now asserted not to), and a temporary name that already existed was opened and truncated (the write now creates it exclusively and
+goes on to the next name; the test plants links at the next forty). Where a guard has two layers (an entry's window and its root's
+window, a grant's `NOFOLLOW` and the `lstat` fallback, a window's watches and its roots' watches) the mutant removes both: a
+single layer is redundant by design, and a survivor of a one-layer mutant is not a hole.
 
 ## Not exercised live (stated, not claimed)
 

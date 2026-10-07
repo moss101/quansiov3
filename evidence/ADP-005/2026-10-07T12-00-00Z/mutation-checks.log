@@ -1,0 +1,174 @@
+# ADP-005 mutation checks at 220c120
+CONTROL-PASSED vitest
+COMPILES grant: a claim does not spend the grant
+KILLED grant: a claim does not spend the grant <- tests/local-files-grants.test.ts > claim > cannot be claimed twice: the first claim spends the grant, whatever
+COMPILES grant: another window may claim
+KILLED grant: another window may claim <- tests/local-files-grants.test.ts > claim > cannot be claimed by another window, and a failed attempt does not 
+COMPILES grant: the clock is not consulted at claim
+KILLED grant: the clock is not consulted at claim <- tests/local-files-grants.test.ts > expiry > an expired grant is reported as expired to the window that held it
+COMPILES grant: links are followed
+KILLED grant: links are followed <- tests/local-files-grants.test.ts > what a grant will not hold > does not follow a link at the end of the picke
+COMPILES grant: a file one byte over the limit is accepted
+KILLED grant: a file one byte over the limit is accepted <- tests/local-files-grants.test.ts > limits > accepts a file at the per-file limit and refuses one a byte over
+COMPILES grant: the total is not limited
+KILLED grant: the total is not limited <- tests/local-files-grants.test.ts > limits > refuses a grant over the file count, the per-file size, the total 
+COMPILES grant: the live-grant count is not limited
+KILLED grant: the live-grant count is not limited <- tests/local-files-grants.test.ts > limits > refuses a grant over the file count, the per-file size, the total 
+COMPILES grant: a closing window leaves the files it was handed open
+KILLED grant: a closing window leaves the files it was handed open <- tests/local-files-grants.test.ts > revocation > a window that closes loses its grants, and the files it was ha
+COMPILES grant: a refused grant leaves what it opened
+KILLED grant: a refused grant leaves what it opened <- tests/local-files-grants.test.ts > what a grant will not hold > refuses a directory, a symbolic link, a missin
+COMPILES grant: the token is stored as it is given
+KILLED grant: the token is stored as it is given <- tests/local-files-grants.test.ts > claim > two grants carry different random tokens, and a grant is known to t
+COMPILES roots: another window's entry id resolves
+KILLED roots: another window's entry id resolves <- tests/local-files-edit.test.ts > what can be opened and saved > an entry of another window's root is outside, 
+COMPILES roots: a link that leaves the root is followed
+KILLED roots: a link that leaves the root is followed <- tests/local-files-roots.test.ts > a path outside the granted roots is refused > a link that replaces a listed 
+COMPILES roots: a link as the last element is accepted
+KILLED roots: a link as the last element is accepted <- tests/local-files-roots.test.ts > the path rules under every entry > resolveInRoot proves containment on real 
+COMPILES roots: a listing includes links
+KILLED roots: a listing includes links <- tests/local-files-roots.test.ts > entries > lists names, kinds and sizes with opaque ids, in order, and leaves
+COMPILES roots: the home folder is a root
+KILLED roots: the home folder is a root <- tests/local-files-roots.test.ts > granting a root > refuses a file, a missing folder, the filesystem root and 
+COMPILES roots: a release keeps the entries
+KILLED roots: a release keeps the entries <- tests/local-files-roots.test.ts > a path outside the granted roots is refused > a window that closes loses its
+COMPILES roots: a plain relative path may have a parent component
+KILLED roots: a plain relative path may have a parent component <- tests/local-files-roots.test.ts > the path rules under every entry > a relative path is plain or it is refused
+COMPILES media: another window's request is served
+KILLED media: another window's request is served <- tests/local-files-media.test.ts > a token that is not a capability > is bound to its window: another window th
+COMPILES media: a request nobody can name is served when the shell requires a name
+KILLED media: a request nobody can name is served when the shell requires a name <- tests/local-files-media.test.ts > a token that is not a capability > is bound to its window: another window th
+COMPILES media: any method is served
+KILLED media: any method is served <- tests/local-files-media.test.ts > a media URL > answers GET and HEAD only
+COMPILES media: the sandbox policy is dropped
+KILLED media: the sandbox policy is dropped <- tests/local-files-media.test.ts > a media URL > serves a granted file with the sandboxing headers, and the URL
+COMPILES media: a claimed grant's URL keeps working
+KILLED media: a claimed grant's URL keeps working <- tests/local-files-media.test.ts > a token that is not a capability > is revoked with its grant: when the grant
+COMPILES media: a closing window's tokens stay
+KILLED media: a closing window's tokens stay <- tests/local-files-media.test.ts > a token that is not a capability > is revoked when its window is destroyed, 
+COMPILES media: a suffix range starts one byte late
+KILLED media: a suffix range starts one byte late <- tests/local-files-media.test.ts > a media URL > answers a single range, a suffix range and an open range, and 
+COMPILES media: more than one range is served
+KILLED media: more than one range is served <- tests/local-files-media.test.ts > a media URL > answers a single range, a suffix range and an open range, and 
+COMPILES media: HTML is served as itself
+KILLED media: HTML is served as itself <- tests/local-files-media.test.ts > a media URL > serves only a closed table of media types as themselves: HTML,
+COMPILES media: the page's policy replaces a media response's
+KILLED media: the page's policy replaces a media response's <- tests/security.test.ts > renderer security baseline > lets the page show local media and nothing else of that 
+COMPILES media: the page may load the scheme as a script
+KILLED media: the page may load the scheme as a script <- tests/security.test.ts > renderer security baseline > lets the page show local media and nothing else of that 
+COMPILES media: the per-window cap is not applied
+KILLED media: the per-window cap is not applied <- tests/local-files-media.test.ts > a token that is not a capability > is limited per window: past the limit the
+COMPILES edit: the re-check after the temporary file is skipped
+KILLED edit: the re-check after the temporary file is skipped <- tests/local-files-edit.test.ts > a file that changed after it was read > is caught when the other writer lands
+COMPILES edit: the baseline is not compared before the write
+KILLED edit: the baseline is not compared before the write <- tests/local-files-edit.test.ts > a file that changed after it was read > is found before anything is written w
+COMPILES edit: an existing backup is replaced
+KILLED edit: an existing backup is replaced <- tests/local-files-edit.test.ts > overwrite after a conflict > never replaces a backup that already exists
+COMPILES edit: the file's permissions are not kept
+KILLED edit: the file's permissions are not kept <- tests/local-files-edit.test.ts > a save that nothing disturbed > replaces the file atomically, keeps its permi
+COMPILES edit: the temporary file is left behind on a conflict
+KILLED edit: the temporary file is left behind on a conflict <- tests/local-files-edit.test.ts > a file that changed after it was read > is caught when the other writer lands
+COMPILES edit: a write is not recorded for the watcher
+KILLED edit: a write is not recorded for the watcher <- tests/local-files-edit.test.ts > a save that nothing disturbed > replaces the file atomically, keeps its permi
+COMPILES edit: the baseline stays the old one after a save
+KILLED edit: the baseline stays the old one after a save <- tests/local-files-edit.test.ts > a save that nothing disturbed > replaces the file atomically, keeps its permi
+COMPILES edit: a target that became a link is written through
+KILLED edit: a target that became a link is written through <- tests/local-files-edit.test.ts > saveWithBaseline and readForEdit directly > compares size and modification ti
+COMPILES edit: binary content is opened as text
+KILLED edit: binary content is opened as text <- tests/local-files-edit.test.ts > what can be opened and saved > opens a UTF-8 text file within the bound, and 
+COMPILES watcher: one OS watch per path, not per inode
+KILLED watcher: one OS watch per path, not per inode <- tests/local-files-host.test.ts > folders, previews, edits and watches > delivers typed changes to the window t
+COMPILES watcher: no debounce
+KILLED watcher: no debounce <- tests/local-files-watcher.test.ts > the debounce > reports a burst of events once, 300 ms after the last, as t
+COMPILES watcher: a replaced directory is still watched
+KILLED watcher: a replaced directory is still watched <- tests/local-files-watcher.test.ts > identity and failure > drops the watch and says so when the directory is r
+COMPILES watcher: the queue limit is one too high
+KILLED watcher: the queue limit is one too high <- tests/local-files-watcher.test.ts > the bounded queue > reports exactly at the limit as changes, not an overfl
+COMPILES watcher: a shell write is reported back
+KILLED watcher: a shell write is reported back <- tests/local-files-host.test.ts > folders, previews, edits and watches > delivers typed changes to the window t
+COMPILES watcher: subscribers are not limited
+KILLED watcher: subscribers are not limited <- tests/local-files-watcher.test.ts > one OS watch per directory > is bounded: subscribers per window and watche
+COMPILES watcher: watches are not limited
+KILLED watcher: watches are not limited <- tests/local-files-watcher.test.ts > one OS watch per directory > is bounded: subscribers per window and watche
+COMPILES watcher: a closed window's watch stays open
+KILLED watcher: a closed window's watch stays open <- tests/local-files-watcher.test.ts > one OS watch per directory > is dropped when its window goes or its root i
+COMPILES watcher: an entry of a file is accepted as a folder
+KILLED watcher: an entry of a file is accepted as a folder <- tests/local-files-watcher.test.ts > one OS watch per directory > refuses a file, a missing path and a director
+COMPILES host: the switch does not switch anything off
+KILLED host: the switch does not switch anything off <- tests/local-files-host.test.ts > switched off > answers every channel POLICY_DENIED, opens no dialog and serve
+COMPILES host: a second dialog may open in one window
+KILLED host: a second dialog may open in one window <- tests/local-files-host.test.ts > attaching files from disk > opens one dialog per window at a time: a request 
+COMPILES host: a closing window keeps its grants
+KILLED host: a closing window keeps its grants <- tests/local-files-host.test.ts > a window that closes > loses everything held for it: grants and their files, 
+COMPILES host: a closing window keeps its watches and a released root keeps its watches
+KILLED host: a closing window keeps its watches and a released root keeps its watches <- tests/local-files-host.test.ts > a window that closes > loses everything held for it: grants and their files, 
+COMPILES host: the attach leaves the claimed files open
+KILLED host: the attach leaves the claimed files open <- tests/local-files-host.test.ts > attaching files from disk > opens a native dialog on request, holds what was 
+COMPILES host: a file inside Quansio's data directory can be attached
+KILLED host: a file inside Quansio's data directory can be attached <- tests/local-files-host.test.ts > Quansio's own data > is never a file a pick can attach nor a folder it can op
+COMPILES host: a folder holding Quansio's data directory can be opened
+KILLED host: a folder holding Quansio's data directory can be opened <- tests/local-files-host.test.ts > Quansio's own data > is never a file a pick can attach nor a folder it can op
+COMPILES host: an oversized file is sent to the upload
+KILLED host: an oversized file is sent to the upload <- tests/local-files-host.test.ts > attaching files from disk > reports a file the upload cannot take and goes on
+COMPILES host: a payload may carry a field the channel does not name
+KILLED host: a payload may carry a field the channel does not name <- tests/local-files-host.test.ts > no channel takes a path > rejects a path where an id is expected, and any fie
+COMPILES policy: a pop-out reaches the folder picker
+KILLED policy: a pop-out reaches the folder picker <- tests/ipc-trust.test.ts > window types > a window may call exactly the channels its type has, and no others
+COMPILES policy: a pop-out asks for a dialog for any thread
+KILLED policy: a pop-out asks for a dialog for any thread <- tests/local-files-host.test.ts > authority per window type > a pop-out asks for a dialog for its own thread on
+COMPILES policy: quick entry reaches the grant channels
+KILLED policy: quick entry reaches the grant channels <- tests/ipc-trust.test.ts > window types > a window may call exactly the channels its type has, and no others
+COMPILES link: an attach link may carry a query
+KILLED link: an attach link may carry a query <- tests/local-files-links.test.ts > the attach link > refuses a link that carries a path, however the path is sp
+COMPILES link: an attach link may carry a sub-path
+KILLED link: an attach link may carry a sub-path <- tests/local-files-links.test.ts > the attach link > refuses a link that carries a path, however the path is sp
+CONTROL-PASSED rust
+COMPILES retention: an edited prepared file is accepted
+KILLED retention: an edited prepared file is accepted <- a_token_that_is_unknown_expired_malformed_or_for_another_set_refuses_the_whole_call
+COMPILES retention: any set of ids is accepted for a token
+KILLED retention: any set of ids is accepted for a token <- a_token_that_is_unknown_expired_malformed_or_for_another_set_refuses_the_whole_call
+COMPILES retention: an expired token is honoured
+KILLED retention: an expired token is honoured <- a_token_that_is_unknown_expired_malformed_or_for_another_set_refuses_the_whole_call
+COMPILES retention: the preview's index and status are not compared
+KILLED retention: the preview's index and status are not compared <- every_part_of_a_worktrees_state_is_rechecked_against_the_preview
+COMPILES retention: the content of a changed file is not part of the fingerprint
+KILLED retention: the content of a changed file is not part of the fingerprint <- a_retention_token_binds_the_exact_set_and_each_worktrees_state
+COMPILES retention: the last look before removal is skipped
+KILLED retention: the last look before removal is skipped <- the_last_look_before_removal_catches_a_change_made_during_the_cleanup
+COMPILES retention: HEAD moving is not noticed
+KILLED retention: HEAD moving is not noticed <- every_part_of_a_worktrees_state_is_rechecked_against_the_preview
+COMPILES retention: a held worktree is removed
+KILLED retention: a held worktree is removed <- cleanup_accounts_for_every_requested_id_with_a_reason_for_each_skip
+COMPILES retention: the snapshot is built in the worktree's real index
+KILLED retention: the snapshot is built in the worktree's real index <- a_cleanup_never_creates_or_moves_a_branch_tag_or_stash
+COMPILES retention: the index snapshot is written with write-tree on the live index
+KILLED retention: the index snapshot is written with write-tree on the live index <- building_the_snapshot_never_writes_the_worktrees_own_index
+COMPILES retention: removal is not recorded before it begins
+KILLED retention: removal is not recorded before it begins <- a_crash_after_removal_began_is_finished_or_undone_and_the_work_is_restorable
+COMPILES retention: a crash recovery completes a changed worktree
+KILLED retention: a crash recovery completes a changed worktree <- a_removal_that_was_interrupted_is_abandoned_when_the_checkout_changed_since
+COMPILES retention: a crash recovery abandons a complete removal
+KILLED retention: a crash recovery abandons a complete removal <- a_crash_after_removal_began_is_finished_or_undone_and_the_work_is_restorable
+COMPILES retention: the sweep removes a worktree with changes
+KILLED retention: the sweep removes a worktree with changes <- the_automatic_sweep_removes_only_clean_idle_worktrees_beyond_the_limit_oldest_first
+COMPILES retention: the sweep ignores how long a worktree was idle
+KILLED retention: the sweep ignores how long a worktree was idle <- a_sweep_does_not_remove_a_worktree_that_was_used_within_the_idle_time
+COMPILES retention: the sweep takes the newest first
+KILLED retention: the sweep takes the newest first <- the_automatic_sweep_removes_only_clean_idle_worktrees_beyond_the_limit_oldest_first
+COMPILES retention: a recovery ref outside the private namespace is accepted
+KILLED retention: a recovery ref outside the private namespace is accepted <- the_shipped_policy_is_valid_and_refuses_what_the_schema_refuses
+COMPILES retention: a restore leaves the index as the snapshot's tree
+KILLED retention: a restore leaves the index as the snapshot's tree <- a_crash_after_removal_began_is_finished_or_undone_and_the_work_is_restorable
+COMPILES retention: an id with a path in it is accepted
+KILLED retention: an id with a path in it is accepted <- a_worktree_id_is_a_slug
+COMPILES agent write: the re-check after the temporary file is skipped
+KILLED agent write: the re-check after the temporary file is skipped <- a_patch_is_applied_to_the_bytes_it_was_checked_against_or_not_at_all
+COMPILES agent write: a stale base digest is accepted
+KILLED agent write: a stale base digest is accepted <- a_write_against_a_stale_base_is_refused_and_leaves_the_file_untouched
+COMPILES agent write: a patch is applied to bytes other than the ones it was checked against
+KILLED agent write: a patch is applied to bytes other than the ones it was checked against <- a_patch_is_applied_to_the_bytes_it_was_checked_against_or_not_at_all
+COMPILES agent write: the temporary file is not created exclusively
+KILLED agent write: the temporary file is not created exclusively <- a_temporary_name_that_is_already_taken_is_never_opened_or_removed
+COMPILES agent write: the file's permissions are not kept
+KILLED agent write: the file's permissions are not kept <- a_rejected_patch_changes_nothing_and_a_write_keeps_the_files_permissions
+# mutants: 85  killed: 85  survived: 0  no-verdict: 0

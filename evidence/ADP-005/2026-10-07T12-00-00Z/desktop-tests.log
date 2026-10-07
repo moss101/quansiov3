@@ -1,0 +1,28 @@
+ ✓ tests/knowledge.e2e.test.ts (2 tests) 6410ms
+   ✓ desktop knowledge E2E against quansio-server > forgetting memory or knowledge removes it from every future retrieval and leaves a tombstone with its provenance 4008ms
+   ✓ desktop knowledge E2E against quansio-server > a skill climbs the ladder one rung at a time; an unapproved version cannot be activated; the run's resolution names it and grants nothing 720ms
+ ✓ tests/collaboration.e2e.test.ts (2 tests) 7957ms
+   ✓ desktop collaboration E2E against quansio-server > keeps one order for two clients posting at once, then revokes the removed one 5277ms
+   ✓ desktop collaboration E2E against quansio-server > hands a conversation from one teammate to another 1043ms
+ ✓ tests/automation.e2e.test.ts (2 tests) 11095ms
+   ✓ desktop automation E2E against quansio-server > delivers a mention on exactly the channels the person chose 1828ms
+   ✓ desktop automation E2E against quansio-server > keeps firing a routine across a server restart without firing a window twice 7622ms
+ ✓ tests/session.e2e.test.ts (9 tests) 12990ms
+   ✓ desktop account (real Electron, real server) > returns to sign-in when the person signs out 901ms
+   ✓ desktop account (real Electron, real server) > returns to sign-in when an administrator revokes the session 3015ms
+   ✓ desktop account (real Electron, real server) > changes workspace and personal settings and shows the effective result 1052ms
+   ✓ desktop account (real Electron, real server) > follows the theme chosen in Settings over the system's, on the page and the window (APP-003) 2241ms
+   ✓ desktop account (real Electron, real server) > keeps a choice made before Settings has finished reading the current values 1076ms
+   ✓ desktop account (real Electron, real server) > shows a viewer the workspace settings without letting them change them 840ms
+   ✓ desktop account (real Electron, real server) > lists the conversation a message starts in the sidebar, and + starts another (APP-003) 1120ms
+   ✓ desktop account (real Electron, real server) > jumps to a page from the command palette (APP-003) 608ms
+   ✓ desktop account (real Electron, real server) > names every surface for a person and every entry opens a page (APP-003) 1153ms
+
+ Test Files  55 passed (55)
+      Tests  494 passed | 4 skipped (498)
+   Start at  12:08:21
+   Duration  13.36s (transform 1.53s, setup 0ms, collect 5.59s, tests 64.08s, environment 5ms, prepare 1.68s)
+
+vitest exit=0
+tsc exit=0
+eslint exit=0
