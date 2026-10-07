@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/automation-config.schema.json",
+  "title": "Quansio automation triggers and workflow scripts (config/automation.yaml)",
+  "description": "Bounds for inbound hooks, per-plan routine limits, dry runs and workflow scripts (DOMAIN.md 13.8). A body cannot be larger than 64 KiB, a signature cannot be accepted from more than ten minutes away, the approval threshold cannot be switched off and the call ceiling cannot pass what a person can review.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "hooks", "limits", "tenant_overrides", "dry_run", "script"],
+  "properties": {
+    "version": { "const": 1 },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_body_bytes", "tolerance_seconds", "rate_per_minute", "delivery_retention_days"],
+      "properties": {
+        "max_body_bytes": { "type": "integer", "minimum": 1024, "maximum": 65536 },
+        "tolerance_seconds": { "type": "integer", "minimum": 30, "maximum": 600 },
+        "rate_per_minute": { "type": "integer", "minimum": 1, "maximum": 600 },
+        "delivery_retention_days": { "type": "integer", "minimum": 1, "maximum": 365 }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["personal", "organization"],
+      "properties": {
+        "personal": { "$ref": "#/$defs/plan" },
+        "organization": { "$ref": "#/$defs/plan" }
+      }
+    },
+    "tenant_overrides": {
+      "type": "object",
+      "propertyNames": { "pattern": "^tn_[0-9A-HJKMNP-TV-Z]{26}$" },
+      "additionalProperties": { "$ref": "#/$defs/plan_override" }
+    },
+    "dry_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rate_per_minute", "next_windows"],
+      "properties": {
+        "rate_per_minute": { "type": "integer", "minimum": 1, "maximum": 600 },
+        "next_windows": { "type": "integer", "minimum": 1, "maximum": 10 }
+      }
+    },
+    "script": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_steps", "max_items", "max_agent_calls_ceiling", "approval_threshold_calls", "max_result_bytes", "max_parallel_calls", "gate_ttl_seconds"],
+      "properties": {
+        "max_steps": { "type": "integer", "minimum": 1, "maximum": 64 },
+        "max_items": { "type": "integer", "minimum": 1, "maximum": 500 },
+        "max_agent_calls_ceiling": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "approval_threshold_calls": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "max_result_bytes": { "type": "integer", "minimum": 1024, "maximum": 262144 },
+        "max_parallel_calls": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "gate_ttl_seconds": { "type": "integer", "minimum": 60, "maximum": 604800 }
+      }
+    }
+  },
+  "$defs": {
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_enabled_triggers", "min_interval_seconds"],
+      "properties": {
+        "max_enabled_triggers": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "min_interval_seconds": { "type": "integer", "minimum": 10, "maximum": 86400 }
+      }
+    },
+    "plan_override": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_enabled_triggers": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "min_interval_seconds": { "type": "integer", "minimum": 10, "maximum": 86400 }
+      }
+    }
+  }
+}

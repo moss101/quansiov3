@@ -13,10 +13,17 @@
 //! * [`ledger`] — one row per fire key; a window, an event or a trigger-now command claims
 //!   exactly one fire, executing it is leased, and a failed execution is retried with
 //!   exponential backoff before it is marked failed.
+//! * [`hooks`] — inbound hook triggers (ADP-007): typed payload filters, endpoint names and the delivery ledger that makes
+//!   a replayed delivery fire nothing; [`script`] — workflow scripts and the instruction templates through which text from
+//!   outside the routine's author reaches a run only as untrusted data; [`config`] — `config/automation.yaml`.
 //! * [`triggers`] — event triggers: a consumer of the tenant's RuntimeEvents that claims a
 //!   fire per matching event in the transaction that advances its cursor.
 
+pub mod config;
+pub mod dryrun;
+pub mod hooks;
 pub mod ledger;
+pub mod script;
 mod store;
 pub mod triggers;
 
@@ -24,6 +31,7 @@ pub use ledger::{
     backoff, Fire, FireLedger, FireSource, FireStatus, FIRE_LEASE_SECONDS, MAX_FIRE_ATTEMPTS,
 };
 pub use store::{
-    NewRoutine, RoutineChange, RoutineError, RoutineStore, RoutineView, ROUTINES_OWNER,
+    validate_template, ChangedRoutine, CreatedRoutine, NewRoutine, RoutineChange, RoutineError,
+    RoutineStore, RoutineView, HOOK_SECRET_PROVIDER, ROUTINES_OWNER,
 };
 pub use triggers::{event_matches, EventTriggers};

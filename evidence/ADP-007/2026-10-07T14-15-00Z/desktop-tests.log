@@ -1,0 +1,12 @@
+tsc rc=0
+tsc build rc=0
+eslint rc=0
+vitest rc=0
+ ↓ tests/launch.e2e.test.ts (2 tests | 2 skipped)
+ ✓ tests/renderer-parts.test.ts (6 tests) 2ms
+
+ Test Files  46 passed | 13 skipped (59)
+      Tests  551 passed | 45 skipped (596)
+   Start at  20:06:39
+   Duration  1.18s (transform 1.77s, setup 0ms, collect 7.59s, tests 1.55s, environment 6ms, prepare 2.18s)
+

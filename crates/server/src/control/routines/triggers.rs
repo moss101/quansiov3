@@ -150,6 +150,7 @@ impl EventTriggers {
                             FireSource::Event,
                             None,
                             Some(event_id),
+                            None,
                         )
                         .await?
                         .is_some()

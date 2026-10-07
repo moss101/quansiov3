@@ -24,7 +24,7 @@ import {
 const ME = "usr_01J8Z3K6F1N8VQ2X5W9Y0AAAA1";
 
 function fire(overrides: Partial<FireView>): FireView {
-  return { id: "rfi_1", fireKey: "routine:rtn_1:2026-09-23T10:00:00+00:00", source: "schedule", status: "fired", attempts: 1, windowAt: "2026-09-23T10:00:00Z", runId: "run_1", threadId: "thr_1", lastError: null, ...overrides };
+  return { id: "rfi_1", fireKey: "routine:rtn_1:2026-09-23T10:00:00+00:00", source: "schedule", status: "fired", attempts: 1, windowAt: "2026-09-23T10:00:00Z", runId: "run_1", threadId: "thr_1", lastError: null, payloadDigest: null, ...overrides };
 }
 
 describe("routines", () => {

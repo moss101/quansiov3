@@ -12,6 +12,7 @@ use chrono::{DateTime, Duration, Utc};
 use quansio_core::{CorrelationId, UlidGenerator};
 use quansio_events::{Actor, EventBatch, EventDraft, EventError, EventStore, EventType};
 use serde_json::{json, Value};
+use sha2::Digest as _;
 use sqlx::postgres::PgRow;
 use sqlx::{PgConnection, PgPool, Row};
 
@@ -23,7 +24,7 @@ pub const FIRE_LEASE_SECONDS: i64 = 120;
 const COLUMNS: &str =
     "id, workspace_id, routine_id, fire_key, source, window_at, source_event_id, \
                        status, attempts, next_attempt_at, last_error, thread_id, message_id, \
-                       objective_id, run_id";
+                       objective_id, run_id, payload";
 
 /// Where a fire came from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -34,6 +35,8 @@ pub enum FireSource {
     Event,
     /// `TriggerRoutineNow`.
     Manual,
+    /// An accepted inbound hook delivery (ADP-007).
+    Hook,
 }
 
 impl FireSource {
@@ -44,6 +47,7 @@ impl FireSource {
             Self::Schedule => "schedule",
             Self::Event => "event",
             Self::Manual => "manual",
+            Self::Hook => "hook",
         }
     }
 }
@@ -116,6 +120,8 @@ pub struct Fire {
     pub objective_id: Option<String>,
     /// The Run, once created.
     pub run_id: Option<String>,
+    /// The accepted body of an inbound hook delivery (ADP-007): untrusted data, kept with the fire.
+    pub payload: Option<Value>,
 }
 
 impl Fire {
@@ -137,6 +143,10 @@ impl Fire {
             "message_id": self.message_id,
             "objective_id": self.objective_id,
             "run_id": self.run_id,
+            // The body is data from outside; the projection names it by digest and never returns it.
+            "payload_digest": self.payload.as_ref().map(|payload| {
+                hex::encode(sha2::Sha256::digest(payload.to_string().as_bytes()))
+            }),
         })
     }
 }
@@ -167,12 +177,13 @@ pub async fn claim_in(
     source: FireSource,
     window_at: Option<DateTime<Utc>>,
     source_event_id: Option<&str>,
+    payload: Option<&Value>,
 ) -> Result<Option<Fire>, EventError> {
     let id = format!("rfi_{}", UlidGenerator::new().generate());
     let row = sqlx::query(&format!(
         "INSERT INTO routine_fires (id, tenant_id, workspace_id, routine_id, fire_key, source, \
-                                    window_at, source_event_id) \
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) \
+                                    window_at, source_event_id, payload) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) \
          ON CONFLICT (tenant_id, fire_key) DO NOTHING RETURNING {COLUMNS}"
     ))
     .bind(&id)
@@ -183,6 +194,7 @@ pub async fn claim_in(
     .bind(source.as_str())
     .bind(window_at)
     .bind(source_event_id)
+    .bind(payload)
     .fetch_optional(&mut *conn)
     .await?;
     let Some(row) = row else {
@@ -554,6 +566,7 @@ fn fire_from_row(row: &PgRow) -> Result<Fire, sqlx::Error> {
         message_id: row.try_get("message_id")?,
         objective_id: row.try_get("objective_id")?,
         run_id: row.try_get("run_id")?,
+        payload: row.try_get("payload")?,
     })
 }
 

@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.29s
+     Running tests/automation_served.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/automation_served-0827ca284ce15074)
+
+running 2 tests
+test a_hook_fire_claimed_before_a_kill_runs_once_after_the_relaunch_and_its_replay_is_a_duplicate ... ok
+test a_killed_process_resumes_a_hook_fired_script_from_its_journal_without_repeating_a_completed_call ... the call in flight at the kill reached the model 2 times (the killed process's request and the resumed one)
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.52s
+

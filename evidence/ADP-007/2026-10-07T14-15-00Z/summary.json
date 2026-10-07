@@ -1,0 +1,159 @@
+{
+  "task_id": "ADP-007",
+  "git_commit": "12e05082221baca82ff64fe864160a0ab0f9691d",
+  "recorded_at": "2026-10-07T17:07:26Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-07T14-15-00Z/lint.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1312 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-07T14-15-00Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test automation_triggers --test automation_workflow --test automation_untrusted --test automation_served  # 22 passed: automation_triggers 11, automation_workflow 8, automation_untrusted 1, automation_served 2",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-07T14-15-00Z/automation-suites.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test automation_served -- --nocapture --test-threads=1  # the real quansio-server process, SIGKILLed and relaunched over the same database (hook fire claimed and not executed; script run killed mid-call), with the real Python plane and a loopback OpenAI-compatible provider",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-07T14-15-00Z/served-boundary.log"
+    },
+    {
+      "command": "node_modules/.bin/vitest run (apps/desktop) && tsc -p apps/desktop/tsconfig.json && eslint --max-warnings 0 apps/desktop  # 551 passed, 45 skipped (46 files; 70 new in automation-triggers and automation-parts); tsc and eslint --max-warnings 0 clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-07T14-15-00Z/desktop-tests.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current  # 245 passed, 1 deselected (the Rust contract generator cannot run from a worktree; it runs in the finalize dry-run clone)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-07T14-15-00Z/repo-tests.log"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 39 mutants, 38 killed, 1 survived, 0 no-verdict; every mutant COMPILES, controls PASSED",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-07T14-15-00Z/mutation-checks.log"
+    },
+    {
+      "command": "validate_v81.py; arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py (chrono-tz); gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-07T14-15-00Z/static-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1312 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test automation_triggers --test automation_workflow --test automation_untrusted --test automation_served  # 22 passed: automation_triggers 11, automation_workflow 8, automation_untrusted 1, automation_served 2",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test automation_served -- --nocapture --test-threads=1  # the real quansio-server process, SIGKILLed and relaunched over the same database (hook fire claimed and not executed; script run killed mid-call), with the real Python plane and a loopback OpenAI-compatible provider",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "node_modules/.bin/vitest run (apps/desktop) && tsc -p apps/desktop/tsconfig.json && eslint --max-warnings 0 apps/desktop  # 551 passed, 45 skipped (46 files; 70 new in automation-triggers and automation-parts); tsc and eslint --max-warnings 0 clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current  # 245 passed, 1 deselected (the Rust contract generator cannot run from a worktree; it runs in the finalize dry-run clone)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 39 mutants, 38 killed, 1 survived, 0 no-verdict; every mutant COMPILES, controls PASSED",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "validate_v81.py; arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py (chrono-tz); gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/ADP-007/2026-10-07T14-15-00Z/lint.log",
+      "sha256": "968c4565e456d90927cad53ca1f4c12358539ce2b0b99c4c6c120f6eaf1448ba",
+      "bytes": 220
+    },
+    {
+      "path": "evidence/ADP-007/2026-10-07T14-15-00Z/workspace-tests.log",
+      "sha256": "806b24989d473257da69bc0a6d91100dca97029f65b463b9ecf1814d7f525740",
+      "bytes": 140064
+    },
+    {
+      "path": "evidence/ADP-007/2026-10-07T14-15-00Z/automation-suites.log",
+      "sha256": "1cc89f59b0bc304b2ba0b699f09ca84623e38739638de7ed263e872b267348f5",
+      "bytes": 2957
+    },
+    {
+      "path": "evidence/ADP-007/2026-10-07T14-15-00Z/served-boundary.log",
+      "sha256": "c9e7e6cd755c1883fb54c98a053c52ad5be7d40f64baacecb40f8b90ba6ddc6a",
+      "bytes": 636
+    },
+    {
+      "path": "evidence/ADP-007/2026-10-07T14-15-00Z/desktop-tests.log",
+      "sha256": "691478c38f2b3ab64320e213867b71fe3653a45e628bbbc28a23f915d0ea1592",
+      "bytes": 364
+    },
+    {
+      "path": "evidence/ADP-007/2026-10-07T14-15-00Z/repo-tests.log",
+      "sha256": "f8f1f97935ddffffa68ab23af39633c800e426932bec4d9991ecf04706dd25b1",
+      "bytes": 1880
+    },
+    {
+      "path": "evidence/ADP-007/2026-10-07T14-15-00Z/mutation-checks.log",
+      "sha256": "fc8643556ec00cdcc51e6f7b88e895e7d91178276f97d4c20b0164f5293f28b4",
+      "bytes": 8754
+    },
+    {
+      "path": "evidence/ADP-007/2026-10-07T14-15-00Z/static-gates.log",
+      "sha256": "a41a4cd6d13c81c16446b050dc1787f72b1949f724d35ce7fcdf1d0ced196647",
+      "bytes": 1975
+    },
+    {
+      "path": "evidence/ADP-007/2026-10-07T14-15-00Z/mutation-checks.py",
+      "sha256": "d053f5ebbd087ee93cc12e1cc43976afed8ba2588bc7a9e3e8d4b6ec0129686e",
+      "bytes": 15931
+    },
+    {
+      "path": "evidence/ADP-007/NOTES.md",
+      "sha256": "ba7d1cf7bddc52b1c4bf451829e588aab6894beb8fd07d8aa22f437a4521ec04",
+      "bytes": 8539
+    },
+    {
+      "path": "evidence/ADP-007/RECONCILIATION.md",
+      "sha256": "b818212f69107654f246f7ea5b827c48e5acc7fa0ecb703be52f489d7a644566",
+      "bytes": 6115
+    },
+    {
+      "path": "evidence/ADP-007/PLAN.md",
+      "sha256": "0ce37ab6875bc5fdfff9bfd6db08f0fc2eccdfc6048b9121868ea9735f69a3fd",
+      "bytes": 3077
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a2ab90f91c5b77719/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 21.93s
+     Running tests/automation_served.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/automation_served-0827ca284ce15074)
+
+running 2 tests
+test a_killed_process_resumes_a_hook_fired_script_from_its_journal_without_repeating_a_completed_call ... ok
+test a_hook_fire_claimed_before_a_kill_runs_once_after_the_relaunch_and_its_replay_is_a_duplicate ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.34s
+
+     Running tests/automation_triggers.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/automation_triggers-1a130131c071a5a6)
+
+running 11 tests
+test a_dry_run_evaluates_without_starting_anything_and_is_rate_limited ... ok
+test a_client_named_create_is_idempotent_and_a_different_definition_is_a_mismatch ... ok
+test a_replayed_webhook_does_not_fire_twice ... ok
+test a_scheduled_window_fires_once_across_a_spring_forward_gap_and_a_fall_back_repeat ... ok
+test a_stale_revision_is_refused_and_a_full_replacement_replaces_everything ... ok
+test an_inbound_request_is_authenticated_bounded_and_refused_with_typed_errors ... ok
+test filters_pass_a_delivery_when_any_group_holds_and_fail_closed ... ok
+test an_unknown_time_zone_is_a_typed_error_and_a_known_one_is_accepted ... ok
+test plan_limits_come_from_configuration ... ok
+test the_hook_path_works_as_the_least_privileged_role ... ok
+test the_payload_reaches_the_run_only_as_untrusted_data_and_changes_nothing_about_the_routine ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.79s
+
+     Running tests/automation_untrusted.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/automation_untrusted-67a4bef9d7ef5af9)
+
+running 1 test
+test payload_text_cannot_authorize_an_action_through_the_real_plane ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.13s
+
+     Running tests/automation_workflow.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/automation_workflow-356b70e7f7902012)
+
+running 8 tests
+test a_script_run_another_instance_is_driving_is_left_alone ... ok
+test a_restart_resumes_a_script_from_its_journal_without_repeating_a_completed_call ... ok
+test a_script_run_cancelled_from_outside_makes_no_further_call ... ok
+test a_script_with_a_gate_runs_as_the_least_privileged_role ... ok
+test an_invalid_item_result_fails_that_item_and_the_reducer_sees_the_failure ... ok
+test above_the_threshold_a_script_holds_an_approval_before_it_fans_out ... ok
+test reaching_the_call_budget_pauses_the_run_into_an_attention_item_instead_of_failing_it ... ok
+test the_orchestrator_and_the_scheduler_leave_a_scripts_nodes_and_runs_to_its_executor ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.16s
+

@@ -1279,6 +1279,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/commands/DryRunRoutine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Routines: DryRunRoutine */
+        post: operations["DryRunRoutine"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commands/RotateRoutineHook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Routines: RotateRoutineHook */
+        post: operations["RotateRoutineHook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/commands/BeginConnectorAuth": {
         parameters: {
             query?: never;
@@ -1670,6 +1704,26 @@ export interface paths {
         get: operations["StreamEvents"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/hooks/{endpoint_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Deliver an event to a routine's inbound hook (DOMAIN.md §13.8 A).
+         * @description Authenticated by `quansio-signature: t=<unix seconds>,v1=<hex HMAC-SHA256(secret, "<t>.<body>")>` (the secret is shown once when the routine is created) with a timestamp within the tolerance window. The body is one JSON object of at most 64 KiB. A delivery whose `quansio-delivery-id` or signature was seen before is answered `duplicate` and fires nothing. The payload reaches the run only as untrusted data.
+         */
+        post: operations["ReceiveRoutineHook"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2434,7 +2488,7 @@ export interface components {
              * @description DOMAIN.md §15 error taxonomy.
              * @enum {string}
              */
-            code: "AUTH_REQUIRED" | "AUTH_INVALID_TOKEN" | "AUTH_EXPIRED" | "SCOPE_FORBIDDEN" | "TENANT_MISMATCH" | "VALIDATION_SCHEMA" | "VALIDATION_UNKNOWN_FIELD" | "VALIDATION_BOUNDS" | "CONFLICT_REVISION" | "CONFLICT_IDEMPOTENCY_MISMATCH" | "CONFLICT_STATE" | "CAPABILITY_DENIED" | "CAPABILITY_INPUTS_UNAVAILABLE" | "POLICY_DENIED" | "APPROVAL_REQUIRED" | "APPROVAL_INVALID" | "APPROVAL_EXPIRED" | "APPROVAL_SUPERSEDED" | "RUNTIME_ILLEGAL_TRANSITION" | "FENCED_STALE_GENERATION" | "LEASE_LOST" | "EFFECT_UNKNOWN_PENDING_RECONCILIATION" | "BUDGET_EXHAUSTED" | "EFFECTS_FROZEN" | "TARGET_UNAVAILABLE" | "TARGET_PROVISION_FAILED" | "TOOL_TIMEOUT" | "TOOL_OUTPUT_TRUNCATED" | "EGRESS_DENIED" | "BROWSER_STALE_PAGE" | "BROWSER_STALE_DIALOG" | "BROWSER_DIALOG_PENDING" | "BROWSER_ACTION_REPLAY_CONFLICT" | "BROWSER_ACTION_IN_DOUBT" | "BROWSER_SECRET_ORIGIN_MISMATCH" | "BROWSER_SECRET_UNAVAILABLE" | "BROWSER_SENSITIVE_INPUT_DENIED" | "BROWSER_NAVIGATION_DENIED" | "BROWSER_CERTIFICATE_DECISION_REQUIRED" | "BROWSER_GESTURE_REQUIRED" | "BROWSER_INPUT_FENCED" | "BROWSER_EFFECT_TIER_EXCEEDED" | "BROWSER_INVALID_REQUEST" | "BROWSER_TARGET_NOT_FOUND" | "BROWSER_PAGE_FAILURE" | "COMPUTER_TAKEOVER_ACTIVE" | "COMPUTER_PERMISSION_REVOKED" | "COMPUTER_LIMIT_EXCEEDED" | "COMPUTER_STOPPED_BY_USER" | "COMPUTER_PERMISSION_REQUIRED" | "COMPUTER_FOREGROUND_CONTROL_LAPSED" | "COMPUTER_HELPER_IDENTITY_REFUSED" | "RECORDING_OWNER_CHANGED" | "RECORDING_NOT_FINISHED" | "RECORDING_UNREDACTED" | "RECORDING_PROPOSAL_REJECTED" | "FILE_GRANT_INVALID" | "FILE_OUTSIDE_ROOTS" | "FILE_EDIT_CONFLICT" | "FILE_REFUSED" | "WORKTREE_TOKEN_INVALID" | "WORKTREE_MISSING" | "DECK_NOT_DELIVERABLE" | "ADAPTER_UNAVAILABLE" | "PREVIEW_SCOPE_LAPSED" | "PROVIDER_UNAVAILABLE" | "PROVIDER_RATE_LIMITED" | "PROVIDER_REFUSAL" | "ROUTE_UNAVAILABLE" | "DLP_DENIED" | "NOT_FOUND" | "RATE_LIMITED" | "STREAM_BACKPRESSURE" | "INTERNAL";
+            code: "AUTH_REQUIRED" | "AUTH_INVALID_TOKEN" | "AUTH_EXPIRED" | "SCOPE_FORBIDDEN" | "TENANT_MISMATCH" | "VALIDATION_SCHEMA" | "VALIDATION_UNKNOWN_FIELD" | "VALIDATION_BOUNDS" | "CONFLICT_REVISION" | "CONFLICT_IDEMPOTENCY_MISMATCH" | "CONFLICT_STATE" | "CAPABILITY_DENIED" | "CAPABILITY_INPUTS_UNAVAILABLE" | "POLICY_DENIED" | "APPROVAL_REQUIRED" | "APPROVAL_INVALID" | "APPROVAL_EXPIRED" | "APPROVAL_SUPERSEDED" | "RUNTIME_ILLEGAL_TRANSITION" | "FENCED_STALE_GENERATION" | "LEASE_LOST" | "EFFECT_UNKNOWN_PENDING_RECONCILIATION" | "BUDGET_EXHAUSTED" | "EFFECTS_FROZEN" | "TARGET_UNAVAILABLE" | "TARGET_PROVISION_FAILED" | "TOOL_TIMEOUT" | "TOOL_OUTPUT_TRUNCATED" | "EGRESS_DENIED" | "BROWSER_STALE_PAGE" | "BROWSER_STALE_DIALOG" | "BROWSER_DIALOG_PENDING" | "BROWSER_ACTION_REPLAY_CONFLICT" | "BROWSER_ACTION_IN_DOUBT" | "BROWSER_SECRET_ORIGIN_MISMATCH" | "BROWSER_SECRET_UNAVAILABLE" | "BROWSER_SENSITIVE_INPUT_DENIED" | "BROWSER_NAVIGATION_DENIED" | "BROWSER_CERTIFICATE_DECISION_REQUIRED" | "BROWSER_GESTURE_REQUIRED" | "BROWSER_INPUT_FENCED" | "BROWSER_EFFECT_TIER_EXCEEDED" | "BROWSER_INVALID_REQUEST" | "BROWSER_TARGET_NOT_FOUND" | "BROWSER_PAGE_FAILURE" | "COMPUTER_TAKEOVER_ACTIVE" | "COMPUTER_PERMISSION_REVOKED" | "COMPUTER_LIMIT_EXCEEDED" | "COMPUTER_STOPPED_BY_USER" | "COMPUTER_PERMISSION_REQUIRED" | "COMPUTER_FOREGROUND_CONTROL_LAPSED" | "COMPUTER_HELPER_IDENTITY_REFUSED" | "RECORDING_OWNER_CHANGED" | "RECORDING_NOT_FINISHED" | "RECORDING_UNREDACTED" | "RECORDING_PROPOSAL_REJECTED" | "FILE_GRANT_INVALID" | "FILE_OUTSIDE_ROOTS" | "FILE_EDIT_CONFLICT" | "FILE_REFUSED" | "WORKTREE_TOKEN_INVALID" | "WORKTREE_MISSING" | "DECK_NOT_DELIVERABLE" | "ADAPTER_UNAVAILABLE" | "PREVIEW_SCOPE_LAPSED" | "AUTOMATION_TIMEZONE_UNKNOWN" | "AUTOMATION_LIMIT_EXCEEDED" | "AUTOMATION_PAYLOAD_TOO_LARGE" | "WORKFLOW_RESULT_INVALID" | "PROVIDER_UNAVAILABLE" | "PROVIDER_RATE_LIMITED" | "PROVIDER_REFUSAL" | "ROUTE_UNAVAILABLE" | "DLP_DENIED" | "NOT_FOUND" | "RATE_LIMITED" | "STREAM_BACKPRESSURE" | "INTERNAL";
             message: string;
             correlation_id: string;
             retryable: boolean;
@@ -2769,6 +2823,14 @@ export interface components {
         };
         /** @description Routines command DeleteRoutine. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
         DeleteRoutineParams: {
+            [key: string]: unknown;
+        };
+        /** @description Routines command DryRunRoutine. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        DryRunRoutineParams: {
+            [key: string]: unknown;
+        };
+        /** @description Routines command RotateRoutineHook. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        RotateRoutineHookParams: {
             [key: string]: unknown;
         };
         /** @description Connectors command BeginConnectorAuth. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
@@ -5865,6 +5927,84 @@ export interface operations {
             };
         };
     };
+    DryRunRoutine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    RotateRoutineHook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     BeginConnectorAuth: {
         parameters: {
             query?: never;
@@ -6735,6 +6875,63 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": string;
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    ReceiveRoutineHook: {
+        parameters: {
+            query?: never;
+            header: {
+                "quansio-signature": string;
+                "quansio-delivery-id"?: string;
+            };
+            path: {
+                endpoint_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Authenticated, and `duplicate` or `filtered`: nothing fired. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "accepted" | "filtered" | "duplicate";
+                        /** @description The claimed fire, when status is `accepted`. */
+                        fire_id?: string;
+                    };
+                };
+            };
+            /** @description Authenticated and accepted: one fire was claimed. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "accepted" | "filtered" | "duplicate";
+                        /** @description The claimed fire, when status is `accepted`. */
+                        fire_id?: string;
+                    };
                 };
             };
             /** @description Typed error (DOMAIN.md §15). */

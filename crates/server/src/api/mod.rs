@@ -24,6 +24,7 @@ pub mod diagnostics;
 pub mod enterprise;
 pub mod error;
 pub mod flags;
+pub mod hooks;
 pub mod knowledge;
 pub mod limits;
 pub mod live;
@@ -43,6 +44,7 @@ pub mod threads;
 pub mod trust;
 pub mod web;
 pub mod webhooks;
+pub mod workflow;
 pub mod workgraph;
 
 use std::collections::BTreeMap;
@@ -387,6 +389,9 @@ pub struct ApiState {
     metrics_token: Option<Arc<str>>,
     background_turns: bool,
     enterprise: Arc<EnterpriseIdentity>,
+    automation: Arc<crate::control::routines::config::AutomationConfig>,
+    hook_limits: RateLimiter,
+    dry_run_limits: RateLimiter,
 }
 
 impl ApiState {
@@ -400,6 +405,7 @@ impl ApiState {
     /// # Errors
     /// Returns [`ApiError`] when a catalog or `config/auth.yaml` is not the shape the contract defines.
     pub fn new(pool: PgPool) -> Result<Self, ApiError> {
+        let automation = crate::control::routines::config::AutomationConfig::shipped();
         let (model, host, roles) = seams::skeleton_seams(pool.clone(), None);
         let auth_file = AuthFile::load()
             .map_err(|error| ApiError::new(ApiErrorCode::Internal, error, "startup"))?;
@@ -437,7 +443,52 @@ impl ApiState {
             metrics_token: None,
             background_turns: false,
             enterprise: Arc::new(enterprise),
+            hook_limits: RateLimiter::new(
+                automation.hooks.rate_per_minute,
+                std::time::Duration::from_secs(60),
+            ),
+            dry_run_limits: RateLimiter::new(
+                automation.dry_run.rate_per_minute,
+                std::time::Duration::from_secs(60),
+            ),
+            automation: Arc::new(automation),
         })
+    }
+
+    /// `config/automation.yaml` as the deployment runs it (ADP-007).
+    #[must_use]
+    pub fn automation(&self) -> &Arc<crate::control::routines::config::AutomationConfig> {
+        &self.automation
+    }
+
+    /// Run under `config` instead of the shipped automation policy, with its rate limiters (tests).
+    #[must_use]
+    pub fn with_automation_config(
+        mut self,
+        config: crate::control::routines::config::AutomationConfig,
+    ) -> Self {
+        self.hook_limits = RateLimiter::new(
+            config.hooks.rate_per_minute,
+            std::time::Duration::from_secs(60),
+        );
+        self.dry_run_limits = RateLimiter::new(
+            config.dry_run.rate_per_minute,
+            std::time::Duration::from_secs(60),
+        );
+        self.automation = Arc::new(config);
+        self
+    }
+
+    /// Requests per inbound hook endpoint per minute.
+    #[must_use]
+    pub fn hook_limits(&self) -> &RateLimiter {
+        &self.hook_limits
+    }
+
+    /// Dry runs per tenant per minute.
+    #[must_use]
+    pub fn dry_run_limits(&self) -> &RateLimiter {
+        &self.dry_run_limits
     }
 
     /// Enterprise identity with `config` instead of `config/identity.yaml` (tests admit the
@@ -772,6 +823,7 @@ pub fn router(state: ApiState) -> Router {
         .route("/v1/commands", get(command_catalog))
         .route("/v1/read-projections", get(read_projections))
         .route("/v1/commands/:command", post(commands::invoke))
+        .route("/v1/hooks/:endpoint", post(hooks::receive))
         .route("/v1/auth/magic-link/start", post(auth::magic_link_start))
         .route(
             "/v1/auth/magic-link/complete",

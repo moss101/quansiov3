@@ -196,6 +196,18 @@ errors:
 - code: PREVIEW_SCOPE_LAPSED
   family: Output
   http_status: 403/409/503
+- code: AUTOMATION_TIMEZONE_UNKNOWN
+  family: Automation
+  http_status: 400/413/422
+- code: AUTOMATION_LIMIT_EXCEEDED
+  family: Automation
+  http_status: 400/413/422
+- code: AUTOMATION_PAYLOAD_TOO_LARGE
+  family: Automation
+  http_status: 400/413/422
+- code: WORKFLOW_RESULT_INVALID
+  family: Automation
+  http_status: 400/413/422
 - code: PROVIDER_UNAVAILABLE
   family: Model
   http_status: 502/503

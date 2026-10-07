@@ -227,6 +227,50 @@ def _stream_paths(catalog: Dict[str, object]) -> Dict[str, object]:
     }
 
 
+def _hook_paths(catalog: Dict[str, object]) -> Dict[str, object]:
+    """`POST /v1/hooks/{endpoint_id}`: the inbound hook of a routine (ADP-007, DOMAIN.md 13.8 A).
+
+    The one mutating route with no tenant header and no session: the signature is the credential, and the signing scheme is the
+    outbound webhooks' (`quansio-signature`).
+    """
+    error = {"description": "Typed error (DOMAIN.md §15).", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}
+    accepted = {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+            "status": {"type": "string", "enum": ["accepted", "filtered", "duplicate"]},
+            "fire_id": {"type": "string", "description": "The claimed fire, when status is `accepted`."},
+        },
+    }
+    return {
+        "/v1/hooks/{endpoint_id}": {
+            "post": {
+                "operationId": "ReceiveRoutineHook",
+                "summary": "Deliver an event to a routine's inbound hook (DOMAIN.md §13.8 A).",
+                "description": (
+                    "Authenticated by `quansio-signature: t=<unix seconds>,v1=<hex HMAC-SHA256(secret, \"<t>.<body>\")>` "
+                    "(the secret is shown once when the routine is created) with a timestamp within the tolerance window. "
+                    "The body is one JSON object of at most 64 KiB. A delivery whose `quansio-delivery-id` or signature was "
+                    "seen before is answered `duplicate` and fires nothing. The payload reaches the run only as untrusted data."
+                ),
+                "tags": ["Hooks"],
+                "security": [],
+                "parameters": [
+                    {"name": "endpoint_id", "in": "path", "required": True, "schema": {"type": "string", "pattern": "^hk_[A-Za-z0-9_-]{43}$"}},
+                    {"name": "quansio-signature", "in": "header", "required": True, "schema": {"type": "string"}},
+                    {"name": "quansio-delivery-id", "in": "header", "schema": {"type": "string", "pattern": "^[A-Za-z0-9._:-]{1,128}$"}},
+                ],
+                "requestBody": {"required": True, "content": {"application/json": {"schema": {"type": "object"}}}},
+                "responses": {
+                    "200": {"description": "Authenticated, and `duplicate` or `filtered`: nothing fired.", "content": {"application/json": {"schema": accepted}}},
+                    "202": {"description": "Authenticated and accepted: one fire was claimed.", "content": {"application/json": {"schema": accepted}}},
+                    "default": error,
+                },
+            }
+        }
+    }
+
+
 def _webhooks(catalog: Dict[str, object]) -> Dict[str, object]:
     """The outbound webhook request (OpenAPI 3.1 `webhooks`), DOMAIN.md §13.5."""
     contract: Dict[str, object] = catalog.get("webhooks") or {}  # type: ignore[assignment]
@@ -402,6 +446,7 @@ def generate_openapi(out: Path, catalog: Optional[Dict[str, object]] = None) -> 
         },
     }
     paths.update(_stream_paths(catalog))
+    paths.update(_hook_paths(catalog))
     for path in projections:
         if path in paths:
             continue

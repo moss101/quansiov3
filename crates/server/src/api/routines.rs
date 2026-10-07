@@ -1,7 +1,8 @@
 //! Routines and notifications over the public API (APP-010, DOMAIN.md §13, §14).
 //!
 //! Commands: `CreateRoutine`, `UpdateRoutine`, `PauseRoutine`, `ResumeRoutine`,
-//! `DeleteRoutine`, `TriggerRoutineNow` (the routine owner, `control::routines`) and
+//! `DeleteRoutine`, `TriggerRoutineNow`, `DryRunRoutine`, `RotateRoutineHook` (the routine owner, `control::routines`;
+//! ADP-007 adds revisions, idempotent creates, inbound hooks and the dry run) and
 //! `UpdateNotificationPreferences`, `MarkNotificationRead` (the notification owner,
 //! `notify`). Projections: `GET /v1/routines?workspace_id=` (with each routine's recent
 //! fires) and `GET /v1/notifications?workspace_id=` (the caller's own, with their
@@ -36,7 +37,10 @@ use super::rbac::Authorization;
 use super::{ApiError, ApiErrorCode, ApiState, TenantScope};
 use crate::control::collaboration::CollaborationStore;
 use crate::control::conversation::{ConversationStore, NewMessage};
-use crate::control::routines::{FireLedger, NewRoutine, RoutineChange, RoutineError, RoutineStore};
+use crate::control::routines::hooks::HookLedger;
+use crate::control::routines::{
+    FireLedger, NewRoutine, RoutineChange, RoutineError, RoutineStore, RoutineView,
+};
 use crate::control::schema;
 use crate::notify::{NotificationStore, NotifyError};
 use crate::policy::rbac::ActionFamily;
@@ -52,11 +56,31 @@ use crate::scheduler::{
 fn routine_error(error: RoutineError, correlation: &str) -> ApiError {
     let code = match error.code() {
         "VALIDATION_SCHEMA" => ApiErrorCode::ValidationSchema,
+        "VALIDATION_BOUNDS" => ApiErrorCode::ValidationBounds,
         "NOT_FOUND" => ApiErrorCode::NotFound,
         "CONFLICT_STATE" => ApiErrorCode::ConflictState,
+        "CONFLICT_REVISION" => ApiErrorCode::ConflictRevision,
+        "CONFLICT_IDEMPOTENCY_MISMATCH" => ApiErrorCode::ConflictIdempotencyMismatch,
+        "AUTOMATION_TIMEZONE_UNKNOWN" => ApiErrorCode::AutomationTimezoneUnknown,
+        "AUTOMATION_LIMIT_EXCEEDED" => ApiErrorCode::AutomationLimitExceeded,
         _ => ApiErrorCode::Internal,
     };
-    ApiError::new(code, error.to_string(), correlation)
+    let message = match code {
+        // A database or sealing failure says nothing about the routine to the caller.
+        ApiErrorCode::Internal => "the routine could not be changed".to_string(),
+        _ => error.to_string(),
+    };
+    if code == ApiErrorCode::Internal {
+        crate::observability::notice(
+            crate::observability::Level::Warn,
+            &format!("routine command: {error}"),
+        );
+    }
+    let api = ApiError::new(code, message, correlation);
+    match error.details() {
+        Some(details) => api.with_details(details),
+        None => api,
+    }
 }
 
 fn notify_error(error: NotifyError, correlation: &str) -> ApiError {
@@ -171,6 +195,87 @@ fn store_for(state: &ApiState, scope: &TenantScope) -> RoutineStore {
         .as_deref()
         .map_or_else(|| Actor::system("api"), Actor::user);
     RoutineStore::new(state.pool().clone(), scope.tenant_id.clone(), actor)
+        .with_config(Arc::clone(state.automation()))
+        .with_key_provider(state.key_provider())
+}
+
+/// `expected_revision`, when the call names one.
+fn expected_revision_of(params: &Value, correlation: &str) -> Result<Option<i32>, ApiError> {
+    match params.get("expected_revision") {
+        None | Some(Value::Null) => Ok(None),
+        Some(value) => value
+            .as_i64()
+            .filter(|revision| *revision >= 1)
+            .and_then(|revision| i32::try_from(revision).ok())
+            .map(Some)
+            .ok_or_else(|| {
+                ApiError::new(
+                    ApiErrorCode::ValidationSchema,
+                    "expected_revision is a positive integer",
+                    correlation,
+                )
+            }),
+    }
+}
+
+/// `create_request_id`, when the call names one: 1 to 64 characters of letters, digits and `. _ : -`.
+fn create_request_id_of(params: &Value, correlation: &str) -> Result<Option<String>, ApiError> {
+    let Some(value) = params
+        .get("create_request_id")
+        .filter(|value| !value.is_null())
+    else {
+        return Ok(None);
+    };
+    value
+        .as_str()
+        .filter(|id| {
+            !id.is_empty()
+                && id.len() <= 64
+                && id.bytes().all(|byte| {
+                    byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b':' | b'-')
+                })
+        })
+        .map(|id| Some(id.to_string()))
+        .ok_or_else(|| {
+            ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                "create_request_id is 1 to 64 characters of letters, digits and . _ : -",
+                correlation,
+            )
+        })
+}
+
+/// A routine's result for a command: its projection, and the hook's signing secret when this call minted one (the command
+/// log keeps the result without it, [`super::webhooks::stored_result`]).
+fn routine_result(view: &RoutineView, secret: Option<String>, replayed: Option<bool>) -> Value {
+    let mut result = view.to_json();
+    if let Some(secret) = secret {
+        result[super::webhooks::ONE_TIME_FIELD] = Value::String(secret);
+    }
+    if let Some(replayed) = replayed {
+        result["replayed"] = Value::Bool(replayed);
+    }
+    result
+}
+
+/// The template a command's parameters describe: `{title, prompt, workflow?}`.
+fn template_of(params: &Value, correlation: &str) -> Result<Value, ApiError> {
+    let mut template = json!({
+        "title": text(params, "title").unwrap_or(""),
+        "prompt": text(params, "prompt").unwrap_or(""),
+    });
+    match params.get("workflow") {
+        None | Some(Value::Null) => {}
+        Some(workflow) if workflow.is_object() => template["workflow"] = workflow.clone(),
+        Some(_) => {
+            return Err(ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                "workflow is a WorkflowScript object",
+                correlation,
+            ))
+        }
+    }
+    Ok(template)
 }
 
 /// A routine the caller may change: its owner, or a workspace admin.
@@ -202,8 +307,8 @@ async fn manageable(
     Ok(routine)
 }
 
-/// `CreateRoutine {workspace_id, title, prompt, trigger {kind, spec, timezone?},
-/// teammate_id?, absence_policy?, budget?, notification_prefs?}`.
+/// `CreateRoutine {workspace_id, title, prompt, trigger {kind, spec, timezone?, filters?}, teammate_id?, absence_policy?,
+/// budget?, notification_prefs?, workflow?, create_request_id?}`.
 pub async fn create_routine(
     state: &ApiState,
     scope: &TenantScope,
@@ -230,10 +335,7 @@ pub async fn create_routine(
         owner_user_id: owner.to_string(),
         teammate_id,
         trigger,
-        objective_template: json!({
-            "title": text(params, "title").unwrap_or(""),
-            "prompt": text(params, "prompt").unwrap_or(""),
-        }),
+        objective_template: template_of(params, correlation)?,
         budget: params.get("budget").cloned().unwrap_or_else(|| json!({})),
         notification_prefs: params
             .get("notification_prefs")
@@ -241,15 +343,40 @@ pub async fn create_routine(
             .unwrap_or_else(|| json!({})),
         absence_policy: absence_of(text(params, "absence_policy"), correlation)?
             .unwrap_or(AbsencePolicy::Skip),
+        create_request_id: create_request_id_of(params, correlation)?,
     };
-    let routine = store_for(state, scope)
+    let created = store_for(state, scope)
         .create(new, Utc::now())
         .await
         .map_err(|error| routine_error(error, correlation))?;
-    Ok(routine.to_json())
+    Ok(routine_result(
+        &created.view,
+        created.secret,
+        Some(created.replayed),
+    ))
 }
 
-/// `UpdateRoutine {routine_id, title?, prompt?, trigger?, teammate_id?, absence_policy?}`.
+/// The teammate a call names: an `agt_` id, or nothing.
+fn teammate_param(params: &Value, correlation: &str) -> Result<Option<String>, ApiError> {
+    match params.get("teammate_id") {
+        None | Some(Value::Null) => Ok(None),
+        Some(value) => value
+            .as_str()
+            .map(|teammate| Some(teammate.to_string()))
+            .ok_or_else(|| {
+                ApiError::new(
+                    ApiErrorCode::ValidationSchema,
+                    "teammate_id is an agt_ id or null",
+                    correlation,
+                )
+            }),
+    }
+}
+
+/// `UpdateRoutine {routine_id, title?, prompt?, trigger?, teammate_id?, absence_policy?, budget?, notification_prefs?,
+/// workflow?, expected_revision?}`. With `expected_revision` the call is a full replacement of the definition (title, prompt
+/// and trigger are required; every other field absent returns to its default) and is refused `CONFLICT_REVISION` when the
+/// routine is at another revision; without it the call merges the fields it names.
 pub async fn update_routine(
     state: &ApiState,
     scope: &TenantScope,
@@ -257,37 +384,86 @@ pub async fn update_routine(
     correlation: &str,
 ) -> Result<Value, ApiError> {
     let routine = manageable(state, scope, params, correlation).await?;
-    let mut change = RoutineChange::default();
-    if let Some(trigger) = params.get("trigger") {
-        change.trigger = Some(trigger_of(trigger, correlation)?);
-    }
-    if params.get("title").is_some() || params.get("prompt").is_some() {
-        change.objective_template = Some(json!({
-            "title": text(params, "title").or_else(|| routine.objective_template.get("title").and_then(Value::as_str)).unwrap_or(""),
-            "prompt": text(params, "prompt").or_else(|| routine.objective_template.get("prompt").and_then(Value::as_str)).unwrap_or(""),
-        }));
-    }
-    match params.get("teammate_id") {
-        None => {}
-        Some(Value::Null) => change.teammate_id = Some(None),
-        Some(value) => {
-            let teammate = value.as_str().ok_or_else(|| {
-                ApiError::new(
+    let expected = expected_revision_of(params, correlation)?;
+    let mut change = RoutineChange {
+        expected_revision: expected,
+        ..RoutineChange::default()
+    };
+    if expected.is_some() {
+        // A full replacement: the whole definition is in the call.
+        for required_field in ["title", "prompt", "trigger"] {
+            if params.get(required_field).is_none_or(Value::is_null) {
+                return Err(ApiError::new(
                     ApiErrorCode::ValidationSchema,
-                    "teammate_id is an agt_ id or null",
+                    format!("{required_field} is required when expected_revision is given: the call replaces the whole definition"),
                     correlation,
-                )
-            })?;
-            check_teammate(state, scope, &routine.workspace_id, teammate, correlation).await?;
-            change.teammate_id = Some(Some(teammate.to_string()));
+                ));
+            }
         }
+        change.trigger = Some(trigger_of(&params["trigger"], correlation)?);
+        change.objective_template = Some(template_of(params, correlation)?);
+        let teammate = teammate_param(params, correlation)?;
+        if let Some(teammate) = &teammate {
+            check_teammate(state, scope, &routine.workspace_id, teammate, correlation).await?;
+        }
+        change.teammate_id = Some(teammate);
+        change.absence_policy = Some(
+            absence_of(text(params, "absence_policy"), correlation)?.unwrap_or(AbsencePolicy::Skip),
+        );
+        change.budget = Some(params.get("budget").cloned().unwrap_or_else(|| json!({})));
+        change.notification_prefs = Some(
+            params
+                .get("notification_prefs")
+                .cloned()
+                .unwrap_or_else(|| json!({})),
+        );
+    } else {
+        if let Some(trigger) = params.get("trigger") {
+            change.trigger = Some(trigger_of(trigger, correlation)?);
+        }
+        if ["title", "prompt", "workflow"]
+            .iter()
+            .any(|field| params.get(*field).is_some())
+        {
+            let mut template = json!({
+                "title": text(params, "title").or_else(|| routine.objective_template.get("title").and_then(Value::as_str)).unwrap_or(""),
+                "prompt": text(params, "prompt").or_else(|| routine.objective_template.get("prompt").and_then(Value::as_str)).unwrap_or(""),
+            });
+            match params.get("workflow") {
+                // Absent: the script stays. Null: it is removed. An object: it is replaced.
+                None => {
+                    if let Some(existing) = routine.objective_template.get("workflow") {
+                        template["workflow"] = existing.clone();
+                    }
+                }
+                Some(Value::Null) => {}
+                Some(_) => {
+                    template["workflow"] = template_of(params, correlation)?["workflow"].clone()
+                }
+            }
+            change.objective_template = Some(template);
+        }
+        match params.get("teammate_id") {
+            None => {}
+            Some(Value::Null) => change.teammate_id = Some(None),
+            Some(_) => {
+                let teammate = teammate_param(params, correlation)?;
+                if let Some(teammate) = &teammate {
+                    check_teammate(state, scope, &routine.workspace_id, teammate, correlation)
+                        .await?;
+                }
+                change.teammate_id = Some(teammate);
+            }
+        }
+        change.absence_policy = absence_of(text(params, "absence_policy"), correlation)?;
+        change.budget = params.get("budget").cloned();
+        change.notification_prefs = params.get("notification_prefs").cloned();
     }
-    change.absence_policy = absence_of(text(params, "absence_policy"), correlation)?;
-    let routine = store_for(state, scope)
+    let changed = store_for(state, scope)
         .update(&routine.id, change, Utc::now())
         .await
         .map_err(|error| routine_error(error, correlation))?;
-    Ok(routine.to_json())
+    Ok(routine_result(&changed.view, changed.secret, None))
 }
 
 /// `PauseRoutine`, `ResumeRoutine` or `DeleteRoutine {routine_id}`.
@@ -299,14 +475,103 @@ pub async fn transition_routine(
     correlation: &str,
 ) -> Result<Value, ApiError> {
     let routine = manageable(state, scope, params, correlation).await?;
+    let expected = expected_revision_of(params, correlation)?;
     let store = store_for(state, scope);
     let routine = match command {
-        "PauseRoutine" => store.pause(&routine.id).await,
-        "ResumeRoutine" => store.resume(&routine.id, Utc::now()).await,
-        _ => store.delete(&routine.id).await,
+        "PauseRoutine" => store.pause(&routine.id, expected).await,
+        "ResumeRoutine" => store.resume(&routine.id, Utc::now(), expected).await,
+        _ => store.delete(&routine.id, expected).await,
     }
     .map_err(|error| routine_error(error, correlation))?;
     Ok(routine.to_json())
+}
+
+/// `RotateRoutineHook {routine_id, expected_revision?}`: a new signing secret, returned once; the old one stops working.
+pub async fn rotate_routine_hook(
+    state: &ApiState,
+    scope: &TenantScope,
+    params: &Value,
+    correlation: &str,
+) -> Result<Value, ApiError> {
+    let routine = manageable(state, scope, params, correlation).await?;
+    let changed = store_for(state, scope)
+        .rotate_hook(&routine.id, expected_revision_of(params, correlation)?)
+        .await
+        .map_err(|error| routine_error(error, correlation))?;
+    Ok(routine_result(&changed.view, changed.secret, None))
+}
+
+/// `DryRunRoutine {routine_id | workspace_id + definition {title, prompt, trigger, workflow?}, sample_payload?}`: what the
+/// routine would do, starting nothing (DOMAIN.md §13.8 C).
+pub async fn dry_run_routine(
+    state: &ApiState,
+    scope: &TenantScope,
+    params: &Value,
+    correlation: &str,
+) -> Result<Value, ApiError> {
+    signed_in(scope, correlation)?;
+    let definition = if params.get("routine_id").is_some() {
+        let routine = manageable(state, scope, params, correlation).await?;
+        let mut definition = json!({
+            "title": routine.objective_template.get("title").cloned().unwrap_or(Value::Null),
+            "prompt": routine.objective_template.get("prompt").cloned().unwrap_or(Value::Null),
+            "trigger": routine.trigger,
+        });
+        if let Some(workflow) = routine.objective_template.get("workflow") {
+            definition["workflow"] = workflow.clone();
+        }
+        definition
+    } else {
+        let workspace_id = required(params, "workspace_id", correlation)?;
+        Authorization::check(
+            state.pool(),
+            scope,
+            Some(workspace_id),
+            ActionFamily::AuthorWork,
+            correlation,
+        )
+        .await?;
+        params
+            .get("definition")
+            .cloned()
+            .filter(Value::is_object)
+            .ok_or_else(|| {
+                ApiError::new(
+                    ApiErrorCode::ValidationSchema,
+                    "give routine_id, or workspace_id and a definition {title, prompt, trigger, workflow?}",
+                    correlation,
+                )
+            })?
+    };
+    if !state.dry_run_limits().allow(&scope.tenant_id) {
+        return Err(ApiError::new(
+            ApiErrorCode::RateLimited,
+            "this tenant has made too many dry runs this minute",
+            correlation,
+        ));
+    }
+    let personal = {
+        let mut tx = state.tenant_tx(&scope.tenant_id, correlation).await?;
+        let personal: Option<bool> =
+            sqlx::query_scalar("SELECT personal FROM tenants WHERE id = $1")
+                .bind(&scope.tenant_id)
+                .fetch_optional(&mut *tx)
+                .await
+                .map_err(|error| internal(error, correlation))?;
+        tx.commit()
+            .await
+            .map_err(|error| internal(error, correlation))?;
+        personal.unwrap_or(false)
+    };
+    let config = state.automation();
+    let limits = config.limits_for(&scope.tenant_id, personal);
+    Ok(crate::control::routines::dryrun::dry_run(
+        &definition,
+        params.get("sample_payload"),
+        config,
+        &limits,
+        Utc::now(),
+    ))
 }
 
 /// `TriggerRoutineNow {routine_id}`: claim a fire keyed by this command and execute it now
@@ -451,6 +716,38 @@ pub async fn routines(
             .map_err(|error| internal(error, "projection"))?;
         let mut item = routine.to_json();
         item["fires"] = Value::Array(fires.iter().map(|fire| fire.to_json()).collect());
+        if routine
+            .objective_template
+            .get("workflow")
+            .is_some_and(|workflow| !workflow.is_null())
+        {
+            // The script runs of its latest fires, derived from their journals: status, the call budget and every step.
+            let executor = super::workflow::executor(&state);
+            let mut runs = Vec::new();
+            for fire in fires.iter().filter(|fire| fire.run_id.is_some()).take(5) {
+                let run_id = fire.run_id.clone().unwrap_or_default();
+                if let Some(mut overview) = executor
+                    .overview(&scope.tenant_id, &run_id)
+                    .await
+                    .map_err(|error| internal(error, "projection"))?
+                {
+                    overview["fire_id"] = json!(fire.id);
+                    overview["run_id"] = json!(run_id);
+                    overview["objective_id"] = json!(fire.objective_id);
+                    runs.push(overview);
+                }
+            }
+            item["script_runs"] = Value::Array(runs);
+        }
+        if routine.hook_endpoint_id.is_some() {
+            // What the hook's ledger holds for the last day: counts, never a body.
+            let (accepted, filtered) =
+                HookLedger::new(state.pool().clone(), scope.tenant_id.clone())
+                    .summary(&routine.id, Utc::now() - chrono::Duration::hours(24))
+                    .await
+                    .map_err(|error| internal(error, "projection"))?;
+            item["hook"]["deliveries"] = json!({ "accepted": accepted, "filtered": filtered });
+        }
         items.push(item);
     }
     Ok(Json(
@@ -696,20 +993,36 @@ async fn fire_routine(
         Some(message) => message,
         None => {
             let window = request.fire_window.to_rfc3339();
-            let blocks = json!([
-                {
-                    "type": "system_notice",
-                    "text": format!("Routine \u{201c}{title}\u{201d} fired ({}).", fire.source),
-                    "notice": {
-                        "kind": "routine_fire",
-                        "routine_id": request.routine_id,
-                        "fire_key": request.fire_key,
-                        "window": window,
-                        "source": fire.source,
-                    },
+            // The instruction is the author's text; a trigger payload is a block of its own, labelled untrusted, and is
+            // the only place it appears (DOMAIN.md 13.8 B).
+            let pieces = crate::control::routines::script::render_instruction(
+                &prompt,
+                request.payload.as_ref(),
+            )
+            .map_err(|error| {
+                ApiError::new(
+                    ApiErrorCode::ValidationSchema,
+                    error.to_string(),
+                    &correlation,
+                )
+            })?;
+            let mut blocks = vec![json!({
+                "type": "system_notice",
+                "text": format!("Routine \u{201c}{title}\u{201d} fired ({}).", fire.source),
+                "notice": {
+                    "kind": "routine_fire",
+                    "routine_id": request.routine_id,
+                    "fire_key": request.fire_key,
+                    "window": window,
+                    "source": fire.source,
                 },
-                { "type": "text", "text": prompt },
-            ]);
+            })];
+            blocks.extend(
+                pieces
+                    .iter()
+                    .map(crate::control::routines::script::Piece::to_block),
+            );
+            let blocks = Value::Array(blocks);
             let new = NewMessage {
                 author_kind: "system",
                 author_id: format!("routine:{}", request.routine_id),
@@ -739,57 +1052,55 @@ async fn fire_routine(
     //    turned exactly as PostMessage does, continuing from where a previous attempt stopped.
     let engine =
         chat_engine(state, identity.clone()).map_err(|error| internal(error, &correlation))?;
-    let existing = existing_run(state, &request.tenant_id, &message.id, &correlation).await?;
-    let run = match existing {
-        Some(run_id) => engine
-            .store()
-            .load_run(&run_id)
+    let run = fire_run(
+        state,
+        request,
+        &identity,
+        &ledger,
+        &fire,
+        objective_id,
+        agent_thread,
+        teammate.as_ref(),
+        &message,
+        &engine,
+        &correlation,
+    )
+    .await?;
+    // A routine with a workflow script (ADP-007) does not take a turn: the script run is driven by the workflow executor,
+    // one worker Run per call, from its journal.
+    if let Some(workflow) = request
+        .objective_template
+        .get("workflow")
+        .filter(|workflow| !workflow.is_null())
+    {
+        let definition = crate::control::routines::script::WorkflowScript::parse(workflow)
+            .map_err(|error| {
+                ApiError::new(
+                    ApiErrorCode::ValidationSchema,
+                    error.to_string(),
+                    &correlation,
+                )
+            })?;
+        let script = crate::scheduler::workflow::ScriptRef {
+            tenant_id: request.tenant_id.clone(),
+            workspace_id: request.workspace_id.clone(),
+            routine_id: request.routine_id.clone(),
+            owner_user_id: request.owner_user_id.clone(),
+            title: title.clone(),
+            fire_key: request.fire_key.clone(),
+            run_id: run.id.to_string(),
+            objective_id: objective_id.to_string(),
+            agent_thread_id: agent_thread.to_string(),
+            teammate_id: request.teammate_id.clone(),
+        };
+        super::workflow::executor(state)
+            .begin(&script, &definition, request.payload.as_ref())
             .await
-            .map_err(|error| runtime_error(error, &correlation))?,
-        None => {
-            let mut new_run = NewRun::new(
-                request.workspace_id.clone(),
-                objective_id,
-                agent_thread,
-                RunTriggerKind::Routine,
-            );
-            new_run.trigger_ref = Some(message.id.clone());
-            let preferred = teammate
-                .as_ref()
-                .and_then(|teammate| teammate.default_execution_target_id.clone());
-            if let Some(target) = preferred {
-                new_run.execution_target_id = Some(target);
-            } else if let Some(target) =
-                load_target(state, &request.tenant_id, &request.workspace_id).await?
-            {
-                new_run.execution_target_id = Some(target);
-            }
-            let run = engine
-                .create_run(new_run)
-                .await
-                .map_err(|error| runtime_error(error, &correlation))?;
-            seed_projection(state, &identity, &request.workspace_id, &run)
-                .await
-                .map_err(|error| internal(error, &correlation))?;
-            run
-        }
-    };
-    ledger
-        .record_step(&fire.id, None, None, None, Some(&run.id.to_string()))
-        .await
-        .map_err(|error| internal(error, &correlation))?;
-    let mut run = run;
-    if run.status == RunStatus::Created {
-        run = engine
-            .enqueue(&run.id, run.generation)
-            .await
-            .map_err(|error| runtime_error(error, &correlation))?;
-    }
-    if run.status == RunStatus::Queued {
-        run = engine
-            .start(&run.id, run.generation)
-            .await
-            .map_err(|error| runtime_error(error, &correlation))?;
+            .map_err(|error| internal(error, &correlation))?;
+        return Ok(RoutineFireOutcome {
+            objective_id: objective_id.to_string(),
+            run_id: run.id.to_string(),
+        });
     }
     let turns = engine
         .store()
@@ -819,6 +1130,75 @@ async fn fire_routine(
         objective_id: objective_id.to_string(),
         run_id: run.id.to_string(),
     })
+}
+
+/// The Run a fire's message started: found by its trigger or created, given its capability projection, queued and started.
+#[allow(clippy::too_many_arguments)]
+async fn fire_run(
+    state: &ApiState,
+    request: &RoutineFireRequest,
+    identity: &RuntimeIdentity,
+    ledger: &FireLedger,
+    fire: &crate::control::routines::Fire,
+    objective_id: CanonicalId,
+    agent_thread: CanonicalId,
+    teammate: Option<&crate::control::teammates::Teammate>,
+    message: &crate::control::conversation::Message,
+    engine: &crate::runtime::state_machine::RuntimeEngine,
+    correlation: &str,
+) -> Result<crate::runtime::state_machine::Run, ApiError> {
+    let existing = existing_run(state, &request.tenant_id, &message.id, correlation).await?;
+    let run = match existing {
+        Some(run_id) => engine
+            .store()
+            .load_run(&run_id)
+            .await
+            .map_err(|error| runtime_error(error, correlation))?,
+        None => {
+            let mut new_run = NewRun::new(
+                request.workspace_id.clone(),
+                objective_id,
+                agent_thread,
+                RunTriggerKind::Routine,
+            );
+            new_run.trigger_ref = Some(message.id.clone());
+            let preferred =
+                teammate.and_then(|teammate| teammate.default_execution_target_id.clone());
+            if let Some(target) = preferred {
+                new_run.execution_target_id = Some(target);
+            } else if let Some(target) =
+                load_target(state, &request.tenant_id, &request.workspace_id).await?
+            {
+                new_run.execution_target_id = Some(target);
+            }
+            let run = engine
+                .create_run(new_run)
+                .await
+                .map_err(|error| runtime_error(error, correlation))?;
+            seed_projection(state, identity, &request.workspace_id, &run)
+                .await
+                .map_err(|error| internal(error, correlation))?;
+            run
+        }
+    };
+    ledger
+        .record_step(&fire.id, None, None, None, Some(&run.id.to_string()))
+        .await
+        .map_err(|error| internal(error, correlation))?;
+    let mut run = run;
+    if run.status == RunStatus::Created {
+        run = engine
+            .enqueue(&run.id, run.generation)
+            .await
+            .map_err(|error| runtime_error(error, correlation))?;
+    }
+    if run.status == RunStatus::Queued {
+        run = engine
+            .start(&run.id, run.generation)
+            .await
+            .map_err(|error| runtime_error(error, correlation))?;
+    }
+    Ok(run)
 }
 
 async fn existing_objective(
@@ -854,7 +1234,7 @@ async fn existing_objective(
     .transpose()
 }
 
-async fn existing_run(
+pub(super) async fn existing_run(
     state: &ApiState,
     tenant_id: &str,
     message_id: &str,

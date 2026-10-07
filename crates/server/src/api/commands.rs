@@ -593,6 +593,12 @@ async fn dispatch(
             )
             .await?
         }
+        "DryRunRoutine" => {
+            super::routines::dry_run_routine(state, scope, &request.params, correlation).await?
+        }
+        "RotateRoutineHook" => {
+            super::routines::rotate_routine_hook(state, scope, &request.params, correlation).await?
+        }
         "UpdateNotificationPreferences" => {
             super::routines::update_notification_preferences(
                 state,
