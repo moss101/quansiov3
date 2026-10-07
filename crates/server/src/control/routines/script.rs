@@ -818,9 +818,11 @@ mod tests {
         assert!(
             edit(|v| v["max_agent_calls"] = json!(config().max_agent_calls_ceiling + 1)).is_err()
         );
+        let refused =
+            edit(|v| v["max_agent_calls"] = json!(1)).expect_err("less than the static calls");
         assert!(
-            edit(|v| v["max_agent_calls"] = json!(1)).is_err(),
-            "less than the static calls"
+            refused.to_string().contains("at least 2 calls"),
+            "the refusal names the guaranteed calls, not only the estimate: {refused}"
         );
         assert!(
             edit(|v| v["estimated_agent_calls"] = json!(1)).is_err(),
