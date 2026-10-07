@@ -335,6 +335,8 @@ pub struct Harness {
     pub objects: Arc<dyn ObjectStore>,
     pub engine: RuntimeEngine,
     moves: Arc<Mutex<VecDeque<(String, Value)>>>,
+    target: Mutex<Option<String>>,
+    last_run: Mutex<Option<String>>,
 }
 
 impl Harness {
@@ -344,6 +346,23 @@ impl Harness {
         prefix: &str,
         outputs: impl FnOnce(OutputToolHost) -> OutputToolHost,
     ) -> Option<Self> {
+        Self::prepare_with_pool(prefix, move |host, _, _| {
+            let host = outputs(host);
+            Box::pin(async move { host })
+        })
+        .await
+    }
+
+    /// Like [`Harness::prepare`], for a composition that needs the scratch database and the object store
+    /// (a preview server over them) before the output host is built.
+    pub async fn prepare_with_pool<F>(prefix: &str, outputs: F) -> Option<Self>
+    where
+        F: FnOnce(
+            OutputToolHost,
+            PgPool,
+            Arc<dyn ObjectStore>,
+        ) -> futures_util::future::LocalBoxFuture<'static, OutputToolHost>,
+    {
         let name = admin_url().map(|_| scratch_name(prefix))?;
         let pool = fresh_database(&name).await?;
         schema::migrate(&pool).await.expect("migrate");
@@ -388,14 +407,17 @@ impl Harness {
             AgentDelegationPort::with_structural_check(pool.clone(), identity.clone())
                 .expect("delegation"),
         );
+        let output_host = outputs(
+            OutputToolHost::new(pool.clone(), Arc::clone(&objects)),
+            pool.clone(),
+            Arc::clone(&objects),
+        )
+        .await;
         let host = ServerToolHost::new(
             ArtifactToolHost::new(pool.clone(), Arc::clone(&objects)),
             Arc::new(UnavailableToolHost),
         )
-        .with_outputs(outputs(OutputToolHost::new(
-            pool.clone(),
-            Arc::clone(&objects),
-        )));
+        .with_outputs(output_host);
         let dispatcher = ToolDispatchService::new(
             pool.clone(),
             identity.clone(),
@@ -423,7 +445,23 @@ impl Harness {
             objects,
             engine,
             moves,
+            target: Mutex::new(None),
+            last_run: Mutex::new(None),
         })
+    }
+
+    /// Put every run that follows on an execution target (`None` for no target).
+    pub fn use_target(&self, target_id: Option<&str>) {
+        *self.target.lock().expect("target") = target_id.map(str::to_string);
+    }
+
+    /// The run the most recent call was made in.
+    pub fn last_run(&self) -> String {
+        self.last_run
+            .lock()
+            .expect("last run")
+            .clone()
+            .expect("a call was made")
     }
 
     /// Propose one governed tool call in a fresh run and report what the call row says.
@@ -438,6 +476,24 @@ impl Harness {
             ))
             .await
             .expect("run");
+        *self.last_run.lock().expect("last run") = Some(run.id.to_string());
+        let target = self.target.lock().expect("target").clone();
+        if let Some(target) = target {
+            let mut tx = self.pool.begin().await.expect("begin");
+            schema::set_tenant_context(&mut tx, TENANT)
+                .await
+                .expect("tenant");
+            sqlx::query(
+                "UPDATE runs SET execution_target_id = $1 WHERE id = $2 AND tenant_id = $3",
+            )
+            .bind(target)
+            .bind(run.id.to_string())
+            .bind(TENANT)
+            .execute(&mut *tx)
+            .await
+            .expect("the run is put on its target");
+            tx.commit().await.expect("commit");
+        }
         let run = self
             .engine
             .enqueue(&run.id, run.generation)

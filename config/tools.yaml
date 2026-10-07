@@ -1677,6 +1677,7 @@ tools:
               after: { type: string }
               note: { type: string }
             required: [index, at, kind, selector]
+        omitted: { type: integer, minimum: 0, description: "Older suggestions left out to keep the result inside its size bound." }
         trust: { type: string }
       required: [suggestions, trust]
 

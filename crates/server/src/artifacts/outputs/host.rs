@@ -15,6 +15,8 @@ use super::deck_host;
 use super::docs_host;
 use super::media::MediaJobPort;
 use super::ports::RenderPort;
+use super::preview::PreviewService;
+use super::preview_host;
 use super::support::{Ctx, Env};
 use super::transcribe_host;
 use super::transcription::TranscriptionPort;
@@ -71,6 +73,7 @@ impl OutputToolHost {
                 render: None,
                 media: None,
                 transcription: None,
+                preview: None,
             },
         }
     }
@@ -96,6 +99,13 @@ impl OutputToolHost {
         self
     }
 
+    /// Compose the loopback preview server.
+    #[must_use]
+    pub fn with_preview(mut self, service: Arc<PreviewService>) -> Self {
+        self.env.preview = Some(service);
+        self
+    }
+
     /// Compose the worker that lays pages out in the render sandbox.
     #[must_use]
     pub fn with_render(mut self, port: Arc<dyn RenderPort>) -> Self {
@@ -118,6 +128,12 @@ impl ToolHostPort for OutputToolHost {
             "video.inspect" => video_host::inspect(&ctx).await,
             "document.export_pdf" => docs_host::export_pdf(&ctx).await,
             "audio.transcribe" => transcribe_host::transcribe(&ctx).await,
+            "webdev.preview_open" => preview_host::open(&ctx, self.env.preview.as_deref()).await,
+            "webdev.preview_renew" => preview_host::renew(&ctx, self.env.preview.as_deref()).await,
+            "webdev.preview_close" => preview_host::close(&ctx, self.env.preview.as_deref()).await,
+            "webdev.preview_suggestions" => {
+                preview_host::suggestions(&ctx, self.env.preview.as_deref()).await
+            }
             other if is_output_tool(other) => Err(HostFailure::Unavailable {
                 owner: crate::runtime::turn_loop::dispatch::OUTPUT_HOST_OWNER,
                 detail: format!("{other} is not wired in this build yet"),

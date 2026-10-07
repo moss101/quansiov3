@@ -14,6 +14,7 @@ use sqlx::PgPool;
 use super::config::OutputsConfig;
 use super::media::MediaJobPort;
 use super::ports::RenderPort;
+use super::preview::PreviewService;
 use super::quality::{Input, QualityRecord};
 use super::transcription::TranscriptionPort;
 use crate::artifacts::CapturedBy;
@@ -40,6 +41,8 @@ pub struct Env {
     pub media: Option<Arc<dyn MediaJobPort>>,
     /// The gateway's transcription route, when one is composed.
     pub transcription: Option<Arc<dyn TranscriptionPort>>,
+    /// The loopback preview server, when one is composed.
+    pub preview: Option<Arc<PreviewService>>,
 }
 
 /// One call.

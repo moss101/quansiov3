@@ -18,6 +18,8 @@ pub mod media;
 pub mod ooxml;
 pub mod pdf;
 pub mod ports;
+pub mod preview;
+mod preview_host;
 pub mod quality;
 pub mod shapes;
 pub mod support;
