@@ -585,6 +585,8 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
     log,
     // Every media request is attributed to the window that made it (below); one that cannot be is refused.
     requireMediaRequester: true,
+    // The shell's own data directory (the session, the keys) is never a file or a folder a person's pick can reach.
+    protectedPaths: [userData],
   });
   windows.onWindowEvent((window, event) => {
     if (event === "closed") {
@@ -784,7 +786,7 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
   if (process.env["QUANSIO_DESKTOP_TEST_HOOKS"] === "1") {
     // For the real-Electron smoke tests only: a handle on the shell's parts, and a replaceable message box so a dialog
     // does not block a headless run. Nothing reads it in a normal launch.
-    (globalThis as Record<string, unknown>)["__quansioShell"] = { host, windows, quit, updateGate, updates, shortcuts, activity, preferences, bridge, connectivity, keepAwake, hooks, guard, files };
+    (globalThis as Record<string, unknown>)["__quansioShell"] = { host, windows, quit, updateGate, updates, shortcuts, activity, preferences, bridge, connectivity, keepAwake, hooks, guard, files, openLink };
   }
   return { bridge, host, windows, openLink };
 }

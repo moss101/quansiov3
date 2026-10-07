@@ -13,6 +13,9 @@
  * files it was handed, its roots and entries, its edit sessions, its media tokens and its watches.
  */
 
+import { realpathSync } from "node:fs";
+import { dirname, sep } from "node:path";
+
 import type { FileChannel } from "../../preload/bridge.js";
 import type { WindowHandler } from "../ipc-trust.js";
 import * as s from "../schema.js";
@@ -61,6 +64,11 @@ export interface LocalFilesHostOptions {
   readonly requireMediaRequester?: boolean;
   /** Test seam: called after each edit's temporary file is written. */
   readonly afterTemporary?: (target: string) => void;
+  /**
+   * Folders the person's own picks may not reach: the shell's own data directory holds the session and its keys, so a file
+   * inside it is never granted and a folder that is, contains or sits inside one is never a root (`root_not_allowed`).
+   */
+  readonly protectedPaths?: readonly string[];
 }
 
 const TOKEN = s.string({ min: 64, max: 64, pattern: /^[0-9a-f]{64}$/ });
@@ -201,6 +209,10 @@ export class LocalFilesHost {
     if (window.closed || picked === null || picked.length === 0) {
       return done({ grant: null });
     }
+    const forbidden = this.#protectedFile(picked);
+    if (forbidden !== null) {
+      return refusedFile("root_not_allowed", "that file belongs to Quansio itself and cannot be attached", forbidden);
+    }
     const created = this.grants.create(id, picked);
     if (!created.ok) {
       return refusedFile(created.failure.reason, grantRefusalText(created.failure.reason), created.failure.name === "" ? undefined : created.failure.name);
@@ -251,6 +263,27 @@ export class LocalFilesHost {
     return done({ attached, skipped });
   }
 
+  /** The name of the first picked file that is inside a protected folder, or `null`. A path that cannot be resolved is not protected here (opening it fails). */
+  #protectedFile(picked: readonly string[]): string | null {
+    for (const path of picked) {
+      const real = realOrNull(path);
+      if (real !== null && this.#protectedReal().some((guarded) => inside(real, guarded))) {
+        return path.split(/[\\/]/).pop() ?? "";
+      }
+    }
+    return null;
+  }
+
+  /** Whether a picked folder is, contains or sits inside a protected folder. */
+  #protectedFolder(folder: string): boolean {
+    const real = realOrNull(folder);
+    return real !== null && this.#protectedReal().some((guarded) => inside(real, guarded) || inside(guarded, real));
+  }
+
+  #protectedReal(): string[] {
+    return (this.#o.protectedPaths ?? []).map((path) => realOrNull(path) ?? path);
+  }
+
   // ---- the channels ----
 
   handlers(): Handlers {
@@ -296,6 +329,9 @@ export class LocalFilesHost {
         if (window.closed || folder === null) {
           return done({ root: null });
         }
+        if (this.#protectedFolder(folder)) {
+          return refusedFile("root_not_allowed", "that folder belongs to Quansio itself and cannot be opened");
+        }
         const granted = this.roots.grant(id, folder);
         return granted.ok ? done({ root: granted.result }) : granted;
       }),
@@ -336,6 +372,24 @@ export class LocalFilesHost {
       "files.watch.unsubscribe": guarded(UNSUBSCRIBE, (window, input) => done({ unsubscribed: this.watcher.unsubscribe(windowId(window), input.subscriptionId) })),
     };
   }
+}
+
+function realOrNull(path: string): string | null {
+  try {
+    return realpathSync(path);
+  } catch {
+    try {
+      // A file that is not there yet cannot be inside anything; its folder can.
+      return realpathSync(dirname(path));
+    } catch {
+      return null;
+    }
+  }
+}
+
+/** Is `path` the folder `directory` or below it? */
+function inside(path: string, directory: string): boolean {
+  return path === directory || path.startsWith(directory.endsWith(sep) ? directory : `${directory}${sep}`);
 }
 
 function invalidGrant(reason: "invalid" | "expired"): Refusal {

@@ -40,7 +40,7 @@ interface Answer {
   readonly error?: { code: string; message: string; details: Record<string, unknown> | null };
 }
 
-function rig(options: { config?: Partial<LocalFilesConfig>; realTime?: boolean; maxUploadBytes?: number; requireRequester?: boolean } = {}) {
+function rig(options: { config?: Partial<LocalFilesConfig>; realTime?: boolean; maxUploadBytes?: number; requireRequester?: boolean; protectedPaths?: readonly string[] } = {}) {
   const factory = new FakeFactory();
   const clock = new Clock();
   const log: string[] = [];
@@ -94,6 +94,7 @@ function rig(options: { config?: Partial<LocalFilesConfig>; realTime?: boolean; 
     log: (line) => log.push(line),
     home,
     ...(options.requireRequester === undefined ? {} : { requireMediaRequester: options.requireRequester }),
+    ...(options.protectedPaths === undefined ? {} : { protectedPaths: options.protectedPaths }),
     ...(options.realTime ? {} : { now: () => clock.now, scheduler: schedulerOf(clock) }),
   });
   windows.onWindowEvent((window, event) => {
@@ -349,6 +350,39 @@ describe("authority per window type", () => {
     }
     expect(r.dialogs.opened).toBe(0);
     expect(r.log.filter((line) => line.includes("ignored files.")).length).toBeGreaterThan(0);
+  });
+});
+
+describe("Quansio's own data", () => {
+  it("is never a file a pick can attach nor a folder it can open, whether the pick is inside it, is it or contains it", async () => {
+    const base = scratch();
+    const userData = join(base, "Quansio");
+    const session = put(userData, "session.json", "{}");
+    put(userData, "sub/keys.bin", "k");
+    const r = rig({ protectedPaths: [userData] });
+    r.dialogs.picks.push([session]);
+    expect(await r.call("files.pick", r.main, {})).toMatchObject({ ok: false, error: { code: "FILE_REFUSED", details: { reason: "root_not_allowed", name: "session.json" } } });
+    r.dialogs.picks.push([put(base, "ordinary.txt", "fine"), join(userData, "sub", "keys.bin")]);
+    expect(await r.call("files.pick", r.main, {})).toMatchObject({ ok: false, error: { details: { reason: "root_not_allowed", name: "keys.bin" } } });
+    // A link outside that leads in is the same file.
+    const alias = join(base, "alias.json");
+    symlinkSync(session, alias);
+    r.dialogs.picks.push([alias]);
+    expect(await r.call("files.pick", r.main, {})).toMatchObject({ ok: false, error: { code: "FILE_REFUSED" } });
+    expect(r.host.grants.openDescriptors()).toBe(0);
+    r.dialogs.picks.push([join(base, "ordinary.txt")]);
+    expect(await r.call("files.pick", r.main, {})).toMatchObject({ ok: true });
+
+    for (const folder of [userData, join(userData, "sub"), base]) {
+      r.dialogs.folders.push(folder);
+      expect(await r.call("files.root.pick", r.main, {}), folder).toMatchObject({ ok: false, error: { code: "FILE_REFUSED", details: { reason: "root_not_allowed" } } });
+    }
+    expect(r.host.roots.rootsOf(r.main.handle.webContentsId)).toEqual([]);
+    // A folder elsewhere is fine.
+    const elsewhere = join(scratch(), "other");
+    put(elsewhere, "x.txt", "x");
+    r.dialogs.folders.push(elsewhere);
+    expect(await r.call("files.root.pick", r.main, {})).toMatchObject({ ok: true });
   });
 });
 

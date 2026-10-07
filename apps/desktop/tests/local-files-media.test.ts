@@ -225,6 +225,18 @@ describe("a token that is not a capability", () => {
     expect(strict.media.handle(get(strictUrl, null, { requester: B })).status).toBe(404);
   });
 
+  it("names its window to the shell, which cancels a request from any other before the handler runs", () => {
+    const r = rig();
+    const url = mintForGrant(r, A, grantOf(r.grants, A, put(r.dir, "a.txt", "abc")));
+    expect(r.media.windowOf(url)).toBe(A);
+    expect(r.media.windowOf(`${url}?fresh=1`)).toBe(A);
+    for (const other of [`${MEDIA_SCHEME}://m/${"0".repeat(64)}/a.txt`, "https://example.com/", "not a url", `${MEDIA_SCHEME}://other/${url.split("/")[3] ?? ""}/a.txt`]) {
+      expect(r.media.windowOf(other), other).toBeNull();
+    }
+    r.media.revokeWindow(A);
+    expect(r.media.windowOf(url)).toBeNull();
+  });
+
   it("is revoked when its window is destroyed, and only that window's tokens go", () => {
     const r = rig();
     const mine = mintForGrant(r, A, grantOf(r.grants, A, put(r.dir, "a.txt", "abc")));
