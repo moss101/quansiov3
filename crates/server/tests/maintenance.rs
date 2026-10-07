@@ -283,7 +283,7 @@ async fn it_counts_exactly_what_a_restart_would_interrupt() {
     // Nothing is cached: finishing the work flips the answer back on the next read.
     set_status(&h.pool, TENANT, "turns", &id("trn", 1), "completed").await;
     set_status(&h.pool, TENANT, "turns", &id("trn", 4), "aborted").await;
-    for n in 1..=3 {
+    for n in 1..=2 {
         set_status(
             &h.pool,
             TENANT,
@@ -293,6 +293,17 @@ async fn it_counts_exactly_what_a_restart_would_interrupt() {
         )
         .await;
     }
+    // An action still being reconciled is enough to make the status busy, with no Turn in flight.
+    let (_, view) = get(&h.router, TENANT, Some(OWNER), "/v1/maintenance").await;
+    assert_eq!(counts(&view), (0, 1, 1, false), "{view}");
+    set_status(
+        &h.pool,
+        TENANT,
+        "effect_records",
+        &id("eff", 3),
+        "SETTLED_SUCCESS",
+    )
+    .await;
     let (_, view) = get(&h.router, TENANT, Some(OWNER), "/v1/maintenance").await;
     // An open terminal alone never makes the status busy.
     assert_eq!(counts(&view), (0, 0, 1, true), "{view}");
