@@ -91,15 +91,15 @@ function rig(options: { toggleDefault?: boolean; directory?: string } = {}): Rig
   const posted: unknown[] = [];
   const menus: MenuItem[][] = [];
   let checks = 0;
-  const shortcuts = new ShortcutRegistry({ platform: "darwin", maxLength: 64, toggleDefault: config.toggleDefault, adapter: system, preferences, onGlobal: (id) => host.onGlobalShortcut(id), log: () => undefined });
+  const shortcuts = new ShortcutRegistry({ platform: "darwin", maxLength: 64, toggleDefault: config.toggleDefault, adapter: system, preferences, onGlobal: (id) => { host.onGlobalShortcut(id); }, log: () => undefined });
   const connectivity = new ConnectivityMonitor({ graceMs: config.offlineGraceMs, minGapMs: config.reconnectMinGapMs, reconnect: (force) => reconnects.push(force), streamOpen: () => false, now: () => clock.now, setTimer: clock.setTimer, clearTimer: clock.clearTimer });
   const activity = new ActivityTracker({ maxItems: config.activityMaxItems, completedTtlMs: config.activityCompletedTtlMs, now: () => clock.now });
   const updateGate = new UpdateGate({
     updates,
     probe: () => Promise.resolve(work.status),
     ask: (status) => { asked.push(status); return Promise.resolve(choice.value); },
-    allowQuit: () => quit.allow(),
-    revokeQuit: () => quit.revoke(),
+    allowQuit: () => { quit.allow(); },
+    revokeQuit: () => { quit.revoke(); },
     pollMs: config.updateIdlePollMs,
     setTimer: clock.setTimer,
     clearTimer: clock.clearTimer,
@@ -489,7 +489,7 @@ describe("shortcuts through the channels", () => {
     expect(await r.call("shell.recording.begin", r.main)).toMatchObject({ ok: true });
     expect(r.system.held.size).toBe(0);
     const paused = r.menus.at(-1) ?? [];
-    expect(JSON.stringify(paused)).not.toContain("accelerator");
+    expect(JSON.stringify(paused)).not.toMatch(/accelerator|role/);
     expect(r.menus.length).toBeGreaterThan(menusBefore);
     r.factory.ofType("main")[0]?.emit("blur");
     expect(r.system.held.size).toBe(1);

@@ -211,7 +211,10 @@ async fn get(router: &axum::Router, tenant: &str, user: Option<&str>, path: &str
     let bytes = axum::body::to_bytes(response.into_body(), 1 << 20)
         .await
         .expect("body");
-    (status, serde_json::from_slice(&bytes).unwrap_or(Value::Null))
+    (
+        status,
+        serde_json::from_slice(&bytes).unwrap_or(Value::Null),
+    )
 }
 
 fn counts(view: &Value) -> (i64, i64, i64, bool) {
@@ -233,7 +236,9 @@ async fn an_empty_tenant_is_idle() {
     assert_eq!(status, 200, "{view}");
     assert_eq!(counts(&view), (0, 0, 0, true));
     assert!(view["workspace_id"].is_null());
-    assert!(view["as_of"].as_str().is_some_and(|text| text.contains('T')));
+    assert!(view["as_of"]
+        .as_str()
+        .is_some_and(|text| text.contains('T')));
     common::drop_pool(&h.pool, &h.name).await;
 }
 
@@ -254,7 +259,7 @@ async fn it_counts_exactly_what_a_restart_would_interrupt() {
     add_turn(&h.pool, TENANT, 4, 4, "active").await; // counted
     add_run(&h.pool, TENANT, WORKSPACE, NODE, 5, "SUCCEEDED").await;
     add_turn(&h.pool, TENANT, 5, 5, "active").await; // a finished Run's stale Turn row is not work
-    // Effects: reserved, dispatched and reconciling are in flight; the rest are not.
+                                                     // Effects: reserved, dispatched and reconciling are in flight; the rest are not.
     for (n, status) in [
         (1, "RESERVED"),
         (2, "DISPATCHED"),
@@ -279,7 +284,14 @@ async fn it_counts_exactly_what_a_restart_would_interrupt() {
     set_status(&h.pool, TENANT, "turns", &id("trn", 1), "completed").await;
     set_status(&h.pool, TENANT, "turns", &id("trn", 4), "aborted").await;
     for n in 1..=3 {
-        set_status(&h.pool, TENANT, "effect_records", &id("eff", n), "SETTLED_SUCCESS").await;
+        set_status(
+            &h.pool,
+            TENANT,
+            "effect_records",
+            &id("eff", n),
+            "SETTLED_SUCCESS",
+        )
+        .await;
     }
     let (_, view) = get(&h.router, TENANT, Some(OWNER), "/v1/maintenance").await;
     // An open terminal alone never makes the status busy.
@@ -300,9 +312,25 @@ async fn a_workspace_narrows_the_counts_and_another_tenant_never_counts() {
     add_turn(&h.pool, TENANT, 2, 2, "active").await;
     add_effect(&h.pool, TENANT, OTHER_WORKSPACE, 2, 1, "DISPATCHED").await;
     // Another tenant's busy Run is invisible whatever is asked.
-    add_run(&h.pool, STRANGER_TENANT, STRANGER_WORKSPACE, STRANGER_NODE, 9, "RUNNING").await;
+    add_run(
+        &h.pool,
+        STRANGER_TENANT,
+        STRANGER_WORKSPACE,
+        STRANGER_NODE,
+        9,
+        "RUNNING",
+    )
+    .await;
     add_turn(&h.pool, STRANGER_TENANT, 9, 9, "active").await;
-    add_effect(&h.pool, STRANGER_TENANT, STRANGER_WORKSPACE, 9, 9, "DISPATCHED").await;
+    add_effect(
+        &h.pool,
+        STRANGER_TENANT,
+        STRANGER_WORKSPACE,
+        9,
+        9,
+        "DISPATCHED",
+    )
+    .await;
 
     let (_, whole) = get(&h.router, TENANT, Some(OWNER), "/v1/maintenance").await;
     assert_eq!(counts(&whole), (2, 1, 1, false), "{whole}");
@@ -324,7 +352,13 @@ async fn a_workspace_narrows_the_counts_and_another_tenant_never_counts() {
     .await;
     assert_eq!(counts(&second), (1, 1, 0, false), "{second}");
     // The stranger's own tenant sees only its own work, never the first tenant's.
-    let (_, stranger) = get(&h.router, STRANGER_TENANT, Some(STRANGER), "/v1/maintenance").await;
+    let (_, stranger) = get(
+        &h.router,
+        STRANGER_TENANT,
+        Some(STRANGER),
+        "/v1/maintenance",
+    )
+    .await;
     assert_eq!(counts(&stranger), (1, 1, 0, false), "{stranger}");
     // A workspace of another tenant, asked for by name, finds nothing here.
     let (_, foreign) = get(

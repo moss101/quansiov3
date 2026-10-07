@@ -81,6 +81,11 @@ describe("the application menu", () => {
   it("drops every accelerator while a binding is recorded, so the key reaches the page", () => {
     const menu = buildMenu(state({ paused: true }));
     expect(acceleratorsOf(menu)).toEqual([]);
+    // No role either: a role such as copy carries a default accelerator the platform would still honour.
+    expect(JSON.stringify(menu)).not.toContain("role");
+    for (const platform of ["win32", "linux"]) {
+      expect(JSON.stringify(buildMenu(state({ platform, paused: true })))).not.toMatch(/role|accelerator/);
+    }
     expect(acceleratorsOf(buildMenu(state())).length).toBeGreaterThan(10);
   });
 

@@ -52,7 +52,7 @@ function rig(): Rig {
       ((window: ManagedWindow, payload: unknown) => {
         calls.push({ channel, window: window.type, payload });
         return Promise.resolve(results.get(channel) ?? { ok: true, result: {} });
-      }) as WindowHandler,
+      }),
     ]),
   ) as Record<PreloadChannel, WindowHandler>;
   const registered = new Map<string, (event: unknown, payload: unknown) => unknown>();

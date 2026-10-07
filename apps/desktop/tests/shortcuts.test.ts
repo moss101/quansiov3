@@ -170,7 +170,7 @@ describe("setting a binding", () => {
     const result = shortcuts.setBinding("find", "mod+shift+f");
     expect(result.ok).toBe(true);
     expect(shortcuts.binding("find")).toBe("mod+shift+f");
-    expect(JSON.parse(readFileSync(join(directory, "shell-preferences.json"), "utf8")).shortcuts.find).toBe("mod+shift+f");
+    expect((JSON.parse(readFileSync(join(directory, "shell-preferences.json"), "utf8")) as { shortcuts: Record<string, string> }).shortcuts["find"]).toBe("mod+shift+f");
     expect(shortcuts.windowBindings().find).toBe("mod+shift+f");
   });
 
@@ -188,7 +188,7 @@ describe("setting a binding", () => {
     for (const [name, binding] of Object.entries(FIXED_BINDINGS)) {
       const result = shortcuts.setBinding("find", binding);
       expect(result, name).toMatchObject({ ok: false, code: "conflict" });
-      expect(result.ok === false && result.code === "conflict" ? result.with : "").toContain(name.replace(/_/g, " "));
+      expect(!result.ok && result.code === "conflict" ? result.with : "").toContain(name.replace(/_/g, " "));
     }
     expect(shortcuts.binding("find")).toBe(WINDOW_DEFAULTS.find);
   });
@@ -228,7 +228,7 @@ describe("setting a binding", () => {
     const { registry: shortcuts } = registry({ system, toggleDefault: null });
     const result = shortcuts.setBinding("quick_entry", "mod+shift+space");
     expect(result).toMatchObject({ ok: false, code: "registration_failed" });
-    expect(result.ok === false ? result.message : "").toMatch(/the system refused/);
+    expect(!result.ok ? result.message : "").toMatch(/the system refused/);
     expect(shortcuts.binding("quick_entry")).toBeNull();
     expect(system.held.size).toBe(0);
   });

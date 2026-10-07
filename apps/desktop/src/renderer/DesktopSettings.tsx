@@ -197,7 +197,7 @@ export function DesktopSettings(): ReactElement {
         <label htmlFor={`${ids}-awake`}>{t("settingsKeepAwake")}</label>
       </div>
       <h4>{t("updateSection")}</h4>
-      <p role="status">{prefs?.waitingForIdle ? t("updateWaitingForIdle") : t(UPDATE_TEXT[prefs?.updateState ?? "unavailable"] ?? "updateUnavailable")}</p>
+      <p aria-live="polite">{prefs?.waitingForIdle ? t("updateWaitingForIdle") : t(UPDATE_TEXT[prefs?.updateState ?? "unavailable"] ?? "updateUnavailable")}</p>
       <div>
         <input
           id={`${ids}-idle`}
@@ -225,7 +225,7 @@ export function DesktopSettings(): ReactElement {
       </button>
       <h4>{t("shortcutsTitle")}</h4>
       <p>{t("shortcutsGlobalNote")}</p>
-      <p role="status">{message ?? ""}</p>
+      <p aria-live="polite">{message ?? ""}</p>
       <ul className="shortcut-list">{(shortcuts?.shortcuts ?? []).map(row)}</ul>
     </section>
   );

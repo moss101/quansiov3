@@ -449,7 +449,7 @@ describe("IPC bridge", () => {
     expect(await garbled.bridge.maintenance()).toBeNull();
   });
 
-  it("reconnects the stream for the connectivity monitor through the one existing reconnect, from the durable cursor", async () => {
+  it("reconnects the stream for the connectivity monitor through the one existing reconnect, from the durable cursor", () => {
     const seen: unknown[] = [];
     const { bridge, sockets } = bridgeWith(userData(), () => Promise.reject(new Error("unused")), undefined, (frame) => seen.push(frame));
     // Nothing subscribed yet: there is nothing to resume, and a connectivity signal opens no stream.

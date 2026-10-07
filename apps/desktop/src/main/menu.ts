@@ -39,7 +39,7 @@ export interface MenuState {
   /** The kind of window that has focus; `null` when none of the shell's windows does. */
   readonly focused: WindowType | null;
   readonly maxBindingLength: number;
-  /** A binding is being recorded: the menu carries no accelerator at all, so the key reaches the page. */
+  /** A binding is being recorded: the menu is inert (no role, no accelerator), so the key reaches the page. */
   readonly paused?: boolean;
 }
 
@@ -63,6 +63,11 @@ function documentWindow(focused: WindowType | null): boolean {
 }
 
 export function buildMenu(state: MenuState): readonly MenuItem[] {
+  if (state.paused === true) {
+    // A role carries its own default accelerator (Command+C for "copy") which the platform would still honour, so while a
+    // binding is recorded the menu is one inert entry: no role, no accelerator, nothing a key can reach.
+    return [{ label: t("menuApp"), submenu: [{ label: t("shortcutRecording"), enabled: false }] }];
+  }
   const mac = state.platform === "darwin";
   const documents = documentWindow(state.focused);
   const command = (label: string, id: WindowShortcutId, kind: ShellCommand["kind"], enabled: boolean): MenuItem => ({
