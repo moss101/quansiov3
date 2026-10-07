@@ -1,0 +1,207 @@
+{
+  "task_id": "ADP-006",
+  "git_commit": "c4ecedc42a5a5634bff2a03a9fc7343e295742ac",
+  "recorded_at": "2026-10-07T12:46:04Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-006/2026-10-07T18-00-00Z/lint.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1264 passed, 0 failed (the real PostgreSQL and development MinIO were running). This task's suites: server unit tests under outputs:: 84; outputs_deck 5, outputs_documents 5 (real Google Chrome), outputs_video 8 (real processes under a stand-in ffmpeg), outputs_transcribe 7 (logic-level gateway double), outputs_preview 12 (real loopback HTTP, real files, real database), outputs_compose 1; qworkerd render 10 (real Chrome), media 12 (real processes, stand-in ffmpeg), lib 27",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-006/2026-10-07T18-00-00Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test outputs_deck --test outputs_documents -- --nocapture --test-threads=1  # 5 + 5 passed: real Chrome lays out, measures, screenshots and prints; the deck gate; forged pages; PPTX/PDF export; Markdown and diagrams to PDF/SVG",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-006/2026-10-07T18-00-00Z/browser-boundary.log"
+    },
+    {
+      "command": "cargo test -p quansio-qworkerd --test render -- --nocapture  # 10 passed: fresh browser context per render, only pinned assets answered, script off, blocked requests recorded",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-006/2026-10-07T18-00-00Z/render-boundary.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test outputs_preview -- --nocapture  # 12 passed: serving, expiry on a manual clock, renewal ceiling, close, authority lapse (run ended, member removed, root changed, target destroyed, final), ownership, suggestions as untrusted data, fail-closed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-006/2026-10-07T18-00-00Z/preview-boundary.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test outputs_video_ffmpeg -- --nocapture; cd python && uv run pytest tests/intelligence/test_transcription_live.py -rs -v  # BLOCKED_EXTERNAL: QUANSIO_TEST_FFMPEG_BIN is not set; QUANSIO_TEST_STT_API_KEY, QUANSIO_TEST_STT_AUDIO, QUANSIO_TEST_STT_EXPECT are not set. Neither real-boundary suite ran; nothing stands in for them",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL",
+      "log": "evidence/ADP-006/2026-10-07T18-00-00Z/blocked-suites.log"
+    },
+    {
+      "command": "cd python && uv run ruff check . && uv run ruff format --check . && uv run mypy intelligence && uv run pytest tests -q -rs  # 809 passed, 18 skipped (every skip names BLOCKED_EXTERNAL); this task: 89 in the four output test files (decks, documents and diagrams, video, transcription against a real loopback HTTP provider)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-006/2026-10-07T18-00-00Z/python-tests.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current  # 244 passed (the Rust contract generator cannot run from a worktree under .claude/worktrees; it is run in the finalize dry-run clone). Composition gate, forbidden-wiring scan, config schema bounds, error-code count (74)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-006/2026-10-07T18-00-00Z/repo-tests.log"
+    },
+    {
+      "command": "node_modules/.bin/vitest run --root apps/desktop && tsc -p apps/desktop/tsconfig.json && eslint apps/desktop  # 481 passed, 45 skipped (the Electron e2e specs, which need the full stack and report their own skips); outputs.test.ts 14: quality record decoding, deck page states, transcript and timeline summaries, text-only rendering; typecheck and eslint clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-006/2026-10-07T18-00-00Z/desktop-tests.log"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 77 mutants of the guards across the server, worker, Python plane and desktop; every one COMPILES and every control PASSED; 77 KILLED by a named test, 0 survived (76 in the full run and 1, the composition root, in a second run appended to the log). The first full run found 16 survivors, each closed by a stronger test and re-run",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-006/2026-10-07T18-00-00Z/mutation-checks.log"
+    },
+    {
+      "command": "validate_v81.py; arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py; gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-006/2026-10-07T18-00-00Z/static-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1264 passed, 0 failed (the real PostgreSQL and development MinIO were running). This task's suites: server unit tests under outputs:: 84; outputs_deck 5, outputs_documents 5 (real Google Chrome), outputs_video 8 (real processes under a stand-in ffmpeg), outputs_transcribe 7 (logic-level gateway double), outputs_preview 12 (real loopback HTTP, real files, real database), outputs_compose 1; qworkerd render 10 (real Chrome), media 12 (real processes, stand-in ffmpeg), lib 27",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test outputs_deck --test outputs_documents -- --nocapture --test-threads=1  # 5 + 5 passed: real Chrome lays out, measures, screenshots and prints; the deck gate; forged pages; PPTX/PDF export; Markdown and diagrams to PDF/SVG",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-qworkerd --test render -- --nocapture  # 10 passed: fresh browser context per render, only pinned assets answered, script off, blocked requests recorded",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test outputs_preview -- --nocapture  # 12 passed: serving, expiry on a manual clock, renewal ceiling, close, authority lapse (run ended, member removed, root changed, target destroyed, final), ownership, suggestions as untrusted data, fail-closed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test outputs_video_ffmpeg -- --nocapture; cd python && uv run pytest tests/intelligence/test_transcription_live.py -rs -v  # BLOCKED_EXTERNAL: QUANSIO_TEST_FFMPEG_BIN is not set; QUANSIO_TEST_STT_API_KEY, QUANSIO_TEST_STT_AUDIO, QUANSIO_TEST_STT_EXPECT are not set. Neither real-boundary suite ran; nothing stands in for them",
+      "exit_code": 0,
+      "result": "BLOCKED_EXTERNAL"
+    },
+    {
+      "command": "cd python && uv run ruff check . && uv run ruff format --check . && uv run mypy intelligence && uv run pytest tests -q -rs  # 809 passed, 18 skipped (every skip names BLOCKED_EXTERNAL); this task: 89 in the four output test files (decks, documents and diagrams, video, transcription against a real loopback HTTP provider)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract tests/ci --deselect tests/contract/test_contracts.py::test_generated_bindings_are_current  # 244 passed (the Rust contract generator cannot run from a worktree under .claude/worktrees; it is run in the finalize dry-run clone). Composition gate, forbidden-wiring scan, config schema bounds, error-code count (74)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "node_modules/.bin/vitest run --root apps/desktop && tsc -p apps/desktop/tsconfig.json && eslint apps/desktop  # 481 passed, 45 skipped (the Electron e2e specs, which need the full stack and report their own skips); outputs.test.ts 14: quality record decoding, deck page states, transcript and timeline summaries, text-only rendering; typecheck and eslint clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 mutation-checks.py (in this bundle; committed tree)  # 77 mutants of the guards across the server, worker, Python plane and desktop; every one COMPILES and every control PASSED; 77 KILLED by a named test, 0 survived (76 in the full run and 1, the composition root, in a second run appended to the log). The first full run found 16 survivors, each closed by a stronger test and re-run",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "validate_v81.py; arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py; gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/lint.log",
+      "sha256": "500b1684d08b657f2f1a8403dd96ac0b8f69bac35f543d31ee886af6f4673096",
+      "bytes": 206
+    },
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/workspace-tests.log",
+      "sha256": "fb88994277ed8326e1da4d4020aba713ebeaedfb9fc0bedf2f61ab690f578c89",
+      "bytes": 134678
+    },
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/browser-boundary.log",
+      "sha256": "ae2b613eae7723e7872889d639127f2e67d628af5a78b902843703221bd52411",
+      "bytes": 1412
+    },
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/render-boundary.log",
+      "sha256": "c1ecde76b2bd34ed74c73c666be44524ca04b7640defa68862f9131fe11342ab",
+      "bytes": 1005
+    },
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/preview-boundary.log",
+      "sha256": "e160d7884ed772b9a0dcda83573e5877e2aa5150141db9d2298804a66a4e841e",
+      "bytes": 1331
+    },
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/blocked-suites.log",
+      "sha256": "f99a5bddd7e407d5b8f939af56bbe2f812919a98bb3db45cf50223fe5c1162ba",
+      "bytes": 1641
+    },
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/python-tests.log",
+      "sha256": "6727befb2d6b814dfbd7d74305f7d9dea66fcb371a81860d9dd4c70fd2f50e81",
+      "bytes": 2533
+    },
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/repo-tests.log",
+      "sha256": "39250c580a9a00d5a3e7276130757c664bfa12f412bd48e7d5f3b8393267acee",
+      "bytes": 362
+    },
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/desktop-tests.log",
+      "sha256": "0232631932621d3f265821bcc778aeb6534ede70a3ca7e3892ca96f4845bf30a",
+      "bytes": 3488
+    },
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/mutation-checks.log",
+      "sha256": "d2c7d2b484b3eb21f27599d939b51e0a137148a833ff638b146d919258d0a6e1",
+      "bytes": 14971
+    },
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/static-gates.log",
+      "sha256": "7ce0e48491dcd3c0f8323d283d69b7a8078f48a27b74b114834c6d458bed41a6",
+      "bytes": 1982
+    },
+    {
+      "path": "evidence/ADP-006/2026-10-07T18-00-00Z/mutation-checks.py",
+      "sha256": "6144fde2d359ec7aa95e217e6f08bb884a675e54d762d8ecdbdcaa0fd0707e98",
+      "bytes": 25133
+    },
+    {
+      "path": "evidence/ADP-006/NOTES.md",
+      "sha256": "dba0095c7b9776d393ec1a88f476a2a6d77b003e28bd5e8f32dfec60035c47a3",
+      "bytes": 8271
+    },
+    {
+      "path": "evidence/ADP-006/RECONCILIATION.md",
+      "sha256": "3147fc8f6703ab437860d191e9ea104e724e176cc09d61f2ef6763e8aa36cacd",
+      "bytes": 7798
+    },
+    {
+      "path": "evidence/ADP-006/PLAN.md",
+      "sha256": "de411dadf490d70e7280e2a8dc9d30925ae15e2334a37b619e72a496a953bb34",
+      "bytes": 2294
+    }
+  ]
+}

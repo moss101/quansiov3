@@ -1,0 +1,71 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-adb62c7a7e357fa11/apps/desktop
+
+ ✓ tests/shell-windows.test.ts (21 tests) 8ms
+ ✓ tests/shortcuts.test.ts (24 tests) 13ms
+ ✓ tests/shell-gates.test.ts (31 tests) 4ms
+ ✓ tests/ipc-trust.test.ts (16 tests) 22ms
+ ✓ tests/local-files-media.test.ts (16 tests) 55ms
+ ↓ tests/session.e2e.test.ts (10 tests | 10 skipped)
+ ✓ tests/local-files-edit.test.ts (15 tests) 118ms
+ ✓ tests/shell-host.test.ts (26 tests) 25ms
+ ↓ tests/live.e2e.test.ts (2 tests | 2 skipped)
+ ↓ tests/conversation.e2e.test.ts (5 tests | 5 skipped)
+ ↓ tests/collaboration.e2e.test.ts (3 tests | 3 skipped)
+ ↓ tests/knowledge.e2e.test.ts (3 tests | 3 skipped)
+ ↓ tests/automation.e2e.test.ts (3 tests | 3 skipped)
+ ✓ tests/conversation.test.ts (10 tests) 5ms
+ ✓ tests/shell-modules.test.ts (16 tests) 21ms
+ ✓ tests/identity.test.ts (6 tests) 20ms
+ ✓ tests/recording.test.ts (18 tests) 20ms
+ ↓ tests/artifacts.e2e.test.ts (3 tests | 3 skipped)
+ ✓ tests/permissions.test.ts (29 tests) 33ms
+ ↓ tests/work.e2e.test.ts (2 tests | 2 skipped)
+ ✓ tests/preload.test.ts (4 tests) 10ms
+ ↓ tests/trust.e2e.test.ts (2 tests | 2 skipped)
+ ✓ tests/local-files-watcher.test.ts (18 tests) 319ms
+ ✓ tests/knowledge.test.ts (9 tests) 7ms
+stdout | tests/recorder.test.ts
+BLOCKED_EXTERNAL: /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-adb62c7a7e357fa11/native/macos/.build/debug/quansio-recorder is not built (swift build --package-path native/macos --product quansio-recorder)
+
+ ✓ tests/recorder.test.ts (7 tests | 4 skipped) 2ms
+ ✓ tests/local-files-grants.test.ts (17 tests) 29ms
+ ✓ tests/local-files-roots.test.ts (13 tests) 47ms
+ ↓ tests/onboarding.e2e.test.ts (2 tests | 2 skipped)
+ ✓ tests/live.test.ts (14 tests) 5ms
+ ✓ tests/shell-activity.test.ts (16 tests) 15ms
+ ↓ tests/teammates.e2e.test.ts (2 tests | 2 skipped)
+ ✓ tests/artifacts.test.ts (10 tests) 7ms
+ ✓ tests/work.test.ts (5 tests) 5ms
+ ↓ tests/reconnect.e2e.test.ts (2 tests | 2 skipped)
+ ✓ tests/presentation.test.ts (13 tests) 5ms
+ ✓ tests/collaboration.test.ts (11 tests) 5ms
+ ✓ tests/shell-menu.test.ts (10 tests) 8ms
+ ✓ tests/trust.test.ts (4 tests) 11ms
+ ✓ tests/outputs.test.ts (14 tests) 11ms
+ ✓ tests/automation.test.ts (7 tests) 4ms
+ ✓ tests/shell-config.test.ts (9 tests) 10ms
+ ✓ tests/shell-ui.test.ts (7 tests) 3ms
+ ✓ tests/local-attach.test.ts (7 tests) 2ms
+ ✓ tests/local-files-links.test.ts (3 tests) 2ms
+ ✓ tests/ipc-sources.test.ts (5 tests) 20ms
+ ✓ tests/settings-form.test.ts (4 tests) 2ms
+ ✓ tests/local-files-config.test.ts (3 tests) 5ms
+ ✓ tests/appearance.test.ts (2 tests) 1ms
+ ✓ tests/diagnostics.test.ts (2 tests) 1ms
+ ✓ tests/trace.test.ts (4 tests) 63ms
+ ✓ tests/security.test.ts (6 tests) 12ms
+ ✓ tests/surfaces.test.ts (3 tests) 2ms
+ ✓ tests/teammates.test.ts (2 tests) 4ms
+ ✓ tests/local-files-host.test.ts (21 tests) 678ms
+   ✓ folders, previews, edits and watches > delivers typed changes to the window that watches, with entry ids it can open, and is silent about its own saves 580ms
+ ✓ tests/onboarding.test.ts (1 test) 2ms
+ ↓ tests/launch.e2e.test.ts (2 tests | 2 skipped)
+ ✓ tests/renderer-parts.test.ts (6 tests) 2ms
+
+ Test Files  44 passed | 13 skipped (57)
+      Tests  481 passed | 45 skipped (526)
+   Start at  15:43:22
+   Duration  1.13s (transform 1.70s, setup 0ms, collect 6.79s, tests 1.64s, environment 5ms, prepare 2.15s)
+
+exit=0

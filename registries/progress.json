@@ -3266,17 +3266,31 @@
     },
     "ADP-006": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "IN_PROGRESS",
       "claimed_by": "agent:adp-006",
       "started_at": "2026-10-07T09:22:13Z",
-      "updated_at": "2026-10-07T09:22:13Z",
+      "updated_at": "2026-10-07T12:46:16Z",
       "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "tests": [
+        "cargo test --workspace --no-fail-fast (1264 passed, 0 failed); this task: outputs:: unit tests 84, outputs_deck 5, outputs_documents 5, outputs_video 8, outputs_transcribe 7, outputs_preview 12, outputs_compose 1, qworkerd render 10 and media 12",
+        "deck gate test: a_pending_or_failing_page_blocks_delivery_until_every_page_is_ready, pages_the_authority_did_not_render_are_not_pages (three forgeries), a_deliverable_deck_exports_a_printed_pdf_and_a_verified_pptx (real Chrome)",
+        "adapter golden-output tests: slides, PPTX, Markdown HTML, diagram IR and SVG goldens in both planes (python/tests/intelligence/test_deck_outputs.py, test_document_diagram_outputs.py, test_video_outputs.py, test_transcription_outputs.py: 89 passed); render plan golden",
+        "video op revision/dry-run test: a_batch_applies_whole_or_not_at_all_against_an_exact_revision, the_host_bounds_a_batch_by_itself_whatever_the_schema_says, a_version_that_video_edit_did_not_make_is_not_edited",
+        "preview scope expiry test: a_scope_lapses_when_its_time_runs_out_and_stays_lapsed, renewing_extends_a_scope_but_never_past_its_maximum_lifetime, a_scope_lapses_when_the_run_ends_the_member_is_removed_or_the_root_changes",
+        "cd python && uv run pytest tests (809 passed, 18 skipped, every skip BLOCKED_EXTERNAL); ruff, ruff format and mypy intelligence clean",
+        "uv run --project python pytest tests/architecture tests/contract tests/ci (244 passed, the Rust bindings check deselected in the worktree)",
+        "desktop: vitest run (481 passed, 45 skipped), tsc and eslint clean; tests/outputs.test.ts 14",
+        "python3 mutation-checks.py (77 mutants, every one compiled, controls passed, 77 killed, 0 survived)",
+        "cargo fmt --check and clippy -D warnings clean; validate_v81, arch_check, workspace_check, inventory, check_authority, legacy_map_check, supply_chain, gen_contracts --check all clean",
+        "BLOCKED_EXTERNAL (did not run): crates/server/tests/outputs_video_ffmpeg.rs needs QUANSIO_TEST_FFMPEG_BIN; python/tests/intelligence/test_transcription_live.py needs QUANSIO_TEST_STT_API_KEY, QUANSIO_TEST_STT_AUDIO, QUANSIO_TEST_STT_EXPECT"
+      ],
+      "artifacts": [
+        "evidence/ADP-006/2026-10-07T18-00-00Z/summary.json"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Output generators (DOMAIN.md 10.4): every adapter output is a versioned Artifact whose quality record the server wrote from checks it ran. Decks: a render sandbox in qworkerd (fresh browser context, only pinned assets answered, no script) measures every page; pages are pending, edited, failed_quality or ready, derived from the stored sources by digest; deck.deliver and deck.export refuse until every page is ready (DECK_NOT_DELIVERABLE), and pages an upload made are not the authority's pages. PPTX is written in Python and re-read by an independent verifier; PDFs are canonicalised so a replay is the same version. Documents (safe Markdown to PDF) and diagrams (IR, Mermaid subset, SVG checked). Video: a timeline Artifact whose version number is its revision, typed atomic edit operations with expected_revision, dry_run and replay, a render plan as typed data, and a supervised ffmpeg job (attach by id, cancel kills the process group, restart recovery). Speech-to-text: a gateway route chosen from the catalog, data-policy guard before a byte is built, submit and poll idempotent by request_id, transcript labelled UNTRUSTED_EXTERNAL and validated again by the server. Web-dev preview: scopes with a random capability token, five-minute renewable lifetime and a maximum, authority re-resolved on every request (run, member, workspace, root), loopback only, lapses are final, suggestions staged as untrusted data; composed in the deployable. Desktop: quality records, deck page states, transcript and timeline summaries as text. BLOCKED_EXTERNAL because two real-boundary suites did not run: the ffmpeg suite (QUANSIO_TEST_FFMPEG_BIN) and the speech-to-text provider suite (QUANSIO_TEST_STT_API_KEY, QUANSIO_TEST_STT_AUDIO, QUANSIO_TEST_STT_EXPECT). Deferred (evidence NOTES.md): the gRPC transport for audio.transcribe, composing the render, media and transcription ports in the deployable, the in-iframe edit runtime and dev-server proxy (outside the contract)."
     },
     "ADP-007": {
       "coverage": null,
