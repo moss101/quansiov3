@@ -609,67 +609,117 @@ async fn pages_the_authority_did_not_render_are_not_pages() {
         "{by_media:#?}"
     );
 
-    // An upload with the right shape is stored (uploads are, valid or not) ...
+    // Pages with the right shape are stored when the store is asked to (uploads are, valid or not), and they pass
+    // for nothing, however they were made: by an upload; by something that looks like a run's own artifact but has
+    // no quality record (only the record, not the origin, can tell it from the authority's); or by a run's artifact
+    // whose record names another adapter. In every case each page is still pending.
     use quansio_server::artifacts::{
         ArtifactGrant, ArtifactKind, ArtifactStore, GrantLevel, NewArtifact, NewVersion, Origin,
         OriginKind, ProducedBy, Retention,
     };
-    let store = ArtifactStore::new(h.objects.as_ref());
-    let mut conn = h.pool.acquire().await.expect("conn");
-    let uploaded = store
-        .create(
-            &mut conn,
-            common::outputs::TENANT,
-            common::outputs::USER,
-            &NewArtifact {
-                workspace_id: common::outputs::WORKSPACE.to_string(),
-                kind: ArtifactKind::Other,
-                title: "pages".to_string(),
-                role: Some(format!("deck_pages:{deck_id}")),
-                origin: Origin {
-                    kind: OriginKind::Upload,
-                    reference: common::outputs::USER.to_string(),
+    let other_record = json!({
+        "record_version": 1, "adapter": "deck.export", "adapter_version": "v1", "ok": true,
+        "inputs": [], "checks": [{ "rule": "output.deck.pdf.pages", "ok": true, "detail": "7 pages" }],
+        "trust": "AGENT_GENERATED", "evidence_ids": [],
+    });
+    let cases: [(&str, OriginKind, Option<Value>); 3] = [
+        ("an upload", OriginKind::Upload, None),
+        ("a run's look-alike with no record", OriginKind::Run, None),
+        (
+            "a run's artifact with another adapter's record",
+            OriginKind::Run,
+            Some(other_record),
+        ),
+    ];
+    for (label, origin, record) in cases {
+        let deck_id = h
+            .create(
+                "presentation",
+                "report",
+                "Layouts",
+                SLIDES,
+                &fixture("slides-layouts.json"),
+            )
+            .await;
+        let forged = forged_pages(&deck_id, &digests);
+        let store = ArtifactStore::new(h.objects.as_ref());
+        let mut tx = h.pool.begin().await.expect("begin");
+        quansio_server::control::schema::set_tenant_context(&mut tx, common::outputs::TENANT)
+            .await
+            .expect("tenant");
+        let uploaded = store
+            .create(
+                &mut tx,
+                common::outputs::TENANT,
+                common::outputs::USER,
+                &NewArtifact {
+                    workspace_id: common::outputs::WORKSPACE.to_string(),
+                    kind: ArtifactKind::Other,
+                    title: "pages".to_string(),
+                    role: Some(format!("deck_pages:{deck_id}")),
+                    origin: Origin {
+                        kind: origin,
+                        reference: common::outputs::USER.to_string(),
+                    },
+                    grants: vec![ArtifactGrant {
+                        principal: common::outputs::USER.to_string(),
+                        level: GrantLevel::Write,
+                    }],
+                    retention: Retention::default(),
                 },
-                grants: vec![ArtifactGrant {
-                    principal: common::outputs::USER.to_string(),
-                    level: GrantLevel::Write,
-                }],
-                retention: Retention::default(),
-            },
-        )
-        .await
-        .expect("artifact");
-    let stored = store
-        .add_version(
-            &mut conn,
-            common::outputs::TENANT,
-            common::outputs::USER,
-            &uploaded.id,
-            &NewVersion {
-                bytes,
-                media_type: deck::PAGES_MEDIA_TYPE.to_string(),
-                expected_digest: None,
-                produced_by: ProducedBy::default(),
-                quality_record: None,
-            },
-        )
-        .await
-        .expect("stored");
-    assert!(stored.version.quality_record.is_none());
-    drop(conn);
+            )
+            .await
+            .expect("artifact");
+        let stored = store
+            .add_version(
+                &mut tx,
+                common::outputs::TENANT,
+                common::outputs::USER,
+                &uploaded.id,
+                &NewVersion {
+                    bytes: forged,
+                    media_type: deck::PAGES_MEDIA_TYPE.to_string(),
+                    expected_digest: None,
+                    produced_by: ProducedBy::default(),
+                    quality_record: record.clone(),
+                },
+            )
+            .await
+            .expect("stored");
+        assert_eq!(stored.version.quality_record.is_some(), record.is_some());
+        tx.commit().await.expect("commit");
 
-    // ... and it passes for nothing: every page is still pending.
-    let refused = h
-        .call("deck.deliver", json!({ "artifact_id": deck_id }))
-        .await;
-    assert!(refused.names("DECK_NOT_DELIVERABLE"), "{refused:#?}");
-    assert!(
-        pages_of(&refused)
-            .iter()
-            .all(|(_, state, _)| state == "pending"),
-        "{refused:#?}"
-    );
+        let refused = h
+            .call("deck.deliver", json!({ "artifact_id": deck_id }))
+            .await;
+        assert!(
+            refused.names("DECK_NOT_DELIVERABLE"),
+            "{label}: {refused:#?}"
+        );
+        assert!(
+            pages_of(&refused)
+                .iter()
+                .all(|(_, state, _)| state == "pending"),
+            "{label}: {refused:#?}"
+        );
+    }
     h.finish().await;
+}
+
+/// Pages that claim every slide of a deck is ready, in the shape the authority stores.
+fn forged_pages(deck_id: &str, digests: &[String]) -> Vec<u8> {
+    serde_json::to_vec(&json!({
+        "schema_version": "v1",
+        "template_version": "v1",
+        "deck": { "artifact_id": deck_id, "version_id": "artv_X", "content_digest": "0".repeat(64), "slide_count": digests.len() },
+        "css": "",
+        "slides": digests.iter().enumerate().map(|(index, digest)| json!({
+            "index": index, "source_digest": digest, "state": "ready",
+            "fragment": format!("<section class=\"slide\" data-slide=\"{index}\"></section>"),
+            "page_digest": "1".repeat(64), "checks": [], "evidence_ids": [],
+        })).collect::<Vec<_>>(),
+    }))
+    .expect("bytes")
 }
 
 // ---------------------------------------------------------------------------------------------
