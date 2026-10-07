@@ -1,0 +1,118 @@
+CONTROL-PASSED  rust-lib
+COMPILES    redact(rust): card numbers are no longer removed
+KILLED      redact(rust): card numbers are no longer removed -- control::skills::recording::archive::tests::an_unredacted_value_names_where_and_what_but_never_the_text (+3 more)
+            says: assertion `left == right` failed
+COMPILES    redact(rust): a secure field's text is kept
+KILLED      redact(rust): a secure field's text is kept -- control::skills::recording::archive::tests::text_in_a_secure_or_labelled_field_must_already_be_gone (+1 more)
+            says: secure text kept: ArchiveReport { redaction: Object {"counts": Object {"api_key": Number(0), "bearer_token": Number(0), "card_number": Number(0), "password_field": Number(0), "verification_code": Numb
+COMPILES    archive: another owner's archive is accepted (epoch)
+KILLED      archive: another owner's archive is accepted (epoch) -- control::skills::recording::archive::tests::another_owner_recording_or_epoch_is_refused
+            says: /owner/epoch
+COMPILES    archive: a recording the model 'finished' is accepted
+KILLED      archive: a recording the model 'finished' is accepted -- control::skills::recording::archive::tests::a_recording_the_person_did_not_finish_is_not_an_archive
+            says: assertion failed: matches!(run(&document), Err(RecordingError::InvalidArchive(_)))
+COMPILES    archive: an archive that still holds a secret is stored
+KILLED      archive: an archive that still holds a secret is stored -- control::skills::recording::archive::tests::an_unredacted_value_names_where_and_what_but_never_the_text (+2 more)
+            says: secure text kept: ArchiveReport { redaction: Object {"counts": Object {"api_key": Number(0), "bearer_token": Number(0), "card_number": Number(0), "password_field": Number(0), "verification_code": Numb
+COMPILES    archive: identical consecutive screenshots are accepted
+KILLED      archive: identical consecutive screenshots are accepted -- control::skills::recording::archive::tests::screenshots_are_checked_against_their_own_bytes_and_each_other
+            says: de-duplication
+COMPILES    proposal: a coordinate key in a slot control is accepted
+KILLED      proposal: a coordinate key in a slot control is accepted -- control::skills::recording::proposal::tests::coordinates_and_element_indexes_are_refused_by_key_and_by_value
+            says: expected a rejection, got Ok(())
+COMPILES    proposal: the plane can classify a slot for the person
+KILLED      proposal: the plane can classify a slot for the person -- control::skills::recording::compile::tests::the_planes_answer_is_taken_only_after_the_servers_own_validation (+1 more)
+            says: expected a rejection, got Ok(())
+COMPILES    proposal: a capability no needed tool has is accepted
+KILLED      proposal: a capability no needed tool has is accepted -- control::skills::recording::proposal::tests::a_proposal_cannot_add_a_tool_a_capability_or_an_evaluation
+            says: expected a rejection, got Ok(())
+COMPILES    proposal: a redacted value can become a constant
+KILLED      proposal: a redacted value can become a constant -- control::skills::recording::proposal::tests::a_redacted_or_sensitive_value_cannot_become_a_constant
+            says: assertion failed: matches!(build_manifest(&redacted,
+COMPILES    proposal: a submission with an undecided slot is accepted
+KILLED      proposal: a submission with an undecided slot is accepted -- control::skills::recording::proposal::tests::a_submission_needs_every_slot_decided_and_never_bakes_in_an_input_example
+            says: no entry found for key
+COMPILES    compile: the plane's answer is taken without the server's validation
+KILLED      compile: the plane's answer is taken without the server's validation -- control::skills::recording::compile::tests::the_planes_answer_is_taken_only_after_the_servers_own_validation
+            says: /manifest/procedure/steps/0/ui/x: Ok(Object {"manifest": Object {"capability_needs": Array [String("read.internal"), String("computer.input.privileged")], "compatibility": Array [String("v8.1")], "exa
+COMPILES    fence: another user is accepted
+KILLED      fence: another user is accepted -- control::skills::recording::store::tests::the_fence_names_the_first_part_that_fails
+            says: assertion `left == right` failed
+COMPILES    fence: another epoch is accepted
+KILLED      fence: another epoch is accepted -- control::skills::recording::store::tests::the_fence_names_the_first_part_that_fails
+            says: assertion `left == right` failed
+COMPILES    fence: another sign-in session is accepted
+KILLED      fence: another sign-in session is accepted -- control::skills::recording::store::tests::the_fence_names_the_first_part_that_fails
+            says: assertion `left == right` failed
+CONTROL-PASSED  rust-int
+COMPILES    store: a stale epoch no longer aborts the recording
+KILLED      store: a stale epoch no longer aborts the recording -- a_new_sign_in_is_another_owner_but_a_token_refresh_is_not (+1 more)
+            says: assertion `left == right` failed: the stale epoch aborted it
+COMPILES    store: a stranger's call aborts the owner's recording
+KILLED      store: a stranger's call aborts the owner's recording -- another_user_epoch_or_sign_in_is_refused_on_every_command
+            says: assertion `left == right` failed
+COMPILES    store: compile before the finish is not its own refusal
+KILLED      store: compile before the finish is not its own refusal -- nothing_but_the_persons_own_finish_finishes_a_recording
+            says: assertion `left == right` failed: CompileRecording
+COMPILES    store: an archive that still holds a secret is stored (integration)
+KILLED      store: an archive that still holds a secret is stored (integration) -- an_archive_that_still_holds_a_secret_is_refused_and_nothing_is_stored
+            says: assertion `left == right` failed: {"accepted_at":"2026-10-07T05:25:56.153268Z","command_id":"cmd_01J8Z3K6F1N8VQ2X5W9Y0K0005","replayed":false,"result":{"recording":{"abort_reason":null,"artifact_id":"
+COMPILES    store: an owner change from another user is not refused (integration)
+KILLED      store: an owner change from another user is not refused (integration) -- another_user_epoch_or_sign_in_is_refused_on_every_command
+            says: assertion `left == right` failed: FinishRecording: {"code":"VALIDATION_SCHEMA","correlation_id":"01M4AD793T0D8EWSP7VCM6SNP3","message":"invalid archive: archive.schema_version must be text","retryable
+CONTROL-PASSED  swift
+COMPILES    recorder: card numbers are no longer removed
+KILLED      recorder: card numbers are no longer removed -- QuansioMacBridgeTests.RecorderSessionTests testNothingTheRulesRemoveIsKeptAndTheSummaryHoldsCountsOnly (+4 more)
+COMPILES    recorder: typed text is stored unredacted
+KILLED      recorder: typed text is stored unredacted -- QuansioMacBridgeTests.RecorderControlTests testStartObserveFinishOverTheChannelAndTheArchiveHoldsWhatWasObserved (+2 more)
+COMPILES    recorder: secure input does not pause capture
+KILLED      recorder: secure input does not pause capture -- QuansioMacBridgeTests.RecorderSessionTests testCaptureStopsWhileSecureInputIsOnAndResumesAfter (+1 more)
+COMPILES    recorder: text typed into a secure field is kept
+NO-VERDICT  recorder: text typed into a secure field is kept: the suite failed but no named test did
+COMPILES    recorder: another account is accepted
+KILLED      recorder: another account is accepted -- QuansioMacBridgeTests.RecorderControlTests testAnotherOwnerOrEpochOverTheChannelEndsTheRecordingAndDiscardsIt (+2 more)
+COMPILES    recorder: a recording that ran out of time is not discarded
+KILLED      recorder: a recording that ran out of time is not discarded -- QuansioMacBridgeTests.RecorderSessionTests testRunningOutOfTimeAbortsAndDiscardsItNeverFinishes
+COMPILES    recorder: reaching the action limit finishes the recording
+KILLED      recorder: reaching the action limit finishes the recording -- QuansioMacBridgeTests.RecorderSessionTests testNothingButFinishCompletesARecording
+COMPILES    channel: the one-time token can be used twice
+KILLED      channel: the one-time token can be used twice -- QuansioMacBridgeTests.RecorderControlTests testTheTokenWorksOnceAndOnlyTheFirstConnectionIsTheChannel (+1 more)
+COMPILES    channel: a bootstrap file others can read is accepted
+KILLED      channel: a bootstrap file others can read is accepted -- QuansioMacBridgeTests.RecorderControlTests testABootstrapFileOthersCouldReadIsRefusedAndDeletedAnyway (+1 more)
+COMPILES    channel: a socket directory others can enter is accepted
+KILLED      channel: a socket directory others can enter is accepted -- QuansioMacBridgeTests.RecorderControlTests testTheSocketDirectoryMustBePrivateAndTheSocketIsOwnerOnly
+COMPILES    controller: a reused request id with other arguments is replayed
+KILLED      controller: a reused request id with other arguments is replayed -- QuansioMacBridgeTests.RecorderControlTests testStartAndFinishAreIdempotentByIdAndFingerprint
+COMPILES    controller: capture starts without the permissions it needs
+KILLED      controller: capture starts without the permissions it needs -- QuansioMacBridgeTests.RecorderControlTests testNothingIsCapturedUntilEveryNeededPermissionIsGranted
+COMPILES    screenshots: an identical screenshot is kept twice
+KILLED      screenshots: an identical screenshot is kept twice -- QuansioMacBridgeTests.RecordingScreenshotTests testCountSpacingAndDuplicatesAreBounded
+COMPILES    screenshots: a screenshot showing a secret is kept
+KILLED      screenshots: a screenshot showing a secret is kept -- QuansioMacBridgeTests.RecordingScreenshotTests testAScreenshotWhoseTextMatchesARuleIsWithheldWholeAndCounted (+1 more)
+COMPILES    screenshots: the minimum interval is not kept
+KILLED      screenshots: the minimum interval is not kept -- QuansioMacBridgeTests.RecordingScreenshotTests testCountSpacingAndDuplicatesAreBounded
+CONTROL-PASSED  python
+COMPILES    plane: card numbers are no longer removed
+KILLED      plane: card numbers are no longer removed -- python/tests/intelligence/test_recording_redaction.py::test_a_summary_is_counts_and_never_a_value (+8 more)
+COMPILES    plane: a projection that still holds a secret is compiled
+KILLED      plane: a projection that still holds a secret is compiled -- python/tests/intelligence/test_recording_compiler.py::test_an_unredacted_projection_is_refused_before_anything_is_compiled (+2 more)
+COMPILES    plane: the compiler classifies the person's slots
+KILLED      plane: the compiler classifies the person's slots -- python/tests/intelligence/test_recording_compiler.py::test_a_compiled_skill_is_a_draft_the_resolver_never_resolves_and_its_manifest_parses (+10 more)
+COMPILES    plane: a flagged control title is copied into the skill
+KILLED      plane: a flagged control title is copied into the skill -- python/tests/intelligence/test_recording_compiler.py::test_no_recorded_coordinate_or_element_index_reaches_the_skill (+1 more)
+COMPILES    plane: text that reads as an instruction is not flagged
+KILLED      plane: text that reads as an instruction is not flagged -- python/tests/intelligence/test_recording_compiler.py::test_what_the_recording_says_is_data_and_adds_no_tool_capability_or_instruction
+COMPILES    plane: a Tool is never preferred to pixels
+KILLED      plane: a Tool is never preferred to pixels -- python/tests/intelligence/test_recording_compiler.py::test_a_connector_family_is_used_only_when_a_concrete_tool_exists (+1 more)
+COMPILES    plane: the validator accepts a coordinate key
+KILLED      plane: the validator accepts a coordinate key -- python/tests/intelligence/test_recording_compiler.py::test_a_compiled_skill_is_a_draft_the_resolver_never_resolves_and_its_manifest_parses (+1 more)
+COMPILES    plane: a skill manifest may carry a coordinate in its procedure
+KILLED      plane: a skill manifest may carry a coordinate in its procedure -- python/tests/intelligence/test_recording_compiler.py::test_a_compiled_skill_is_a_draft_the_resolver_never_resolves_and_its_manifest_parses
+CONTROL-PASSED  vitest
+KILLED      desktop: a finish request is a click whatever produced it -- tests/recording.test.ts > the indicator and the finish > builds a finish request only from a genuine click
+KILLED      desktop: a submission with an undecided slot is built -- tests/recording.test.ts > submission: every slot is the person's decision > refuses until every slot is classified, naming what is open
+KILLED      desktop: the generic command path sends a recording command -- tests/recording.test.ts > the bridge's recording channels > are allowlisted, handled, and the generic command path refuses the recording commands
+KILLED      desktop: main finishes without the person's click -- tests/recorder.test.ts > the real recorder process > starts through a one-time token, is finished only by a click and posts the recorder's own archive with the owner fence (+2 more)
+KILLED      desktop: an account change leaves the recorder running -- tests/recorder.test.ts > the real recorder process > ends the local recording at once when the account changes, and a later finish is refused
+KILLED      desktop: compile and submit carry an epoch the page sent -- tests/recording.test.ts > the bridge's recording channels > compile and submit carry the epoch main holds, never one the page sent
+SUMMARY killed=48 survived=0 no_verdict=1 total=49
