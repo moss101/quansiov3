@@ -345,6 +345,7 @@ impl ArtifactToolHost {
                         step_id: Some(dispatch.step_id.clone()),
                         user_id: dispatch.acting_user_id.clone(),
                     },
+                    quality_record: None,
                 },
             )
             .await

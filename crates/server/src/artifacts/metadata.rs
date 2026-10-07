@@ -161,6 +161,9 @@ pub struct ArtifactVersion {
     /// The source-format check recorded when the version was added (CAP-003):
     /// `{ok, rule, detail}`; `None` for a version stored before checks existed.
     pub format_check: Option<serde_json::Value>,
+    /// The checks an output adapter's version passed (ADP-006, DOMAIN.md §10.4 A); `None` for every version
+    /// an output tool did not make.
+    pub quality_record: Option<serde_json::Value>,
     /// Creation timestamp.
     pub created_at: DateTime<Utc>,
 }
@@ -195,6 +198,9 @@ pub struct NewVersion {
     pub expected_digest: Option<Digest>,
     /// Producing run/step/user.
     pub produced_by: ProducedBy,
+    /// The quality record the authority wrote for an output adapter's version (§10.4 A); `None` for any
+    /// other version. Only the output tool host sets it, from checks it ran itself.
+    pub quality_record: Option<serde_json::Value>,
 }
 
 /// Result of adding a version: the stored version and whether it was a replay.
@@ -496,8 +502,8 @@ impl<'a> ArtifactStore<'a> {
         sqlx::query(
             "INSERT INTO artifact_versions (id, tenant_id, artifact_id, seq, content_digest, \
              size_bytes, media_type, object_key, produced_by_run_id, produced_by_step_id, \
-             produced_by_user_id, parent_version_id, format_check) \
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+             produced_by_user_id, parent_version_id, format_check, quality_record) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
         )
         .bind(version_id.to_canonical())
         .bind(tenant_id)
@@ -512,6 +518,7 @@ impl<'a> ArtifactStore<'a> {
         .bind(&input.produced_by.user_id)
         .bind(artifact.current_version_id.map(|id| id.to_canonical()))
         .bind(super::formats::check(artifact.kind, &input.media_type, &input.bytes).to_json())
+        .bind(&input.quality_record)
         .execute(&mut *conn)
         .await?;
 
@@ -1024,7 +1031,7 @@ async fn fetch_version(
     let row = sqlx::query(
         "SELECT id, tenant_id, artifact_id, seq, content_digest, size_bytes, media_type, \
          object_key, produced_by_run_id, produced_by_step_id, produced_by_user_id, \
-         parent_version_id, format_check, created_at FROM artifact_versions WHERE id = $1 AND tenant_id = $2",
+         parent_version_id, format_check, quality_record, created_at FROM artifact_versions WHERE id = $1 AND tenant_id = $2",
     )
     .bind(&id)
     .bind(tenant_id)
@@ -1046,7 +1053,7 @@ async fn find_version_by_digest(
     let row = sqlx::query(
         "SELECT id, tenant_id, artifact_id, seq, content_digest, size_bytes, media_type, \
          object_key, produced_by_run_id, produced_by_step_id, produced_by_user_id, \
-         parent_version_id, format_check, created_at FROM artifact_versions \
+         parent_version_id, format_check, quality_record, created_at FROM artifact_versions \
          WHERE artifact_id = $1 AND tenant_id = $2 AND content_digest = $3 \
          ORDER BY seq LIMIT 1",
     )
@@ -1200,6 +1207,9 @@ fn decode_version(row: &PgRow) -> Result<ArtifactVersion, ArtifactError> {
             .transpose()?,
         format_check: row
             .try_get("format_check")
+            .map_err(|e| decode_error("artifact version", e))?,
+        quality_record: row
+            .try_get("quality_record")
             .map_err(|e| decode_error("artifact version", e))?,
         created_at: row
             .try_get("created_at")

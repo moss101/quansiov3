@@ -287,6 +287,7 @@ pub async fn create_artifact(
                     step_id: None,
                     user_id: Some(user_id.clone()),
                 },
+                quality_record: None,
             },
         )
         .await
@@ -435,7 +436,7 @@ pub async fn artifact_versions(
     .ok_or_else(|| ApiError::new(ApiErrorCode::NotFound, format!("{artifact_id} is not an artifact of this tenant"), "projection"))?;
     let rows = sqlx::query(
         "SELECT v.id, v.seq, v.content_digest, v.size_bytes, v.media_type, v.produced_by_run_id, v.produced_by_step_id, \
-                v.produced_by_user_id, v.parent_version_id, v.format_check, v.created_at, \
+                v.produced_by_user_id, v.parent_version_id, v.format_check, v.quality_record, v.created_at, \
                 COALESCE((SELECT jsonb_agg(e.id ORDER BY e.captured_at) FROM evidence e \
                           WHERE e.tenant_id = v.tenant_id AND v.produced_by_step_id IS NOT NULL AND e.step_id = v.produced_by_step_id), '[]'::jsonb) AS evidence_ids \
          FROM artifact_versions v WHERE v.tenant_id = $1 AND v.artifact_id = $2 ORDER BY v.seq",
@@ -472,6 +473,7 @@ pub async fn artifact_versions(
             "evidence_ids": row.get::<Value, _>("evidence_ids"),
             "parent_version_id": row.get::<Option<String>, _>("parent_version_id"),
             "format_check": row.get::<Option<Value>, _>("format_check"),
+            "quality_record": row.get::<Option<Value>, _>("quality_record"),
             "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
         })).collect::<Vec<_>>(),
     })))

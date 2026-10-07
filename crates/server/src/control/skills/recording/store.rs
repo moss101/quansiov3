@@ -431,6 +431,7 @@ impl RecordingStore {
                                 step_id: None,
                                 user_id: Some(caller.user_id.clone()),
                             },
+                            quality_record: None,
                         },
                     )
                     .await?;

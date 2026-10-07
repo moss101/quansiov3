@@ -187,6 +187,15 @@ errors:
 - code: WORKTREE_MISSING
   family: Files
   http_status: 403/409/422
+- code: DECK_NOT_DELIVERABLE
+  family: Output
+  http_status: 403/409/503
+- code: ADAPTER_UNAVAILABLE
+  family: Output
+  http_status: 403/409/503
+- code: PREVIEW_SCOPE_LAPSED
+  family: Output
+  http_status: 403/409/503
 - code: PROVIDER_UNAVAILABLE
   family: Model
   http_status: 502/503
