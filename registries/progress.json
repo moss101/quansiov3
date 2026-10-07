@@ -1,7 +1,7 @@
 {
   "version": "8.1",
   "revision": 5,
-  "updated_at": "2026-10-04",
+  "updated_at": "2026-10-07",
   "allowed_coverage": [
     "ALREADY_COVERED",
     "PARTIAL",
@@ -3176,17 +3176,44 @@
     },
     "ADP-003": {
       "coverage": "GENUINE_GAP",
-      "status": "RECONCILING",
+      "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:adp-003",
       "started_at": "2026-10-04T03:43:14Z",
-      "updated_at": "2026-10-04T03:43:14Z",
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
-      "real_boundary_evidence": [],
-      "implementation_complete": false,
-      "blocker": null,
-      "notes": ""
+      "updated_at": "2026-10-07T05:36:58Z",
+      "git_commit": "0d927aec3eb73a45e8b9d7ade946ef6c6a1cf6fe",
+      "tests": [
+        "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test skill_recording (12: real PostgreSQL, real Python plane, in-memory object store) and --lib recording (25)",
+        "QUANSIO_TEST_MACOS_RECORDER=1 swift test --package-path native/macos (82 tests, 0 failures, 14 ADP-002 skips; this task's 40 incl. real event tap, accessibility, display capture + Vision, recorder process)",
+        "cd python && uv run pytest tests (640 passed, 91 skipped; redaction corpus parity, compiler shape, no coordinates, RPC)",
+        "cd apps/desktop && npx vitest run --exclude tests/work.e2e.test.ts (190 passed; recording.test.ts 18, recorder.test.ts 7 against the real binary), tsc and eslint clean",
+        "uv run --project python pytest tests/architecture tests/contract tests/ci (240 passed)",
+        "python3 mutation-checks.py (49 mutants, every one compiled, controls passed, 48 killed plus the one NO-VERDICT re-run killed, 0 survived)",
+        "cargo test --workspace --no-fail-fast (1067 passed, 13 failed: object-store calls to MinIO, which was not running; none touches this task)"
+      ],
+      "artifacts": [
+        "evidence/ADP-003/2026-10-04T05-24-48Z/summary.json"
+      ],
+      "real_boundary_evidence": [
+        {
+          "boundary": "macOS recorder through the real CGEvent tap, Accessibility, display capture with the Vision text recogniser, secure-event-input state and the real quansio-recorder process (one-time token handshake)",
+          "environment": "macOS Apple Silicon interactive host; Accessibility, Input Monitoring and Screen Recording granted to the terminal host; QUANSIO_TEST_MACOS_RECORDER=1",
+          "command": "QUANSIO_TEST_MACOS_RECORDER=1 swift test --package-path native/macos",
+          "artifact": "evidence/ADP-003/2026-10-04T05-24-48Z/swift-live.log",
+          "sha256": "e32faba308d6a32d84ae5e86de5b3b254c218b26a2f6c1ff704c42df2eb52963",
+          "recorded_at": "2026-10-07T05:35:19Z"
+        },
+        {
+          "boundary": "desktop recorder host driving the real quansio-recorder binary over its authenticated Unix socket (finish only by a click, owner fence, account change tears it down)",
+          "environment": "macOS Apple Silicon interactive host; built quansio-recorder executable",
+          "command": "cd apps/desktop && npx vitest run --exclude tests/work.e2e.test.ts",
+          "artifact": "evidence/ADP-003/2026-10-04T05-24-48Z/desktop-tests.log",
+          "sha256": "8f405027fb6758601a86689ca0ea3d1144c8cef0bb5324f12996bac3a4e8da4f",
+          "recorded_at": "2026-10-07T05:35:19Z"
+        }
+      ],
+      "implementation_complete": true,
+      "blocker": "ADP-003 is implemented and its tests pass, but it may not be PASS (AGENTS.md; D-017): its dependency ADP-002 is BLOCKED_EXTERNAL (and through it EXEC-010: the Windows 11 UIA boundary was never run on a Windows host). Pieces of ADP-003 itself not run against a real boundary: (1) live narration: the transcript channel, its redaction and its ingest are built and tested, but no live speech capture is wired (it needs Speech Recognition and Microphone permission and was not built unverified), so a recording made today has no voice transcript; (2) the S3 object store: the API tests keep archives in an in-memory object store because the MinIO image was not available offline, so the artifact store's S3 path was not exercised by this task (the artifact suite covers it). Run on this Mac with Accessibility, Input Monitoring and Screen Recording granted (QUANSIO_TEST_MACOS_RECORDER=1): the real listen-only event tap, a real accessibility lookup, a real display capture judged by the real Vision recogniser, the real quansio-recorder process with its token handshake, real PostgreSQL and the real Python plane. Unblock: clear ADP-002 and EXEC-010, then record the narration and S3 runs as real_boundary_evidence.",
+      "notes": "Skill recording (D-019): a person demonstrates a workflow once. The macOS recorder (native/macos Recording/ + quansio-recorder) watches with a listen-only event tap, names each click's control by accessibility attributes, redacts before it keeps anything (rule set v1: keys/tokens, bearer credentials, 13+ digit card numbers, verification codes, secure/password fields; screenshots judged by their recognised text and withheld whole), pauses on secure input, fences every call by tenant+user+epoch and answers one authenticated Unix-socket channel opened with a one-time token from a 0600 file it deletes. The server owns the session row (skill_recordings, migration 0026): StartRecording/FinishRecording/CancelRecording/CompileRecording/SubmitRecordingSkill are a person's commands (never a service principal), finish is the only way out of recording, the owner fence (user, sign-in family, epoch) aborts a stale session's recording and refuses a stranger without aborting, an archive that still holds anything redaction removes is refused and nothing is stored (RECORDING_UNREDACTED names categories and pointers, never text), the archive is an owner-only Artifact, the Python plane compiles the text-only projection into a proposal (bundle ids and accessibility attributes, input slots left for the person, pre/postconditions and recovery that never repeats blind, Tools before pixels, untrusted-origin labelling) and the server validates it independently before keeping it; submission creates one DRAFT version through the Skill Registry (promotion stays ManageTenant). Deferred (evidence NOTES.md): live narration capture, user-data export/deletion of recordings (no DeleteUserData/ExportTenantData handler exists yet), the Windows recorder."
     },
     "ADP-004": {
       "coverage": null,
