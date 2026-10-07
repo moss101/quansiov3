@@ -1,0 +1,98 @@
+desktop bundle written to /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a1c9346a29d79b76e/apps/desktop/dist/app
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a1c9346a29d79b76e/apps/desktop
+
+ ✓ tests/shell-windows.test.ts (21 tests) 6ms
+ ✓ tests/shortcuts.test.ts (24 tests) 12ms
+ ✓ tests/shell-gates.test.ts (31 tests) 5ms
+ ✓ tests/ipc-trust.test.ts (16 tests) 20ms
+ ✓ tests/shell-host.test.ts (26 tests) 23ms
+ ✓ tests/conversation.test.ts (10 tests) 5ms
+ ✓ tests/shell-modules.test.ts (16 tests) 21ms
+ ✓ tests/recording.test.ts (18 tests) 19ms
+ ✓ tests/knowledge.test.ts (9 tests) 6ms
+ ✓ tests/identity.test.ts (6 tests) 20ms
+ ✓ tests/live.test.ts (14 tests) 5ms
+ ✓ tests/permissions.test.ts (29 tests) 32ms
+stdout | tests/recorder.test.ts
+BLOCKED_EXTERNAL: /Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a1c9346a29d79b76e/native/macos/.build/debug/quansio-recorder is not built (swift build --package-path native/macos --product quansio-recorder)
+
+ ✓ tests/recorder.test.ts (7 tests | 4 skipped) 2ms
+ ✓ tests/shell-activity.test.ts (16 tests) 13ms
+ ✓ tests/preload.test.ts (4 tests) 8ms
+ ✓ tests/artifacts.test.ts (10 tests) 6ms
+ ✓ tests/work.test.ts (5 tests) 5ms
+ ✓ tests/collaboration.test.ts (11 tests) 6ms
+ ✓ tests/shell-menu.test.ts (10 tests) 4ms
+ ✓ tests/trust.test.ts (4 tests) 9ms
+ ✓ tests/shell-config.test.ts (9 tests) 6ms
+ ✓ tests/presentation.test.ts (13 tests) 4ms
+ ✓ tests/teammates.test.ts (2 tests) 3ms
+ ✓ tests/automation.test.ts (7 tests) 3ms
+ ✓ tests/shell-ui.test.ts (7 tests) 3ms
+ ✓ tests/trace.test.ts (4 tests) 52ms
+ ✓ tests/ipc-sources.test.ts (4 tests) 12ms
+ ✓ tests/security.test.ts (5 tests) 10ms
+ ✓ tests/settings-form.test.ts (4 tests) 1ms
+ ✓ tests/appearance.test.ts (2 tests) 2ms
+ ✓ tests/diagnostics.test.ts (2 tests) 1ms
+ ✓ tests/renderer-parts.test.ts (6 tests) 3ms
+ ✓ tests/surfaces.test.ts (3 tests) 2ms
+ ✓ tests/onboarding.test.ts (1 test) 2ms
+ ✓ tests/launch.e2e.test.ts (1 test) 760ms
+   ✓ desktop launch (real Electron) > renders the bundled renderer from the app: scheme 759ms
+stderr | tests/artifacts.e2e.test.ts > desktop artifact workspace E2E against quansio-server > keeps artifacts after the run closes, shows history with links and diffs, survives reload, and search finds them by content
+BLOCKED_EXTERNAL: dev MinIO at http://127.0.0.1:59010 is not reachable; the artifact workspace needs the object store
+
+stderr | tests/artifacts.e2e.test.ts > desktop artifact workspace E2E against quansio-server > shows each version's source check and saves an edit as the next version (CAP-003)
+BLOCKED_EXTERNAL: dev MinIO at http://127.0.0.1:59010 is not reachable; the artifact workspace needs the object store
+
+ ✓ tests/artifacts.e2e.test.ts (2 tests) 1781ms
+ ✓ tests/onboarding.e2e.test.ts (1 test) 2766ms
+   ✓ new-user onboarding E2E against quansio-server (session-only) > takes a fresh user from a magic link to a governed workspace with a running stream, then resumes from the keychain 734ms
+ ✓ tests/reconnect.e2e.test.ts (1 test) 2846ms
+   ✓ desktop reconnect E2E against quansio-server > posts a message, persists the run and cursor, drops the socket, and resumes the same run from the cursor 1267ms
+ ✓ tests/teammates.e2e.test.ts (1 test) 3358ms
+   ✓ desktop roster E2E against quansio-server > creates, routes to, edits and archives a teammate: capability narrows, lineage stays 1687ms
+stderr | tests/trust.e2e.test.ts > desktop trust E2E against quansio-server > binds the approval to the preview, keeps unsettled effects open, and refuses evidence that fails its digest
+BLOCKED_EXTERNAL: dev MinIO at http://127.0.0.1:59010 is not reachable; the evidence case needs the object store
+
+ ✓ tests/trust.e2e.test.ts (1 test) 4412ms
+   ✓ desktop trust E2E against quansio-server > binds the approval to the preview, keeps unsettled effects open, and refuses evidence that fails its digest 2772ms
+ ✓ tests/knowledge.e2e.test.ts (2 tests) 5892ms
+   ✓ desktop knowledge E2E against quansio-server > forgetting memory or knowledge removes it from every future retrieval and leaves a tombstone with its provenance 1803ms
+   ✓ desktop knowledge E2E against quansio-server > a skill climbs the ladder one rung at a time; an unapproved version cannot be activated; the run's resolution names it and grants nothing 2546ms
+ ✓ tests/live.e2e.test.ts (1 test) 6010ms
+   ✓ desktop live surface E2E against quansio-server > takes over the same session, fences the agent, survives a reconnect, and hands back 4218ms
+ ✓ tests/collaboration.e2e.test.ts (2 tests) 6347ms
+   ✓ desktop collaboration E2E against quansio-server > keeps one order for two clients posting at once, then revokes the removed one 4033ms
+   ✓ desktop collaboration E2E against quansio-server > hands a conversation from one teammate to another 561ms
+stderr | tests/conversation.e2e.test.ts > desktop conversation E2E against quansio-server > uploads a real binary as an artifact and attaches it to a message the inspector shows
+BLOCKED_EXTERNAL: dev MinIO at http://127.0.0.1:59010 is not reachable; the attachment case needs it
+
+ ✓ tests/conversation.e2e.test.ts (4 tests) 7776ms
+   ✓ desktop conversation E2E against quansio-server > streams the reply, lands it as a durable message, and a reload rebuilds the same thread with its inspector 4075ms
+   ✓ desktop conversation E2E against quansio-server > asks a question in the thread, waits, and continues from the answer 867ms
+   ✓ desktop conversation E2E against quansio-server > cancels a turn and the run stops: the page loses its cancel, the question is withdrawn, a late answer is refused 1149ms
+ ✓ tests/automation.e2e.test.ts (2 tests) 11127ms
+   ✓ desktop automation E2E against quansio-server > delivers a mention on exactly the channels the person chose 1990ms
+   ✓ desktop automation E2E against quansio-server > keeps firing a routine across a server restart without firing a window twice 7551ms
+ ✓ tests/session.e2e.test.ts (9 tests) 14675ms
+   ✓ desktop account (real Electron, real server) > returns to sign-in when the person signs out 814ms
+   ✓ desktop account (real Electron, real server) > returns to sign-in when an administrator revokes the session 3246ms
+   ✓ desktop account (real Electron, real server) > changes workspace and personal settings and shows the effective result 1195ms
+   ✓ desktop account (real Electron, real server) > follows the theme chosen in Settings over the system's, on the page and the window (APP-003) 2378ms
+   ✓ desktop account (real Electron, real server) > keeps a choice made before Settings has finished reading the current values 1160ms
+   ✓ desktop account (real Electron, real server) > shows a viewer the workspace settings without letting them change them 870ms
+   ✓ desktop account (real Electron, real server) > lists the conversation a message starts in the sidebar, and + starts another (APP-003) 1429ms
+   ✓ desktop account (real Electron, real server) > jumps to a page from the command palette (APP-003) 713ms
+   ✓ desktop account (real Electron, real server) > names every surface for a person and every entry opens a page (APP-003) 1517ms
+
+ Test Files  46 passed (46)
+      Tests  379 passed | 4 skipped (383)
+   Start at  09:27:03
+   Duration  15.09s (transform 1.40s, setup 0ms, collect 5.77s, tests 68.08s, environment 4ms, prepare 1.58s)
+
+vitest exit=0
+tsc exit=0
+eslint exit=0

@@ -66,3 +66,26 @@ monitor change, mouse click-through).
 ## Migrations and rollback
 
 No migration. Rollback: revert the task branch; `shell-preferences.json` is ignored by the previous build.
+
+## Plan (checklist, all done unless listed under Deferred in NOTES.md)
+
+- [x] DOMAIN.md §0, §13.6, §14; `config/desktop-shell.yaml` + schema + contract test; regenerated catalogs/OpenAPI/SDK.
+- [x] Server: `GET /v1/maintenance` over three owners' counts; real-PostgreSQL tests (what is counted, a flip back to idle,
+      workspace narrowing, tenant isolation, auth and bounds).
+- [x] Desktop main: `schema`, `shell-config`, `preferences`, `shortcut-grammar` + `shortcuts`, `keep-awake`, `connectivity`,
+      `work-status`, `quit`, `update-gate` (+ `UpdateHooks` install-on-quit), `dialogs`, `activity`, `menu`, `tray`, `windows`,
+      `ipc-trust`, `shell-host`; `app.ts` rewritten as the Electron adapter layer; `DesktopBridge` gained `maintenance`,
+      `resumeStream`, `signedIn`, `streamOpen`, `observe`.
+- [x] Preload: `SHELL_CHANNELS` (20 invoke) and five push channels; `PRELOAD_ALLOWLIST` is bridge + shell.
+- [x] Renderer: window-kind boot (`index.tsx`), `Popout`, `QuickEntry`, `Indicator`, `DesktopSettings`, App wiring (commands,
+      connectivity, activity, offline state), sidebar drag-out, palette entry.
+- [x] Tests: unit (config/schema, shortcuts, gates, windows, activity, menu/tray, host, ipc trust, source scan, ui decoders,
+      bridge), real-Electron + real-server smoke (`tests/e2e/shell.e2e.spec.ts`), mutation checks.
+- [x] Evidence bundle, validator, progress, finalize script.
+
+## Outcome against the reconciliation
+
+Nothing in the existing authority path moved: the main window still reaches the server only through `DesktopBridge`, the one
+reconnect is still `StreamClient` + the durable cursor, and `UpdateHooks` still reports `unavailable` for an unsigned build.
+The one structural change is that `registerBridgeHandlers` (which installed handlers with no sender check) is gone and
+`registerGuardedHandlers` is the only way a handler is installed.
