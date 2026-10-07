@@ -159,6 +159,23 @@ describe("preload bridge", () => {
         "onConnectivity",
         "onShortcuts",
         "onShortcutRecordingEnded",
+        // Local files (ADP-005)
+        "pickLocalFiles",
+        "attachLocalFiles",
+        "discardLocalFiles",
+        "previewLocalFile",
+        "pickFolder",
+        "listFolders",
+        "releaseFolder",
+        "folderEntries",
+        "fileMediaUrl",
+        "openFileForEdit",
+        "saveEditedFile",
+        "closeFileEdit",
+        "watchFolder",
+        "unwatchFolder",
+        "onFileChanges",
+        "onFileGrant",
       ].sort(),
     );
     for (const key of Object.keys(api)) {
@@ -276,6 +293,22 @@ describe("preload bridge", () => {
     await api.setIndicatorInteractive(true);
     await api.moveIndicator(10, 20);
     await api.installUpdate("now");
+    // Local files (ADP-005): every call carries an opaque id or nothing, never a path.
+    const token = "0".repeat(64);
+    await api.pickLocalFiles({ threadId: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.attachLocalFiles({ token, threadId: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.discardLocalFiles(token);
+    await api.previewLocalFile(token, 0);
+    await api.pickFolder();
+    await api.listFolders();
+    await api.releaseFolder("lroot_00000000000000000000000000000000");
+    await api.folderEntries("lroot_00000000000000000000000000000000", null);
+    await api.fileMediaUrl("ent_00000000000000000000000000000000");
+    await api.openFileForEdit("ent_00000000000000000000000000000000");
+    await api.saveEditedFile({ editId: "edit_00000000000000000000000000000000", text: "x" });
+    await api.closeFileEdit("edit_00000000000000000000000000000000");
+    await api.watchFolder("lroot_00000000000000000000000000000000");
+    await api.unwatchFolder("sub_0000000000000000");
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

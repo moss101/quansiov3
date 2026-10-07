@@ -9,6 +9,7 @@ export type { SurfaceDescriptor, SurfaceId } from "./surfaces.js";
 export { DESKTOP_SURFACES, surface } from "./surfaces.js";
 export {
   DENIED_PERMISSIONS,
+  MEDIA_RESPONSE_CSP,
   RENDERER_CSP,
   RENDERER_ENTRY_URL,
   RENDERER_WEB_PREFERENCES,

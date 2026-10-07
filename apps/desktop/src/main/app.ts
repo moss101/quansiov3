@@ -14,6 +14,7 @@
 
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { Readable } from "node:stream";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import {
@@ -39,16 +40,22 @@ import {
   Tray,
   type Display,
   type MenuItemConstructorOptions,
+  webContents,
 } from "electron";
 import WebSocket from "ws";
 
 import type { SocketFactory, SocketLike } from "../client/stream.js";
 import { ActivityTracker } from "./activity.js";
 import { ConnectivityMonitor } from "./connectivity.js";
-import { deepLinkFromArgv, DEEP_LINK_SCHEME } from "./deeplinks.js";
+import { deepLinkFromArgv, parseDeepLink, DEEP_LINK_SCHEME } from "./deeplinks.js";
 import { quitChosen, quitDialog, updateChoiceOf, updateDialog, type MessageBox } from "./dialogs.js";
 import { DesktopBridge, type DesktopAuth } from "./ipc.js";
 import { IpcGuard, registerGuardedHandlers, type WindowHandler } from "./ipc-trust.js";
+import { loadLocalFilesConfig } from "./local-files/config.js";
+import { LocalFilesHost, type LocalFileDialogs } from "./local-files/host.js";
+import { MEDIA_SCHEME } from "./local-files/media.js";
+import { MAX_UPLOAD_BYTES } from "../conversation/composer.js";
+import { t } from "../i18n/strings.js";
 import { KeepAwake } from "./keep-awake.js";
 import type { MenuItem } from "./menu.js";
 import { UNPROBED_PERMISSIONS, mapMediaAccess, type PermissionSource } from "./permissions.js";
@@ -71,6 +78,7 @@ import { UpdateGate } from "./update-gate.js";
 import { parseUpdateChannel, updateFeedUrl, UpdateHooks } from "./updates.js";
 import {
   WindowManager,
+  type ManagedWindow,
   type DisplayAdapter,
   type DisplayInfo,
   type WindowEvent,
@@ -118,6 +126,8 @@ const bundleRoot = dirname(fileURLToPath(import.meta.url));
 function registerRendererScheme(): void {
   protocol.registerSchemesAsPrivileged([
     { scheme: "app", privileges: { standard: true, secure: true, supportFetchAPI: true } },
+    // Local media URLs (ADP-005): capability tokens served by main; `stream` so audio and video can seek with Range.
+    { scheme: MEDIA_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
   ]);
 }
 
@@ -341,9 +351,33 @@ function electronMenu(items: readonly MenuItem[], click: (item: MenuItem) => voi
 /** Hooks a test harness may use to drive the shell; present only when `QUANSIO_DESKTOP_TEST_HOOKS=1`. */
 interface TestHooks {
   messageBox: (box: MessageBox) => Promise<number>;
+  /** The native file and folder dialogs (ADP-005); a run replaces them with what a person would pick. */
+  dialogs: LocalFileDialogs;
 }
 
-export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: ShellHost; windows: WindowManager }> {
+/** The `BrowserWindow` a managed window is, for parenting a native dialog. */
+function parentOf(window: ManagedWindow): BrowserWindow | undefined {
+  const contents = webContents.fromId(window.handle.webContentsId);
+  return (contents ? BrowserWindow.fromWebContents(contents) : null) ?? undefined;
+}
+
+/** Electron's own open dialogs for the local-file host: files (several, never a folder) and one folder. */
+const nativeDialogs: LocalFileDialogs = {
+  pickFiles: async (window) => {
+    const options = { title: t("attachDialogTitle"), properties: ["openFile" as const, "multiSelections" as const] };
+    const parent = parentOf(window);
+    const chosen = parent ? await dialog.showOpenDialog(parent, options) : await dialog.showOpenDialog(options);
+    return chosen.canceled ? null : chosen.filePaths;
+  },
+  pickFolder: async (window) => {
+    const options = { title: t("folderDialogTitle"), properties: ["openDirectory" as const] };
+    const parent = parentOf(window);
+    const chosen = parent ? await dialog.showOpenDialog(parent, options) : await dialog.showOpenDialog(options);
+    return chosen.canceled ? null : (chosen.filePaths[0] ?? null);
+  },
+};
+
+export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: ShellHost; windows: WindowManager; openLink: (url: string) => void }> {
   const environment = shellEnvironment(process.env);
   const userData = app.getPath("userData");
   const config = loadShellConfig(join(bundleRoot, "desktop-shell.yaml"));
@@ -389,6 +423,7 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
       const result = parent ? await dialog.showMessageBox(parent, options) : await dialog.showMessageBox(options);
       return result.response;
     },
+    dialogs: nativeDialogs,
   };
 
   // The one place that knows what is running: the server's maintenance status and this desktop's own stream.
@@ -539,6 +574,49 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
   });
   const activity = new ActivityTracker({ maxItems: config.activityMaxItems, completedTtlMs: config.activityCompletedTtlMs, now: () => Date.now() });
 
+  // Local files (ADP-005): grants, granted folders, media URLs, safe edits and the shared watcher. The renderer names
+  // nothing but opaque ids; the dialogs are main's.
+  const files = new LocalFilesHost({
+    config: loadLocalFilesConfig(join(bundleRoot, "local-files.yaml")),
+    windows,
+    dialogs: { pickFiles: (window) => hooks.dialogs.pickFiles(window), pickFolder: (window) => hooks.dialogs.pickFolder(window) },
+    bridge,
+    maxUploadBytes: MAX_UPLOAD_BYTES,
+    log,
+    // Every media request is attributed to the window that made it (below); one that cannot be is refused.
+    requireMediaRequester: true,
+  });
+  windows.onWindowEvent((window, event) => {
+    if (event === "closed") {
+      files.windowClosed(window);
+    }
+  });
+  // A media URL is served only to the window it was minted for. `onBeforeRequest` names the sending window before the
+  // protocol handler runs: another window is cancelled there, and the handler is told who asked.
+  const mediaRequesters = new Map<string, number[]>();
+  // The match pattern for every URL of the scheme, spelled with an escape: the source-scan tests strip comments with a
+  // regular expression that would read a literal slash-star inside a string as the start of one.
+  const everyMediaUrl = `${MEDIA_SCHEME}:\x2f\x2f*\x2f*`;
+  defaultSession.webRequest.onBeforeRequest({ urls: [everyMediaUrl] }, (details, callback) => {
+    const owner = files.media.windowOf(details.url);
+    if (owner === null || details.webContentsId !== owner) {
+      callback({ cancel: true });
+      return;
+    }
+    mediaRequesters.set(details.url, [...(mediaRequesters.get(details.url) ?? []), owner]);
+    callback({});
+  });
+  protocol.handle(MEDIA_SCHEME, (request) => {
+    const queue = mediaRequesters.get(request.url) ?? [];
+    const requester = queue.shift() ?? null;
+    if (queue.length === 0) {
+      mediaRequesters.delete(request.url);
+    }
+    const answer = files.mediaResponse({ method: request.method, url: request.url, range: request.headers.get("range"), requester });
+    const body = answer.body === null ? null : (Readable.toWeb(answer.body()) as unknown as ReadableStream);
+    return new Response(body, { status: answer.status, headers: { ...answer.headers } });
+  });
+
   host = new ShellHost({
     platform: process.platform,
     config,
@@ -586,10 +664,20 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
   const handlers = {
     ...Object.fromEntries(Object.entries(bridgeHandlers).map(([channel, handler]) => [channel, (_window: unknown, payload: unknown) => handler(payload)])),
     ...shellHandlers,
+    ...files.handlers(),
   } as Readonly<Record<PreloadChannel, WindowHandler>>;
   registerGuardedHandlers(ipcMain, guard, handlers);
 
   const openLink = (url: string): void => {
+    // `quansio://attach` asks for a native file dialog and nothing else: a link names no file (ADP-005).
+    const parsed = parseDeepLink(url);
+    if (parsed?.kind === "attach-files") {
+      const main = windows.showMain();
+      files.requestAttach(main, parsed.threadId).catch((error: unknown) => {
+        log(`quansio desktop: the attach dialog failed: ${error instanceof Error ? error.message : String(error)}`);
+      });
+      return;
+    }
     const intent = bridge.openDeepLink(url);
     if (intent?.kind === "oauth-callback") {
       // The provider's return trip: main completes the exchange; the renderer only learns
@@ -638,6 +726,7 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
     bridge.close();
   });
   app.on("will-quit", () => {
+    files.dispose();
     shortcuts.releaseAll();
     keepAwake.dispose();
     connectivity.dispose();
@@ -695,9 +784,9 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
   if (process.env["QUANSIO_DESKTOP_TEST_HOOKS"] === "1") {
     // For the real-Electron smoke tests only: a handle on the shell's parts, and a replaceable message box so a dialog
     // does not block a headless run. Nothing reads it in a normal launch.
-    (globalThis as Record<string, unknown>)["__quansioShell"] = { host, windows, quit, updateGate, updates, shortcuts, activity, preferences, bridge, connectivity, keepAwake, hooks, guard };
+    (globalThis as Record<string, unknown>)["__quansioShell"] = { host, windows, quit, updateGate, updates, shortcuts, activity, preferences, bridge, connectivity, keepAwake, hooks, guard, files };
   }
-  return { bridge, host, windows };
+  return { bridge, host, windows, openLink };
 }
 
 /**
@@ -751,14 +840,11 @@ export function main(): void {
   registerRendererScheme();
   app.setAsDefaultProtocolClient(DEEP_LINK_SCHEME);
   app.whenReady().then(async () => {
-    const { bridge } = await startDesktop();
+    const { openLink } = await startDesktop();
     // The first instance's own argv may carry the deep link on Windows/Linux.
     const link = deepLinkFromArgv(process.argv);
     if (link) {
-      const intent = bridge.openDeepLink(link);
-      if (intent?.kind === "oauth-callback") {
-        await bridge.completeOAuth(intent.code, intent.state);
-      }
+      openLink(link);
     }
   }).catch((error: unknown) => {
     process.stderr.write(`quansio desktop: ${error instanceof Error ? error.message : String(error)}\n`);

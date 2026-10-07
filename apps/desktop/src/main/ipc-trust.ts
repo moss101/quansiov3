@@ -17,7 +17,7 @@
  * answers nothing at all.
  */
 
-import { BRIDGE_CHANNELS, PRELOAD_ALLOWLIST, SHELL_CHANNELS, type BridgeChannel, type PreloadChannel } from "../preload/bridge.js";
+import { BRIDGE_CHANNELS, FILE_CHANNELS, PRELOAD_ALLOWLIST, SHELL_CHANNELS, type BridgeChannel, type PreloadChannel } from "../preload/bridge.js";
 import { navigationAllowed } from "./security.js";
 import type { ManagedWindow, WindowLookup, WindowType } from "./windows.js";
 
@@ -115,6 +115,28 @@ const SHELL_POLICY: Readonly<Record<(typeof SHELL_CHANNELS)[number], ChannelPoli
   "update.install": { windows: ["main"] },
 };
 
+/**
+ * The local-file channels (ADP-005, DOMAIN.md §13.7). The grant channels are the composer's attach control, so a
+ * pop-out may use them for its own thread only (a token is also bound to the window that holds it); folders, entries,
+ * media for entries, edits and watches are `main` only. A quick-entry window and the indicator reach none of them.
+ */
+const FILE_POLICY: Readonly<Record<(typeof FILE_CHANNELS)[number], ChannelPolicy>> = {
+  "files.pick": { windows: ["main", "popout"], popout: own("threadId") },
+  "files.grant.attach": { windows: ["main", "popout"], popout: own("threadId") },
+  "files.grant.discard": { windows: ["main", "popout"], popout: () => null },
+  "files.grant.preview": { windows: ["main", "popout"], popout: () => null },
+  "files.root.pick": { windows: ["main"] },
+  "files.root.list": { windows: ["main"] },
+  "files.root.release": { windows: ["main"] },
+  "files.root.entries": { windows: ["main"] },
+  "files.media.url": { windows: ["main"] },
+  "files.edit.open": { windows: ["main"] },
+  "files.edit.save": { windows: ["main"] },
+  "files.edit.close": { windows: ["main"] },
+  "files.watch.subscribe": { windows: ["main"] },
+  "files.watch.unsubscribe": { windows: ["main"] },
+};
+
 function bridgePolicy(channel: BridgeChannel): ChannelPolicy {
   const popout = POPOUT[channel];
   const windows: WindowType[] = ["main"];
@@ -129,7 +151,7 @@ function bridgePolicy(channel: BridgeChannel): ChannelPolicy {
 
 /** The policy of every allowlisted channel. A bridge channel nobody lists above is main-only. */
 export const POLICY: Readonly<Record<PreloadChannel, ChannelPolicy>> = Object.freeze(
-  Object.fromEntries([...BRIDGE_CHANNELS.map((channel) => [channel, bridgePolicy(channel)] as const), ...Object.entries(SHELL_POLICY)]) as Record<PreloadChannel, ChannelPolicy>,
+  Object.fromEntries([...BRIDGE_CHANNELS.map((channel) => [channel, bridgePolicy(channel)] as const), ...Object.entries(SHELL_POLICY), ...Object.entries(FILE_POLICY)]) as Record<PreloadChannel, ChannelPolicy>,
 );
 
 export type Refusal =

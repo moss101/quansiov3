@@ -15,7 +15,9 @@ export type DeepLinkIntent =
   | { readonly kind: "open-run"; readonly runId: string }
   | { readonly kind: "open-approval"; readonly approvalId: string }
   | { readonly kind: "open-artifact"; readonly artifactId: string }
-  | { readonly kind: "open-workspace"; readonly workspaceId: string };
+  | { readonly kind: "open-workspace"; readonly workspaceId: string }
+  /** Ask main to open a native file dialog and hand the picks to the window as a grant (ADP-005): a link carries no path. */
+  | { readonly kind: "attach-files"; readonly threadId: string | null };
 
 const ID_PATTERNS: Record<string, { prefix: string; kind: DeepLinkIntent["kind"]; field: string }> = {
   thread: { prefix: "thr_", kind: "open-thread", field: "threadId" },
@@ -51,6 +53,19 @@ export function parseDeepLink(raw: string): DeepLinkIntent | null {
     return { kind: "oauth-callback", code, state };
   }
   if (url.search) {
+    // Any query is refused whole, and so is a path-like parameter inside it: a link supplies no path (ADP-005).
+    return null;
+  }
+  if (url.hostname === "attach") {
+    // quansio://attach[/thr_…] — the native dialog is the only way a file reaches the product; the link names no file.
+    const parts = url.pathname.split("/").filter(Boolean);
+    if (parts.length === 0 && (url.pathname === "" || url.pathname === "/")) {
+      return { kind: "attach-files", threadId: null };
+    }
+    const only = parts[0] ?? "";
+    if (parts.length === 1 && only.startsWith("thr_") && ULID_BODY.test(only.slice(4))) {
+      return { kind: "attach-files", threadId: only };
+    }
     return null;
   }
   const kind = url.hostname;

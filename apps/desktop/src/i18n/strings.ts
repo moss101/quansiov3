@@ -504,6 +504,15 @@ export const STRINGS = {
   popoutPin: "Keep on top",
   popoutOpenWindow: "Open in a new window",
   popoutGone: "This thread could not be opened.",
+  // ---- local files (ADP-005): native dialogs and the composer's attach messages ----
+  attachDialogTitle: "Choose files to attach",
+  folderDialogTitle: "Choose a folder",
+  attachFromDisk: "Attach files from your computer",
+  attachWorking: "Attaching…",
+  attachSkippedOne: "1 file was not attached",
+  attachSkippedMany: "{n} files were not attached",
+  attachGrantExpired: "That selection expired. Choose the files again.",
+  attachRefused: "Those files cannot be attached.",
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

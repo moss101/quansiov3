@@ -8,7 +8,13 @@
 
 /** CSP that forbids remote script, inline eval and object plugins. */
 export const RENDERER_CSP =
-  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: wss:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
+  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: quansio-media:; media-src quansio-media:; connect-src 'self' https: wss:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
+
+/**
+ * The policy a local media response (ADP-005, DOMAIN.md 13.7 C) carries. It is not the page's: a file the person picked
+ * is served sandboxed, with no script, no form, no navigation, whatever it contains.
+ */
+export const MEDIA_RESPONSE_CSP = "sandbox";
 
 /**
  * The shape of {@link RENDERER_WEB_PREFERENCES}, typed with `boolean` rather than
@@ -107,7 +113,8 @@ export function withContentSecurityPolicy(
       headers[key] = value;
     }
   }
-  headers["Content-Security-Policy"] = [RENDERER_CSP];
+  // A local media response is a file, not a page: it is sandboxed, and the page's own policy does not replace that.
+  headers["Content-Security-Policy"] = [details.url.startsWith("quansio-media:") ? MEDIA_RESPONSE_CSP : RENDERER_CSP];
   return { responseHeaders: headers };
 }
 

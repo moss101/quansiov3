@@ -8,7 +8,8 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type ReactElement } from "react";
 
-import { attachmentFromUpload, postedIdentities, postedRunStatus } from "../conversation/composer.js";
+import { postedIdentities, postedRunStatus } from "../conversation/composer.js";
+import { attachFromDisk, attachPushedGrant, type AttachOutcome } from "../conversation/local-attach.js";
 import { decodeTimeline, type RunInspection } from "../conversation/inspector.js";
 import { byAgentThread, dividerDay, faceLetter, faceTone, transcript, turnInFlight, type Face as FaceData, type RosterEntry } from "../conversation/presentation.js";
 import {
@@ -95,7 +96,8 @@ export function Conversation(props: ConversationProps): ReactElement {
   const [addressee, setAddressee] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [pinned, setPinned] = useState(true);
-  const fileInput = useRef<HTMLInputElement | null>(null);
+  // A native file dialog or an attach in flight: the control waits for it instead of opening a second one.
+  const [attaching, setAttaching] = useState(false);
   const composer = useRef<HTMLTextAreaElement | null>(null);
   const scroller = useRef<HTMLDivElement | null>(null);
   // The thread last agreed with the shell: a change from the sidebar is followed, and a thread
@@ -227,24 +229,45 @@ export function Conversation(props: ConversationProps): ReactElement {
     }
   }, [state.composer, state.threadId, addressee]);
 
-  const attach = useCallback(async (file: File) => {
-    try {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      let binary = "";
-      for (const byte of bytes) {
-        binary += String.fromCharCode(byte);
+  // What an attach produced: its files become composer attachments like any other, and what could not be attached is said.
+  const attached = useCallback((outcome: AttachOutcome) => {
+    if (outcome.kind === "failed") {
+      setNotice(outcome.message);
+      return;
+    }
+    if (outcome.kind === "attached") {
+      for (const attachment of outcome.attachments) {
+        dispatch({ type: "composer.attach", attachment });
       }
-      const result = await window.quansio.uploadAttachment({
-        name: file.name,
-        mediaType: file.type,
-        bytesBase64: btoa(binary),
-        threadId: state.threadId,
-      });
-      dispatch({ type: "composer.attach", attachment: attachmentFromUpload(result) });
+      if (outcome.notices.length > 0) {
+        setNotice(outcome.notices.join(" "));
+      }
+    }
+  }, []);
+
+  // The attach control (ADP-005): a native dialog in main, never a file input; the page learns names and an opaque token
+  // and asks main to attach them, and no path or bytes cross to the page.
+  const attach = useCallback(async () => {
+    setAttaching(true);
+    try {
+      attached(await attachFromDisk(window.quansio, state.threadId));
     } catch (error) {
       setNotice(errorText(error));
+    } finally {
+      setAttaching(false);
     }
-  }, [state.threadId]);
+  }, [state.threadId, attached]);
+
+  // An `attach` deep link made main open the dialog; the grant it produced arrives here.
+  useEffect(
+    () =>
+      window.quansio.onFileGrant((push) => {
+        void attachPushedGrant(window.quansio, push, state.threadId).then(attached, (error: unknown) => {
+          setNotice(errorText(error));
+        });
+      }),
+    [state.threadId, attached],
+  );
 
   const answer = useCallback(async (question: ConversationQuestion, value: unknown) => {
     try {
@@ -483,20 +506,8 @@ export function Conversation(props: ConversationProps): ReactElement {
                 }
               }}
             />
-            <input
-              ref={fileInput}
-              type="file"
-              hidden
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) {
-                  void attach(file);
-                }
-                event.target.value = "";
-              }}
-            />
-            <button type="button" className="circle lead" aria-label={t("attach")} data-tip={t("attach")} onClick={() => fileInput.current?.click()}>
-              <PlusIcon size={14} />
+            <button type="button" className="circle lead" aria-label={t("attachFromDisk")} data-tip={t("attachFromDisk")} disabled={attaching} onClick={() => void attach()}>
+              {attaching ? <SpinnerIcon size={14} /> : <PlusIcon size={14} />}
             </button>
             <div className="composer-trail">
               {live ? (
