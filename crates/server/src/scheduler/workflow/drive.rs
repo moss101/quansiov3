@@ -937,7 +937,17 @@ impl Pass<'_> {
 
         // The items: one worker each, a bounded number at a time. An item that is already finished is not called again.
         let children = self.graph.children(&group.id).await?;
+        // Every round settles at least one item (or asks for the budget it lacks, once); a round count past that means the
+        // journal and the graph disagree about what is finished, and the loop must end rather than spin.
+        let mut rounds = 0usize;
         loop {
+            rounds += 1;
+            if rounds > items.len() + 4 {
+                return Ok(Flow::Finish(Ending::Failed(failure(
+                    "STALLED",
+                    format!("step {id} made no progress over {} rounds", rounds - 1),
+                ))));
+            }
             let mut in_flight: Vec<(usize, String)> = Vec::new();
             let mut fresh: Vec<(usize, String)> = Vec::new();
             for index in 0..items.len() {
