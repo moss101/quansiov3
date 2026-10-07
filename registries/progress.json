@@ -3311,17 +3311,31 @@
     },
     "ADP-007": {
       "coverage": "PARTIAL",
-      "status": "RECONCILING",
+      "status": "PASS",
       "claimed_by": "agent:adp-007",
       "started_at": "2026-10-07T12:54:56Z",
-      "updated_at": "2026-10-07T12:54:56Z",
-      "git_commit": null,
-      "tests": [],
-      "artifacts": [],
+      "updated_at": "2026-10-07T17:09:22Z",
+      "git_commit": "30dd9232e332275362591a5df59ee2eb049bdd0b",
+      "tests": [
+        "cargo test --workspace --no-fail-fast (1312 passed, 0 failed)",
+        "webhook dedupe: automation_triggers::a_replayed_webhook_does_not_fire_twice (a real HTTP listener: the same bytes, the same signature under another delivery id, a sender's retry under a new timestamp, a restart; one fire however often it was sent); automation_served::a_hook_fire_claimed_before_a_kill_runs_once_after_the_relaunch_and_its_replay_is_a_duplicate (the real quansio-server process killed with SIGKILL and relaunched)",
+        "stale-revision update: automation_triggers::a_stale_revision_is_refused_and_a_full_replacement_replaces_everything (CONFLICT_REVISION with the current revision; full replacement semantics); a_client_named_create_is_idempotent_and_a_different_definition_is_a_mismatch",
+        "DST fire: automation_triggers::a_scheduled_window_fires_once_across_a_spring_forward_gap_and_a_fall_back_repeat; scheduler::routine and scheduler::timezone unit tests over America/New_York, Europe/London, Pacific/Auckland, Australia/Lord_Howe, Asia/Kolkata, America/Sao_Paulo; an_unknown_time_zone_is_a_typed_error_and_a_known_one_is_accepted",
+        "payload text can never authorize an action: automation_triggers::the_payload_reaches_the_run_only_as_untrusted_data_and_changes_nothing_about_the_routine; automation_untrusted::payload_text_cannot_authorize_an_action_through_the_real_plane (real Python plane: the payload is its own untrusted_external segment, an obedient model's injected fs.write parks on an approval, nothing is written, the routine is unchanged)",
+        "journal replay and restart: automation_workflow::a_restart_resumes_a_script_from_its_journal_without_repeating_a_completed_call; automation_served::a_killed_process_resumes_a_hook_fired_script_from_its_journal_without_repeating_a_completed_call (SIGKILL mid-call, relaunch, no finished call asked of the model again, one finished entry per call)",
+        "budget approval: automation_workflow::above_the_threshold_a_script_holds_an_approval_before_it_fans_out; reaching_the_call_budget_pauses_the_run_into_an_attention_item_instead_of_failing_it; a_script_with_a_gate_runs_as_the_least_privileged_role",
+        "desktop: 551 passed, 45 skipped (46 files; 70 new in automation-triggers and automation-parts); tsc and eslint --max-warnings 0 clean",
+        "uv run --project python pytest tests/architecture tests/contract tests/ci (245 passed, 1 deselected)",
+        "python3 mutation-checks.py (39 mutants, 38 killed, 1 survived, 0 no-verdict)",
+        "cargo fmt --check and clippy -D warnings clean; validate_v81, arch_check, workspace_check, inventory, check_authority, legacy_map_check, supply_chain, gen_contracts --check all clean"
+      ],
+      "artifacts": [
+        "evidence/ADP-007/2026-10-07T14-15-00Z/summary.json"
+      ],
       "real_boundary_evidence": [],
-      "implementation_complete": false,
+      "implementation_complete": true,
       "blocker": null,
-      "notes": ""
+      "notes": "Automation triggers and workflow scripts (D-019, DOMAIN.md 13.8). Inbound hooks: a webhook trigger kind with an unguessable endpoint, a signing secret held by the secret broker and shown once, HMAC over timestamp and body with a tolerance window, a durable replay ledger (delivery id and signature digest), a 64 KiB cap, a per-endpoint rate limit, typed filters (OR of groups, AND within a group), fires claimed in the existing fire ledger before execution, and the payload reaching the run only as an UNTRUSTED_EXTERNAL block through the INT-012 segment path. Management: expected_revision with full-replacement semantics and a typed conflict, idempotent creates by client request id, per-plan limits from config/automation.yaml, a rate-limited dry run, copy that says a trigger or script is the tool for waiting. IANA time zones (chrono-tz) with explicit gap and repeat rules and a typed error for an unknown name. Workflow scripts: a typed IR (agent, parallel, reduce, log) with a hard max_agent_calls, compiled through the Planner to WorkGraph nodes, journalled as Evidence on the script run (no new store), resumed after a restart without repeating a finished call, gated through the existing approval path above 20 calls, paused into an attention item at the budget, with schema-validated item results. Desktop: hook entries (endpoint and secret shown once), dry run, revision-conflict handling, an IANA picker and a script view with its budget. Recovery proven with the real quansio-server process killed with SIGKILL and relaunched. Not exercised live (evidence NOTES.md): a real model, Electron/browser clicks for the new UI, two served processes racing for one script. Deferred: connector-event triggers (no event source exists), desktop authoring of a script, per-item status in the script view, automatic retry of a failed worker call."
     },
     "ADP-008": {
       "coverage": null,
