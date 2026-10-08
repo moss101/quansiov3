@@ -95,6 +95,35 @@ export function decodeActivity(payload: unknown): ActivityRow[] {
   return rows;
 }
 
+export type RemoteAnswer = "view" | "control" | "deny" | "stop";
+
+/** The answers the computer's owner is offered on a remote-control row (ADP-009): none on any other row. */
+export function remoteAnswers(kind: string): readonly RemoteAnswer[] {
+  switch (kind) {
+    case "remote_ask_view":
+      return ["view", "deny"];
+    case "remote_ask_control":
+      return ["view", "control", "deny"];
+    case "remote_watching":
+    case "remote_controlling":
+      return ["stop"];
+    default:
+      return [];
+  }
+}
+
+export const REMOTE_ANSWER_LABELS: Readonly<Record<RemoteAnswer, StringKey>> = {
+  view: "remoteAllowView",
+  control: "remoteAllowControl",
+  deny: "remoteDeny",
+  stop: "remoteStop",
+};
+
+/** Whether a row is a remote session: it is not dismissible, only answered or ended. */
+export function isRemoteRow(kind: string): boolean {
+  return kind.startsWith("remote_");
+}
+
 export const GROUP_HEADINGS: Readonly<Record<ActivityGroup, StringKey>> = {
   waiting: "activityGroupWaiting",
   running: "activityGroupRunning",

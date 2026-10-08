@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quansio.dev/schemas/json/remote-control-config.schema.json",
+  "title": "Quansio remote control (config/remote-control.yaml)",
+  "description": "Bounds for a remote session over the live-frames WebSocket (DOMAIN.md 8.6.2): how long a request waits for the person at the computer, how long a grant and a session last, how fresh the computer's readiness report must be, and the size and rate of frames and input.",
+  "x-quansio-version": "v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "enabled",
+    "consent_ttl_seconds",
+    "grant_max_seconds",
+    "session_max_seconds",
+    "session_idle_seconds",
+    "host_report_max_age_seconds",
+    "frame_max_bytes",
+    "frame_max_per_second",
+    "input_max_per_second",
+    "text_max_chars",
+    "coordinate_max",
+    "clipboard_max_bytes",
+    "clipboard_max_files",
+    "clipboard_max_per_second"
+  ],
+  "properties": {
+    "version": { "const": 1 },
+    "enabled": { "type": "boolean" },
+    "consent_ttl_seconds": { "type": "integer", "minimum": 10, "maximum": 600 },
+    "grant_max_seconds": { "type": "integer", "minimum": 60, "maximum": 14400 },
+    "session_max_seconds": { "type": "integer", "minimum": 60, "maximum": 14400 },
+    "session_idle_seconds": { "type": "integer", "minimum": 30, "maximum": 3600 },
+    "host_report_max_age_seconds": { "type": "integer", "minimum": 2, "maximum": 120 },
+    "frame_max_bytes": { "type": "integer", "minimum": 1024, "maximum": 4194304 },
+    "frame_max_per_second": { "type": "integer", "minimum": 1, "maximum": 60 },
+    "input_max_per_second": { "type": "integer", "minimum": 1, "maximum": 240 },
+    "text_max_chars": { "type": "integer", "minimum": 1, "maximum": 4096 },
+    "coordinate_max": { "type": "integer", "minimum": 640, "maximum": 65536 },
+    "clipboard_max_bytes": { "type": "integer", "minimum": 1, "maximum": 1048576 },
+    "clipboard_max_files": { "type": "integer", "minimum": 0, "maximum": 8 },
+    "clipboard_max_per_second": { "type": "integer", "minimum": 1, "maximum": 10 }
+  }
+}

@@ -803,6 +803,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/commands/SupplyPaymentInput": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Browser/computer: SupplyPaymentInput */
+        post: operations["SupplyPaymentInput"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commands/RequestRemoteControl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Browser/computer: RequestRemoteControl */
+        post: operations["RequestRemoteControl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commands/GrantRemoteControl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Browser/computer: GrantRemoteControl */
+        post: operations["GrantRemoteControl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commands/DenyRemoteControl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Browser/computer: DenyRemoteControl */
+        post: operations["DenyRemoteControl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commands/StopRemoteControl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Browser/computer: StopRemoteControl */
+        post: operations["StopRemoteControl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/commands/CreateArtifact": {
         parameters: {
             query?: never;
@@ -2505,7 +2590,7 @@ export interface components {
              * @description DOMAIN.md §15 error taxonomy.
              * @enum {string}
              */
-            code: "AUTH_REQUIRED" | "AUTH_INVALID_TOKEN" | "AUTH_EXPIRED" | "SCOPE_FORBIDDEN" | "TENANT_MISMATCH" | "VALIDATION_SCHEMA" | "VALIDATION_UNKNOWN_FIELD" | "VALIDATION_BOUNDS" | "CONFLICT_REVISION" | "CONFLICT_IDEMPOTENCY_MISMATCH" | "CONFLICT_STATE" | "CAPABILITY_DENIED" | "CAPABILITY_INPUTS_UNAVAILABLE" | "POLICY_DENIED" | "APPROVAL_REQUIRED" | "APPROVAL_INVALID" | "APPROVAL_EXPIRED" | "APPROVAL_SUPERSEDED" | "RUNTIME_ILLEGAL_TRANSITION" | "FENCED_STALE_GENERATION" | "LEASE_LOST" | "EFFECT_UNKNOWN_PENDING_RECONCILIATION" | "BUDGET_EXHAUSTED" | "EFFECTS_FROZEN" | "TARGET_UNAVAILABLE" | "TARGET_PROVISION_FAILED" | "TOOL_TIMEOUT" | "TOOL_OUTPUT_TRUNCATED" | "EGRESS_DENIED" | "BROWSER_STALE_PAGE" | "BROWSER_STALE_DIALOG" | "BROWSER_DIALOG_PENDING" | "BROWSER_ACTION_REPLAY_CONFLICT" | "BROWSER_ACTION_IN_DOUBT" | "BROWSER_SECRET_ORIGIN_MISMATCH" | "BROWSER_SECRET_UNAVAILABLE" | "BROWSER_SENSITIVE_INPUT_DENIED" | "BROWSER_NAVIGATION_DENIED" | "BROWSER_CERTIFICATE_DECISION_REQUIRED" | "BROWSER_GESTURE_REQUIRED" | "BROWSER_INPUT_FENCED" | "BROWSER_EFFECT_TIER_EXCEEDED" | "BROWSER_INVALID_REQUEST" | "BROWSER_TARGET_NOT_FOUND" | "BROWSER_PAGE_FAILURE" | "COMPUTER_TAKEOVER_ACTIVE" | "COMPUTER_PERMISSION_REVOKED" | "COMPUTER_LIMIT_EXCEEDED" | "COMPUTER_STOPPED_BY_USER" | "COMPUTER_PERMISSION_REQUIRED" | "COMPUTER_FOREGROUND_CONTROL_LAPSED" | "COMPUTER_HELPER_IDENTITY_REFUSED" | "RECORDING_OWNER_CHANGED" | "RECORDING_NOT_FINISHED" | "RECORDING_UNREDACTED" | "RECORDING_PROPOSAL_REJECTED" | "FILE_GRANT_INVALID" | "FILE_OUTSIDE_ROOTS" | "FILE_EDIT_CONFLICT" | "FILE_REFUSED" | "WORKTREE_TOKEN_INVALID" | "WORKTREE_MISSING" | "DECK_NOT_DELIVERABLE" | "ADAPTER_UNAVAILABLE" | "PREVIEW_SCOPE_LAPSED" | "TOOL_NOT_MODEL_VISIBLE" | "TOOL_NOT_HOST_CALLABLE" | "PACK_INSTALL_FAILED" | "AUTOMATION_TIMEZONE_UNKNOWN" | "AUTOMATION_LIMIT_EXCEEDED" | "AUTOMATION_PAYLOAD_TOO_LARGE" | "WORKFLOW_RESULT_INVALID" | "PROVIDER_UNAVAILABLE" | "PROVIDER_RATE_LIMITED" | "PROVIDER_REFUSAL" | "ROUTE_UNAVAILABLE" | "DLP_DENIED" | "NOT_FOUND" | "RATE_LIMITED" | "STREAM_BACKPRESSURE" | "INTERNAL";
+            code: "AUTH_REQUIRED" | "AUTH_INVALID_TOKEN" | "AUTH_EXPIRED" | "SCOPE_FORBIDDEN" | "TENANT_MISMATCH" | "VALIDATION_SCHEMA" | "VALIDATION_UNKNOWN_FIELD" | "VALIDATION_BOUNDS" | "CONFLICT_REVISION" | "CONFLICT_IDEMPOTENCY_MISMATCH" | "CONFLICT_STATE" | "CAPABILITY_DENIED" | "CAPABILITY_INPUTS_UNAVAILABLE" | "POLICY_DENIED" | "APPROVAL_REQUIRED" | "APPROVAL_INVALID" | "APPROVAL_EXPIRED" | "APPROVAL_SUPERSEDED" | "RUNTIME_ILLEGAL_TRANSITION" | "FENCED_STALE_GENERATION" | "LEASE_LOST" | "EFFECT_UNKNOWN_PENDING_RECONCILIATION" | "BUDGET_EXHAUSTED" | "EFFECTS_FROZEN" | "TARGET_UNAVAILABLE" | "TARGET_PROVISION_FAILED" | "TOOL_TIMEOUT" | "TOOL_OUTPUT_TRUNCATED" | "EGRESS_DENIED" | "BROWSER_STALE_PAGE" | "BROWSER_STALE_DIALOG" | "BROWSER_DIALOG_PENDING" | "BROWSER_ACTION_REPLAY_CONFLICT" | "BROWSER_ACTION_IN_DOUBT" | "BROWSER_SECRET_ORIGIN_MISMATCH" | "BROWSER_SECRET_UNAVAILABLE" | "BROWSER_SENSITIVE_INPUT_DENIED" | "BROWSER_NAVIGATION_DENIED" | "BROWSER_CERTIFICATE_DECISION_REQUIRED" | "BROWSER_GESTURE_REQUIRED" | "BROWSER_INPUT_FENCED" | "BROWSER_EFFECT_TIER_EXCEEDED" | "BROWSER_INVALID_REQUEST" | "BROWSER_TARGET_NOT_FOUND" | "BROWSER_PAGE_FAILURE" | "COMPUTER_TAKEOVER_ACTIVE" | "COMPUTER_PERMISSION_REVOKED" | "COMPUTER_LIMIT_EXCEEDED" | "COMPUTER_STOPPED_BY_USER" | "COMPUTER_PERMISSION_REQUIRED" | "COMPUTER_FOREGROUND_CONTROL_LAPSED" | "COMPUTER_HELPER_IDENTITY_REFUSED" | "RECORDING_OWNER_CHANGED" | "RECORDING_NOT_FINISHED" | "RECORDING_UNREDACTED" | "RECORDING_PROPOSAL_REJECTED" | "FILE_GRANT_INVALID" | "FILE_OUTSIDE_ROOTS" | "FILE_EDIT_CONFLICT" | "FILE_REFUSED" | "WORKTREE_TOKEN_INVALID" | "WORKTREE_MISSING" | "DECK_NOT_DELIVERABLE" | "ADAPTER_UNAVAILABLE" | "PREVIEW_SCOPE_LAPSED" | "TOOL_NOT_MODEL_VISIBLE" | "TOOL_NOT_HOST_CALLABLE" | "PACK_INSTALL_FAILED" | "MCP_SERVER_UNAVAILABLE" | "MCP_TOOL_NOT_REGISTERED" | "MCP_TOOL_CHANGED" | "MCP_INVALID_REQUEST" | "MCP_PROTOCOL_ERROR" | "MCP_TOOL_ERROR" | "MCP_RESULT_INVALID" | "MCP_BUSY" | "MCP_CALL_IN_DOUBT" | "COMPOSE_SCRIPT_ERROR" | "COMPOSE_LIMIT_EXCEEDED" | "COMPOSE_TERMINATED" | "AUTOMATION_TIMEZONE_UNKNOWN" | "AUTOMATION_LIMIT_EXCEEDED" | "AUTOMATION_PAYLOAD_TOO_LARGE" | "WORKFLOW_RESULT_INVALID" | "PROVIDER_UNAVAILABLE" | "PROVIDER_RATE_LIMITED" | "PROVIDER_REFUSAL" | "ROUTE_UNAVAILABLE" | "DLP_DENIED" | "NOT_FOUND" | "RATE_LIMITED" | "STREAM_BACKPRESSURE" | "INTERNAL";
             message: string;
             correlation_id: string;
             retryable: boolean;
@@ -2705,6 +2790,26 @@ export interface components {
         };
         /** @description Browser/computer command DecideBrowserPermission. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
         DecideBrowserPermissionParams: {
+            [key: string]: unknown;
+        };
+        /** @description Browser/computer command SupplyPaymentInput. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        SupplyPaymentInputParams: {
+            [key: string]: unknown;
+        };
+        /** @description Browser/computer command RequestRemoteControl. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        RequestRemoteControlParams: {
+            [key: string]: unknown;
+        };
+        /** @description Browser/computer command GrantRemoteControl. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        GrantRemoteControlParams: {
+            [key: string]: unknown;
+        };
+        /** @description Browser/computer command DenyRemoteControl. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        DenyRemoteControlParams: {
+            [key: string]: unknown;
+        };
+        /** @description Browser/computer command StopRemoteControl. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
+        StopRemoteControlParams: {
             [key: string]: unknown;
         };
         /** @description Artifacts command CreateArtifact. The concrete parameter schema is owned by the implementing task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false. */
@@ -4838,6 +4943,201 @@ export interface operations {
         };
     };
     DecideBrowserPermission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    SupplyPaymentInput: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    RequestRemoteControl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    GrantRemoteControl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    DenyRemoteControl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommandEnvelope"];
+            };
+        };
+        responses: {
+            /** @description Accepted; result or typed error (DOMAIN.md §14). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        command_id: string;
+                        /** Format: date-time */
+                        accepted_at: string;
+                        result?: Record<string, never> | null;
+                        error?: components["schemas"]["Error"] | null;
+                    };
+                };
+            };
+            /** @description Typed error (DOMAIN.md §15). */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    StopRemoteControl: {
         parameters: {
             query?: never;
             header?: never;

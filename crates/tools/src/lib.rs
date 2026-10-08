@@ -11,6 +11,7 @@ pub mod call;
 pub mod canonical;
 pub mod declaration;
 pub mod error;
+pub mod mcp;
 pub mod receipt;
 pub mod registry;
 pub mod schema;
@@ -21,10 +22,11 @@ pub use canonical::canonical_json;
 pub use declaration::{
     EffectClassRule, EvidenceCapture, IdempotencyRule, NamedDerivation, RawEvidenceCapture,
     RawIdempotencyRule, RawResourceRule, RawToolDeclaration, ResourceRule, SourceTrust,
-    ToolDeclaration, ToolHost,
+    ToolDeclaration, ToolHost, ToolOrigin,
 };
 pub use error::ToolError;
-pub use registry::{RawFamilyReservation, ToolRegistry, ToolVisibility};
+pub use mcp::{McpConfig, McpServerConfig, McpTransportKind, ToolListChange};
+pub use registry::{RawFamilyReservation, RegistryHandle, ToolRegistry, ToolVisibility};
 pub use schema::{check_vocabulary, first_violation, validate_instance, SchemaViolation};
 pub use side_effect::{SideEffectClass, SideEffectMapping, SideEffectRow};
 

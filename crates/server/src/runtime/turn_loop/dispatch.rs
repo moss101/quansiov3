@@ -29,7 +29,8 @@ use quansio_core::{CanonicalId, Digest, Generation, Prefix, UlidGenerator};
 use quansio_events::event_type::EventType;
 use quansio_events::{EventDraft, EventStore};
 use quansio_tools::{
-    canonical_json, plan_call, CallContext, Caller, SourceTrust, ToolCallPlan, ToolRegistry,
+    canonical_json, plan_call, CallContext, Caller, RegistryHandle, SourceTrust, ToolCallPlan,
+    ToolRegistry,
 };
 use serde_json::{json, Value};
 use sqlx::{PgPool, Row};
@@ -71,6 +72,9 @@ pub const ARTIFACT_HOST_OWNER: &str = "CORE-007";
 /// The task that owns the output generators (deck, diagram, PDF, video, transcription and
 /// web-dev preview tools, all server-hosted).
 pub const OUTPUT_HOST_OWNER: &str = "ADP-006";
+/// The task that owns the MCP client (external tool servers run in the execution target) and the composition sandbox
+/// (`compose.run`): both are hosted by qworkerd.
+pub const MCP_HOST_OWNER: &str = "ADP-009";
 /// The task that owns ACTIVE knowledge (the server-hosted citation tool).
 pub const KNOWLEDGE_HOST_OWNER: &str = "INT-006";
 /// The task that resolves the acting user's roles and identity.
@@ -92,12 +96,60 @@ pub fn host_owner(tool: &str) -> &'static str {
         | "video.inspect"
         | "audio.transcribe" => OUTPUT_HOST_OWNER,
         _ if tool.starts_with("webdev.") => OUTPUT_HOST_OWNER,
+        _ if tool.starts_with("mcp.") || tool == COMPOSE_TOOL => MCP_HOST_OWNER,
         _ if tool.starts_with("browser.") => BROWSER_TOOL_HOST_OWNER,
         _ if tool.starts_with("computer.") => COMPUTER_TOOL_HOST_OWNER,
         "web.search" | "web.fetch" => CONNECTOR_HOST_OWNER,
         _ if tool.starts_with("connector.") => CONNECTOR_HOST_OWNER,
         _ if tool.starts_with("scm.") => SCM_HOST_OWNER,
         _ => FILE_TOOL_HOST_OWNER,
+    }
+}
+
+/// The tool that runs a composition script (ADP-009). A script may not call it.
+pub const COMPOSE_TOOL: &str = "compose.run";
+
+/// What a call made on behalf of a running composition script came to (ADP-009, DOMAIN.md §7.5).
+#[derive(Debug, Clone, PartialEq)]
+pub enum NestedOutcome {
+    /// The tool finished: its own result, as recorded on the call.
+    Completed {
+        /// The tool's result (a computer action's receipt included).
+        result: Value,
+    },
+    /// The tool ran and failed with a known outcome.
+    Failed {
+        /// The typed tool error.
+        error: Value,
+    },
+    /// The call was refused before any dispatch (schema, capability, policy, visibility).
+    Rejected {
+        /// The Quansio error code.
+        code: String,
+        /// Why.
+        detail: String,
+    },
+    /// The call parked for an approval; the script can not wait for a person.
+    Parked {
+        /// What it waits for.
+        wait_key: String,
+    },
+    /// The call's outcome is unknown; it is reconciled, never retried.
+    Unknown {
+        /// The effect awaiting reconciliation.
+        effect_id: Option<String>,
+    },
+}
+
+impl NestedOutcome {
+    fn from_rejected(outcome: ToolDispatchOutcome) -> Self {
+        match outcome {
+            ToolDispatchOutcome::Rejected { code, detail } => Self::Rejected { code, detail },
+            _ => Self::Rejected {
+                code: "INTERNAL".to_string(),
+                detail: "a refusal was expected".to_string(),
+            },
+        }
     }
 }
 
@@ -409,7 +461,9 @@ impl MemoryProposalPort for UnavailableMemoryProposals {
 pub struct ToolDispatchService {
     pool: PgPool,
     identity: RuntimeIdentity,
-    registry: &'static ToolRegistry,
+    /// The registry calls are planned and tools exposed against: the shipped one, plus the external tools an
+    /// MCP server currently offers (ADP-009). One handle, shared with the model's tool offer.
+    registry: RegistryHandle,
     runs: RuntimeStore,
     events: EventStore,
     ledger: EffectLedger,
@@ -448,7 +502,7 @@ impl ToolDispatchService {
             runs: RuntimeStore::new(pool.clone(), identity.clone())?,
             pool,
             identity,
-            registry: ToolRegistry::builtin(),
+            registry: RegistryHandle::builtin(),
             ledger,
             policies,
             projections,
@@ -496,14 +550,24 @@ impl ToolDispatchService {
     /// calls this.
     #[must_use]
     pub fn with_registry(mut self, registry: &'static ToolRegistry) -> Self {
+        self.registry = RegistryHandle::fixed(registry.clone());
+        self
+    }
+
+    /// Plan, expose and dispatch against a registry the caller keeps current: the MCP client replaces one
+    /// server's external tools in the handle when its tool list changes (ADP-009), and the service sees the
+    /// change on its next call. The model's tool offer must be given the same handle, so what a model is
+    /// offered is what the dispatcher will accept.
+    #[must_use]
+    pub fn with_registry_handle(mut self, registry: RegistryHandle) -> Self {
         self.registry = registry;
         self
     }
 
-    /// The registry this service plans against.
+    /// The registry this service plans against, as it is now.
     #[must_use]
-    pub fn registry(&self) -> &'static ToolRegistry {
-        self.registry
+    pub fn registry(&self) -> Arc<ToolRegistry> {
+        self.registry.current()
     }
 
     /// Make a **host call** (ADP-008, DOMAIN.md §7.5): the trusted runtime, or the person through their
@@ -527,6 +591,77 @@ impl ToolDispatchService {
             request,
         )
         .await
+    }
+
+    /// Make a call **on behalf of a running composition script** (ADP-009, DOMAIN.md §7.5 "Composition sandbox").
+    ///
+    /// It is the model's call, because the model wrote the script: the tool must be model-visible, the arguments are
+    /// validated against its schema, the run's CapabilityProjection must cover it, policy decides, the Effect Ledger
+    /// reserves and settles it, and it is recorded in `tool_calls` like any other. The one difference is what comes
+    /// back: the tool's own result, which the script needs and the turn loop reads from the row. A script may not call
+    /// a control tool (`user.ask`, `work.*`, `memory.propose`) or `compose.run` itself: those change what the run is
+    /// doing rather than the world, and are refused here, recorded, before anything is validated.
+    ///
+    /// # Errors
+    /// The same as [`ToolDispatchPort::dispatch`].
+    pub async fn dispatch_nested(
+        &self,
+        call: ProposedToolCall,
+        request: ToolDispatchRequest,
+    ) -> Result<NestedOutcome, RuntimeError> {
+        if is_internal_tool(&call.tool) || call.tool == COMPOSE_TOOL {
+            let run = self
+                .runs
+                .load_run(&CanonicalId::parse_typed(&request.run_id, Prefix::Run)?)
+                .await?;
+            let refused = self
+                .reject(
+                    &run,
+                    &request,
+                    &call,
+                    "POLICY_DENIED",
+                    "a composition script may not call a control tool or compose.run",
+                )
+                .await?;
+            return Ok(NestedOutcome::from_rejected(refused));
+        }
+        let outcome = ToolDispatchPort::dispatch(self, call, request).await?;
+        Ok(match outcome {
+            ToolDispatchOutcome::Completed {
+                effect_id: Some(effect_id),
+                ..
+            } => NestedOutcome::Completed {
+                result: self.result_by_effect(&effect_id).await?,
+            },
+            ToolDispatchOutcome::Completed { .. }
+            | ToolDispatchOutcome::CompletionClaimed { .. } => NestedOutcome::Completed {
+                result: Value::Null,
+            },
+            ToolDispatchOutcome::Failed { error } => NestedOutcome::Failed { error },
+            ToolDispatchOutcome::Rejected { code, detail } => {
+                NestedOutcome::Rejected { code, detail }
+            }
+            ToolDispatchOutcome::Parked { wait_key, .. } => NestedOutcome::Parked { wait_key },
+            ToolDispatchOutcome::OutcomeUnknown { effect_id } => {
+                NestedOutcome::Unknown { effect_id }
+            }
+        })
+    }
+
+    /// The recorded result of the call that settled this effect.
+    async fn result_by_effect(&self, effect_id: &str) -> Result<Value, RuntimeError> {
+        let mut tx = self.pool.begin().await?;
+        schema::set_tenant_context(&mut tx, &self.identity.tenant_id).await?;
+        let result: Option<Option<Value>> = sqlx::query_scalar(
+            "SELECT result FROM tool_calls WHERE effect_id = $1 AND tenant_id = $2 \
+             ORDER BY created_at DESC LIMIT 1",
+        )
+        .bind(effect_id)
+        .bind(&self.identity.tenant_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(result.flatten().unwrap_or(Value::Null))
     }
 
     /// The Effect Ledger every consequential call reserves through.
@@ -553,8 +688,8 @@ impl ToolDispatchService {
         let Some(projection) = self.projections.projection_for_run(run_id).await? else {
             return Ok(Vec::new());
         };
-        let mut names: Vec<String> = self
-            .registry
+        let registry = self.registry.current();
+        let mut names: Vec<String> = registry
             .exposed_names(&projection, now)
             .into_iter()
             .map(str::to_string)
@@ -602,8 +737,9 @@ impl ToolDispatchService {
                 detail: format!("the tool call for effect {} is gone", pending.effect_id),
             });
         };
+        let registry = self.registry.current();
         let plan = match plan_call(
-            self.registry,
+            &registry,
             &stored.tool_name,
             Some(stored.version),
             &stored.args,
@@ -808,8 +944,9 @@ impl ToolDispatchPort for ToolDispatchService {
         }
 
         // 1. Resolve and validate strictly. Nothing is written when this refuses.
+        let registry = self.registry.current();
         let plan = match plan_call(
-            self.registry,
+            &registry,
             &call.tool,
             None,
             &call.args,

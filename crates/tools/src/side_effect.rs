@@ -32,16 +32,20 @@ pub enum SideEffectClass {
     OpenWorldMutation,
     /// May cause an external effect the page decides (a click that submits, sends or pays).
     PotentialExternalEffect,
+    /// Brings another browser's session data (cookies) into the managed browser (ADP-009). Not the page's doing: the person's
+    /// own act, approved at tier 4 every time.
+    SessionImport,
 }
 
 impl SideEffectClass {
     /// Every class, in ladder order.
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 6] = [
         Self::Read,
         Self::ReadSensitive,
         Self::LocalMutation,
         Self::OpenWorldMutation,
         Self::PotentialExternalEffect,
+        Self::SessionImport,
     ];
 
     /// The canonical spelling used in `config/tools.yaml` and `config/effects.yaml`.
@@ -53,6 +57,7 @@ impl SideEffectClass {
             Self::LocalMutation => "local_mutation",
             Self::OpenWorldMutation => "open_world_mutation",
             Self::PotentialExternalEffect => "potential_external_effect",
+            Self::SessionImport => "session_import",
         }
     }
 
@@ -65,7 +70,7 @@ impl SideEffectClass {
             .into_iter()
             .find(|class| class.as_str() == value)
             .ok_or_else(|| {
-                format!("side_effect {value:?} is not one of the five side-effect classes")
+                format!("side_effect {value:?} is not one of the six side-effect classes")
             })
     }
 }
@@ -211,6 +216,15 @@ mod tests {
             mapping
                 .row(SideEffectClass::PotentialExternalEffect)
                 .journaled
+        );
+        // An import is journaled and settles as the one class that is tier 4 and never `always` (ADP-009).
+        assert!(mapping.row(SideEffectClass::SessionImport).journaled);
+        assert_eq!(
+            mapping
+                .row(SideEffectClass::SessionImport)
+                .effect_class
+                .as_str(),
+            "browser.session.import"
         );
     }
 

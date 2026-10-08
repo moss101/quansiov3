@@ -222,3 +222,56 @@ describe("opening an item", () => {
     expect(commandForNotice(notice({}))).toBeNull();
   });
 });
+
+describe("remote control entries (ADP-009, DOMAIN.md 8.6.2)", () => {
+  const TARGET = "tgt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
+  const OWNER = "usr_01J8Z3K6F1N8VQ2X5W9Y0OWNER0";
+  const VIEWER = "usr_01J8Z3K6F1N8VQ2X5W9Y0VIEWER";
+  const at = (ms: number): string => new Date(ms).toISOString();
+  const remote = (state: string, extra: Record<string, unknown> = {}): Record<string, unknown> =>
+    event("target.remote_changed", `${TARGET}:${VIEWER}`, { target_id: TARGET, host_user_id: OWNER, viewer_user_id: VIEWER, requested_scope: "control", granted_scope: null, state, ...extra });
+
+  it("follows a session from the request to its end, with fixed titles and no text from the payload", () => {
+    const { tracker: t, clock } = tracker();
+    clock.now = Date.parse("2026-10-08T10:00:00Z");
+    t.apply(remote("requested", { consent_expires_at: at(clock.now + 60_000), reason: "<script>alert(1)</script>" }));
+    expect(t.items()).toMatchObject([{ kind: "remote_ask_control", group: "waiting", title: "A remote viewer asks to control this computer", ref: { targetId: TARGET, viewerId: VIEWER } }]);
+    expect(JSON.stringify(t.items())).not.toContain("script");
+    t.apply(remote("authorized", { granted_scope: "view", ends_at: at(clock.now + 600_000) }));
+    expect(t.items()).toMatchObject([{ kind: "remote_watching", title: "This computer is being watched" }]);
+    t.apply(remote("authorized", { granted_scope: "control", ends_at: at(clock.now + 600_000) }));
+    expect(t.items()).toMatchObject([{ kind: "remote_controlling" }]);
+    expect(t.waitingCount()).toBe(1);
+    t.apply(remote("stopped", { reason: "idle" }));
+    expect(t.items()).toEqual([]);
+  });
+
+  it("cannot be dismissed, is not evicted by a crowd of other items, and ends by itself when its time passes", () => {
+    const { tracker: t, clock } = tracker({ maxItems: 2 });
+    clock.now = Date.parse("2026-10-08T10:00:00Z");
+    t.apply(remote("authorized", { granted_scope: "control", ends_at: at(clock.now + 10_000) }));
+    const key = `remote:${TARGET}:${VIEWER}`;
+    expect(t.dismiss(key)).toBe(false);
+    for (const id of ["a", "b", "c", "d"]) {
+      t.apply(event("turn.started", `trn_${id}`, { turn_id: `trn_${id}`, run_id: RUN_A }));
+    }
+    expect(t.get(key)).not.toBeNull();
+    clock.now += 11_000;
+    expect(t.get(key)).toBeNull();
+    expect(t.items().some((item) => item.key === key)).toBe(false);
+  });
+
+  it("shows nothing for a viewer's own side, an unknown state or scope, or a session whose time already passed", () => {
+    const clock = { now: Date.parse("2026-10-08T10:00:00Z") };
+    const t = new ActivityTracker({ maxItems: 24, completedTtlMs: 600_000, now: () => clock.now, selfUserId: () => VIEWER });
+    expect(t.apply(remote("authorized", { granted_scope: "control", ends_at: at(clock.now + 60_000) }))).toBe(false);
+    const own = new ActivityTracker({ maxItems: 24, completedTtlMs: 600_000, now: () => clock.now, selfUserId: () => OWNER });
+    expect(own.apply(remote("authorized", { granted_scope: "root", ends_at: at(clock.now + 60_000) }))).toBe(false);
+    expect(own.apply(remote("authorized", { granted_scope: "control", ends_at: at(clock.now - 1) }))).toBe(false);
+    expect(own.apply(remote("authorized", { granted_scope: "control" }))).toBe(false);
+    expect(own.apply(remote("exploding"))).toBe(false);
+    expect(own.apply(event("target.remote_changed", "x", { state: "authorized" }))).toBe(false);
+    expect(own.items()).toEqual([]);
+    expect(own.apply(remote("authorized", { granted_scope: "control", ends_at: at(clock.now + 60_000) }))).toBe(true);
+  });
+});

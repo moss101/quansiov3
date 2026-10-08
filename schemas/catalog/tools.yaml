@@ -10,6 +10,8 @@ tools:
 - browser.observe
 - browser.click
 - browser.type
+- browser.fill_payment_field
+- browser.import_session
 - browser.press_key
 - browser.handle_dialog
 - browser.extract
@@ -22,6 +24,8 @@ tools:
 - computer.clipboard
 - computer.system_key
 - connector.<id>.<op>
+- mcp.<server>.<tool>
+- compose.run
 - scm.git.<op>
 - scm.pr.<op>
 - artifact.create

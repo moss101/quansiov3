@@ -67,6 +67,7 @@ describe("preload bridge", () => {
         "runTimeline",
         "postMessage",
         "answerQuestion",
+        "answerRemote",
         "cancelTurn",
         "uploadAttachment",
         "listArtifacts",
@@ -116,6 +117,16 @@ describe("preload bridge", () => {
         "compileRecording",
         "submitRecordingSkill",
         "detachLive",
+        "supplyPayment",
+        "passwordStatus",
+        "listPasswords",
+        "suggestPasswords",
+        "savePassword",
+        "removePassword",
+        "fillPassword",
+        "scanBrowsers",
+        "importLogins",
+        "stageCookies",
         "viewThread",
         "createThread",
         "addParticipant",
@@ -264,6 +275,7 @@ describe("preload bridge", () => {
     await api.compileRecording("rec_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.submitRecordingSkill({ recordingId: "rec_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", name: "make-a-note", semver: "1.0.0", slots: [] });
     await api.detachLive();
+    await api.supplyPayment({ origin: "https://shop.example", fields: { card_number: "4242424242424242" } });
     await api.viewThread("thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.createThread({ kind: "group", title: "launch", participants: [] });
     await api.addParticipant({ thread_id: "thr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", kind: "user", id: "usr_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
@@ -294,6 +306,7 @@ describe("preload bridge", () => {
     await api.activityItems();
     await api.dismissActivity("run:run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.openActivity("run:run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.answerRemote("remote:tgt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA:usr_01J8Z3K6F1N8VQ2X5W9Y0VIEWER", "stop");
     await api.setIndicatorInteractive(true);
     await api.moveIndicator(10, 20);
     await api.installUpdate("now");
@@ -313,6 +326,16 @@ describe("preload bridge", () => {
     await api.closeFileEdit("edit_00000000000000000000000000000000");
     await api.watchFolder("lroot_00000000000000000000000000000000");
     await api.unwatchFolder("sub_0000000000000000");
+    // The person's own secrets (ADP-009): metadata and ids in, counts out.
+    await api.passwordStatus();
+    await api.listPasswords();
+    await api.suggestPasswords("https://example.com/login");
+    await api.savePassword({ origin: "https://example.com", username: "ada", password: "a-test-password" });
+    await api.removePassword("pw_00000000000000000000000000000001");
+    await api.fillPassword({ id: "pw_00000000000000000000000000000001", sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
+    await api.scanBrowsers();
+    await api.importLogins({ family: "chrome", profile: "Default" });
+    await api.stageCookies({ family: "chrome", profile: "Default", domains: ["example.test"] });
     expect(invoked.map((call) => call.channel)).toEqual([...PRELOAD_ALLOWLIST]);
     expect(invoked[0]?.payload).toEqual(command);
     for (const call of invoked) {

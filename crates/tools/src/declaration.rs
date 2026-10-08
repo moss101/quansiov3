@@ -71,6 +71,24 @@ impl fmt::Display for ToolHost {
     }
 }
 
+/// Where a declaration came from (ADP-009, DOMAIN.md §7.5 "External tools").
+///
+/// A built-in tool is declared in `config/tools.yaml` by the repository. An external tool is declared by
+/// the runtime from what an MCP server offered, under the classification `config/mcp.yaml` gives it; the
+/// server that offered it never decides what class, resource or trust the tool has.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ToolOrigin {
+    /// Declared in `config/tools.yaml`.
+    Builtin,
+    /// Offered by an external MCP server and declared by the runtime.
+    External {
+        /// The configured server name, the second segment of `mcp.<server>.<tool>`.
+        server: String,
+        /// The name the server itself uses for the tool, which the transport sends back to it.
+        remote_name: String,
+    },
+}
+
 /// The trust level assigned to a tool's results (DOMAIN.md §12).
 ///
 /// Mirrors the generated contract `quansio.v1.trust.TrustLevel` without depending on the
@@ -312,6 +330,10 @@ pub struct ToolDeclaration {
     /// differs in who asked. Off unless declared, so a tool is never reachable from a host surface by
     /// accident.
     pub host_callable: bool,
+    /// Where the declaration came from (ADP-009). Only the runtime's own MCP builder sets
+    /// [`ToolOrigin::External`]; a declaration read from `config/tools.yaml` is always
+    /// [`ToolOrigin::Builtin`].
+    pub origin: ToolOrigin,
 }
 
 impl ToolDeclaration {
@@ -412,6 +434,7 @@ impl ToolDeclaration {
             side_effect,
             model_visible: raw.model_visible,
             host_callable: raw.host_callable,
+            origin: ToolOrigin::Builtin,
         })
     }
 

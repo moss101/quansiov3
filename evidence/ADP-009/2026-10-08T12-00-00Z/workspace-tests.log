@@ -1,0 +1,368 @@
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_capability-8a73949eb7b57b76)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/authorization_decisions.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/authorization_decisions-9c5aff9d1773510f)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/delegation_narrowing.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/delegation_narrowing-e997d04447a08073)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/fail_closed.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/fail_closed-ebedd84cd3ca9dd5)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/grant_values.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/grant_values-dad4da0bf97f8dbf)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/narrowing_properties.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/narrowing_properties-a1064cfaedf4e9ac)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running tests/policy_and_user_rules.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/policy_and_user_rules-f8206a6718556093)
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/projection_persistence.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/projection_persistence-1ba346ca430cf60b)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.59s
+     Running tests/selector_containment.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/selector_containment-2c46554aff3ac826)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/stale_projection.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/stale_projection-8010a77f4b7e225d)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/widening_rejection.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/widening_rejection-a6662e8a704d9531)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_cli-7252362119fe892b)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/main.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio-23e9c03c614e23f8)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/cli_e2e.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/cli_e2e-6d5d3f6a6cf7aa40)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/client_only.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/client_only-c848d31bb643cb55)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_contracts-ec8f072d319bb8b2)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_core-29e2dc88dec5c05e)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/identity.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/identity-5039ec78445d4c61)
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_events-f31746639f190d3f)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/event_families.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/event_families-64c0cfa9600160cc)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/nats_transport.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/nats_transport-1cf955d7258eb82d)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running tests/outbox_publisher.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outbox_publisher-3717787afcf9505b)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s
+     Running tests/projection_determinism.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/projection_determinism-b83b0f58f8b55d5a)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.83s
+     Running tests/projection_resume.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/projection_resume-b087300c21921040)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.60s
+     Running tests/runtime_event_store.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/runtime_event_store-23ab7c0824206990)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.93s
+     Running tests/stream_backpressure.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/stream_backpressure-1453c39f39fe0d01)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.86s
+     Running tests/stream_channels.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/stream_channels-a14f087078500ee0)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.64s
+     Running tests/stream_resume.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/stream_resume-0e3369d23098172f)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.65s
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_graph-729c02ccde05c0ed)
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/agent_graph.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/agent_graph-00f9899b9a21790b)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.63s
+     Running tests/atomic_batch.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/atomic_batch-da9684e3559ae824)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.62s
+     Running tests/attempts_append_only.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/attempts_append_only-647dde27bf5973e2)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.52s
+     Running tests/cycle_rejection.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/cycle_rejection-72c823d02b39a98b)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s
+     Running tests/graph_transaction.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/graph_transaction-60216d82bb234db7)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+     Running tests/illegal_transitions.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/illegal_transitions-8ba3ec9689778b0b)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.78s
+     Running tests/plan_proposal.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/plan_proposal-b7d0e0b953588c2b)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.25s
+     Running tests/revision_cas.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/revision_cas-417190a8f600c795)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.87s
+     Running tests/tenant_isolation.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/tenant_isolation-357b580a3c916cae)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_indexer-03edf9a422c0f0f4)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/postgres_rebuild.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/postgres_rebuild-00aae63228e044ab)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.14s
+     Running tests/search_api.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/search_api-e76f2535fea82bc3)
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.28s
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_machine-b2737b985dfb0398)
+test result: ok. 64 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+     Running tests/browser.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser-1c0799178695c1f3)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.69s
+     Running tests/browser_guard.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser_guard-cfa29cbd5e0ceb8a)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.79s
+     Running tests/computer_helper.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/computer_helper-2abedef96a3fe303)
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.71s
+     Running tests/computer_permission.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/computer_permission-89bb77d3bfb9a573)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/computer_receipts.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/computer_receipts-05c74ff4466f6327)
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.50s
+     Running tests/computer_sequence.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/computer_sequence-d1a63335aba975b3)
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.49s
+     Running tests/computer_use.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/computer_use-47e74921a73dd3d2)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.75s
+     Running tests/control.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/control-940cf8e7ea04dc43)
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.28s
+     Running tests/egress.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/egress-9f90c07f2c38b73a)
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.71s
+     Running tests/macos_capsule.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/macos_capsule-f3d43ff0ebae9bb5)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+     Running tests/secrets.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/secrets-e57c304fadb23576)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.63s
+     Running tests/terminal.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/terminal-45896b3d69d2f650)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.92s
+     Running tests/windows_capsule.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/windows_capsule-e7166dbf681d64a9)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_native_windows-699b7c6846e2a4cf)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_qworkerd-380e111bcb089bee)
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+     Running tests/browser.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser-af0777b8fb68ba5c)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.61s
+     Running tests/browser_contract.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser_contract-45fb31e66dade5a1)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.41s
+     Running tests/browser_fencing.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser_fencing-22eb6f02138da0fa)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.41s
+     Running tests/browser_guard.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser_guard-531403d7ec6168e8)
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.04s
+     Running tests/browser_import.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser_import-d09b0e1f154513b7)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.08s
+     Running tests/browser_ledger.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser_ledger-bfefed05bcf6ad7b)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.72s
+     Running tests/browser_payment.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser_payment-309fcd0257ce2d4c)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.64s
+     Running tests/browser_secrets.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser_secrets-47120b7a379591d2)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.03s
+     Running tests/compose.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/compose-8cb0446280789715)
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.98s
+     Running tests/file_conflicts.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/file_conflicts-3ea79b89baa16d43)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.58s
+     Running tests/host.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/host-de796b8c7ba3047c)
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+     Running tests/mcp.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/mcp-ddf251eddcecb16f)
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.47s
+     Running tests/media.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/media-829e0ca6803aeb10)
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.61s
+     Running tests/remote_host.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/remote_host-2a7f368ada2f9ed0)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+     Running tests/render.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/render-607c46f3cdc7b873)
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.51s
+     Running tests/retention.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/retention-238d07893221de8a)
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.80s
+     Running tests/scm_tools.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/scm_tools-23ca0be4d0d4da2b)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.74s
+     Running tests/tools.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/tools-d4f553497add6f0d)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.43s
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_server-a728a7ba9d58807c)
+test result: ok. 339 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.88s
+     Running unittests src/bin/quansio-dev-seed.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_dev_seed-852706fe9abf44b1)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running unittests src/bin/quansio-server.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_server-3a2a90f4b39aa62d)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/agent_graph_store.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/agent_graph_store-43d5bb17325433f4)
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.21s
+     Running tests/agents.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/agents-48d0d7d7ef9d432f)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.54s
+     Running tests/api.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/api-28ae3c980e217347)
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.81s
+     Running tests/artifact_workflows.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/artifact_workflows-a5b47ac94ee2caa6)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.49s
+     Running tests/artifact_workspace.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/artifact_workspace-ca3bebb0ce3959f4)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.37s
+     Running tests/artifacts.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/artifacts-a63466e731bcc59a)
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.32s
+     Running tests/audit_lifecycle.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/audit_lifecycle-d6a77b504e405d3f)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running tests/automation_served.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/automation_served-7c31219cafac0b4a)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.96s
+     Running tests/automation_triggers.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/automation_triggers-00e7a0569a7167fb)
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.37s
+     Running tests/automation_untrusted.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/automation_untrusted-14d5224fe2e30147)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.45s
+     Running tests/automation_workflow.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/automation_workflow-564e83d3864508ca)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.85s
+     Running tests/background_composition.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/background_composition-04c7441aef225703)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.68s
+     Running tests/browser_import.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser_import-944171578c2fa98f)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.71s
+     Running tests/budget_service_paths.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/budget_service_paths-2ffe6b798f298b0c)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.66s
+     Running tests/budgets.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/budgets-a2b2303e2833951d)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.67s
+     Running tests/budgets_enforced.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/budgets_enforced-0bcd152de22ba33b)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.31s
+     Running tests/collaboration.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/collaboration-cb262ef211d307ae)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.81s
+     Running tests/command_idempotency.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/command_idempotency-a3279675f7c96896)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+     Running tests/compaction.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/compaction-98fa98bb02f9991f)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.14s
+     Running tests/compaction_unowned_epochs.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/compaction_unowned_epochs-6f44a2e8eaf024f1)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+     Running tests/completion_claims.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/completion_claims-6e8f261c1dc1e602)
+     Running tests/compose_dispatch.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/compose_dispatch-4748fa8de85ed99f)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.62s
+     Running tests/connector_broker.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/connector_broker-26954c03f51a260f)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+     Running tests/context_bridge.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/context_bridge-a73e5dc024e8f1d3)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.56s
+     Running tests/conversation_surface.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/conversation_surface-937866c3382ae906)
+test served_a_message_is_accepted_before_its_turn_and_the_reply_follows ... FAILED
+test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.42s
+     Running tests/effects.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/effects-fde70a4d817fae8b)
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.42s
+     Running tests/effects_taxonomy_and_model.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/effects_taxonomy_and_model-bcfe120f0a2b876a)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/enterprise_identity.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/enterprise_identity-4a2846f628740954)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.69s
+     Running tests/graph_orchestration.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/graph_orchestration-9142263e92433fd7)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s
+     Running tests/graph_planning.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/graph_planning-f0377ee209c73675)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.18s
+     Running tests/graph_scheduler_dispatch.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/graph_scheduler_dispatch-c9df697b7bf157d4)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.72s
+     Running tests/identity.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/identity-5f91cffd187099f1)
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.16s
+     Running tests/intelligence_gateway.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/intelligence_gateway-c869c7c2b1edc152)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s
+     Running tests/kms_key_provider.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/kms_key_provider-c3e8806661b63aa2)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running tests/knowledge_surface.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/knowledge_surface-1a988b37ec135d45)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.04s
+     Running tests/live_sessions.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/live_sessions-be11f078aeed1f12)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.78s
+     Running tests/maintenance.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/maintenance-e80b5ec9f314d74e)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.75s
+     Running tests/mcp_dispatch.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/mcp_dispatch-84a04e0b8a5dd6e1)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.51s
+     Running tests/observability.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/observability-6f35d221e7f20798)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.77s
+     Running tests/ops_kill_switches.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/ops_kill_switches-9230a2f86726bcfc)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.75s
+     Running tests/orchestration.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/orchestration-988534968e7729cf)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.10s
+     Running tests/orchestration_paths.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/orchestration_paths-9e111dfd56bd3e17)
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.86s
+     Running tests/outputs_compose.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outputs_compose-483c9dbe9c6923d6)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+     Running tests/outputs_deck.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outputs_deck-956bfbd610523467)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.03s
+     Running tests/outputs_documents.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outputs_documents-2a0a7154d369f8ca)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.06s
+     Running tests/outputs_preview.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outputs_preview-22398d111cbd1554)
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.19s
+     Running tests/outputs_transcribe.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outputs_transcribe-5e9c68a4056cfc84)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.77s
+     Running tests/outputs_video.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outputs_video-787f4fbc1ea335c4)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.53s
+     Running tests/outputs_video_ffmpeg.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/outputs_video_ffmpeg-93dcefb69faa01c4)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/pack_install.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/pack_install-b1ff5ec287e78b39)
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.52s
+     Running tests/payment_flow.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/payment_flow-1fe8e869d5f9f124)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.43s
+     Running tests/payment_supply.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/payment_supply-7850492447b34104)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.11s
+     Running tests/planning.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/planning-461b6309142d1339)
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.15s
+     Running tests/planning_compile.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/planning_compile-371f4eb5eeb3b5a0)
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/planning_graph_port.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/planning_graph_port-8f0b345609076bd7)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.86s
+     Running tests/policy.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/policy-54d5c86106fcedd5)
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.37s
+     Running tests/protocol_state.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/protocol_state-70da71e282efbdcf)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.85s
+     Running tests/qualification.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/qualification-b6e9911286a428fa)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.62s
+     Running tests/questions_lifecycle.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/questions_lifecycle-294a81882d5989bb)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.69s
+     Running tests/recovery.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/recovery-e4189f582824da98)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.81s
+     Running tests/recovery_point.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/recovery_point-9d639eac869c6322)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/remote_control.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/remote_control-61df3d7adce56d42)
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 33.16s
+     Running tests/routines.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/routines-9078eb72b63e881a)
+     Running tests/runtime_state_machine.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/runtime_state_machine-9075005340e16348)
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.56s
+     Running tests/scheduler.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/scheduler-702d95881a65e347)
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.11s
+     Running tests/schema_bootstrap.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/schema_bootstrap-923071339693ffdc)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.64s
+     Running tests/served_plan_and_memory.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/served_plan_and_memory-f7cc9e8d8dae748c)
+     Running tests/skill_evolution.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/skill_evolution-741756a30ba6c0e6)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.11s
+     Running tests/skill_recording.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/skill_recording-ce45b3aa3d5d22ac)
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.72s
+     Running tests/skills.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/skills-dbc6cc82ff6ee062)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+     Running tests/state_machine_engine.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/state_machine_engine-9c0887f6486e1533)
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.51s
+     Running tests/state_machine_store.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/state_machine_store-dc7e9ce937cb8b6e)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.91s
+     Running tests/teammates.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/teammates-417993f9e9d5e15f)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.13s
+     Running tests/tool_visibility.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/tool_visibility-8579cc67fab0b934)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.86s
+     Running tests/trust_policy.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/trust_policy-afb384b677494f73)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/trust_surface.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/trust_surface-1257805741e26623)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.97s
+     Running tests/turn_loop.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/turn_loop-1a5f4310854fced8)
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.97s
+     Running tests/turn_loop_internal_tools.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/turn_loop_internal_tools-5664efd31ac847ff)
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.95s
+     Running tests/usage.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/usage-e67072d0ac1e77d4)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/usage_store.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/usage_store-58d66137b6c9730b)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.66s
+     Running tests/verification.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/verification-666e6d9d91be3aa8)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.33s
+     Running tests/verification_contract_checks.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/verification_contract_checks-5667c6e78fbf633a)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.60s
+     Running tests/walking_skeleton.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/walking_skeleton-126988e0a8598316)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.04s
+     Running tests/walking_skeleton_gateway.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/walking_skeleton_gateway-1d40323d6f012993)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.60s
+     Running tests/web_admin_surface.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/web_admin_surface-3dffca70362b964a)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.25s
+     Running tests/webhooks.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/webhooks-7144397759b515e7)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.62s
+     Running tests/workgraph_surface.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/workgraph_surface-0aae942a2dd96c91)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.80s
+     Running unittests src/lib.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_tools-f8d4204c2e69bb59)
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/bin/quansio-tool-check.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/quansio_tool_check-831b9f4973b226aa)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/browser_side_effects.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/browser_side_effects-e3341dae05789603)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+     Running tests/builtin_packs.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/builtin_packs-8f2d06debd472b43)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+     Running tests/computer_receipt.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/computer_receipt-14b8e018182b5581)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+     Running tests/mcp_registry.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/mcp_registry-63ef7e2c462e2a87)
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+     Running tests/source_trust_parity.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/source_trust_parity-900362816112240d)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/tool_check_binary.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/tool_check_binary-b16632b27d7512d7)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+     Running tests/tool_contract.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/tool_contract-2bbd81f1ff897bc8)
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running tests/visibility.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/visibility-2a8136e2a7eb50df)
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+rerun of the one load flake alone:
+test without_an_object_store_uploads_fail_closed ... ok
+test cancel_turn_stops_a_parked_run_and_withdraws_its_question ... ok
+test a_question_parks_the_run_and_the_answer_in_thread_resumes_it ... ok
+test an_upload_becomes_an_attachment_the_message_and_the_inspector_carry ... ok
+test live_frames_reach_a_workspace_subscriber_while_the_turn_runs ... ok
+test served_a_message_is_accepted_before_its_turn_and_the_reply_follows ... ok
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.91s

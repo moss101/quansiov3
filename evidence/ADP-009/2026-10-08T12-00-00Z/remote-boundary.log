@@ -1,0 +1,43 @@
+test a_denied_or_lapsed_request_ends_and_a_stranger_cannot_stop_a_session ... ok
+test a_grant_may_narrow_a_request_and_never_widen_it_and_a_view_grant_takes_no_input ... ok
+test asking_is_refused_for_a_viewer_who_may_not_a_computer_nobody_owns_and_one_that_is_not_a_native_computer ... ok
+test only_the_bound_viewer_sends_input_and_only_the_computers_own_side_sends_frames ... ok
+test nothing_flows_until_the_person_at_the_computer_says_yes_and_only_the_parties_receive_it ... ok
+test control_needs_the_person_to_hold_native_input_and_the_agent_taking_it_back_ends_the_session ... ok
+test a_malformed_stale_or_excessive_message_is_refused_with_a_reason_and_relayed_to_no_one ... ok
+test the_clipboard_is_its_own_bounded_channel_that_reaches_one_side_only ... ok
+test input_needs_a_computer_that_is_capturing_unlocked_permitted_and_still_reporting ... ok
+test a_computer_has_one_session_at_a_time_and_a_viewer_who_goes_quiet_loses_it ... ok
+test a_grant_that_runs_out_and_a_request_that_waits_too_long_end_for_both_sides ... ok
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 34.53s
+BLOCKED_EXTERNAL: remote control on a real screen needs the native helper's capture and input ports (ADP-002) and QUANSIO_TEST_MACOS_COMPUTER_USE=1 with Screen Recording and Accessibility granted; the ports are not built, nothing stands in
+test real_capture_and_injection_are_blocked_external ... ok
+test a_frame_is_taken_only_while_the_screen_is_capturing_and_unlocked ... ok
+test a_view_grant_takes_no_input_and_no_clipboard ... ok
+test input_reaches_the_machine_only_when_this_computer_itself_admits_it ... ok
+test a_consent_the_machine_would_not_give_is_refused ... ok
+test the_clipboard_is_written_only_when_this_computer_admits_it_and_bounded_here_too ... ok
+test stop_a_lapsed_grant_and_an_idle_viewer_each_end_it_here_without_the_server ... ok
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test remote::protocol::tests::the_spellings_are_canonical ... ok
+test remote::session::tests::refusals_have_stable_spellings ... ok
+test remote::session::tests::a_request_that_waits_too_long_lapses_and_a_late_grant_is_refused ... ok
+test remote::protocol::tests::a_pointer_cannot_name_a_pixel_the_viewer_was_never_shown ... ok
+test remote::session::tests::a_denial_ends_it_and_a_stopped_session_is_never_revived ... ok
+test remote::session::tests::input_waits_for_a_first_frame_and_stays_on_the_screen_the_viewer_was_shown ... ok
+test remote::session::tests::a_locked_screen_shows_nothing_and_takes_nothing ... ok
+test remote::session::tests::a_grant_may_narrow_a_request_and_never_widen_it_or_outlast_the_limit ... ok
+test remote::session::tests::the_feature_switch_refuses_a_request ... ok
+test remote::session::tests::nothing_is_authorized_until_the_person_at_the_computer_says_so ... ok
+test remote::protocol::tests::a_well_formed_message_of_each_kind_parses ... ok
+test remote::session::tests::a_computer_that_falls_silent_stops_admitting_input_and_nothing_is_queued ... ok
+test remote::session::tests::either_side_may_stop_it_a_stranger_may_not_and_the_system_may_end_it ... ok
+test remote::session::tests::only_the_bound_viewer_sends_input_and_only_the_computers_own_side_sends_frames ... ok
+test remote::tests::the_shipped_configuration_is_valid_and_bounded ... ok
+test remote::session::tests::a_grant_runs_out_and_a_session_with_no_viewer_activity_ends ... ok
+test remote::session::tests::input_needs_control_and_a_computer_that_is_capturing_unlocked_and_permitted ... ok
+test remote::session::tests::the_clipboard_is_a_separate_channel_that_needs_control_a_ready_screen_and_the_right_sender ... ok
+test remote::session::tests::sequence_numbers_only_increase_and_the_rate_is_bounded ... ok
+test remote::protocol::tests::clipboard_and_ping_messages_parse_and_every_bound_is_enforced ... ok
+test remote::protocol::tests::a_message_that_breaks_the_form_is_refused_before_any_session_is_asked ... ok
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 0.01s

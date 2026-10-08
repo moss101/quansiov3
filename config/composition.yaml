@@ -1,0 +1,61 @@
+# The composition sandbox (ADP-009, DOMAIN.md 7.5 "Composition sandbox", DOSSIER.md D-019). Policy lives here, never as a source constant (D-018).
+# crates/qworkerd/src/compose/ reads this file; schemas/json/composition-config.schema.json bounds every value, so a configuration cannot
+# lift a limit past its ceiling or drop a terminal condition.
+#
+# A model that wants to compose several browser, computer or tool calls submits one script (`compose.run`). It runs in an embedded
+# interpreter with no ambient I/O: no network, files, process, modules, timers or `eval`. Everything it can do it does through `call(tool, args)`,
+# and every `call` is the same governed call a model proposing that tool directly would make: validated against the Tool's schema, authorized by
+# the run's Capability Projection, evaluated by policy, reserved on the Effect Ledger and settled there. The sandbox adds limits and takes
+# nothing away from that path.
+version: 1
+
+# Master switch. Off, `compose.run` answers COMPOSE_LIMIT_EXCEEDED (limit: disabled) without starting an interpreter. A rollout flag: it can never
+# widen authority.
+enabled: true
+
+limits:
+  # The interpreter's heap and native stack. An allocation past the heap limit and a recursion past the stack limit end the cell.
+  memory_bytes: 67108864
+  stack_bytes: 524288
+  # Wall-clock time of one cell, and the most a caller may ask for. The deadline is checked before every host call and by the interpreter's interrupt
+  # handler (so an empty loop ends too). A host call already in flight is not cancelled - its effect would be left unsettled - and ends by its own tool
+  # timeout.
+  deadline_ms: 30000
+  deadline_max_ms: 120000
+  # Host calls one cell may make, and the most a caller may ask for. The call that would pass the budget ends the cell.
+  host_call_budget: 64
+  host_call_budget_max: 512
+  # The script's size, one call's arguments, and one call's result as handed to the script.
+  max_script_bytes: 65536
+  max_args_bytes: 262144
+  max_host_result_bytes: 1048576
+  # What a cell returns: text (the `log` lines and the result value) is cut here and says so; at most this many `image(ref)` references of at most
+  # `image_ref_bytes` each (a reference to evidence or an artifact, never pixels).
+  output_text_bytes: 38912
+  output_images: 3
+  image_ref_bytes: 4096
+  # The `state` object persists across the cells of one session only, as JSON of at most this size. It is cleared on reset, when a cell ends in a
+  # limit or a terminal condition, and when it has been idle this long (checked when the session is next used: no timer). At most this many sessions
+  # are held; the least recently used is dropped.
+  state_max_bytes: 1048576
+  idle_timeout_ms: 1800000
+  max_sessions: 16
+
+# A host call that answers with one of these codes ends the cell, and no `catch` in the script can keep it going: the conditions are the person taking
+# the machine, an OS permission going away, the person stopping the run, a spent budget, and the runtime fencing the call. A call that parks for an
+# approval, and one whose outcome is unknown, end the cell as well, whatever their code. Any other error is the script's to handle.
+terminal_codes:
+  - COMPUTER_TAKEOVER_ACTIVE
+  - COMPUTER_PERMISSION_REVOKED
+  - COMPUTER_PERMISSION_REQUIRED
+  - COMPUTER_FOREGROUND_CONTROL_LAPSED
+  - COMPUTER_STOPPED_BY_USER
+  - COMPUTER_LIMIT_EXCEEDED
+  - COMPUTER_HELPER_IDENTITY_REFUSED
+  - BROWSER_INPUT_FENCED
+  - BUDGET_EXHAUSTED
+  - EFFECTS_FROZEN
+  - TARGET_UNAVAILABLE
+  - FENCED_STALE_GENERATION
+  - LEASE_LOST
+  - RUNTIME_ILLEGAL_TRANSITION

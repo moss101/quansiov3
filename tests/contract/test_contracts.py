@@ -44,7 +44,7 @@ def test_domain_derivation_covers_commands_errors_effects_events_trust(catalog):
     # 38 platform codes plus the 16 `BROWSER_*` codes of the hardened browser (ADP-001, §15), the
     # 7 `COMPUTER_*` codes of native computer use (ADP-002, §15), the 4 `RECORDING_*` codes (ADP-003, §15) and the
     # 6 file and worktree codes (ADP-005, §15).
-    assert len(catalog["errors"]) == 81  # + the 4 automation codes (ADP-007), 2 tool codes and PACK_INSTALL_FAILED (ADP-008, §15)
+    assert len(catalog["errors"]) == 93  # + the 4 automation codes (ADP-007), 2 tool codes and PACK_INSTALL_FAILED (ADP-008), 9 MCP and 3 Compose codes (ADP-009, §15)
     assert len(catalog["effect_classes"]) == 24  # + fs.delete.workspace (ADP-005)
     assert len(catalog["event_families"]) == 36  # + webhook.* (APP-015), recording.* (ADP-003)
     assert catalog["trust_levels"] == [
@@ -255,6 +255,16 @@ def test_json_schemas_validate_real_artifacts():
     validator("automation-config").validate(automation)
     pack_install = yaml.safe_load((ROOT / "config" / "pack-install.yaml").read_text())
     validator("pack-install-config").validate(pack_install)
+    mcp = yaml.safe_load((ROOT / "config" / "mcp.yaml").read_text())
+    validator("mcp-config").validate(mcp)
+    compose = yaml.safe_load((ROOT / "config" / "composition.yaml").read_text())
+    validator("composition-config").validate(compose)
+    local_secrets = yaml.safe_load((ROOT / "config" / "local-secrets.yaml").read_text())
+    validator("local-secrets-config").validate(local_secrets)
+    payment_inputs = yaml.safe_load((ROOT / "config" / "payment-inputs.yaml").read_text())
+    validator("payment-inputs-config").validate(payment_inputs)
+    browser_import = yaml.safe_load((ROOT / "config" / "browser-import.yaml").read_text())
+    validator("browser-import-config").validate(browser_import)
 
     summaries = sorted((ROOT / "evidence").glob("*/*/summary.json"))
     assert summaries, "at least one task evidence bundle must exist"
@@ -532,3 +542,191 @@ def test_pack_install_schema_keeps_history_and_reports_bounded():
     assert broken(lambda d: d["reports"].update(max_diagnostic_bytes=1_000_000))
     assert broken(lambda d: d.update(unknown_section={}))
     assert broken(lambda d: d["reports"].pop("retention_days"))
+
+
+def test_mcp_config_schema_keeps_external_tools_classified_bounded_and_credential_free():
+    """A configuration cannot classify an unclassified tool as a read, hand a server a credential-shaped environment
+    name, point an http server at a URL with credentials, or leave a bound open (ADP-009, DOMAIN.md 7.5)."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "mcp-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "mcp.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+    assert good["servers"] == [], "no server ships configured"
+    assert good["unclassified"]["effect_class"] == "data.upload.protected"
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    def with_server(**server):
+        base = {"name": "demo", "transport": "stdio", "command": "/bin/true"}
+        base.update(server)
+        return lambda d: d.update(servers=[base])
+
+    assert not broken(with_server())
+    assert not broken(with_server(tools={"read": {"effect_class": "read.external"}}))
+    # An unclassified tool is never a read, whatever the file says.
+    assert broken(lambda d: d["unclassified"].update(effect_class="read.external"))
+    assert broken(lambda d: d["unclassified"].update(effect_class="read.internal"))
+    assert broken(lambda d: d["unclassified"].update(effect_class="content.upload"))
+    # No credential-shaped or worker-owned environment name, anywhere.
+    for name in ("ANTHROPIC_API_KEY", "GITHUB_TOKEN", "db_password", "QUANSIO_SERVER_URL", "AWS_SECRET_ACCESS_KEY", "X_AUTH"):
+        assert broken(with_server(env={name: "x"})), name
+        assert broken(with_server(inherit_env=[name])), name
+        assert broken(lambda d, n=name: d["stdio"].update(inherit_env=[n])), name
+    assert not broken(with_server(env={"DEMO_MODE": "fixture"}))
+    # A tool's class is a DOMAIN 7.1 class, a server name is a plain identifier, a url has no credentials.
+    assert broken(with_server(tools={"x": {"effect_class": "made.up"}}))
+    assert broken(with_server(name="Bad-Name"))
+    assert broken(with_server(transport="http", url="https://user:pw@example.com/mcp"))
+    assert not broken(with_server(transport="http", url="https://example.com/mcp"))
+    assert broken(with_server(transport="websocket"))
+    assert broken(with_server(unknown_key=1))
+    # Bounds stay bounded.
+    assert broken(lambda d: d["limits"].update(call_timeout_max_ms=10_000_000))
+    assert broken(lambda d: d["limits"].update(max_result_bytes=64 * 1024 * 1024))
+    assert broken(lambda d: d["limits"].update(max_concurrent_calls=0))
+    assert broken(lambda d: d["restart"].update(max_restarts=1000))
+    assert broken(lambda d: d["restart"].update(backoff_ms=[]))
+    assert broken(lambda d: d.update(unknown_section={}))
+    assert broken(lambda d: d["limits"].pop("max_schema_bytes"))
+
+
+def test_compose_config_schema_keeps_the_sandbox_bounded_and_its_terminal_conditions_mandatory():
+    """A configuration cannot lift a limit past its ceiling, and cannot drop the terminal conditions of a takeover,
+    a revoked permission, a user stop, a spent budget or a fenced browser (ADP-009, DOMAIN.md 7.5)."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "composition-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "composition.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+    limits = good["limits"]
+    assert limits["memory_bytes"] == 64 * 1024 * 1024 and limits["deadline_ms"] == 30_000 and limits["host_call_budget"] == 64
+    assert limits["output_text_bytes"] == 38 * 1024 and limits["output_images"] == 3 and limits["idle_timeout_ms"] == 30 * 60 * 1000
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    for mandatory in (
+        "COMPUTER_TAKEOVER_ACTIVE",
+        "COMPUTER_PERMISSION_REVOKED",
+        "COMPUTER_STOPPED_BY_USER",
+        "BUDGET_EXHAUSTED",
+        "BROWSER_INPUT_FENCED",
+    ):
+        assert broken(lambda d, code=mandatory: d["terminal_codes"].remove(code)), mandatory
+    assert not broken(lambda d: d["terminal_codes"].append("SOMETHING_ELSE_ENDS_IT"))
+    assert broken(lambda d: d["terminal_codes"].append("not a code"))
+    assert broken(lambda d: d["terminal_codes"].append("BUDGET_EXHAUSTED"))
+    assert broken(lambda d: d["limits"].update(deadline_max_ms=600_000))
+    assert broken(lambda d: d["limits"].update(deadline_ms=0))
+    assert broken(lambda d: d["limits"].update(host_call_budget_max=100_000))
+    assert broken(lambda d: d["limits"].update(memory_bytes=8 * 1024 * 1024 * 1024))
+    assert broken(lambda d: d["limits"].update(output_images=100))
+    assert broken(lambda d: d["limits"].update(max_script_bytes=64 * 1024 * 1024))
+    assert broken(lambda d: d["limits"].update(max_sessions=0))
+    assert broken(lambda d: d["limits"].pop("host_call_budget"))
+    assert broken(lambda d: d.update(unknown_section={}))
+    assert broken(lambda d: d["limits"].update(allow_network=True))
+
+
+def _bounded(name: str, config: str, values: dict):
+    """The shipped config validates, and each key the schema bounds is refused one past either end."""
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / f"{name}.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / config).read_text())
+    assert not list(validator.iter_errors(good))
+
+    def broken(edit):
+        document = copy.deepcopy(good)
+        edit(document)
+        return list(validator.iter_errors(document))
+
+    for key, (low, high) in values.items():
+        assert schema["properties"][key]["minimum"] == low and schema["properties"][key]["maximum"] == high, key
+        assert not broken(lambda d, k=key, v=low: d.update({k: v})), f"{key} at its minimum"
+        assert not broken(lambda d, k=key, v=high: d.update({k: v})), f"{key} at its maximum"
+        assert broken(lambda d, k=key, v=low - 1: d.update({k: v})), f"{key} below its minimum"
+        assert broken(lambda d, k=key, v=high + 1: d.update({k: v})), f"{key} above its maximum"
+        assert broken(lambda d, k=key: d.update({k: "7"})), f"{key} is a number"
+    assert broken(lambda d: d.update(unknown_key=1))
+    assert broken(lambda d: d.pop("version"))
+    assert broken(lambda d: d.update(version=2))
+    return good, broken
+
+
+def test_payment_input_config_keeps_a_card_number_short_lived_and_bounded():
+    good, broken = _bounded(
+        "payment-inputs-config",
+        "payment-inputs.yaml",
+        {"ttl_seconds": (10, 900), "max_ttl_seconds": (10, 900), "max_fields": (1, 16), "max_value_chars": (4, 256)},
+    )
+    assert good["ttl_seconds"] == 300 and good["max_ttl_seconds"] == 900 and good["enabled"] is True
+    # A configuration cannot keep a payment value waiting for an hour, or allow an unbounded supply.
+    assert broken(lambda d: d.update(max_ttl_seconds=3600))
+    assert broken(lambda d: d.update(max_fields=1000))
+    assert broken(lambda d: d.update(enabled="yes"))
+
+
+def test_browser_import_config_keeps_a_staged_cookie_bundle_short_lived_and_bounded():
+    good, broken = _bounded(
+        "browser-import-config",
+        "browser-import.yaml",
+        {
+            "ttl_seconds": (60, 3600),
+            "max_cookies": (1, 100000),
+            "max_value_bytes": (64, 8192),
+            "max_bundle_bytes": (4096, 33554432),
+            "max_domains_listed": (1, 200),
+        },
+    )
+    assert good["ttl_seconds"] == 900 and good["max_cookies"] == 5000 and good["enabled"] is True
+    # A bundle travels in one command, so the shipped bundle bound stays under the API's request body limit (2 MiB).
+    assert good["max_bundle_bytes"] <= 2 * 1024 * 1024
+    assert broken(lambda d: d.update(ttl_seconds=86400))
+    assert broken(lambda d: d.update(enabled=None))
+
+
+def test_local_secrets_config_bounds_the_password_manager_the_import_and_the_payment_form():
+    import copy
+
+    from jsonschema import Draft202012Validator
+
+    schema = json.loads((ROOT / "schemas" / "json" / "local-secrets-config.schema.json").read_text())
+    validator = Draft202012Validator(schema)
+    good = yaml.safe_load((ROOT / "config" / "local-secrets.yaml").read_text())
+    assert not list(validator.iter_errors(good))
+    numeric = [key for key, rule in schema["properties"].items() if rule.get("type") == "integer"]
+    assert numeric, "the schema bounds numbers"
+    for key in numeric:
+        low, high = schema["properties"][key]["minimum"], schema["properties"][key]["maximum"]
+        for value, ok in ((low, True), (high, True), (low - 1, False), (high + 1, False)):
+            document = copy.deepcopy(good)
+            document[key] = value
+            assert (not list(validator.iter_errors(document))) == ok, f"{key}={value}"
+    for switch in ("local_secrets.enabled", "local_secrets.import_enabled"):
+        document = copy.deepcopy(good)
+        document[switch] = "yes"
+        assert list(validator.iter_errors(document)), switch
+    document = copy.deepcopy(good)
+    document["local_secrets.vault_path"] = "/etc"
+    assert list(validator.iter_errors(document)), "no key names a path"
+    # The desktop's payment ceiling never passes the runtime's.
+    runtime = yaml.safe_load((ROOT / "config" / "payment-inputs.yaml").read_text())
+    assert good["local_secrets.payment_ttl_ms"] / 1000 <= runtime["max_ttl_seconds"]
+    assert good["local_secrets.payment_max_fields"] <= runtime["max_fields"]
+    assert good["local_secrets.payment_value_max_chars"] <= runtime["max_value_chars"]

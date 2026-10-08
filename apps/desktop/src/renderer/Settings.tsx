@@ -13,6 +13,7 @@ import { applyTheme, themeFromMe } from "../appearance.js";
 import { t, type StringKey } from "../i18n/strings.js";
 import { afterSave, fieldsFromWorkspace, mergeLoaded, type FieldKey, type SettingsFields } from "../settings-form.js";
 import { DesktopSettings } from "./DesktopSettings.js";
+import { SecretsSettings } from "./SecretsSettings.js";
 
 interface WorkspaceView {
   readonly id: string;
@@ -178,6 +179,7 @@ export function Settings({ workspaceId }: { readonly workspaceId: string }): Rea
         <button type="submit" disabled={!loaded}>{t("settingsSaveMine")}</button>
       </form>
       <DesktopSettings />
+      <SecretsSettings />
       <h3>{t("settingsEffective")}</h3>
       <dl>
         {Object.entries(effective)

@@ -21,7 +21,9 @@
 //! worker. It stops the *materialization* being used, and the lifetime bounds how long a delivered
 //! value is worth anything; that is why materializations are short-lived rather than convenient.
 
+pub mod imports;
 mod key_provider;
+pub mod payment;
 
 use sqlx::{PgConnection, Row};
 

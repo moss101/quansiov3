@@ -70,7 +70,17 @@ pub async fn invoke(
         ));
     }
 
-    let params_digest = Digest::of_canonical_json(&request.params.to_string())
+    // The command log keeps a digest of the params. A payment value is short enough to be recovered from its digest, so
+    // the digest of `SupplyPaymentInput` (and of `ImportBrowserSession`, whose cookies are sessions) covers the params without
+    // their values.
+    let digested = if command.eq_ignore_ascii_case("SupplyPaymentInput") {
+        super::payment_inputs::redacted_params(&request.params)
+    } else if command.eq_ignore_ascii_case("ImportBrowserSession") {
+        super::browser_imports::redacted_params(&request.params)
+    } else {
+        request.params.clone()
+    };
+    let params_digest = Digest::of_canonical_json(&digested.to_string())
         .as_str()
         .to_string();
     let known = state
@@ -656,6 +666,73 @@ async fn dispatch(
                 state,
                 scope,
                 identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        // Remote control of a person's own computer (ADP-009, DOMAIN.md 8.6.2): a viewer asks, the person at the computer decides.
+        "RequestRemoteControl" => {
+            super::remote::request_remote_control(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "GrantRemoteControl" => {
+            super::remote::grant_remote_control(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "DenyRemoteControl" => {
+            super::remote::deny_remote_control(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "StopRemoteControl" => {
+            super::remote::stop_remote_control(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        // A person's staged cookies for the agent's browser (ADP-009): sealed, never applied until browser.import_session is approved.
+        "ImportBrowserSession" => {
+            super::browser_imports::import_browser_session(
+                state,
+                scope,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        // A person's one-time payment values for one checkout (ADP-009): sealed, usable once, never returned.
+        "SupplyPaymentInput" => {
+            super::payment_inputs::supply_payment_input(
+                state,
+                scope,
                 user_id.as_deref(),
                 &request.params,
                 correlation,

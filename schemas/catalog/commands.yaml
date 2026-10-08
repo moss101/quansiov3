@@ -55,6 +55,11 @@ commands:
   - GrantComputerTier
   - ResolveBrowserCertificate
   - DecideBrowserPermission
+  - SupplyPaymentInput
+  - RequestRemoteControl
+  - GrantRemoteControl
+  - DenyRemoteControl
+  - StopRemoteControl
   Artifacts:
   - CreateArtifact
   - AddArtifactVersion

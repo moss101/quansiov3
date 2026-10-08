@@ -13,6 +13,7 @@
  */
 
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { Readable } from "node:stream";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -52,8 +53,11 @@ import { quitChosen, quitDialog, updateChoiceOf, updateDialog, type MessageBox }
 import { DesktopBridge, type DesktopAuth } from "./ipc.js";
 import { IpcGuard, registerGuardedHandlers, type WindowHandler } from "./ipc-trust.js";
 import { loadLocalFilesConfig } from "./local-files/config.js";
+import { loadLocalSecretsConfig } from "./secrets/config.js";
+import { composeSecrets } from "./secrets/compose.js";
 import { LocalFilesHost, type LocalFileDialogs } from "./local-files/host.js";
 import { MEDIA_SCHEME } from "./local-files/media.js";
+import { newCommandId } from "../client/ids.js";
 import { MAX_UPLOAD_BYTES } from "../conversation/composer.js";
 import { t } from "../i18n/strings.js";
 import { KeepAwake } from "./keep-awake.js";
@@ -460,9 +464,12 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
   const auth: DesktopAuth = environment.harness
     ? { kind: "trusted-headers", scope: { tenantId: environment.harness.tenantId, userId: environment.harness.userId }, workspaceId: environment.harness.workspaceId }
     : { kind: "session", tokens: new TokenStore(userData, safeStorage) };
+  const localSecrets = loadLocalSecretsConfig(join(bundleRoot, "local-secrets.yaml"));
   const bridge = new DesktopBridge({
     serverOrigin: environment.serverOrigin,
     auth,
+    // One-time payment values (ADP-009): the limits the payment form and its channel run on.
+    localSecrets,
     // OAuth: the authorization URL opens in the system browser, never in the renderer.
     openExternal: (url) => shell.openExternal(url),
     // The theme preference also drives the native chrome (traffic lights, menus, scrollbars).
@@ -572,7 +579,20 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
       windows.broadcast(["main", "popout"], "shell.connectivity", { state: connectivityState });
     },
   });
-  const activity = new ActivityTracker({ maxItems: config.activityMaxItems, completedTtlMs: config.activityCompletedTtlMs, now: () => Date.now() });
+  const activity = new ActivityTracker({ maxItems: config.activityMaxItems, completedTtlMs: config.activityCompletedTtlMs, now: () => Date.now(), selfUserId: () => bridge.userId() });
+
+  // The person's own secrets (ADP-009): the password manager and the import from another browser. Main window only; nothing here
+  // reaches an agent, and no answer carries a password or a cookie value.
+  const secrets = composeSecrets({
+    config: localSecrets,
+    userData,
+    home: homedir(),
+    cipher: safeStorage,
+    ask: (box) => hooks.messageBox(box),
+    server: bridge.server,
+    workspaceId: () => bridge.workspaceId() ?? "",
+    newCommandId,
+  });
 
   // Local files (ADP-005): grants, granted folders, media URLs, safe edits and the shared watcher. The renderer names
   // nothing but opaque ids; the dialogs are main's.
@@ -667,6 +687,7 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
     ...Object.fromEntries(Object.entries(bridgeHandlers).map(([channel, handler]) => [channel, (_window: unknown, payload: unknown) => handler(payload)])),
     ...shellHandlers,
     ...files.handlers(),
+    ...secrets.host.handlers(),
   } as Readonly<Record<PreloadChannel, WindowHandler>>;
   registerGuardedHandlers(ipcMain, guard, handlers);
 

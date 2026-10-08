@@ -1,0 +1,9 @@
+cargo test --workspace --no-fail-fast (1504 passed, 1 timing flake that passes alone)
+viewer authorization negative tests: crates/server/tests/remote_control.rs (11 tests), crates/machine remote::session/protocol unit tests (21), crates/qworkerd/tests/remote_host.rs (7)
+sandbox budget/escape tests: crates/qworkerd/tests/compose.rs, crates/server/tests/compose_dispatch.rs
+import approval test: crates/qworkerd/tests/browser_import.rs, crates/server/tests/browser_import.rs, apps/desktop/tests/secrets-import.test.ts
+payment field masking test: crates/qworkerd/tests/browser_payment.rs, crates/server/tests/payment_flow.rs, payment_supply.rs, apps/desktop/tests/secrets-payments.test.ts
+MCP projection narrowing test: crates/tools/tests/mcp_registry.rs, crates/qworkerd/tests/mcp.rs, crates/server/tests/mcp_dispatch.rs
+desktop: vitest 627 passed 45 skipped; tsc, tsc build, eslint --max-warnings 0 clean
+python: ruff, ruff format, mypy intelligence clean; pytest 776 passed 93 skipped; tests/architecture tests/contract tests/ci 251 passed
+mutation-checks.py: 26 mutants, 25 killed, 1 equivalent survivor

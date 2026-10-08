@@ -22,7 +22,8 @@ import { applyTheme, themeFromMe } from "../appearance.js";
 import { decodeMessages, type ConversationMessage } from "../conversation/state.js";
 import { t } from "../i18n/strings.js";
 import { parseShellCommand, type ShellCommand } from "../shell-command.js";
-import { connectivityOf, decodeActivity, decodePending, groupActivity, GROUP_HEADINGS, type ActivityRow } from "../shell-ui.js";
+import { connectivityOf, decodeActivity, decodePending, groupActivity, isRemoteRow, GROUP_HEADINGS, type ActivityRow } from "../shell-ui.js";
+import { RemoteAnswers } from "./Indicator.js";
 import { decodeRoster } from "../teammates/roster.js";
 import { DESKTOP_SURFACES } from "../surfaces.js";
 import { Artifacts } from "./Artifacts.js";
@@ -587,8 +588,14 @@ function Shell(): ReactElement {
                       {entry.rows.map((row) => (
                         <li key={row.key}>
                           <span>{row.title}</span>
-                          <button type="button" className="link" onClick={() => { void window.quansio.openActivity(row.key); }}>{t("indicatorOpen")}</button>
-                          <button type="button" className="link" onClick={() => { void window.quansio.dismissActivity(row.key); }}>{t("indicatorDismiss")}</button>
+                          {isRemoteRow(row.kind) ? (
+                            <RemoteAnswers row={row} />
+                          ) : (
+                            <>
+                              <button type="button" className="link" onClick={() => { void window.quansio.openActivity(row.key); }}>{t("indicatorOpen")}</button>
+                              <button type="button" className="link" onClick={() => { void window.quansio.dismissActivity(row.key); }}>{t("indicatorDismiss")}</button>
+                            </>
+                          )}
                         </li>
                       ))}
                     </ul>

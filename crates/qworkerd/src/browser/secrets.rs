@@ -49,6 +49,186 @@ impl std::fmt::Debug for SecretText {
     }
 }
 
+impl Drop for SecretText {
+    /// Overwrite the characters before the allocation is released, so a freed secret is not left in memory that is reused as
+    /// it was (best effort: the optimizer is told the zeroed bytes are observed).
+    fn drop(&mut self) {
+        let mut bytes = std::mem::take(&mut self.0).into_bytes();
+        bytes.fill(0);
+        std::hint::black_box(&bytes);
+    }
+}
+
+/// A payment field the agent may name (DOMAIN.md §13.9 C). The agent never writes a value: it names one of these, and the
+/// runtime inserts what the person supplied for it, into a field whose live `autocomplete` token says it is that field.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PaymentField {
+    /// `cc-number`.
+    CardNumber,
+    /// `cc-csc`.
+    Cvc,
+    /// `cc-exp`.
+    Expiry,
+    /// `cc-exp-month`.
+    ExpiryMonth,
+    /// `cc-exp-year`.
+    ExpiryYear,
+    /// `cc-name`.
+    CardHolderName,
+    /// `address-line1` or `street-address`.
+    AddressLine,
+    /// `address-level2`.
+    City,
+    /// `address-level1`.
+    Region,
+    /// `postal-code`.
+    PostalCode,
+    /// `country` or `country-name`.
+    Country,
+}
+
+impl PaymentField {
+    /// Every field, in the order the tool's schema lists them.
+    pub const ALL: [Self; 11] = [
+        Self::CardNumber,
+        Self::Cvc,
+        Self::Expiry,
+        Self::ExpiryMonth,
+        Self::ExpiryYear,
+        Self::CardHolderName,
+        Self::AddressLine,
+        Self::City,
+        Self::Region,
+        Self::PostalCode,
+        Self::Country,
+    ];
+
+    /// The canonical spelling the tool takes and the person's supply names.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::CardNumber => "card_number",
+            Self::Cvc => "cvc",
+            Self::Expiry => "expiry",
+            Self::ExpiryMonth => "expiry_month",
+            Self::ExpiryYear => "expiry_year",
+            Self::CardHolderName => "card_holder_name",
+            Self::AddressLine => "address_line",
+            Self::City => "city",
+            Self::Region => "region",
+            Self::PostalCode => "postal_code",
+            Self::Country => "country",
+        }
+    }
+
+    /// Parse the canonical spelling.
+    #[must_use]
+    pub fn parse(value: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|field| field.as_str() == value)
+    }
+
+    /// The `autocomplete` tokens that identify the field. A field the page does not label with one of them is not accepted: the
+    /// runtime does not guess from a name or a placeholder where a card is concerned.
+    #[must_use]
+    pub const fn tokens(self) -> &'static [&'static str] {
+        match self {
+            Self::CardNumber => &["cc-number"],
+            Self::Cvc => &["cc-csc"],
+            Self::Expiry => &["cc-exp"],
+            Self::ExpiryMonth => &["cc-exp-month"],
+            Self::ExpiryYear => &["cc-exp-year"],
+            Self::CardHolderName => &["cc-name"],
+            Self::AddressLine => &["address-line1", "street-address"],
+            Self::City => &["address-level2"],
+            Self::Region => &["address-level1"],
+            Self::PostalCode => &["postal-code"],
+            Self::Country => &["country", "country-name"],
+        }
+    }
+
+    /// Whether the field is masked on the page before the value goes in: the card number, its security code and its expiry.
+    #[must_use]
+    pub const fn masked(self) -> bool {
+        matches!(
+            self,
+            Self::CardNumber | Self::Cvc | Self::Expiry | Self::ExpiryMonth | Self::ExpiryYear
+        )
+    }
+}
+
+/// One payment value to take, with the call it is taken for.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PaymentRequest {
+    /// The field the agent named.
+    pub field: PaymentField,
+    /// The ToolCall the insertion belongs to.
+    pub call_id: String,
+    /// The action id the insertion belongs to.
+    pub action_id: String,
+}
+
+/// A payment value the person supplied for one use: the value, and the one origin it may be inserted on.
+#[derive(Debug)]
+pub struct PaymentValue {
+    /// The value. Redacted in every rendering, zeroed when dropped.
+    pub value: SecretText,
+    /// The origin the person supplied it for (`https://shop.example`).
+    pub allowed_origin: String,
+}
+
+/// The future a take returns.
+pub type TakeFuture =
+    Pin<Box<dyn Future<Output = Result<PaymentValue, BrowserFault>> + Send + 'static>>;
+
+type TakeFn = Arc<dyn Fn(PaymentRequest) -> TakeFuture + Send + Sync>;
+
+/// One staged bundle to take, with the call it is taken for.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ImportRequest {
+    /// The staged bundle's id, as the approved call named it.
+    pub import_id: String,
+    /// The digest the approval carried: the runtime refuses a bundle that is not this one.
+    pub digest: String,
+    /// The ToolCall the import belongs to.
+    pub call_id: String,
+    /// The action id the import belongs to.
+    pub action_id: String,
+}
+
+/// A staged bundle of another browser's cookies, taken once. The values are zeroed when it is dropped and redacted in every
+/// rendering.
+pub struct ImportedBundle {
+    /// The cookies (the runtime's own type: [`quansio_machine::secrets::imports::ImportCookie`] redacts its value in `Debug`).
+    pub cookies: Vec<quansio_machine::secrets::imports::ImportCookie>,
+}
+
+impl std::fmt::Debug for ImportedBundle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "ImportedBundle(<{} cookies redacted>)",
+            self.cookies.len()
+        )
+    }
+}
+
+impl Drop for ImportedBundle {
+    /// Overwrite every value before the allocation is released (best effort, as for [`SecretText`]).
+    fn drop(&mut self) {
+        for cookie in &mut self.cookies {
+            let mut bytes = std::mem::take(&mut cookie.value).into_bytes();
+            bytes.fill(0);
+            std::hint::black_box(&bytes);
+        }
+    }
+}
+
+/// The future an import take returns.
+pub type ImportFuture =
+    Pin<Box<dyn Future<Output = Result<ImportedBundle, BrowserFault>> + Send + 'static>>;
+
+type ImportFn = Arc<dyn Fn(ImportRequest) -> ImportFuture + Send + Sync>;
+
 /// What the runtime returns for one placeholder: the value, and where it may be used.
 #[derive(Debug)]
 pub struct ResolvedSecret {
@@ -83,6 +263,10 @@ pub type ResolveFuture =
 #[derive(Clone)]
 pub struct SecretPort {
     resolve: Arc<dyn Fn(SecretRequest) -> ResolveFuture + Send + Sync>,
+    /// Where the person's one-time payment values are taken from (ADP-009), when the runtime has one.
+    payments: Option<TakeFn>,
+    /// Where the person's staged cookie bundle is taken from (ADP-009), when the runtime has one.
+    imports: Option<ImportFn>,
 }
 
 impl SecretPort {
@@ -93,6 +277,66 @@ impl SecretPort {
     {
         Self {
             resolve: Arc::new(resolve),
+            payments: None,
+            imports: None,
+        }
+    }
+
+    /// Install the source of one-time payment values. A take **consumes**: the runtime deletes the value as it hands it over,
+    /// so a second take of the same field is `SecretUnavailable` until the person supplies it again.
+    #[must_use]
+    pub fn with_payments<F>(mut self, take: F) -> Self
+    where
+        F: Fn(PaymentRequest) -> TakeFuture + Send + Sync + 'static,
+    {
+        self.payments = Some(Arc::new(take));
+        self
+    }
+
+    /// Install the source of staged cookie bundles. A take **consumes**: the runtime overwrites the bundle as it hands it over, so
+    /// a second take of the same id is `SecretUnavailable` until the person stages again.
+    #[must_use]
+    pub fn with_imports<F>(mut self, take: F) -> Self
+    where
+        F: Fn(ImportRequest) -> ImportFuture + Send + Sync + 'static,
+    {
+        self.imports = Some(Arc::new(take));
+        self
+    }
+
+    /// Take one staged bundle, if the runtime has it.
+    ///
+    /// # Errors
+    /// Returns [`FaultCode::SecretUnavailable`] when no source is connected, and whatever the runtime refused with otherwise
+    /// (nothing staged, expired, already used, not the bundle that was approved).
+    pub async fn take_import(
+        &self,
+        request: ImportRequest,
+    ) -> Result<ImportedBundle, BrowserFault> {
+        match &self.imports {
+            Some(take) => take(request).await,
+            None => Err(BrowserFault::new(
+                FaultCode::SecretUnavailable,
+                "no browser-data import is connected to this session",
+            )),
+        }
+    }
+
+    /// Take one payment value, if the runtime has any to give.
+    ///
+    /// # Errors
+    /// Returns [`FaultCode::SecretUnavailable`] when no source is connected, and whatever the runtime refused with otherwise
+    /// (nothing supplied, expired, already used).
+    pub async fn take_payment(
+        &self,
+        request: PaymentRequest,
+    ) -> Result<PaymentValue, BrowserFault> {
+        match &self.payments {
+            Some(take) => take(request).await,
+            None => Err(BrowserFault::new(
+                FaultCode::SecretUnavailable,
+                "no payment input is connected to this session",
+            )),
         }
     }
 

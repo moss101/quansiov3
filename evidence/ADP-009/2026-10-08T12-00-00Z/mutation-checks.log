@@ -1,0 +1,77 @@
+remote-view-grant-takes-input: CONTROL-PASSED
+remote-view-grant-takes-input: COMPILES
+remote-view-grant-takes-input: KILLED (rc=101)
+remote-locked-screen-takes-input: CONTROL-PASSED
+remote-locked-screen-takes-input: COMPILES
+remote-locked-screen-takes-input: KILLED (rc=101)
+remote-stale-report-admitted: PATTERN_NOT_UNIQUE (0)
+remote-anyone-decides: CONTROL-PASSED
+remote-anyone-decides: COMPILES
+remote-anyone-decides: KILLED (rc=101)
+remote-grant-widens-request: CONTROL-PASSED
+remote-grant-widens-request: COMPILES
+remote-grant-widens-request: KILLED (rc=101)
+remote-no-idle-end: PATTERN_NOT_UNIQUE (0)
+remote-clipboard-name-unchecked: PATTERN_NOT_UNIQUE (0)
+remote-clipboard-total-uncapped: CONTROL-PASSED
+remote-clipboard-total-uncapped: COMPILES
+remote-clipboard-total-uncapped: KILLED (rc=101)
+remote-second-session-allowed: CONTROL-PASSED
+remote-second-session-allowed: COMPILES
+remote-second-session-allowed: KILLED (rc=101)
+remote-frames-to-everyone: CONTROL-PASSED
+remote-frames-to-everyone: COMPILES
+remote-frames-to-everyone: KILLED (rc=101)
+remote-clipboard-to-wrong-side: CONTROL-PASSED
+remote-clipboard-to-wrong-side: COMPILES
+remote-clipboard-to-wrong-side: KILLED (rc=101)
+remote-agent-fence-dropped: CONTROL-PASSED
+remote-agent-fence-dropped: COMPILES
+remote-agent-fence-dropped: KILLED (rc=101)
+remote-handback-keeps-sessions: CONTROL-PASSED
+remote-handback-keeps-sessions: COMPILES
+remote-handback-keeps-sessions: KILLED (rc=101)
+remote-host-skips-own-readiness: CONTROL-PASSED
+remote-host-skips-own-readiness: COMPILES
+remote-host-skips-own-readiness: KILLED (rc=101)
+remote-host-trusts-server-viewer: PATTERN_NOT_UNIQUE (0)
+remote-indicator-dismissible: CONTROL-PASSED
+remote-indicator-dismissible: KILLED (rc=1)
+remote-indicator-shown-to-viewer: CONTROL-PASSED
+remote-indicator-shown-to-viewer: KILLED (rc=1)
+remote-indicator-answer-unfenced: CONTROL-PASSED
+remote-indicator-answer-unfenced: KILLED (rc=1)
+remote-indicator-outlives-session: CONTROL-PASSED
+remote-indicator-outlives-session: KILLED (rc=1)
+payment-origin-unchecked: CONTROL-PASSED
+payment-origin-unchecked: COMPILES
+payment-origin-unchecked: KILLED (rc=101)
+payment-expired-value-taken: CONTROL-PASSED
+payment-expired-value-taken: COMPILES
+payment-expired-value-taken: SURVIVED (rc=0)
+import-staging-needs-no-tier4: CONTROL-PASSED
+import-staging-needs-no-tier4: COMPILES
+import-staging-needs-no-tier4: KILLED (rc=101)
+sandbox-deadline-ignored: CONTROL-PASSED
+sandbox-deadline-ignored: COMPILES
+sandbox-deadline-ignored: TIMEOUT-KILLED (rc=124)
+mcp-shadows-builtin-name: CONTROL-PASSED
+mcp-shadows-builtin-name: COMPILES
+mcp-shadows-builtin-name: KILLED (rc=101)
+mcp-external-trusted: CONTROL-PASSED
+mcp-external-trusted: COMPILES
+mcp-external-trusted: KILLED (rc=101)
+vault-saves-in-plaintext: CONTROL-PASSED
+vault-saves-in-plaintext: KILLED (rc=1)
+remote-stale-report-admitted: CONTROL-PASSED
+remote-stale-report-admitted: COMPILES
+remote-stale-report-admitted: KILLED (rc=101)
+remote-no-idle-end: CONTROL-PASSED
+remote-no-idle-end: COMPILES
+remote-no-idle-end: KILLED (rc=101)
+remote-clipboard-name-unchecked: CONTROL-PASSED
+remote-clipboard-name-unchecked: COMPILES
+remote-clipboard-name-unchecked: KILLED (rc=101)
+remote-host-trusts-server-viewer: CONTROL-PASSED
+remote-host-trusts-server-viewer: COMPILES
+remote-host-trusts-server-viewer: KILLED (rc=101)

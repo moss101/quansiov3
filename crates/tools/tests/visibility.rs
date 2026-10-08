@@ -157,26 +157,32 @@ fn a_misspelt_or_ill_typed_flag_cannot_leave_a_tool_visible() {
 
 // ---- the shipped registry ---------------------------------------------------------------------
 
+/// The host-only tools: `webdev.preview_scopes` (ADP-008) and `browser.import_session` (ADP-009, a person's staged cookies, applied only
+/// after an approval that is asked every time).
+const HOST_ONLY: [&str; 2] = ["browser.import_session", "webdev.preview_scopes"];
+
 #[test]
-fn the_shipped_registry_declares_exactly_one_host_only_tool_and_the_rest_are_the_models() {
+fn the_shipped_registry_declares_exactly_two_host_only_tools_and_the_rest_are_the_models() {
     let registry = ToolRegistry::builtin();
-    let host_only: Vec<&str> = registry
+    let mut host_only: Vec<&str> = registry
         .declarations()
         .filter(|declaration| !declaration.model_visible)
         .map(|declaration| declaration.name.as_str())
         .collect();
-    assert_eq!(host_only, vec!["webdev.preview_scopes"]);
-    assert_eq!(
-        registry.host_callable_names(),
-        vec!["webdev.preview_scopes"]
-    );
+    host_only.sort_unstable();
+    assert_eq!(host_only, HOST_ONLY);
+    let mut host_callable = registry.host_callable_names();
+    host_callable.sort_unstable();
+    assert_eq!(host_callable, HOST_ONLY);
     let all: BTreeSet<&str> = registry.callable_names().into_iter().collect();
     let visible: BTreeSet<&str> = registry.model_visible_names().into_iter().collect();
-    assert_eq!(all.len(), visible.len() + 1);
-    assert!(!visible.contains("webdev.preview_scopes"));
-    // The audit: every tool declared before ADP-008 keeps the defaults.
+    assert_eq!(all.len(), visible.len() + HOST_ONLY.len());
+    for name in HOST_ONLY {
+        assert!(!visible.contains(name), "{name} is offered to a model");
+    }
+    // The audit: every other tool keeps the defaults.
     for declaration in registry.declarations() {
-        if declaration.name != "webdev.preview_scopes" {
+        if !HOST_ONLY.contains(&declaration.name.as_str()) {
             assert!(
                 declaration.model_visible && !declaration.host_callable,
                 "{} changed visibility",

@@ -12,8 +12,32 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement } from "react";
 
 import { t } from "../i18n/strings.js";
-import { decodeActivity, groupActivity, GROUP_HEADINGS, type ActivityRow } from "../shell-ui.js";
+import { decodeActivity, groupActivity, isRemoteRow, remoteAnswers, GROUP_HEADINGS, REMOTE_ANSWER_LABELS, type ActivityRow } from "../shell-ui.js";
 import { CloseIcon, PulseIcon } from "./icons.js";
+
+/** The owner's answers on a remote-control row: allow, deny, or Stop. A row that is not a remote session has none. */
+export function RemoteAnswers({ row }: { readonly row: ActivityRow }): ReactElement | null {
+  const answers = remoteAnswers(row.kind);
+  if (answers.length === 0) {
+    return null;
+  }
+  return (
+    <>
+      {answers.map((answer) => (
+        <button
+          key={answer}
+          type="button"
+          className={answer === "stop" || answer === "deny" ? "link danger" : "link"}
+          onClick={() => {
+            void window.quansio.answerRemote(row.key, answer);
+          }}
+        >
+          {t(REMOTE_ANSWER_LABELS[answer])}
+        </button>
+      ))}
+    </>
+  );
+}
 
 export function Indicator(): ReactElement {
   const [rows, setRows] = useState<readonly ActivityRow[]>([]);
@@ -100,26 +124,33 @@ export function Indicator(): ReactElement {
                   {entry.rows.map((row) => (
                     <li key={row.key} className={`indicator-item ${row.group}`}>
                       <span className="indicator-title">{row.title}</span>
-                      <button
-                        type="button"
-                        className="link"
-                        onClick={() => {
-                          void window.quansio.openActivity(row.key);
-                        }}
-                      >
-                        {t("indicatorOpen")}
-                      </button>
-                      <button
-                        type="button"
-                        className="icon-button ghost tiny"
-                        aria-label={t("indicatorDismiss")}
-                        data-tip={t("indicatorDismiss")}
-                        onClick={() => {
-                          void window.quansio.dismissActivity(row.key);
-                        }}
-                      >
-                        <CloseIcon size={12} />
-                      </button>
+                      {isRemoteRow(row.kind) ? (
+                        // A computer being watched or controlled is shown until the session ends: answered or stopped, never dismissed.
+                        <RemoteAnswers row={row} />
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="link"
+                            onClick={() => {
+                              void window.quansio.openActivity(row.key);
+                            }}
+                          >
+                            {t("indicatorOpen")}
+                          </button>
+                          <button
+                            type="button"
+                            className="icon-button ghost tiny"
+                            aria-label={t("indicatorDismiss")}
+                            data-tip={t("indicatorDismiss")}
+                            onClick={() => {
+                              void window.quansio.dismissActivity(row.key);
+                            }}
+                          >
+                            <CloseIcon size={12} />
+                          </button>
+                        </>
+                      )}
                     </li>
                   ))}
                 </ul>

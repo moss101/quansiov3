@@ -2292,6 +2292,14 @@ form label:has(textarea) {
 .live-guard .live-guard-dialog,
 .live-guard .live-guard-certificate,
 .live-guard .live-guard-in_doubt { display: flex; flex-direction: column; gap: var(--s1); }
+.secrets-settings { display: flex; flex-direction: column; gap: var(--s2); }
+.secrets-settings form { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: var(--s2); }
+.secrets-settings label { display: flex; flex-direction: column; gap: var(--s1); }
+.secrets-settings fieldset label { flex-direction: row; align-items: center; }
+.secrets-profile { display: flex; flex-direction: column; gap: var(--s1); }
+.live-payment { display: flex; flex-direction: column; gap: var(--s2); }
+.live-payment form { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: var(--s2); }
+.live-payment label { display: flex; flex-direction: column; gap: var(--s1); }
 .live-untrusted { font-family: var(--font-mono, monospace); overflow-wrap: anywhere; }
 .live-permissions { display: flex; flex-direction: column; gap: var(--s2); }
 .live-permissions .permission-row { display: flex; flex-direction: column; gap: var(--s1); }

@@ -5,15 +5,17 @@
 //! exposes tools to a model **only** through capability filtering: a run never sees a tool
 //! its projection cannot cover.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
+use std::sync::{Arc, PoisonError, RwLock};
 
 use chrono::{DateTime, Utc};
 use quansio_capability::CapabilityProjection;
 use serde::{Deserialize, Serialize};
 
-use crate::declaration::{RawToolDeclaration, ToolDeclaration};
+use crate::declaration::{RawToolDeclaration, ToolDeclaration, ToolOrigin};
 use crate::error::ToolError;
+use crate::mcp::{self, ToolListChange};
 
 /// Where `config/tools.yaml` lives relative to this source file.
 const TOOLS_CONFIG: &str = include_str!("../../../config/tools.yaml");
@@ -63,6 +65,10 @@ struct CatalogDocument {
 pub struct ToolRegistry {
     declarations: Vec<ToolDeclaration>,
     families: Vec<RawFamilyReservation>,
+    /// External tool names whose server stopped offering them (ADP-009). No call resolves to one
+    /// and no projection exposes it; an older version is still found by `get_version`, so a call that
+    /// parked for approval before the tool went away is answered rather than lost.
+    retired: BTreeSet<String>,
 }
 
 impl ToolRegistry {
@@ -132,7 +138,146 @@ impl ToolRegistry {
         Ok(Self {
             declarations,
             families: document.families,
+            retired: BTreeSet::new(),
         })
+    }
+
+    /// The registry with the external tools `external` declares (ADP-009).
+    ///
+    /// `external` is the **complete** set the MCP client currently offers, so the result is this registry's
+    /// built-in tools plus exactly those: an external tool that is not in it is retired (no call resolves to
+    /// it and no projection exposes it), one that is is registered or kept, and a name that was retired and is
+    /// offered again is live again, which is the only way a tool comes back. Registering never widens
+    /// anything: a declaration's grant template names the class and resource the configuration gave it, and a
+    /// projection still has to hold a grant for it.
+    ///
+    /// # Errors
+    /// Returns [`ToolError::MalformedDeclaration`] for a declaration that is not an external `mcp.<server>.<tool>`
+    /// tool, whose name collides with a built-in tool, whose schema leaves the vocabulary, that is not
+    /// host-`qworkerd` with untrusted results, or that reuses a registered version with different content.
+    pub fn with_external(&self, external: Vec<ToolDeclaration>) -> Result<Self, ToolError> {
+        let mut next = self.clone();
+        let mut offered: BTreeSet<String> = BTreeSet::new();
+        for declaration in external {
+            let malformed = |detail: String| ToolError::MalformedDeclaration {
+                tool: declaration.name.clone(),
+                detail,
+            };
+            let ToolOrigin::External { server, .. } = &declaration.origin else {
+                return Err(malformed(
+                    "only an external declaration may be registered here".to_string(),
+                ));
+            };
+            let prefix = format!("{}.{server}.", mcp::NAMESPACE);
+            if !declaration.name.starts_with(&prefix) || declaration.name.len() == prefix.len() {
+                return Err(malformed(format!(
+                    "an external tool of {server} is named {prefix}<tool>"
+                )));
+            }
+            if self
+                .declarations
+                .iter()
+                .any(|d| d.name == declaration.name && matches!(d.origin, ToolOrigin::Builtin))
+            {
+                return Err(malformed("the name belongs to a built-in tool".to_string()));
+            }
+            if declaration.host != crate::declaration::ToolHost::Qworkerd
+                || declaration.source_trust != crate::declaration::SourceTrust::UntrustedExternal
+                || declaration.host_callable
+                || declaration.grant_templates.len() != 1
+            {
+                return Err(malformed(
+                    "an external tool runs in the worker, returns untrusted data, is never host-callable and has one grant template".to_string(),
+                ));
+            }
+            crate::schema::check_vocabulary(&declaration.name, &declaration.input_schema)?;
+            crate::schema::check_vocabulary(&declaration.name, &declaration.output_schema)?;
+            if let Some(existing) = next.get_version(&declaration.name, declaration.version) {
+                if existing != &declaration {
+                    return Err(malformed(format!(
+                        "version {} is already registered with different content",
+                        declaration.version
+                    )));
+                }
+            } else {
+                next.declarations.push(declaration.clone());
+            }
+            offered.insert(declaration.name.clone());
+        }
+        let known_external: BTreeSet<String> = next
+            .declarations
+            .iter()
+            .filter(|d| matches!(d.origin, ToolOrigin::External { .. }))
+            .map(|d| d.name.clone())
+            .collect();
+        next.retired = known_external.difference(&offered).cloned().collect();
+        Ok(next)
+    }
+
+    /// The registry with one server's tools replaced by `declarations` (the complete set it now offers),
+    /// every other server's tools untouched. See [`ToolRegistry::with_external`].
+    ///
+    /// # Errors
+    /// The same as [`ToolRegistry::with_external`]; a declaration of another server is
+    /// [`ToolError::MalformedDeclaration`].
+    pub fn with_server_tools(
+        &self,
+        server: &str,
+        declarations: Vec<ToolDeclaration>,
+    ) -> Result<Self, ToolError> {
+        if let Some(stray) = declarations.iter().find(|declaration| {
+            !matches!(&declaration.origin, ToolOrigin::External { server: s, .. } if s == server)
+        }) {
+            return Err(ToolError::MalformedDeclaration {
+                tool: stray.name.clone(),
+                detail: format!("the tool does not belong to the server {server}"),
+            });
+        }
+        let mut all: Vec<ToolDeclaration> = self
+            .external()
+            .filter(|declaration| {
+                !matches!(&declaration.origin, ToolOrigin::External { server: s, .. } if s == server)
+            })
+            .cloned()
+            .collect();
+        all.extend(declarations);
+        self.with_external(all)
+    }
+
+    /// What a replacement of one server's tools changes, for the report of a refresh.
+    #[must_use]
+    pub fn change_for(&self, server: &str, current: &[ToolDeclaration]) -> ToolListChange {
+        let latest: Vec<&ToolDeclaration> = self
+            .external()
+            .filter(|declaration| {
+                matches!(&declaration.origin, ToolOrigin::External { server: s, .. } if s == server)
+            })
+            .collect();
+        mcp::diff_tools(&latest, current)
+    }
+
+    /// The newest declaration of every external tool that is not retired, in registration order.
+    pub fn external(&self) -> impl Iterator<Item = &ToolDeclaration> {
+        self.latest()
+            .filter(|declaration| matches!(declaration.origin, ToolOrigin::External { .. }))
+    }
+
+    /// Every version of the external tools of one server, retired or not. The MCP client builds the next
+    /// version of a tool from these.
+    #[must_use]
+    pub fn external_of(&self, server: &str) -> Vec<&ToolDeclaration> {
+        self.declarations
+            .iter()
+            .filter(|declaration| {
+                matches!(&declaration.origin, ToolOrigin::External { server: s, .. } if s == server)
+            })
+            .collect()
+    }
+
+    /// Whether a name is an external tool whose server stopped offering it.
+    #[must_use]
+    pub fn is_retired(&self, name: &str) -> bool {
+        self.retired.contains(name)
     }
 
     /// Build a registry from a YAML file on disk.
@@ -154,6 +299,9 @@ impl ToolRegistry {
     /// The latest registered version of a tool.
     #[must_use]
     pub fn get(&self, name: &str) -> Option<&ToolDeclaration> {
+        if self.retired.contains(name) {
+            return None;
+        }
         self.declarations
             .iter()
             .filter(|declaration| declaration.name == name)
@@ -369,6 +517,55 @@ impl ToolRegistry {
             }
         }
         Ok(())
+    }
+}
+
+/// The registry a running process plans, exposes and dispatches against (ADP-009).
+///
+/// The built-in registry never changes; the external tools an MCP server offers do (a server adds, changes
+/// or removes a tool while a run is going). The handle holds the registry as one immutable snapshot that a
+/// refresh replaces whole, so a call is planned against one consistent registry and every holder of the
+/// handle (the dispatcher, the model's tool offer) sees the same one. Cloning the handle shares it.
+#[derive(Debug, Clone)]
+pub struct RegistryHandle {
+    current: Arc<RwLock<Arc<ToolRegistry>>>,
+}
+
+impl RegistryHandle {
+    /// A handle on the shipped registry with no external tool.
+    #[must_use]
+    pub fn builtin() -> Self {
+        Self::fixed(ToolRegistry::builtin().clone())
+    }
+
+    /// A handle on this registry.
+    #[must_use]
+    pub fn fixed(registry: ToolRegistry) -> Self {
+        Self {
+            current: Arc::new(RwLock::new(Arc::new(registry))),
+        }
+    }
+
+    /// The registry as it is now. A snapshot: a later refresh does not change it.
+    #[must_use]
+    pub fn current(&self) -> Arc<ToolRegistry> {
+        Arc::clone(&self.current.read().unwrap_or_else(PoisonError::into_inner))
+    }
+
+    /// Replace one server's external tools with the complete set it now offers.
+    ///
+    /// # Errors
+    /// The same as [`ToolRegistry::with_server_tools`]; on an error the registry is unchanged.
+    pub fn replace_server_tools(
+        &self,
+        server: &str,
+        declarations: Vec<ToolDeclaration>,
+    ) -> Result<ToolListChange, ToolError> {
+        let mut guard = self.current.write().unwrap_or_else(PoisonError::into_inner);
+        let change = guard.change_for(server, &declarations);
+        let next = guard.with_server_tools(server, declarations)?;
+        *guard = Arc::new(next);
+        Ok(change)
     }
 }
 

@@ -83,6 +83,7 @@ fn the_three_new_tools_and_the_side_effect_table_are_in_the_domain() {
         "local_mutation",
         "open_world_mutation",
         "potential_external_effect",
+        "session_import",
     ] {
         assert!(
             domain.contains(&format!("| `{class}` |")),

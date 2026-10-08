@@ -25,6 +25,7 @@ use quansio_tools::{first_violation, ToolHost, ToolRegistry};
 use super::driver::{ActionReport, BrowserCallContext, BrowserDriver};
 use super::fault::{BrowserFault, FaultCode};
 use super::fence::Target;
+use super::secrets::PaymentField;
 use super::Classified;
 
 /// How a dispatched call ended, in the vocabulary the host reports to the runtime.
@@ -221,6 +222,41 @@ impl BrowserDriver {
                     &Target::from_args(args)?,
                     required(args, "text")?,
                     args.get("clear").and_then(Value::as_bool) == Some(true),
+                )
+                .await
+            }
+            "browser.fill_payment_field" => {
+                let field = text(args, "field")
+                    .and_then(PaymentField::parse)
+                    .ok_or_else(|| {
+                        BrowserFault::new(
+                            FaultCode::InvalidRequest,
+                            "field must be one of the payment fields the tool names",
+                        )
+                    })?;
+                self.fill_payment_field(
+                    ctx,
+                    required(args, "tab_id")?,
+                    required(args, "expected_document_revision")?,
+                    &Target::from_args(args)?,
+                    field,
+                )
+                .await
+            }
+            "browser.import_session" => {
+                self.import_session(
+                    ctx,
+                    required(args, "import_id")?,
+                    required(args, "digest")?,
+                    args.get("cookie_count")
+                        .and_then(Value::as_u64)
+                        .and_then(|count| usize::try_from(count).ok())
+                        .ok_or_else(|| {
+                            BrowserFault::new(
+                                FaultCode::InvalidRequest,
+                                "cookie_count is required for this tool",
+                            )
+                        })?,
                 )
                 .await
             }
