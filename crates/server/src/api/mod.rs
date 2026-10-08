@@ -37,6 +37,7 @@ pub mod payment_inputs;
 pub mod projections;
 pub mod rbac;
 pub mod recordings;
+pub mod remote;
 pub mod routines;
 pub mod scim;
 pub mod seams;
@@ -384,6 +385,7 @@ pub struct ApiState {
     magic_link_delivery: auth::SharedDelivery,
     scope_trust: ScopeTrust,
     live: Arc<live::LiveHub>,
+    remote: Arc<remote::RemoteHub>,
     objects: Option<Arc<dyn ObjectStore>>,
     search: Option<Arc<search::SearchService>>,
     web_root: Option<web::WebRoot>,
@@ -438,6 +440,7 @@ impl ApiState {
             magic_link_delivery: Arc::new(auth::ConsoleDelivery),
             scope_trust: ScopeTrust::TrustedHeaders,
             live: live::LiveHub::new(),
+            remote: Arc::new(remote::RemoteHub::default()),
             objects: None,
             search: None,
             web_root: None,
@@ -655,6 +658,20 @@ impl ApiState {
             host = host.with_outputs(outputs);
         }
         self.host = Arc::new(host);
+    }
+
+    /// Run remote control against another configuration. A test shortens the readiness window; the deployable reads
+    /// `config/remote-control.yaml`.
+    #[must_use]
+    pub fn with_remote_config(mut self, config: quansio_machine::remote::RemoteConfig) -> Self {
+        self.remote = Arc::new(remote::RemoteHub::new(config));
+        self
+    }
+
+    /// The remote-control sessions of this process (ADP-009).
+    #[must_use]
+    pub fn remote(&self) -> &Arc<remote::RemoteHub> {
+        &self.remote
     }
 
     /// The live-frame hub `/v1/stream` forwards from and the runtime publishes to.

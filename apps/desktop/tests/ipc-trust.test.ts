@@ -156,7 +156,7 @@ const POPOUT_SHELL = ["shell.window.context", "shell.pending.consume", "shell.po
 const POPOUT_FILES = ["files.pick", "files.grant.attach", "files.grant.discard", "files.grant.preview"];
 const QUICK_BRIDGE = ["session.state", "session.me", "appearance.set", "teammates.list"];
 const QUICK_SHELL = ["shell.window.context", "shell.pending.consume", "shell.window.close", "shell.quickEntry.submit"];
-const INDICATOR = ["shell.window.context", "shell.pending.consume", "shell.activity.list", "shell.activity.dismiss", "shell.activity.open", "shell.indicator.interactive", "shell.indicator.moveTo"];
+const INDICATOR = ["shell.window.context", "shell.pending.consume", "shell.activity.list", "shell.activity.dismiss", "shell.activity.open", "shell.remote.answer", "shell.indicator.interactive", "shell.indicator.moveTo"];
 const MAIN_NEVER = ["shell.popout.pin", "shell.window.close", "shell.quickEntry.submit", "shell.indicator.interactive", "shell.indicator.moveTo"];
 
 describe("window types", () => {

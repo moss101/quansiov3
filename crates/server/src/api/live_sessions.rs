@@ -103,7 +103,7 @@ fn runtime_error(
     ApiError::new(code, error.to_string(), correlation)
 }
 
-fn now_second() -> String {
+pub(super) fn now_second() -> String {
     Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string()
 }
 
@@ -463,7 +463,11 @@ fn subject(params: &Value, correlation: &str) -> Result<Subject, ApiError> {
 }
 
 /// Run one mutation with its events in one transaction, keeping the typed refusal.
-async fn commit<T, F>(events: &EventStore, tenant_id: &str, mutation: F) -> Result<T, ApiError>
+pub(super) async fn commit<T, F>(
+    events: &EventStore,
+    tenant_id: &str,
+    mutation: F,
+) -> Result<T, ApiError>
 where
     T: Send,
     F: Send
@@ -512,7 +516,7 @@ where
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn stage(
+pub(super) async fn stage(
     tx: &mut Transaction<'static, Postgres>,
     batch: &mut EventBatch,
     identity: &RuntimeIdentity,
@@ -551,7 +555,7 @@ async fn stage(
     Ok(())
 }
 
-fn actor_of(identity: &RuntimeIdentity, user_id: Option<&str>) -> Actor {
+pub(super) fn actor_of(identity: &RuntimeIdentity, user_id: Option<&str>) -> Actor {
     user_id.map_or_else(|| identity.actor.clone(), Actor::user)
 }
 
@@ -796,7 +800,12 @@ pub async fn handback(
     let actor = actor_of(&identity, user_id);
     let correlation_owned = correlation.to_string();
     let tenant = scope.tenant_id.clone();
-    commit(&events, &scope.tenant_id, move |tx, batch| {
+    // Native input going back to the agent ends every remote session that holds it (DOMAIN.md 8.6.2): a person cannot keep driving.
+    let resumed_computer = match &subject {
+        Subject::Computer(target_id) => Some(target_id.clone()),
+        Subject::Browser(_) => None,
+    };
+    let answer = commit(&events, &scope.tenant_id, move |tx, batch| {
         Box::pin(async move {
             let correlation = correlation_owned.as_str();
             let at = now_second();
@@ -856,7 +865,11 @@ pub async fn handback(
             }
         })
     })
-    .await
+    .await?;
+    if let Some(target_id) = resumed_computer {
+        super::remote::agent_resumed(state, &scope.tenant_id, &target_id).await;
+    }
+    Ok(answer)
 }
 
 /// Park the owning run, when there is one, under the caller's transaction.
@@ -901,7 +914,7 @@ async fn release(
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn audit(
+pub(super) async fn audit(
     tx: &mut Transaction<'static, Postgres>,
     tenant_id: &str,
     workspace_id: &str,

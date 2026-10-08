@@ -186,6 +186,19 @@ export class DesktopBridge {
     return state?.kind === "signed-in" ? { tenantId: state.tenantId, userId: state.userId } : null;
   }
 
+  /** The signed-in person, once known (the activity list shows a remote session to the computer's owner). */
+  userId(): string | null {
+    return this.#identity()?.userId ?? null;
+  }
+
+  /**
+   * The computer's owner answers a remote-control request or stops a session (ADP-009, DOMAIN.md 8.6.2). Only these three commands
+   * pass; the server decides who may.
+   */
+  async remoteControl(name: "GrantRemoteControl" | "DenyRemoteControl" | "StopRemoteControl", params: Record<string, unknown>): Promise<unknown> {
+    return (await this.server.invoke(name, newCommandId(), params)).result;
+  }
+
   /** Resume a stored session from the keychain (session mode); false when there is none. */
   async resume(): Promise<boolean> {
     if (!this.sessions) {

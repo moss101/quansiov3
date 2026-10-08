@@ -116,6 +116,7 @@ export const SHELL_CHANNELS = [
   "shell.activity.list",
   "shell.activity.dismiss",
   "shell.activity.open",
+  "shell.remote.answer",
   "shell.indicator.interactive",
   "shell.indicator.moveTo",
   "update.install",
@@ -381,6 +382,9 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     activityItems: () => send("shell.activity.list", {}),
     dismissActivity: (key: string) => send("shell.activity.dismiss", { key }),
     openActivity: (key: string) => send("shell.activity.open", { key }),
+    // The computer's owner answers a remote-control request, or stops a standing session (ADP-009, DOMAIN.md 8.6.2). The page names
+    // the activity item and the answer; main reads the computer and the viewer from the item, never from the page.
+    answerRemote: (key: string, answer: "view" | "control" | "deny" | "stop") => send("shell.remote.answer", { key, answer }),
     setIndicatorInteractive: (active: boolean) => send("shell.indicator.interactive", { active }),
     moveIndicator: (x: number, y: number) => send("shell.indicator.moveTo", { x, y }),
     installUpdate: (mode: "now" | "when_idle" | "cancel_when_idle") => send("update.install", { mode }),

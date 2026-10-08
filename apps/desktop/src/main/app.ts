@@ -579,7 +579,7 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
       windows.broadcast(["main", "popout"], "shell.connectivity", { state: connectivityState });
     },
   });
-  const activity = new ActivityTracker({ maxItems: config.activityMaxItems, completedTtlMs: config.activityCompletedTtlMs, now: () => Date.now() });
+  const activity = new ActivityTracker({ maxItems: config.activityMaxItems, completedTtlMs: config.activityCompletedTtlMs, now: () => Date.now(), selfUserId: () => bridge.userId() });
 
   // The person's own secrets (ADP-009): the password manager and the import from another browser. Main window only; nothing here
   // reaches an agent, and no answer carries a password or a cookie value.

@@ -18,6 +18,7 @@ pub mod compose;
 pub mod host;
 pub mod mcp;
 pub mod media;
+pub mod remote;
 pub mod replay;
 pub mod tools;
 

@@ -1,0 +1,38 @@
+# Remote control of a person's own computer (ADP-009, DOMAIN.md 8.6.2). Policy lives here, never as a source constant (D-018).
+# crates/machine/src/remote reads this file; schemas/json/remote-control-config.schema.json bounds every value, so a configuration cannot
+# make a consent immortal, a session unlimited or a frame unbounded.
+#
+# A remote session is one viewer on one native computer: the viewer asks, the person at the computer decides on that computer, and
+# the server relays frames and input over the live-frames WebSocket only while the decision stands. Nothing here names a credential.
+version: 1
+
+# Switch. Off, a request is refused with POLICY_DENIED and nothing is relayed.
+enabled: true
+
+# How long a request waits for the person at the computer (seconds). Past it the request lapses.
+consent_ttl_seconds: 120
+
+# The longest a person may grant (seconds), the most any session lasts, and how long it may sit with no viewer activity.
+grant_max_seconds: 3600
+session_max_seconds: 3600
+session_idle_seconds: 300
+
+# How fresh the computer's own report of its capture, lock and permission state must be for input to be admitted (seconds).
+# A computer that falls silent stops admitting input: absence of a report is not readiness.
+host_report_max_age_seconds: 15
+
+# Frames: the largest (bytes of the base64 text) and the most per second.
+frame_max_bytes: 262144
+frame_max_per_second: 15
+
+# Input: the most events per second, the longest typed text (characters) and the largest pointer coordinate.
+input_max_per_second: 60
+text_max_chars: 256
+coordinate_max: 16384
+
+# Clipboard: a separate, bounded channel from input. The most bytes one transfer carries (text bytes, or all its files decoded), the
+# most files in one transfer and the most transfers per second. A transfer needs a control grant, a ready and unlocked computer, and
+# never carries a path: a file travels as a plain name and its bytes.
+clipboard_max_bytes: 65536
+clipboard_max_files: 2
+clipboard_max_per_second: 2

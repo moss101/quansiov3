@@ -62,6 +62,7 @@ interface Rig {
   postResult: { value: unknown };
   checks: number;
   main: ManagedWindow;
+  remote: { name: string; params: Record<string, unknown> }[];
   call: (channel: ShellChannel, window: ManagedWindow, payload?: unknown) => Promise<{ ok: boolean; result?: Record<string, unknown>; error?: { code: string; message: string; details: unknown } }>;
 }
 
@@ -89,6 +90,7 @@ function rig(options: { toggleDefault?: boolean; directory?: string } = {}): Rig
   const quit = new QuitGate({ probe: () => Promise.resolve(work.status), ask: (status) => { asked.push(status); return Promise.resolve(false); } });
   const reconnects: boolean[] = [];
   const posted: unknown[] = [];
+  const remote: Rig["remote"] = [];
   const menus: MenuItem[][] = [];
   let checks = 0;
   const shortcuts = new ShortcutRegistry({ platform: "darwin", maxLength: 64, toggleDefault: config.toggleDefault, adapter: system, preferences, onGlobal: (id) => { host.onGlobalShortcut(id); }, log: () => undefined });
@@ -115,6 +117,7 @@ function rig(options: { toggleDefault?: boolean; directory?: string } = {}): Rig
       streamOpen: () => false,
       resumeStream: (force) => { reconnects.push(force); return true; },
       maintenance: () => Promise.resolve(work.server),
+      remoteControl: (name, params) => { remote.push({ name, params }); return Promise.resolve({ session: { state: "ok" } }); },
     },
     shortcuts,
     keepAwake,
@@ -137,6 +140,7 @@ function rig(options: { toggleDefault?: boolean; directory?: string } = {}): Rig
     host, windows, factory, displays, clock, system, blocker, updater, updates, quit, keepAwake, preferences, directory, menus, posted, reconnects, work, asked, choice, postResult,
     get checks() { return checks; },
     main,
+    remote,
     call: (channel, window, payload = {}) => handlers[channel](window, payload) as ReturnType<Rig["call"]>,
   };
 }
@@ -176,6 +180,7 @@ describe("every shell channel validates its payload", () => {
       "shell.activity.list": r.main,
       "shell.activity.dismiss": r.main,
       "shell.activity.open": r.main,
+      "shell.remote.answer": r.main,
       "shell.indicator.interactive": indicator,
       "shell.indicator.moveTo": indicator,
       "update.install": r.main,
@@ -199,6 +204,8 @@ describe("every shell channel validates its payload", () => {
       ["shell.popout.open", { threadId: THREAD, tab: "elsewhere" }],
       ["shell.popout.open", { threadId: THREAD, x: 1.5, y: 2 }],
       ["shell.activity.dismiss", { key: "" }],
+      ["shell.remote.answer", { key: "remote:x", answer: "root" }],
+      ["shell.remote.answer", { key: "remote:x", answer: "stop", target_id: "tgt_other" }],
       ["shell.indicator.moveTo", { x: "1", y: 2 }],
       ["update.install", { mode: "force" }],
       ["shell.window.context", { extra: 1 }],
@@ -608,5 +615,67 @@ describe("connectivity and updates through the channels", () => {
     r.host.checkForUpdates();
     expect(r.checks).toBe(1);
     expect(OTHER_THREAD).not.toBe(THREAD);
+  });
+});
+
+// ---- remote control (ADP-009, DOMAIN.md 8.6.2)
+
+const TARGET = "tgt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
+const VIEWER = "usr_01J8Z3K6F1N8VQ2X5W9Y0VIEWER";
+const OWNER = "usr_01J8Z3K6F1N8VQ2X5W9Y0OWNER0";
+const FUTURE = new Date(Date.now() + 3_600_000).toISOString();
+
+const remoteFrame = (state: string, extra: Record<string, unknown> = {}): EventFrame =>
+  frame("target.remote_changed", `${TARGET}:${VIEWER}`, { target_id: TARGET, host_user_id: OWNER, viewer_user_id: VIEWER, requested_scope: "control", granted_scope: null, state, ...extra });
+
+describe("remote control on the person's computer", () => {
+  it("a request waits for the owner, who answers from the list; the answer names the computer and viewer main read from the event", async () => {
+    const r = rig();
+    r.host.onStreamFrame(remoteFrame("requested", { consent_expires_at: FUTURE }));
+    const key = `remote:${TARGET}:${VIEWER}`;
+    expect(((await r.call("shell.activity.list", r.main)).result as { items: { key: string; kind: string; group: string }[] }).items).toMatchObject([{ key, kind: "remote_ask_control", group: "waiting" }]);
+    // Allow control, narrowed to view, and deny: each is the matching command with ids from the item, never from the page.
+    expect((await r.call("shell.remote.answer", r.main, { key, answer: "view" })).ok).toBe(true);
+    expect((await r.call("shell.remote.answer", r.main, { key, answer: "control" })).ok).toBe(true);
+    expect((await r.call("shell.remote.answer", r.main, { key, answer: "deny" })).ok).toBe(true);
+    expect(r.remote).toEqual([
+      { name: "GrantRemoteControl", params: { target_id: TARGET, viewer_user_id: VIEWER, scope: "view" } },
+      { name: "GrantRemoteControl", params: { target_id: TARGET, viewer_user_id: VIEWER, scope: "control" } },
+      { name: "DenyRemoteControl", params: { target_id: TARGET, viewer_user_id: VIEWER } },
+    ]);
+    // Stopping is for a standing session, not a request; an unknown item is not found; a view request cannot be granted control.
+    expect((await r.call("shell.remote.answer", r.main, { key, answer: "stop" })).error?.code).toBe("CONFLICT_STATE");
+    expect((await r.call("shell.remote.answer", r.main, { key: "remote:gone", answer: "stop" })).error?.code).toBe("NOT_FOUND");
+    r.host.onStreamFrame(remoteFrame("requested", { requested_scope: "view", consent_expires_at: FUTURE }));
+    expect((await r.call("shell.remote.answer", r.main, { key, answer: "control" })).error?.code).toBe("CONFLICT_STATE");
+    expect(r.remote).toHaveLength(3);
+  });
+
+  it("a standing session is a persistent entry with an immediate Stop that cannot be dismissed, and it goes when the session ends", async () => {
+    const r = rig();
+    const key = `remote:${TARGET}:${VIEWER}`;
+    r.windows.indicator();
+    r.host.onStreamFrame(remoteFrame("authorized", { granted_scope: "control", ends_at: FUTURE }));
+    const pushed = r.factory.ofType("indicator")[0]?.sent.at(-1)?.payload as { items: { kind: string; title: string }[] };
+    expect(pushed.items).toMatchObject([{ kind: "remote_controlling", title: "This computer is being controlled" }]);
+    // It is not the person's to hide.
+    expect((await r.call("shell.activity.dismiss", r.main, { key })).result).toEqual({ dismissed: false });
+    expect(((await r.call("shell.activity.list", r.main)).result as { items: unknown[] }).items).toHaveLength(1);
+    // Granting is for a request; the one answer on a standing session is Stop.
+    expect((await r.call("shell.remote.answer", r.main, { key, answer: "view" })).error?.code).toBe("CONFLICT_STATE");
+    expect((await r.call("shell.remote.answer", r.main, { key, answer: "stop" })).ok).toBe(true);
+    expect(r.remote).toEqual([{ name: "StopRemoteControl", params: { target_id: TARGET, viewer_user_id: VIEWER } }]);
+    // Narrowed to view, the entry follows; the session ending removes it.
+    r.host.onStreamFrame(remoteFrame("authorized", { granted_scope: "view", ends_at: FUTURE }));
+    await expect(r.host.handlers()["shell.activity.list"](r.main, {})).resolves.toMatchObject({ result: { items: [{ kind: "remote_watching" }] } });
+    r.host.onStreamFrame(remoteFrame("stopped", { reason: "host_stopped" }));
+    expect((await r.call("shell.activity.list", r.main)).result).toEqual({ items: [] });
+  });
+
+  it("the indicator and the main window may answer; no other window reaches the channel", async () => {
+    const r = rig();
+    const indicator = r.windows.indicator();
+    r.host.onStreamFrame(remoteFrame("authorized", { granted_scope: "control", ends_at: FUTURE }));
+    expect((await r.call("shell.remote.answer", indicator ?? r.main, { key: `remote:${TARGET}:${VIEWER}`, answer: "stop" })).ok).toBe(true);
   });
 });

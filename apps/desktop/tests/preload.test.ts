@@ -67,6 +67,7 @@ describe("preload bridge", () => {
         "runTimeline",
         "postMessage",
         "answerQuestion",
+        "answerRemote",
         "cancelTurn",
         "uploadAttachment",
         "listArtifacts",
@@ -305,6 +306,7 @@ describe("preload bridge", () => {
     await api.activityItems();
     await api.dismissActivity("run:run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.openActivity("run:run_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.answerRemote("remote:tgt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA:usr_01J8Z3K6F1N8VQ2X5W9Y0VIEWER", "stop");
     await api.setIndicatorInteractive(true);
     await api.moveIndicator(10, 20);
     await api.installUpdate("now");

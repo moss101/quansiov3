@@ -16,7 +16,7 @@ import type { EventFrame } from "../client/stream.js";
 import type { DesktopNotice } from "../automation/notifications.js";
 import type { ShellChannel } from "../preload/bridge.js";
 import { settled } from "./ipc.js";
-import { ActivityTracker, type ActivityItem } from "./activity.js";
+import { ActivityTracker, isRemoteKind, type ActivityItem } from "./activity.js";
 import { ConnectivityMonitor } from "./connectivity.js";
 import { KeepAwake } from "./keep-awake.js";
 import { buildMenu, type MenuItem, type ShellCommand } from "./menu.js";
@@ -38,6 +38,7 @@ export interface ShellBridge {
   streamOpen(): boolean;
   resumeStream(force: boolean): boolean;
   maintenance(): Promise<MaintenanceStatus | null>;
+  remoteControl(name: "GrantRemoteControl" | "DenyRemoteControl" | "StopRemoteControl", params: Record<string, unknown>): Promise<unknown>;
 }
 
 export interface ShellHostOptions {
@@ -90,6 +91,10 @@ const POPOUT_OPEN = s.object<{ threadId: string; tab?: "conversation" | "inspect
   sidebar: s.optional(s.boolean()),
   x: s.optional(COORDINATE),
   y: s.optional(COORDINATE),
+});
+const REMOTE_ANSWER = s.object<{ key: string; answer: "view" | "control" | "deny" | "stop" }>({
+  key: s.string({ min: 1, max: 160 }),
+  answer: s.oneOf(["view", "control", "deny", "stop"] as const),
 });
 const NOTHING = s.empty();
 
@@ -463,6 +468,32 @@ export class ShellHost {
           }
           this.command(command);
           return { ok: true, result: { opened: true } };
+        }),
+      "shell.remote.answer": (_window, payload) =>
+        Promise.resolve(parse(REMOTE_ANSWER, payload)).then(async (input) => {
+          if (!input.ok) {
+            return input.error;
+          }
+          // The computer and the viewer come from the item main derived from a durable event, never from the page.
+          const item = o.activity.get(input.value.key);
+          const target = item?.ref.targetId;
+          const viewer = item?.ref.viewerId;
+          if (item === null || !isRemoteKind(item.kind) || target === undefined || viewer === undefined) {
+            return refused("NOT_FOUND", "that remote session is no longer listed");
+          }
+          const asking = item.kind === "remote_ask_view" || item.kind === "remote_ask_control";
+          const answer = input.value.answer;
+          if (asking !== (answer !== "stop") || (answer === "control" && item.kind !== "remote_ask_control")) {
+            return refused("CONFLICT_STATE", "that answer does not fit where the session is");
+          }
+          const params = { target_id: target, viewer_user_id: viewer };
+          const result =
+            answer === "stop"
+              ? await settled(o.bridge.remoteControl("StopRemoteControl", params))
+              : answer === "deny"
+                ? await settled(o.bridge.remoteControl("DenyRemoteControl", params))
+                : await settled(o.bridge.remoteControl("GrantRemoteControl", { ...params, scope: answer }));
+          return result;
         }),
       "shell.indicator.interactive": (window, payload) =>
         Promise.resolve(parse(INTERACTIVE, payload)).then((input) => {

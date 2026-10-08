@@ -182,6 +182,8 @@ async fn handle_socket(
         &scope.tenant_id,
         scope.user_id.as_deref(),
     );
+    // What this socket brings to the remote relay (ADP-009): its account and sign-in.
+    let relay = super::remote::SocketRelay::new(&state, &scope).await;
     let consumer = request.consumer.or(consumer).unwrap_or_else(|| {
         format!(
             "csm_{}",
@@ -232,6 +234,9 @@ async fn handle_socket(
                 }
                 let admitted = match &frame {
                     StreamFrame::Event(event) => gate.admits_event(&event.event).await,
+                    StreamFrame::Live(live) if super::remote::is_remote(&live.frame) => {
+                        relay.admits(&state, &live.frame)
+                    }
                     StreamFrame::Live(live) => gate.admits_live(live).await,
                 };
                 if !admitted {
@@ -275,6 +280,8 @@ async fn handle_socket(
             engaged,
         },
         &mut standing,
+        &state,
+        &relay,
     )
     .await;
 }
@@ -291,6 +298,8 @@ async fn tail_events(
     gate: &mut ThreadGate,
     mut shedding: Shedding,
     standing: &mut Standing,
+    state: &ApiState,
+    relay: &super::remote::SocketRelay,
 ) {
     let subscribed: Vec<String> = subscription
         .channels()
@@ -303,15 +312,28 @@ async fn tail_events(
                 Some(Ok(Message::Ping(payload))) => {
                     let _ = socket.send(Message::Pong(payload)).await;
                 }
+                // The one message a socket may send after it subscribed: a remote-control message (ADP-009). It is parsed
+                // strictly, authorized against the session and relayed; a refusal is answered, never queued.
+                Some(Ok(Message::Text(text))) => {
+                    if let Some(reply) = relay.upstream(state, &text) {
+                        let _ = socket.send(Message::Text(reply.to_string())).await;
+                    }
+                }
                 Some(Ok(Message::Close(_))) | None | Some(Err(_)) => return,
                 _ => {}
             },
             frame = live.recv() => match frame {
                 Ok(frame) => {
                     // Live frames are transient (DOMAIN.md §9.3): forwarded when on a subscribed
-                    // channel, never buffered beyond the hub's capacity, never persisted.
+                    // channel, never buffered beyond the hub's capacity, never persisted. A `remote.*` frame
+                    // is the two parties of a remote session's alone, whoever else watches the target.
+                    let admitted = if super::remote::is_remote(&frame.frame) {
+                        relay.admits(state, &frame.frame)
+                    } else {
+                        gate.admits_live(&frame).await
+                    };
                     if subscribed.iter().any(|channel| channel == &frame.channel)
-                        && gate.admits_live(&frame).await
+                        && admitted
                         && socket
                             .send(Message::Text(StreamFrame::Live(frame).to_json_value().to_string()))
                             .await
@@ -342,10 +364,13 @@ async fn tail_events(
             },
             () = tokio::time::sleep(Duration::from_millis(50)) => {
                 if let Some(refusal) = standing.lapsed().await {
+                    // A sign-in that no longer stands ends the sessions it held.
+                    relay.lapsed(state).await;
                     let _ = socket.send(Message::Text(refusal.to_string())).await;
                     let _ = socket.send(Message::Close(None)).await;
                     return;
                 }
+                relay.sweep(state).await;
                 let batch = match store
                     .resume(
                         subscription.tenant_id(),

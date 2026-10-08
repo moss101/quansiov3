@@ -17,6 +17,7 @@ pub mod computer_use;
 pub mod control;
 pub mod egress;
 pub mod gateway;
+pub mod remote;
 pub mod secrets;
 pub mod substrates;
 

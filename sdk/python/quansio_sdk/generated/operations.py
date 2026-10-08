@@ -247,6 +247,26 @@ OPERATIONS: dict[str, dict[str, str]] = {
         "path": "/v1/commands/SupplyPaymentInput",
         "family": "Browser/computer",
     },
+    "RequestRemoteControl": {
+        "method": "POST",
+        "path": "/v1/commands/RequestRemoteControl",
+        "family": "Browser/computer",
+    },
+    "GrantRemoteControl": {
+        "method": "POST",
+        "path": "/v1/commands/GrantRemoteControl",
+        "family": "Browser/computer",
+    },
+    "DenyRemoteControl": {
+        "method": "POST",
+        "path": "/v1/commands/DenyRemoteControl",
+        "family": "Browser/computer",
+    },
+    "StopRemoteControl": {
+        "method": "POST",
+        "path": "/v1/commands/StopRemoteControl",
+        "family": "Browser/computer",
+    },
     "CreateArtifact": {
         "method": "POST",
         "path": "/v1/commands/CreateArtifact",

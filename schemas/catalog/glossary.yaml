@@ -38,6 +38,7 @@ glossary:
 - Install report
 - External tool
 - Composition script / cell
+- Remote session
 - Host-callable tool
 - ExecutionTarget
 - ComputerControl

@@ -2048,6 +2048,174 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/commands/RequestRemoteControl:
+    post:
+      operationId: RequestRemoteControl
+      summary: 'Browser/computer: RequestRemoteControl'
+      tags:
+      - Browser/computer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/GrantRemoteControl:
+    post:
+      operationId: GrantRemoteControl
+      summary: 'Browser/computer: GrantRemoteControl'
+      tags:
+      - Browser/computer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/DenyRemoteControl:
+    post:
+      operationId: DenyRemoteControl
+      summary: 'Browser/computer: DenyRemoteControl'
+      tags:
+      - Browser/computer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/commands/StopRemoteControl:
+    post:
+      operationId: StopRemoteControl
+      summary: 'Browser/computer: StopRemoteControl'
+      tags:
+      - Browser/computer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/commands/CreateArtifact:
     post:
       operationId: CreateArtifact
@@ -6514,6 +6682,34 @@ components:
       type: object
       additionalProperties: true
       description: 'Browser/computer command SupplyPaymentInput. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    RequestRemoteControlParams:
+      type: object
+      additionalProperties: true
+      description: 'Browser/computer command RequestRemoteControl. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    GrantRemoteControlParams:
+      type: object
+      additionalProperties: true
+      description: 'Browser/computer command GrantRemoteControl. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    DenyRemoteControlParams:
+      type: object
+      additionalProperties: true
+      description: 'Browser/computer command DenyRemoteControl. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
+      x-quansio-params-defined: false
+    StopRemoteControlParams:
+      type: object
+      additionalProperties: true
+      description: 'Browser/computer command StopRemoteControl. The concrete parameter schema is owned by the implementing
         task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
         false.'
       x-quansio-params-defined: false

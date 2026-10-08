@@ -80,3 +80,20 @@ Capability only narrows: an external tool needs a grant on `connector:mcp.<serve
 
 Every surface is behind its own configuration (`enabled` in `config/mcp.yaml` and `config/composition.yaml`, the vault and import in
 `config/desktop-shell.yaml` once they land) and removable by reverting the task branch.
+
+## Remote control (item 5, DOMAIN.md 8.6.2)
+
+* **Owner:** the pure authorization state machine and wire form are `crates/machine/src/remote/` (shared by both ends so neither trusts the
+  other); the relay, the four commands and the lifecycle events are `crates/server/src/api/remote.rs` (+ `stream.rs`, `live_sessions.rs`
+  `Handback`); the computer's own side is `crates/qworkerd/src/remote.rs`; the person's indicator and Stop are `apps/desktop/src/main/activity.ts`,
+  `shell-host.ts` and the indicator renderer. No new service, store or transport: frames, input and clipboard ride the existing `/v1/stream`
+  WebSocket on the `target:` channel.
+* **Persistent state:** none new. Sessions are in memory (a restart ends them); the rows are the existing `runtime_events`
+  (`target.remote_changed`) and `audit_entries`.
+* **Effects:** none in the Effect Ledger: a remote session is not an agent action. Native input stays fenced by ComputerControl: a `control`
+  grant is refused while the agent holds input and `Handback` ends every session.
+* **Capabilities:** viewer needs `AuthorWork` in the computer's workspace; the owner alone decides; capability only narrows (a grant never
+  widens the request).
+* **Real boundary:** capturing the screen and posting input need ADP-002 permissions (`QUANSIO_TEST_MACOS_COMPUTER_USE=1`); the production
+  capture/input/conditions ports over the native helper are NOT built, so those steps are `BLOCKED_EXTERNAL`.
+* **Rollback:** `enabled: false` in `config/remote-control.yaml` refuses every request; reverting the branch removes the surface.

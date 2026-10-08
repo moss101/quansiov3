@@ -672,6 +672,51 @@ async fn dispatch(
             )
             .await?
         }
+        // Remote control of a person's own computer (ADP-009, DOMAIN.md 8.6.2): a viewer asks, the person at the computer decides.
+        "RequestRemoteControl" => {
+            super::remote::request_remote_control(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "GrantRemoteControl" => {
+            super::remote::grant_remote_control(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "DenyRemoteControl" => {
+            super::remote::deny_remote_control(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "StopRemoteControl" => {
+            super::remote::stop_remote_control(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
         // A person's staged cookies for the agent's browser (ADP-009): sealed, never applied until browser.import_session is approved.
         "ImportBrowserSession" => {
             super::browser_imports::import_browser_session(

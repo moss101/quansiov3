@@ -110,6 +110,7 @@ const SHELL_POLICY: Readonly<Record<(typeof SHELL_CHANNELS)[number], ChannelPoli
   "shell.activity.list": { windows: ["main", "indicator"] },
   "shell.activity.dismiss": { windows: ["main", "indicator"] },
   "shell.activity.open": { windows: ["main", "indicator"] },
+  "shell.remote.answer": { windows: ["main", "indicator"] },
   "shell.indicator.interactive": { windows: ["indicator"] },
   "shell.indicator.moveTo": { windows: ["indicator"] },
   "update.install": { windows: ["main"] },
