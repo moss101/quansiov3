@@ -1,0 +1,138 @@
+{
+  "task_id": "ADP-009",
+  "git_commit": "cd17774e83d2e5f656fad7355c57892282a0f7b8",
+  "recorded_at": "2026-10-08T07:50:44Z",
+  "commands": [
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-009/2026-10-08T12-00-00Z/lint.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1504 passed; one 800 ms timing test failed once under load and passes alone (workspace-tests.log)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-009/2026-10-08T12-00-00Z/workspace-tests.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test remote_control; cargo test -p quansio-qworkerd --test remote_host; cargo test -p quansio-machine --lib remote  # 11 + 7 + 21 passed; real PostgreSQL, real server, real WebSocket clients; real screen BLOCKED_EXTERNAL",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-009/2026-10-08T12-00-00Z/remote-boundary.log"
+    },
+    {
+      "command": "tsc -p apps/desktop/tsconfig.json && tsc tsconfig.build.json --noEmit && eslint --max-warnings 0 apps/desktop && vitest run --root apps/desktop  # 627 passed, 45 skipped",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-009/2026-10-08T12-00-00Z/desktop-tests.log"
+    },
+    {
+      "command": "ruff check; ruff format --check; mypy intelligence; pytest (776 passed); pytest tests/architecture tests/contract tests/ci --deselect test_generated_bindings_are_current (251 passed)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-009/2026-10-08T12-00-00Z/python-repo-tests.log"
+    },
+    {
+      "command": "python3 mutation-checks.py  # 26 mutants, 25 killed, 1 equivalent survivor; every mutant COMPILES, controls PASSED",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-009/2026-10-08T12-00-00Z/mutation-checks.log"
+    },
+    {
+      "command": "validate_v81.py; arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py; gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-009/2026-10-08T12-00-00Z/static-gates.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings  # clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test --workspace --no-fail-fast  # 1504 passed; one 800 ms timing test failed once under load and passes alone (workspace-tests.log)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test remote_control; cargo test -p quansio-qworkerd --test remote_host; cargo test -p quansio-machine --lib remote  # 11 + 7 + 21 passed; real PostgreSQL, real server, real WebSocket clients; real screen BLOCKED_EXTERNAL",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "tsc -p apps/desktop/tsconfig.json && tsc tsconfig.build.json --noEmit && eslint --max-warnings 0 apps/desktop && vitest run --root apps/desktop  # 627 passed, 45 skipped",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "ruff check; ruff format --check; mypy intelligence; pytest (776 passed); pytest tests/architecture tests/contract tests/ci --deselect test_generated_bindings_are_current (251 passed)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 mutation-checks.py  # 26 mutants, 25 killed, 1 equivalent survivor; every mutant COMPILES, controls PASSED",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "validate_v81.py; arch_check.py; workspace_check.py; inventory.py --scan; check_authority.py; legacy_map_check.py; supply_chain/check.py; gen_contracts.py --check --only catalog,openapi,ts,sdk  # all CLEAN / PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/ADP-009/2026-10-08T12-00-00Z/lint.log",
+      "sha256": "0f3ac8bb3f636a5f540e2ecf281abe3fbeb5a7b7fd15a6ddf5df255c9519c474",
+      "bytes": 26
+    },
+    {
+      "path": "evidence/ADP-009/2026-10-08T12-00-00Z/workspace-tests.log",
+      "sha256": "ba513d2ca9ef87e7c94f289a927da63982e929b36ca271bd159f38a77bc9ae10",
+      "bytes": 39470
+    },
+    {
+      "path": "evidence/ADP-009/2026-10-08T12-00-00Z/remote-boundary.log",
+      "sha256": "8344e10c0511674c51d89c04f14182e2b67d145d4e2ee2ed49c201cf2736fa1d",
+      "bytes": 4070
+    },
+    {
+      "path": "evidence/ADP-009/2026-10-08T12-00-00Z/desktop-tests.log",
+      "sha256": "caedc36390e1aa1b5ba13fd78dccfae75c8604d075e629a5278d5f31e0a087c2",
+      "bytes": 4262
+    },
+    {
+      "path": "evidence/ADP-009/2026-10-08T12-00-00Z/python-repo-tests.log",
+      "sha256": "a43694dcc5fed72df25058f35cc6392410f200281d30f53c72f0dccc0ce6411a",
+      "bytes": 1586
+    },
+    {
+      "path": "evidence/ADP-009/2026-10-08T12-00-00Z/mutation-checks.log",
+      "sha256": "dae9737cfc9016973646f75c1ad465f0182f1ff5e2290a03ac5f9ef7683427ce",
+      "bytes": 3350
+    },
+    {
+      "path": "evidence/ADP-009/2026-10-08T12-00-00Z/static-gates.log",
+      "sha256": "dad2d7a8ab9bacb08e365155e6a829f7e846ca407f0ba89302b92a788c2594dc",
+      "bytes": 1971
+    },
+    {
+      "path": "evidence/ADP-009/2026-10-08T12-00-00Z/mutation-checks.py",
+      "sha256": "b168ffcb8ec9f94930a6f41bbc2a664b7f8d2014322ef74238ddf1eb783f1459",
+      "bytes": 8771
+    },
+    {
+      "path": "evidence/ADP-009/NOTES.md",
+      "sha256": "05ec9bb864ccf8d6ea2ec3210bc15d5855cef67f0607bdcb538443f9cd7089c7",
+      "bytes": 6103
+    },
+    {
+      "path": "evidence/ADP-009/RECONCILIATION.md",
+      "sha256": "49b13aa58e19aaead02f1779f658a2389cf1bb61ea8b991e9ed1497ebd9fd6fe",
+      "bytes": 7533
+    }
+  ]
+}
