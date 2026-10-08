@@ -12,6 +12,7 @@
 //! | `routine.fire_failed` | `failed` | the routine's owner |
 //! | `run.blocked` / `run.failed` of a routine's run | `blocked` / `failed` | the routine's owner |
 //! | `routine.script_paused` (a workflow script at its call budget) | `attention` | the routine's owner |
+//! | `run.suspended` carrying an `attention` item (a native-computer permission, ADP-002) | `blocked` | the people in the run's thread (else who started it) |
 //!
 //! The notifications and the cursor advance commit together, and a notification is unique
 //! per (event, user, kind), so consuming an event twice notifies once.
@@ -226,6 +227,30 @@ async fn recipients(
                 ),
                 json!({ "routine_id": routine_id, "run_id": text(payload, "run_id") }),
             )]
+        }
+        // A run parked on something only a person can put right (DOMAIN.md 8.6.1 E): the item travels with the notice so
+        // the surface that opens it shows the same guide, never a guess.
+        "run.suspended" if payload.get("attention").is_some_and(Value::is_object) => {
+            let attention = payload.get("attention").cloned().unwrap_or(Value::Null);
+            let run_id = text(payload, "run_id").unwrap_or(&event.aggregate_id);
+            let lapsed = text(&attention, "code") == Some("COMPUTER_FOREGROUND_CONTROL_LAPSED");
+            let title = if lapsed {
+                "Your agent is waiting for you to stop using the keyboard and mouse for a moment"
+            } else {
+                "Your agent needs a permission before it can use the computer"
+            };
+            let (_, people) = question_audience(conn, tenant_id, "", run_id).await?;
+            people
+                .iter()
+                .map(|user| {
+                    one(
+                        user,
+                        "blocked",
+                        title.to_string(),
+                        json!({ "run_id": run_id, "attention": attention }),
+                    )
+                })
+                .collect()
         }
         "run.blocked" | "run.failed" => {
             let owner: Option<(String, String)> = sqlx::query_as(

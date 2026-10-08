@@ -86,6 +86,8 @@ export interface Attention {
   readonly kind: AttentionKind;
   readonly id: string;
   readonly detail: string;
+  /** The tab the item belongs to, when it belongs to one (a certificate decision names it). */
+  readonly tabId?: string;
 }
 
 export interface TerminalSessionView {
@@ -278,7 +280,7 @@ export function attentionNeeded(session: LiveSession): readonly Attention[] {
     }
     for (const certificate of tab.certificates) {
       if (certificate.status === "pending") {
-        items.push({ kind: "certificate", id: certificate.id, detail: `${certificate.origin} ${certificate.errorType}` });
+        items.push({ kind: "certificate", id: certificate.id, detail: `${certificate.origin} ${certificate.errorType}`, tabId: tab.tabId });
       }
     }
   }
@@ -402,6 +404,59 @@ export function handback(sessionId: string): { readonly name: "Handback"; readon
     throw new Error("a handback names a bsn_ session");
   }
   return { name: "Handback", params: { session_id: sessionId } };
+}
+
+/** What a person answers a certificate error or a media permission request with. */
+export type UserDecision = "allow" | "deny";
+
+/** The only permissions a person can grant the agent's browser; every other one stays denied. */
+export const GRANTABLE_PERMISSIONS = ["camera", "microphone"] as const;
+export type GrantablePermission = (typeof GRANTABLE_PERMISSIONS)[number];
+
+/**
+ * The origin of a page address, when it is an http(s) one: `scheme://host[:port]`, nothing else. A permission is
+ * decided for one origin, so the page never builds a decision for an address it cannot reduce to one.
+ */
+export function originOf(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+/** `ResolveBrowserCertificate {session_id, tab_id, certificate_id, decision}`: a person's command, never an agent's. */
+export function resolveCertificate(
+  sessionId: string,
+  tabId: string,
+  certificateId: string,
+  decision: UserDecision,
+): { readonly name: "ResolveBrowserCertificate"; readonly params: { readonly session_id: string; readonly tab_id: string; readonly certificate_id: string; readonly decision: UserDecision } } {
+  if (!sessionId.startsWith("bsn_") || tabId === "" || certificateId === "") {
+    throw new Error("a certificate decision names a bsn_ session, a tab and a certificate");
+  }
+  return { name: "ResolveBrowserCertificate", params: { session_id: sessionId, tab_id: tabId, certificate_id: certificateId, decision } };
+}
+
+/** `DecideBrowserPermission {session_id, tab_id, origin, permission, decision}`: camera or microphone, one origin. */
+export function decidePermission(
+  sessionId: string,
+  tabId: string,
+  origin: string,
+  permission: GrantablePermission,
+  decision: UserDecision,
+): { readonly name: "DecideBrowserPermission"; readonly params: { readonly session_id: string; readonly tab_id: string; readonly origin: string; readonly permission: GrantablePermission; readonly decision: UserDecision } } {
+  if (!sessionId.startsWith("bsn_") || tabId === "") {
+    throw new Error("a permission decision names a bsn_ session and a tab");
+  }
+  if (originOf(origin) !== origin) {
+    throw new Error("a permission decision names one http(s) origin");
+  }
+  if (!GRANTABLE_PERMISSIONS.includes(permission)) {
+    throw new Error("only camera and microphone can be granted");
+  }
+  return { name: "DecideBrowserPermission", params: { session_id: sessionId, tab_id: tabId, origin, permission, decision } };
 }
 
 /** `RequestTakeover {target_id}` / `Handback {target_id}` for the native computer. */

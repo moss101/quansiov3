@@ -303,11 +303,15 @@ export {
   decodeLiveSession,
   decodeTargets,
   decodeTerminal,
+  decidePermission,
+  GRANTABLE_PERMISSIONS,
   handback,
   handbackAllowed,
   isSameSession,
+  originOf,
   pauseReasonOf,
   requestTakeover,
+  resolveCertificate,
   takeoverAllowed,
 } from "./live/session.js";
 export type {

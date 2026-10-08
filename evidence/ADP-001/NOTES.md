@@ -71,6 +71,12 @@ nothing in the Chrome suites produced a schema-invalid result.
 
 ## Deferred, and why
 
+- **Closed by the composition follow-up (evidence `2026-10-08T08-40-47Z`):** `ResolveBrowserCertificate` and `DecideBrowserPermission`
+  now have HTTP handlers (`crates/server/src/api/live_sessions.rs`: a service principal is `SCOPE_FORBIDDEN`, a viewer 403, the row is
+  unchanged on every refusal, one AuditEntry names the user, the answer carries the receipt) and the desktop's live surface has the
+  buttons (continue/cancel on a pending certificate, camera/microphone allow/deny per tab origin). Proven against PostgreSQL in
+  `crates/server/tests/live_sessions.rs` and in `apps/desktop/tests/live-decisions.test.ts`. What remains is the channel that carries
+  the receipt to the worker (below). The original text of this item follows.
 - `ResolveBrowserCertificate` and `DecideBrowserPermission` have no HTTP handler (the catalog reports "no
   handler in this build", as for `ImportBrowserSession`) and the desktop has no button for them. The
   control-plane half (user-only, recorded with the user's identity, returning the receipt) is real and

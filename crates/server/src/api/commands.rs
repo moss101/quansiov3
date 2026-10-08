@@ -717,6 +717,27 @@ async fn dispatch(
             )
             .await?
         }
+        // A person's answer to a certificate error or a camera/microphone request in the agent's browser (ADP-001).
+        "ResolveBrowserCertificate" => {
+            super::live_sessions::resolve_browser_certificate(
+                state,
+                scope,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "DecideBrowserPermission" => {
+            super::live_sessions::decide_browser_permission(
+                state,
+                scope,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
         // A person's staged cookies for the agent's browser (ADP-009): sealed, never applied until browser.import_session is approved.
         "ImportBrowserSession" => {
             super::browser_imports::import_browser_session(
@@ -914,6 +935,8 @@ async fn cancel_run(
     correlation: &str,
 ) -> Result<Value, ApiError> {
     let (run_id, generation) = run_ref(params, correlation)?;
+    // A native computer sequence in flight ends before it asks for another action (DOMAIN.md 8.6.1 B).
+    state.computer_stops().stop(&run_id.to_string());
     let engine = RuntimeEngine::new(state.pool().clone(), identity.clone())
         .map_err(|error| internal(error, correlation))?;
     let run = engine
@@ -930,6 +953,7 @@ async fn pause_run(
     correlation: &str,
 ) -> Result<Value, ApiError> {
     let (run_id, generation) = run_ref(params, correlation)?;
+    state.computer_stops().stop(&run_id.to_string());
     let engine = RuntimeEngine::new(state.pool().clone(), identity.clone())
         .map_err(|error| internal(error, correlation))?;
     let run = engine
@@ -1849,6 +1873,16 @@ pub(super) fn turn_json(outcome: &TurnOutcome) -> Value {
             "turn_id": turn_id,
             "steps_used": steps_used,
             "max_steps": max_steps,
+        }),
+        TurnOutcome::Suspended {
+            run_id,
+            turn_id,
+            reason,
+        } => json!({
+            "kind": "suspended",
+            "run_id": run_id,
+            "turn_id": turn_id,
+            "reason": reason,
         }),
         other => json!({ "kind": "other", "debug": format!("{other:?}") }),
     }

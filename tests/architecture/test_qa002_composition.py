@@ -24,10 +24,12 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: (kind, name) -> (owning task, what is missing). Found by QA-001/QA-002, 2026-09-27.
 KNOWN_GAPS: Dict[Tuple[str, str], Tuple[str, str]] = {
-    # EXEC-010's dispatcher is only named by the ADP-002 sequence runner (which the scan counts as a
-    # mention), so what is missing is the runtime tool host that walks a sequence: both are one gap.
-    ("UNCOMPOSED", "ComputerSequence"): ("ADP-002", "no tool host walks native computer action sequences (EXEC-010's dispatcher is never constructed either)"),
-    ("NOT_COMPOSED", "ActionFeed"): ("ADP-002", "no runtime feeds a computer action sequence"),
+    # Closed by the ADP-001 composition follow-up: `crate::computer::ComputerToolHost` (composed by `ApiState` in front of
+    # every other host) walks each `computer.*` call through `ComputerSequence` with a `ListFeed` and EXEC-010's
+    # `ComputerDispatcher`, and parks the run on the permission attention item. What it still composes is the
+    # fail-closed `UnavailableComputerBridge`: a bridge that reaches a machine needs the signed native helper and its
+    # control channel (ADP-002 notes, `config/computer-use.yaml: helper.status: unpublished`). The scan cannot see that
+    # remainder (the host's forwarding adapter implements the trait too), so it is recorded in evidence/ADP-002/NOTES.md.
     ("UNCOMPOSED", "WorkerHost"): ("EXEC-002", "qworkerd has no daemon that runs its host"),
 }
 

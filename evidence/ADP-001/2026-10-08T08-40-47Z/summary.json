@@ -1,0 +1,69 @@
+{
+  "task_id": "ADP-001",
+  "git_commit": "8692b6773a500691d3a8cfea9d206dea17212a1a",
+  "recorded_at": "2026-10-08T08:40:47Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test -p quansio-server --test live_sessions  # 5 passed against real PostgreSQL: a viewer is 403, a service principal (even one scoped Browser/computer) is SCOPE_FORBIDDEN for both ResolveBrowserCertificate and DecideBrowserPermission and the guard row is unchanged, a decision other than allow/deny or a certificate that is not pending is refused, the owner's allow is recorded with their identity and returns the receipt, the same state reads back through GET /v1/browser-sessions/{id}, only camera and microphone for a well-formed origin are grantable",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-08T08-40-47Z/server-tests.log"
+    },
+    {
+      "command": "cd apps/desktop && npx vitest run  # 634+ passed, new tests/live-decisions.test.ts (builders refuse what the server refuses, channels allowlisted, refusal returned as data, buttons call only the person's channels) and the updated preload surface test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-08T08-40-47Z/desktop-tests.log"
+    },
+    {
+      "command": "cd apps/desktop && npx tsc -p tsconfig.json",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-001/2026-10-08T08-40-47Z/desktop-typecheck.log"
+    },
+    {
+      "command": "mutation checks (evidence/ADP-002/2026-10-08T08-40-47Z/mutation-checks.log): a service principal admitted, a viewer admitted -- both KILLED",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test -p quansio-server --test live_sessions  # 5 passed against real PostgreSQL: a viewer is 403, a service principal (even one scoped Browser/computer) is SCOPE_FORBIDDEN for both ResolveBrowserCertificate and DecideBrowserPermission and the guard row is unchanged, a decision other than allow/deny or a certificate that is not pending is refused, the owner's allow is recorded with their identity and returns the receipt, the same state reads back through GET /v1/browser-sessions/{id}, only camera and microphone for a well-formed origin are grantable",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && npx vitest run  # 634+ passed, new tests/live-decisions.test.ts (builders refuse what the server refuses, channels allowlisted, refusal returned as data, buttons call only the person's channels) and the updated preload surface test",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && npx tsc -p tsconfig.json",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks (evidence/ADP-002/2026-10-08T08-40-47Z/mutation-checks.log): a service principal admitted, a viewer admitted -- both KILLED",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/ADP-001/2026-10-08T08-40-47Z/desktop-tests.log",
+      "sha256": "f42135050fff382d35122e22e6129194b725968dc45b0aa649d6685438b8fab2",
+      "bytes": 4260
+    },
+    {
+      "path": "evidence/ADP-001/2026-10-08T08-40-47Z/desktop-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/ADP-001/2026-10-08T08-40-47Z/server-tests.log",
+      "sha256": "15a69e54796899e9b319d59efbe1108be519901ce28b2076caf4ef42e9192288",
+      "bytes": 33503
+    }
+  ]
+}

@@ -378,6 +378,9 @@ pub struct ApiState {
     /// the server-hosted layer over it.
     inner_host: Arc<dyn ToolHostPort>,
     outputs: Option<crate::artifacts::outputs::OutputToolHost>,
+    /// The host of `computer.*` calls (ADP-002): composed over the database with the bridge this build has, which is none
+    /// that can reach a machine until the native helper exists (`UnavailableComputerBridge`).
+    computer: Arc<crate::computer::ComputerToolHost>,
     roles: Arc<dyn RoleProvider>,
     auth: Arc<AuthStore>,
     auth_file: Arc<AuthFile>,
@@ -411,7 +414,12 @@ impl ApiState {
     /// Returns [`ApiError`] when a catalog or `config/auth.yaml` is not the shape the contract defines.
     pub fn new(pool: PgPool) -> Result<Self, ApiError> {
         let automation = crate::control::routines::config::AutomationConfig::shipped();
-        let (model, host, roles) = seams::skeleton_seams(pool.clone(), None);
+        let (model, inner_host, roles) = seams::skeleton_seams(pool.clone(), None);
+        let computer = Arc::new(crate::computer::ComputerToolHost::new(pool.clone()));
+        let host: Arc<dyn ToolHostPort> = Arc::new(crate::computer::ComputerRoutedHost::new(
+            Arc::clone(&computer),
+            Arc::clone(&inner_host),
+        ));
         let auth_file = AuthFile::load()
             .map_err(|error| ApiError::new(ApiErrorCode::Internal, error, "startup"))?;
         let key = SigningKey::from_env()
@@ -430,8 +438,9 @@ impl ApiState {
             ),
             limits: RateLimiter::from_env(),
             model,
-            inner_host: Arc::clone(&host),
+            inner_host,
             outputs: None,
+            computer,
             host,
             roles,
             auth: Arc::new(auth),
@@ -647,17 +656,47 @@ impl ApiState {
     }
 
     fn rebuild_host(&mut self) {
-        let Some(objects) = self.objects.clone() else {
-            return;
+        // The server-hosted layer (artifact and output tools) when there is an object store; otherwise the host the
+        // state started with. `computer.*` goes to the computer host in front of either.
+        let base: Arc<dyn ToolHostPort> = match self.objects.clone() {
+            Some(objects) => {
+                let mut host = crate::artifacts::tool_host::ServerToolHost::new(
+                    crate::artifacts::tool_host::ArtifactToolHost::new(self.pool.clone(), objects),
+                    Arc::clone(&self.inner_host),
+                );
+                if let Some(outputs) = self.outputs.clone() {
+                    host = host.with_outputs(outputs);
+                }
+                Arc::new(host)
+            }
+            None => Arc::clone(&self.inner_host),
         };
-        let mut host = crate::artifacts::tool_host::ServerToolHost::new(
-            crate::artifacts::tool_host::ArtifactToolHost::new(self.pool.clone(), objects),
-            Arc::clone(&self.inner_host),
-        );
-        if let Some(outputs) = self.outputs.clone() {
-            host = host.with_outputs(outputs);
-        }
-        self.host = Arc::new(host);
+        self.host = Arc::new(crate::computer::ComputerRoutedHost::new(
+            Arc::clone(&self.computer),
+            base,
+        ));
+    }
+
+    /// Reach a machine's input through `bridge`, recognising `known` applications up to `grant` (ADP-002). The
+    /// deployable composes none today: the helper that holds the operating-system permissions does not exist yet, so
+    /// every `computer.*` call is refused `TARGET_UNAVAILABLE`-style before any input. A test supplies a scripted one.
+    #[must_use]
+    pub fn with_computer_bridge(
+        mut self,
+        bridge: Arc<dyn quansio_machine::computer_use::bridge::NativeComputerBridge>,
+        known: quansio_machine::computer_use::KnownApps,
+        grant: quansio_machine::computer_use::ComputerGrant,
+    ) -> Self {
+        self.computer = Arc::new((*self.computer).clone().with_bridge(bridge, known, grant));
+        self.rebuild_host();
+        self
+    }
+
+    /// The stop flags of the native computer sequences in flight: a person's `CancelRun` or `PauseRun` raises the one of
+    /// the run it names, so the sequence ends before it asks for another action (DOMAIN.md 8.6.1 B).
+    #[must_use]
+    pub fn computer_stops(&self) -> &crate::computer::StopRegistry {
+        self.computer.stops()
     }
 
     /// Run remote control against another configuration. A test shortens the readiness window; the deployable reads

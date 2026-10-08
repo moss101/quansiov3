@@ -20,6 +20,7 @@ import {
   decodeLiveSession,
   decodeTargets,
   handbackAllowed,
+  originOf,
   takeoverAllowed,
   type LiveSession,
   type TargetView,
@@ -211,6 +212,32 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
     [session, open],
   );
 
+  // A certificate error and a media permission are the person's to decide (ADP-001): the server refuses anyone else,
+  // and nothing the agent does enables these buttons. A refusal is shown; the view is re-read either way.
+  const decideCertificate = useCallback(
+    async (tabId: string, certificateId: string, decision: "allow" | "deny") => {
+      if (!session) {
+        return;
+      }
+      const settled = (await window.quansio.resolveCertificate({ sessionId: session.sessionId, tabId, certificateId, decision })) as SettledPayload;
+      setNotice(refusal(settled));
+      await open(session.sessionId);
+    },
+    [session, open],
+  );
+
+  const decideMedia = useCallback(
+    async (tabId: string, origin: string, permission: "camera" | "microphone", decision: "allow" | "deny") => {
+      if (!session) {
+        return;
+      }
+      const settled = (await window.quansio.decidePermission({ sessionId: session.sessionId, tabId, origin, permission, decision })) as SettledPayload;
+      setNotice(refusal(settled));
+      await open(session.sessionId);
+    },
+    [session, open],
+  );
+
   const computerControl = useCallback(
     async (kind: "takeover" | "handback") => {
       if (!session) {
@@ -299,6 +326,12 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
                   <li key={`${item.kind}:${item.id}`} className={`card live-guard-${item.kind}`} data-attention={item.kind}>
                     <strong>{item.kind === "dialog" ? t("liveDialogPending") : item.kind === "certificate" ? t("liveCertificateRequired") : t("liveInDoubt")}</strong>
                     <span className="live-untrusted">{item.detail}</span>
+                    {item.kind === "certificate" && item.tabId ? (
+                      <span className="live-decision">
+                        <button type="button" className="live-certificate-continue" onClick={() => { void decideCertificate(item.tabId ?? "", item.id, "allow"); }}>{t("liveCertificateContinue")}</button>
+                        <button type="button" className="live-certificate-cancel" onClick={() => { void decideCertificate(item.tabId ?? "", item.id, "deny"); }}>{t("liveCertificateCancel")}</button>
+                      </span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -310,6 +343,15 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
                   {t("liveRevision")} {tab.documentRevision}
                   {tab.popupsBlocked > 0 ? ` · ${String(tab.popupsBlocked)} ${t("livePopupsBlocked")}` : ""}
                 </p>
+                {originOf(tab.url) ? (
+                  <div className="live-permission" data-origin={originOf(tab.url) ?? ""}>
+                    <p className="stage">{t("livePermissionFor")} <span className="live-untrusted">{originOf(tab.url)}</span></p>
+                    <button type="button" className="live-permission-camera" onClick={() => { void decideMedia(tab.tabId, originOf(tab.url) ?? "", "camera", "allow"); }}>{t("livePermissionCamera")}</button>
+                    <button type="button" className="live-permission-microphone" onClick={() => { void decideMedia(tab.tabId, originOf(tab.url) ?? "", "microphone", "allow"); }}>{t("livePermissionMicrophone")}</button>
+                    <button type="button" className="live-permission-deny" onClick={() => { void decideMedia(tab.tabId, originOf(tab.url) ?? "", "camera", "deny").then(() => decideMedia(tab.tabId, originOf(tab.url) ?? "", "microphone", "deny")); }}>{t("livePermissionDeny")}</button>
+                    <p className="stage">{t("livePermissionNote")}</p>
+                  </div>
+                ) : null}
                 <h4>{t("liveDownloads")}</h4>
                 {tab.downloads.length === 0 ? (
                   <p className="stage">{t("liveNoDownloads")}</p>

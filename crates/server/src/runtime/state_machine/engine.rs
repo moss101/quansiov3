@@ -30,7 +30,7 @@ use super::store::{
 use super::turn_loop::{
     BudgetPort, ClaimVerdict, CompletionClaim, DelegationContext, DelegationOutcome,
     DelegationPort, LiveFramePort, ModelCallRequest, ModelProposalSource, NoBudgets, NoLiveFrames,
-    ProposedToolCall, QuestionContext, QuestionOutcome, QuestionPort, TextSink,
+    ProposedToolCall, QuestionContext, QuestionOutcome, QuestionPort, Suspension, TextSink,
     ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest, TurnOutcome, UnavailableDelegation,
     UnavailableModelProposalSource, UnavailableQuestions, UnavailableToolDispatch,
     UnavailableVerification, VerificationContext, VerificationOutcome, VerificationPort,
@@ -527,6 +527,7 @@ impl RuntimeEngine {
             Ok(ToolDispatchOutcome::Failed { .. }) => "failed",
             Ok(ToolDispatchOutcome::Rejected { .. }) => "rejected",
             Ok(ToolDispatchOutcome::Parked { .. }) => "parked",
+            Ok(ToolDispatchOutcome::Suspended(_)) => "suspended",
             Ok(ToolDispatchOutcome::OutcomeUnknown { .. }) => "outcome_unknown",
             Ok(ToolDispatchOutcome::CompletionClaimed { .. }) => "completion_claimed",
             Err(_) => "error",
@@ -1144,6 +1145,12 @@ impl RuntimeEngine {
                     .await
                     .map(Some)
             }
+            ToolDispatchOutcome::Suspended(suspension) => {
+                // Boxed: a debug build's async frames are deep on this path and a test thread's stack is small.
+                Box::pin(self.park_suspended(run, turn, generation, step, attempt, *suspension))
+                    .await
+                    .map(Some)
+            }
             ToolDispatchOutcome::OutcomeUnknown { effect_id } => {
                 self.store
                     .complete_step(
@@ -1161,6 +1168,45 @@ impl RuntimeEngine {
                     .map(Some)
             }
         }
+    }
+
+    /// Suspend the run on an attention item the tool dispatch reported (DOMAIN.md 8.6.1 E).
+    async fn park_suspended(
+        &self,
+        run: &Run,
+        turn: &Turn,
+        generation: Generation,
+        step: &Step,
+        attempt: &Attempt,
+        suspension: Suspension,
+    ) -> Result<TurnOutcome, RuntimeError> {
+        let Suspension {
+            reason,
+            attention,
+            error,
+        } = suspension;
+        self.store
+            .complete_step(
+                &step.id,
+                generation,
+                &attempt.id,
+                StepStatus::Failed,
+                AttemptStatus::Failed,
+                Some(error),
+                Vec::new(),
+            )
+            .await?;
+        self.store
+            .finish_turn(&turn.id, generation, TurnStatus::Completed)
+            .await?;
+        self.store
+            .suspend_with_attention(&run.id, generation, reason.clone(), attention)
+            .await?;
+        Ok(TurnOutcome::Suspended {
+            run_id: run.id.to_string(),
+            turn_id: turn.id.to_string(),
+            reason,
+        })
     }
 
     /// Park the run in a `WAITING_*` state the tool dispatch reported.

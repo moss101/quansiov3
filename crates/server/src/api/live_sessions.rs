@@ -29,7 +29,8 @@ use quansio_machine::computer_use::store::{
 };
 use quansio_machine::computer_use::MachineHolder;
 use quansio_machine::control::browser::{
-    BrowserSession, BrowserSessionError, BrowserSessionStore, SessionStatus,
+    BrowserSession, BrowserSessionError, BrowserSessionStore, Decision, DecisionActor,
+    DecisionReceipt, SessionStatus,
 };
 use quansio_machine::control::terminal::{TerminalSession, TerminalStore};
 use serde::Deserialize;
@@ -870,6 +871,245 @@ pub async fn handback(
         super::remote::agent_resumed(state, &scope.tenant_id, &target_id).await;
     }
     Ok(answer)
+}
+
+// ------------------------------------------------------------------ user-only browser decisions (ADP-001)
+
+/// What a decision command shares: a person, a session in the caller's tenant, an `allow` or `deny`.
+struct DecisionRequest {
+    user_id: String,
+    session_id: String,
+    tab_id: String,
+    decision: Decision,
+    workspace_id: String,
+}
+
+/// Refuse everyone but a signed-in person, read the common params and check the role, before any row is touched.
+///
+/// A service principal is refused as `SCOPE_FORBIDDEN` however it is scoped: a certificate error or a camera grant is
+/// a person's act (DOMAIN.md 8.4.1 F), and no Tool, thread, routine or model output reaches this function.
+async fn decision_request(
+    state: &ApiState,
+    scope: &TenantScope,
+    user_id: Option<&str>,
+    params: &Value,
+    command: &str,
+    correlation: &str,
+) -> Result<DecisionRequest, ApiError> {
+    if scope.principal.is_some() {
+        return Err(ApiError::new(
+            ApiErrorCode::ScopeForbidden,
+            format!("{command} is a person's decision: a service principal cannot make it"),
+            correlation,
+        ));
+    }
+    let Some(user_id) = user_id.filter(|id| id.starts_with("usr_")) else {
+        return Err(ApiError::new(
+            ApiErrorCode::AuthRequired,
+            format!("{command} needs a signed-in person"),
+            correlation,
+        ));
+    };
+    let text = |key: &str| {
+        params
+            .get(key)
+            .and_then(Value::as_str)
+            .filter(|value| !value.is_empty())
+            .map(str::to_string)
+            .ok_or_else(|| {
+                ApiError::new(
+                    ApiErrorCode::ValidationSchema,
+                    format!("{key} is required"),
+                    correlation,
+                )
+            })
+    };
+    let session_id = text("session_id")?;
+    let tab_id = text("tab_id")?;
+    let decision = match text("decision")?.as_str() {
+        "allow" => Decision::Allow,
+        "deny" => Decision::Deny,
+        _ => {
+            return Err(ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                "decision is allow or deny",
+                correlation,
+            ))
+        }
+    };
+    let workspace_id = workspace_of(
+        state,
+        &scope.tenant_id,
+        &Subject::Browser(session_id.clone()),
+        correlation,
+    )
+    .await?;
+    // Letting a page past a certificate error, or open a camera, is the kind of act a person with the right to
+    // approve effects in the workspace makes; a viewer cannot.
+    Authorization::check(
+        state.pool(),
+        scope,
+        Some(&workspace_id),
+        ActionFamily::ApproveEffect,
+        correlation,
+    )
+    .await?;
+    Ok(DecisionRequest {
+        user_id: user_id.to_string(),
+        session_id,
+        tab_id,
+        decision,
+        workspace_id,
+    })
+}
+
+fn receipt_json(receipt: &DecisionReceipt) -> Value {
+    json!({
+        "session_id": receipt.session_id(),
+        "tab_id": receipt.tab_id(),
+        "kind": receipt.kind().as_str(),
+        "subject": receipt.subject(),
+        "decision": receipt.decision().as_str(),
+        "decided_by": receipt.decided_by(),
+        "decided_at": receipt.decided_at(),
+    })
+}
+
+/// `ResolveBrowserCertificate {session_id, tab_id, certificate_id, decision}`: a person lets the tab continue past a
+/// certificate error (`allow`) or cancels it (`deny`). The receipt is what the worker acts on.
+pub async fn resolve_browser_certificate(
+    state: &ApiState,
+    scope: &TenantScope,
+    user_id: Option<&str>,
+    params: &Value,
+    correlation: &str,
+) -> Result<Value, ApiError> {
+    let request = decision_request(
+        state,
+        scope,
+        user_id,
+        params,
+        "ResolveBrowserCertificate",
+        correlation,
+    )
+    .await?;
+    let certificate_id = params
+        .get("certificate_id")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| {
+            ApiError::new(
+                ApiErrorCode::ValidationSchema,
+                "certificate_id is required",
+                correlation,
+            )
+        })?;
+    let at = now_second();
+    let mut tx = state.tenant_tx(&scope.tenant_id, correlation).await?;
+    let receipt = BrowserSessionStore::decide_certificate(
+        &mut tx,
+        &scope.tenant_id,
+        &request.session_id,
+        &request.tab_id,
+        certificate_id,
+        request.decision,
+        &DecisionActor::User {
+            user_id: request.user_id.clone(),
+        },
+        &at,
+    )
+    .await
+    .map_err(|error| browser_error(error, correlation))?;
+    audit(
+        &mut tx,
+        &scope.tenant_id,
+        &request.workspace_id,
+        &Actor::user(&request.user_id),
+        "ResolveBrowserCertificate",
+        &format!("browser_session:{}", request.session_id),
+        &format!(
+            "certificate {certificate_id} on tab {}: {}",
+            request.tab_id,
+            request.decision.as_str()
+        ),
+        correlation,
+    )
+    .await?;
+    tx.commit()
+        .await
+        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
+    Ok(json!({ "receipt": receipt_json(&receipt) }))
+}
+
+/// `DecideBrowserPermission {session_id, tab_id, origin, permission, decision}`: a person grants or denies camera or
+/// microphone for one origin. Nothing else can be granted.
+pub async fn decide_browser_permission(
+    state: &ApiState,
+    scope: &TenantScope,
+    user_id: Option<&str>,
+    params: &Value,
+    correlation: &str,
+) -> Result<Value, ApiError> {
+    let request = decision_request(
+        state,
+        scope,
+        user_id,
+        params,
+        "DecideBrowserPermission",
+        correlation,
+    )
+    .await?;
+    let text = |key: &str| {
+        params
+            .get(key)
+            .and_then(Value::as_str)
+            .filter(|value| !value.is_empty())
+            .ok_or_else(|| {
+                ApiError::new(
+                    ApiErrorCode::ValidationSchema,
+                    format!("{key} is required"),
+                    correlation,
+                )
+            })
+    };
+    let origin = text("origin")?;
+    let permission = text("permission")?;
+    let at = now_second();
+    let mut tx = state.tenant_tx(&scope.tenant_id, correlation).await?;
+    let receipt = BrowserSessionStore::decide_permission(
+        &mut tx,
+        &scope.tenant_id,
+        &request.session_id,
+        &request.tab_id,
+        origin,
+        permission,
+        request.decision,
+        &DecisionActor::User {
+            user_id: request.user_id.clone(),
+        },
+        &at,
+    )
+    .await
+    .map_err(|error| browser_error(error, correlation))?;
+    audit(
+        &mut tx,
+        &scope.tenant_id,
+        &request.workspace_id,
+        &Actor::user(&request.user_id),
+        "DecideBrowserPermission",
+        &format!("browser_session:{}", request.session_id),
+        &format!(
+            "{permission} for {origin} on tab {}: {}",
+            request.tab_id,
+            request.decision.as_str()
+        ),
+        correlation,
+    )
+    .await?;
+    tx.commit()
+        .await
+        .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
+    Ok(json!({ "receipt": receipt_json(&receipt) }))
 }
 
 /// Park the owning run, when there is one, under the caller's transaction.

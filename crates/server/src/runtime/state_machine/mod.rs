@@ -37,7 +37,7 @@ pub use turn_loop::{
     BudgetPort, ClaimVerdict, CompletionClaim, DelegationContext, DelegationOutcome,
     DelegationPort, DelegationRequest, LiveFramePort, ModelCallRequest, ModelProposal,
     ModelProposalSource, ModelUsage, NoBudgets, ProposedQuestion, ProposedToolCall,
-    QuestionContext, QuestionOutcome, QuestionPort, TextSink, ToolDispatchOutcome,
+    QuestionContext, QuestionOutcome, QuestionPort, Suspension, TextSink, ToolDispatchOutcome,
     ToolDispatchPort, ToolDispatchRequest, TurnOutcome, UnavailableDelegation,
     UnavailableModelProposalSource, UnavailableQuestions, UnavailableToolDispatch,
     UnavailableVerification, VerificationContext, VerificationOutcome, VerificationPort,

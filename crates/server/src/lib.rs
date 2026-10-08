@@ -18,6 +18,7 @@ pub mod api;
 pub mod artifacts;
 pub mod audit;
 pub mod composition;
+pub mod computer;
 pub mod control;
 pub mod effects;
 pub mod intelligence;
