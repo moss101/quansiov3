@@ -822,6 +822,44 @@ impl RuntimeStore {
         .await
     }
 
+    /// Suspend a Run on something only a person can put right, and say what (DOMAIN.md §5.2, §8.6.1 E).
+    ///
+    /// `run.suspended` carries `attention` (what is missing and how the person is guided to it) and the run leaves
+    /// `SUSPENDED` only through `ResumeRun`. Nothing the model proposes later changes that.
+    ///
+    /// # Errors
+    /// As [`Self::suspend`].
+    pub async fn suspend_with_attention(
+        &self,
+        run_id: &CanonicalId,
+        generation: Generation,
+        reason: impl Into<String>,
+        attention: Value,
+    ) -> Result<Run, RuntimeError> {
+        let tenant_id = self.identity.tenant_id.clone();
+        let identity = self.identity.clone();
+        let run_id = *run_id;
+        let reason = reason.into();
+        self.commit(move |tx, batch| {
+            Box::pin(async move {
+                let mut publisher = Publisher::new(&tenant_id, &identity);
+                apply_run_transition_with(
+                    tx,
+                    batch,
+                    &mut publisher,
+                    &tenant_id,
+                    &run_id,
+                    generation,
+                    RunStatus::Suspended,
+                    Some(reason),
+                    Some(attention),
+                )
+                .await
+            })
+        })
+        .await
+    }
+
     /// Resume a suspended Run (DOMAIN.md §5.2).
     ///
     /// # Errors
@@ -1821,6 +1859,34 @@ async fn apply_run_transition(
     to: RunStatus,
     terminal_reason: Option<String>,
 ) -> Result<Run, RuntimeError> {
+    apply_run_transition_with(
+        tx,
+        batch,
+        publisher,
+        tenant_id,
+        run_id,
+        generation,
+        to,
+        terminal_reason,
+        None,
+    )
+    .await
+}
+
+/// As [`apply_run_transition`], with one more field on the transition's event: what the person is being asked to do
+/// (an `attention` item), so the surface that shows the park reads it from the event, not from a guess.
+#[allow(clippy::too_many_arguments)]
+async fn apply_run_transition_with(
+    tx: &mut Transaction<'static, Postgres>,
+    batch: &mut EventBatch,
+    publisher: &mut Publisher<'_>,
+    tenant_id: &str,
+    run_id: &CanonicalId,
+    generation: Generation,
+    to: RunStatus,
+    terminal_reason: Option<String>,
+    attention: Option<Value>,
+) -> Result<Run, RuntimeError> {
     let current = lock_run(tx, tenant_id, run_id).await?;
     fence(current.generation, generation)?;
     if !current.status.can_transition_to(to) {
@@ -1866,13 +1932,19 @@ async fn apply_run_transition(
             event_type,
             &run.workspace_id,
             generation,
-            json!({
-                "run_id": run.id.to_string(),
-                "from": current.status.as_db_str(),
-                "to": run.status.as_db_str(),
-                "terminal_reason": run.terminal_reason,
-                "generation": run.generation.get(),
-            }),
+            {
+                let mut payload = json!({
+                    "run_id": run.id.to_string(),
+                    "from": current.status.as_db_str(),
+                    "to": run.status.as_db_str(),
+                    "terminal_reason": run.terminal_reason,
+                    "generation": run.generation.get(),
+                });
+                if let Some(attention) = attention {
+                    payload["attention"] = attention;
+                }
+                payload
+            },
         )
         .await?;
     Ok(run)

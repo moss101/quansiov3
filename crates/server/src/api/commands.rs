@@ -935,6 +935,8 @@ async fn cancel_run(
     correlation: &str,
 ) -> Result<Value, ApiError> {
     let (run_id, generation) = run_ref(params, correlation)?;
+    // A native computer sequence in flight ends before it asks for another action (DOMAIN.md 8.6.1 B).
+    state.computer_stops().stop(&run_id.to_string());
     let engine = RuntimeEngine::new(state.pool().clone(), identity.clone())
         .map_err(|error| internal(error, correlation))?;
     let run = engine
@@ -951,6 +953,7 @@ async fn pause_run(
     correlation: &str,
 ) -> Result<Value, ApiError> {
     let (run_id, generation) = run_ref(params, correlation)?;
+    state.computer_stops().stop(&run_id.to_string());
     let engine = RuntimeEngine::new(state.pool().clone(), identity.clone())
         .map_err(|error| internal(error, correlation))?;
     let run = engine
@@ -1870,6 +1873,16 @@ pub(super) fn turn_json(outcome: &TurnOutcome) -> Value {
             "turn_id": turn_id,
             "steps_used": steps_used,
             "max_steps": max_steps,
+        }),
+        TurnOutcome::Suspended {
+            run_id,
+            turn_id,
+            reason,
+        } => json!({
+            "kind": "suspended",
+            "run_id": run_id,
+            "turn_id": turn_id,
+            "reason": reason,
         }),
         other => json!({ "kind": "other", "debug": format!("{other:?}") }),
     }

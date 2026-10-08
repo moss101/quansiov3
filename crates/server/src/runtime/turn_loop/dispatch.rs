@@ -51,8 +51,8 @@ use crate::runtime::protocol_state::{is_unsettled, PendingToolCall};
 use super::super::state_machine::{
     ClaimVerdict, CompletionClaim, DelegationContext, DelegationOutcome, DelegationPort,
     DelegationRequest, ProposedToolCall, Run, RunStatus, RunTriggerKind, RuntimeError,
-    RuntimeIdentity, RuntimeStore, ToolDispatchOutcome, ToolDispatchPort, ToolDispatchRequest,
-    MEMORY_OWNER,
+    RuntimeIdentity, RuntimeStore, Suspension, ToolDispatchOutcome, ToolDispatchPort,
+    ToolDispatchRequest, MEMORY_OWNER,
 };
 use super::parallel::COMPLETION_TOOL;
 use super::questions::{NewQuestion, QuestionService};
@@ -174,6 +174,9 @@ pub enum HostOutcome {
         /// Evidence ids the host captured.
         evidence_ids: Vec<String>,
     },
+    /// The host could not start the call because a person has to put something right first (a missing OS permission,
+    /// DOMAIN.md §8.6.1 E). Nothing was sent: the effect settles as failed and the run is suspended with `attention`.
+    Suspend(Box<Suspension>),
     /// The host could not establish the outcome; the effect must be reconciled.
     Unknown {
         /// Why the outcome is unknown.
@@ -637,7 +640,11 @@ impl ToolDispatchService {
             | ToolDispatchOutcome::CompletionClaimed { .. } => NestedOutcome::Completed {
                 result: Value::Null,
             },
+            // A script cannot wait for a person: a call that needs one is an ordinary typed failure to it.
             ToolDispatchOutcome::Failed { error } => NestedOutcome::Failed { error },
+            ToolDispatchOutcome::Suspended(suspension) => NestedOutcome::Failed {
+                error: suspension.error,
+            },
             ToolDispatchOutcome::Rejected { code, detail } => {
                 NestedOutcome::Rejected { code, detail }
             }
@@ -1283,6 +1290,10 @@ impl ToolDispatchService {
                 .await?;
                 Ok(ToolDispatchOutcome::Failed { error })
             }
+            Ok(HostOutcome::Suspend(suspension)) => {
+                // Boxed: see the engine's park; a debug build's async frames are deep on this path.
+                Box::pin(self.settle_suspended(run, plan, stored, effect_id, *suspension)).await
+            }
             Ok(HostOutcome::Unknown { detail }) => {
                 self.mark_unknown(run, &stored.id, effect_id, plan, &detail)
                     .await?;
@@ -1312,6 +1323,38 @@ impl ToolDispatchService {
                 })
             }
         }
+    }
+
+    /// A host asked for the run to be suspended on an attention item. Nothing reached the machine, so the outcome is
+    /// known: the effect settles as failed (retryable once the person has put it right) and the engine suspends the run.
+    async fn settle_suspended(
+        &self,
+        run: &Run,
+        plan: &ToolCallPlan,
+        stored: &StoredCall,
+        effect_id: &str,
+        suspension: Suspension,
+    ) -> Result<ToolDispatchOutcome, RuntimeError> {
+        self.ledger
+            .settle_failure(effect_id, true, None, Vec::new())
+            .await
+            .map_err(effect_refusal)?;
+        self.update_tool_call(&stored.id, "failed", None, Some(suspension.error.clone()))
+            .await?;
+        self.emit_tool_event(
+            run,
+            &stored.id,
+            "tool.failed",
+            Some(plan.effect_class.as_str()),
+            json!({
+                "tool_call_id": stored.id,
+                "tool": plan.tool,
+                "effect_id": effect_id,
+                "retryable": true,
+            }),
+        )
+        .await?;
+        Ok(ToolDispatchOutcome::Suspended(Box::new(suspension)))
     }
 
     /// Run a control-plane tool whose handler is a runtime port rather than a host

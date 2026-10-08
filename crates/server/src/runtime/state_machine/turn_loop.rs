@@ -203,6 +203,17 @@ impl BudgetPort for NoBudgets {
     }
 }
 
+/// What a run is suspended on: the typed reason, the item a person is asked to act on, and the Tool error the Step records.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Suspension {
+    /// The typed reason the run is suspended with (for example `COMPUTER_PERMISSION_REQUIRED`).
+    pub reason: String,
+    /// What the person is asked to do, spelled as the surface parses it.
+    pub attention: Value,
+    /// The typed tool error the Step records.
+    pub error: Value,
+}
+
 /// What a tool dispatch produced (DOMAIN.md §7.4).
 #[derive(Debug, Clone, PartialEq)]
 pub enum ToolDispatchOutcome {
@@ -238,6 +249,10 @@ pub enum ToolDispatchOutcome {
         /// EffectRecord reserved for the parked call, when one exists.
         effect_id: Option<String>,
     },
+    /// The tool could not start because a person has to put something right first (a missing OS
+    /// permission, DOMAIN.md §8.6.1 E). Nothing was sent; the run is suspended with the attention
+    /// item and leaves `SUSPENDED` only through `ResumeRun`. Boxed so the common outcomes stay small.
+    Suspended(Box<Suspension>),
     /// The tool was dispatched and its external outcome is unknown; it must be
     /// reconciled before any retry (DOMAIN.md §7.2).
     OutcomeUnknown {
@@ -585,6 +600,16 @@ pub enum TurnOutcome {
         steps_used: u32,
         /// Budget the turn honoured.
         max_steps: u32,
+    },
+    /// A tool needs something only a person can give; the run is `SUSPENDED` with an attention item
+    /// and leaves it only through `ResumeRun` (DOMAIN.md §8.6.1 E).
+    Suspended {
+        /// Run that was suspended.
+        run_id: String,
+        /// Turn the loop ran in.
+        turn_id: String,
+        /// The typed reason (`COMPUTER_PERMISSION_REQUIRED`, ...).
+        reason: String,
     },
     /// A dispatched effect has an unknown outcome; the run is suspended for
     /// reconciliation and no retry is attempted (DOMAIN.md §7.2).
