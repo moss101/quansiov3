@@ -87,6 +87,10 @@ single layer is redundant by design, and a survivor of a one-layer mutant is not
 
 ## Deferred
 
+- **Re-assessed 2026-10-08, still deferred:** the call sites (create a worktree at Run start, `acquire`/`release`, `sweep()`/`recover()`
+  at start-up) belong to the worker host in the execution target, because retention is a library over the target's Git and the
+  server may not hold a target's worktrees; `qworkerd` has no daemon yet (QA-002 `KNOWN_GAPS`: `WorkerHost`, EXEC-002). Wiring them
+  from the server would put Git state on the wrong side of the boundary, so nothing was changed.
 - **The runtime's call sites for retention.** `WorktreeRetention` is a host-callable library with real-Git tests. What is not
   wired: creating a managed worktree from a Run's start, `acquire`/`release` around a Run, scheduling `sweep()` and `recover()` at
   qworkerd start-up, a command and a desktop control for a person's cleanup, and reserving the `fs.delete.workspace` effect around

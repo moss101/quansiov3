@@ -1,0 +1,82 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/agent-a0a3b7df048003b48/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 25.73s
+     Running tests/api.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/api-46b70706dc5a954f)
+
+running 17 tests
+test feature_flags_load_from_config_and_cannot_disable_escalation ... ok
+test every_code_maps_to_a_status_and_says_whether_a_retry_could_help ... ok
+test the_error_vocabulary_is_the_one_the_catalog_generates ... ok
+test the_command_catalog_is_the_one_the_gate_checks ... ok
+test an_api_handler_reads_and_writes_only_its_own_table ... ok
+test generated_openapi_lists_every_catalog_command ... ok
+test every_statement_the_api_runs_is_inside_a_tenant_scoped_transaction ... ok
+test a_resend_while_the_first_is_still_being_applied_is_told_to_come_back ... ok
+test the_deployable_composes_from_the_environment ... ok
+test a_refused_command_is_recorded_and_a_resend_gets_the_same_refusal ... ok
+test two_tenants_may_send_the_same_command_id_and_each_replays_its_own ... ok
+test a_tenant_over_the_rate_limit_is_rate_limited ... ok
+test a_command_scoped_to_another_tenant_does_not_touch_this_one ... ok
+test a_mutating_call_calls_the_owner_and_a_resend_returns_its_result_once ... ok
+test a_call_without_a_usable_tenant_is_refused_with_the_right_code ... ok
+test health_reports_readiness_and_the_catalogues_it_serves ... ok
+test the_public_surface_works_as_the_application_role_under_rls ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.80s
+
+     Running tests/collaboration.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/collaboration-07fa8334ee233c56)
+
+running 6 tests
+test a_thread_list_decides_access_exactly_as_one_thread_does ... ok
+test a_handoff_moves_the_thread_to_the_next_teammate ... ok
+test membership_rules_protect_a_thread_for_its_participants ... ok
+test reactions_mentions_and_attention ... ok
+test a_removed_participant_receives_no_new_protected_event ... ok
+test concurrent_posts_from_two_people_keep_one_stable_order ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.64s
+
+     Running tests/completion_claims.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/completion_claims-e73b60f41795c5e2)
+
+running 8 tests
+
+thread 'an_independent_verifier_that_disagrees_keeps_the_work_incomplete' (14133667) has overflowed its stack
+fatal runtime error: stack overflow, aborting
+error: test failed, to rerun pass `-p quansio-server --test completion_claims`
+
+Caused by:
+  process didn't exit successfully: `/Users/mohsin/projects/quansiov3/target/debug/deps/completion_claims-e73b60f41795c5e2` (signal: 6, SIGABRT: process abort signal)
+     Running tests/computer_host.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/computer_host-0370697b90f493e9)
+
+running 5 tests
+test a_read_goes_through_the_sequence_and_its_receipt_settles_the_ledger ... ok
+test a_takeover_ends_the_call_before_the_bridge_is_asked_and_a_stopped_run_sends_nothing ... ok
+test an_unverified_click_is_unknown_and_not_retried_and_the_run_waits_for_reconciliation ... ok
+test a_verified_click_settles_and_a_missing_permission_parks_the_run_without_sending_anything ... ok
+test without_a_bridge_nothing_is_simulated_and_an_unrecognised_application_is_refused ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.70s
+
+     Running tests/routines.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/routines-039f0101850d4826)
+
+running 4 tests
+
+thread 'notifications_follow_preferences_and_deliver_email' (14134258) has overflowed its stack
+fatal runtime error: stack overflow, aborting
+error: test failed, to rerun pass `-p quansio-server --test routines`
+
+Caused by:
+  process didn't exit successfully: `/Users/mohsin/projects/quansiov3/target/debug/deps/routines-039f0101850d4826` (signal: 6, SIGABRT: process abort signal)
+     Running tests/served_plan_and_memory.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/served_plan_and_memory-9c610c542e556d28)
+
+running 3 tests
+
+thread 'a_served_memory_proposal_without_a_memory_store_is_refused_and_writes_nothing' (14134291) has overflowed its stack
+fatal runtime error: stack overflow, aborting
+error: test failed, to rerun pass `-p quansio-server --test served_plan_and_memory`
+
+Caused by:
+  process didn't exit successfully: `/Users/mohsin/projects/quansiov3/target/debug/deps/served_plan_and_memory-9c610c542e556d28` (signal: 6, SIGABRT: process abort signal)
+error: 3 targets failed:
+    `-p quansio-server --test completion_claims`
+    `-p quansio-server --test routines`
+    `-p quansio-server --test served_plan_and_memory`

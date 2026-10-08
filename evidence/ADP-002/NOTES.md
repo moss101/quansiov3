@@ -96,6 +96,17 @@ macOS Apple Silicon, Accessibility and Screen Recording granted to the terminal 
 
 ## Deferred, and why
 
+- **Closed by the composition follow-up (evidence `2026-10-08T08-40-47Z`):** `crates/server/src/computer/` (`ComputerToolHost`,
+  composed by `ApiState` in front of every other host) walks each `computer.*` call through `ComputerSequence`/`ListFeed` and EXEC-010's
+  dispatcher, settles the ledger from the receipt, honours `CancelRun`/`PauseRun` (stop flag) and a run that is not running, and parks
+  the run on the permission attention item (`run.suspended` carries `attention`, a `blocked` Notification carries it, `ResumeRun`
+  only). QA-002 `KNOWN_GAPS` no longer lists `ComputerSequence`/`ActionFeed`. **Still open:** (1) the deployable composes only
+  `UnavailableComputerBridge` (refuses every call before any input) because the signed helper and its control channel do not exist; the
+  composition scan cannot see this remainder (the host's forwarding adapter implements the trait too), so it is recorded here;
+  (2) a tool call is one action, so a sequence is a list of one: a Tool that carries several actions is not declared; (3) known
+  applications and the tier ceiling are constructor inputs (`ApiState::with_computer_bridge`), `GrantComputerTier` has no handler yet;
+  (4) the bridge-bound proofs stay `BLOCKED_EXTERNAL` (real Accessibility/Screen Recording; the server suite uses a scripted bridge
+  stand-in only for the platform half). The original text of this item follows.
 - The runtime tool host that walks a sequence, settles each action on the Effect Ledger from `ledger_outcome`, parks the
   run (`SUSPENDED`, `COMPUTER_PERMISSION_REQUIRED`, a `blocked` Notification carrying the attention item) and maps the
   `COMPUTER_*` codes onto HTTP: there is no computer tool host in the server (QA-002 `KNOWN_GAPS`: `ComputerSequence`,

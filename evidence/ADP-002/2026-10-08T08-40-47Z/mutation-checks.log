@@ -1,0 +1,22 @@
+CONTROL-PASSED  a missing permission is returned as a plain failure, not a park
+COMPILES  a missing permission is returned as a plain failure, not a park
+KILLED  a missing permission is returned as a plain failure, not a park :: test a_verified_click_settles_and_a_missing_permission_parks_the_run_without_sending_anything ... FAILED
+CONTROL-PASSED  a run that is not running still sends input
+COMPILES  a run that is not running still sends input
+KILLED  a run that is not running still sends input :: test a_takeover_ends_the_call_before_the_bridge_is_asked_and_a_stopped_run_sends_nothing ... FAILED
+CONTROL-PASSED  an unverified receipt settles as success
+COMPILES  an unverified receipt settles as success
+KILLED  an unverified receipt settles as success :: test an_unverified_click_is_unknown_and_not_retried_and_the_run_waits_for_reconciliation ... FAILED
+CONTROL-PASSED  the attention item is dropped from run.suspended
+COMPILES  the attention item is dropped from run.suspended
+KILLED  the attention item is dropped from run.suspended :: test a_verified_click_settles_and_a_missing_permission_parks_the_run_without_sending_anything ... FAILED
+CONTROL-PASSED  the blocked notification is never made
+COMPILES  the blocked notification is never made
+KILLED  the blocked notification is never made :: test a_verified_click_settles_and_a_missing_permission_parks_the_run_without_sending_anything ... FAILED
+CONTROL-PASSED  a service principal may decide a certificate
+COMPILES  a service principal may decide a certificate
+KILLED  a service principal may decide a certificate :: test a_person_resolves_a_certificate_error_and_everyone_else_is_refused ... FAILED
+CONTROL-PASSED  a viewer may decide a certificate
+COMPILES  a viewer may decide a certificate
+KILLED  a viewer may decide a certificate :: test a_person_resolves_a_certificate_error_and_everyone_else_is_refused ... FAILED
+DONE

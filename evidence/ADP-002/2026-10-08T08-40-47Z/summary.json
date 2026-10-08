@@ -1,0 +1,94 @@
+{
+  "task_id": "ADP-002",
+  "git_commit": "da218a5f20d858d65dec3eee3ae583bbc52de154",
+  "recorded_at": "2026-10-08T08:40:47Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test -p quansio-server --test computer_host  # 5 passed: a read settles SETTLED_SUCCESS on its observed receipt; an unverified click is OUTCOME_UNKNOWN, the run is suspended for reconciliation and the bridge saw it once; a missing permission settles SETTLED_FAILED with 0 bridge calls, suspends the run with COMPUTER_PERMISSION_REQUIRED, run.suspended carries the attention item, a blocked Notification carries it, only ResumeRun leaves; a takeover and a paused run end the call before the bridge is asked; with no bridge composed the call is refused before any input; an unrecognised application is POLICY_DENIED. Scripted bridge stand-in: the real one needs permissions only a person at a Mac can grant (BLOCKED_EXTERNAL, native/macos suite)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-002/2026-10-08T08-40-47Z/server-tests.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib  # 341 passed (StopRegistry and action-parsing unit tests included)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "RUST_MIN_STACK=33554432 cargo test -p quansio-server --test api --test completion_claims --test routines --test served_plan_and_memory  # 17/8/4/3 passed; without the larger stack completion_claims, routines and served_plan_and_memory overflow their test thread's stack on main too (verified on a clean main worktree); api passes on main and with this change",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-002/2026-10-08T08-40-47Z/server-stack-sensitive-tests.log"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract  # 165 passed (QA-002 composition gate with ComputerSequence and ActionFeed removed from KNOWN_GAPS); test_generated_bindings_are_current deselected, it cannot run from a worktree (memory: worktree-ci-limits)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-002/2026-10-08T08-40-47Z/python-tests.log"
+    },
+    {
+      "command": "python3 evidence/ADP-002/2026-10-08T08-40-47Z/mutation-checks.py (scratch; log mutation-checks.log): 7 mutants, all COMPILE, all KILLED after a passing CONTROL",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<private database> cargo test -p quansio-server --test computer_host  # 5 passed: a read settles SETTLED_SUCCESS on its observed receipt; an unverified click is OUTCOME_UNKNOWN, the run is suspended for reconciliation and the bridge saw it once; a missing permission settles SETTLED_FAILED with 0 bridge calls, suspends the run with COMPUTER_PERMISSION_REQUIRED, run.suspended carries the attention item, a blocked Notification carries it, only ResumeRun leaves; a takeover and a paused run end the call before the bridge is asked; with no bridge composed the call is refused before any input; an unrecognised application is POLICY_DENIED. Scripted bridge stand-in: the real one needs permissions only a person at a Mac can grant (BLOCKED_EXTERNAL, native/macos suite)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib  # 341 passed (StopRegistry and action-parsing unit tests included)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "RUST_MIN_STACK=33554432 cargo test -p quansio-server --test api --test completion_claims --test routines --test served_plan_and_memory  # 17/8/4/3 passed; without the larger stack completion_claims, routines and served_plan_and_memory overflow their test thread's stack on main too (verified on a clean main worktree); api passes on main and with this change",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --project python pytest tests/architecture tests/contract  # 165 passed (QA-002 composition gate with ComputerSequence and ActionFeed removed from KNOWN_GAPS); test_generated_bindings_are_current deselected, it cannot run from a worktree (memory: worktree-ci-limits)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 evidence/ADP-002/2026-10-08T08-40-47Z/mutation-checks.py (scratch; log mutation-checks.log): 7 mutants, all COMPILE, all KILLED after a passing CONTROL",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/ADP-002/2026-10-08T08-40-47Z/mutation-checks.log",
+      "sha256": "cea42a65a1e44e13b92cc1fd422cec9b70ff020c301232b2da8cb67864e4a521",
+      "bytes": 1893
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-08T08-40-47Z/mutation-checks.py",
+      "sha256": "3122ab31750b8a4efbf3907ebb13d8ee7c43e2257cb1179881f64bae1696fe65",
+      "bytes": 4160
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-08T08-40-47Z/python-tests.log",
+      "sha256": "912685b10686adb361c8cc7b9d04c4afc65314a4d09851c7f6cbca408d0f9aa1",
+      "bytes": 275
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-08T08-40-47Z/server-api-and-others.log",
+      "sha256": "010537e980ed912c33d9d4e6485fbef9aaf6e973176c6a55be2fafdd2e67c206",
+      "bytes": 4738
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-08T08-40-47Z/server-stack-sensitive-tests.log",
+      "sha256": "cf052ec52e116115af065737657aa036f92fac9fa4a67464677a49aef1a6642d",
+      "bytes": 3379
+    },
+    {
+      "path": "evidence/ADP-002/2026-10-08T08-40-47Z/server-tests.log",
+      "sha256": "15a69e54796899e9b319d59efbe1108be519901ce28b2076caf4ef42e9192288",
+      "bytes": 33503
+    }
+  ]
+}
