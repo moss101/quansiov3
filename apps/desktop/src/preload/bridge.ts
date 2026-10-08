@@ -66,6 +66,8 @@ export const BRIDGE_CHANNELS = [
   "live.session",
   "live.takeover",
   "live.handback",
+  "live.certificate",
+  "live.permission",
   "live.attach",
   "computer.permissions",
   "computer.openSettings",
@@ -314,6 +316,9 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     liveSession: (sessionId: string) => send("live.session", { sessionId }),
     requestTakeover: (subject: { sessionId: string } | { targetId: string }) => send("live.takeover", subject),
     handback: (subject: { sessionId: string } | { targetId: string }) => send("live.handback", subject),
+    // A person's answer to a certificate error or a camera/microphone request (ADP-001). The server refuses anyone else.
+    resolveCertificate: (decision: { sessionId: string; tabId: string; certificateId: string; decision: "allow" | "deny" }) => send("live.certificate", decision),
+    decidePermission: (decision: { sessionId: string; tabId: string; origin: string; permission: "camera" | "microphone"; decision: "allow" | "deny" }) => send("live.permission", decision),
     attachLive: (targetId: string) => send("live.attach", { targetId }),
     // Native computer permissions (ADP-002): the status the guide polls, and the one click that opens a
     // Privacy pane (a permission name, never a URL).

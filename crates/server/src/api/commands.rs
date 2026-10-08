@@ -717,6 +717,27 @@ async fn dispatch(
             )
             .await?
         }
+        // A person's answer to a certificate error or a camera/microphone request in the agent's browser (ADP-001).
+        "ResolveBrowserCertificate" => {
+            super::live_sessions::resolve_browser_certificate(
+                state,
+                scope,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
+        "DecideBrowserPermission" => {
+            super::live_sessions::decide_browser_permission(
+                state,
+                scope,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
         // A person's staged cookies for the agent's browser (ADP-009): sealed, never applied until browser.import_session is approved.
         "ImportBrowserSession" => {
             super::browser_imports::import_browser_session(

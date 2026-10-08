@@ -17,7 +17,7 @@ import { ANSWER_COMMAND, CANCEL_COMMAND, MAX_UPLOAD_BYTES, POST_COMMAND, UPLOAD_
 import { MAX_IMAGE_PREVIEW_BYTES, MAX_TEXT_PREVIEW_BYTES, isActiveContent, isExecutable, mediaKind, openAllowed, previewPlan } from "../artifacts/preview.js";
 import { searchQueryString, searchRequest } from "../artifacts/search.js";
 import { OBJECTIVE_COMMAND, PROPOSE_COMMAND } from "../work/monitor.js";
-import { computerCommand, handback as handbackCommand, requestTakeover as takeoverCommand } from "../live/session.js";
+import { computerCommand, decidePermission as permissionCommand, handback as handbackCommand, requestTakeover as takeoverCommand, resolveCertificate as certificateCommand } from "../live/session.js";
 import { desktopNotice, type DesktopNotice } from "../automation/notifications.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { parseOpenSettings, parsePermissionRequest, readSnapshot, settingsUrl, notApplicable, type PermissionSnapshot, type PermissionSource } from "./permissions.js";
@@ -324,6 +324,9 @@ export class DesktopBridge {
       "live.session": (payload) => Promise.resolve(payload).then((raw) => this.server.browserSession(asSessionId(raw, "live.session"))),
       "live.takeover": (payload) => settled(Promise.resolve(payload).then((raw) => this.liveControl("RequestTakeover", raw))),
       "live.handback": (payload) => settled(Promise.resolve(payload).then((raw) => this.liveControl("Handback", raw))),
+      // A person's answer to a certificate error or a camera/microphone request (ADP-001): user-only on the server.
+      "live.certificate": (payload) => settled(Promise.resolve(payload).then((raw) => this.liveCertificate(raw))),
+      "live.permission": (payload) => settled(Promise.resolve(payload).then((raw) => this.livePermission(raw))),
       "computer.permissions": (payload) => Promise.resolve(payload).then((raw) => this.computerPermissions(raw)),
       "computer.openSettings": (payload) => Promise.resolve(payload).then((raw) => this.openComputerSettings(raw)),
       // Skill recording (ADP-003): refusals are data the page branches on, so the commands are settled.
@@ -495,6 +498,35 @@ export class DesktopBridge {
     if (!command) {
       throw new Error("a live control command names a bsn_ session or a tgt_ target");
     }
+    return (await this.server.invoke(command.name, newCommandId(), command.params)).result;
+  }
+
+  /** `ResolveBrowserCertificate`: the person lets a tab continue past a certificate error, or cancels it. */
+  async liveCertificate(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "live.certificate");
+    const command = certificateCommand(
+      asSessionId(record, "live.certificate"),
+      asText(record["tabId"], "live.certificate tabId"),
+      asText(record["certificateId"], "live.certificate certificateId"),
+      asDecision(record["decision"], "live.certificate"),
+    );
+    return (await this.server.invoke(command.name, newCommandId(), command.params)).result;
+  }
+
+  /** `DecideBrowserPermission`: the person grants or denies camera or microphone for one origin. */
+  async livePermission(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "live.permission");
+    const permission = record["permission"];
+    if (permission !== "camera" && permission !== "microphone") {
+      throw new Error("live.permission grants camera or microphone only");
+    }
+    const command = permissionCommand(
+      asSessionId(record, "live.permission"),
+      asText(record["tabId"], "live.permission tabId"),
+      asText(record["origin"], "live.permission origin"),
+      permission,
+      asDecision(record["decision"], "live.permission"),
+    );
     return (await this.server.invoke(command.name, newCommandId(), command.params)).result;
   }
 
@@ -1328,6 +1360,20 @@ function asThreadId(payload: unknown, what: string): string {
     throw new Error(`${what} needs a thr_ id`);
   }
   return threadId;
+}
+
+function asText(value: unknown, what: string): string {
+  if (typeof value !== "string" || value === "") {
+    throw new Error(`${what} needs a non-empty string`);
+  }
+  return value;
+}
+
+function asDecision(value: unknown, what: string): "allow" | "deny" {
+  if (value !== "allow" && value !== "deny") {
+    throw new Error(`${what} decision is allow or deny`);
+  }
+  return value;
 }
 
 function asSessionId(payload: unknown, what: string): string {

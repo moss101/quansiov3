@@ -609,3 +609,258 @@ async fn a_native_computer_takeover_drives_the_control_row_with_its_fence() {
     );
     common::drop_pool(&h.pool, &h.name).await;
 }
+
+// ------------------------------------------------------------------ ADP-001: user-only browser decisions
+
+const TAB: &str = "cdp-1";
+
+/// The worker's report with one pending certificate error, written the way the control channel will write it.
+async fn report_pending_certificate(pool: &sqlx::PgPool) {
+    let report = quansio_machine::control::browser::GuardReport::from_json(&json!({
+        "tabs": [{
+            "tab_id": TAB,
+            "url": "https://example.com/",
+            "document_revision": "rev_0123456789abcdef",
+            "certificates": [{
+                "id": "crt_1", "origin": "https://example.com", "error_type": "ERR_CERT_AUTHORITY_INVALID",
+                "status": "pending", "certificate_sha256": null, "decided_by": null
+            }],
+            "downloads": [],
+            "popups_blocked": 0
+        }],
+        "in_doubt": []
+    }))
+    .expect("report");
+    let mut conn = pool.acquire().await.expect("acquire");
+    schema::set_tenant_context_conn(&mut conn, TENANT)
+        .await
+        .expect("tenant");
+    BrowserSessionStore::record_guard_report(
+        &mut conn,
+        TENANT,
+        SESSION,
+        &report,
+        "2026-10-08T00:00:00Z",
+    )
+    .await
+    .expect("report");
+}
+
+async fn session_guard(pool: &sqlx::PgPool) -> Value {
+    let mut conn = pool.acquire().await.expect("acquire");
+    schema::set_tenant_context_conn(&mut conn, TENANT)
+        .await
+        .expect("tenant");
+    let session = BrowserSessionStore::load(&mut conn, TENANT, SESSION)
+        .await
+        .expect("load");
+    session.guard.to_json()
+}
+
+async fn bearer_command(
+    router: &axum::Router,
+    token: &str,
+    name: &str,
+    id: u32,
+    params: Value,
+) -> (u16, Value) {
+    let request = Request::builder()
+        .method("POST")
+        .uri(format!("/v1/commands/{name}"))
+        .header("x-quansio-tenant", TENANT)
+        .header("content-type", "application/json")
+        .header("authorization", format!("Bearer {token}"))
+        .body(axum::body::Body::from(
+            json!({ "command_id": command_id(id), "params": params }).to_string(),
+        ))
+        .expect("request");
+    let response = router.clone().oneshot(request).await.expect("response");
+    let status = response.status().as_u16();
+    (status, json_body(response).await)
+}
+
+#[tokio::test]
+async fn a_person_resolves_a_certificate_error_and_everyone_else_is_refused() {
+    let Some(h) = prepare("live_cert_decision").await else {
+        common::blocked_marker();
+        return;
+    };
+    report_pending_certificate(&h.pool).await;
+    let before = session_guard(&h.pool).await;
+    let params = |decision: &str| json!({ "session_id": SESSION, "tab_id": TAB, "certificate_id": "crt_1", "decision": decision });
+
+    // A viewer may look at the surface but not decide for the agent's browser.
+    let (status, refused) = command(
+        &h.router,
+        VIEWER,
+        "ResolveBrowserCertificate",
+        1,
+        params("allow"),
+    )
+    .await;
+    assert_eq!(status, 403, "{refused}");
+
+    // A service principal, even one holding the Browser/computer family, is not a person.
+    let (status, created) = command(
+        &h.router,
+        OWNER,
+        "CreateServicePrincipal",
+        2,
+        json!({ "name": "browser-bot", "scopes": ["Browser/computer"] }),
+    )
+    .await;
+    assert_eq!(status, 200, "{created}");
+    let token = created["result"]["secret"]
+        .as_str()
+        .expect("key")
+        .to_string();
+    let (status, refused) = bearer_command(
+        &h.router,
+        &token,
+        "ResolveBrowserCertificate",
+        3,
+        params("allow"),
+    )
+    .await;
+    assert_eq!(status, 403, "{refused}");
+    assert_eq!(refused["code"], "SCOPE_FORBIDDEN");
+    let (status, refused) = bearer_command(
+        &h.router,
+        &token,
+        "DecideBrowserPermission",
+        4,
+        json!({ "session_id": SESSION, "tab_id": TAB, "origin": "https://example.com", "permission": "camera", "decision": "allow" }),
+    )
+    .await;
+    assert_eq!(status, 403, "{refused}");
+    assert_eq!(refused["code"], "SCOPE_FORBIDDEN");
+
+    // None of the refusals touched the row.
+    assert_eq!(session_guard(&h.pool).await, before);
+
+    // A decision that is neither allow nor deny, and a certificate that is not pending, are refused too.
+    let (status, refused) = command(
+        &h.router,
+        OWNER,
+        "ResolveBrowserCertificate",
+        5,
+        params("maybe"),
+    )
+    .await;
+    assert_eq!(status, 400, "{refused}");
+    let (status, refused) = command(
+        &h.router,
+        OWNER,
+        "ResolveBrowserCertificate",
+        6,
+        json!({ "session_id": SESSION, "tab_id": TAB, "certificate_id": "crt_nope", "decision": "allow" }),
+    )
+    .await;
+    assert_eq!(status, 409, "{refused}");
+    assert_eq!(session_guard(&h.pool).await, before);
+
+    // The person's decision is recorded with their identity and returns the receipt the worker acts on.
+    let (status, decided) = command(
+        &h.router,
+        OWNER,
+        "ResolveBrowserCertificate",
+        7,
+        params("allow"),
+    )
+    .await;
+    assert_eq!(status, 200, "{decided}");
+    let receipt = &decided["result"]["receipt"];
+    assert_eq!(receipt["kind"], "certificate");
+    assert_eq!(receipt["subject"], "crt_1");
+    assert_eq!(receipt["decision"], "allow");
+    assert_eq!(receipt["decided_by"], OWNER);
+    let guard = session_guard(&h.pool).await;
+    assert_eq!(guard["tabs"][0]["certificates"][0]["status"], "continued");
+    assert_eq!(guard["tabs"][0]["certificates"][0]["decided_by"], OWNER);
+    assert_eq!(guard["decisions"][0]["decided_by"], OWNER);
+    // The surface reads the same state back.
+    let (status, view) = get(&h.router, OWNER, &format!("/v1/browser-sessions/{SESSION}")).await;
+    assert_eq!(status, 200, "{view}");
+    assert_eq!(
+        view["session"]["guard"]["tabs"][0]["certificates"][0]["status"],
+        "continued"
+    );
+    // A second answer to the same error finds nothing pending.
+    let (status, again) = command(
+        &h.router,
+        OWNER,
+        "ResolveBrowserCertificate",
+        8,
+        params("deny"),
+    )
+    .await;
+    assert_eq!(status, 409, "{again}");
+    common::drop_pool(&h.pool, &h.name).await;
+}
+
+#[tokio::test]
+async fn only_camera_and_microphone_for_a_well_formed_origin_can_be_granted_and_only_by_a_person() {
+    let Some(h) = prepare("live_perm_decision").await else {
+        common::blocked_marker();
+        return;
+    };
+    let params = |origin: &str, permission: &str, decision: &str| json!({ "session_id": SESSION, "tab_id": TAB, "origin": origin, "permission": permission, "decision": decision });
+    let (status, refused) = command(
+        &h.router,
+        VIEWER,
+        "DecideBrowserPermission",
+        2,
+        params("https://example.com", "camera", "allow"),
+    )
+    .await;
+    assert_eq!(status, 403, "{refused}");
+    for (n, (origin, permission)) in [
+        ("https://example.com", "geolocation"),
+        ("https://example.com", "notifications"),
+        ("example.com", "camera"),
+        ("https://example.com/path", "microphone"),
+        ("https://user@example.com", "camera"),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let n = u32::try_from(n).expect("small");
+        let (status, refused) = command(
+            &h.router,
+            OWNER,
+            "DecideBrowserPermission",
+            10 + n,
+            params(origin, permission, "allow"),
+        )
+        .await;
+        assert_eq!(status, 400, "{origin} {permission}: {refused}");
+    }
+    assert_eq!(session_guard(&h.pool).await["decisions"], json!([]));
+
+    let (status, granted) = command(
+        &h.router,
+        OWNER,
+        "DecideBrowserPermission",
+        4,
+        params("https://example.com", "camera", "allow"),
+    )
+    .await;
+    assert_eq!(status, 200, "{granted}");
+    let receipt = &granted["result"]["receipt"];
+    assert_eq!(receipt["kind"], "permission");
+    assert_eq!(receipt["subject"], "https://example.com|camera");
+    assert_eq!(receipt["decided_by"], OWNER);
+    let (status, denied) = command(
+        &h.router,
+        OWNER,
+        "DecideBrowserPermission",
+        5,
+        params("https://example.com", "microphone", "deny"),
+    )
+    .await;
+    assert_eq!(status, 200, "{denied}");
+    let guard = session_guard(&h.pool).await;
+    assert_eq!(guard["decisions"].as_array().map(Vec::len), Some(2));
+    assert_eq!(guard["decisions"][1]["decision"], "deny");
+    common::drop_pool(&h.pool, &h.name).await;
+}
