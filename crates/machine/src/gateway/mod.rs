@@ -21,6 +21,8 @@
 //! holds and the instant, so the same rules serve the worker (which has no control-plane database) and
 //! a test.
 
+pub mod wire;
+
 use quansio_core::Digest;
 
 use crate::control::{Substrate, TargetStatus};

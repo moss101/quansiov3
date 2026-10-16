@@ -38,6 +38,7 @@ fn server_config(kms: Option<KmsConfig>, key_file: Option<String>) -> ServerConf
         secrets_kms: kms,
         nats_url: None,
         intelligence_endpoint: None,
+        worker_socket: None,
     }
 }
 
