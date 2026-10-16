@@ -15,6 +15,7 @@
 
 pub mod browser;
 pub mod compose;
+pub mod executor;
 pub mod host;
 pub mod mcp;
 pub mod media;
