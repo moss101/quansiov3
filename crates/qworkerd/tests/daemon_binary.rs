@@ -264,3 +264,61 @@ async fn the_binary_refuses_to_start_without_a_usable_workspace_root_or_with_an_
         .unwrap();
     assert_eq!(status.code(), Some(2));
 }
+
+#[tokio::test]
+async fn the_browser_flags_are_refused_without_a_browser_and_a_state_dir_inside_the_workspace_is_refused(
+) {
+    let dir = tempfile::Builder::new()
+        .prefix("q")
+        .tempdir_in("/tmp")
+        .unwrap();
+    let root = dir.path().join("root");
+    std::fs::create_dir_all(root.join("state")).unwrap();
+    let base = |extra: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_qworkerd"))
+            .args([
+                "--socket",
+                "/tmp/none.sock",
+                "--tenant",
+                TENANT,
+                "--target",
+                TARGET,
+                "--workspace-root",
+            ])
+            .arg(&root)
+            .args(extra)
+            .stderr(Stdio::piped())
+            .output()
+            .unwrap()
+    };
+    // The flags mean nothing without a browser: they are refused rather than ignored.
+    for extra in [
+        &["--allow-private-network"][..],
+        &["--state-dir", "/tmp/x"][..],
+    ] {
+        let out = base(extra);
+        assert_eq!(out.status.code(), Some(2), "{extra:?}");
+        assert!(
+            String::from_utf8_lossy(&out.stderr).contains("only used with --chrome"),
+            "{extra:?}"
+        );
+    }
+    // A browser needs a state directory, and not one the file tools can read.
+    let chrome = std::env::current_exe().unwrap(); // any existing file: the check that matters comes first
+    let out = base(&["--chrome", chrome.to_str().unwrap()]);
+    assert_eq!(out.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&out.stderr).contains("needs --state-dir"));
+    let inside = root.join("state");
+    let out = base(&[
+        "--chrome",
+        chrome.to_str().unwrap(),
+        "--state-dir",
+        inside.to_str().unwrap(),
+    ]);
+    assert_eq!(out.status.code(), Some(2));
+    assert!(
+        String::from_utf8_lossy(&out.stderr).contains("must not be inside"),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+}

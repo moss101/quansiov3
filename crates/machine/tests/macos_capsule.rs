@@ -147,6 +147,7 @@ fn envelope(tool: &str) -> ActionEnvelope {
         args_digest: Digest::of_canonical_json("{}").to_string(),
         max_output_bytes: 1024,
         deadline_at: "2026-09-14T08:00:00Z".to_string(),
+        approved_tier: None,
     }
 }
 

@@ -19,6 +19,7 @@ use quansio_machine::gateway::ActionEnvelope;
 use serde::Deserialize;
 use serde_json::{json, Value};
 
+use crate::browser_runtime::BrowserRuntime;
 use crate::host::{HostFailure, OutputSink, ToolExecutor, ToolOutput};
 use crate::tools::{
     CancelToken, FileHost, ProcessHandle, ProcessHost, RootScope, Sandbox, SpawnRequest,
@@ -74,6 +75,7 @@ pub struct LocalToolExecutor {
     tenant_id: String,
     terminal_timeout: Duration,
     spawned: Mutex<Vec<ProcessHandle>>,
+    browser: Option<BrowserRuntime>,
 }
 
 impl std::fmt::Debug for LocalToolExecutor {
@@ -96,6 +98,7 @@ impl LocalToolExecutor {
             tenant_id: tenant_id.into(),
             terminal_timeout: DEFAULT_TERMINAL_TIMEOUT,
             spawned: Mutex::new(Vec::new()),
+            browser: None,
         }
     }
 
@@ -103,6 +106,13 @@ impl LocalToolExecutor {
     #[must_use]
     pub fn with_shell(mut self, shell: impl Into<String>) -> Self {
         self.process = ProcessHost::with_shell(shell);
+        self
+    }
+
+    /// Serve `browser.*` calls on browsers this worker launches. Without it they fail closed.
+    #[must_use]
+    pub fn with_browser(mut self, browser: BrowserRuntime) -> Self {
+        self.browser = Some(browser);
         self
     }
 
@@ -364,6 +374,22 @@ impl ToolExecutor for LocalToolExecutor {
             "fs.patch" => self.patch(envelope),
             "terminal.exec" => self.exec(envelope).await,
             "process.spawn" => self.spawn(envelope),
+            tool if tool.starts_with("browser.") => {
+                let Some(browser) = &self.browser else {
+                    return Err(HostFailure::ToolFailed {
+                        tool: envelope.tool.clone(),
+                        detail: "BROWSER_UNAVAILABLE: this worker was started without a browser (--chrome)".to_string(),
+                    });
+                };
+                // The reply is a document whatever happened (ok, error or in doubt); the server settles on it.
+                let document = browser.call(envelope).await;
+                output.push(
+                    Self::fit(document, "output", Self::limit(envelope))
+                        .to_string()
+                        .as_bytes(),
+                );
+                return Ok(ToolOutput::new());
+            }
             other => Err(ToolError::UnknownTool(other.to_string())),
         };
         match outcome {

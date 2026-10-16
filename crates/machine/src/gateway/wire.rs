@@ -83,6 +83,9 @@ pub struct EnvelopeWire {
     pub max_output_bytes: usize,
     /// Deadline.
     pub deadline_at: String,
+    /// The highest consequence tier the runtime approved for the call, when it stated one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub approved_tier: Option<u8>,
 }
 
 impl From<&ActionEnvelope> for EnvelopeWire {
@@ -102,6 +105,7 @@ impl From<&ActionEnvelope> for EnvelopeWire {
             args_digest: envelope.args_digest.clone(),
             max_output_bytes: envelope.max_output_bytes,
             deadline_at: envelope.deadline_at.clone(),
+            approved_tier: envelope.approved_tier,
         }
     }
 }
@@ -128,6 +132,7 @@ impl EnvelopeWire {
             args_digest: self.args_digest,
             max_output_bytes: self.max_output_bytes,
             deadline_at: self.deadline_at,
+            approved_tier: self.approved_tier,
         })
     }
 }
@@ -262,6 +267,7 @@ mod tests {
             args_digest: "0".repeat(64),
             max_output_bytes: 10,
             deadline_at: "2999-01-01T00:00:00Z".into(),
+            approved_tier: Some(3),
         };
         assert_eq!(
             EnvelopeWire::from(&envelope.clone().into_envelope().unwrap()),
