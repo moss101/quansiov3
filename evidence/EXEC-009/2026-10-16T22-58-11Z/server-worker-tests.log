@@ -1,0 +1,34 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/crates/server)
+   Compiling quansio-qworkerd v0.1.0 (/Users/mohsin/projects/quansiov3/crates/qworkerd)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.37s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-78000db210b072f3)
+
+running 3 tests
+test worker::browser::tests::a_driver_reply_settles_as_exactly_what_it_said_it_was ... ok
+test worker::browser::tests::an_outcome_the_driver_could_not_establish_is_unknown_and_so_is_anything_that_is_not_its_reply ... ok
+test worker::browser::tests::only_a_static_effect_class_states_a_ceiling ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 341 filtered out; finished in 0.01s
+
+     Running tests/worker_browser.rs (target/debug/deps/worker_browser-5a549c53fccfaed8)
+
+running 2 tests
+test with_no_worker_attached_every_browser_call_is_worker_unavailable ... ok
+test a_browser_tool_a_worker_cannot_serve_is_refused_and_never_answered_by_a_stub ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 13.84s
+
+     Running tests/worker_host.rs (target/debug/deps/worker_host-4c7ba1c11e0d831b)
+
+running 8 tests
+test with_no_worker_a_worker_tool_is_refused_and_never_answered_by_a_stub ... ok
+test a_path_outside_the_worker_root_is_a_failed_result_not_a_read ... ok
+test a_lost_worker_releases_its_lease_and_the_next_dispatch_is_refused ... ok
+test tools_run_on_the_worker_under_a_live_lease_and_the_disk_shows_it ... ok
+test only_a_ready_target_that_dials_in_is_given_a_worker_and_only_one_worker_per_target ... ok
+test a_worker_that_goes_quiet_is_fenced_when_its_lease_lapses_and_its_work_is_refused ... ok
+test a_dispatch_the_worker_never_answers_is_unknown_and_is_not_sent_twice ... ok
+test heartbeats_keep_the_lease_alive_past_its_ttl_and_the_target_records_what_the_worker_observed ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 7.06s
+

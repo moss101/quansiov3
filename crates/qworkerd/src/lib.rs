@@ -14,6 +14,8 @@
 #![forbid(unsafe_code)]
 
 pub mod browser;
+pub mod browser_runtime;
+pub mod chrome;
 pub mod compose;
 pub mod daemon;
 pub mod executor;

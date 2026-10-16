@@ -126,6 +126,19 @@ impl WorkerHub {
         }
     }
 
+    /// The control-plane pool the hub leases through.
+    #[must_use]
+    pub const fn pool(&self) -> &PgPool {
+        &self.pool
+    }
+
+    /// The target of the worker attached for a workspace, when one is.
+    #[must_use]
+    pub fn target_for_workspace(&self, tenant_id: &str, workspace_id: &str) -> Option<String> {
+        self.link_for_workspace(tenant_id, workspace_id)
+            .map(|link| link.target_id.clone())
+    }
+
     /// The workers attached now.
     #[must_use]
     pub fn links(&self) -> Vec<LinkSnapshot> {
@@ -473,6 +486,10 @@ impl WorkerHub {
             deadline_at: request.deadline_at,
         })
         .map_err(|rejection| HubError::Envelope(rejection.to_string()))?;
+        let envelope = match request.approved_tier {
+            Some(tier) => envelope.with_approved_tier(tier),
+            None => envelope,
+        };
         // Belt and braces: the gateway's own rules, applied here as the worker will apply them.
         MachineGateway::validate(
             &envelope,
@@ -540,4 +557,7 @@ pub struct DispatchArgs<'a> {
     pub deadline_at: &'a str,
     /// How long to wait for the worker's answer.
     pub wait: Duration,
+    /// The highest consequence tier the runtime approved for the call, for a tool whose consequence is known only
+    /// once the worker has looked at the page.
+    pub approved_tier: Option<u8>,
 }

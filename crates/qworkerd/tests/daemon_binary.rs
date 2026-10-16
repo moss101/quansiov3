@@ -264,3 +264,76 @@ async fn the_binary_refuses_to_start_without_a_usable_workspace_root_or_with_an_
         .unwrap();
     assert_eq!(status.code(), Some(2));
 }
+
+#[tokio::test]
+async fn the_browser_flags_are_refused_without_a_browser_and_a_state_dir_inside_the_workspace_is_refused(
+) {
+    let dir = tempfile::Builder::new()
+        .prefix("q")
+        .tempdir_in("/tmp")
+        .unwrap();
+    let root = dir.path().join("root");
+    std::fs::create_dir_all(root.join("state")).unwrap();
+    // A daemon that wrongly accepts its arguments keeps running (it would retry the socket forever), so the wait is
+    // bounded: a regression fails this test in seconds instead of hanging the suite.
+    let base = |extra: &[&str]| {
+        let mut child = Command::new(env!("CARGO_BIN_EXE_qworkerd"))
+            .args([
+                "--socket",
+                "/tmp/none.sock",
+                "--tenant",
+                TENANT,
+                "--target",
+                TARGET,
+                "--workspace-root",
+            ])
+            .arg(&root)
+            .args(extra)
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        loop {
+            if child.try_wait().unwrap().is_some() {
+                return child.wait_with_output().unwrap();
+            }
+            if std::time::Instant::now() > deadline {
+                let _ = child.kill();
+                let _ = child.wait();
+                panic!("the daemon accepted {extra:?} and kept running");
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+    };
+    // The flags mean nothing without a browser: they are refused rather than ignored.
+    for extra in [
+        &["--allow-private-network"][..],
+        &["--state-dir", "/tmp/x"][..],
+    ] {
+        let out = base(extra);
+        assert_eq!(out.status.code(), Some(2), "{extra:?}");
+        assert!(
+            String::from_utf8_lossy(&out.stderr).contains("only used with --chrome"),
+            "{extra:?}"
+        );
+    }
+    // A browser needs a state directory, and not one the file tools can read.
+    let chrome = std::env::current_exe().unwrap(); // any existing file: the check that matters comes first
+    let out = base(&["--chrome", chrome.to_str().unwrap()]);
+    assert_eq!(out.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&out.stderr).contains("needs --state-dir"));
+    let inside = root.join("state");
+    let out = base(&[
+        "--chrome",
+        chrome.to_str().unwrap(),
+        "--state-dir",
+        inside.to_str().unwrap(),
+    ]);
+    assert_eq!(out.status.code(), Some(2));
+    assert!(
+        String::from_utf8_lossy(&out.stderr).contains("must not be inside"),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+}

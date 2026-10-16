@@ -10,8 +10,10 @@
 //! refused, never simulated), or retry a dispatch whose result it did not see. A dispatch that was sent and
 //! not answered settles as *unknown*, and the runtime reconciles it.
 
+mod browser;
 mod host;
 mod hub;
 
+pub use browser::{approved_tier, BROWSER_TOOLS};
 pub use host::{WorkerRoutedHost, WorkerToolHost, WORKER_TOOLS};
 pub use hub::{DispatchArgs, HubConfig, HubError, LinkSnapshot, WorkerHub};

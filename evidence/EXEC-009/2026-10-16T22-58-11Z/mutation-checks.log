@@ -1,0 +1,28 @@
+M1 server does not fence agent input during a takeover: COMPILES
+M1 server does not fence agent input during a takeover: KILLED (a_takeover_fences_the_agent_before_anything_is_sent_and_a_handback_lifts_it;result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.48s;)
+M2 server forwards the model's session_id as written: COMPILES
+M2 server forwards the model's session_id as written: KILLED (a_takeover_fences_the_agent_before_anything_is_sent_and_a_handback_lifts_it;the_ceiling_is_the_taxonomy_s_tier_for_the_tool_and_a_higher_consequence_is_refused_before_input;)
+M3 server states no approved tier: COMPILES
+M3 server states no approved tier: KILLED (the_ceiling_is_the_taxonomy_s_tier_for_the_tool_and_a_higher_consequence_is_refused_before_input;result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.54s;)
+M4 server routes any browser tool, served or not: COMPILES
+M4 server routes any browser tool, served or not: KILLED (a_browser_tool_a_worker_cannot_serve_is_refused_and_never_answered_by_a_stub;result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.44s;)
+M5 worker does not vet navigation destinations: COMPILES
+M5 worker does not vet navigation destinations: KILLED (by_default_the_machine_s_own_addresses_are_refused_before_chrome_is_asked;result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s;)
+M6 daemon accepts a state dir inside the workspace: DOES NOT COMPILE (verdict void)
+For more information about this error, try `rustc --explain E0004`.
+error: could not compile `quansio-qworkerd` (bin "qworkerd") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+M7 server settles an in-doubt reply as success: DOES NOT COMPILE (verdict void)
+    |                   -- while parsing the `match` arm starting here                                             ^ expected one of `,`, `.`, `?`, `}`, or an operator
+
+error: could not compile `quansio-server` (lib test) due to 2 previous errors
+CONTROL (restored): all pass
+(no diff above = restored)
+M6 daemon accepts a state dir inside the workspace: COMPILES
+(eval):2: command not found: timeout
+M6 daemon accepts a state dir inside the workspace: COMPILES
+M6 daemon accepts a state dir inside the workspace: KILLED (the_browser_flags_are_refused_without_a_browser_and_a_state_dir_inside_the_workspace_is_refused;result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.53s;)
+M7 server settles an in-doubt reply as success: COMPILES
+M7 server settles an in-doubt reply as success: KILLED (worker::browser::tests::an_outcome_the_driver_could_not_establish_is_unknown_and_so_is_anything_that_is_not_its_reply;result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 341 filtered out; finished in 0.01s;)
+CONTROL (restored): all pass
+(no diff above = restored)

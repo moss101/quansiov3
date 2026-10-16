@@ -1,0 +1,144 @@
+{
+  "task_id": "EXEC-009",
+  "git_commit": "0d63d1148ac1f116f8fba88c8aed60952e6df24d",
+  "recorded_at": "2026-10-16T23:38:51Z",
+  "commands": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-16T22-58-11Z/fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-16T22-58-11Z/clippy.log"
+    },
+    {
+      "command": "arch_check.py + pytest tests/architecture  # 129 passed, forbidden-wiring clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-16T22-58-11Z/architecture.log"
+    },
+    {
+      "command": "cargo test -p quansio-qworkerd --test browser_worker --test executor --test daemon_binary --lib  # a real Chrome the worker launches, driven through the worker host against a local site whose counters show what the page really requested: loopback refused before Chrome is asked and the site never sees a request; navigate/observe/click run and the site sees exactly one click; a re-delivered click is a replay and the site still sees one; a click above the approved tier is refused with no input and goes through under a higher one; a worker without a browser refuses; bad session ids never become directories; the daemon refuses browser flags without a browser and a state dir inside the workspace",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-16T22-58-11Z/worker-tests.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test worker_browser --test worker_host --lib worker  # real PostgreSQL leases and browser sessions, a real worker session and a real Chrome: a call acts on its own run's session and run B cannot reach run A's tab by naming it; a takeover fences the agent before anything is sent and a handback lifts it; the ceiling is the taxonomy's tier (click 3, navigate 2, observe 0) and a Buy-now click above it is refused with no input; unserved browser tools are refused and open no session; no worker means WORKER_UNAVAILABLE; settle() maps ok/error/in_doubt/garbage to success/failure/unknown/unknown",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-16T22-58-11Z/server-worker-tests.log"
+    },
+    {
+      "command": "cargo test -p quansio-machine --lib gateway  # approved_tier survives the wire, an unknown kind and oversize frames are refused",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-16T22-58-11Z/gateway-unit.log"
+    },
+    {
+      "command": "RUST_MIN_STACK=16777216 cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1318 passed, 0 failed (the larger stack avoids three tests that overflow on main, reproduced without this change)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-16T22-58-11Z/full-crates.log"
+    },
+    {
+      "command": "mutation checks M1-M7 all KILLED: fence removed, session_id forwarded as written, no approved tier, unserved tools routed, navigation not vetted, state dir inside the workspace accepted, in-doubt settled as success; every mutant compiles; the restored control passes. M6 first hung the suite, so the test now bounds its waits",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-16T22-58-11Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "arch_check.py + pytest tests/architecture  # 129 passed, forbidden-wiring clean",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-qworkerd --test browser_worker --test executor --test daemon_binary --lib  # a real Chrome the worker launches, driven through the worker host against a local site whose counters show what the page really requested: loopback refused before Chrome is asked and the site never sees a request; navigate/observe/click run and the site sees exactly one click; a re-delivered click is a replay and the site still sees one; a click above the approved tier is refused with no input and goes through under a higher one; a worker without a browser refuses; bad session ids never become directories; the daemon refuses browser flags without a browser and a state dir inside the workspace",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test worker_browser --test worker_host --lib worker  # real PostgreSQL leases and browser sessions, a real worker session and a real Chrome: a call acts on its own run's session and run B cannot reach run A's tab by naming it; a takeover fences the agent before anything is sent and a handback lifts it; the ceiling is the taxonomy's tier (click 3, navigate 2, observe 0) and a Buy-now click above it is refused with no input; unserved browser tools are refused and open no session; no worker means WORKER_UNAVAILABLE; settle() maps ok/error/in_doubt/garbage to success/failure/unknown/unknown",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-machine --lib gateway  # approved_tier survives the wire, an unknown kind and oversize frames are refused",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "RUST_MIN_STACK=16777216 cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1318 passed, 0 failed (the larger stack avoids three tests that overflow on main, reproduced without this change)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks M1-M7 all KILLED: fence removed, session_id forwarded as written, no approved tier, unserved tools routed, navigation not vetted, state dir inside the workspace accepted, in-doubt settled as success; every mutant compiles; the restored control passes. M6 first hung the suite, so the test now bounds its waits",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/EXEC-009/2026-10-16T22-58-11Z/fmt.log",
+      "sha256": "8bc7b290341d8b4d3fbdc6c48bffc1dac5c9e8a41608403e62b6f2a0c1af9957",
+      "bytes": 9
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-16T22-58-11Z/clippy.log",
+      "sha256": "8511bd0ad82238e2500e94a166ed2957d5b170c67156d8578f4b2a0aa77a9510",
+      "bytes": 257
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-16T22-58-11Z/architecture.log",
+      "sha256": "39bf3ecef9aae6170d6ca9570465d36a738e41b87c8d36778f3496226abe2d73",
+      "bytes": 220
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-16T22-58-11Z/worker-tests.log",
+      "sha256": "7528b61984606b02013f50f18df11592cd6d28ec6d3633852fccf8f531499c97",
+      "bytes": 5610
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-16T22-58-11Z/server-worker-tests.log",
+      "sha256": "6ceebf663cac16e18d8bb556273a17053ae4c97dc760d946fcc486332d9d2ea8",
+      "bytes": 1995
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-16T22-58-11Z/gateway-unit.log",
+      "sha256": "7e5c3c343aa583d78c74b635554832a164343b3d24807da50948db1e809baf09",
+      "bytes": 766
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-16T22-58-11Z/full-crates.log",
+      "sha256": "1fc3be78c330a905604c1f35396712179f2cac28718f4bdc2367ef548ce61b22",
+      "bytes": 132618
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-16T22-58-11Z/mutation-checks.log",
+      "sha256": "4d62722c9de9aa91aead7d38828ee9a979857b37754dacf927f9f6a306e1fd9c",
+      "bytes": 2924
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-16T22-58-11Z/RECONCILIATION.md",
+      "sha256": "40d243428573b2eeca40e84641a18a219fe32b87861a70b9758490d622906f3c",
+      "bytes": 4156
+    }
+  ]
+}
