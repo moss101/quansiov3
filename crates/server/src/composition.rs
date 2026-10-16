@@ -56,6 +56,9 @@ pub struct ServerConfig {
     /// `unix:///path`) that builds each turn's context and fulfils its model calls (APP-001).
     /// Unset, turns are answered by the conformance stub, and startup says so.
     pub intelligence_endpoint: Option<String>,
+    /// `QUANSIO_WORKER_SOCKET`: the Unix socket the server listens on for `qworkerd` (EXEC-002). Unset, no worker can
+    /// attach and the worker tools (`fs.*`, `terminal.exec`, `process.spawn`) are refused `WORKER_UNAVAILABLE`.
+    pub worker_socket: Option<std::path::PathBuf>,
 }
 
 impl ServerConfig {
@@ -121,9 +124,14 @@ impl ServerConfig {
         let intelligence_endpoint = env::var("QUANSIO_INTELLIGENCE_ENDPOINT")
             .ok()
             .filter(|value| !value.is_empty());
+        let worker_socket = env::var("QUANSIO_WORKER_SOCKET")
+            .ok()
+            .filter(|value| !value.is_empty())
+            .map(std::path::PathBuf::from);
         Ok(Self {
             nats_url,
             intelligence_endpoint,
+            worker_socket,
             secrets_key_file,
             secrets_key_ref,
             secrets_kms,
@@ -252,6 +260,27 @@ impl Composition {
                 api = api.with_metrics_token(&token);
             }
         }
+        // The worker hub (EXEC-002): always composed, so a worker tool is either run by an attached worker or refused
+        // `WORKER_UNAVAILABLE`; it is never answered by the conformance stub. It listens only when a socket is configured.
+        let hub = crate::worker::WorkerHub::new(pool.clone(), crate::worker::HubConfig::default());
+        if let Some(path) = config.worker_socket.as_deref() {
+            hub.listen(path)
+                .map_err(|error| format!("QUANSIO_WORKER_SOCKET={}: {error}", path.display()))?;
+            crate::observability::notice(
+                crate::observability::Level::Info,
+                &format!(
+                    "QUANSIO_WORKER_SOCKET={}: qworkerd may attach; start it with --socket {}",
+                    path.display(),
+                    path.display()
+                ),
+            );
+        } else {
+            crate::observability::notice(
+                crate::observability::Level::Info,
+                "QUANSIO_WORKER_SOCKET is not set: fs.*, terminal.exec and process.spawn are refused WORKER_UNAVAILABLE",
+            );
+        }
+        api = api.with_worker_hub(hub);
         if let Some(endpoint) = config.intelligence_endpoint.as_deref() {
             let settings = crate::intelligence::model_source::ModelCallSettings::load()?;
             let client = crate::intelligence::IntelligenceClient::connect_lazy(endpoint)

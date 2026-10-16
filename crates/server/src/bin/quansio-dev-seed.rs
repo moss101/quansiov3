@@ -11,7 +11,7 @@
 //!
 //! Usage:
 //!   quansio-dev-seed create --database <name> --tenant <tn_…> --user <usr_…> \
-//!       --workspace <ws_…> --node <wn_…> [--ask-writes] [--intelligence] [--live] \
+//!       --workspace <ws_…> --node <wn_…> [--ask-writes] [--intelligence] [--live] [--worker] \
 //!       [--member <usr_…>:<tenant role>:<workspace role>]…
 //!   quansio-dev-seed drop --database <name>
 //!
@@ -27,6 +27,10 @@
 //! the run's browser session (agent-held, active, on a page), one open terminal session
 //! with a durable cursor, and the target's native-computer control row, under the fixed
 //! ids in [`LIVE_IDS`].
+//!
+//! `--worker` also registers one READY `customer_private_worker` target, [`WORKER_TARGET`], which a `qworkerd` started
+//! with `--target` set to it can attach to (EXEC-002): `fs.*`, `terminal.exec` and `process.spawn` then run on that
+//! worker. The target is written through the machine authority, like the `--live` one.
 
 use std::env;
 use std::process::exit;
@@ -50,6 +54,8 @@ struct Args {
     /// Also seed a target with a run, a browser session, a terminal session and a
     /// computer-control row.
     live: bool,
+    /// Also register a READY `customer_private_worker` target a `qworkerd` can attach to.
+    worker: bool,
     /// Extra users with roles: `--member <usr_…>:<tenant role>:<workspace role>`.
     members: Vec<(String, String, String)>,
 }
@@ -107,6 +113,7 @@ fn parse_args() -> Result<Args, String> {
         ask_writes: false,
         intelligence: false,
         live: false,
+        worker: false,
         members: Vec::new(),
     };
     while let Some(flag) = args.next() {
@@ -120,6 +127,10 @@ fn parse_args() -> Result<Args, String> {
         }
         if flag == "--live" {
             parsed.live = true;
+            continue;
+        }
+        if flag == "--worker" {
+            parsed.worker = true;
             continue;
         }
         let value = args.next().ok_or_else(|| format!("{flag} needs a value"))?;
@@ -300,11 +311,58 @@ async fn run(args: Args) -> Result<(), String> {
     if args.live {
         seed_live(&mut tx, &args).await?;
     }
+    if args.worker {
+        seed_worker(&mut tx, &args).await?;
+    }
     tx.commit()
         .await
         .map_err(|error| format!("commit: {error}"))?;
     pool.close().await;
     println!("database_url={database_url}");
+    Ok(())
+}
+
+/// The target `--worker` registers, which a `qworkerd` names with `--target`.
+pub const WORKER_TARGET: &str = "tgt_01J8Z3K6F1N8VQ2X5W9Y0E2WK1";
+
+/// The `--worker` row (EXEC-002): one READY target on the substrate that dials in, registered and walked to `READY` through
+/// the machine authority, the way a controller would.
+async fn seed_worker(tx: &mut PgConnection, args: &Args) -> Result<(), String> {
+    use quansio_machine::control::{
+        MachineControl, NewTarget, Substrate, TargetClass, TargetFence, TargetStatus,
+    };
+
+    MachineControl::register(
+        tx,
+        &args.tenant,
+        &NewTarget {
+            id: WORKER_TARGET.to_string(),
+            workspace_id: args.workspace.clone(),
+            class: TargetClass::PersistentWorkspaceComputer,
+            substrate: Substrate::CustomerPrivateWorker,
+            image_digest: None,
+            desired_state: Some("READY".to_string()),
+        },
+    )
+    .await
+    .map_err(|error| format!("worker target: {error}"))?;
+    for to in [TargetStatus::Provisioning, TargetStatus::Ready] {
+        let current = MachineControl::load(tx, &args.tenant, WORKER_TARGET)
+            .await
+            .map_err(|error| format!("worker target: {error}"))?;
+        MachineControl::transition(
+            tx,
+            &args.tenant,
+            WORKER_TARGET,
+            &TargetFence {
+                generation: current.generation,
+            },
+            to,
+        )
+        .await
+        .map_err(|error| format!("worker target {to:?}: {error}"))?;
+    }
+    println!("worker_target={WORKER_TARGET}");
     Ok(())
 }
 

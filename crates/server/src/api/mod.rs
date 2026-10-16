@@ -381,6 +381,9 @@ pub struct ApiState {
     /// The host of `computer.*` calls (ADP-002): composed over the database with the bridge this build has, which is none
     /// that can reach a machine until the native helper exists (`UnavailableComputerBridge`).
     computer: Arc<crate::computer::ComputerToolHost>,
+    /// The host of the worker tools (`fs.*`, `terminal.exec`, `process.spawn`) when the deployment composes a worker hub
+    /// (EXEC-002). Without one those calls reach the wrapped host, which in a served build is the conformance stub.
+    worker: Option<Arc<crate::worker::WorkerToolHost>>,
     roles: Arc<dyn RoleProvider>,
     auth: Arc<AuthStore>,
     auth_file: Arc<AuthFile>,
@@ -441,6 +444,7 @@ impl ApiState {
             inner_host,
             outputs: None,
             computer,
+            worker: None,
             host,
             roles,
             auth: Arc::new(auth),
@@ -671,10 +675,24 @@ impl ApiState {
             }
             None => Arc::clone(&self.inner_host),
         };
+        // The worker tools go to the attached worker when a hub is composed; every other call is the base host's.
+        let base: Arc<dyn ToolHostPort> = match self.worker.clone() {
+            Some(worker) => Arc::new(crate::worker::WorkerRoutedHost::new(worker, base)),
+            None => base,
+        };
         self.host = Arc::new(crate::computer::ComputerRoutedHost::new(
             Arc::clone(&self.computer),
             base,
         ));
+    }
+
+    /// Run the worker tools on the workers attached to `hub` (EXEC-002). A workspace with no attached worker has its
+    /// worker tools refused `WORKER_UNAVAILABLE`: they are never answered by the conformance stub.
+    #[must_use]
+    pub fn with_worker_hub(mut self, hub: crate::worker::WorkerHub) -> Self {
+        self.worker = Some(Arc::new(crate::worker::WorkerToolHost::new(hub)));
+        self.rebuild_host();
+        self
     }
 
     /// Reach a machine's input through `bridge`, recognising `known` applications up to `grant` (ADP-002). The

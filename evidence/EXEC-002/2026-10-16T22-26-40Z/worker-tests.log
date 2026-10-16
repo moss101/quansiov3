@@ -1,0 +1,46 @@
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+   Compiling quansio-qworkerd v0.1.0 (/Users/mohsin/projects/quansiov3/crates/qworkerd)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.50s
+     Running tests/daemon_binary.rs (target/debug/deps/daemon_binary-6743a12eaa661255)
+
+running 2 tests
+test the_binary_refuses_to_start_without_a_usable_workspace_root_or_with_an_unknown_flag ... ok
+test the_binary_dials_in_obeys_only_its_lease_and_runs_a_dispatch_once_across_a_reconnect ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.56s
+
+     Running tests/executor.rs (target/debug/deps/executor-7b49fb7e85ecf0a4)
+
+running 10 tests
+test a_terminal_command_cannot_start_outside_the_workspace ... ok
+test a_write_with_the_wrong_digest_changes_nothing ... ok
+test a_spawned_process_is_owned_by_the_executor_and_an_unhosted_tool_is_refused ... ok
+test a_stale_base_digest_is_an_edit_conflict_and_the_file_is_untouched ... ok
+test paths_that_leave_the_workspace_are_refused_before_any_io ... ok
+test a_patch_applies_and_a_patch_that_does_not_match_writes_nothing ... ok
+test a_write_lands_on_disk_and_a_read_returns_what_was_written ... ok
+test an_expired_deadline_stops_a_command_and_a_dispatch_runs_once ... ok
+test a_terminal_command_runs_in_the_workspace_and_reports_its_exit ... ok
+test output_is_bounded_while_it_arrives ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/host.rs (target/debug/deps/host-56786763bc96c7a5)
+
+running 13 tests
+test a_private_worker_is_never_dialled ... ok
+test an_unknown_kind_is_refused_rather_than_guessed ... ok
+test a_worker_reports_the_state_it_observes_and_only_its_own_generation ... ok
+test the_sink_bounds_each_chunk_as_it_arrives ... ok
+test a_cancelled_effect_is_recorded_and_not_re_dispatched ... ok
+test a_checkpoint_hook_records_the_target ... ok
+test a_replay_after_the_lease_lapsed_is_fenced_rather_than_served ... ok
+test a_replayed_dispatch_is_answered_from_the_record_not_run_again ... ok
+test a_failing_tool_is_recorded_as_a_failure ... ok
+test output_is_bounded_while_the_tool_streams_and_evidence_is_uploaded ... ok
+test a_stale_envelope_fails_before_any_tool_runs ... ok
+test qworkerd_evaluates_no_policy_or_capability ... ok
+test qworkerd_reaches_no_control_plane_database ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
