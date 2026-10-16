@@ -887,7 +887,7 @@ impl ToolDispatchService {
         let run = self.runs.load_run(&run_id).await?;
         self.update_tool_call(&stored.id, "dispatched", None, None)
             .await?;
-        self.run_to_result(&run, &plan, &stored, request, &pending.effect_id, &token)
+        Box::pin(self.run_to_result(&run, &plan, &stored, request, &pending.effect_id, &token))
             .await
     }
 
@@ -1168,8 +1168,7 @@ impl ToolDispatchPort for ToolDispatchService {
             args: plan.args.clone(),
             context,
         };
-        self.run_to_result(&run, &plan, &stored, request, &effect.id, &token)
-            .await
+        Box::pin(self.run_to_result(&run, &plan, &stored, request, &effect.id, &token)).await
     }
 
     async fn resume(
@@ -1209,9 +1208,7 @@ impl ToolDispatchService {
         token: &str,
     ) -> Result<ToolDispatchOutcome, RuntimeError> {
         if is_internal_tool(&plan.tool) {
-            return self
-                .run_internal(run, plan, stored, &request, effect_id)
-                .await;
+            return Box::pin(self.run_internal(run, plan, stored, &request, effect_id)).await;
         }
         let dispatch = HostDispatch {
             tool_call_id: stored.id.clone(),
