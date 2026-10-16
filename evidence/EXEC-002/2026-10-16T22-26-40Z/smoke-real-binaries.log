@@ -1,0 +1,12 @@
+worker_target=tgt_01J8Z3K6F1N8VQ2X5W9Y0E2WK1
+database_url=postgres://***@127.0.0.1:55440/quansio_smoke_worker
+--- server notices
+"detail":"QUANSIO_WORKER_SOCKET=/tmp/qw-smoke.sock: qworkerd may attach; start it with --socket /tmp/qw-smoke.sock"
+--- socket mode
+srw-------@
+--- worker attached: lease status | held by hub | target status | observed_state
+held|t|READY|READY
+/private/tmp/claude-501/-Users-mohsin-projects-quansiov3/7830eed2-0e46-47ee-bda7-821473d4e7c9/scratchpad/smoke.sh: line 27: 87035 Terminated: 15          $T/qworkerd --socket $SOCK --tenant $TN --target tgt_01J8Z3K6F1N8VQ2X5W9Y0E2WK1 --workspace-root $ROOT --heartbeat-secs 2 > /tmp/qw-worker.log 2>&1
+--- worker stopped: lease status
+released
+cleaned
