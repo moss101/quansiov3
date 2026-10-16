@@ -274,8 +274,10 @@ async fn the_browser_flags_are_refused_without_a_browser_and_a_state_dir_inside_
         .unwrap();
     let root = dir.path().join("root");
     std::fs::create_dir_all(root.join("state")).unwrap();
+    // A daemon that wrongly accepts its arguments keeps running (it would retry the socket forever), so the wait is
+    // bounded: a regression fails this test in seconds instead of hanging the suite.
     let base = |extra: &[&str]| {
-        Command::new(env!("CARGO_BIN_EXE_qworkerd"))
+        let mut child = Command::new(env!("CARGO_BIN_EXE_qworkerd"))
             .args([
                 "--socket",
                 "/tmp/none.sock",
@@ -287,9 +289,22 @@ async fn the_browser_flags_are_refused_without_a_browser_and_a_state_dir_inside_
             ])
             .arg(&root)
             .args(extra)
+            .stdout(Stdio::null())
             .stderr(Stdio::piped())
-            .output()
-            .unwrap()
+            .spawn()
+            .unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        loop {
+            if child.try_wait().unwrap().is_some() {
+                return child.wait_with_output().unwrap();
+            }
+            if std::time::Instant::now() > deadline {
+                let _ = child.kill();
+                let _ = child.wait();
+                panic!("the daemon accepted {extra:?} and kept running");
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
     };
     // The flags mean nothing without a browser: they are refused rather than ignored.
     for extra in [
