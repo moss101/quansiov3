@@ -535,3 +535,51 @@ async fn a_worker_that_goes_quiet_is_fenced_when_its_lease_lapses_and_its_work_i
     );
     drop_pool(&world.pool, &world.name).await;
 }
+
+#[tokio::test]
+async fn a_lease_revoked_in_the_control_plane_stops_forwarding_even_before_its_cached_expiry() {
+    let Some(world) = world("wk_revoke").await else {
+        return blocked_marker();
+    };
+    let target = register(&world.pool, Substrate::CustomerPrivateWorker, true).await;
+    let root = tempfile::tempdir().unwrap();
+    let _worker = attach_worker(&world, &target, root.path());
+    attached(&world, 1).await;
+    let host = routed(&world, Arc::new(Recording::default()));
+    success(
+        host.execute(dispatch(
+            "terminal.exec",
+            json!({"command": "touch before"}),
+            5000,
+        ))
+        .await,
+    );
+    assert!(root.path().join("before").exists());
+
+    // An operator fences the worker. Its lease has a minute left in the hub's own copy and in the worker's.
+    let lease_id = world.hub.links()[0].lease_id.clone();
+    let mut tx = world.pool.begin().await.unwrap();
+    MachineControl::revoke_lease(&mut tx, TENANT, &lease_id)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    match host
+        .execute(dispatch(
+            "terminal.exec",
+            json!({"command": "touch after"}),
+            5000,
+        ))
+        .await
+    {
+        Err(HostFailure::Refused { detail }) => {
+            assert!(detail.contains("WORKER_NOT_DISPATCHED"), "{detail}")
+        }
+        other => panic!("{other:?}"),
+    }
+    assert!(
+        !root.path().join("after").exists(),
+        "nothing was sent to a worker whose lease was revoked"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}

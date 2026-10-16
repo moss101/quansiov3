@@ -501,6 +501,19 @@ States: `REQUESTED → PROVISIONING → READY ⇄ BUSY; READY → DRAINING → S
 ### 8.3 Lease
 `id, target_id, holder {controller_id, generation}, acquired_at, expires_at, renewed_at, status (held|released|expired|revoked)`. qworkerd rejects any action whose `(lease_id, generation)` does not match its current lease.
 
+#### 8.3.1 Worker control channel (EXEC-002) — normative
+A worker on a substrate that `is_outbound_only` (`customer_private_worker`) **dials the server**; the server never dials a worker. The server listens on a Unix socket named by `QUANSIO_WORKER_SOCKET` (mode `0600`; unset → no worker can attach). One JSON document per line, at most 8 MiB, in both directions (`crates/machine/src/gateway/wire.rs`).
+
+| Direction | Frame | Meaning |
+|---|---|---|
+| worker → server | `hello {tenant_id, target_id}` | First frame. The server takes the lease only for a registered target that is on an outbound-only substrate and `READY`; otherwise the connection is closed. A second worker for a target whose lease is held is refused. |
+| server → worker | `lease {lease_id, target_id, generation, expires_at}` | The lease the worker now holds. Sent on connect and after each renewal; a newer one replaces the old. Until one arrives the worker holds nothing and refuses every dispatch. |
+| server → worker | `dispatch {envelope}` | One `ActionEnvelope`. The server sends it only while the lease is live in the control plane; the worker re-validates it against the lease it holds before anything runs (`MachineGateway::validate`). |
+| worker → server | `result {dispatch_token, effect_id, replayed, outcome}` | `outcome` is `completed {output, truncated, evidence_ref}`, `failed {detail}`, `cancelled`, or `rejected {reason}` (the envelope did not pass the lease; nothing ran). |
+| worker → server | `heartbeat {target_id, generation, observed_state, at}` | What the worker observes (§8.2). An accepted heartbeat (`MachineGateway::accept_heartbeat`) records `observed_state`/`last_heartbeat_at` and **renews the lease**; the server runs no renewal timer, so a silent worker is fenced when its lease lapses. |
+
+A dispatch runs at most once per `dispatch_token`: a re-delivery after a reconnect is answered from the worker's record (`replayed: true`) without running the tool. A dispatch the server sent and did not see answered settles as **unknown** (reconciled, never re-sent). With no worker attached for the workspace, `fs.read`, `fs.write`, `fs.patch`, `terminal.exec` and `process.spawn` are refused `WORKER_UNAVAILABLE`; they are never answered by a stand-in. Releasing the connection releases the lease.
+
 ### 8.4 BrowserSession
 `id, target_id, run_id?, profile_ref, control_holder (agent|user|none), control_since, current_url, tabs[] {target_id, url, title, document_revision?}, screencast {enabled, stream_ref}, checkpoint_id?, status (active|paused_takeover|paused_policy|closed), guard (§8.4.1)`. Takeover: `RequestTakeover` → `control_holder=user` fences agent input; `Handback` → agent resumes. No second session is created on takeover (APP-007).
 
