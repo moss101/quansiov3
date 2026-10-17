@@ -18,7 +18,7 @@
  */
 
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer as createHttpServer, type Server } from "node:http";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -153,6 +153,21 @@ describe.skipIf(blocked !== null)("desktop automation E2E against quansio-server
   const dirs: string[] = [];
   const stderr: string[] = [];
 
+  // The scratch tenant gets the shortest interval the schema allows (10 s) through the same
+  // config/automation.yaml the server reads, as a tenant override; the plans' own minimums stay.
+  function automationConfigFile(): string {
+    const shipped = readFileSync(join(WORKSPACE_ROOT, "config", "automation.yaml"), "utf8");
+    const replaced = shipped.replace(/^tenant_overrides: \{\}$/m, `tenant_overrides:\n  ${TENANT}:\n    min_interval_seconds: 10`);
+    if (replaced === shipped) {
+      throw new Error("config/automation.yaml no longer has an empty tenant_overrides line to extend");
+    }
+    const dir = mkdtempSync(join(tmpdir(), "quansio-auto-config-"));
+    dirs.push(dir);
+    const file = join(dir, "automation.yaml");
+    writeFileSync(file, replaced);
+    return file;
+  }
+
   async function startServer(): Promise<void> {
     const port = await freePort();
     origin = `http://127.0.0.1:${String(port)}`;
@@ -163,6 +178,7 @@ describe.skipIf(blocked !== null)("desktop automation E2E against quansio-server
         QUANSIO_BIND: `127.0.0.1:${String(port)}`,
         QUANSIO_TRUST_SCOPE_HEADERS: "1",
         QUANSIO_SCHEDULER_INTERVAL_MS: "200",
+        QUANSIO_AUTOMATION_CONFIG: automationConfigFile(),
         QUANSIO_EMAIL_ENDPOINT: mailUrl,
         QUANSIO_EMAIL_TOKEN: MAIL_TOKEN,
       },
@@ -292,11 +308,11 @@ describe.skipIf(blocked !== null)("desktop automation E2E against quansio-server
 
   it("keeps firing a routine across a server restart without firing a window twice", async () => {
     let owner = await client(OWNER, "desktop:auto-routine");
-    const created = (await owner.handlers["routines.command"]({ name: "CreateRoutine", params: { title: "Heartbeat", prompt: "say hello", trigger: { kind: "interval", spec: "1s" }, absence_policy: "catch_up_once" } })) as SettledPayload;
+    const created = (await owner.handlers["routines.command"]({ name: "CreateRoutine", params: { title: "Heartbeat", prompt: "say hello", trigger: { kind: "interval", spec: "10s" }, absence_policy: "catch_up_once" } })) as SettledPayload;
     expect(created.ok, JSON.stringify(created)).toBe(true);
     const routineId = created.result?.["id"] as string;
     const fires = async () => decodeRoutines(await owner.handlers["routines.list"]({})).find((routine) => routine.id === routineId)?.fires ?? [];
-    await waitFor(async () => ((await fires()).filter((fire) => fire.status === "fired").length >= 2 ? true : undefined), "two fires before the restart");
+    await waitFor(async () => ((await fires()).filter((fire) => fire.status === "fired").length >= 2 ? true : undefined), "two fires before the restart", 60_000);
 
     // Kill the server mid-flight and start a new process on the same database.
     owner.bridge.close();
@@ -304,7 +320,7 @@ describe.skipIf(blocked !== null)("desktop automation E2E against quansio-server
     await startServer();
     owner = await client(OWNER, "desktop:auto-routine-2");
     const before = (await fires()).length;
-    await waitFor(async () => ((await fires()).filter((fire) => fire.status === "fired").length >= before + 2 ? true : undefined), "two fires after the restart");
+    await waitFor(async () => ((await fires()).filter((fire) => fire.status === "fired").length >= before + 2 ? true : undefined), "two fires after the restart", 60_000);
     const now = (await owner.handlers["routines.command"]({ name: "TriggerRoutineNow", params: { routine_id: routineId } })) as SettledPayload;
     expect(now.ok, JSON.stringify(now)).toBe(true);
     expect(now.result?.["source"]).toBe("manual");

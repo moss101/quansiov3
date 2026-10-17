@@ -27,6 +27,8 @@ limits:
     min_interval_seconds: 60
 
 # Limits for one tenant, by tenant id; a key here replaces the plan's value for that tenant. Empty by default.
+# A deployment (or an E2E harness giving its scratch tenant a faster cadence) may run a file of this shape by naming it in
+# QUANSIO_AUTOMATION_CONFIG; the loader holds it to the schema's bounds (an interval floor of 10 s) the same way.
 tenant_overrides: {}
 
 # DryRunRoutine (13.8 C).

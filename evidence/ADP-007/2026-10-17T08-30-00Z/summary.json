@@ -1,0 +1,139 @@
+{
+  "task_id": "ADP-007",
+  "git_commit": "09589ecb8614231eb7f021cfb32a354cb848cf78",
+  "recorded_at": "2026-10-17T08:30:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd apps/desktop && npx vitest run tests/work.e2e.test.ts tests/automation.e2e.test.ts) # run 1 of 3",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-17T08-30-00Z/work-automation-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd apps/desktop && npx vitest run tests/work.e2e.test.ts tests/automation.e2e.test.ts) # run 2 of 3",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-17T08-30-00Z/work-automation-2.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd apps/desktop && npx vitest run tests/work.e2e.test.ts tests/automation.e2e.test.ts) # run 3 of 3",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-17T08-30-00Z/work-automation-3.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd apps/desktop && npx vitest run) # full suite, run 1 of 6: work.e2e and automation.e2e pass; exit 1 only from the pre-existing conversation.e2e and trust.e2e failures (EXEC-002)",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/ADP-007/2026-10-17T08-30-00Z/desktop-full-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd apps/desktop && npx vitest run) # full suite, run 3 of 6: as run 1, plus an intermittent local-files-watcher failure",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/ADP-007/2026-10-17T08-30-00Z/desktop-full-3.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib routines::config",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-17T08-30-00Z/config-unit.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-17T08-30-00Z/clippy.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/ADP-007/2026-10-17T08-30-00Z/validator.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd apps/desktop && npx vitest run tests/work.e2e.test.ts tests/automation.e2e.test.ts) # run 1 of 3",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd apps/desktop && npx vitest run tests/work.e2e.test.ts tests/automation.e2e.test.ts) # run 2 of 3",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd apps/desktop && npx vitest run tests/work.e2e.test.ts tests/automation.e2e.test.ts) # run 3 of 3",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd apps/desktop && npx vitest run) # full suite, run 1 of 6: work.e2e and automation.e2e pass; exit 1 only from the pre-existing conversation.e2e and trust.e2e failures (EXEC-002)",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> (cd apps/desktop && npx vitest run) # full suite, run 3 of 6: as run 1, plus an intermittent local-files-watcher failure",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "cargo test -p quansio-server --lib routines::config",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/control/routines/config.rs",
+      "sha256": "abdc606f121b551689ff64cb2cac8c2324b8fbf7a50262e49afcacb5c9e63e6f",
+      "bytes": 8724
+    },
+    {
+      "path": "crates/server/src/composition.rs",
+      "sha256": "6301b4e0d8b60f61c5f0d759fef6e1e705ba9b5dc1c6085e81129e6f073dbbea",
+      "bytes": 47158
+    },
+    {
+      "path": "config/automation.yaml",
+      "sha256": "7cbc05aa970abd4344a3438e97cf3ec4721d774d8ce3df347cd1c193f5c42dce",
+      "bytes": 2565
+    },
+    {
+      "path": "apps/desktop/tests/automation.e2e.test.ts",
+      "sha256": "bd7237bf06a2c7b8fd630e66a85b1c952880a7e30a724f7cecb6bfc7da670a5e",
+      "bytes": 16106
+    },
+    {
+      "path": "apps/desktop/tests/work.e2e.test.ts",
+      "sha256": "347af75f8975c122e765007ce30e115c936128a91b6f11c4ba77e62d3ae400e5",
+      "bytes": 16055
+    },
+    {
+      "path": "evidence/ADP-007/2026-10-17T08-30-00Z/NOTES.md",
+      "sha256": "f4dfdc4478009504de9c6c2977458e2a09cf6de96269d289b7e75db72b4d2d96",
+      "bytes": 2101
+    }
+  ]
+}
