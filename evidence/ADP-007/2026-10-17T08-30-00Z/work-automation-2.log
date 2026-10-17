@@ -1,0 +1,14 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/.claude/worktrees/quirky-mestorf-d45e61/apps/desktop
+
+ ✓ tests/work.e2e.test.ts (1 test) 1490ms
+   ✓ desktop work graph E2E against quansio-server > shows the canonical revision, resolves a concurrent edit as a rebase, and shows a handoff 524ms
+ ✓ tests/automation.e2e.test.ts (2 tests) 43927ms
+   ✓ desktop automation E2E against quansio-server > delivers a mention on exactly the channels the person chose 1026ms
+   ✓ desktop automation E2E against quansio-server > keeps firing a routine across a server restart without firing a window twice 42068ms
+
+ Test Files  2 passed (2)
+      Tests  3 passed (3)
+   Start at  11:25:52
+   Duration  44.37s (transform 182ms, setup 0ms, collect 441ms, tests 45.42s, environment 0ms, prepare 59ms)
+
