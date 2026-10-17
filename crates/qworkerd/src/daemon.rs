@@ -119,6 +119,27 @@ where
                 Some(line) => line,
                 None => return Ok(()),
             },
+            frame = host.executor().next_frame() => {
+                // Frames flow only while the server asked for them, and only to a worker that still holds its lease.
+                if let (Some(frame), true) = (frame, lease.held) {
+                    writer
+                        .write_all(
+                            wire::encode(&FromWorker::BrowserFrame {
+                                session_id: frame.session_id,
+                                tab_id: frame.tab_id,
+                                media_type: frame.media_type.to_string(),
+                                data: frame.data,
+                                url: frame.url,
+                                device_width: frame.device_width,
+                                device_height: frame.device_height,
+                                sequence: frame.sequence,
+                            })?
+                            .as_bytes(),
+                        )
+                        .await?;
+                }
+                continue;
+            }
             () = tokio::time::sleep_until(next_beat) => {
                 next_beat += heartbeat_every;
                 if lease.held {

@@ -17,13 +17,16 @@ use std::sync::Arc;
 
 use quansio_machine::gateway::ActionEnvelope;
 use serde_json::{json, Value};
-use tokio::sync::Mutex;
+use tokio::sync::{mpsc, Mutex};
 
 use quansio_machine::control::browser::{DecisionKind, DecisionReceipt};
 use quansio_machine::gateway::wire::BrowserOrder;
 
 use crate::browser::tools::ToolReply;
-use crate::browser::{BrowserCallContext, BrowserDriver, BrowserFault, DriverConfig, FaultCode};
+use crate::browser::{
+    BrowserCallContext, BrowserDriver, BrowserFault, DriverConfig, FaultCode, ScreencastFrame,
+    ScreencastHandle,
+};
 use crate::chrome::{vet_navigation, ChromeProcess};
 
 struct LiveSession {
@@ -39,6 +42,10 @@ pub struct BrowserRuntime {
     tenant_id: String,
     allow_private_network: bool,
     sessions: Mutex<HashMap<String, Arc<LiveSession>>>,
+    /// The running screencasts, by session.
+    pumps: Mutex<HashMap<String, ScreencastHandle>>,
+    frames: mpsc::Sender<ScreencastFrame>,
+    frames_out: Mutex<mpsc::Receiver<ScreencastFrame>>,
 }
 
 impl std::fmt::Debug for BrowserRuntime {
@@ -62,13 +69,23 @@ impl BrowserRuntime {
         state_dir: impl Into<PathBuf>,
         tenant_id: impl Into<String>,
     ) -> Self {
+        // A viewer who is behind wants the newest picture: the queue is short and a full one drops frames.
+        let (frames, frames_out) = mpsc::channel(4);
         Self {
             chrome: chrome.into(),
             state_dir: state_dir.into(),
             tenant_id: tenant_id.into(),
             allow_private_network: false,
             sessions: Mutex::new(HashMap::new()),
+            pumps: Mutex::new(HashMap::new()),
+            frames,
+            frames_out: Mutex::new(frames_out),
         }
+    }
+
+    /// The next frame of any session whose screencast is running.
+    pub async fn next_frame(&self) -> Option<ScreencastFrame> {
+        self.frames_out.lock().await.recv().await
     }
 
     /// Let the browser be sent to loopback, private and link-local addresses. Off unless the operator who started
@@ -153,6 +170,32 @@ impl BrowserRuntime {
                 "user" | "agent" => Ok(()),
                 other => Err(format!("{other:?} is not a holder")),
             },
+            BrowserOrder::Screencast {
+                session_id,
+                enabled,
+            } => {
+                let mut pumps = self.pumps.lock().await;
+                if *enabled {
+                    if pumps.contains_key(session_id) {
+                        return Ok(());
+                    }
+                    // The tab a person is looking at is the one most recently opened.
+                    let tab = live
+                        .driver
+                        .tab_ids()
+                        .pop()
+                        .ok_or_else(|| "the session has no tab to show".to_string())?;
+                    let handle = live
+                        .driver
+                        .start_screencast(&tab, self.frames.clone())
+                        .await
+                        .map_err(|fault| fault.to_string())?;
+                    pumps.insert(session_id.clone(), handle);
+                } else if let Some(handle) = pumps.remove(session_id) {
+                    handle.stop().await;
+                }
+                Ok(())
+            }
             BrowserOrder::UserClick { tab_id, x, y, .. } => live
                 .driver
                 .user_click(tab_id, *x, *y)

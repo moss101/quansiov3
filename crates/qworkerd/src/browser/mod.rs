@@ -44,6 +44,7 @@ pub mod fence;
 pub mod journal;
 pub mod origin;
 pub mod render;
+pub mod screencast;
 pub mod secrets;
 pub mod tab;
 pub mod tools;
@@ -55,6 +56,7 @@ use serde_json::{json, Value};
 pub use cdp::{CdpConnection, CdpError, CdpEvent, PageTarget};
 pub use driver::{ActionReport, BrowserCallContext, BrowserDriver, DriverConfig};
 pub use fault::{BrowserFault, FaultCode};
+pub use screencast::{ScreencastFrame, ScreencastHandle};
 
 /// A default bound on the readable text an observation extracts.
 pub const DEFAULT_MAX_TEXT_BYTES: usize = 262_144;

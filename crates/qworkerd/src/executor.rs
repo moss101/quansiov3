@@ -424,6 +424,13 @@ impl ToolExecutor for LocalToolExecutor {
         }
     }
 
+    async fn next_frame(&self) -> Option<crate::browser::ScreencastFrame> {
+        match &self.browser {
+            Some(browser) => browser.next_frame().await,
+            None => std::future::pending().await,
+        }
+    }
+
     async fn browser_guards(&self, only: Option<&str>) -> Vec<(String, Value)> {
         match &self.browser {
             Some(browser) => browser.guards(only).await,

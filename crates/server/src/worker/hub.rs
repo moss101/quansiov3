@@ -3,11 +3,12 @@
 //! The hub runs no timer. A lease is renewed when the worker's heartbeat arrives (DOMAIN.md §8.2), so a worker
 //! that goes quiet is fenced when its lease lapses.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
 
+use crate::runtime::state_machine::LiveFramePort;
 use quansio_core::{CanonicalId, Prefix, UlidGenerator};
 use quansio_machine::control::browser::{BrowserSessionStore, GuardReport};
 use quansio_machine::control::{
@@ -17,6 +18,7 @@ use quansio_machine::gateway::wire::{
     self, BrowserOrder, FromWorker, LeaseWire, OutcomeWire, ToWorker,
 };
 use quansio_machine::gateway::{ActionEnvelope, DispatchRequest, Heartbeat, MachineGateway};
+use serde_json::json;
 use sqlx::PgPool;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{UnixListener, UnixStream};
@@ -96,6 +98,8 @@ struct Link {
     outbound: mpsc::Sender<String>,
     pending: Mutex<HashMap<String, oneshot::Sender<Answer>>>,
     lease: Mutex<Lease>,
+    /// Sessions already proven to be on this worker's target, so a frame costs no query.
+    verified: Mutex<HashSet<String>>,
 }
 
 /// Accepts workers and carries dispatches to them.
@@ -105,6 +109,8 @@ pub struct WorkerHub {
     config: Arc<HubConfig>,
     links: Arc<LinkMap>,
     connections: Arc<std::sync::atomic::AtomicU64>,
+    /// Where a worker's frames are published for whoever is watching; set once the API state exists.
+    live: Arc<Mutex<Option<Arc<dyn LiveFramePort>>>>,
 }
 
 impl std::fmt::Debug for WorkerHub {
@@ -126,6 +132,7 @@ impl WorkerHub {
             config: Arc::new(config),
             links: Arc::new(Mutex::new(HashMap::new())),
             connections: Arc::new(std::sync::atomic::AtomicU64::new(0)),
+            live: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -280,6 +287,7 @@ impl WorkerHub {
             outbound,
             pending: Mutex::new(HashMap::new()),
             lease: Mutex::new(lease.clone()),
+            verified: Mutex::new(HashSet::new()),
         });
         let key = (tenant_id.clone(), target_id.clone());
         self.links
@@ -335,6 +343,27 @@ impl WorkerHub {
                 Ok(FromWorker::BrowserGuard { session_id, report }) => {
                     self.record_guard(&link, &session_id, &report).await;
                 }
+                Ok(FromWorker::BrowserFrame {
+                    session_id,
+                    tab_id,
+                    media_type,
+                    data,
+                    url,
+                    device_width,
+                    device_height,
+                    sequence,
+                }) => {
+                    let frame = Frame {
+                        tab_id,
+                        media_type,
+                        data,
+                        url,
+                        device_width,
+                        device_height,
+                        sequence,
+                    };
+                    self.publish_frame(&link, &session_id, frame).await;
+                }
                 _ => {}
             }
         }
@@ -351,6 +380,67 @@ impl WorkerHub {
         });
         let line = wire::encode(&frame).map_err(|_| ())?;
         link.outbound.send(line).await.map_err(|_| ())
+    }
+
+    /// Where this hub publishes the frames its workers send. The API state attaches its live hub here.
+    pub fn attach_live(&self, live: Arc<dyn LiveFramePort>) {
+        *self.live.lock().unwrap_or_else(PoisonError::into_inner) = Some(live);
+    }
+
+    /// Publish one frame of a session's tab, if the session is on this worker's target.
+    ///
+    /// Frames are transient (DOMAIN.md §9.3): published to the target's channel for whoever is watching, never stored.
+    /// A worker cannot show a frame as another target's session.
+    async fn publish_frame(&self, link: &Arc<Link>, session_id: &str, frame: Frame) {
+        let Some(live) = self
+            .live
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
+        else {
+            return;
+        };
+        let known = link
+            .verified
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .contains(session_id);
+        if !known {
+            let on_target = async {
+                let mut tx = self.pool.begin().await.ok()?;
+                crate::control::schema::set_tenant_context(&mut tx, &link.tenant_id)
+                    .await
+                    .ok()?;
+                let session = BrowserSessionStore::load(&mut tx, &link.tenant_id, session_id)
+                    .await
+                    .ok()?;
+                Some(session.target_id == link.target_id)
+            }
+            .await;
+            if on_target != Some(true) {
+                return;
+            }
+            link.verified
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .insert(session_id.to_string());
+        }
+        live.publish(
+            &link.tenant_id,
+            &format!("target:{}", link.target_id),
+            json!({
+                "kind": "browser.frame",
+                "session_id": session_id,
+                "tab_id": frame.tab_id,
+                "media_type": frame.media_type,
+                "data": frame.data,
+                "url": frame.url,
+                "width": frame.device_width,
+                "height": frame.device_height,
+                "cursor": null,
+                "sequence": frame.sequence,
+            }),
+        );
     }
 
     /// Store what a worker's driver reported about one of its sessions.
@@ -623,6 +713,17 @@ impl WorkerHub {
             }
         }
     }
+}
+
+/// One picture of a tab as the worker sent it.
+struct Frame {
+    tab_id: String,
+    media_type: String,
+    data: String,
+    url: String,
+    device_width: u32,
+    device_height: u32,
+    sequence: u64,
 }
 
 /// Whether an order reached a worker's channel.

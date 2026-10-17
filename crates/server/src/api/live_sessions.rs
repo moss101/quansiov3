@@ -619,16 +619,151 @@ async fn relay_control(state: &ApiState, tenant_id: &str, answer: &Value, holder
     ) else {
         return false;
     };
+    let sent = hub
+        .relay(
+            tenant_id,
+            BrowserOrder::Control {
+                session_id: session_id.to_string(),
+                holder: holder.to_string(),
+                at: now_second(),
+            },
+        )
+        .await
+        == crate::worker::Relay::Sent;
+    // A person who holds the session needs to see it; when the agent has it back the stream stops.
     hub.relay(
         tenant_id,
-        BrowserOrder::Control {
+        BrowserOrder::Screencast {
             session_id: session_id.to_string(),
-            holder: holder.to_string(),
-            at: now_second(),
+            enabled: holder == "user",
         },
     )
-    .await
-        == crate::worker::Relay::Sent
+    .await;
+    sent
+}
+
+/// `SendBrowserInput {session_id, tab_id, kind: "click" | "text", x?, y?, text?}`: a person's click or typing in a
+/// browser session they hold (DOMAIN.md §8.4.2).
+///
+/// Only a signed-in person; a service principal is refused. Only while a person holds the session — the agent's input is
+/// fenced then, and this is the one thing that is not — and only to a worker that is attached: an input that cannot be
+/// delivered is an error, not a silent drop, because the person is looking at a page they believe they are driving.
+/// Individual inputs are not audited (a click per frame would drown the log); the takeover and handback that bound them
+/// are.
+///
+/// # Errors
+/// See [`ApiError`].
+pub async fn send_browser_input(
+    state: &ApiState,
+    scope: &TenantScope,
+    user_id: Option<&str>,
+    params: &Value,
+    correlation: &str,
+) -> Result<Value, ApiError> {
+    use quansio_machine::gateway::wire::BrowserOrder;
+    let invalid = |detail: &str| {
+        ApiError::new(
+            ApiErrorCode::ValidationSchema,
+            detail.to_string(),
+            correlation,
+        )
+    };
+    if scope.principal.is_some() {
+        return Err(ApiError::new(
+            ApiErrorCode::ScopeForbidden,
+            "SendBrowserInput is a person's act: a service principal cannot make it",
+            correlation,
+        ));
+    }
+    if user_id.filter(|id| id.starts_with("usr_")).is_none() {
+        return Err(ApiError::new(
+            ApiErrorCode::AuthRequired,
+            "SendBrowserInput needs a signed-in person",
+            correlation,
+        ));
+    }
+    let text = |key: &str| {
+        params
+            .get(key)
+            .and_then(Value::as_str)
+            .filter(|value| !value.is_empty())
+    };
+    let session_id = text("session_id")
+        .ok_or_else(|| invalid("session_id is required"))?
+        .to_string();
+    let tab_id = text("tab_id")
+        .ok_or_else(|| invalid("tab_id is required"))?
+        .to_string();
+    let order = match text("kind") {
+        Some("click") => {
+            let coordinate = |key: &str| {
+                params
+                    .get(key)
+                    .and_then(Value::as_f64)
+                    .filter(|value| value.is_finite() && (0.0..=20_000.0).contains(value))
+                    .ok_or_else(|| invalid(&format!("{key} is a number from 0 to 20000")))
+            };
+            BrowserOrder::UserClick {
+                session_id: session_id.clone(),
+                tab_id,
+                x: coordinate("x")?,
+                y: coordinate("y")?,
+            }
+        }
+        Some("text") => {
+            let typed = text("text").ok_or_else(|| invalid("text is required"))?;
+            if typed.len() > 4096 {
+                return Err(invalid("text is at most 4096 bytes"));
+            }
+            BrowserOrder::UserText {
+                session_id: session_id.clone(),
+                tab_id,
+                text: typed.to_string(),
+            }
+        }
+        _ => return Err(invalid("kind is click or text")),
+    };
+    let workspace_id = workspace_of(
+        state,
+        &scope.tenant_id,
+        &Subject::Browser(session_id.clone()),
+        correlation,
+    )
+    .await?;
+    Authorization::check(
+        state.pool(),
+        scope,
+        Some(&workspace_id),
+        ActionFamily::AuthorWork,
+        correlation,
+    )
+    .await?;
+    let mut tx = state.tenant_tx(&scope.tenant_id, correlation).await?;
+    let session = BrowserSessionStore::load(&mut tx, &scope.tenant_id, &session_id)
+        .await
+        .map_err(|error| browser_error(error, correlation))?;
+    if !matches!(
+        session.control_holder,
+        quansio_machine::control::browser::ControlHolder::User
+    ) {
+        return Err(ApiError::new(
+            ApiErrorCode::ConflictState,
+            "input is accepted only while a person holds the session; take it over first",
+            correlation,
+        ));
+    }
+    let delivered = match state.worker_hub() {
+        Some(hub) => hub.relay(&scope.tenant_id, order).await == crate::worker::Relay::Sent,
+        None => false,
+    };
+    if !delivered {
+        return Err(ApiError::new(
+            ApiErrorCode::TargetUnavailable,
+            "no worker is attached for this session; the input was not delivered",
+            correlation,
+        ));
+    }
+    Ok(json!({ "delivered": true }))
 }
 
 /// Give the worker that runs the session the receipt of a user's decision. The decision is recorded either way; a worker

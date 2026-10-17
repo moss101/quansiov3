@@ -698,6 +698,8 @@ impl ApiState {
     /// worker tools refused `WORKER_UNAVAILABLE`: they are never answered by the conformance stub.
     #[must_use]
     pub fn with_worker_hub(mut self, hub: crate::worker::WorkerHub) -> Self {
+        // The frames a worker sends go to whoever is watching through this state's live hub.
+        hub.attach_live(self.live.clone());
         self.worker = Some(Arc::new(crate::worker::WorkerToolHost::new(hub)));
         self.rebuild_host();
         self

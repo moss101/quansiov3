@@ -219,6 +219,12 @@ pub trait ToolExecutor: Send + Sync {
         Err("this worker has no browser".to_string())
     }
 
+    /// The next frame of a session whose screencast is running. Never resolves for an executor with no browser, so a
+    /// caller can wait on it beside other work.
+    async fn next_frame(&self) -> Option<crate::browser::ScreencastFrame> {
+        std::future::pending().await
+    }
+
     /// The guard reports of the browser sessions this executor runs, as `(session_id, report)`; `only` limits them to
     /// one session. Empty for an executor with no browser.
     async fn browser_guards(&self, only: Option<&str>) -> Vec<(String, serde_json::Value)> {

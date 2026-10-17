@@ -46,6 +46,7 @@ export const OPERATIONS = {
   RestoreCheckpoint: { method: "POST", path: "/v1/commands/RestoreCheckpoint", family: "Execution" },
   RequestTakeover: { method: "POST", path: "/v1/commands/RequestTakeover", family: "Browser/computer" },
   Handback: { method: "POST", path: "/v1/commands/Handback", family: "Browser/computer" },
+  SendBrowserInput: { method: "POST", path: "/v1/commands/SendBrowserInput", family: "Browser/computer" },
   ImportBrowserSession: { method: "POST", path: "/v1/commands/ImportBrowserSession", family: "Browser/computer" },
   GrantComputerTier: { method: "POST", path: "/v1/commands/GrantComputerTier", family: "Browser/computer" },
   ResolveBrowserCertificate: { method: "POST", path: "/v1/commands/ResolveBrowserCertificate", family: "Browser/computer" },

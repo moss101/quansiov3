@@ -165,6 +165,13 @@ pub enum BrowserOrder {
         /// The receipt the control plane minted for the user.
         receipt: ReceiptWire,
     },
+    /// Start or stop relaying frames of the session's current tab. The server asks for them while a person is looking.
+    Screencast {
+        /// The session.
+        session_id: String,
+        /// Whether frames should flow.
+        enabled: bool,
+    },
     /// A click the user made while holding the session.
     UserClick {
         /// The session.
@@ -193,6 +200,7 @@ impl BrowserOrder {
     pub fn session_id(&self) -> &str {
         match self {
             Self::Control { session_id, .. }
+            | Self::Screencast { session_id, .. }
             | Self::UserClick { session_id, .. }
             | Self::UserText { session_id, .. } => session_id,
             Self::Certificate { receipt } | Self::Permission { receipt } => &receipt.session_id,
@@ -269,6 +277,28 @@ pub enum FromWorker {
         session_id: String,
         /// The driver's guard report.
         report: serde_json::Value,
+    },
+    /// One picture of a session's tab, sent only while the server asked for the session's frames. Transient: the server
+    /// publishes it to whoever is watching and keeps nothing.
+    BrowserFrame {
+        /// The session.
+        session_id: String,
+        /// The tab.
+        tab_id: String,
+        /// The image's media type.
+        media_type: String,
+        /// The image, base64.
+        data: String,
+        /// The page's URL when the frame was taken.
+        url: String,
+        /// The page's viewport size in CSS pixels, which a click's coordinates are in; `0` when unknown.
+        #[serde(default)]
+        device_width: u32,
+        /// See `device_width`.
+        #[serde(default)]
+        device_height: u32,
+        /// Counts up, so a viewer can drop a frame that arrives late.
+        sequence: u64,
     },
     /// What the worker observes about itself (DOMAIN.md §8.2). The server renews the lease on a heartbeat it
     /// accepts, so a worker that goes quiet is fenced when its lease lapses, with no timer on the server.

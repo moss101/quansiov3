@@ -114,6 +114,7 @@ struct World {
     pool: PgPool,
     hub: WorkerHub,
     router: axum::Router,
+    live: Arc<quansio_server::api::live::LiveHub>,
     target: String,
     _dir: tempfile::TempDir,
     _state: tempfile::TempDir,
@@ -237,6 +238,7 @@ async fn world(label: &str, with_worker: bool) -> Option<World> {
         name,
         pool,
         hub,
+        live: api.live().clone(),
         router: quansio_server::api::router(api),
         target,
         _dir: dir,
@@ -572,10 +574,289 @@ async fn world_without_hub(world: &World) -> World {
         name: world.name.clone(),
         pool: world.pool.clone(),
         hub: world.hub.clone(),
+        live: state.live().clone(),
         router: quansio_server::api::router(state),
         target: world.target.clone(),
         _dir: tempfile::tempdir().unwrap(),
         _state: tempfile::tempdir().unwrap(),
         _root: tempfile::tempdir().unwrap(),
     }
+}
+
+/// Everything the live hub has for the tenant so far, as `(channel, frame)`.
+fn drain(
+    receiver: &mut tokio::sync::broadcast::Receiver<quansio_events::LiveFrame>,
+) -> Vec<(String, Value)> {
+    let mut frames = Vec::new();
+    while let Ok(frame) = receiver.try_recv() {
+        frames.push((frame.channel, frame.frame));
+    }
+    frames
+}
+
+#[tokio::test]
+async fn frames_reach_the_live_hub_while_a_person_holds_the_session_and_stop_at_the_handback() {
+    let Some(world) = world("wl_frames", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    let mut watching = world.live.subscribe(TENANT);
+    ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.big()}),
+    )
+    .await;
+    let session = sessions(&world.pool, &world.target).await.remove(0).0;
+    let channel = format!("target:{}", world.target);
+    assert!(
+        drain(&mut watching)
+            .iter()
+            .all(|(_, frame)| frame["kind"] != "browser.frame"),
+        "no one is holding the session, so no frames were asked for"
+    );
+
+    let (status, taken) = command(
+        &world,
+        "RequestTakeover",
+        11,
+        json!({"session_id": session}),
+    )
+    .await;
+    assert_eq!(status, 200, "{taken}");
+    // Chromium sends a first picture as soon as the screencast starts.
+    let mut seen = Vec::new();
+    for _ in 0..100 {
+        seen.extend(
+            drain(&mut watching)
+                .into_iter()
+                .filter(|(_, frame)| frame["kind"] == "browser.frame"),
+        );
+        if !seen.is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    assert!(!seen.is_empty(), "a frame reached the live hub");
+    let (published_on, frame) = &seen[0];
+    assert_eq!(published_on, &channel);
+    assert_eq!(frame["session_id"], session.as_str());
+    assert_eq!(frame["media_type"], "image/jpeg");
+    assert!(frame["data"].as_str().is_some_and(|data| data.len() > 100
+        && data
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || "+/=".contains(c))));
+    assert_eq!(frame["url"], site.big());
+    assert!(
+        frame["width"].as_u64().is_some_and(|w| w > 0)
+            && frame["height"].as_u64().is_some_and(|h| h > 0),
+        "the page's size travels with the picture"
+    );
+    assert!(frame["sequence"].as_u64().is_some_and(|n| n >= 1));
+
+    // After the handback the stream stops: the agent changes the page and nothing is published.
+    let (status, back) = command(&world, "Handback", 12, json!({"session_id": session})).await;
+    assert_eq!(status, 200, "{back}");
+    tokio::time::sleep(Duration::from_millis(500)).await;
+    drain(&mut watching);
+    ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.url()}),
+    )
+    .await;
+    tokio::time::sleep(Duration::from_millis(1200)).await;
+    assert!(
+        drain(&mut watching)
+            .iter()
+            .all(|(_, frame)| frame["kind"] != "browser.frame"),
+        "frames kept coming after the handback"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn a_forged_frame_for_another_targets_session_is_never_published() {
+    let Some(world) = world("wl_forgedframe", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.url()}),
+    )
+    .await;
+    let session = sessions(&world.pool, &world.target).await.remove(0).0;
+    let other = register_target(&world.pool).await;
+    let mut watching = world.live.subscribe(TENANT);
+
+    let stream = tokio::net::UnixStream::connect(world._dir.path().join("w.sock"))
+        .await
+        .unwrap();
+    let (_reader, mut writer) = stream.into_split();
+    let hello = quansio_machine::gateway::wire::encode(
+        &quansio_machine::gateway::wire::FromWorker::Hello {
+            tenant_id: TENANT.to_string(),
+            target_id: other,
+        },
+    )
+    .unwrap();
+    writer.write_all(hello.as_bytes()).await.unwrap();
+    for _ in 0..100 {
+        if world.hub.links().len() == 2 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    let forged = quansio_machine::gateway::wire::encode(
+        &quansio_machine::gateway::wire::FromWorker::BrowserFrame {
+            session_id: session,
+            tab_id: "forged".to_string(),
+            media_type: "image/jpeg".to_string(),
+            data: "Rk9SR0VE".to_string(),
+            url: "https://evil.example/".to_string(),
+            device_width: 0,
+            device_height: 0,
+            sequence: 1,
+        },
+    )
+    .unwrap();
+    writer.write_all(forged.as_bytes()).await.unwrap();
+    tokio::time::sleep(Duration::from_millis(700)).await;
+    assert!(
+        drain(&mut watching)
+            .iter()
+            .all(|(_, frame)| frame["data"] != "Rk9SR0VE"),
+        "a frame from a worker that does not hold the session's target was published"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn a_person_s_input_is_delivered_only_while_they_hold_the_session_and_every_malformed_one_is_refused(
+) {
+    let Some(world) = world("wl_input", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.big()}),
+    )
+    .await;
+    let session = sessions(&world.pool, &world.target).await.remove(0).0;
+    let tab = guard(&world.pool, &session).await["tabs"][0]["tab_id"]
+        .as_str()
+        .unwrap_or_default()
+        .to_string();
+    eventually("the guard names the tab", || async {
+        !guard(&world.pool, &session).await["tabs"]
+            .as_array()
+            .is_none_or(Vec::is_empty)
+    })
+    .await;
+    let tab = if tab.is_empty() {
+        guard(&world.pool, &session).await["tabs"][0]["tab_id"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    } else {
+        tab
+    };
+    let click = |x: f64, y: f64| json!({"session_id": session, "tab_id": tab, "kind": "click", "x": x, "y": y});
+
+    // The agent holds the session: a person's input has nowhere to go.
+    let (status, refused) = command(&world, "SendBrowserInput", 21, click(50.0, 50.0)).await;
+    assert_eq!(status, 409, "{refused}");
+    assert_eq!(site.hits("/hit"), 0);
+
+    let (status, taken) = command(
+        &world,
+        "RequestTakeover",
+        22,
+        json!({"session_id": session}),
+    )
+    .await;
+    assert_eq!(status, 200, "{taken}");
+    let (status, delivered) = command(&world, "SendBrowserInput", 23, click(50.0, 50.0)).await;
+    assert_eq!(status, 200, "{delivered}");
+    assert_eq!(delivered["result"]["delivered"], true);
+    eventually("the person's click lands in the page", || async {
+        site.hits("/hit") == 1
+    })
+    .await;
+
+    // Malformed inputs are refused before they reach a worker.
+    for (n, bad) in [
+        (
+            24,
+            json!({"session_id": session, "tab_id": tab, "kind": "click", "x": -1, "y": 5}),
+        ),
+        (
+            25,
+            json!({"session_id": session, "tab_id": tab, "kind": "click", "x": 5, "y": 99999}),
+        ),
+        (
+            26,
+            json!({"session_id": session, "tab_id": tab, "kind": "drag"}),
+        ),
+        (
+            27,
+            json!({"session_id": session, "tab_id": tab, "kind": "text", "text": "x".repeat(5000)}),
+        ),
+        (
+            28,
+            json!({"session_id": session, "kind": "click", "x": 1, "y": 1}),
+        ),
+    ] {
+        let (status, body) = command(&world, "SendBrowserInput", n, bad.clone()).await;
+        assert_eq!(status, 400, "{bad}: {body}");
+    }
+    assert_eq!(site.hits("/hit"), 1, "nothing malformed reached the page");
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn an_input_that_cannot_be_delivered_is_an_error_and_not_a_silent_drop() {
+    let Some(world) = world("wl_inputgone", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.big()}),
+    )
+    .await;
+    let session = sessions(&world.pool, &world.target).await.remove(0).0;
+    let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    let mut tx = world.pool.begin().await.unwrap();
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .unwrap();
+    quansio_machine::control::browser::BrowserSessionStore::request_takeover(
+        &mut tx, TENANT, &session, &now,
+    )
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
+
+    // The person holds the session, but this server has no worker hub.
+    let bare = world_without_hub(&world).await;
+    let (status, body) = command(
+        &bare,
+        "SendBrowserInput",
+        31,
+        json!({"session_id": session, "tab_id": "t", "kind": "click", "x": 1, "y": 1}),
+    )
+    .await;
+    assert_eq!(status, 503, "{body}");
+    drop_pool(&world.pool, &world.name).await;
 }
