@@ -1,0 +1,36 @@
+W2 a joining viewer does not start the stream: COMPILES
+W2 a joining viewer does not start the stream: KILLED (the_stream_follows_a_newer_tab_and_stops_when_the_last_viewer_leaves;a_viewer_sees_the_agent_work_whether_it_joins_before_the_browser_exists_or_after;result: FAILED. 10 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.01s;)
+W3 the host does not ask for the stream after a call creates the browser: COMPILES
+W3 the host does not ask for the stream after a call creates the browser: KILLED (a_viewer_sees_the_agent_work_whether_it_joins_before_the_browser_exists_or_after;the_stream_follows_a_newer_tab_and_stops_when_the_last_viewer_leaves;result: FAILED. 10 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.77s;)
+W4 the worker does not follow a newer tab: COMPILES
+W4 the worker does not follow a newer tab: KILLED (the_stream_follows_a_newer_tab_and_stops_when_the_last_viewer_leaves;result: FAILED. 11 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 24.23s;)
+W5 a late viewer is not given a current picture: COMPILES
+W5 a late viewer is not given a current picture: KILLED (a_viewer_sees_the_agent_work_whether_it_joins_before_the_browser_exists_or_after;result: FAILED. 11 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.24s;)
+W6 frame numbers restart with every stream: COMPILES
+W6 frame numbers restart with every stream: KILLED (the_stream_follows_a_newer_tab_and_stops_when_the_last_viewer_leaves;result: FAILED. 11 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.75s;)
+--- W1 and W7 re-run after the stop test was made able to fail (the first version used a static page)
+W1 the last viewer leaving does not stop the stream: COMPILES
+W1 the last viewer leaving does not stop the stream: KILLED (the_stream_follows_a_newer_tab_and_stops_when_the_last_viewer_leaves;result: FAILED. 11 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.55s;)
+W7 the host streams whether or not anyone is watching: COMPILES
+W7 the host streams whether or not anyone is watching: KILLED (with_no_viewer_the_agent_works_unwatched_and_nothing_is_streamed;result: FAILED. 11 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.34s;)
+CONTROL (restored): all pass
+(no diff above = restored)
+--- keys, scroll, frame tolerance, desktop rules
+K1 the server accepts any key: COMPILES
+K1 the server accepts any key: KILLED (a_person_s_special_keys_and_scroll_reach_the_page_and_anything_else_is_refused;result: FAILED. 12 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.30s;)
+K2 the server does not bound a scroll: COMPILES
+K2 the server does not bound a scroll: KILLED (a_person_s_special_keys_and_scroll_reach_the_page_and_anything_else_is_refused;result: FAILED. 12 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.81s;)
+K3 the worker accepts any key: COMPILES
+K3 the worker accepts any key: KILLED (a_person_s_special_keys_and_scroll_reach_the_page_and_anything_else_is_refused;result: FAILED. 12 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.01s;)
+K4 the worker does not bound a scroll: COMPILES
+K4 the worker does not bound a scroll: KILLED (a_person_s_special_keys_and_scroll_reach_the_page_and_anything_else_is_refused;result: FAILED. 12 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.95s;)
+K5 a frame the daemon cannot read ends the connection: COMPILES
+K5 a frame the daemon cannot read ends the connection: KILLED (a_worker_takes_browser_orders_only_while_it_holds_a_lease_and_rebuilds_a_receipt_only_from_a_valid_wire_form;result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s;)
+T1 the desktop forwards a chord (Control held): COMPILES
+T1 the desktop forwards a chord (Control held): KILLED (   × a key press > stays with the person's own keyboard when it is a chord or not a key the page can be told 2ms; FAIL  tests/live-input.test.ts > a key press > stays with the person's own keyboard w)
+T2 the desktop sends a named key it was not allowed: COMPILES
+T2 the desktop sends a named key it was not allowed: KILLED (   × a key press > is a named key, a printable character as text, or nothing 8ms;   × a key press > stays with the person's own keyboard when it is a chord or not a key the page can be told 0ms;)
+T3 the desktop does not clamp a fast scroll: COMPILES
+T3 the desktop does not clamp a fast scroll: KILLED (   × a turn of the wheel over the picture > is not sent when it cannot be placed, and never exceeds what the server accepts 3ms; FAIL  tests/live-input.test.ts > a turn of the wheel over the picture )
+CONTROL (restored): all pass
+(no diff above = restored)
