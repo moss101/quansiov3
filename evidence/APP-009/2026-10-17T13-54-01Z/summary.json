@@ -1,0 +1,144 @@
+{
+  "task_id": "APP-009",
+  "git_commit": "c23d5f086435cdf89450c356f71679ee30392dd5",
+  "recorded_at": "2026-10-17T14:10:34Z",
+  "commands": [
+    {
+      "command": "cargo fmt --check -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-17T13-54-01Z/fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-17T13-54-01Z/clippy.log"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # clean clone: 129 passed, validator PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-17T13-54-01Z/architecture.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1335 passed, 0 failed, default stack. New: tests/teammate_thread_race.rs, 12 rounds x 8 simultaneous callers on a teammate with no thread, real PostgreSQL: every caller succeeds, all get the same ACTIVE thread, exactly one thread row. Before the fix it failed in round 0 (8 callers, 8 different threads)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-17T13-54-01Z/full-crates.log"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # run 1 of 3, dev stack up, all 68 files: 676 passed (collaboration.e2e included)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-17T13-54-01Z/desktop-full-1.log"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # run 2 of 3: 676 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-17T13-54-01Z/desktop-full-2.log"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # run 3 of 3: 676 passed. Three clean runs do not prove a rare flake gone; the deterministic reproduction and the mutants do",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-17T13-54-01Z/desktop-full-3.log"
+    },
+    {
+      "command": "mutation checks, all KILLED, every mutant compiles, restored tree identical to the fix: no lock -> 4 threads for one teammate; a bare activate again -> the reported message 'illegal agent_thread transition: ACTIVE -> ACTIVE'; a creator that lost the race is told it failed -> 'state conflict'; look-then-create -> 8 threads",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-17T13-54-01Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --check -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # clean clone: 129 passed, validator PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1335 passed, 0 failed, default stack. New: tests/teammate_thread_race.rs, 12 rounds x 8 simultaneous callers on a teammate with no thread, real PostgreSQL: every caller succeeds, all get the same ACTIVE thread, exactly one thread row. Before the fix it failed in round 0 (8 callers, 8 different threads)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # run 1 of 3, dev stack up, all 68 files: 676 passed (collaboration.e2e included)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # run 2 of 3: 676 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # run 3 of 3: 676 passed. Three clean runs do not prove a rare flake gone; the deterministic reproduction and the mutants do",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks, all KILLED, every mutant compiles, restored tree identical to the fix: no lock -> 4 threads for one teammate; a bare activate again -> the reported message 'illegal agent_thread transition: ACTIVE -> ACTIVE'; a creator that lost the race is told it failed -> 'state conflict'; look-then-create -> 8 threads",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-009/2026-10-17T13-54-01Z/fmt.log",
+      "sha256": "8bc7b290341d8b4d3fbdc6c48bffc1dac5c9e8a41608403e62b6f2a0c1af9957",
+      "bytes": 9
+    },
+    {
+      "path": "evidence/APP-009/2026-10-17T13-54-01Z/clippy.log",
+      "sha256": "d6055da9eac8b4b12534cfdf029e231a41e7173125989fb06137ecb2a1c0d8ab",
+      "bytes": 343
+    },
+    {
+      "path": "evidence/APP-009/2026-10-17T13-54-01Z/architecture.log",
+      "sha256": "49628ccdd9c070fd26b3c289774dc05fc7afc1addb6cddd5c3155f10f67696bc",
+      "bytes": 287
+    },
+    {
+      "path": "evidence/APP-009/2026-10-17T13-54-01Z/full-crates.log",
+      "sha256": "e6b76037e95414ec0b84ec7539869dc48c47e7340e65927181e0ad44b57aca3a",
+      "bytes": 134825
+    },
+    {
+      "path": "evidence/APP-009/2026-10-17T13-54-01Z/desktop-full-1.log",
+      "sha256": "8622078daa3d9b16504f74d74b08ff5363e779a79f4968e9eb76e7774079f6d7",
+      "bytes": 8078
+    },
+    {
+      "path": "evidence/APP-009/2026-10-17T13-54-01Z/desktop-full-2.log",
+      "sha256": "4f35d17878165e84ad2311d8c00c318a6fe45800a729e7eb8775ce986563fb41",
+      "bytes": 8232
+    },
+    {
+      "path": "evidence/APP-009/2026-10-17T13-54-01Z/desktop-full-3.log",
+      "sha256": "e43cfd32f73d3909528192ab90413523dee7ed86384bda2624b3b1626af6346e",
+      "bytes": 8234
+    },
+    {
+      "path": "evidence/APP-009/2026-10-17T13-54-01Z/mutation-checks.log",
+      "sha256": "c65d45d8f1a466d0e8b34b40fb642c93f7718a5400dc58b90cf2febf5349b142",
+      "bytes": 997
+    },
+    {
+      "path": "evidence/APP-009/2026-10-17T13-54-01Z/RECONCILIATION.md",
+      "sha256": "6f0a389842a823fccb5b510a57e9f0666c54eb075fb997764a8c95694459a890",
+      "bytes": 4313
+    }
+  ]
+}

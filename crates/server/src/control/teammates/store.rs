@@ -452,6 +452,10 @@ impl TeammateStore {
     /// The teammate's ACTIVE AgentThread, provisioning one when the workspace has none
     /// for it (one persistent thread per teammate per workspace).
     ///
+    /// Safe to call from any number of messages at once: the teammate's row is committed before its thread exists, so the
+    /// first messages can all arrive in that window. Exactly one creates the thread, they all get the same one, and none
+    /// is refused because another activated it first.
+    ///
     /// # Errors
     /// Returns the runtime's error.
     pub async fn provision_thread(
@@ -459,9 +463,6 @@ impl TeammateStore {
         identity: &RuntimeIdentity,
         teammate: &Teammate,
     ) -> Result<AgentThread, TeammateError> {
-        if let Some(thread) = self.thread_of(identity, teammate).await? {
-            return Ok(thread);
-        }
         let agents = AgentStore::new(self.pool.clone(), identity.clone())?;
         let mut new = NewAgentThread::new(teammate.workspace_id.clone(), AgentKind::Teammate);
         new.definition_id = Some(teammate.id);
@@ -469,8 +470,10 @@ impl TeammateStore {
             new.execution_target_id =
                 CanonicalId::parse_typed(target, Prefix::ExecutionTarget).ok();
         }
-        let created = agents.create_thread(new).await?;
-        Ok(agents.activate(&created.id, created.generation).await?)
+        // One thread per teammate however many messages ask for it at once, and an activation another caller got to first is
+        // accepted: see `AgentStore::ensure_thread_for_definition`.
+        let thread = agents.ensure_thread_for_definition(new).await?;
+        Ok(agents.ensure_active(thread).await?)
     }
 
     /// Change a definition: version bumped, `agent.definition_updated` and the AuditEntry in

@@ -693,30 +693,105 @@ impl AgentStore {
             Box::pin(async move {
                 let mut publisher = Publisher::new(&tenant_id, &identity);
                 let created = insert_thread(tx, &tenant_id, &thread).await?;
-                publisher
-                    .emit(
-                        tx,
-                        batch,
-                        "agent_thread",
-                        &created.id.to_string(),
-                        "agent.thread_provisioned",
-                        &created.workspace_id,
-                        created.generation,
-                        json!({
-                            "agent_thread_id": created.id.to_string(),
-                            "workspace_id": created.workspace_id,
-                            "agent_kind": created.agent_kind.as_db_str(),
-                            "parent_id": created.parent_id.as_ref().map(ToString::to_string),
-                            "work_node_id": created.work_node_id.as_ref().map(ToString::to_string),
-                            "status": created.status.as_db_str(),
-                            "generation": created.generation.get(),
-                        }),
-                    )
-                    .await?;
+                emit_thread_provisioned(tx, batch, &mut publisher, &created).await?;
                 Ok(created)
             })
         })
         .await
+    }
+
+    /// The AgentThread of a teammate definition, created if it has none — atomically.
+    ///
+    /// A teammate's row is committed before its thread exists, so two callers can ask for the thread of the same teammate at
+    /// once. "Look, then create" lets both create one (a teammate with two threads, its messages split between them), and an
+    /// activation after the other's is refused as `ACTIVE → ACTIVE`. Here the common case (the thread exists) is a plain read.
+    /// Otherwise the thread is created in a transaction that first takes a lock for the definition and looks again: of several
+    /// callers exactly one finds nothing and creates it, and each of the others finds it, abandons its transaction (nothing
+    /// written, no event) and returns the winner's thread. The thread comes back as it is (`PROVISIONED` for the creator,
+    /// possibly already `ACTIVE`); [`AgentStore::ensure_active`] makes it active idempotently.
+    ///
+    /// # Errors
+    /// [`RuntimeError::LifecyclePolicy`] when `thread` names no definition (a worker has none to be unique by), and a database
+    /// error when the workspace, parent or WorkNode is not visible in this tenant.
+    pub async fn ensure_thread_for_definition(
+        &self,
+        thread: NewAgentThread,
+    ) -> Result<AgentThread, RuntimeError> {
+        let Some(definition_id) = thread.definition_id else {
+            return Err(RuntimeError::LifecyclePolicy {
+                from: "none".to_string(),
+                to: AgentThreadStatus::Provisioned.as_db_str().to_string(),
+                rule: "a thread unique by definition names the definition",
+            });
+        };
+        if let Some(existing) = self.thread_of_definition(&definition_id).await? {
+            return Ok(existing);
+        }
+        let tenant_id = self.identity.tenant_id.clone();
+        let identity = self.identity.clone();
+        let created = self
+            .commit(move |tx, batch| {
+                Box::pin(async move {
+                    // Held until this transaction ends: a second creator waits here and then sees the first one's thread.
+                    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+                        .bind(format!(
+                            "agent_thread_for_definition:{tenant_id}:{definition_id}"
+                        ))
+                        .execute(&mut **tx)
+                        .await?;
+                    let winner: Option<String> = sqlx::query_scalar(
+                        "SELECT id FROM agent_threads WHERE tenant_id = $1 AND definition_id = $2 \
+                         ORDER BY created_at, id LIMIT 1",
+                    )
+                    .bind(&tenant_id)
+                    .bind(definition_id.to_string())
+                    .fetch_optional(&mut **tx)
+                    .await?;
+                    if let Some(id) = winner {
+                        // Another caller created it first. There is nothing to write and no event to stage, so this
+                        // transaction is abandoned and the caller reads the winner's thread.
+                        return Err(RuntimeError::StateConflict {
+                            entity: "agent_thread",
+                            id,
+                        });
+                    }
+                    let mut publisher = Publisher::new(&tenant_id, &identity);
+                    let created = insert_thread(tx, &tenant_id, &thread).await?;
+                    emit_thread_provisioned(tx, batch, &mut publisher, &created).await?;
+                    Ok(created)
+                })
+            })
+            .await;
+        match created {
+            Err(RuntimeError::StateConflict {
+                entity: "agent_thread",
+                id,
+            }) => {
+                let id = CanonicalId::parse_typed(&id, Prefix::AgentThread)?;
+                self.load_thread(&id).await
+            }
+            other => other,
+        }
+    }
+
+    /// The first AgentThread of a definition, if it has one.
+    async fn thread_of_definition(
+        &self,
+        definition_id: &CanonicalId,
+    ) -> Result<Option<AgentThread>, RuntimeError> {
+        let tenant_id = self.identity.tenant_id.clone();
+        let mut tx = self.events.begin_tenant_transaction(&tenant_id).await?;
+        let row: Option<PgRow> = sqlx::query(&format!(
+            "SELECT {THREAD_COLUMNS} FROM agent_threads \
+             WHERE tenant_id = $1 AND definition_id = $2 ORDER BY created_at, id LIMIT 1"
+        ))
+        .bind(&tenant_id)
+        .bind(definition_id.to_string())
+        .fetch_optional(&mut *tx)
+        .await?;
+        let thread = row.as_ref().map(thread_from_row).transpose()?;
+        tx.commit().await?;
+        Ok(thread)
     }
 
     /// Apply one legal AgentThread transition and emit its `agent.*` event.
@@ -2062,6 +2137,36 @@ async fn release_parent_run(
 }
 
 // ---------------------------------------------------------------- tx helpers
+
+/// Emit `agent.thread_provisioned` for a thread just created.
+async fn emit_thread_provisioned(
+    tx: &mut Transaction<'static, Postgres>,
+    batch: &mut EventBatch,
+    publisher: &mut Publisher<'_>,
+    created: &AgentThread,
+) -> Result<(), RuntimeError> {
+    publisher
+        .emit(
+            tx,
+            batch,
+            "agent_thread",
+            &created.id.to_string(),
+            "agent.thread_provisioned",
+            &created.workspace_id,
+            created.generation,
+            json!({
+                "agent_thread_id": created.id.to_string(),
+                "workspace_id": created.workspace_id,
+                "agent_kind": created.agent_kind.as_db_str(),
+                "parent_id": created.parent_id.as_ref().map(ToString::to_string),
+                "work_node_id": created.work_node_id.as_ref().map(ToString::to_string),
+                "status": created.status.as_db_str(),
+                "generation": created.generation.get(),
+            }),
+        )
+        .await?;
+    Ok(())
+}
 
 async fn insert_thread(
     tx: &mut Transaction<'static, Postgres>,
