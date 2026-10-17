@@ -39,3 +39,6 @@ local/
 scratch/
 *.log
 !evidence/**/*.log
+
+# macOS Finder metadata
+.DS_Store
