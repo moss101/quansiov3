@@ -154,6 +154,9 @@ describe.skipIf(blocked !== null)("desktop trust E2E against quansio-server", ()
         QUANSIO_DATABASE_URL: databaseUrl,
         QUANSIO_BIND: `127.0.0.1:${String(port)}`,
         QUANSIO_TRUST_SCOPE_HEADERS: "1",
+        // These suites exercise the conversation and approval flows, not a machine: the model's tool calls are answered by the
+        // conformance stub, and nothing is executed. A served server refuses worker tools without a worker by default.
+        QUANSIO_CONFORMANCE_STUB_HOST: "1",
         QUANSIO_APPROVAL_SIGNING_KEY: "desktop-trust-e2e-signing-key",
         ...(minio ? { QUANSIO_OBJECT_STORE: "1", QUANSIO_TEST_MINIO_ENDPOINT: MINIO } : {}),
       },
