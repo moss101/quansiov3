@@ -2287,6 +2287,7 @@ form label:has(textarea) {
 }
 
 .live-screen img { display: block; max-width: 100%; }
+.live-screen img.live-picture-driving { cursor: crosshair; outline: 2px solid var(--accent, #4c8bf5); outline-offset: -2px; }
 .live-no-frame { padding: var(--s4); color: var(--fg-2); }
 .live-guard { display: flex; flex-direction: column; gap: var(--s2); }
 .live-guard .live-guard-dialog,

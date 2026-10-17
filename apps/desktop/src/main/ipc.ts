@@ -17,7 +17,7 @@ import { ANSWER_COMMAND, CANCEL_COMMAND, MAX_UPLOAD_BYTES, POST_COMMAND, UPLOAD_
 import { MAX_IMAGE_PREVIEW_BYTES, MAX_TEXT_PREVIEW_BYTES, isActiveContent, isExecutable, mediaKind, openAllowed, previewPlan } from "../artifacts/preview.js";
 import { searchQueryString, searchRequest } from "../artifacts/search.js";
 import { OBJECTIVE_COMMAND, PROPOSE_COMMAND } from "../work/monitor.js";
-import { computerCommand, decidePermission as permissionCommand, handback as handbackCommand, requestTakeover as takeoverCommand, resolveCertificate as certificateCommand } from "../live/session.js";
+import { browserInput as inputCommand, computerCommand, decidePermission as permissionCommand, handback as handbackCommand, requestTakeover as takeoverCommand, resolveCertificate as certificateCommand } from "../live/session.js";
 import { desktopNotice, type DesktopNotice } from "../automation/notifications.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { parseOpenSettings, parsePermissionRequest, readSnapshot, settingsUrl, notApplicable, type PermissionSnapshot, type PermissionSource } from "./permissions.js";
@@ -327,6 +327,9 @@ export class DesktopBridge {
       // A person's answer to a certificate error or a camera/microphone request (ADP-001): user-only on the server.
       "live.certificate": (payload) => settled(Promise.resolve(payload).then((raw) => this.liveCertificate(raw))),
       "live.permission": (payload) => settled(Promise.resolve(payload).then((raw) => this.livePermission(raw))),
+      // A person's click or typing in a browser session they hold: refused unless they hold it, and an input that cannot be
+      // delivered is an error the page shows rather than a silent drop.
+      "live.input": (payload) => settled(Promise.resolve(payload).then((raw) => this.liveInput(raw))),
       "computer.permissions": (payload) => Promise.resolve(payload).then((raw) => this.computerPermissions(raw)),
       "computer.openSettings": (payload) => Promise.resolve(payload).then((raw) => this.openComputerSettings(raw)),
       // Skill recording (ADP-003): refusals are data the page branches on, so the commands are settled.
@@ -510,6 +513,24 @@ export class DesktopBridge {
       asText(record["certificateId"], "live.certificate certificateId"),
       asDecision(record["decision"], "live.certificate"),
     );
+    return (await this.server.invoke(command.name, newCommandId(), command.params)).result;
+  }
+
+  /** `SendBrowserInput`: the person's click or typed text, for the session they hold. */
+  async liveInput(raw: unknown): Promise<unknown> {
+    const record = asRecord(raw, "live.input");
+    const sessionId = asSessionId(record, "live.input");
+    const tabId = asText(record["tabId"], "live.input tabId");
+    const kind = record["kind"];
+    const command =
+      kind === "click"
+        ? inputCommand(sessionId, tabId, { kind, x: Number(record["x"]), y: Number(record["y"]) })
+        : kind === "text"
+          ? inputCommand(sessionId, tabId, { kind, text: asText(record["text"], "live.input text") })
+          : null;
+    if (!command) {
+      throw new Error("live.input is a click or typed text");
+    }
     return (await this.server.invoke(command.name, newCommandId(), command.params)).result;
   }
 
