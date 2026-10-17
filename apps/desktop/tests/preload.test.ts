@@ -108,6 +108,7 @@ describe("preload bridge", () => {
         "handback",
         "resolveCertificate",
         "decidePermission",
+        "sendBrowserInput",
         "attachLive",
         "computerPermissions",
         "openComputerSettings",
@@ -268,6 +269,7 @@ describe("preload bridge", () => {
     await api.handback({ sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA" });
     await api.resolveCertificate({ sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", tabId: "cdp-1", certificateId: "crt_1", decision: "allow" });
     await api.decidePermission({ sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", tabId: "cdp-1", origin: "https://example.com", permission: "camera", decision: "deny" });
+    await api.sendBrowserInput({ sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", tabId: "cdp-1", kind: "click", x: 10, y: 20 });
     await api.attachLive("tgt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
     await api.computerPermissions({ needs: ["accessibility"] });
     await api.openComputerSettings("accessibility");

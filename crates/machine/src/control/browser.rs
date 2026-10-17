@@ -24,8 +24,8 @@ use crate::control::MachineError;
 pub use super::browser_guard::{
     BrowserSecretError, BrowserSecretMaterial, BrowserSecretRequest, BrowserSecretValue,
     BrowserSecrets, Decision, DecisionActor, DecisionKind, DecisionReceipt, GuardCertificate,
-    GuardDialog, GuardDownload, GuardReport, GuardState, GuardTab, InDoubtAction, RecordedDecision,
-    BROWSER_SECRET_TOOL, GRANTABLE_PERMISSIONS,
+    GuardDialog, GuardDownload, GuardReport, GuardState, GuardTab, InDoubtAction, ReceiptWire,
+    RecordedDecision, BROWSER_SECRET_TOOL, GRANTABLE_PERMISSIONS,
 };
 
 /// Who is driving a session (the schema's `browser_sessions.control_holder`).

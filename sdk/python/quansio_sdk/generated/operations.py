@@ -222,6 +222,11 @@ OPERATIONS: dict[str, dict[str, str]] = {
         "path": "/v1/commands/Handback",
         "family": "Browser/computer",
     },
+    "SendBrowserInput": {
+        "method": "POST",
+        "path": "/v1/commands/SendBrowserInput",
+        "family": "Browser/computer",
+    },
     "ImportBrowserSession": {
         "method": "POST",
         "path": "/v1/commands/ImportBrowserSession",

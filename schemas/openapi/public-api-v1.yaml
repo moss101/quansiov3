@@ -1838,6 +1838,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /v1/commands/SendBrowserInput:
+    post:
+      operationId: SendBrowserInput
+      summary: 'Browser/computer: SendBrowserInput'
+      tags:
+      - Browser/computer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandEnvelope'
+      responses:
+        '200':
+          description: Accepted; result or typed error (DOMAIN.md §14).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - command_id
+                - accepted_at
+                properties:
+                  command_id:
+                    type: string
+                  accepted_at:
+                    type: string
+                    format: date-time
+                  result:
+                    type:
+                    - object
+                    - 'null'
+                  error:
+                    oneOf:
+                    - $ref: '#/components/schemas/Error'
+                    - type: 'null'
+        default:
+          description: Typed error (DOMAIN.md §15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /v1/commands/ImportBrowserSession:
     post:
       operationId: ImportBrowserSession
@@ -6649,6 +6691,13 @@ components:
       additionalProperties: true
       description: 'Browser/computer command Handback. The concrete parameter schema is owned by the implementing task and
         must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined: false.'
+      x-quansio-params-defined: false
+    SendBrowserInputParams:
+      type: object
+      additionalProperties: true
+      description: 'Browser/computer command SendBrowserInput. The concrete parameter schema is owned by the implementing
+        task and must be added additively; until then this schema is deliberately open and marked x-quansio-params-defined:
+        false.'
       x-quansio-params-defined: false
     ImportBrowserSessionParams:
       type: object

@@ -12,6 +12,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::{ActionEnvelope, EnvelopeKind, LeaseClaim};
+use crate::control::browser::ReceiptWire;
 
 /// The longest frame either side accepts, so a peer cannot make the other buffer without bound.
 pub const MAX_FRAME_BYTES: usize = 8 * 1024 * 1024;
@@ -137,14 +138,86 @@ impl EnvelopeWire {
     }
 }
 
+/// An order about a browser session, from the control plane to the worker that runs it (EXEC-009 composition).
+///
+/// These carry what only the server knows — who holds the session, what a person decided, what a person did while
+/// holding it. The worker applies them to the session's driver; the driver still refuses what it must.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "order", rename_all = "snake_case")]
+pub enum BrowserOrder {
+    /// Who holds the session: `agent` or `user`. Idempotent — the worker moves its driver to match and does nothing if it
+    /// already does — so the server states it before an agent dispatch and when a person takes over or hands back.
+    Control {
+        /// The session.
+        session_id: String,
+        /// `agent` or `user`.
+        holder: String,
+        /// Canonical instant.
+        at: String,
+    },
+    /// A user's decision on a certificate error.
+    Certificate {
+        /// The receipt the control plane minted for the user.
+        receipt: ReceiptWire,
+    },
+    /// A user's decision on a permission.
+    Permission {
+        /// The receipt the control plane minted for the user.
+        receipt: ReceiptWire,
+    },
+    /// Start or stop relaying frames of the session's current tab. The server asks for them while a person is looking.
+    Screencast {
+        /// The session.
+        session_id: String,
+        /// Whether frames should flow.
+        enabled: bool,
+    },
+    /// A click the user made while holding the session.
+    UserClick {
+        /// The session.
+        session_id: String,
+        /// The tab.
+        tab_id: String,
+        /// Viewport x.
+        x: f64,
+        /// Viewport y.
+        y: f64,
+    },
+    /// Text the user typed while holding the session.
+    UserText {
+        /// The session.
+        session_id: String,
+        /// The tab.
+        tab_id: String,
+        /// The text.
+        text: String,
+    },
+}
+
+impl BrowserOrder {
+    /// The session the order is about.
+    #[must_use]
+    pub fn session_id(&self) -> &str {
+        match self {
+            Self::Control { session_id, .. }
+            | Self::Screencast { session_id, .. }
+            | Self::UserClick { session_id, .. }
+            | Self::UserText { session_id, .. } => session_id,
+            Self::Certificate { receipt } | Self::Permission { receipt } => &receipt.session_id,
+        }
+    }
+}
+
 /// Server to worker.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ToWorker {
     /// The lease the worker holds now. Sent on connect and on every renewal; a newer one replaces the old.
     Lease(LeaseWire),
     /// One fenced action.
     Dispatch(Box<EnvelopeWire>),
+    /// An order about a browser session.
+    Browser(BrowserOrder),
 }
 
 /// How a dispatch ended on the worker.
@@ -175,7 +248,7 @@ pub enum OutcomeWire {
 }
 
 /// Worker to server.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum FromWorker {
     /// The first frame: which target this worker serves.
@@ -195,6 +268,37 @@ pub enum FromWorker {
         replayed: bool,
         /// How it ended.
         outcome: OutcomeWire,
+    },
+    /// What a browser session's driver reports about its tabs and actions (DOMAIN.md §8.4.1 E): sent after each browser
+    /// action and each order. Bounded and parsed strictly by the control plane, which stores it only for a session of
+    /// the target this worker holds.
+    BrowserGuard {
+        /// The session.
+        session_id: String,
+        /// The driver's guard report.
+        report: serde_json::Value,
+    },
+    /// One picture of a session's tab, sent only while the server asked for the session's frames. Transient: the server
+    /// publishes it to whoever is watching and keeps nothing.
+    BrowserFrame {
+        /// The session.
+        session_id: String,
+        /// The tab.
+        tab_id: String,
+        /// The image's media type.
+        media_type: String,
+        /// The image, base64.
+        data: String,
+        /// The page's URL when the frame was taken.
+        url: String,
+        /// The page's viewport size in CSS pixels, which a click's coordinates are in; `0` when unknown.
+        #[serde(default)]
+        device_width: u32,
+        /// See `device_width`.
+        #[serde(default)]
+        device_height: u32,
+        /// Counts up, so a viewer can drop a frame that arrives late.
+        sequence: u64,
     },
     /// What the worker observes about itself (DOMAIN.md §8.2). The server renews the lease on a heartbeat it
     /// accepts, so a worker that goes quiet is fenced when its lease lapses, with no timer on the server.

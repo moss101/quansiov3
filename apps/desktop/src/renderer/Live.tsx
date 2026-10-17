@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 
 import { t } from "../i18n/strings.js";
-import { decodeBrowserFrame, latestFrame, type BrowserFrame } from "../live/frames.js";
+import { decodeBrowserFrame, frameToPage, latestFrame, type BrowserFrame } from "../live/frames.js";
 import {
   agentInputAllowed,
   applyEvent,
@@ -212,6 +212,45 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
     [session, open],
   );
 
+  // A person's input to the session they hold: a click on the picture and printable keys. The server refuses it unless they
+  // hold the session, and says so when it could not be delivered; the page shows that and does not pretend it landed.
+  const sendInput = useCallback(
+    async (input: { kind: "click"; x: number; y: number } | { kind: "text"; text: string }) => {
+      if (!session || session.controller !== "user" || !frame?.tabId) {
+        return;
+      }
+      const settled = (await window.quansio.sendBrowserInput({ sessionId: session.sessionId, tabId: frame.tabId, ...input })) as SettledPayload;
+      const refused = refusal(settled);
+      setNotice(refused);
+    },
+    [session, frame],
+  );
+
+  const clickPicture = useCallback(
+    (event: { clientX: number; clientY: number; currentTarget: HTMLElement }) => {
+      if (!frame) {
+        return;
+      }
+      const point = frameToPage(frame, event.currentTarget.getBoundingClientRect(), event.clientX, event.clientY);
+      if (point) {
+        void sendInput({ kind: "click", ...point });
+      }
+    },
+    [frame, sendInput],
+  );
+
+  const typeInPicture = useCallback(
+    (event: { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean; preventDefault: () => void }) => {
+      // Printable characters only: the page is told text, not key codes, so Enter, Backspace and shortcuts stay with the
+      // person's own keyboard and are not forwarded.
+      if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        void sendInput({ kind: "text", text: event.key });
+      }
+    },
+    [sendInput],
+  );
+
   // A certificate error and a media permission are the person's to decide (ADP-001): the server refuses anyone else,
   // and nothing the agent does enables these buttons. A refusal is shown; the view is re-read either way.
   const decideCertificate = useCallback(
@@ -307,7 +346,14 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
           </nav>
           <div className="live-screen">
             {frame ? (
-              <img src={frame.dataUrl} alt={t("liveScreenAlt")} />
+              <img
+                src={frame.dataUrl}
+                alt={t("liveScreenAlt")}
+                className={session.controller === "user" ? "live-picture live-picture-driving" : "live-picture"}
+                tabIndex={session.controller === "user" ? 0 : undefined}
+                onClick={session.controller === "user" ? clickPicture : undefined}
+                onKeyDown={session.controller === "user" ? typeInPicture : undefined}
+              />
             ) : (
               <p className="live-no-frame">{session.screencastEnabled ? t("liveWaitingFrames") : t("liveNoScreencast")}</p>
             )}

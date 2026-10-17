@@ -18,6 +18,11 @@ export interface AgentCursor {
 
 export interface BrowserFrame {
   readonly sessionId: string;
+  /** The tab the picture shows, when the worker said (a person's input names a tab). */
+  readonly tabId: string | null;
+  /** The page's viewport in CSS pixels, which a click's coordinates are in; `null` when unknown. */
+  readonly width: number | null;
+  readonly height: number | null;
   /** `data:<media type>;base64,…`, ready for an `<img>`. */
   readonly dataUrl: string;
   readonly url: string | null;
@@ -60,8 +65,13 @@ export function decodeBrowserFrame(frame: unknown, sessionId: string): BrowserFr
   }
   const mediaType = typeof record["media_type"] === "string" && MEDIA_TYPES.has(record["media_type"]) ? record["media_type"] : "image/jpeg";
   const sequence = typeof record["sequence"] === "number" && Number.isInteger(record["sequence"]) ? record["sequence"] : null;
+  const dimension = (value: unknown): number | null =>
+    typeof value === "number" && Number.isFinite(value) && value > 0 && value <= 100000 ? value : null;
   return {
     sessionId,
+    tabId: typeof record["tab_id"] === "string" && record["tab_id"].length > 0 ? record["tab_id"] : null,
+    width: dimension(record["width"]),
+    height: dimension(record["height"]),
     dataUrl: `data:${mediaType};base64,${data}`,
     url: typeof record["url"] === "string" ? record["url"] : null,
     cursor: cursorOf(record["cursor"]),
@@ -75,4 +85,37 @@ export function latestFrame(current: BrowserFrame | null, incoming: BrowserFrame
     return current;
   }
   return incoming;
+}
+
+/** Where a click on the displayed picture lands in the page, in the page's own CSS pixels. */
+export interface PagePoint {
+  readonly x: number;
+  readonly y: number;
+}
+
+/** The rectangle the picture is displayed in, in the same coordinates as the click (`getBoundingClientRect`). */
+export interface DisplayedRect {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * Map a click on the displayed picture to the page's coordinates.
+ *
+ * The picture is a scaled copy of the page's viewport, so the click's fraction of the displayed rectangle is its fraction
+ * of the viewport. `null` when the frame does not say how big the page is, or the click is outside the picture: a click
+ * that cannot be placed is not sent.
+ */
+export function frameToPage(frame: BrowserFrame, rect: DisplayedRect, clientX: number, clientY: number): PagePoint | null {
+  if (frame.width === null || frame.height === null || rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+  const fractionX = (clientX - rect.left) / rect.width;
+  const fractionY = (clientY - rect.top) / rect.height;
+  if (!(fractionX >= 0 && fractionX <= 1 && fractionY >= 0 && fractionY <= 1)) {
+    return null;
+  }
+  return { x: Math.round(fractionX * frame.width * 100) / 100, y: Math.round(fractionY * frame.height * 100) / 100 };
 }

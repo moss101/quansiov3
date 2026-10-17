@@ -19,6 +19,8 @@
 
 use std::collections::BTreeMap;
 
+use quansio_machine::control::browser::DecisionReceipt;
+use quansio_machine::gateway::wire::BrowserOrder;
 use quansio_machine::gateway::{
     ActionEnvelope, EnvelopeKind, Heartbeat, LeaseClaim, MachineGateway, Rejection,
 };
@@ -198,6 +200,37 @@ pub trait ToolExecutor: Send + Sync {
         envelope: &ActionEnvelope,
         output: &mut OutputSink,
     ) -> Result<ToolOutput, HostFailure>;
+
+    /// Apply an order about a browser session. An executor with no browser refuses.
+    ///
+    /// # Errors
+    /// Returns why the order was not applied.
+    async fn browser_order(&self, order: &BrowserOrder) -> Result<(), String> {
+        let _ = order;
+        Err("this worker has no browser".to_string())
+    }
+
+    /// Apply a user's decision on a certificate error or a permission. An executor with no browser refuses.
+    ///
+    /// # Errors
+    /// Returns why the decision was not applied.
+    async fn browser_decision(&self, receipt: &DecisionReceipt) -> Result<(), String> {
+        let _ = receipt;
+        Err("this worker has no browser".to_string())
+    }
+
+    /// The next frame of a session whose screencast is running. Never resolves for an executor with no browser, so a
+    /// caller can wait on it beside other work.
+    async fn next_frame(&self) -> Option<crate::browser::ScreencastFrame> {
+        std::future::pending().await
+    }
+
+    /// The guard reports of the browser sessions this executor runs, as `(session_id, report)`; `only` limits them to
+    /// one session. Empty for an executor with no browser.
+    async fn browser_guards(&self, only: Option<&str>) -> Vec<(String, serde_json::Value)> {
+        let _ = only;
+        Vec::new()
+    }
 }
 
 /// Where captured evidence goes.
@@ -241,6 +274,12 @@ pub struct WorkerHost<E: ToolExecutor, S: EvidenceSink> {
 }
 
 impl<E: ToolExecutor, S: EvidenceSink> WorkerHost<E, S> {
+    /// The executor the host runs tools through.
+    #[must_use]
+    pub const fn executor(&self) -> &E {
+        &self.executor
+    }
+
     /// Build a host over an executor and an evidence sink.
     pub fn new(executor: E, evidence: S) -> Self {
         Self {

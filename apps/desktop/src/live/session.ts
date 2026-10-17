@@ -459,6 +459,39 @@ export function decidePermission(
   return { name: "DecideBrowserPermission", params: { session_id: sessionId, tab_id: tabId, origin, permission, decision } };
 }
 
+/** A person's input to a browser session they hold: a click at a page point, or typed text. */
+export type BrowserInput =
+  | { readonly kind: "click"; readonly x: number; readonly y: number }
+  | { readonly kind: "text"; readonly text: string };
+
+/** The most text one input carries; the server refuses more. */
+export const MAX_INPUT_TEXT_BYTES = 4096;
+
+/**
+ * `SendBrowserInput {session_id, tab_id, kind, …}`: a person's act, valid only while they hold the session. The builder
+ * refuses what the server refuses, so a malformed input never leaves the window.
+ */
+export function browserInput(
+  sessionId: string,
+  tabId: string,
+  input: BrowserInput,
+): { readonly name: "SendBrowserInput"; readonly params: Record<string, string | number> } {
+  if (!sessionId.startsWith("bsn_") || tabId === "") {
+    throw new Error("an input names a bsn_ session and a tab");
+  }
+  if (input.kind === "click") {
+    const inRange = (value: number): boolean => Number.isFinite(value) && value >= 0 && value <= 20000;
+    if (!inRange(input.x) || !inRange(input.y)) {
+      throw new Error("a click is at a point from 0 to 20000");
+    }
+    return { name: "SendBrowserInput", params: { session_id: sessionId, tab_id: tabId, kind: "click", x: input.x, y: input.y } };
+  }
+  if (input.text === "" || new TextEncoder().encode(input.text).length > MAX_INPUT_TEXT_BYTES) {
+    throw new Error(`typed text is 1 to ${String(MAX_INPUT_TEXT_BYTES)} bytes`);
+  }
+  return { name: "SendBrowserInput", params: { session_id: sessionId, tab_id: tabId, kind: "text", text: input.text } };
+}
+
 /** `RequestTakeover {target_id}` / `Handback {target_id}` for the native computer. */
 export function computerCommand(kind: "RequestTakeover" | "Handback", targetId: string): { readonly name: "RequestTakeover" | "Handback"; readonly params: { readonly target_id: string } } {
   if (!targetId.startsWith("tgt_")) {

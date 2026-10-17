@@ -403,4 +403,38 @@ impl ToolExecutor for LocalToolExecutor {
             }),
         }
     }
+
+    async fn browser_order(
+        &self,
+        order: &quansio_machine::gateway::wire::BrowserOrder,
+    ) -> Result<(), String> {
+        match &self.browser {
+            Some(browser) => browser.order(order).await,
+            None => Err("this worker has no browser".to_string()),
+        }
+    }
+
+    async fn browser_decision(
+        &self,
+        receipt: &quansio_machine::control::browser::DecisionReceipt,
+    ) -> Result<(), String> {
+        match &self.browser {
+            Some(browser) => browser.decide(receipt).await,
+            None => Err("this worker has no browser".to_string()),
+        }
+    }
+
+    async fn next_frame(&self) -> Option<crate::browser::ScreencastFrame> {
+        match &self.browser {
+            Some(browser) => browser.next_frame().await,
+            None => std::future::pending().await,
+        }
+    }
+
+    async fn browser_guards(&self, only: Option<&str>) -> Vec<(String, Value)> {
+        match &self.browser {
+            Some(browser) => browser.guards(only).await,
+            None => Vec::new(),
+        }
+    }
 }

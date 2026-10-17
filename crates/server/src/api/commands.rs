@@ -828,6 +828,16 @@ async fn dispatch(
             ))
             .await?
         }
+        "SendBrowserInput" => {
+            super::live_sessions::send_browser_input(
+                state,
+                scope,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            )
+            .await?
+        }
         "Handback" => {
             Box::pin(super::live_sessions::handback(
                 state,

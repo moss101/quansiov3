@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use quansio_machine::gateway::wire::OutcomeWire;
+use quansio_machine::gateway::wire::{BrowserOrder, OutcomeWire};
 use serde_json::json;
 
 use super::browser::{
@@ -42,6 +42,12 @@ impl WorkerToolHost {
         }
     }
 
+    /// The hub this host sends through.
+    #[must_use]
+    pub const fn hub(&self) -> &WorkerHub {
+        &self.hub
+    }
+
     /// Run a `browser.*` call on the session of the call's own run.
     async fn browser(&self, mut dispatch: HostDispatch) -> Result<HostOutcome, HostFailure> {
         if !BROWSER_TOOLS.contains(&dispatch.tool.as_str()) {
@@ -76,6 +82,19 @@ impl WorkerToolHost {
                 detail: format!("BROWSER_SESSION_UNAVAILABLE: {detail}"),
             })?;
         require_agent_control(&session)?;
+        // The control plane's word on who holds the session is stated to the worker before each agent call, so a takeover
+        // or a handback it missed (it was away, or restarting) cannot leave its driver disagreeing with the database.
+        self.hub
+            .send_order(
+                &dispatch.tenant_id,
+                &target_id,
+                BrowserOrder::Control {
+                    session_id: session.id.clone(),
+                    holder: "agent".to_string(),
+                    at: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+                },
+            )
+            .await;
         // The call acts on its own run's session whatever id the model wrote.
         if let Some(arguments) = dispatch.args.as_object_mut() {
             arguments.insert("session_id".to_string(), json!(session.id));

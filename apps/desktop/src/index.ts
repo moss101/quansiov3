@@ -302,6 +302,7 @@ export {
   decodeGuard,
   decodeLiveSession,
   decodeTargets,
+  browserInput,
   decodeTerminal,
   decidePermission,
   GRANTABLE_PERMISSIONS,
