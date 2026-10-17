@@ -1,0 +1,9 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.34s
+     Running unittests src/lib.rs (target/debug/deps/quansio_server-78000db210b072f3)
+
+running 2 tests
+test control::routines::config::tests::the_shipped_policy_loads_and_a_tenant_override_replaces_only_what_it_names ... ok
+test control::routines::config::tests::a_replacement_file_cannot_go_below_the_schema_floor ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 343 filtered out; finished in 0.01s
+

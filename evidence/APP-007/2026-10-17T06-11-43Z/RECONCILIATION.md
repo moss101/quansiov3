@@ -54,3 +54,6 @@ permission decisions had no way to reach the page, and the live view had no pict
 * `tests/work.e2e.test.ts` passes alone 3/3 and failed once in the full parallel run: load-sensitive.
 * Three server test binaries overflow the stack in debug builds on `main` (a separate follow-up is in flight); they run here
   with `RUST_MIN_STACK=16777216`.
+
+
+> **Superseded after review:** the stub opt-in described above was dropped when `main` landed a better fix for the same breakage (the conversation and trust E2E suites now run on a real attached worker, EXEC-002). The served default is unchanged: worker tools are run by an attached worker or refused `WORKER_UNAVAILABLE`.

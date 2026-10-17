@@ -111,6 +111,58 @@ impl AutomationConfig {
         serde_yaml::from_str(SHIPPED).expect("config/automation.yaml parses")
     }
 
+    /// The configuration a deployment runs: `config/automation.yaml` as shipped, or, when
+    /// `QUANSIO_AUTOMATION_CONFIG` names a file, that file in the same shape (a deployment or
+    /// a test harness giving one tenant its own plan through `tenant_overrides`). The values
+    /// the schema bounds are bounded here too, so a replacement file cannot lift the interval
+    /// floor or the trigger ceiling past what `automation-config.schema.json` allows.
+    ///
+    /// # Errors
+    /// If the named file cannot be read, does not parse, or holds a value outside the schema's bounds.
+    pub fn from_env() -> Result<Self, String> {
+        match std::env::var("QUANSIO_AUTOMATION_CONFIG")
+            .ok()
+            .filter(|value| !value.is_empty())
+        {
+            None => Ok(Self::shipped()),
+            Some(path) => {
+                let text = std::fs::read_to_string(&path)
+                    .map_err(|error| format!("QUANSIO_AUTOMATION_CONFIG {path}: {error}"))?;
+                let config: Self = serde_yaml::from_str(&text)
+                    .map_err(|error| format!("QUANSIO_AUTOMATION_CONFIG {path}: {error}"))?;
+                config.check_bounds()?;
+                Ok(config)
+            }
+        }
+    }
+
+    /// The bounds `schemas/json/automation-config.schema.json` puts on the plan limits.
+    fn check_bounds(&self) -> Result<(), String> {
+        let plans = [self.limits.personal, self.limits.organization];
+        let overrides = self.tenant_overrides.values();
+        let intervals = plans
+            .iter()
+            .map(|plan| Some(plan.min_interval_seconds))
+            .chain(overrides.clone().map(|over| over.min_interval_seconds));
+        let triggers = plans
+            .iter()
+            .map(|plan| Some(plan.max_enabled_triggers))
+            .chain(overrides.map(|over| over.max_enabled_triggers));
+        if intervals
+            .flatten()
+            .any(|seconds| !(10..=86_400).contains(&seconds))
+        {
+            return Err("min_interval_seconds must be between 10 and 86400".to_string());
+        }
+        if triggers
+            .flatten()
+            .any(|count| !(1..=10_000).contains(&count))
+        {
+            return Err("max_enabled_triggers must be between 1 and 10000".to_string());
+        }
+        Ok(())
+    }
+
     /// The limits that apply to a tenant: its plan's, with its own overrides on top.
     #[must_use]
     pub fn limits_for(&self, tenant_id: &str, personal: bool) -> PlanLimits {
@@ -136,6 +188,30 @@ impl AutomationConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_replacement_file_cannot_go_below_the_schema_floor() {
+        let mut config = AutomationConfig::shipped();
+        assert!(config.check_bounds().is_ok());
+        config.tenant_overrides.insert(
+            "tn_01J8Z3K6F1N8VQ2X5W9Y0ABCDE".to_string(),
+            PlanOverride {
+                max_enabled_triggers: None,
+                min_interval_seconds: Some(1),
+            },
+        );
+        assert!(
+            config.check_bounds().is_err(),
+            "1 s is under the 10 s floor"
+        );
+        config
+            .tenant_overrides
+            .values_mut()
+            .for_each(|over| over.min_interval_seconds = Some(10));
+        assert!(config.check_bounds().is_ok());
+        config.limits.personal.min_interval_seconds = 5;
+        assert!(config.check_bounds().is_err());
+    }
 
     #[test]
     fn the_shipped_policy_loads_and_a_tenant_override_replaces_only_what_it_names() {

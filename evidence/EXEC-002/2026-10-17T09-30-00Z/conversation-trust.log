@@ -1,0 +1,15 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/.claude/worktrees/quirky-mestorf-d45e61/apps/desktop
+
+ ✓ tests/trust.e2e.test.ts (1 test) 2932ms
+   ✓ desktop trust E2E against quansio-server > binds the approval to the preview, keeps unsettled effects open, and refuses evidence that fails its digest 664ms
+ ✓ tests/conversation.e2e.test.ts (4 tests) 3720ms
+   ✓ desktop conversation E2E against quansio-server > streams the reply, lands it as a durable message, and a reload rebuilds the same thread with its inspector 575ms
+   ✓ desktop conversation E2E against quansio-server > asks a question in the thread, waits, and continues from the answer 379ms
+   ✓ desktop conversation E2E against quansio-server > uploads a real binary as an artifact and attaches it to a message the inspector shows 350ms
+
+ Test Files  2 passed (2)
+      Tests  5 passed (5)
+   Start at  11:46:38
+   Duration  4.21s (transform 201ms, setup 0ms, collect 491ms, tests 6.65s, environment 0ms, prepare 80ms)
+

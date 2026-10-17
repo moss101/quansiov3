@@ -128,6 +128,22 @@ function waitFor<T>(poll: () => T | undefined, what: string, timeoutMs = 15_000)
   });
 }
 
+/**
+ * Whether what the page renders equals the canonical graph. The orchestrator commits to a live workspace on its own tick, so
+ * a single read can be one revision behind the next; the page agrees when a reload and a canonical read land on the same
+ * revision, which is what the renderer's refresh does.
+ */
+async function agreesWithCanonical(page: Page): Promise<boolean> {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const canonical = decodeWorkGraph(await page.handlers["work.graph"]({}));
+    if (matchesCanonical(page.state, canonical)) {
+      return true;
+    }
+    await page.load();
+  }
+  return false;
+}
+
 /** A page: the bridge's handlers plus the work reducer fed with everything main pushed. */
 class Page {
   readonly pushed: { channel: string; payload: unknown }[] = [];
@@ -170,18 +186,40 @@ class Page {
     return graph;
   }
 
-  /** What the renderer's submit does: nodes first when edges name new nodes. */
-  async propose(draft: EditDraft): Promise<WorkGraphView> {
+  /**
+   * What the renderer's submit does: nodes first when edges name new nodes. The server's
+   * orchestrator also commits to a live workspace (it promotes and dispatches nodes on its
+   * own tick), so any base revision can go stale between a load and a propose. A refused
+   * proposal writes nothing, so a submit that is not testing the conflict itself does what the
+   * product does: reload, rebase the draft and submit again. `retry: false` surfaces the
+   * first CONFLICT_REVISION to the caller.
+   */
+  async propose(draft: EditDraft, retry = true): Promise<WorkGraphView> {
     if (!needsTwoProposals(draft)) {
-      await this.handlers["work.propose"](proposal(draft));
+      await this.#submit(draft, retry);
       return this.load();
     }
     const before = this.state.graph;
-    await this.handlers["work.propose"](proposal(draft, "nodes"));
+    await this.#submit(draft, retry, "nodes");
     const after = await this.load();
     const localIds = resolveLocalIds(draft, before, after);
-    await this.handlers["work.propose"](proposal({ ...draft, baseRevision: after.revision }, "edges", localIds));
+    await this.#submit({ ...draft, baseRevision: after.revision }, retry, "edges", localIds);
     return this.load();
+  }
+
+  async #submit(draft: EditDraft, retry: boolean, ...rest: [phase?: "nodes" | "edges", localIds?: Parameters<typeof proposal>[2]]): Promise<void> {
+    let current = draft;
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        await this.handlers["work.propose"](proposal(current, ...rest));
+        return;
+      } catch (error) {
+        if (!retry || attempt >= 8 || !(error instanceof ApiError) || error.code !== "CONFLICT_REVISION") {
+          throw error;
+        }
+        current = rebase(current, await this.load()).draft;
+      }
+    }
   }
 
   close(): void {
@@ -237,8 +275,8 @@ describe.skipIf(blocked !== null)("desktop work graph E2E against quansio-server
     alice.feed();
     expect(alice.state.stale).toBe(true);
     const withObjective = await alice.load();
-    expect(withObjective.revision).toBe(created.revision);
-    expect(matchesCanonical(alice.state, withObjective)).toBe(true);
+    expect(withObjective.revision).toBeGreaterThanOrEqual(created.revision);
+    expect(await agreesWithCanonical(alice)).toBe(true);
     const objective = withObjective.nodes.find((node) => node.id === created.objective_id);
     expect(objective?.kind).toBe("objective");
     expect(objective?.threadId).toBe(created.thread_id);
@@ -254,30 +292,33 @@ describe.skipIf(blocked !== null)("desktop work graph E2E against quansio-server
     expect(gather?.parentId).toBe(created.objective_id);
     expect(planned.edges.some((edge) => edge.kind === "depends_on" && edge.fromNodeId === write?.id && edge.toNodeId === gather?.id)).toBe(true);
     expect(planned.blockers.some((blocker) => blocker.nodeId === write?.id && blocker.kind === "prerequisite" && blocker.ref === gather?.id)).toBe(true);
-    expect(matchesCanonical(alice.state, decodeWorkGraph(await alice.handlers["work.graph"]({})))).toBe(true);
+    expect(await agreesWithCanonical(alice)).toBe(true);
 
     // Revision conflict: Bob loads the same revision; Alice edits first; Bob's edit is
     // refused with CONFLICT_REVISION and nothing of his is written. He rebases and succeeds.
     const bobView = await bob.load();
-    expect(bobView.revision).toBe(planned.revision);
-    const aliceEdit = withIntent(newDraft(WORKSPACE, planned.revision), { kind: "add_node", localId: "review", nodeKind: "milestone", title: "review", description: null, parentId: created.objective_id, priority: 1, contract: null });
+    expect(bobView.revision).toBeGreaterThanOrEqual(planned.revision);
+    const aliceEdit = withIntent(newDraft(WORKSPACE, bobView.revision), { kind: "add_node", localId: "review", nodeKind: "milestone", title: "review", description: null, parentId: created.objective_id, priority: 1, contract: null });
     const afterAlice = await alice.propose(aliceEdit);
     expect(afterAlice.revision).toBeGreaterThan(planned.revision);
     let bobDraft = withIntent(newDraft(WORKSPACE, bobView.revision), { kind: "add_node", localId: "publish", nodeKind: "task", title: "publish", description: null, parentId: created.objective_id, priority: 1, contract: null });
     bobDraft = withIntent(bobDraft, { kind: "transition", nodeId: gather?.id ?? "", to: "ready", expectedRevision: gather?.revision ?? 1 });
     let conflict: unknown = null;
     try {
-      await bob.propose(bobDraft);
+      await bob.propose(bobDraft, false);
     } catch (error) {
       conflict = error;
     }
     expect(conflict).toBeInstanceOf(ApiError);
     expect((conflict as ApiError).code).toBe("CONFLICT_REVISION");
     const untouched = await bob.load();
-    expect(untouched.revision).toBe(afterAlice.revision);
+    expect(untouched.revision).toBeGreaterThanOrEqual(afterAlice.revision);
     expect(untouched.nodes.some((node) => node.title === "publish")).toBe(false);
     const rebased = rebase(bobDraft, untouched);
-    expect(rebased.dropped).toEqual([]);
+    // The server's orchestrator promotes a node with no open prerequisite on its own tick, so by
+    // now `gather` may already be ready; the rebase then drops exactly that redundant
+    // transition and keeps everything else. Nothing else may be dropped.
+    expect(rebased.dropped.filter((entry) => !(entry.intent.kind === "transition" && entry.intent.nodeId === gather?.id && entry.reason.endsWith("is already ready")))).toEqual([]);
     expect(rebased.draft.baseRevision).toBe(untouched.revision);
     const afterBob = await bob.propose(rebased.draft);
     expect(afterBob.nodes.some((node) => node.title === "publish")).toBe(true);
@@ -289,7 +330,7 @@ describe.skipIf(blocked !== null)("desktop work graph E2E against quansio-server
       return alice.state.stale ? true : undefined;
     }, "alice sees the change");
     const aliceNow = await alice.load();
-    expect(aliceNow.revision).toBe(afterBob.revision);
+    expect(aliceNow.revision).toBeGreaterThanOrEqual(afterBob.revision);
 
     // Agent handoff UI: a delegation makes a worker and a handoff edge; the run parks.
     const posted = (await alice.handlers["messages.post"]({ threadId: null, content: `split this ${DELEGATE_SCENARIO}` })) as { run_id: string };

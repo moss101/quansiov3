@@ -39,7 +39,6 @@ fn server_config(kms: Option<KmsConfig>, key_file: Option<String>) -> ServerConf
         nats_url: None,
         intelligence_endpoint: None,
         worker_socket: None,
-        conformance_stub_host: false,
     }
 }
 

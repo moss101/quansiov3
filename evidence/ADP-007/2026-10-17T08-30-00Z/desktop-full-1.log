@@ -1,0 +1,141 @@
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3/.claude/worktrees/quirky-mestorf-d45e61/apps/desktop
+
+ ✓ tests/shell-windows.test.ts (21 tests) 6ms
+ ✓ tests/shell-gates.test.ts (31 tests) 5ms
+ ✓ tests/shortcuts.test.ts (24 tests) 43ms
+ ↓ tests/session.e2e.test.ts (10 tests | 10 skipped)
+ ✓ tests/shell-host.test.ts (29 tests) 53ms
+ ✓ tests/ipc-trust.test.ts (16 tests) 27ms
+ ✓ tests/local-files-media.test.ts (16 tests) 52ms
+ ✓ tests/automation-triggers.test.ts (40 tests) 25ms
+ ✓ tests/shell-modules.test.ts (16 tests) 39ms
+ ✓ tests/permissions.test.ts (29 tests) 56ms
+ ✓ tests/identity.test.ts (6 tests) 51ms
+ ✓ tests/local-files-watcher.test.ts (18 tests) 339ms
+ ✓ tests/local-files-edit.test.ts (15 tests) 107ms
+ ✓ tests/automation-parts.test.ts (30 tests) 50ms
+ ✓ tests/preload.test.ts (4 tests) 10ms
+ ✓ tests/shell-activity.test.ts (19 tests) 13ms
+ ✓ tests/conversation.test.ts (10 tests) 6ms
+ ✓ tests/recording.test.ts (18 tests) 25ms
+ ✓ tests/local-files-grants.test.ts (17 tests) 33ms
+ ✓ tests/live.test.ts (14 tests) 5ms
+ ✓ tests/knowledge.test.ts (9 tests) 8ms
+ ✓ tests/local-files-host.test.ts (21 tests) 709ms
+   ✓ folders, previews, edits and watches > delivers typed changes to the window that watches, with entry ids it can open, and is silent about its own saves 603ms
+ ✓ tests/secrets-payments.test.ts (13 tests) 23ms
+ ✓ tests/secrets-vault.test.ts (11 tests) 16ms
+ ✓ tests/local-files-roots.test.ts (13 tests) 54ms
+ ✓ tests/artifacts.test.ts (10 tests) 7ms
+stdout | tests/recorder.test.ts
+BLOCKED_EXTERNAL: /Users/mohsin/projects/quansiov3/.claude/worktrees/quirky-mestorf-d45e61/native/macos/.build/debug/quansio-recorder is not built (swift build --package-path native/macos --product quansio-recorder)
+
+ ✓ tests/recorder.test.ts (7 tests | 4 skipped) 3ms
+ ✓ tests/work.test.ts (5 tests) 10ms
+ ✓ tests/secrets-fill.test.ts (8 tests) 36ms
+ ✓ tests/collaboration.test.ts (11 tests) 7ms
+ ✓ tests/outputs.test.ts (14 tests) 12ms
+ ✓ tests/secrets-host.test.ts (9 tests) 161ms
+ ✓ tests/shell-menu.test.ts (10 tests) 7ms
+ ✓ tests/presentation.test.ts (13 tests) 6ms
+ ✓ tests/trust.test.ts (4 tests) 12ms
+ ✓ tests/live-decisions.test.ts (7 tests) 17ms
+ ✓ tests/packs.test.ts (9 tests) 4ms
+ ✓ tests/automation.test.ts (7 tests) 5ms
+ ✓ tests/shell-config.test.ts (9 tests) 6ms
+ ✓ tests/security.test.ts (6 tests) 14ms
+ ✓ tests/teammates.test.ts (2 tests) 3ms
+ ✓ tests/local-attach.test.ts (7 tests) 4ms
+ ✓ tests/trace.test.ts (4 tests) 65ms
+ ✓ tests/ipc-sources.test.ts (5 tests) 20ms
+ ✓ tests/shell-ui.test.ts (7 tests) 3ms
+ ✓ tests/secrets-config.test.ts (4 tests) 6ms
+ ✓ tests/local-files-config.test.ts (3 tests) 8ms
+ ✓ tests/local-files-links.test.ts (3 tests) 3ms
+ ✓ tests/settings-form.test.ts (4 tests) 3ms
+ ↓ tests/launch.e2e.test.ts (2 tests | 2 skipped)
+ ✓ tests/appearance.test.ts (2 tests) 1ms
+ ✓ tests/diagnostics.test.ts (2 tests) 2ms
+ ✓ tests/renderer-parts.test.ts (6 tests) 3ms
+ ✓ tests/surfaces.test.ts (3 tests) 2ms
+ ✓ tests/onboarding.test.ts (1 test) 2ms
+stdout | tests/secrets-import.test.ts > the Safe Storage key and values > is the real keychain's only on a machine where someone will answer its prompt
+BLOCKED_EXTERNAL: QUANSIO_TEST_MACOS_KEYCHAIN_IMPORT=1 is not set; the real keychain prompt (a person's to answer) was not exercised
+
+ ✓ tests/secrets-import.test.ts (16 tests) 3234ms
+ ✓ tests/live.e2e.test.ts (1 test) 7097ms
+   ✓ desktop live surface E2E against quansio-server > takes over the same session, fences the agent, survives a reconnect, and hands back 928ms
+ ✓ tests/knowledge.e2e.test.ts (2 tests) 7213ms
+   ✓ desktop knowledge E2E against quansio-server > forgetting memory or knowledge removes it from every future retrieval and leaves a tombstone with its provenance 497ms
+   ✓ desktop knowledge E2E against quansio-server > a skill climbs the ladder one rung at a time; an unapproved version cannot be activated; the run's resolution names it and grants nothing 2160ms
+ ✓ tests/reconnect.e2e.test.ts (1 test) 6536ms
+   ✓ desktop reconnect E2E against quansio-server > posts a message, persists the run and cursor, drops the socket, and resumes the same run from the cursor 1022ms
+ ✓ tests/work.e2e.test.ts (1 test) 6950ms
+   ✓ desktop work graph E2E against quansio-server > shows the canonical revision, resolves a concurrent edit as a rebase, and shows a handoff 2982ms
+ ✓ tests/teammates.e2e.test.ts (1 test) 6589ms
+   ✓ desktop roster E2E against quansio-server > creates, routes to, edits and archives a teammate: capability narrows, lineage stays 2938ms
+ ✓ tests/onboarding.e2e.test.ts (1 test) 6824ms
+   ✓ new-user onboarding E2E against quansio-server (session-only) > takes a fresh user from a magic link to a governed workspace with a running stream, then resumes from the keychain 1225ms
+ ✓ tests/artifacts.e2e.test.ts (2 tests) 7208ms
+   ✓ desktop artifact workspace E2E against quansio-server > keeps artifacts after the run closes, shows history with links and diffs, survives reload, and search finds them by content 2889ms
+   ✓ desktop artifact workspace E2E against quansio-server > shows each version's source check and saves an edit as the next version (CAP-003) 322ms
+ ❯ tests/conversation.e2e.test.ts (4 tests | 1 failed) 7273ms
+   × desktop conversation E2E against quansio-server > streams the reply, lands it as a durable message, and a reload rebuilds the same thread with its inspector 2013ms
+     → expected [ [ 'fs.read', 'rejected' ] ] to deeply equal [ [ 'fs.read', 'completed' ] ]
+   ✓ desktop conversation E2E against quansio-server > asks a question in the thread, waits, and continues from the answer 1162ms
+   ✓ desktop conversation E2E against quansio-server > uploads a real binary as an artifact and attaches it to a message the inspector shows 389ms
+ ✓ tests/collaboration.e2e.test.ts (2 tests) 7601ms
+   ✓ desktop collaboration E2E against quansio-server > keeps one order for two clients posting at once, then revokes the removed one 3782ms
+   ✓ desktop collaboration E2E against quansio-server > hands a conversation from one teammate to another 602ms
+ ❯ tests/trust.e2e.test.ts (1 test | 1 failed) 25457ms
+   × desktop trust E2E against quansio-server > binds the approval to the preview, keeps unsettled effects open, and refuses evidence that fails its digest 22276ms
+     → timed out waiting for the effect to settle
+ ✓ tests/automation.e2e.test.ts (2 tests) 48351ms
+   ✓ desktop automation E2E against quansio-server > delivers a mention on exactly the channels the person chose 3235ms
+   ✓ desktop automation E2E against quansio-server > keeps firing a routine across a server restart without firing a window twice 42026ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/conversation.e2e.test.ts > desktop conversation E2E against quansio-server > streams the reply, lands it as a durable message, and a reload rebuilds the same thread with its inspector
+AssertionError: expected [ [ 'fs.read', 'rejected' ] ] to deeply equal [ [ 'fs.read', 'completed' ] ]
+
+- Expected
++ Received
+
+  Array [
+    Array [
+      "fs.read",
+-     "completed",
++     "rejected",
+    ],
+  ]
+
+ ❯ tests/conversation.e2e.test.ts:285:84
+    283|     expect(inspection.turns).toHaveLength(1);
+    284|     expect(inspection.turns[0]?.modelRoute).toBe("in-process/conforman…
+    285|     expect(inspection.turns[0]?.tools.map((tool) => [tool.toolName, to…
+       |                                                                                    ^
+    286|     expect(inspection.turns[0]?.tools[0]?.effectStatus).not.toBeNull();
+    287|     reloaded.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/trust.e2e.test.ts > desktop trust E2E against quansio-server > binds the approval to the preview, keeps unsettled effects open, and refuses evidence that fails its digest
+Error: timed out waiting for the effect to settle
+ ❯ Module.eventually tests/settle.ts:22:13
+     20|     }
+     21|     if (Date.now() > deadline) {
+     22|       throw new Error(`timed out waiting for ${what}`);
+       |             ^
+     23|     }
+     24|     await new Promise((resolve) => setTimeout(resolve, 50));
+ ❯ tests/trust.e2e.test.ts:239:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+ Test Files  2 failed | 63 passed | 2 skipped (67)
+      Tests  2 failed | 650 passed | 16 skipped (668)
+   Start at  11:19:41
+   Duration  49.27s (transform 1.89s, setup 0ms, collect 8.55s, tests 142.52s, environment 7ms, prepare 2.71s)
+

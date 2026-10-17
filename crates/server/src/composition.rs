@@ -59,11 +59,6 @@ pub struct ServerConfig {
     /// `QUANSIO_WORKER_SOCKET`: the Unix socket the server listens on for `qworkerd` (EXEC-002). Unset, no worker can
     /// attach and the worker tools (`fs.*`, `terminal.exec`, `process.spawn`) are refused `WORKER_UNAVAILABLE`.
     pub worker_socket: Option<std::path::PathBuf>,
-    /// `QUANSIO_CONFORMANCE_STUB_HOST=1`: answer the worker tools with the conformance stub instead of a worker. For
-    /// harnesses that exercise the conversation and approval flows without a machine; **nothing is executed**, so it is never
-    /// evidence of a real boundary, and startup says so. Unset (the default), a worker tool is run by an attached worker or
-    /// refused `WORKER_UNAVAILABLE`.
-    pub conformance_stub_host: bool,
 }
 
 impl ServerConfig {
@@ -133,12 +128,10 @@ impl ServerConfig {
             .ok()
             .filter(|value| !value.is_empty())
             .map(std::path::PathBuf::from);
-        let conformance_stub_host = env::var("QUANSIO_CONFORMANCE_STUB_HOST").as_deref() == Ok("1");
         Ok(Self {
             nats_url,
             intelligence_endpoint,
             worker_socket,
-            conformance_stub_host,
             secrets_key_file,
             secrets_key_ref,
             secrets_kms,
@@ -207,7 +200,10 @@ impl Composition {
         let mut api = ApiState::new(pool.clone())
             .map_err(|error| error.message)?
             .with_scope_trust(trust)
-            .with_background_turns();
+            .with_background_turns()
+            .with_automation_config(
+                crate::control::routines::config::AutomationConfig::from_env()?,
+            );
         if let Some(store) = config.object_store.clone() {
             crate::observability::notice(
                 crate::observability::Level::Info,
@@ -267,19 +263,10 @@ impl Composition {
                 api = api.with_metrics_token(&token);
             }
         }
-        // The worker hub (EXEC-002): composed unless a harness asked for the stub, so a worker tool is either run by an
-        // attached worker or refused `WORKER_UNAVAILABLE`; it is never answered by the conformance stub by default. It listens
-        // only when a socket is configured.
-        if config.conformance_stub_host {
-            crate::observability::notice(
-                crate::observability::Level::Warn,
-                "QUANSIO_CONFORMANCE_STUB_HOST=1: fs.*, terminal.exec and process.spawn are answered by the conformance stub and NOTHING IS EXECUTED; this is for test harnesses only",
-            );
-        }
+        // The worker hub (EXEC-002): always composed, so a worker tool is either run by an attached worker or refused
+        // `WORKER_UNAVAILABLE`; it is never answered by the conformance stub. It listens only when a socket is configured.
         let hub = crate::worker::WorkerHub::new(pool.clone(), crate::worker::HubConfig::default());
-        if config.conformance_stub_host {
-            // No hub is composed: the worker tools reach the host the state started with, which is the stub.
-        } else if let Some(path) = config.worker_socket.as_deref() {
+        if let Some(path) = config.worker_socket.as_deref() {
             hub.listen(path)
                 .map_err(|error| format!("QUANSIO_WORKER_SOCKET={}: {error}", path.display()))?;
             crate::observability::notice(
@@ -296,9 +283,7 @@ impl Composition {
                 "QUANSIO_WORKER_SOCKET is not set: fs.*, terminal.exec and process.spawn are refused WORKER_UNAVAILABLE",
             );
         }
-        if !config.conformance_stub_host {
-            api = api.with_worker_hub(hub);
-        }
+        api = api.with_worker_hub(hub);
         if let Some(endpoint) = config.intelligence_endpoint.as_deref() {
             let settings = crate::intelligence::model_source::ModelCallSettings::load()?;
             let client = crate::intelligence::IntelligenceClient::connect_lazy(endpoint)
