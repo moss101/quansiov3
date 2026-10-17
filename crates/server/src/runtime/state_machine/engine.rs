@@ -481,7 +481,7 @@ impl RuntimeEngine {
         let result = span
             .context()
             .clone()
-            .scope(self.run_turn_in_span(run_id, generation, input))
+            .scope(Box::pin(self.run_turn_in_span(run_id, generation, input)))
             .await;
         match &result {
             Ok(_) => span.end("ok", serde_json::json!({})),
@@ -573,9 +573,14 @@ impl RuntimeEngine {
 
         // A run released from a WAITING_* state continues its recorded call instead of
         // asking the model to propose it again.
-        if let Some(outcome) = self
-            .resume_pending_calls(&run, &turn, generation, &mut steps_used, &mut tally)
-            .await?
+        if let Some(outcome) = Box::pin(self.resume_pending_calls(
+            &run,
+            &turn,
+            generation,
+            &mut steps_used,
+            &mut tally,
+        ))
+        .await?
         {
             return Ok(outcome);
         }
@@ -610,13 +615,11 @@ impl RuntimeEngine {
             };
             // Text reaches the conversation as the model writes it; the final frame below
             // still carries the whole text, which replaces what streamed.
-            let proposal = match self
-                .model
-                .propose_streaming(
-                    request,
-                    self.text_sink(&run, &turn.id.to_string(), &model_step.id.to_string()),
-                )
-                .await
+            let proposal = match Box::pin(self.model.propose_streaming(
+                request,
+                self.text_sink(&run, &turn.id.to_string(), &model_step.id.to_string()),
+            ))
+            .await
             {
                 Ok(proposal) => {
                     self.store
@@ -676,16 +679,15 @@ impl RuntimeEngine {
             }
 
             tally.assistant_text.clone_from(&proposal.assistant_text);
-            if let Some(outcome) = self
-                .dispatch_tool_calls(
-                    &run,
-                    &turn,
-                    generation,
-                    &proposal.tool_calls,
-                    &mut steps_used,
-                    &mut tally,
-                )
-                .await?
+            if let Some(outcome) = Box::pin(self.dispatch_tool_calls(
+                &run,
+                &turn,
+                generation,
+                &proposal.tool_calls,
+                &mut steps_used,
+                &mut tally,
+            ))
+            .await?
             {
                 return Ok(outcome);
             }
@@ -713,7 +715,7 @@ impl RuntimeEngine {
                     run_id: run.id.to_string(),
                     generation: generation.get(),
                 };
-                match self.delegation.delegate(delegation.clone(), context).await {
+                match Box::pin(self.delegation.delegate(delegation.clone(), context)).await {
                     Ok(DelegationOutcome::Spawned {
                         child_agent_thread_id,
                         ..
@@ -782,7 +784,7 @@ impl RuntimeEngine {
                     generation: generation.get(),
                     thread_id: None,
                 };
-                match self.questions.ask(question.clone(), context).await {
+                match Box::pin(self.questions.ask(question.clone(), context)).await {
                     Ok(QuestionOutcome::Asked { question_id }) => {
                         self.store
                             .complete_step(

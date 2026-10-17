@@ -1,0 +1,36 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.44s
+     Running tests/completion_claims.rs (target/debug/deps/completion_claims-c1acf0ab2ebe694f)
+
+running 9 tests
+test a_run_stopped_mid_verification_recovers_to_running_and_can_claim_again ... ok
+test a_plain_conversation_is_never_offered_a_completion_claim_and_stays_open ... ok
+test a_verifier_that_is_the_claimant_cannot_certify_a_contract_requiring_independence ... ok
+test the_served_claim_path_fits_a_thread_stack_below_the_default ... ok
+test a_claim_whose_contract_passes_succeeds_the_run_through_the_independent_verifier ... ok
+test rejected_claims_are_bounded_per_turn_and_leave_the_work_incomplete ... ok
+test a_claim_the_protocol_refuses_never_reaches_verification ... ok
+test a_failing_contract_returns_its_feedback_to_the_model_and_the_turn_continues ... ok
+test an_independent_verifier_that_disagrees_keeps_the_work_incomplete ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.52s
+
+     Running tests/routines.rs (target/debug/deps/routines-9182466dd7139dd0)
+
+running 4 tests
+test routine_commands_validate_and_transition ... ok
+test an_event_fires_its_routine_once_however_it_is_consumed ... ok
+test a_scheduled_window_fires_once_across_restarts ... ok
+test notifications_follow_preferences_and_deliver_email ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.87s
+
+     Running tests/served_plan_and_memory.rs (target/debug/deps/served_plan_and_memory-b7e4dc6ee5ed1622)
+
+running 3 tests
+test a_served_memory_proposal_without_a_memory_store_is_refused_and_writes_nothing ... ok
+test a_served_memory_proposal_lands_only_as_a_gated_candidate_of_the_triggering_message ... ok
+test a_served_run_observes_the_workgraph_and_its_plan_is_committed_or_refused_with_its_code ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.17s
+

@@ -162,7 +162,7 @@ pub async fn invoke(
 
     let identity = RuntimeIdentity::system(&scope.tenant_id, "api", correlation_id)
         .with_command_id(command_id);
-    let dispatched = dispatch(
+    let dispatched = Box::pin(dispatch(
         &state,
         &scope,
         &command,
@@ -170,7 +170,7 @@ pub async fn invoke(
         &identity,
         &request,
         &correlation,
-    )
+    ))
     .await;
     if let Some(principal) = &scope.principal {
         let (decision, reason) = match &dispatched {
@@ -227,163 +227,172 @@ async fn dispatch(
     let user_id = scope.user_id.clone();
     let result = match command {
         "CreateWorkspace" | "UpdateWorkspace" | "UpdateUserSettings" => {
-            identity_command(state, scope, command, &request.params, correlation).await?
+            Box::pin(identity_command(
+                state,
+                scope,
+                command,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
-        "CancelRun" => cancel_run(state, identity, &request.params, correlation).await?,
-        "PauseRun" => pause_run(state, identity, &request.params, correlation).await?,
-        "ResumeRun" => resume_run(state, identity, &request.params, correlation).await?,
+        "CancelRun" => Box::pin(cancel_run(state, identity, &request.params, correlation)).await?,
+        "PauseRun" => Box::pin(pause_run(state, identity, &request.params, correlation)).await?,
+        "ResumeRun" => Box::pin(resume_run(state, identity, &request.params, correlation)).await?,
         "CreateThread" => {
-            super::collaboration::create_thread(
+            Box::pin(super::collaboration::create_thread(
                 state,
                 scope,
                 identity,
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "AddParticipant" => {
-            super::collaboration::add_participant(
+            Box::pin(super::collaboration::add_participant(
                 state,
                 scope,
                 identity,
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "RemoveParticipant" => {
-            super::collaboration::remove_participant(
+            Box::pin(super::collaboration::remove_participant(
                 state,
                 scope,
                 identity,
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "ReactToMessage" => {
-            super::collaboration::react_to_message(
+            Box::pin(super::collaboration::react_to_message(
                 state,
                 scope,
                 identity,
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "HandOffThread" => {
-            super::collaboration::hand_off_thread(
+            Box::pin(super::collaboration::hand_off_thread(
                 state,
                 scope,
                 identity,
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "PostMessage" => {
-            post_message(
+            Box::pin(post_message(
                 state,
                 scope,
                 identity,
                 &request.params,
                 user_id.as_deref(),
                 correlation,
-            )
+            ))
             .await?
         }
         "AnswerQuestion" => {
-            answer_question(
+            Box::pin(answer_question(
                 state,
                 identity,
                 &request.params,
                 user_id.as_deref(),
                 correlation,
-            )
+            ))
             .await?
         }
-        "CancelTurn" => cancel_turn(state, identity, &request.params, correlation).await?,
+        "CancelTurn" => {
+            Box::pin(cancel_turn(state, identity, &request.params, correlation)).await?
+        }
         "ProposeGraphEdit" => {
-            super::workgraph::propose_graph_edit(
+            Box::pin(super::workgraph::propose_graph_edit(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "ApproveEffect" => {
-            super::trust::approve_effect(
+            Box::pin(super::trust::approve_effect(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
                 chat_engine,
-            )
+            ))
             .await?
         }
         "DenyEffect" => {
-            super::trust::deny_effect(
+            Box::pin(super::trust::deny_effect(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
                 chat_engine,
-            )
+            ))
             .await?
         }
         "CreateObjective" => {
-            super::workgraph::create_objective(
+            Box::pin(super::workgraph::create_objective(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "CreateArtifact" => {
-            super::artifacts::create_artifact(
+            Box::pin(super::artifacts::create_artifact(
                 state,
                 &scope.tenant_id,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "DeleteKnowledge" => {
-            super::knowledge::delete_knowledge(
+            Box::pin(super::knowledge::delete_knowledge(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "SupersedeKnowledge" => {
-            super::knowledge::supersede_knowledge(
+            Box::pin(super::knowledge::supersede_knowledge(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "DeleteMemory" => {
-            super::knowledge::delete_memory(
+            Box::pin(super::knowledge::delete_memory(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "InstallSkill" => {
@@ -397,13 +406,13 @@ async fn dispatch(
                 correlation,
             )
             .await?;
-            super::knowledge::install_skill(
+            Box::pin(super::knowledge::install_skill(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         // Pack installs (ADP-008): what a tenant may use changes for everyone, so both are a tenant
@@ -417,14 +426,14 @@ async fn dispatch(
                 correlation,
             )
             .await?;
-            super::packs::install_pack(
+            Box::pin(super::packs::install_pack(
                 state,
                 identity,
                 command_id,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "RollbackPack" => {
@@ -436,13 +445,13 @@ async fn dispatch(
                 correlation,
             )
             .await?;
-            super::packs::rollback_pack(
+            Box::pin(super::packs::rollback_pack(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "PromoteSkillVersion" => {
@@ -455,13 +464,13 @@ async fn dispatch(
                 correlation,
             )
             .await?;
-            super::knowledge::promote_skill_version(
+            Box::pin(super::knowledge::promote_skill_version(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "ProposeSkillCandidates" => {
@@ -473,13 +482,13 @@ async fn dispatch(
                 correlation,
             )
             .await?;
-            super::knowledge::propose_skill_candidates(
+            Box::pin(super::knowledge::propose_skill_candidates(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "DisableSkill" => {
@@ -493,76 +502,88 @@ async fn dispatch(
                 correlation,
             )
             .await?;
-            super::knowledge::disable_skill(
+            Box::pin(super::knowledge::disable_skill(
                 state,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         // Skill recording (ADP-003): a person's commands. The handlers refuse a service principal and
         // build the owner fence from the authenticated session; the store checks it.
         "StartRecording" => {
-            super::recordings::start_recording(state, scope, identity, &request.params, correlation)
-                .await?
-        }
-        "FinishRecording" => {
-            super::recordings::finish_recording(
+            Box::pin(super::recordings::start_recording(
                 state,
                 scope,
                 identity,
                 &request.params,
                 correlation,
-            )
+            ))
+            .await?
+        }
+        "FinishRecording" => {
+            Box::pin(super::recordings::finish_recording(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            ))
             .await?
         }
         "CancelRecording" => {
-            super::recordings::cancel_recording(
+            Box::pin(super::recordings::cancel_recording(
                 state,
                 scope,
                 identity,
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "CompileRecording" => {
-            super::recordings::compile_recording(
+            Box::pin(super::recordings::compile_recording(
                 state,
                 scope,
                 identity,
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "SubmitRecordingSkill" => {
-            super::recordings::submit_recording_skill(
+            Box::pin(super::recordings::submit_recording_skill(
                 state,
                 scope,
                 identity,
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "InviteMember" => {
-            super::admin::invite_member(state, scope, identity, &request.params, correlation)
-                .await?
+            Box::pin(super::admin::invite_member(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
         "FreezeEffects" | "UnfreezeEffects" | "DisableProvider" | "EnableProvider"
         | "QuarantineWorker" | "DrainTarget" | "RevokeConnector" | "EngageKillSwitch"
         | "ReleaseKillSwitch" => {
-            super::ops::command(
+            Box::pin(super::ops::command(
                 state,
                 scope,
                 identity,
                 command,
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "CreateServicePrincipal"
@@ -571,193 +592,240 @@ async fn dispatch(
         | "SetGroupRoleMapping"
         | "RemoveGroupRoleMapping"
         | "RevokeUserSessions" => {
-            super::enterprise::command(
+            Box::pin(super::enterprise::command(
                 state,
                 scope,
                 identity,
                 command,
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "UpdateMembership" => {
-            super::admin::update_membership(state, scope, identity, &request.params, correlation)
-                .await?
+            Box::pin(super::admin::update_membership(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
         "RemoveMember" => {
-            super::admin::remove_member(state, scope, identity, &request.params, correlation)
-                .await?
+            Box::pin(super::admin::remove_member(
+                state,
+                scope,
+                identity,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
         "CreateTeammate" => {
-            super::teammates::create_teammate(
+            Box::pin(super::teammates::create_teammate(
                 state,
                 scope,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "UpdateTeammate" => {
-            super::teammates::update_teammate(
+            Box::pin(super::teammates::update_teammate(
                 state,
                 scope,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "ArchiveTeammate" => {
-            super::teammates::archive_teammate(
+            Box::pin(super::teammates::archive_teammate(
                 state,
                 scope,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "CreateRoutine" => {
-            super::routines::create_routine(state, scope, &request.params, correlation).await?
+            Box::pin(super::routines::create_routine(
+                state,
+                scope,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
         "UpdateRoutine" => {
-            super::routines::update_routine(state, scope, &request.params, correlation).await?
+            Box::pin(super::routines::update_routine(
+                state,
+                scope,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
         "PauseRoutine" | "ResumeRoutine" | "DeleteRoutine" => {
-            super::routines::transition_routine(state, scope, command, &request.params, correlation)
-                .await?
+            Box::pin(super::routines::transition_routine(
+                state,
+                scope,
+                command,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
         "TriggerRoutineNow" => {
-            super::routines::trigger_routine_now(
+            Box::pin(super::routines::trigger_routine_now(
                 state,
                 scope,
                 &command_id.as_canonical().to_string(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "DryRunRoutine" => {
-            super::routines::dry_run_routine(state, scope, &request.params, correlation).await?
-        }
-        "RotateRoutineHook" => {
-            super::routines::rotate_routine_hook(state, scope, &request.params, correlation).await?
-        }
-        "UpdateNotificationPreferences" => {
-            super::routines::update_notification_preferences(
+            Box::pin(super::routines::dry_run_routine(
                 state,
                 scope,
                 &request.params,
                 correlation,
-            )
+            ))
+            .await?
+        }
+        "RotateRoutineHook" => {
+            Box::pin(super::routines::rotate_routine_hook(
+                state,
+                scope,
+                &request.params,
+                correlation,
+            ))
+            .await?
+        }
+        "UpdateNotificationPreferences" => {
+            Box::pin(super::routines::update_notification_preferences(
+                state,
+                scope,
+                &request.params,
+                correlation,
+            ))
             .await?
         }
         "MarkNotificationRead" => {
-            super::routines::mark_notification_read(state, scope, &request.params, correlation)
-                .await?
+            Box::pin(super::routines::mark_notification_read(
+                state,
+                scope,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
         "RequestTakeover" => {
-            super::live_sessions::request_takeover(
+            Box::pin(super::live_sessions::request_takeover(
                 state,
                 scope,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         // Remote control of a person's own computer (ADP-009, DOMAIN.md 8.6.2): a viewer asks, the person at the computer decides.
         "RequestRemoteControl" => {
-            super::remote::request_remote_control(
+            Box::pin(super::remote::request_remote_control(
                 state,
                 scope,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "GrantRemoteControl" => {
-            super::remote::grant_remote_control(
+            Box::pin(super::remote::grant_remote_control(
                 state,
                 scope,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "DenyRemoteControl" => {
-            super::remote::deny_remote_control(
+            Box::pin(super::remote::deny_remote_control(
                 state,
                 scope,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "StopRemoteControl" => {
-            super::remote::stop_remote_control(
+            Box::pin(super::remote::stop_remote_control(
                 state,
                 scope,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         // A person's answer to a certificate error or a camera/microphone request in the agent's browser (ADP-001).
         "ResolveBrowserCertificate" => {
-            super::live_sessions::resolve_browser_certificate(
+            Box::pin(super::live_sessions::resolve_browser_certificate(
                 state,
                 scope,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "DecideBrowserPermission" => {
-            super::live_sessions::decide_browser_permission(
+            Box::pin(super::live_sessions::decide_browser_permission(
                 state,
                 scope,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         // A person's staged cookies for the agent's browser (ADP-009): sealed, never applied until browser.import_session is approved.
         "ImportBrowserSession" => {
-            super::browser_imports::import_browser_session(
+            Box::pin(super::browser_imports::import_browser_session(
                 state,
                 scope,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         // A person's one-time payment values for one checkout (ADP-009): sealed, usable once, never returned.
         "SupplyPaymentInput" => {
-            super::payment_inputs::supply_payment_input(
+            Box::pin(super::payment_inputs::supply_payment_input(
                 state,
                 scope,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "SendBrowserInput" => {
@@ -771,48 +839,72 @@ async fn dispatch(
             .await?
         }
         "Handback" => {
-            super::live_sessions::handback(
+            Box::pin(super::live_sessions::handback(
                 state,
                 scope,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "CreateWebhookSubscription" => {
-            super::webhooks::create_subscription(state, scope, &request.params, correlation).await?
+            Box::pin(super::webhooks::create_subscription(
+                state,
+                scope,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
         "UpdateWebhookSubscription" => {
-            super::webhooks::update_subscription(state, scope, &request.params, correlation).await?
+            Box::pin(super::webhooks::update_subscription(
+                state,
+                scope,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
         "RedeliverWebhook" => {
-            super::webhooks::redeliver(state, scope, &request.params, correlation).await?
+            Box::pin(super::webhooks::redeliver(
+                state,
+                scope,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
         "DeleteWebhookSubscription" => {
-            super::webhooks::delete_subscription(state, scope, &request.params, correlation).await?
+            Box::pin(super::webhooks::delete_subscription(
+                state,
+                scope,
+                &request.params,
+                correlation,
+            ))
+            .await?
         }
         "SetBudget" => {
-            super::admin::set_budget(
+            Box::pin(super::admin::set_budget(
                 state,
                 scope,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         "SetPolicy" => {
-            super::admin::set_policy(
+            Box::pin(super::admin::set_policy(
                 state,
                 scope,
                 identity,
                 user_id.as_deref(),
                 &request.params,
                 correlation,
-            )
+            ))
             .await?
         }
         other => {
@@ -1195,7 +1287,7 @@ async fn post_message(
         "run_status": run.status.as_db_str(),
         "teammate": teammate_json,
     });
-    if let Some((outcome, reply)) = continue_run(state, turn).await? {
+    if let Some((outcome, reply)) = Box::pin(continue_run(state, turn)).await? {
         result["turn"] = turn_json(&outcome);
         result["reply_message_id"] = json!(reply);
     }
@@ -1217,7 +1309,7 @@ where
         + 'static,
 {
     if !state.background_turns() {
-        return turn.await.map(Some);
+        return Box::pin(turn).await.map(Some);
     }
     tokio::spawn(async move {
         if let Err(error) = turn.await {
@@ -1352,7 +1444,7 @@ async fn answer_question(
             Ok((outcome, reply))
         }
     };
-    if let Some((outcome, reply)) = continue_run(state, turn).await? {
+    if let Some((outcome, reply)) = Box::pin(continue_run(state, turn)).await? {
         result["turn"] = turn_json(&outcome);
         if result.get("thread_id").is_some() {
             result["reply_message_id"] = json!(reply);
