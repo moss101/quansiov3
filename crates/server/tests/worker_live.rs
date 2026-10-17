@@ -44,7 +44,7 @@ const RUN_B: &str = "run_01J8Z3K6F1N8VQ2X5W9YBRWBBB";
 const BIG: &str = "<html><head><title>Big</title></head><body style=\"margin:0\">\
 <button style=\"position:fixed;left:0;top:0;width:100vw;height:100vh\" onclick=\"var x=new XMLHttpRequest();x.open('GET','/hit',false);x.send();\">Count</button>\
 </body></html>";
-const LIVE: &str = "<html><body><div id=\"c\">0</div><script>var n=0;setInterval(function(){document.getElementById('c').textContent=String(++n)},100)</script></body></html>";
+const LIVE: &str = "<html><body><div id=\"c\">0</div><script>var n=0;function t(){document.getElementById('c').textContent=String(++n);setTimeout(t,100)}t()</script></body></html>";
 const KEYS: &str = "<html><body style=\"margin:0;height:6000px\"><input id=\"i\" autofocus style=\"width:200px\" onkeydown=\"var x=new XMLHttpRequest();x.open('GET','/key-'+event.key,false);x.send();\"><script>window.addEventListener('scroll',function(){var x=new XMLHttpRequest();x.open('GET','/scrolled',false);x.send();});document.getElementById('i').focus();</script></body></html>";
 const PAGE: &str = "<html><head><title>Shop</title></head><body>\
 <button onclick=\"var x=new XMLHttpRequest();x.open('GET','/hit',false);x.send();\">Count</button>\
