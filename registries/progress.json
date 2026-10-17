@@ -1961,14 +1961,17 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:claude-opus-5",
       "started_at": "2026-09-21T06:05:54Z",
-      "updated_at": "2026-09-23T05:16:32Z",
+      "updated_at": "2026-10-17T06:49:04Z",
       "git_commit": "d0cf35ecd3727a4882562c910e6db2ab64e84b19",
       "tests": [
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-server --test live_sessions (3 passed against real PostgreSQL: a takeover fences the same session and parks the run \u2014 one session row, WAITING_TAKEOVER, next_safe_action AwaitHandback, handback resumes; a policy pause is shown and no handback undoes it; the native-computer takeover drives the ComputerControl row with its generation fence and stays pending while a call is in flight)",
         "cargo test -p quansio-server --lib api::live_sessions (subject validation; automation fence from row and ProtocolState)",
         "QUANSIO_TEST_POSTGRES_URL=... pnpm --filter @quansio/desktop exec vitest run tests/live.test.ts tests/live.e2e.test.ts tests/preload.test.ts (single-session and terminal-replay unit tests; takeover + reconnect + handback E2E through the desktop bridge against the real quansio-server seeded by quansio-dev-seed --live; viewer refused SCOPE_FORBIDDEN)",
         "QUANSIO_TEST_POSTGRES_URL=... cargo test -p quansio-cli --test cli_e2e (targets list reads the served projection)",
-        "bash scripts/ci/ci.sh (pipeline PASS, 11 of 11 gates)"
+        "bash scripts/ci/ci.sh (pipeline PASS, 11 of 11 gates)",
+        "cargo test -p quansio-server --test worker_live",
+        "cargo test -p quansio-qworkerd --test daemon_orders",
+        "cd apps/desktop && vitest run tests/live-input.test.ts"
       ],
       "artifacts": [
         "evidence/APP-007/RECONCILIATION.md",
@@ -1985,12 +1988,13 @@
         "apps/desktop/src/live/frames.ts",
         "apps/desktop/src/renderer/Live.tsx",
         "apps/desktop/tests/live.test.ts",
-        "apps/desktop/tests/live.e2e.test.ts"
+        "apps/desktop/tests/live.e2e.test.ts",
+        "evidence/APP-007/2026-10-17T06-11-43Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
       "blocker": "Implementation is complete. PASS is forbidden while EXEC-010 is BLOCKED_EXTERNAL (the Windows 11 UI Automation boundary needs a Windows host). Real CDP screencast frames and PTY bytes additionally need an execution substrate's worker channel (EXEC-003/004/005, BLOCKED_EXTERNAL on this host). Unblock: flip EXEC-010 to PASS, then re-run this task's tests.",
-      "notes": "Takeover does not mint a replacement session id. Agent input is fenced while controller=user. Reconnect restores the same session and terminal cursor. 2026-09-19 correction: was BLOCKED_EXTERNAL at aeb0619b8efa6f374e46e3dd5dc032ad669905f9 claimed by agent:principal-1 (started 2026-09-15T06:10:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/desktop/src/live is a 36-line stub. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-23 (agent:claude-opus-5): implemented at d0cf35e \u2014 RequestTakeover/Handback over the same BrowserSession (or the target's ComputerControl) park and resume the owning run through ProtocolState in one transaction with one control_changed event and one AuditEntry; /v1/targets and /v1/browser-sessions/{id} served with the automation fence; the desktop live surface (session state, takeover controls, pause reason, screencast frames, native-computer row, terminal replay from the durable cursor) over a target-scoped live subscription. BLOCKED_EXTERNAL only because EXEC-010 is."
+      "notes": "Takeover does not mint a replacement session id. Agent input is fenced while controller=user. Reconnect restores the same session and terminal cursor. 2026-09-19 correction: was BLOCKED_EXTERNAL at aeb0619b8efa6f374e46e3dd5dc032ad669905f9 claimed by agent:principal-1 (started 2026-09-15T06:10:00Z); reset to NOT_STARTED \u2014 recorded implementation_complete on 2026-09-15 but the build items are unimplemented: apps/desktop/src/live is a 36-line stub. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-23 (agent:claude-opus-5): implemented at d0cf35e \u2014 RequestTakeover/Handback over the same BrowserSession (or the target's ComputerControl) park and resume the owning run through ProtocolState in one transaction with one control_changed event and one AuditEntry; /v1/targets and /v1/browser-sessions/{id} served with the automation fence; the desktop live surface (session state, takeover controls, pause reason, screencast frames, native-computer row, terminal replay from the durable cursor) over a target-scoped live subscription. BLOCKED_EXTERNAL only because EXEC-010 is. 2026-10-17 worker browser relay (fix/APP-007-worker-live-relay, merge 8eacea46ac0663e3599789ba069ffbbc1040dfbb): the live surface now works against a worker-run browser. The worker reports its driver guard state after each browser action and order (stored only for a session on the target it holds); RequestTakeover/Handback and the user-only certificate/permission decisions are relayed to the worker after they commit (the response says worker_relayed), and the server restates who holds the session before every agent call; while a person holds the session the worker streams Chromium screencast frames, published as browser.frame on the target channel after checking the session is on the worker target; the new user command SendBrowserInput delivers a person click or typing, only while they hold the session, and fails loudly when undeliverable; the desktop viewer maps a click on the picture to page coordinates and sends printable keys. A decision receipt is now rebuilt from the wire in exactly one place (qworkerd daemon), pinned by the extended structural test in crates/machine/tests/browser_guard.rs. QUANSIO_CONFORMANCE_STUB_HOST=1 is the explicit harness opt-in for the conversation/trust desktop E2E suites (they broke when the worker merge made the served default refuse worker tools). Evidence evidence/APP-007/2026-10-17T06-11-43Z. Not done: watching the agent work, special keys/scroll/drag, concurrent dispatch, retry of a decision relayed to an absent worker, a real Electron window run. Pre-existing and unrelated: desktop automation.e2e (ADP-007 60 s plan minimum vs a 1 s routine) and a work.e2e revision race under parallel load. Status unchanged: still BLOCKED_EXTERNAL on EXEC-010."
     },
     "APP-008": {
       "coverage": "PARTIAL",
