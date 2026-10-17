@@ -159,6 +159,7 @@ fn wsl_guest_channel_is_the_typed_qworkerd_vocabulary() {
         args_digest: Digest::of_canonical_json("{}").to_string(),
         max_output_bytes: 1024,
         deadline_at: "2026-09-15T00:00:00Z".to_string(),
+        approved_tier: None,
     };
     windows_guest_service(&envelope("fs.read")).expect("file");
     assert!(windows_guest_service(&envelope("connector.github.write")).is_err());

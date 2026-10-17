@@ -30,7 +30,9 @@ KNOWN_GAPS: Dict[Tuple[str, str], Tuple[str, str]] = {
     # fail-closed `UnavailableComputerBridge`: a bridge that reaches a machine needs the signed native helper and its
     # control channel (ADP-002 notes, `config/computer-use.yaml: helper.status: unpublished`). The scan cannot see that
     # remainder (the host's forwarding adapter implements the trait too), so it is recorded in evidence/ADP-002/NOTES.md.
-    ("UNCOMPOSED", "WorkerHost"): ("EXEC-002", "qworkerd has no daemon that runs its host"),
+    # Closed by the EXEC-002 worker composition: `qworkerd` (crates/qworkerd/src/bin/qworkerd.rs) constructs `WorkerHost` over the
+    # local tool executor and dials the server's `QUANSIO_WORKER_SOCKET`, where `crate::worker::WorkerHub` takes the lease and routes
+    # `fs.*`, `terminal.exec` and `process.spawn` to it. With no worker attached those tools are refused WORKER_UNAVAILABLE.
 }
 
 

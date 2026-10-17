@@ -1,0 +1,83 @@
+   Compiling quansio-qworkerd v0.1.0 (/Users/mohsin/projects/quansiov3/crates/qworkerd)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.00s
+     Running unittests src/lib.rs (target/debug/deps/quansio_qworkerd-7b08930b4001801d)
+
+running 40 tests
+test browser::fence::tests::a_neighbourhood_is_clipped_to_the_viewport ... ok
+test browser::origin::tests::external_handoffs_are_application_schemes ... ok
+test browser::secrets::tests::placeholders_split_around_literals ... ok
+test browser::render::tests::asset_names_are_plain_file_names ... ok
+test browser::fence::tests::a_fingerprint_names_what_changed ... ok
+test browser::secrets::tests::a_secret_has_no_rendering ... ok
+test browser::origin::tests::an_allow_list_entry_with_no_origin_matches_nothing ... ok
+test browser::render::tests::a_blocked_url_is_recorded_without_credentials ... ok
+test browser::secrets::tests::a_half_written_placeholder_is_refused_not_typed ... ok
+test browser::render::tests::base64_matches_the_standard_alphabet ... ok
+test browser::tab::tests::filenames_lose_their_separators ... ok
+test browser::render::tests::only_the_pinned_host_serves_a_pinned_asset ... ok
+test browser::tab::tests::a_window_and_an_application_handoff_are_follow_ups ... ok
+test browser::tab::tests::a_navigation_changes_the_revision_and_drops_observations ... ok
+test browser::tab::tests::a_download_over_the_cap_is_cancelled_and_named_so ... ok
+test browser::origin::tests::origins_are_canonical ... ok
+test browser::tab::tests::a_certificate_error_on_a_navigation_is_pending_and_one_on_a_subresource_is_cancelled ... ok
+test browser::fence::tests::exactly_one_target_form_is_accepted ... ok
+test browser::tab::tests::a_dialog_is_pending_until_it_closes ... ok
+test browser::origin::tests::navigation_is_web_only_without_credentials ... ok
+test browser::secrets::tests::sensitivity_follows_the_signals_the_browser_acts_on ... ok
+test mcp::http::tests::an_event_stream_is_split_into_its_data_documents ... ok
+test mcp::http::tests::instants_are_canonical ... ok
+test mcp::tests::a_request_that_was_sent_and_not_answered_is_in_doubt_unless_the_tool_only_reads ... ok
+test media::tests::a_png_size_is_read_from_its_header_and_nothing_else_is_a_png ... ok
+test media::tests::file_names_and_ids_are_plain ... ok
+test mcp::tests::a_result_is_reduced_to_text_and_counts_and_never_more_than_the_bound ... ok
+test replay::tests::a_token_runs_once_and_is_answered_from_the_record_after ... ok
+test replay::tests::the_record_is_bounded_oldest_first ... ok
+test mcp::transport::tests::a_line_is_read_up_to_its_newline_and_never_past_the_bound ... ok
+test mcp::transport::tests::messages_are_placed_by_their_shape_and_the_bad_ones_are_unplaceable ... ok
+test media::tests::a_probe_is_read_from_ffprobes_json ... ok
+test chrome::tests::a_public_literal_and_about_blank_are_admitted ... ok
+test chrome::tests::the_machine_its_network_and_metadata_services_are_refused_by_address_and_by_name ... ok
+test compose::config::tests::a_caller_can_only_ask_for_less_than_the_ceiling ... ok
+test compose::config::tests::the_shipped_configuration_is_valid_and_keeps_the_four_mandatory_terminal_conditions ... ok
+test compose::config::tests::a_mandatory_terminal_code_cannot_be_removed ... ok
+test browser::tools::tests::a_reconciled_replay_is_not_held_to_the_tools_output ... ok
+test browser::tools::tests::an_in_doubt_report_is_an_unknown_outcome_with_the_flags_that_forbid_a_retry ... ok
+test browser::tools::tests::a_result_the_declaration_does_not_describe_is_not_returned ... ok
+
+test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/browser_worker.rs (target/debug/deps/browser_worker-c1e4964b60cdcf5c)
+
+running 4 tests
+test by_default_the_machine_s_own_addresses_are_refused_before_chrome_is_asked ... ok
+test a_worker_without_a_browser_refuses_and_a_bad_session_id_never_becomes_a_directory ... ok
+test a_click_above_the_approved_tier_is_refused_before_any_input_and_goes_through_under_a_higher_one ... ok
+test a_page_is_navigated_observed_and_clicked_once_and_a_redelivery_does_not_click_again ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.21s
+
+     Running tests/daemon_binary.rs (target/debug/deps/daemon_binary-6743a12eaa661255)
+
+running 3 tests
+test the_binary_refuses_to_start_without_a_usable_workspace_root_or_with_an_unknown_flag ... ok
+test the_browser_flags_are_refused_without_a_browser_and_a_state_dir_inside_the_workspace_is_refused ... ok
+test the_binary_dials_in_obeys_only_its_lease_and_runs_a_dispatch_once_across_a_reconnect ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.61s
+
+     Running tests/executor.rs (target/debug/deps/executor-7b49fb7e85ecf0a4)
+
+running 10 tests
+test a_terminal_command_cannot_start_outside_the_workspace ... ok
+test a_write_with_the_wrong_digest_changes_nothing ... ok
+test a_spawned_process_is_owned_by_the_executor_and_an_unhosted_tool_is_refused ... ok
+test a_stale_base_digest_is_an_edit_conflict_and_the_file_is_untouched ... ok
+test paths_that_leave_the_workspace_are_refused_before_any_io ... ok
+test a_write_lands_on_disk_and_a_read_returns_what_was_written ... ok
+test a_patch_applies_and_a_patch_that_does_not_match_writes_nothing ... ok
+test an_expired_deadline_stops_a_command_and_a_dispatch_runs_once ... ok
+test a_terminal_command_runs_in_the_workspace_and_reports_its_exit ... ok
+test output_is_bounded_while_it_arrives ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

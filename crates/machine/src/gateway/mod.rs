@@ -21,6 +21,8 @@
 //! holds and the instant, so the same rules serve the worker (which has no control-plane database) and
 //! a test.
 
+pub mod wire;
+
 use quansio_core::Digest;
 
 use crate::control::{Substrate, TargetStatus};
@@ -95,6 +97,10 @@ pub struct ActionEnvelope {
     pub max_output_bytes: usize,
     /// Instant the action stops being acceptable (canonical ISO-8601 UTC).
     pub deadline_at: String,
+    /// The highest consequence tier the runtime approved for this call, for a tool whose consequence is only known
+    /// once the worker has looked at the page (`browser.click`). `None` states no ceiling. Not part of the argument
+    /// digest: it is the runtime's decision about the call, not an argument of it.
+    pub approved_tier: Option<u8>,
 }
 
 /// Everything one dispatch carries, so issuing one is a single decision rather than a long argument
@@ -152,9 +158,17 @@ impl ActionEnvelope {
             args_json: request.args_json.to_string(),
             max_output_bytes: request.max_output_bytes,
             deadline_at: request.deadline_at.to_string(),
+            approved_tier: None,
         };
         envelope.check_shape()?;
         Ok(envelope)
+    }
+
+    /// State the highest consequence tier the runtime approved for this call.
+    #[must_use]
+    pub const fn with_approved_tier(mut self, tier: u8) -> Self {
+        self.approved_tier = Some(tier);
+        self
     }
 
     /// Whether the envelope carries the identities and instants every kind needs.

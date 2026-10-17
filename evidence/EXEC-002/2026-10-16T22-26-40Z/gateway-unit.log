@@ -1,0 +1,15 @@
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/crates/machine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.12s
+     Running unittests src/lib.rs (target/debug/deps/quansio_machine-9ca2ff49a51bdfc9)
+
+running 7 tests
+test gateway::tests::the_dial_rule_is_the_substrate_s_decision ... ok
+test gateway::tests::issuing_computes_the_argument_digest ... ok
+test gateway::tests::shape_is_checked_before_anything_else ... ok
+test gateway::tests::a_live_envelope_validates ... ok
+test gateway::tests::a_kind_needs_what_it_runs ... ok
+test gateway::wire::tests::an_envelope_survives_the_wire_and_an_unknown_kind_does_not ... ok
+test gateway::wire::tests::a_frame_over_the_bound_or_of_the_wrong_shape_is_refused ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 59 filtered out; finished in 0.00s
+

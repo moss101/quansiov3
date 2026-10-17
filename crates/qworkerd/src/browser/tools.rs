@@ -101,6 +101,12 @@ impl ToolReply {
         reply
     }
 
+    /// A reply for a call refused before the driver was asked (the worker's own guard, for example).
+    #[must_use]
+    pub fn refused(tool: &str, fault: &BrowserFault) -> Self {
+        Self::failure(tool, fault)
+    }
+
     fn failure(tool: &str, fault: &BrowserFault) -> Self {
         Self {
             tool: tool.to_string(),

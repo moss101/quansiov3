@@ -1,0 +1,12 @@
+A hub accepts any substrate: COMPILES
+A hub accepts any substrate: KILLED  (only_a_ready_target_that_dials_in_is_given_a_worker_and_only_one_worker_per_target;result: FAILED. 8 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.13s;)
+B hub ignores heartbeats (no renewal): COMPILES
+B hub ignores heartbeats (no renewal): KILLED  (heartbeats_keep_the_lease_alive_past_its_ttl_and_the_target_records_what_the_worker_observed;result: FAILED. 8 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.97s;)
+C hub skips the live-lease check before sending: COMPILES
+C hub skips the live-lease check before sending: KILLED  (a_lease_revoked_in_the_control_plane_stops_forwarding_even_before_its_cached_expiry;result: FAILED. 8 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.19s;)
+D executor does not fit output to the bound: COMPILES
+D executor does not fit output to the bound: KILLED  (output_is_bounded_while_it_arrives;result: FAILED. 9 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s;)
+E daemon treats the lease as held before any is granted (EQUIVALENT if SURVIVED: an empty lease id still fails the lease-id guard): COMPILES
+E daemon treats the lease as held before any is granted (EQUIVALENT if SURVIVED: an empty lease id still fails the lease-id guard): SURVIVED (tests still pass) <-- gap
+CONTROL (restored): all pass
+(no diff above = restored)

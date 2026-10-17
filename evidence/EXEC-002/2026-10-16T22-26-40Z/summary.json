@@ -1,0 +1,144 @@
+{
+  "task_id": "EXEC-002",
+  "git_commit": "9f312f46457f84b8b32a9d9ae0f3227d8bd6057a",
+  "recorded_at": "2026-10-16T22:33:22Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-machine --lib gateway  # wire frames survive the wire; an unknown kind and an oversize/misshapen frame are refused; gateway rules unchanged",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-16T22-26-40Z/gateway-unit.log"
+    },
+    {
+      "command": "cargo test -p quansio-qworkerd --test executor --test daemon_binary --test host  # 10 executor tests on a real filesystem and shell (write/read/patch/conflict/escape/exec/bound/once/unhosted); the real qworkerd binary as a child process: dials in, refuses with no lease or a stale generation, runs once, heartbeats, answers a re-delivered dispatch from its record after a reconnect, refuses a missing root and an unknown flag",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-16T22-26-40Z/worker-tests.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test worker_host  # 9 tests against real PostgreSQL leases, a real Unix socket and a real worker session: no worker -> WORKER_UNAVAILABLE and never the stub; fs.write/fs.read/terminal.exec land on the worker's disk under a live lease; an escaping path is a failed result; only a READY target that dials in gets a worker, one worker per target; a lost worker releases its lease; an unanswered dispatch is Unknown and sent once; heartbeats keep a 2 s lease alive for 6 s and record observed_state; a silent worker is fenced and nothing runs; a revoked lease stops forwarding before its cached expiry",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-16T22-26-40Z/server-worker-host.log"
+    },
+    {
+      "command": "uv run --python 3.12 python scripts/ci/arch_check.py && pytest tests/architecture  # 129 passed: forbidden wiring clean, WorkerHost composition gap closed and removed from KNOWN_GAPS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-16T22-26-40Z/architecture.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-16T22-26-40Z/clippy.log"
+    },
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-16T22-26-40Z/fmt.log"
+    },
+    {
+      "command": "scratchpad smoke.sh: quansio-dev-seed create --worker; quansio-server with QUANSIO_WORKER_SOCKET; a separately started qworkerd. Socket mode 0600; lease held by the hub with the target READY and observed READY; stopping the worker releases the lease",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-16T22-26-40Z/smoke-real-binaries.log"
+    },
+    {
+      "command": "mutation checks: A substrate gate, B heartbeat renewal, C control-plane lease check, D output bound -- all KILLED; E (lease held before granted) SURVIVED as an equivalent mutant (documented); every mutant COMPILES; the restored control passes",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-16T22-26-40Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-machine --lib gateway  # wire frames survive the wire; an unknown kind and an oversize/misshapen frame are refused; gateway rules unchanged",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-qworkerd --test executor --test daemon_binary --test host  # 10 executor tests on a real filesystem and shell (write/read/patch/conflict/escape/exec/bound/once/unhosted); the real qworkerd binary as a child process: dials in, refuses with no lease or a stale generation, runs once, heartbeats, answers a re-delivered dispatch from its record after a reconnect, refuses a missing root and an unknown flag",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test -p quansio-server --test worker_host  # 9 tests against real PostgreSQL leases, a real Unix socket and a real worker session: no worker -> WORKER_UNAVAILABLE and never the stub; fs.write/fs.read/terminal.exec land on the worker's disk under a live lease; an escaping path is a failed result; only a READY target that dials in gets a worker, one worker per target; a lost worker releases its lease; an unanswered dispatch is Unknown and sent once; heartbeats keep a 2 s lease alive for 6 s and record observed_state; a silent worker is fenced and nothing runs; a revoked lease stops forwarding before its cached expiry",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --python 3.12 python scripts/ci/arch_check.py && pytest tests/architecture  # 129 passed: forbidden wiring clean, WorkerHost composition gap closed and removed from KNOWN_GAPS",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "scratchpad smoke.sh: quansio-dev-seed create --worker; quansio-server with QUANSIO_WORKER_SOCKET; a separately started qworkerd. Socket mode 0600; lease held by the hub with the target READY and observed READY; stopping the worker releases the lease",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks: A substrate gate, B heartbeat renewal, C control-plane lease check, D output bound -- all KILLED; E (lease held before granted) SURVIVED as an equivalent mutant (documented); every mutant COMPILES; the restored control passes",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/EXEC-002/2026-10-16T22-26-40Z/gateway-unit.log",
+      "sha256": "a6ba82549a154b46cd56828d1ca47ac7ab0c2b4f16195a7fae6875df74a4c3a9",
+      "bytes": 852
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-16T22-26-40Z/worker-tests.log",
+      "sha256": "0bc2de1868180d9e2c3bcfb8e40866e8cd594e7f8957a6cab8fb8d86774a2bbb",
+      "bytes": 2507
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-16T22-26-40Z/server-worker-host.log",
+      "sha256": "f0366a90b2d46a37693e4bb53c34bdf1e683a7a07dd52c5e830636e1208f2a45",
+      "bytes": 1221
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-16T22-26-40Z/architecture.log",
+      "sha256": "b2047c363d25dfde20e3c1e8dc37bfd05c60bc344480928e2723b68dde18520f",
+      "bytes": 220
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-16T22-26-40Z/clippy.log",
+      "sha256": "5d6ca41f85f988df47f83f4cde370bfb38a754aeb878edbeb4cf3dca77305eac",
+      "bytes": 257
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-16T22-26-40Z/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-16T22-26-40Z/smoke-real-binaries.log",
+      "sha256": "672dc98d2c85a7c043b7d306adef405d41a003fbbb62fb4ad2220941f2f14d54",
+      "bytes": 725
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-16T22-26-40Z/mutation-checks.log",
+      "sha256": "12358835337af1d6d389089ef9f7331f31bf1869c05849b7870a6c1100c6bfca",
+      "bytes": 1436
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-16T22-26-40Z/RECONCILIATION.md",
+      "sha256": "55611fcfe64ff1116ca23cbad38ff149dc757e47b8484aa7ea88226b18386622",
+      "bytes": 3409
+    }
+  ]
+}
