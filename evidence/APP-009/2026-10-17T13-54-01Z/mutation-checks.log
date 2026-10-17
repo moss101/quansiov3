@@ -1,0 +1,11 @@
+M1 no lock: creators are not serialized: COMPILES
+M1 no lock: creators are not serialized: KILLED (assertion `left == right` failed: round 0: the callers were handed 4 different threads for one teammate)
+M2 activation is a bare activate again: COMPILES
+M2 activation is a bare activate again: KILLED (round 0: a message failed because another was posted at the same time: illegal agent_thread transition: ACTIVE -> ACTIVE)
+M3 a creator that lost the race is told it failed: COMPILES
+M3 a creator that lost the race is told it failed: KILLED (round 0: a message failed because another was posted at the same time: state conflict on agent_thread ath_01M552CCMECH46J4HWXSSR8MF9)
+M4 look-then-create, no get-or-create: COMPILES
+M4 look-then-create, no get-or-create: KILLED (assertion `left == right` failed: round 0: the callers were handed 8 different threads for one teammate)
+RESTORED: identical to the committed fix
+CONTROL (restored): passes
+(diff above is the fix itself; mutants are restored)
