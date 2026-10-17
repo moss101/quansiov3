@@ -1,0 +1,165 @@
+{
+  "task_id": "EXEC-002",
+  "git_commit": "48b5b3f9743e69df2013243a3d055af6945dff92",
+  "recorded_at": "2026-10-17T09:30:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_QWORKERD_BIN=target/debug/qworkerd (cd apps/desktop && npx vitest run) # full suite, run 1 of 8: 652 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-17T09-30-00Z/desktop-full-1.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_QWORKERD_BIN=target/debug/qworkerd (cd apps/desktop && npx vitest run) # full suite, run 4 of 8: 652 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-17T09-30-00Z/desktop-full-4.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_QWORKERD_BIN=target/debug/qworkerd (cd apps/desktop && npx vitest run) # full suite, run 8 of 8: 652 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-17T09-30-00Z/desktop-full-8.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_QWORKERD_BIN=target/debug/qworkerd (cd apps/desktop && npx vitest run tests/conversation.e2e.test.ts tests/trust.e2e.test.ts) # first green run on a real qworkerd",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-17T09-30-00Z/conversation-trust.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-17T09-30-00Z/clippy.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test api",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-17T09-30-00Z/server-api.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test turn_loop",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-17T09-30-00Z/server-turn_loop.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test worker_host",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-17T09-30-00Z/server-worker_host.log"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd apps/desktop && npx tsc --noEmit -p . && npx eslint tests)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-17T09-30-00Z/validator.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_QWORKERD_BIN=target/debug/qworkerd (cd apps/desktop && npx vitest run) # full suite, run 1 of 8: 652 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_QWORKERD_BIN=target/debug/qworkerd (cd apps/desktop && npx vitest run) # full suite, run 4 of 8: 652 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_QWORKERD_BIN=target/debug/qworkerd (cd apps/desktop && npx vitest run) # full suite, run 8 of 8: 652 passed, 0 failed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> QUANSIO_TEST_QWORKERD_BIN=target/debug/qworkerd (cd apps/desktop && npx vitest run tests/conversation.e2e.test.ts tests/trust.e2e.test.ts) # first green run on a real qworkerd",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test api",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test turn_loop",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test worker_host",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "(cd apps/desktop && npx tsc --noEmit -p . && npx eslint tests)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_v81.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/api/seams.rs",
+      "sha256": "1e28c3d5ad02db254c1e4ec7832848fad760b8afe16ac753dd82cb729982e42c",
+      "bytes": 13556
+    },
+    {
+      "path": "crates/server/src/worker/hub.rs",
+      "sha256": "34fcc917f68cacd0f0fd41db14fa187d83290231f346d54720a2da0fec06563c",
+      "bytes": 20343
+    },
+    {
+      "path": "apps/desktop/tests/worker.ts",
+      "sha256": "388ff779a0558fa2ac497bcc78fb645860c553c16ce8b6dbc9f1d4148d26dd9b",
+      "bytes": 2809
+    },
+    {
+      "path": "apps/desktop/tests/conversation.e2e.test.ts",
+      "sha256": "8d5a989758c9a60a75819b9deff6372439fabec4abb83c2e9a2160d159e80c17",
+      "bytes": 19445
+    },
+    {
+      "path": "apps/desktop/tests/trust.e2e.test.ts",
+      "sha256": "3cc7c361cf52b547b30b0e6ba61018ea0286c497bf3a67b51e955189686c9bce",
+      "bytes": 14528
+    },
+    {
+      "path": "apps/desktop/tests/work.e2e.test.ts",
+      "sha256": "1f9ed56c0d8383fe63aad3d3503890402392c302b284b61a11bc9649b42fd125",
+      "bytes": 16676
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-17T09-30-00Z/NOTES.md",
+      "sha256": "3ceb1f17197a26caddbfd963e70fe9f63de3c5d70041d439421d5d3ef48d7bea",
+      "bytes": 1786
+    }
+  ]
+}

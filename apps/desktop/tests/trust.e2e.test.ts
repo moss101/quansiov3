@@ -9,6 +9,7 @@
  */
 
 import { eventually } from "./settle.js";
+import { prepareWorker, workerBinMissing, type WorkerHandle } from "./worker.js";
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -51,14 +52,14 @@ const APPROVAL_SCENARIO = "[[scenario:approval]]";
 
 const blocked = !ADMIN_URL
   ? "BLOCKED_EXTERNAL: QUANSIO_TEST_POSTGRES_URL is not set; the dev stack is not running"
-  : !existsSync(SERVER_BIN) || !existsSync(SEED_BIN)
-    ? `BLOCKED_EXTERNAL: ${SERVER_BIN} and ${SEED_BIN} are needed; build them with cargo build -p quansio-server --bins`
+  : !existsSync(SERVER_BIN) || !existsSync(SEED_BIN) || workerBinMissing()
+    ? `BLOCKED_EXTERNAL: ${SERVER_BIN}, ${SEED_BIN} and the qworkerd binary are needed; build them with cargo build -p quansio-server --bins && cargo build -p quansio-qworkerd`
     : null;
 
 function seedScratchDatabase(database: string): string {
   const output = execFileSync(
     SEED_BIN,
-    ["create", "--database", database, "--tenant", TENANT, "--user", USER, "--workspace", WORKSPACE, "--node", NODE, "--ask-writes"],
+    ["create", "--database", database, "--tenant", TENANT, "--user", USER, "--workspace", WORKSPACE, "--node", NODE, "--ask-writes", "--worker"],
     { env: { ...process.env, QUANSIO_DATABASE_URL: ADMIN_URL }, encoding: "utf8" },
   );
   const line = output.split("\n").find((candidate) => candidate.startsWith("database_url="));
@@ -140,6 +141,7 @@ describe.skipIf(blocked !== null)("desktop trust E2E against quansio-server", ()
   let origin: string;
   let userData: string;
   let minio = false;
+  let worker: WorkerHandle;
   const stderr: string[] = [];
 
   beforeAll(async () => {
@@ -148,12 +150,14 @@ describe.skipIf(blocked !== null)("desktop trust E2E against quansio-server", ()
     const port = await freePort();
     origin = `http://127.0.0.1:${String(port)}`;
     minio = await minioReachable();
+    worker = prepareWorker(TENANT);
     child = spawn(SERVER_BIN, [], {
       env: {
         ...process.env,
         QUANSIO_DATABASE_URL: databaseUrl,
         QUANSIO_BIND: `127.0.0.1:${String(port)}`,
         QUANSIO_TRUST_SCOPE_HEADERS: "1",
+        QUANSIO_WORKER_SOCKET: worker.socket,
         QUANSIO_APPROVAL_SIGNING_KEY: "desktop-trust-e2e-signing-key",
         ...(minio ? { QUANSIO_OBJECT_STORE: "1", QUANSIO_TEST_MINIO_ENDPOINT: MINIO } : {}),
       },
@@ -161,10 +165,12 @@ describe.skipIf(blocked !== null)("desktop trust E2E against quansio-server", ()
     });
     child.stderr?.on("data", (chunk: Buffer) => stderr.push(chunk.toString()));
     await waitForHealth(origin, child, stderr);
+    await worker.attach(stderr);
     userData = mkdtempSync(join(tmpdir(), "quansio-desktop-trust-"));
   }, 90_000);
 
   afterAll(async () => {
+    worker.stop();
     child.kill("SIGTERM");
     await new Promise((resolve) => setTimeout(resolve, 200));
     try {
