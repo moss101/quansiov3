@@ -223,7 +223,7 @@ impl ConformanceStubModel {
                         "call_approval",
                         "fs.write",
                         json!({
-                            "path": "/work/root/out.txt",
+                            "path": "out.txt",
                             "content": content,
                             "content_digest": quansio_core::Digest::of(content.as_bytes()).to_string(),
                         }),
@@ -281,7 +281,7 @@ impl ConformanceStubModel {
                 tool_calls: vec![ProposedToolCall::new(
                     "call_conformance",
                     "fs.read",
-                    json!({ "path": "/work/root/notes.md" }),
+                    json!({ "path": "notes.md" }),
                 )],
                 ..ModelProposal::default()
             })

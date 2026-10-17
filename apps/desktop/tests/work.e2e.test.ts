@@ -128,6 +128,22 @@ function waitFor<T>(poll: () => T | undefined, what: string, timeoutMs = 15_000)
   });
 }
 
+/**
+ * Whether what the page renders equals the canonical graph. The orchestrator commits to a live workspace on its own tick, so
+ * a single read can be one revision behind the next; the page agrees when a reload and a canonical read land on the same
+ * revision, which is what the renderer's refresh does.
+ */
+async function agreesWithCanonical(page: Page): Promise<boolean> {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const canonical = decodeWorkGraph(await page.handlers["work.graph"]({}));
+    if (matchesCanonical(page.state, canonical)) {
+      return true;
+    }
+    await page.load();
+  }
+  return false;
+}
+
 /** A page: the bridge's handlers plus the work reducer fed with everything main pushed. */
 class Page {
   readonly pushed: { channel: string; payload: unknown }[] = [];
@@ -259,8 +275,8 @@ describe.skipIf(blocked !== null)("desktop work graph E2E against quansio-server
     alice.feed();
     expect(alice.state.stale).toBe(true);
     const withObjective = await alice.load();
-    expect(withObjective.revision).toBe(created.revision);
-    expect(matchesCanonical(alice.state, withObjective)).toBe(true);
+    expect(withObjective.revision).toBeGreaterThanOrEqual(created.revision);
+    expect(await agreesWithCanonical(alice)).toBe(true);
     const objective = withObjective.nodes.find((node) => node.id === created.objective_id);
     expect(objective?.kind).toBe("objective");
     expect(objective?.threadId).toBe(created.thread_id);
@@ -276,7 +292,7 @@ describe.skipIf(blocked !== null)("desktop work graph E2E against quansio-server
     expect(gather?.parentId).toBe(created.objective_id);
     expect(planned.edges.some((edge) => edge.kind === "depends_on" && edge.fromNodeId === write?.id && edge.toNodeId === gather?.id)).toBe(true);
     expect(planned.blockers.some((blocker) => blocker.nodeId === write?.id && blocker.kind === "prerequisite" && blocker.ref === gather?.id)).toBe(true);
-    expect(matchesCanonical(alice.state, decodeWorkGraph(await alice.handlers["work.graph"]({})))).toBe(true);
+    expect(await agreesWithCanonical(alice)).toBe(true);
 
     // Revision conflict: Bob loads the same revision; Alice edits first; Bob's edit is
     // refused with CONFLICT_REVISION and nothing of his is written. He rebases and succeeds.
@@ -296,7 +312,7 @@ describe.skipIf(blocked !== null)("desktop work graph E2E against quansio-server
     expect(conflict).toBeInstanceOf(ApiError);
     expect((conflict as ApiError).code).toBe("CONFLICT_REVISION");
     const untouched = await bob.load();
-    expect(untouched.revision).toBe(afterAlice.revision);
+    expect(untouched.revision).toBeGreaterThanOrEqual(afterAlice.revision);
     expect(untouched.nodes.some((node) => node.title === "publish")).toBe(false);
     const rebased = rebase(bobDraft, untouched);
     // The server's orchestrator promotes a node with no open prerequisite on its own tick, so by
@@ -314,7 +330,7 @@ describe.skipIf(blocked !== null)("desktop work graph E2E against quansio-server
       return alice.state.stale ? true : undefined;
     }, "alice sees the change");
     const aliceNow = await alice.load();
-    expect(aliceNow.revision).toBe(afterBob.revision);
+    expect(aliceNow.revision).toBeGreaterThanOrEqual(afterBob.revision);
 
     // Agent handoff UI: a delegation makes a worker and a handoff edge; the run parks.
     const posted = (await alice.handlers["messages.post"]({ threadId: null, content: `split this ${DELEGATE_SCENARIO}` })) as { run_id: string };

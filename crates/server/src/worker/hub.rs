@@ -287,6 +287,7 @@ impl WorkerHub {
             self.drop_link(&key, &link, false).await;
             return;
         }
+        eprintln!("worker hub: worker attached for {target_id}");
 
         let writer_task = tokio::spawn(async move {
             while let Some(line) = queue.recv().await {
