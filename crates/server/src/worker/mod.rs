@@ -16,4 +16,4 @@ mod hub;
 
 pub use browser::{approved_tier, BROWSER_TOOLS};
 pub use host::{WorkerRoutedHost, WorkerToolHost, WORKER_TOOLS};
-pub use hub::{DispatchArgs, HubConfig, HubError, LinkSnapshot, Relay, WorkerHub};
+pub use hub::{DispatchArgs, HubConfig, HubError, LinkSnapshot, Relay, Viewer, WorkerHub};

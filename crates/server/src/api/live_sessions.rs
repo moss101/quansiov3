@@ -636,6 +636,7 @@ async fn relay_control(state: &ApiState, tenant_id: &str, answer: &Value, holder
         BrowserOrder::Screencast {
             session_id: session_id.to_string(),
             enabled: holder == "user",
+            refresh: holder == "user",
         },
     )
     .await;

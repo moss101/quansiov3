@@ -171,6 +171,10 @@ pub enum BrowserOrder {
         session_id: String,
         /// Whether frames should flow.
         enabled: bool,
+        /// Also send one picture of the current page now. A viewer who arrives while the stream is already running would
+        /// otherwise see nothing until the page changes, because the browser sends a frame only when it does.
+        #[serde(default)]
+        refresh: bool,
     },
     /// A click the user made while holding the session.
     UserClick {

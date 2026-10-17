@@ -100,6 +100,21 @@ impl WorkerToolHost {
             arguments.insert("session_id".to_string(), json!(session.id));
         }
         let answer = self.send(&dispatch, approved_tier(&dispatch.tool)).await;
+        // The call may have launched the session's browser or opened a tab: if anyone is watching, ask for the stream now
+        // (the worker follows the newest tab and does nothing if it already shows it).
+        if self.hub.has_viewers(&dispatch.tenant_id, &target_id) {
+            self.hub
+                .send_order(
+                    &dispatch.tenant_id,
+                    &target_id,
+                    BrowserOrder::Screencast {
+                        session_id: session.id.clone(),
+                        enabled: true,
+                        refresh: false,
+                    },
+                )
+                .await;
+        }
         match answer {
             Ok((OutcomeWire::Completed { output, .. }, _)) => Ok(settle(&output)),
             other => Self::map(other),

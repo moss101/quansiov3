@@ -192,6 +192,19 @@ async fn handle_socket(
                 .trim_start_matches("cmd_")
         )
     });
+    // A socket watching a target's channel is a viewer of its browsers: frames flow while one is connected and stop when
+    // the last has gone, however the socket ends (the guards drop with this task).
+    let _viewing: Vec<crate::worker::Viewer> = state
+        .worker_hub()
+        .map(|hub| {
+            request
+                .subscribe
+                .iter()
+                .filter_map(|item| item.channel.strip_prefix("target:"))
+                .map(|target_id| hub.viewer_joined(&scope.tenant_id, target_id))
+                .collect()
+        })
+        .unwrap_or_default();
     let mut subscription = match StreamSubscription::new(&scope.tenant_id, &consumer, channels) {
         Ok(subscription) => subscription,
         Err(error) => {
