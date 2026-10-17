@@ -1,0 +1,58 @@
+{
+  "task_id": "RUN-011",
+  "git_commit": "df0bc3aba103d56755b36fa5b399fd57660a94a7",
+  "recorded_at": "2026-10-17T07:30:00Z",
+  "commands": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test completion_claims --test routines --test served_plan_and_memory # default thread stack, no RUST_MIN_STACK",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-10-17T07-30-00Z/command-1.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/RUN-011/2026-10-17T07-30-00Z/command-2.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev .env DSN> cargo test -p quansio-server --test completion_claims --test routines --test served_plan_and_memory # default thread stack, no RUST_MIN_STACK",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "crates/server/src/api/commands.rs",
+      "sha256": "6f76a891d83c21247dc39eb00421af4106376da31206df325347ad8f8363a862",
+      "bytes": 74971
+    },
+    {
+      "path": "crates/server/src/runtime/state_machine/engine.rs",
+      "sha256": "e9a334c529ba8f86c4901f754e6f8a0fbd07ea4b88fc5e4cecb279dd164f9dd9",
+      "bytes": 59888
+    },
+    {
+      "path": "crates/server/src/runtime/turn_loop/dispatch.rs",
+      "sha256": "5fc92a26f5d54cc98085f33fd50b0573b240e3dd03a9fb555ca15215a7ea745d",
+      "bytes": 84498
+    },
+    {
+      "path": "crates/server/tests/completion_claims.rs",
+      "sha256": "100c3eda7fc400fa2b110494d253d5acd11f4381a3e84cb2bf46704f2813d1b1",
+      "bytes": 33553
+    },
+    {
+      "path": "evidence/RUN-011/2026-10-17T07-30-00Z/NOTES.md",
+      "sha256": "7759be51a67b8a9fcf5b6bdc845c0ec09715a03bed8defac0d8ece486af0c0a1",
+      "bytes": 795
+    }
+  ]
+}
