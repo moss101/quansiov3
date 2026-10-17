@@ -554,6 +554,56 @@ fn a_receipt_has_no_constructor_outside_the_control_plane_and_the_test_feature()
     );
     assert!(!source.contains("impl Default for DecisionReceipt"));
     assert!(!source.contains("derive(Default"));
+
+    // The worker rebuilds a receipt from the control channel (EXEC-009 composition). That is a third way in, and it is
+    // pinned the same way: exactly one function does it, it takes the wire description and nothing else, and the only
+    // caller in the workspace is the worker's control-channel reader.
+    assert_eq!(
+        source
+            .matches("Ok(Self {\n            session_id: wire.session_id.clone()")
+            .count(),
+        1,
+        "another function builds a receipt from the wire"
+    );
+    assert_eq!(
+        source
+            .matches("pub fn from_control_channel(wire: &ReceiptWire)")
+            .count(),
+        1
+    );
+    let workspace = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
+    let mut callers = Vec::new();
+    for entry in std::fs::read_dir(&workspace).expect("crates") {
+        let src = entry.expect("crate").path().join("src");
+        let mut stack = vec![src];
+        while let Some(dir) = stack.pop() {
+            let Ok(read) = std::fs::read_dir(&dir) else {
+                continue;
+            };
+            for item in read.flatten() {
+                let path = item.path();
+                if path.is_dir() {
+                    stack.push(path);
+                } else if path.extension().is_some_and(|ext| ext == "rs")
+                    && std::fs::read_to_string(&path)
+                        .is_ok_and(|text| text.contains("from_control_channel("))
+                {
+                    callers.push(
+                        path.strip_prefix(&workspace)
+                            .unwrap()
+                            .to_string_lossy()
+                            .replace('\\', "/"),
+                    );
+                }
+            }
+        }
+    }
+    callers.sort();
+    assert_eq!(
+        callers,
+        vec!["machine/src/control/browser_guard.rs", "qworkerd/src/daemon.rs"],
+        "a receipt is rebuilt from the wire somewhere other than the worker's control-channel reader"
+    );
 }
 
 // ------------------------------------------------------------------ secrets

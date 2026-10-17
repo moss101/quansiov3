@@ -492,6 +492,86 @@ impl DecisionReceipt {
     }
 }
 
+/// A receipt as it crosses the worker control channel (EXEC-009 composition).
+///
+/// The control plane mints a [`DecisionReceipt`] for a user and hands the worker this description of it over the
+/// channel only the lease holder can write to. It is data: the worker turns it back into a receipt with
+/// [`DecisionReceipt::from_control_channel`], and nothing else in the worker may.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct ReceiptWire {
+    /// The session the decision was made in.
+    pub session_id: String,
+    /// The tab.
+    pub tab_id: String,
+    /// `certificate` or `permission`.
+    pub kind: String,
+    /// The certificate id, or `<origin>|<permission>`.
+    pub subject: String,
+    /// `allow` or `deny`.
+    pub decision: String,
+    /// The user.
+    pub decided_by: String,
+    /// When.
+    pub decided_at: String,
+}
+
+impl DecisionReceipt {
+    /// This receipt as it travels to the worker.
+    #[must_use]
+    pub fn to_wire(&self) -> ReceiptWire {
+        ReceiptWire {
+            session_id: self.session_id.clone(),
+            tab_id: self.tab_id.clone(),
+            kind: self.kind.as_str().to_string(),
+            subject: self.subject.clone(),
+            decision: self.decision.as_str().to_string(),
+            decided_by: self.decided_by.clone(),
+            decided_at: self.decided_at.clone(),
+        }
+    }
+
+    /// The receipt a worker received from the control plane over its control channel.
+    ///
+    /// This is the one way a receipt exists outside the control plane's store functions, and only the worker's
+    /// control-channel reader (`qworkerd::daemon`) calls it; a test pins both. The trust it carries is the
+    /// channel's: only the holder of the target's lease can write to it.
+    ///
+    /// # Errors
+    /// Returns the field that is not a value the domain defines.
+    pub fn from_control_channel(wire: &ReceiptWire) -> Result<Self, String> {
+        let kind = match wire.kind.as_str() {
+            "certificate" => DecisionKind::Certificate,
+            "permission" => DecisionKind::Permission,
+            other => return Err(format!("{other:?} is not a decision kind")),
+        };
+        let decision = match wire.decision.as_str() {
+            "allow" => Decision::Allow,
+            "deny" => Decision::Deny,
+            other => return Err(format!("{other:?} is not a decision")),
+        };
+        for (field, value) in [
+            ("session_id", &wire.session_id),
+            ("tab_id", &wire.tab_id),
+            ("subject", &wire.subject),
+            ("decided_by", &wire.decided_by),
+            ("decided_at", &wire.decided_at),
+        ] {
+            if value.trim().is_empty() {
+                return Err(format!("{field} is required"));
+            }
+        }
+        Ok(Self {
+            session_id: wire.session_id.clone(),
+            tab_id: wire.tab_id.clone(),
+            kind,
+            subject: wire.subject.clone(),
+            decision,
+            decided_by: wire.decided_by.clone(),
+            decided_at: wire.decided_at.clone(),
+        })
+    }
+}
+
 #[cfg(feature = "test-support")]
 impl DecisionReceipt {
     /// A receipt without a database, for another crate's tests of the worker half of a decision.

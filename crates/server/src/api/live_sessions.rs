@@ -609,6 +609,49 @@ async fn workspace_of(
     target_workspace(&mut tx, tenant_id, &target_id, correlation).await
 }
 
+/// Tell the worker that runs a browser session who holds it now. Best effort: the database has the truth and the server
+/// repeats it before the next agent call, so a worker that is away learns it then.
+async fn relay_control(state: &ApiState, tenant_id: &str, answer: &Value, holder: &str) -> bool {
+    use quansio_machine::gateway::wire::BrowserOrder;
+    let (Some(hub), Some(session_id)) = (
+        state.worker_hub(),
+        answer.pointer("/session/id").and_then(Value::as_str),
+    ) else {
+        return false;
+    };
+    hub.relay(
+        tenant_id,
+        BrowserOrder::Control {
+            session_id: session_id.to_string(),
+            holder: holder.to_string(),
+            at: now_second(),
+        },
+    )
+    .await
+        == crate::worker::Relay::Sent
+}
+
+/// Give the worker that runs the session the receipt of a user's decision. The decision is recorded either way; a worker
+/// that is away does not learn it, and the response says so (`worker_relayed: false`).
+async fn relay_receipt(
+    state: &ApiState,
+    tenant_id: &str,
+    receipt: &quansio_machine::control::browser::DecisionReceipt,
+    certificate: bool,
+) -> bool {
+    use quansio_machine::gateway::wire::BrowserOrder;
+    let Some(hub) = state.worker_hub() else {
+        return false;
+    };
+    let receipt = receipt.to_wire();
+    let order = if certificate {
+        BrowserOrder::Certificate { receipt }
+    } else {
+        BrowserOrder::Permission { receipt }
+    };
+    hub.relay(tenant_id, order).await == crate::worker::Relay::Sent
+}
+
 /// `RequestTakeover {session_id}` or `RequestTakeover {target_id}`.
 pub async fn request_takeover(
     state: &ApiState,
@@ -635,7 +678,7 @@ pub async fn request_takeover(
     let actor = actor_of(&identity, user_id);
     let correlation_owned = correlation.to_string();
     let tenant = scope.tenant_id.clone();
-    commit(&events, &scope.tenant_id, move |tx, batch| {
+    let mut answer = commit(&events, &scope.tenant_id, move |tx, batch| {
         Box::pin(async move {
             let correlation = correlation_owned.as_str();
             let at = now_second();
@@ -772,7 +815,12 @@ pub async fn request_takeover(
             }
         })
     })
-    .await
+    .await?;
+    if answer.get("session").is_some() {
+        let relayed = relay_control(state, &scope.tenant_id, &answer, "user").await;
+        answer["worker_relayed"] = json!(relayed);
+    }
+    Ok(answer)
 }
 
 /// `Handback {session_id}` or `Handback {target_id}`.
@@ -869,6 +917,11 @@ pub async fn handback(
     .await?;
     if let Some(target_id) = resumed_computer {
         super::remote::agent_resumed(state, &scope.tenant_id, &target_id).await;
+    }
+    let mut answer = answer;
+    if answer.get("session").is_some() {
+        let relayed = relay_control(state, &scope.tenant_id, &answer, "agent").await;
+        answer["worker_relayed"] = json!(relayed);
     }
     Ok(answer)
 }
@@ -1038,7 +1091,8 @@ pub async fn resolve_browser_certificate(
     tx.commit()
         .await
         .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
-    Ok(json!({ "receipt": receipt_json(&receipt) }))
+    let relayed = relay_receipt(state, &scope.tenant_id, &receipt, true).await;
+    Ok(json!({ "receipt": receipt_json(&receipt), "worker_relayed": relayed }))
 }
 
 /// `DecideBrowserPermission {session_id, tab_id, origin, permission, decision}`: a person grants or denies camera or
@@ -1109,7 +1163,8 @@ pub async fn decide_browser_permission(
     tx.commit()
         .await
         .map_err(|error| ApiError::new(ApiErrorCode::Internal, error.to_string(), correlation))?;
-    Ok(json!({ "receipt": receipt_json(&receipt) }))
+    let relayed = relay_receipt(state, &scope.tenant_id, &receipt, false).await;
+    Ok(json!({ "receipt": receipt_json(&receipt), "worker_relayed": relayed }))
 }
 
 /// Park the owning run, when there is one, under the caller's transaction.

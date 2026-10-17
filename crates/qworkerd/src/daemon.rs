@@ -9,7 +9,8 @@
 //! Dispatches are served one at a time: a long command holds the channel until it ends. That is the
 //! conservative reading of "at most once"; concurrent dispatch is a later change, not an assumption here.
 
-use quansio_machine::gateway::wire::{self, FromWorker, OutcomeWire, ToWorker};
+use quansio_machine::control::browser::DecisionReceipt;
+use quansio_machine::gateway::wire::{self, BrowserOrder, FromWorker, OutcomeWire, ToWorker};
 use quansio_machine::gateway::LeaseClaim;
 use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader};
@@ -142,6 +143,7 @@ where
             ToWorker::Dispatch(wire_envelope) => {
                 let dispatch_token = wire_envelope.dispatch_token.clone();
                 let effect_id = wire_envelope.effect_id.clone();
+                let is_browser = wire_envelope.tool.starts_with("browser.");
                 let result = match (*wire_envelope).into_envelope() {
                     Err(kind) => FromWorker::Result {
                         dispatch_token,
@@ -169,7 +171,53 @@ where
                     },
                 };
                 writer.write_all(wire::encode(&result)?.as_bytes()).await?;
+                // A browser action may have changed what its driver guards (a dialog, a certificate error, a call in
+                // doubt): the control plane is told while the action is fresh.
+                if is_browser {
+                    report_guards(host, None, &mut writer).await?;
+                }
+            }
+            ToWorker::Browser(order) => {
+                // A worker that does not hold a lease takes no orders: it has been fenced.
+                if !lease.held {
+                    continue;
+                }
+                let session = order.session_id().to_string();
+                let applied = match &order {
+                    // The one place a receipt is rebuilt from the wire: the control channel's reader.
+                    BrowserOrder::Certificate { receipt }
+                    | BrowserOrder::Permission { receipt } => {
+                        match DecisionReceipt::from_control_channel(receipt) {
+                            Ok(receipt) => host.executor().browser_decision(&receipt).await,
+                            Err(why) => Err(why),
+                        }
+                    }
+                    other => host.executor().browser_order(other).await,
+                };
+                if let Err(why) = applied {
+                    eprintln!("qworkerd: a browser order for {session} was not applied: {why}");
+                }
+                report_guards(host, Some(&session), &mut writer).await?;
             }
         }
     }
+}
+
+/// Send the control plane the guard report of one session, or of every live one.
+async fn report_guards<E, S, W>(
+    host: &WorkerHost<E, S>,
+    only: Option<&str>,
+    writer: &mut W,
+) -> Result<(), SessionError>
+where
+    E: ToolExecutor,
+    S: EvidenceSink,
+    W: AsyncWrite + Unpin,
+{
+    for (session_id, report) in host.executor().browser_guards(only).await {
+        writer
+            .write_all(wire::encode(&FromWorker::BrowserGuard { session_id, report })?.as_bytes())
+            .await?;
+    }
+    Ok(())
 }

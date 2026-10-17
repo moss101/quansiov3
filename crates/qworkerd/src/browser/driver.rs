@@ -452,6 +452,12 @@ impl BrowserDriver {
         self.session().handback(at).map_err(BrowserFault::from)
     }
 
+    /// Whether a person holds the session (a takeover is in force).
+    #[must_use]
+    pub fn is_user_held(&self) -> bool {
+        matches!(self.session().control_holder, super::ControlHolder::User)
+    }
+
     /// The tabs the driver holds, in the order they were opened.
     #[must_use]
     pub fn tab_ids(&self) -> Vec<String> {

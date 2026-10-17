@@ -19,6 +19,9 @@ use quansio_machine::gateway::ActionEnvelope;
 use serde_json::{json, Value};
 use tokio::sync::Mutex;
 
+use quansio_machine::control::browser::{DecisionKind, DecisionReceipt};
+use quansio_machine::gateway::wire::BrowserOrder;
+
 use crate::browser::tools::ToolReply;
 use crate::browser::{BrowserCallContext, BrowserDriver, BrowserFault, DriverConfig, FaultCode};
 use crate::chrome::{vet_navigation, ChromeProcess};
@@ -115,6 +118,89 @@ impl BrowserRuntime {
         });
         sessions.insert(session_id.to_string(), Arc::clone(&live));
         Ok(live)
+    }
+
+    async fn live(&self, session_id: &str) -> Option<Arc<LiveSession>> {
+        self.sessions.lock().await.get(session_id).cloned()
+    }
+
+    /// Apply an order about a session to its driver.
+    ///
+    /// `Control` is idempotent and is a no-op for a session whose browser has not been launched (the browser starts agent-held).
+    /// The orders that act on a page need the browser to exist.
+    ///
+    /// # Errors
+    /// Returns why the order was not applied.
+    pub async fn order(&self, order: &BrowserOrder) -> Result<(), String> {
+        let Some(live) = self.live(order.session_id()).await else {
+            return match order {
+                BrowserOrder::Control { .. } => Ok(()),
+                _ => Err(format!(
+                    "no browser is running for session {}",
+                    order.session_id()
+                )),
+            };
+        };
+        match order {
+            BrowserOrder::Control { holder, at, .. } => match holder.as_str() {
+                "user" if !live.driver.is_user_held() => live
+                    .driver
+                    .request_takeover(at)
+                    .map_err(|fault| fault.to_string()),
+                "agent" if live.driver.is_user_held() => {
+                    live.driver.handback(at).map_err(|fault| fault.to_string())
+                }
+                "user" | "agent" => Ok(()),
+                other => Err(format!("{other:?} is not a holder")),
+            },
+            BrowserOrder::UserClick { tab_id, x, y, .. } => live
+                .driver
+                .user_click(tab_id, *x, *y)
+                .await
+                .map_err(|fault| fault.to_string()),
+            BrowserOrder::UserText { tab_id, text, .. } => live
+                .driver
+                .user_text(tab_id, text)
+                .await
+                .map_err(|fault| fault.to_string()),
+            BrowserOrder::Certificate { .. } | BrowserOrder::Permission { .. } => {
+                Err("a decision is applied from its receipt, not as an order".to_string())
+            }
+        }
+    }
+
+    /// Apply a user's decision from the receipt the control plane minted for them.
+    ///
+    /// # Errors
+    /// Returns why the decision was not applied.
+    pub async fn decide(&self, receipt: &DecisionReceipt) -> Result<(), String> {
+        let live = self
+            .live(receipt.session_id())
+            .await
+            .ok_or_else(|| format!("no browser is running for session {}", receipt.session_id()))?;
+        let applied = match receipt.kind() {
+            DecisionKind::Certificate => {
+                live.driver
+                    .resolve_certificate(receipt.tab_id(), receipt)
+                    .await
+            }
+            DecisionKind::Permission => {
+                live.driver
+                    .apply_permission_decision(receipt.tab_id(), receipt)
+                    .await
+            }
+        };
+        applied.map(|_| ()).map_err(|fault| fault.to_string())
+    }
+
+    /// The guard reports of the live sessions, or of one.
+    pub async fn guards(&self, only: Option<&str>) -> Vec<(String, Value)> {
+        let sessions = self.sessions.lock().await;
+        sessions
+            .iter()
+            .filter(|(id, _)| only.is_none_or(|wanted| wanted == id.as_str()))
+            .map(|(id, live)| (id.clone(), live.driver.guard_report()))
+            .collect()
     }
 
     /// Run one `browser.*` envelope and return the driver's reply document.

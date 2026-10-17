@@ -686,6 +686,14 @@ impl ApiState {
         ));
     }
 
+    /// The worker hub, when the deployment composes one.
+    #[must_use]
+    pub fn worker_hub(&self) -> Option<&crate::worker::WorkerHub> {
+        self.worker
+            .as_deref()
+            .map(crate::worker::WorkerToolHost::hub)
+    }
+
     /// Run the worker tools on the workers attached to `hub` (EXEC-002). A workspace with no attached worker has its
     /// worker tools refused `WORKER_UNAVAILABLE`: they are never answered by the conformance stub.
     #[must_use]

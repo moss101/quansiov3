@@ -9,10 +9,13 @@ use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
 
 use quansio_core::{CanonicalId, Prefix, UlidGenerator};
+use quansio_machine::control::browser::{BrowserSessionStore, GuardReport};
 use quansio_machine::control::{
     Lease, LeaseRequest, MachineControl, MachineError, TargetFence, TargetStatus,
 };
-use quansio_machine::gateway::wire::{self, FromWorker, LeaseWire, OutcomeWire, ToWorker};
+use quansio_machine::gateway::wire::{
+    self, BrowserOrder, FromWorker, LeaseWire, OutcomeWire, ToWorker,
+};
 use quansio_machine::gateway::{ActionEnvelope, DispatchRequest, Heartbeat, MachineGateway};
 use sqlx::PgPool;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -329,6 +332,9 @@ impl WorkerHub {
                     )
                     .await;
                 }
+                Ok(FromWorker::BrowserGuard { session_id, report }) => {
+                    self.record_guard(&link, &session_id, &report).await;
+                }
                 _ => {}
             }
         }
@@ -345,6 +351,91 @@ impl WorkerHub {
         });
         let line = wire::encode(&frame).map_err(|_| ())?;
         link.outbound.send(line).await.map_err(|_| ())
+    }
+
+    /// Store what a worker's driver reported about one of its sessions.
+    ///
+    /// Only for a session on the target this worker holds the lease of: a worker cannot write another target's
+    /// session. The report is parsed strictly and bounded by the control plane (DOMAIN.md §8.4.1 E); one that does not
+    /// parse is dropped, and the previous report stands.
+    async fn record_guard(&self, link: &Arc<Link>, session_id: &str, report: &serde_json::Value) {
+        let Ok(report) = GuardReport::from_json(report) else {
+            return;
+        };
+        let stored = async {
+            let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
+            crate::control::schema::set_tenant_context(&mut tx, &link.tenant_id)
+                .await
+                .map_err(|e| e.to_string())?;
+            let session = BrowserSessionStore::load(&mut tx, &link.tenant_id, session_id)
+                .await
+                .map_err(|e| e.to_string())?;
+            if session.target_id != link.target_id {
+                return Err(format!(
+                    "session {session_id} is not on target {}",
+                    link.target_id
+                ));
+            }
+            BrowserSessionStore::record_guard_report(
+                &mut tx,
+                &link.tenant_id,
+                session_id,
+                &report,
+                &now(),
+            )
+            .await
+            .map_err(|e| e.to_string())?;
+            tx.commit().await.map_err(|e| e.to_string())
+        }
+        .await;
+        if let Err(why) = stored {
+            eprintln!("worker hub: a guard report for {session_id} was not stored: {why}");
+        }
+    }
+
+    /// Send an order about a browser session to the worker that runs it.
+    ///
+    /// The session's target is read from the control plane, so a caller names a session, never a worker. `Relay::NoWorker`
+    /// is not a failure of the command that caused the order: what the user decided is recorded either way, and the order
+    /// is repeated by the server before the next agent dispatch where it matters (control).
+    pub async fn relay(&self, tenant_id: &str, order: BrowserOrder) -> Relay {
+        let target_id = {
+            let Ok(mut tx) = self.pool.begin().await else {
+                return Relay::NoWorker;
+            };
+            if crate::control::schema::set_tenant_context(&mut tx, tenant_id)
+                .await
+                .is_err()
+            {
+                return Relay::NoWorker;
+            }
+            match BrowserSessionStore::load(&mut tx, tenant_id, order.session_id()).await {
+                Ok(session) => session.target_id,
+                Err(_) => return Relay::NoWorker,
+            }
+        };
+        self.send_order(tenant_id, &target_id, order).await
+    }
+
+    /// Send an order to the worker attached for `target_id`.
+    pub async fn send_order(&self, tenant_id: &str, target_id: &str, order: BrowserOrder) -> Relay {
+        let link = self
+            .links
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get(&(tenant_id.to_string(), target_id.to_string()))
+            .cloned();
+        let Some(link) = link else {
+            return Relay::NoWorker;
+        };
+        let Ok(line) = wire::encode(&ToWorker::Browser(order)) else {
+            return Relay::NoWorker;
+        };
+        if link.outbound.send(line).await.is_ok() {
+            Relay::Sent
+        } else {
+            Relay::NoWorker
+        }
     }
 
     /// A worker's heartbeat: accept it only for the lease generation the hub holds, record what the worker
@@ -532,6 +623,15 @@ impl WorkerHub {
             }
         }
     }
+}
+
+/// Whether an order reached a worker's channel.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Relay {
+    /// It was put on the worker's channel.
+    Sent,
+    /// No worker is attached for the session's target.
+    NoWorker,
 }
 
 /// What a dispatch carries.
