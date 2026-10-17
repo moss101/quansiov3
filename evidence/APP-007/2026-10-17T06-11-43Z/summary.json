@@ -1,0 +1,160 @@
+{
+  "task_id": "APP-007",
+  "git_commit": "fab8fda0ca212208829a44bf7a665adfe297a157",
+  "recorded_at": "2026-10-17T06:36:51Z",
+  "commands": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T06-11-43Z/fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T06-11-43Z/clippy.log"
+    },
+    {
+      "command": "arch_check.py + pytest tests/architecture  # 129 passed, forbidden wiring clean, the validator passes",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T06-11-43Z/architecture.log"
+    },
+    {
+      "command": "gen_contracts.py --check --only catalog,openapi,sdk,ts,rust  # SendBrowserInput regenerated from DOMAIN.md; no hand edits",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T06-11-43Z/contracts.log"
+    },
+    {
+      "command": "cd apps/desktop && tsc --noEmit && eslint src tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T06-11-43Z/desktop-static.log"
+    },
+    {
+      "command": "cd apps/desktop && vitest run live-input preload live-decisions live live.e2e conversation.e2e trust.e2e  # the suites this change touches, with the dev stack up: a click maps to page coordinates from the frame's own size and is not sent when it cannot be placed; the builder refuses what the server refuses; the channel is allowlisted and sends the params the command defines; the live view calls only that channel and only while the person holds the session; the conversation and trust E2E run against the real server with the stub opted in explicitly",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T06-11-43Z/desktop-changed.log"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # the whole desktop suite with the dev stack up: 667 passed, 2 FAILED. tests/automation.e2e (ADP-007 added a 60 s plan minimum; the test still schedules a 1 s routine; fails on main) and tests/work.e2e (CONFLICT_REVISION race under parallel load; passes alone 3 of 3). Neither touches this change",
+      "exit_code": 1,
+      "result": "FAIL",
+      "log": "evidence/APP-007/2026-10-17T06-11-43Z/desktop-full.log"
+    },
+    {
+      "command": "RUST_MIN_STACK=16777216 cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1328 passed, 0 failed: real PostgreSQL, a real worker over a Unix socket and a real Chrome. worker_live (9): a guard report reaches the database and a worker cannot write another target's session; RequestTakeover/Handback move the worker's driver and the page sees only the person's clicks; a decision is relayed and the response says when no worker was reached; frames reach the live hub while a person holds the session and a handback stops the stream (proved by the next takeover starting a new one); a forged frame for another target's session is never published; SendBrowserInput is delivered only while the person holds the session, every malformed input is refused and an undeliverable one is an error; a missed handback is repaired before the next agent call. daemon_orders: a worker takes orders only while it holds a lease and rebuilds a receipt only from a valid wire form",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T06-11-43Z/full-crates.log"
+    },
+    {
+      "command": "mutation checks L1-L9 all KILLED (L4 survived the first test and was killed after the test was rewritten): guard report from another target, frame without checking its session, takeover never starts the stream, handback never stops it, input accepted while the agent holds the session, orders without a lease, control not restated, unknown decision kind accepted, a second place rebuilding a receipt from the wire; every mutant compiles; the restored control passes",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T06-11-43Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "arch_check.py + pytest tests/architecture  # 129 passed, forbidden wiring clean, the validator passes",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "gen_contracts.py --check --only catalog,openapi,sdk,ts,rust  # SendBrowserInput regenerated from DOMAIN.md; no hand edits",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && tsc --noEmit && eslint src tests",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && vitest run live-input preload live-decisions live live.e2e conversation.e2e trust.e2e  # the suites this change touches, with the dev stack up: a click maps to page coordinates from the frame's own size and is not sent when it cannot be placed; the builder refuses what the server refuses; the channel is allowlisted and sends the params the command defines; the live view calls only that channel and only while the person holds the session; the conversation and trust E2E run against the real server with the stub opted in explicitly",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # the whole desktop suite with the dev stack up: 667 passed, 2 FAILED. tests/automation.e2e (ADP-007 added a 60 s plan minimum; the test still schedules a 1 s routine; fails on main) and tests/work.e2e (CONFLICT_REVISION race under parallel load; passes alone 3 of 3). Neither touches this change",
+      "exit_code": 1,
+      "result": "FAIL"
+    },
+    {
+      "command": "RUST_MIN_STACK=16777216 cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1328 passed, 0 failed: real PostgreSQL, a real worker over a Unix socket and a real Chrome. worker_live (9): a guard report reaches the database and a worker cannot write another target's session; RequestTakeover/Handback move the worker's driver and the page sees only the person's clicks; a decision is relayed and the response says when no worker was reached; frames reach the live hub while a person holds the session and a handback stops the stream (proved by the next takeover starting a new one); a forged frame for another target's session is never published; SendBrowserInput is delivered only while the person holds the session, every malformed input is refused and an undeliverable one is an error; a missed handback is repaired before the next agent call. daemon_orders: a worker takes orders only while it holds a lease and rebuilds a receipt only from a valid wire form",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks L1-L9 all KILLED (L4 survived the first test and was killed after the test was rewritten): guard report from another target, frame without checking its session, takeover never starts the stream, handback never stops it, input accepted while the agent holds the session, orders without a lease, control not restated, unknown decision kind accepted, a second place rebuilding a receipt from the wire; every mutant compiles; the restored control passes",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-007/2026-10-17T06-11-43Z/fmt.log",
+      "sha256": "8bc7b290341d8b4d3fbdc6c48bffc1dac5c9e8a41608403e62b6f2a0c1af9957",
+      "bytes": 9
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T06-11-43Z/clippy.log",
+      "sha256": "3e6a41ef8bf96b446d26765568adb37d510a6fc86db8e01fb68ca5722b229203",
+      "bytes": 169
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T06-11-43Z/architecture.log",
+      "sha256": "6f28d50f43d8e765f8067298a1dee7b8b0a722fb10501fde5cc32b1bf0e7b330",
+      "bytes": 220
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T06-11-43Z/contracts.log",
+      "sha256": "0ac74103ceda3798197b3003b793bbd073821e37fd88ea963d91153ee820fb7f",
+      "bytes": 65
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T06-11-43Z/desktop-static.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T06-11-43Z/desktop-changed.log",
+      "sha256": "223f56a8a529e186c48516ec30f75054a2463274c0b380b5ecc3d148fb527854",
+      "bytes": 1350
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T06-11-43Z/desktop-full.log",
+      "sha256": "3e72716dca98f146c43d6922466eb3ed1541b80ab522b63572fbce1644d4e788",
+      "bytes": 9956
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T06-11-43Z/full-crates.log",
+      "sha256": "5435749332c7e230c6daf52bfb4c2fd157f10ec6b39f8f9b651a36cabbbf0719",
+      "bytes": 133837
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T06-11-43Z/mutation-checks.log",
+      "sha256": "d693054f7178722660cca4c3cb0b03a674f2a66378fe2d77823462b1bb041e1f",
+      "bytes": 2894
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T06-11-43Z/RECONCILIATION.md",
+      "sha256": "5a339799a67861ff5ad04674224a4bdf54da862f373aa9de8d603f48754cca1b",
+      "bytes": 5461
+    }
+  ]
+}
