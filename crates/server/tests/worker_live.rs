@@ -595,7 +595,8 @@ fn drain(
 }
 
 #[tokio::test]
-async fn frames_reach_the_live_hub_while_a_person_holds_the_session_and_stop_at_the_handback() {
+async fn frames_reach_the_live_hub_while_a_person_holds_the_session_and_a_handback_stops_the_stream(
+) {
     let Some(world) = world("wl_frames", true).await else {
         return blocked_marker();
     };
@@ -655,24 +656,35 @@ async fn frames_reach_the_live_hub_while_a_person_holds_the_session_and_stop_at_
     );
     assert!(frame["sequence"].as_u64().is_some_and(|n| n >= 1));
 
-    // After the handback the stream stops: the agent changes the page and nothing is published.
+    // After the handback the stream stops. A stopped stream cannot be resumed, only started again, so the proof is that
+    // the next takeover begins a new one: its first picture is number 1. (A stream that never stopped would not start
+    // again, and would carry on counting.)
     let (status, back) = command(&world, "Handback", 12, json!({"session_id": session})).await;
     assert_eq!(status, 200, "{back}");
-    tokio::time::sleep(Duration::from_millis(500)).await;
+    tokio::time::sleep(Duration::from_millis(300)).await;
     drain(&mut watching);
-    ok(
-        &host,
-        RUN_A,
-        "browser.navigate",
-        json!({"session_id": "x", "url": site.url()}),
+    let (status, again) = command(
+        &world,
+        "RequestTakeover",
+        13,
+        json!({"session_id": session}),
     )
     .await;
-    tokio::time::sleep(Duration::from_millis(1200)).await;
-    assert!(
-        drain(&mut watching)
+    assert_eq!(status, 200, "{again}");
+    let mut restarted = false;
+    for _ in 0..100 {
+        if drain(&mut watching)
             .iter()
-            .all(|(_, frame)| frame["kind"] != "browser.frame"),
-        "frames kept coming after the handback"
+            .any(|(_, frame)| frame["kind"] == "browser.frame" && frame["sequence"] == 1)
+        {
+            restarted = true;
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    assert!(
+        restarted,
+        "the second takeover did not begin a new stream: the first one was never stopped"
     );
     drop_pool(&world.pool, &world.name).await;
 }
