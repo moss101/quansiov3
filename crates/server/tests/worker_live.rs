@@ -860,3 +860,52 @@ async fn an_input_that_cannot_be_delivered_is_an_error_and_not_a_silent_drop() {
     assert_eq!(status, 503, "{body}");
     drop_pool(&world.pool, &world.name).await;
 }
+
+#[tokio::test]
+async fn a_handback_the_worker_missed_is_repaired_before_the_next_agent_call() {
+    let Some(world) = world("wl_repair", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.url()}),
+    )
+    .await;
+    let session = sessions(&world.pool, &world.target).await.remove(0).0;
+
+    // The person takes over through the command, so the worker's driver is user-held.
+    let (status, taken) = command(
+        &world,
+        "RequestTakeover",
+        41,
+        json!({"session_id": session}),
+    )
+    .await;
+    assert_eq!(status, 200, "{taken}");
+    // The handback is recorded in the database but never reaches the worker (it was away, restarting, or the relay failed).
+    let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    let mut tx = world.pool.begin().await.unwrap();
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .unwrap();
+    quansio_machine::control::browser::BrowserSessionStore::handback(
+        &mut tx, TENANT, &session, &now,
+    )
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
+
+    // The database says the agent holds the session. The next agent call states that to the worker first, so its driver
+    // does not refuse the agent for a takeover that has ended.
+    ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.big()}),
+    )
+    .await;
+    drop_pool(&world.pool, &world.name).await;
+}
