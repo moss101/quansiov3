@@ -309,6 +309,47 @@ async fn a_claim_whose_contract_passes_succeeds_the_run_through_the_independent_
     served.finish().await;
 }
 
+/// The deepest served path (PostMessage -> command dispatch -> turn -> tool dispatch -> verification)
+/// runs on a 1.5 MiB thread stack, below the 2 MiB a test thread gets by default and without
+/// `RUST_MIN_STACK`. A debug build keeps every await point's temporaries in the poll frame, so an
+/// await that is not boxed on this path grows the frame until the process aborts with a stack
+/// overflow; this fails there first, with headroom to spare.
+#[test]
+fn the_served_claim_path_fits_a_thread_stack_below_the_default() {
+    let worker = std::thread::Builder::new()
+        .name("served-claim-small-stack".into())
+        .stack_size(1536 * 1024)
+        .spawn(|| {
+            tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("runtime")
+                .block_on(async {
+                    let Some(served) = serve(
+                        "run008_small_stack",
+                        json!({
+                            "deterministic_checks": [{ "kind": "effects_settled", "effect_classes": ["read.internal"] }],
+                            "semantic_verification": { "required": true, "rubric_id": "rubric_report", "independent_model": false }
+                        }),
+                    )
+                    .await
+                    else {
+                        return;
+                    };
+                    let result = served
+                        .post(
+                            "cmd_01J8Z3K6F1N8VQ2X5W9YRXN0S1",
+                            &claim("the report is delivered [[stub:verdict agree]]"),
+                        )
+                        .await;
+                    assert_eq!(result["turn"]["kind"], "succeeded", "{result}");
+                    served.finish().await;
+                });
+        })
+        .expect("spawn");
+    worker.join().expect("the served claim path completed");
+}
+
 #[tokio::test]
 async fn a_failing_contract_returns_its_feedback_to_the_model_and_the_turn_continues() {
     let Some(served) = serve(
