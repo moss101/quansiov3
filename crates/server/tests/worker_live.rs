@@ -1028,14 +1028,14 @@ async fn with_no_viewer_the_agent_works_unwatched_and_nothing_is_streamed() {
         &host,
         RUN_A,
         "browser.navigate",
-        json!({"session_id": "x", "url": site.big()}),
+        json!({"session_id": "x", "url": site.animated()}),
     )
     .await;
     ok(
         &host,
         RUN_A,
         "browser.navigate",
-        json!({"session_id": "x", "url": site.url()}),
+        json!({"session_id": "x", "url": site.animated()}),
     )
     .await;
     tokio::time::sleep(Duration::from_millis(1000)).await;
@@ -1073,7 +1073,7 @@ async fn the_stream_follows_a_newer_tab_and_stops_when_the_last_viewer_leaves() 
         &host,
         RUN_A,
         "browser.navigate",
-        json!({"session_id": "x", "url": site.url()}),
+        json!({"session_id": "x", "url": site.animated()}),
     )
     .await;
     let second_tab = second["tab_id"].as_str().unwrap().to_string();
@@ -1090,6 +1090,18 @@ async fn the_stream_follows_a_newer_tab_and_stops_when_the_last_viewer_leaves() 
         }
     }
     assert!(followed, "the viewer was never shown the agent's newer tab");
+
+    // Positive control for the silence below: while someone watches an animated page, pictures really do keep coming.
+    let mut flowing = 0;
+    for _ in 0..8 {
+        if followed_viewer_frame(&mut one).await {
+            flowing += 1;
+        }
+    }
+    assert!(
+        flowing >= 5,
+        "only {flowing} of 8 short waits saw a picture while a viewer watched an animated page"
+    );
 
     // Two viewers, one leaves: the stream stays. The last leaves: it stops.
     let other = Viewer::join(addr, &world.target).await;
@@ -1141,4 +1153,9 @@ async fn the_stream_follows_a_newer_tab_and_stops_when_the_last_viewer_leaves() 
     );
     returning.leave().await;
     drop_pool(&world.pool, &world.name).await;
+}
+
+/// Whether a picture arrives within a short wait.
+async fn followed_viewer_frame(viewer: &mut Viewer) -> bool {
+    viewer.frame(400).await.is_some()
 }
