@@ -44,6 +44,8 @@ const RUN_B: &str = "run_01J8Z3K6F1N8VQ2X5W9YBRWBBB";
 const BIG: &str = "<html><head><title>Big</title></head><body style=\"margin:0\">\
 <button style=\"position:fixed;left:0;top:0;width:100vw;height:100vh\" onclick=\"var x=new XMLHttpRequest();x.open('GET','/hit',false);x.send();\">Count</button>\
 </body></html>";
+const LIVE: &str = "<html><body><div id=\"c\">0</div><script>var n=0;function t(){document.getElementById('c').textContent=String(++n);setTimeout(t,100)}t()</script></body></html>";
+const KEYS: &str = "<html><body style=\"margin:0;height:6000px\"><input id=\"i\" autofocus style=\"width:200px\" onkeydown=\"var x=new XMLHttpRequest();x.open('GET','/key-'+event.key,false);x.send();\"><script>window.addEventListener('scroll',function(){var x=new XMLHttpRequest();x.open('GET','/scrolled',false);x.send();});document.getElementById('i').focus();</script></body></html>";
 const PAGE: &str = "<html><head><title>Shop</title></head><body>\
 <button onclick=\"var x=new XMLHttpRequest();x.open('GET','/hit',false);x.send();\">Count</button>\
 <button onclick=\"var x=new XMLHttpRequest();x.open('GET','/buy',false);x.send();\">Buy now</button>\
@@ -86,6 +88,8 @@ impl Site {
                     let (kind, body) = match path.as_str() {
                         "/" => ("text/html", PAGE),
                         "/big" => ("text/html", BIG),
+                        "/live" => ("text/html", LIVE),
+                        "/keys" => ("text/html", KEYS),
                         _ => ("text/plain", "ok"),
                     };
                     let reply = format!(
@@ -100,6 +104,12 @@ impl Site {
     }
     fn url(&self) -> String {
         format!("http://127.0.0.1:{}/", self.port)
+    }
+    fn keys(&self) -> String {
+        format!("http://127.0.0.1:{}/keys", self.port)
+    }
+    fn animated(&self) -> String {
+        format!("http://127.0.0.1:{}/live", self.port)
     }
     fn big(&self) -> String {
         format!("http://127.0.0.1:{}/big", self.port)
@@ -606,7 +616,7 @@ async fn frames_reach_the_live_hub_while_a_person_holds_the_session_and_a_handba
         &host,
         RUN_A,
         "browser.navigate",
-        json!({"session_id": "x", "url": site.big()}),
+        json!({"session_id": "x", "url": site.animated()}),
     )
     .await;
     let session = sessions(&world.pool, &world.target).await.remove(0).0;
@@ -648,7 +658,7 @@ async fn frames_reach_the_live_hub_while_a_person_holds_the_session_and_a_handba
         && data
             .chars()
             .all(|c| c.is_ascii_alphanumeric() || "+/=".contains(c))));
-    assert_eq!(frame["url"], site.big());
+    assert_eq!(frame["url"], site.animated());
     assert!(
         frame["width"].as_u64().is_some_and(|w| w > 0)
             && frame["height"].as_u64().is_some_and(|h| h > 0),
@@ -656,35 +666,18 @@ async fn frames_reach_the_live_hub_while_a_person_holds_the_session_and_a_handba
     );
     assert!(frame["sequence"].as_u64().is_some_and(|n| n >= 1));
 
-    // After the handback the stream stops. A stopped stream cannot be resumed, only started again, so the proof is that
-    // the next takeover begins a new one: its first picture is number 1. (A stream that never stopped would not start
-    // again, and would carry on counting.)
+    // After the handback nobody is watching and the agent holds the session, so the stream stops. The page is animated, so a
+    // stream that kept running would keep delivering pictures; the hub's own live receiver needs no socket to hear them.
     let (status, back) = command(&world, "Handback", 12, json!({"session_id": session})).await;
     assert_eq!(status, 200, "{back}");
-    tokio::time::sleep(Duration::from_millis(300)).await;
+    tokio::time::sleep(Duration::from_millis(600)).await;
     drain(&mut watching);
-    let (status, again) = command(
-        &world,
-        "RequestTakeover",
-        13,
-        json!({"session_id": session}),
-    )
-    .await;
-    assert_eq!(status, 200, "{again}");
-    let mut restarted = false;
-    for _ in 0..100 {
-        if drain(&mut watching)
-            .iter()
-            .any(|(_, frame)| frame["kind"] == "browser.frame" && frame["sequence"] == 1)
-        {
-            restarted = true;
-            break;
-        }
-        tokio::time::sleep(Duration::from_millis(50)).await;
-    }
+    tokio::time::sleep(Duration::from_millis(1500)).await;
     assert!(
-        restarted,
-        "the second takeover did not begin a new stream: the first one was never stopped"
+        drain(&mut watching)
+            .iter()
+            .all(|(_, frame)| frame["kind"] != "browser.frame"),
+        "pictures kept coming after the handback"
     );
     drop_pool(&world.pool, &world.name).await;
 }
@@ -919,5 +912,395 @@ async fn a_handback_the_worker_missed_is_repaired_before_the_next_agent_call() {
         json!({"session_id": "x", "url": site.big()}),
     )
     .await;
+    drop_pool(&world.pool, &world.name).await;
+}
+
+// ------------------------------------------------------------------ watching the agent work
+
+/// A WebSocket viewer of `/v1/stream`, subscribed to the target's channel.
+struct Viewer {
+    ws: tokio_tungstenite::WebSocketStream<
+        tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+    >,
+}
+
+async fn serve_http(world: &World) -> std::net::SocketAddr {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let router = world.router.clone();
+    tokio::spawn(async move {
+        axum::serve(listener, router).await.ok();
+    });
+    addr
+}
+
+impl Viewer {
+    async fn join(addr: std::net::SocketAddr, target: &str) -> Self {
+        use futures_util::SinkExt;
+        use tokio_tungstenite::tungstenite::client::IntoClientRequest;
+        use tokio_tungstenite::tungstenite::Message;
+        let mut request = format!("ws://{addr}/v1/stream")
+            .into_client_request()
+            .unwrap();
+        request
+            .headers_mut()
+            .insert("x-quansio-tenant", TENANT.parse().unwrap());
+        request
+            .headers_mut()
+            .insert("x-quansio-user", USER.parse().unwrap());
+        let (mut ws, _) = tokio_tungstenite::connect_async(request)
+            .await
+            .expect("connect");
+        ws.send(Message::Text(
+            json!({ "subscribe": [{ "channel": format!("target:{target}") }] }).to_string(),
+        ))
+        .await
+        .expect("subscribe");
+        Self { ws }
+    }
+
+    /// The next browser frame within `ms`.
+    async fn frame(&mut self, ms: u64) -> Option<Value> {
+        use futures_util::StreamExt;
+        use tokio_tungstenite::tungstenite::Message;
+        let deadline = tokio::time::Instant::now() + Duration::from_millis(ms);
+        loop {
+            match tokio::time::timeout_at(deadline, self.ws.next()).await {
+                Ok(Some(Ok(Message::Text(text)))) => {
+                    let value: Value = serde_json::from_str(&text).ok()?;
+                    if value["kind"] == "live" && value["frame"]["kind"] == "browser.frame" {
+                        return Some(value["frame"].clone());
+                    }
+                }
+                Ok(Some(Ok(_))) => {}
+                _ => return None,
+            }
+        }
+    }
+
+    async fn leave(mut self) {
+        let _ = self.ws.close(None).await;
+    }
+}
+
+#[tokio::test]
+async fn a_viewer_sees_the_agent_work_whether_it_joins_before_the_browser_exists_or_after() {
+    let Some(world) = world("wl_watch", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    let addr = serve_http(&world).await;
+
+    // Joined first: nothing is running yet, so the first frame comes when the agent's call creates the browser.
+    let mut early = Viewer::join(addr, &world.target).await;
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.big()}),
+    )
+    .await;
+    let session = sessions(&world.pool, &world.target).await.remove(0).0;
+    let seen = early
+        .frame(15_000)
+        .await
+        .expect("the agent's browser was shown to a viewer who was already there");
+    assert_eq!(seen["session_id"], session.as_str());
+    assert_eq!(seen["url"], site.big());
+
+    // Joined later: the stream is already there to be found.
+    let mut late = Viewer::join(addr, &world.target).await;
+    // The page is static, so the browser sends nothing new: the late viewer is given a current picture on arrival.
+    let also = late
+        .frame(15_000)
+        .await
+        .expect("a viewer who arrived late saw nothing");
+    assert_eq!(also["session_id"], session.as_str());
+    early.leave().await;
+    late.leave().await;
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn with_no_viewer_the_agent_works_unwatched_and_nothing_is_streamed() {
+    let Some(world) = world("wl_unwatched", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    let mut watching = world.live.subscribe(TENANT);
+    ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.animated()}),
+    )
+    .await;
+    ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.animated()}),
+    )
+    .await;
+    tokio::time::sleep(Duration::from_millis(1000)).await;
+    assert!(
+        drain(&mut watching)
+            .iter()
+            .all(|(_, frame)| frame["kind"] != "browser.frame"),
+        "frames were produced for a session nobody is watching"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn the_stream_follows_a_newer_tab_and_stops_when_the_last_viewer_leaves() {
+    let Some(world) = world("wl_follow", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    let addr = serve_http(&world).await;
+    let first = ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.animated()}),
+    )
+    .await;
+    let first_tab = first["tab_id"].as_str().unwrap().to_string();
+
+    let mut one = Viewer::join(addr, &world.target).await;
+    let a_frame = one.frame(15_000).await.expect("a frame of the first tab");
+    assert_eq!(a_frame["tab_id"], first_tab.as_str());
+
+    // The agent opens another tab (a navigate with no tab names a new one): the viewer is moved to it.
+    let second = ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.animated()}),
+    )
+    .await;
+    let second_tab = second["tab_id"].as_str().unwrap().to_string();
+    assert_ne!(first_tab, second_tab);
+    let mut followed = false;
+    for _ in 0..40 {
+        match one.frame(500).await {
+            Some(frame) if frame["tab_id"] == second_tab.as_str() => {
+                followed = true;
+                break;
+            }
+            Some(_) => {}
+            None => {}
+        }
+    }
+    assert!(followed, "the viewer was never shown the agent's newer tab");
+
+    // Positive control for the silence below: while someone watches an animated page, pictures really do keep coming.
+    let mut flowing = 0;
+    for _ in 0..8 {
+        if followed_viewer_frame(&mut one).await {
+            flowing += 1;
+        }
+    }
+    assert!(
+        flowing >= 5,
+        "only {flowing} of 8 short waits saw a picture while a viewer watched an animated page"
+    );
+
+    // Two viewers, one leaves: the stream stays. The last leaves: it stops.
+    let other = Viewer::join(addr, &world.target).await;
+    for _ in 0..50 {
+        if world.hub.has_viewers(TENANT, &world.target) {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    one.leave().await;
+    tokio::time::sleep(Duration::from_millis(400)).await;
+    assert!(
+        world.hub.has_viewers(TENANT, &world.target),
+        "one viewer is still watching"
+    );
+    other.leave().await;
+    for _ in 0..100 {
+        if !world.hub.has_viewers(TENANT, &world.target) {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    assert!(
+        !world.hub.has_viewers(TENANT, &world.target),
+        "the last viewer left"
+    );
+
+    // The page is animated, so a running stream would deliver a picture every moment. With nobody watching, none comes.
+    let mut hub_side = world.live.subscribe(TENANT);
+    tokio::time::sleep(Duration::from_millis(600)).await;
+    drain(&mut hub_side);
+    tokio::time::sleep(Duration::from_millis(1500)).await;
+    assert!(
+        drain(&mut hub_side)
+            .iter()
+            .all(|(_, frame)| frame["kind"] != "browser.frame"),
+        "pictures kept coming with no one watching"
+    );
+
+    // And a viewer who returns finds it running again, with numbers that never went backwards.
+    let mut returning = Viewer::join(addr, &world.target).await;
+    let back = returning
+        .frame(15_000)
+        .await
+        .expect("a returning viewer was shown nothing");
+    assert!(
+        back["sequence"].as_u64().unwrap_or(0) > a_frame["sequence"].as_u64().unwrap_or(0),
+        "frame numbers went backwards: {back} after {a_frame}"
+    );
+    returning.leave().await;
+    drop_pool(&world.pool, &world.name).await;
+}
+
+/// Whether a picture arrives within a short wait.
+async fn followed_viewer_frame(viewer: &mut Viewer) -> bool {
+    viewer.frame(400).await.is_some()
+}
+
+#[tokio::test]
+async fn a_person_s_special_keys_and_scroll_reach_the_page_and_anything_else_is_refused() {
+    let Some(world) = world("wl_keys", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    let navigated = ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.keys()}),
+    )
+    .await;
+    let tab = navigated["tab_id"].as_str().unwrap().to_string();
+    let session = sessions(&world.pool, &world.target).await.remove(0).0;
+    let (status, taken) = command(
+        &world,
+        "RequestTakeover",
+        51,
+        json!({"session_id": session}),
+    )
+    .await;
+    assert_eq!(status, 200, "{taken}");
+
+    // A named key reaches the focused field: the page reports it by name.
+    for (n, key) in [(52, "Enter"), (53, "Backspace"), (54, "ArrowDown")] {
+        let (status, body) = command(
+            &world,
+            "SendBrowserInput",
+            n,
+            json!({"session_id": session, "tab_id": tab, "kind": "key", "key": key}),
+        )
+        .await;
+        assert_eq!(status, 200, "{key}: {body}");
+        eventually(&format!("the page saw {key}"), || async {
+            site.hits(&format!("/key-{key}")) == 1
+        })
+        .await;
+    }
+
+    // A scroll moves the page: the page reports its own scroll event.
+    let (status, body) = command(
+        &world,
+        "SendBrowserInput",
+        55,
+        json!({"session_id": session, "tab_id": tab, "kind": "scroll", "x": 100, "y": 100, "delta_x": 0, "delta_y": 400}),
+    )
+    .await;
+    assert_eq!(status, 200, "{body}");
+    eventually("the page scrolled", || async {
+        site.hits("/scrolled") >= 1
+    })
+    .await;
+
+    // What a person may not send is refused before any worker: printable characters are text, chords are not keys, and a
+    // scroll is bounded.
+    let before = site.hits("/key-a");
+    for (n, bad) in [
+        (56, json!({"kind": "key", "key": "a"})),
+        (57, json!({"kind": "key", "key": "Control+a"})),
+        (58, json!({"kind": "key", "key": "F12"})),
+        (59, json!({"kind": "key"})),
+        (
+            60,
+            json!({"kind": "scroll", "x": 1, "y": 1, "delta_x": 0, "delta_y": 10001}),
+        ),
+        (
+            61,
+            json!({"kind": "scroll", "x": -1, "y": 1, "delta_x": 0, "delta_y": 1}),
+        ),
+        (62, json!({"kind": "scroll", "x": 1, "y": 1, "delta_y": 1})),
+    ] {
+        let mut params = bad.clone();
+        params["session_id"] = json!(session);
+        params["tab_id"] = json!(tab);
+        let (status, body) = command(&world, "SendBrowserInput", n, params).await;
+        assert_eq!(status, 400, "{bad}: {body}");
+    }
+    assert_eq!(
+        site.hits("/key-a"),
+        before,
+        "a refused key reached the page"
+    );
+
+    // The worker does not take the server's word for it: orders sent straight to it, bypassing the server's checks, are
+    // refused by the driver itself and the page sees nothing.
+    use quansio_machine::gateway::wire::BrowserOrder;
+    let scrolled = site.hits("/scrolled");
+    for key in ["F12", "a", "Control+a", "Shift"] {
+        world
+            .hub
+            .send_order(
+                TENANT,
+                &world.target,
+                BrowserOrder::UserKey {
+                    session_id: session.clone(),
+                    tab_id: tab.clone(),
+                    key: key.to_string(),
+                },
+            )
+            .await;
+    }
+    for (x, delta_x, delta_y) in [
+        (10.0, 0.0, 50_000.0),
+        (10.0, 50_000.0, 0.0),
+        (10.0, 0.0, -50_000.0),
+        (-5.0, 0.0, 10.0),
+    ] {
+        world
+            .hub
+            .send_order(
+                TENANT,
+                &world.target,
+                BrowserOrder::UserScroll {
+                    session_id: session.clone(),
+                    tab_id: tab.clone(),
+                    x,
+                    y: 10.0,
+                    delta_x,
+                    delta_y,
+                },
+            )
+            .await;
+    }
+    tokio::time::sleep(Duration::from_millis(800)).await;
+    for key in ["F12", "a", "Shift"] {
+        assert_eq!(
+            site.hits(&format!("/key-{key}")),
+            0,
+            "the worker accepted {key}"
+        );
+    }
+    assert_eq!(
+        site.hits("/scrolled"),
+        scrolled,
+        "the worker accepted an out-of-bounds scroll"
+    );
     drop_pool(&world.pool, &world.name).await;
 }

@@ -5,6 +5,7 @@
 //! viewer who is behind wants the newest picture, not every picture, and the pump must never hold up the connection the
 //! agent's own actions use.
 
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 use serde_json::json;
@@ -51,6 +52,12 @@ impl std::fmt::Debug for ScreencastHandle {
 }
 
 impl ScreencastHandle {
+    /// The tab being shown.
+    #[must_use]
+    pub fn tab_id(&self) -> &str {
+        &self.tab.id
+    }
+
     /// Stop the screencast and the pump.
     pub async fn stop(self) {
         self.task.abort();
@@ -76,6 +83,55 @@ async fn next_event(events: &mut broadcast::Receiver<CdpEvent>) -> Option<CdpEve
 }
 
 impl BrowserDriver {
+    /// One picture of a tab as it is now, numbered from `sequence` like the stream's own frames.
+    ///
+    /// For a viewer who arrives while a stream is running: the browser sends a frame only when the page changes, so a static
+    /// page would otherwise show them nothing.
+    ///
+    /// # Errors
+    /// Returns [`BrowserFault`] when the tab does not exist or the browser refuses.
+    pub async fn snapshot_frame(
+        &self,
+        tab_id: &str,
+        sequence: &AtomicU64,
+    ) -> Result<ScreencastFrame, BrowserFault> {
+        let tab = self.tab(Some(tab_id))?;
+        let shot = tab
+            .conn
+            .call(
+                "Page.captureScreenshot",
+                json!({ "format": "jpeg", "quality": 60 }),
+            )
+            .await?;
+        let data = shot
+            .get("data")
+            .and_then(|data| data.as_str())
+            .unwrap_or_default()
+            .to_string();
+        let metrics = tab
+            .conn
+            .call("Page.getLayoutMetrics", json!({}))
+            .await
+            .unwrap_or_default();
+        let dimension = |key: &str| {
+            metrics
+                .pointer(&format!("/cssVisualViewport/{key}"))
+                .and_then(serde_json::Value::as_f64)
+                .map_or(0, |value| value.round().clamp(0.0, 100_000.0) as u32)
+        };
+        let url = tab.state().url.clone();
+        Ok(ScreencastFrame {
+            session_id: self.session_id(),
+            tab_id: tab.id.clone(),
+            media_type: "image/jpeg",
+            data,
+            url,
+            device_width: dimension("clientWidth"),
+            device_height: dimension("clientHeight"),
+            sequence: sequence.fetch_add(1, Ordering::SeqCst) + 1,
+        })
+    }
+
     /// Start relaying a tab's frames to `sink`.
     ///
     /// # Errors
@@ -84,6 +140,7 @@ impl BrowserDriver {
         &self,
         tab_id: &str,
         sink: mpsc::Sender<ScreencastFrame>,
+        sequence: Arc<AtomicU64>,
     ) -> Result<ScreencastHandle, BrowserFault> {
         let tab = self.tab(Some(tab_id))?;
         let mut events = tab.conn.subscribe();
@@ -96,7 +153,6 @@ impl BrowserDriver {
         let pumped = Arc::clone(&tab);
         let session_id = self.session_id();
         let task = tokio::spawn(async move {
-            let mut sequence = 0_u64;
             while let Some(event) = next_event(&mut events).await {
                 if event.method != "Page.screencastFrame" {
                     continue;
@@ -110,7 +166,7 @@ impl BrowserDriver {
                 let Some(data) = event.params.get("data").and_then(|data| data.as_str()) else {
                     continue;
                 };
-                sequence += 1;
+                let number = sequence.fetch_add(1, Ordering::SeqCst) + 1;
                 let dimension = |key: &str| {
                     event
                         .params
@@ -126,7 +182,7 @@ impl BrowserDriver {
                     url: pumped.state().url.clone(),
                     device_width: dimension("deviceWidth"),
                     device_height: dimension("deviceHeight"),
-                    sequence,
+                    sequence: number,
                 };
                 if sink.is_closed() {
                     break;

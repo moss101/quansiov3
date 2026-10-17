@@ -1,0 +1,144 @@
+{
+  "task_id": "APP-007",
+  "git_commit": "52365c22ffe3d9bd60a1631106434a9a638abd2a",
+  "recorded_at": "2026-10-17T11:45:59Z",
+  "commands": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T11-27-57Z/fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T11-27-57Z/clippy.log"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # on a clean clone: 129 passed, validator PASS",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T11-27-57Z/architecture.log"
+    },
+    {
+      "command": "gen_contracts.py --check --only catalog,openapi,sdk,ts,rust  # SendBrowserInput keeps its name; no generated artifact moved",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T11-27-57Z/contracts.log"
+    },
+    {
+      "command": "cd apps/desktop && tsc --noEmit && eslint src tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T11-27-57Z/desktop-static.log"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # dev stack up, all 68 files: 676 passed, 4 skipped (pre-existing). New: a key press is a named key, a grapheme as text, or nothing (chords stay with the person); a wheel turn is scaled from the displayed picture to the page and clamped; the key and scroll commands are built from exactly what the server accepts and travel the one channel; the live view sends input only while the person holds the session",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T11-27-57Z/desktop-full.log"
+    },
+    {
+      "command": "cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1334 passed, 0 failed, on a default stack. worker_live (13) against real PostgreSQL, a real worker, a real Chrome and a real WebSocket against the served router: a viewer who joins before the browser exists, and one who joins after, both see the agent work (the late one is given a current picture); with no viewer nothing is streamed; the stream follows the agent's newer tab; two viewers keep it, the last leaving stops it (an animated page plus a positive control that pictures really flow, so silence means something) and returning viewers find frame numbers that never went backwards; a person's Enter, Backspace, ArrowDown and scroll reach a real page; every key off the allowlist and every out-of-bounds scroll is refused at the control plane, and orders sent straight to the worker bypassing it are refused by the driver. daemon_orders: a frame the worker cannot read is skipped, not fatal",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T11-27-57Z/full-crates.log"
+    },
+    {
+      "command": "mutation checks, all KILLED: W1-W7 (last viewer leaving does not stop the stream [killed only after the test was rewritten], a joining viewer does not start it, the host does not ask after the browser is created, the worker does not follow a newer tab, a late viewer gets no picture, frame numbers restart, the host streams with no viewer); K1-K5 (server accepts any key, server does not bound a scroll, worker accepts any key, worker does not bound a scroll, an unreadable frame ends the connection); T1-T3 (desktop forwards a chord, sends a key it was not allowed, does not clamp a scroll); every mutant compiles; the restored control passes",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-17T11-27-57Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # on a clean clone: 129 passed, validator PASS",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "gen_contracts.py --check --only catalog,openapi,sdk,ts,rust  # SendBrowserInput keeps its name; no generated artifact moved",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && tsc --noEmit && eslint src tests",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # dev stack up, all 68 files: 676 passed, 4 skipped (pre-existing). New: a key press is a named key, a grapheme as text, or nothing (chords stay with the person); a wheel turn is scaled from the displayed picture to the page and clamped; the key and scroll commands are built from exactly what the server accepts and travel the one channel; the live view sends input only while the person holds the session",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1334 passed, 0 failed, on a default stack. worker_live (13) against real PostgreSQL, a real worker, a real Chrome and a real WebSocket against the served router: a viewer who joins before the browser exists, and one who joins after, both see the agent work (the late one is given a current picture); with no viewer nothing is streamed; the stream follows the agent's newer tab; two viewers keep it, the last leaving stops it (an animated page plus a positive control that pictures really flow, so silence means something) and returning viewers find frame numbers that never went backwards; a person's Enter, Backspace, ArrowDown and scroll reach a real page; every key off the allowlist and every out-of-bounds scroll is refused at the control plane, and orders sent straight to the worker bypassing it are refused by the driver. daemon_orders: a frame the worker cannot read is skipped, not fatal",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks, all KILLED: W1-W7 (last viewer leaving does not stop the stream [killed only after the test was rewritten], a joining viewer does not start it, the host does not ask after the browser is created, the worker does not follow a newer tab, a late viewer gets no picture, frame numbers restart, the host streams with no viewer); K1-K5 (server accepts any key, server does not bound a scroll, worker accepts any key, worker does not bound a scroll, an unreadable frame ends the connection); T1-T3 (desktop forwards a chord, sends a key it was not allowed, does not clamp a scroll); every mutant compiles; the restored control passes",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-007/2026-10-17T11-27-57Z/fmt.log",
+      "sha256": "8bc7b290341d8b4d3fbdc6c48bffc1dac5c9e8a41608403e62b6f2a0c1af9957",
+      "bytes": 9
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T11-27-57Z/clippy.log",
+      "sha256": "197ba236bf8a92ba5de25159ebc324024919368c2c45642da5339c16472dc140",
+      "bytes": 168
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T11-27-57Z/architecture.log",
+      "sha256": "c5f18af1a1705eb0c937ad662140a10d5a28f4b6730bf147906468d430a0c518",
+      "bytes": 287
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T11-27-57Z/contracts.log",
+      "sha256": "0ac74103ceda3798197b3003b793bbd073821e37fd88ea963d91153ee820fb7f",
+      "bytes": 65
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T11-27-57Z/desktop-static.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T11-27-57Z/desktop-full.log",
+      "sha256": "b7197522d53c815e68d8e29d014aadfe0670b7373b3e959bdc09e20130b93fa1",
+      "bytes": 8080
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T11-27-57Z/full-crates.log",
+      "sha256": "d1b68c91473f93063476b9482c2cd90b2cb53dcaa74277b382f010dfccead43e",
+      "bytes": 134350
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T11-27-57Z/mutation-checks.log",
+      "sha256": "eb20217e4dffbc4a8f307b0ae11eba90caba7355fe8074f06e6f533603f26c1d",
+      "bytes": 4765
+    },
+    {
+      "path": "evidence/APP-007/2026-10-17T11-27-57Z/RECONCILIATION.md",
+      "sha256": "053d4b75dadf49a72f4ad1d2f0c1675eac28c1ab506e2d0c5d4be51f6a1e484a",
+      "bytes": 4866
+    }
+  ]
+}

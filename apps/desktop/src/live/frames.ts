@@ -119,3 +119,25 @@ export function frameToPage(frame: BrowserFrame, rect: DisplayedRect, clientX: n
   }
   return { x: Math.round(fractionX * frame.width * 100) / 100, y: Math.round(fractionY * frame.height * 100) / 100 };
 }
+
+/**
+ * A wheel turn over the displayed picture, as a scroll of the page: where the pointer is in page pixels, and the deltas
+ * scaled from displayed pixels to page pixels (the picture is a scaled copy). `null` when it cannot be placed, and the
+ * deltas are clamped so one fast turn never exceeds what the server accepts.
+ */
+export function wheelToPage(
+  frame: BrowserFrame,
+  rect: DisplayedRect,
+  clientX: number,
+  clientY: number,
+  deltaX: number,
+  deltaY: number,
+  limit = 10000,
+): { readonly x: number; readonly y: number; readonly deltaX: number; readonly deltaY: number } | null {
+  const point = frameToPage(frame, rect, clientX, clientY);
+  if (!point || frame.width === null || frame.height === null || !Number.isFinite(deltaX) || !Number.isFinite(deltaY)) {
+    return null;
+  }
+  const clamp = (value: number): number => Math.max(-limit, Math.min(limit, Math.round(value * 100) / 100));
+  return { ...point, deltaX: clamp((deltaX * frame.width) / rect.width), deltaY: clamp((deltaY * frame.height) / rect.height) };
+}

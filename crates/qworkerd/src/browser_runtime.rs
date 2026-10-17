@@ -44,6 +44,8 @@ pub struct BrowserRuntime {
     sessions: Mutex<HashMap<String, Arc<LiveSession>>>,
     /// The running screencasts, by session.
     pumps: Mutex<HashMap<String, ScreencastHandle>>,
+    /// One counter per session, so frame numbers never go backwards across a restart of its stream or a one-off picture.
+    counters: Mutex<HashMap<String, Arc<std::sync::atomic::AtomicU64>>>,
     frames: mpsc::Sender<ScreencastFrame>,
     frames_out: Mutex<mpsc::Receiver<ScreencastFrame>>,
 }
@@ -78,6 +80,7 @@ impl BrowserRuntime {
             allow_private_network: false,
             sessions: Mutex::new(HashMap::new()),
             pumps: Mutex::new(HashMap::new()),
+            counters: Mutex::new(HashMap::new()),
             frames,
             frames_out: Mutex::new(frames_out),
         }
@@ -151,7 +154,8 @@ impl BrowserRuntime {
     pub async fn order(&self, order: &BrowserOrder) -> Result<(), String> {
         let Some(live) = self.live(order.session_id()).await else {
             return match order {
-                BrowserOrder::Control { .. } => Ok(()),
+                // Nothing to move or show yet: the browser starts agent-held, and a stream is asked for again once it exists.
+                BrowserOrder::Control { .. } | BrowserOrder::Screencast { .. } => Ok(()),
                 _ => Err(format!(
                     "no browser is running for session {}",
                     order.session_id()
@@ -173,21 +177,40 @@ impl BrowserRuntime {
             BrowserOrder::Screencast {
                 session_id,
                 enabled,
+                refresh,
             } => {
                 let mut pumps = self.pumps.lock().await;
                 if *enabled {
-                    if pumps.contains_key(session_id) {
+                    // The tab a person is looking at is the one most recently opened.
+                    // No tab yet means nothing to show; the server asks again after the agent's next call.
+                    let Some(tab) = live.driver.tab_ids().pop() else {
+                        return Ok(());
+                    };
+                    let counter = self
+                        .counters
+                        .lock()
+                        .await
+                        .entry(session_id.clone())
+                        .or_default()
+                        .clone();
+                    if pumps
+                        .get(session_id)
+                        .is_some_and(|pump| pump.tab_id() == tab)
+                    {
+                        if *refresh {
+                            if let Ok(frame) = live.driver.snapshot_frame(&tab, &counter).await {
+                                let _ = self.frames.try_send(frame);
+                            }
+                        }
                         return Ok(());
                     }
-                    // The tab a person is looking at is the one most recently opened.
-                    let tab = live
-                        .driver
-                        .tab_ids()
-                        .pop()
-                        .ok_or_else(|| "the session has no tab to show".to_string())?;
+                    // The agent opened another tab since the stream began: follow it.
+                    if let Some(old) = pumps.remove(session_id) {
+                        old.stop().await;
+                    }
                     let handle = live
                         .driver
-                        .start_screencast(&tab, self.frames.clone())
+                        .start_screencast(&tab, self.frames.clone(), counter)
                         .await
                         .map_err(|fault| fault.to_string())?;
                     pumps.insert(session_id.clone(), handle);
@@ -199,6 +222,23 @@ impl BrowserRuntime {
             BrowserOrder::UserClick { tab_id, x, y, .. } => live
                 .driver
                 .user_click(tab_id, *x, *y)
+                .await
+                .map_err(|fault| fault.to_string()),
+            BrowserOrder::UserKey { tab_id, key, .. } => live
+                .driver
+                .user_key(tab_id, key)
+                .await
+                .map_err(|fault| fault.to_string()),
+            BrowserOrder::UserScroll {
+                tab_id,
+                x,
+                y,
+                delta_x,
+                delta_y,
+                ..
+            } => live
+                .driver
+                .user_scroll(tab_id, *x, *y, *delta_x, *delta_y)
                 .await
                 .map_err(|fault| fault.to_string()),
             BrowserOrder::UserText { tab_id, text, .. } => live

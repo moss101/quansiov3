@@ -12,8 +12,8 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { browserInput, decodeBrowserFrame } from "../src/index.js";
-import { frameToPage } from "../src/live/frames.js";
+import { browserInput, decodeBrowserFrame, inputForKey, USER_KEYS } from "../src/index.js";
+import { frameToPage, wheelToPage } from "../src/live/frames.js";
 import { DesktopBridge } from "../src/main/ipc.js";
 import { SessionFile } from "../src/main/session-file.js";
 import { UpdateHooks } from "../src/main/updates.js";
@@ -140,5 +140,108 @@ describe("the live view", () => {
     expect(source).toContain('session.controller !== "user"');
     expect(source).toContain('onClick={session.controller === "user" ? clickPicture : undefined}');
     expect(source).toContain("setNotice(refused)");
+  });
+});
+
+describe("a key press", () => {
+  const press = (key: string, held: Partial<{ ctrlKey: boolean; metaKey: boolean; altKey: boolean }> = {}) =>
+    inputForKey({ key, ctrlKey: false, metaKey: false, altKey: false, ...held });
+
+  it("is a named key, a printable character as text, or nothing", () => {
+    for (const key of USER_KEYS) {
+      expect(press(key), key).toEqual({ kind: "key", key });
+    }
+    expect(press("a")).toEqual({ kind: "text", text: "a" });
+    expect(press("É")).toEqual({ kind: "text", text: "É" });
+    expect(press(" ")).toEqual({ kind: "text", text: " " });
+    expect(press("😀")).toEqual({ kind: "text", text: "😀" });
+    expect(press("e\u0301")).toEqual({ kind: "text", text: "e\u0301" });
+  });
+
+  it("stays with the person's own keyboard when it is a chord or not a key the page can be told", () => {
+    expect(press("c", { metaKey: true })).toBeNull();
+    expect(press("a", { ctrlKey: true })).toBeNull();
+    expect(press("Enter", { altKey: true })).toBeNull();
+    for (const key of ["Shift", "Control", "Meta", "Alt", "CapsLock", "F5", "F12", "Dead", "Process", "Unidentified", ""]) {
+      expect(press(key), key).toBeNull();
+    }
+  });
+});
+
+describe("a turn of the wheel over the picture", () => {
+  const frame = frameOf();
+  if (!frame) {
+    throw new Error("a frame");
+  }
+  const rect = { left: 100, top: 40, width: 500, height: 250 };
+
+  it("scrolls the page by the same fraction, scaled from the displayed picture to the page", () => {
+    expect(wheelToPage(frame, rect, 350, 165, 10, 50)).toEqual({ x: 500, y: 250, deltaX: 20, deltaY: 100 });
+    expect(wheelToPage(frame, rect, 350, 165, -5, -25)).toEqual({ x: 500, y: 250, deltaX: -10, deltaY: -50 });
+  });
+
+  it("is not sent when it cannot be placed, and never exceeds what the server accepts", () => {
+    expect(wheelToPage(frame, rect, 50, 165, 0, 10)).toBeNull();
+    expect(wheelToPage(frame, rect, 350, 165, Number.NaN, 10)).toBeNull();
+    const unsized = frameOf({ width: undefined, height: undefined });
+    expect(unsized && wheelToPage(unsized, rect, 350, 165, 0, 10)).toBeNull();
+    expect(wheelToPage(frame, rect, 350, 165, 0, 1e9)?.deltaY).toBe(10000);
+    expect(wheelToPage(frame, rect, 350, 165, 0, -1e9)?.deltaY).toBe(-10000);
+  });
+});
+
+describe("the key and scroll commands", () => {
+  it("are built from exactly what the server accepts", () => {
+    expect(browserInput(SESSION, "T1", { kind: "key", key: "Enter" })).toEqual({
+      name: "SendBrowserInput",
+      params: { session_id: SESSION, tab_id: "T1", kind: "key", key: "Enter" },
+    });
+    expect(browserInput(SESSION, "T1", { kind: "scroll", x: 5, y: 6, deltaX: 0, deltaY: -120 })).toEqual({
+      name: "SendBrowserInput",
+      params: { session_id: SESSION, tab_id: "T1", kind: "scroll", x: 5, y: 6, delta_x: 0, delta_y: -120 },
+    });
+    expect(() => browserInput(SESSION, "T1", { kind: "key", key: "a" as never })).toThrow();
+    expect(() => browserInput(SESSION, "T1", { kind: "key", key: "Control+a" as never })).toThrow();
+    expect(() => browserInput(SESSION, "T1", { kind: "scroll", x: -1, y: 0, deltaX: 0, deltaY: 1 })).toThrow();
+    expect(() => browserInput(SESSION, "T1", { kind: "scroll", x: 0, y: 0, deltaX: 0, deltaY: 10001 })).toThrow();
+    expect(() => browserInput(SESSION, "T1", { kind: "scroll", x: 0, y: 0, deltaX: Number.NaN, deltaY: 1 })).toThrow();
+  });
+
+  it("travel the same channel with the params the command defines, and a refused one sends nothing", async () => {
+    const calls: { body: Record<string, unknown> | null }[] = [];
+    const handlers = new DesktopBridge({
+      serverOrigin: "http://127.0.0.1:8080",
+      auth: { kind: "trusted-headers", scope: { tenantId: TENANT, userId: USER }, workspaceId: WORKSPACE },
+      session: new SessionFile(mkdtempSync(join(tmpdir(), "quansio-input-"))),
+      openSocket: () => {
+        throw new Error("no socket in this test");
+      },
+      updates: new UpdateHooks("stable", null, "http://x", false),
+      consumer: "desktop:test",
+      push: () => undefined,
+      fetch: (_url, init) => {
+        calls.push({ body: typeof init?.body === "string" ? (JSON.parse(init.body) as Record<string, unknown>) : null });
+        return Promise.resolve(new Response(JSON.stringify({ command_id: "c", accepted_at: "now", replayed: false, result: { delivered: true } }), { status: 200, headers: { "content-type": "application/json" } }));
+      },
+    }).handlers();
+    expect(await handlers["live.input"]({ sessionId: SESSION, tabId: "T1", kind: "key", key: "Enter" })).toMatchObject({ ok: true });
+    expect(calls[0]?.body?.["params"]).toEqual({ session_id: SESSION, tab_id: "T1", kind: "key", key: "Enter" });
+    expect(await handlers["live.input"]({ sessionId: SESSION, tabId: "T1", kind: "scroll", x: 1, y: 2, deltaX: 3, deltaY: 4 })).toMatchObject({ ok: true });
+    expect(calls[1]?.body?.["params"]).toEqual({ session_id: SESSION, tab_id: "T1", kind: "scroll", x: 1, y: 2, delta_x: 3, delta_y: 4 });
+    const before = calls.length;
+    for (const bad of [
+      { sessionId: SESSION, tabId: "T1", kind: "key", key: "F12" },
+      { sessionId: SESSION, tabId: "T1", kind: "scroll", x: 1, y: 2, deltaX: 0, deltaY: 99999 },
+    ]) {
+      expect(await handlers["live.input"](bad), JSON.stringify(bad)).toMatchObject({ ok: false });
+    }
+    expect(calls.length).toBe(before);
+  });
+
+  it("are sent from the live view only while the person holds the session", () => {
+    const source = readFileSync(join(__dirname, "..", "src", "renderer", "Live.tsx"), "utf8");
+    expect(source).toContain('onWheel={session.controller === "user" ? wheelOverPicture : undefined}');
+    expect(source).toContain('onKeyDown={session.controller === "user" ? typeInPicture : undefined}');
+    expect(source).toContain("inputForKey(event)");
   });
 });

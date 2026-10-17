@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use crate::runtime::state_machine::LiveFramePort;
 use quansio_core::{CanonicalId, Prefix, UlidGenerator};
-use quansio_machine::control::browser::{BrowserSessionStore, GuardReport};
+use quansio_machine::control::browser::{BrowserSessionStore, GuardReport, SessionStatus};
 use quansio_machine::control::{
     Lease, LeaseRequest, MachineControl, MachineError, TargetFence, TargetStatus,
 };
@@ -111,6 +111,8 @@ pub struct WorkerHub {
     connections: Arc<std::sync::atomic::AtomicU64>,
     /// Where a worker's frames are published for whoever is watching; set once the API state exists.
     live: Arc<Mutex<Option<Arc<dyn LiveFramePort>>>>,
+    /// How many live sockets are watching each target's channel, by `(tenant, target)`.
+    viewers: Arc<Mutex<HashMap<LinkKey, usize>>>,
 }
 
 impl std::fmt::Debug for WorkerHub {
@@ -133,6 +135,7 @@ impl WorkerHub {
             links: Arc::new(Mutex::new(HashMap::new())),
             connections: Arc::new(std::sync::atomic::AtomicU64::new(0)),
             live: Arc::new(Mutex::new(None)),
+            viewers: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -381,6 +384,66 @@ impl WorkerHub {
         });
         let line = wire::encode(&frame).map_err(|_| ())?;
         link.outbound.send(line).await.map_err(|_| ())
+    }
+
+    /// A live socket has started watching a target's channel. Frames flow from the target's browsers while at least one
+    /// socket is; the returned guard ends the watch when it is dropped, however the socket ended.
+    #[must_use]
+    pub fn viewer_joined(&self, tenant_id: &str, target_id: &str) -> Viewer {
+        let key = (tenant_id.to_string(), target_id.to_string());
+        let first = {
+            let mut viewers = self.viewers.lock().unwrap_or_else(PoisonError::into_inner);
+            let count = viewers.entry(key.clone()).or_insert(0);
+            *count += 1;
+            *count == 1
+        };
+        // The first viewer starts the stream; every viewer, first or not, is sent a current picture.
+        let _ = first;
+        tokio::spawn(self.clone().stream_target(key.clone(), true));
+        Viewer {
+            hub: self.clone(),
+            key,
+        }
+    }
+
+    /// Whether anyone is watching the target's channel now.
+    #[must_use]
+    pub fn has_viewers(&self, tenant_id: &str, target_id: &str) -> bool {
+        self.viewers
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get(&(tenant_id.to_string(), target_id.to_string()))
+            .is_some_and(|count| *count > 0)
+    }
+
+    /// Ask the worker to start or stop the stream of every open browser session on a target.
+    async fn stream_target(self, key: LinkKey, enabled: bool) {
+        let sessions = async {
+            let mut tx = self.pool.begin().await.ok()?;
+            crate::control::schema::set_tenant_context(&mut tx, &key.0)
+                .await
+                .ok()?;
+            BrowserSessionStore::list_for_target(&mut tx, &key.0, &key.1)
+                .await
+                .ok()
+        }
+        .await
+        .unwrap_or_default();
+        for session in sessions
+            .into_iter()
+            .filter(|session| session.status != SessionStatus::Closed)
+        {
+            self.send_order(
+                &key.0,
+                &key.1,
+                BrowserOrder::Screencast {
+                    session_id: session.id,
+                    enabled,
+                    refresh: enabled,
+                },
+            )
+            .await;
+        }
     }
 
     /// Where this hub publishes the frames its workers send. The API state attaches its live hub here.
@@ -711,6 +774,48 @@ impl WorkerHub {
                 Err(HubError::NoAnswer(
                     "the worker did not answer in time".to_string(),
                 ))
+            }
+        }
+    }
+}
+
+/// A live socket's watch on a target's channel; dropping it ends the watch.
+pub struct Viewer {
+    hub: WorkerHub,
+    key: LinkKey,
+}
+
+impl std::fmt::Debug for Viewer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Viewer")
+            .field("target", &self.key.1)
+            .finish()
+    }
+}
+
+impl Drop for Viewer {
+    fn drop(&mut self) {
+        let last = {
+            let mut viewers = self
+                .hub
+                .viewers
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
+            match viewers.get_mut(&self.key) {
+                Some(count) if *count > 1 => {
+                    *count -= 1;
+                    false
+                }
+                Some(_) => {
+                    viewers.remove(&self.key);
+                    true
+                }
+                None => false,
+            }
+        };
+        if last {
+            if let Ok(runtime) = tokio::runtime::Handle::try_current() {
+                runtime.spawn(self.hub.clone().stream_target(self.key.clone(), false));
             }
         }
     }

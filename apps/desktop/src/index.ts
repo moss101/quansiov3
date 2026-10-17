@@ -303,6 +303,9 @@ export {
   decodeLiveSession,
   decodeTargets,
   browserInput,
+  inputForKey,
+  MAX_SCROLL,
+  USER_KEYS,
   decodeTerminal,
   decidePermission,
   GRANTABLE_PERMISSIONS,
@@ -346,7 +349,7 @@ export {
 export type { ComputerAttention, GuideView, PermissionName, PermissionRow, PermissionSnapshot, PermissionState } from "./live/permissions.js";
 export { TerminalReplay, decodeTerminalBytes, replayPosition } from "./live/terminal.js";
 export type { Accepted, ReplayPosition, TerminalBytesFrame } from "./live/terminal.js";
-export { decodeBrowserFrame, latestFrame } from "./live/frames.js";
+export { decodeBrowserFrame, frameToPage, latestFrame, wheelToPage } from "./live/frames.js";
 export type { AgentCursor, BrowserFrame, CursorAction } from "./live/frames.js";
 export {
   activeParticipants,

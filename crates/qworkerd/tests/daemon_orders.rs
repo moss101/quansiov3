@@ -184,6 +184,30 @@ async fn a_worker_takes_browser_orders_only_while_it_holds_a_lease_and_rebuilds_
         "a malformed receipt was applied"
     );
 
+    // A frame the worker cannot read does not end the connection: it is skipped, and the next order is still applied.
+    for garbage in [
+        "not json at all\n",
+        "{\"type\":\"browser\",\"order\":\"user_telepathy\"}\n",
+        "{\"type\":\"lease\"}\n",
+    ] {
+        server_write.write_all(garbage.as_bytes()).await.unwrap();
+    }
+    let applied_before = recorded.lock().unwrap().orders.len();
+    server_write
+        .write_all(send(control("agent")).await.as_bytes())
+        .await
+        .unwrap();
+    let reported: FromWorker = wire::decode(&lines.next_line().await.unwrap().unwrap()).unwrap();
+    assert!(
+        matches!(reported, FromWorker::BrowserGuard { .. }),
+        "the worker stopped answering after a bad frame: {reported:?}"
+    );
+    assert_eq!(recorded.lock().unwrap().orders.len(), applied_before + 1);
+    assert!(
+        !worker.is_finished(),
+        "the session ended over a frame it could not read"
+    );
+
     drop(server_write);
     worker.abort();
 }
