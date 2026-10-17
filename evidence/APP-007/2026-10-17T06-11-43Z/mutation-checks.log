@@ -1,0 +1,23 @@
+L1 hub stores a guard report for a session on another target: COMPILES
+L1 hub stores a guard report for a session on another target: KILLED (a_worker_cannot_write_a_guard_report_for_a_session_on_another_target;result: FAILED. 8 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.01s;)
+L2 hub publishes a frame without checking its session: COMPILES
+L2 hub publishes a frame without checking its session: KILLED (a_forged_frame_for_another_targets_session_is_never_published;result: FAILED. 8 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.85s;)
+L3 takeover never starts the stream: COMPILES
+L3 takeover never starts the stream: KILLED (frames_reach_the_live_hub_while_a_person_holds_the_session_and_stop_at_the_handback;result: FAILED. 8 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.14s;)
+L5 input is accepted while the agent holds the session: COMPILES
+L5 input is accepted while the agent holds the session: KILLED (a_person_s_input_is_delivered_only_while_they_hold_the_session_and_every_malformed_one_is_refused;result: FAILED. 8 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.88s;)
+L6 a worker without a lease takes orders: COMPILES
+L6 a worker without a lease takes orders: KILLED (a_worker_takes_browser_orders_only_while_it_holds_a_lease_and_rebuilds_a_receipt_only_from_a_valid_wire_form;result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s;)
+L7 the server does not restate who holds the session: COMPILES
+L7 the server does not restate who holds the session: KILLED (a_handback_the_worker_missed_is_repaired_before_the_next_agent_call;result: FAILED. 8 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.80s;)
+L8 an unknown decision kind is accepted from the wire: COMPILES
+L8 an unknown decision kind is accepted from the wire: KILLED (a_worker_takes_browser_orders_only_while_it_holds_a_lease_and_rebuilds_a_receipt_only_from_a_valid_wire_form;result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s;)
+L9 a second place rebuilds a receipt from the wire: COMPILES
+L9 a second place rebuilds a receipt from the wire: KILLED (a_receipt_has_no_constructor_outside_the_control_plane_and_the_test_feature;result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.78s;)
+CONTROL (restored): all pass
+(no diff above = restored)
+--- L4 rerun after the test was rewritten (the first test could not tell a stopped stream from a running one)
+L4 handback never stops the stream: COMPILES
+L4 handback never stops the stream: KILLED (frames_reach_the_live_hub_while_a_person_holds_the_session_and_a_handback_stops_the_stream;result: FAILED. 8 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.43s;)
+CONTROL (restored): all pass
+(no diff above = restored)
