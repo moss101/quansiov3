@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 
 import { t } from "../i18n/strings.js";
-import { decodeBrowserFrame, frameToPage, latestFrame, type BrowserFrame } from "../live/frames.js";
+import { decodeBrowserFrame, frameToPage, latestFrame, wheelToPage, type BrowserFrame } from "../live/frames.js";
 import {
   agentInputAllowed,
   applyEvent,
@@ -20,8 +20,10 @@ import {
   decodeLiveSession,
   decodeTargets,
   handbackAllowed,
+  inputForKey,
   originOf,
   takeoverAllowed,
+  type BrowserInput,
   type LiveSession,
   type TargetView,
 } from "../live/session.js";
@@ -215,7 +217,7 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
   // A person's input to the session they hold: a click on the picture and printable keys. The server refuses it unless they
   // hold the session, and says so when it could not be delivered; the page shows that and does not pretend it landed.
   const sendInput = useCallback(
-    async (input: { kind: "click"; x: number; y: number } | { kind: "text"; text: string }) => {
+    async (input: BrowserInput) => {
       if (!session || session.controller !== "user" || !frame?.tabId) {
         return;
       }
@@ -241,14 +243,41 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
 
   const typeInPicture = useCallback(
     (event: { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean; preventDefault: () => void }) => {
-      // Printable characters only: the page is told text, not key codes, so Enter, Backspace and shortcuts stay with the
-      // person's own keyboard and are not forwarded.
-      if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      // Named keys and printable characters are the person's to send; a chord stays with their own keyboard.
+      const input = inputForKey(event);
+      if (input) {
         event.preventDefault();
-        void sendInput({ kind: "text", text: event.key });
+        void sendInput(input);
       }
     },
     [sendInput],
+  );
+
+  // A turn of the wheel over the picture scrolls the page. Turns in a short burst are added up and sent as one scroll, so a
+  // fast flick is a single command and not dozens.
+  const pendingScroll = useRef<{ x: number; y: number; deltaX: number; deltaY: number } | null>(null);
+  const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wheelOverPicture = useCallback(
+    (event: { clientX: number; clientY: number; deltaX: number; deltaY: number; currentTarget: HTMLElement }) => {
+      if (!frame) {
+        return;
+      }
+      const turn = wheelToPage(frame, event.currentTarget.getBoundingClientRect(), event.clientX, event.clientY, event.deltaX, event.deltaY);
+      if (!turn) {
+        return;
+      }
+      const before = pendingScroll.current;
+      pendingScroll.current = before ? { ...turn, deltaX: before.deltaX + turn.deltaX, deltaY: before.deltaY + turn.deltaY } : turn;
+      scrollTimer.current ??= setTimeout(() => {
+        const send = pendingScroll.current;
+        pendingScroll.current = null;
+        scrollTimer.current = null;
+        if (send) {
+          void sendInput({ kind: "scroll", x: send.x, y: send.y, deltaX: Math.max(-10000, Math.min(10000, send.deltaX)), deltaY: Math.max(-10000, Math.min(10000, send.deltaY)) });
+        }
+      }, 80);
+    },
+    [frame, sendInput],
   );
 
   // A certificate error and a media permission are the person's to decide (ADP-001): the server refuses anyone else,
@@ -353,6 +382,7 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
                 tabIndex={session.controller === "user" ? 0 : undefined}
                 onClick={session.controller === "user" ? clickPicture : undefined}
                 onKeyDown={session.controller === "user" ? typeInPicture : undefined}
+                onWheel={session.controller === "user" ? wheelOverPicture : undefined}
               />
             ) : (
               <p className="live-no-frame">{session.screencastEnabled ? t("liveWaitingFrames") : t("liveNoScreencast")}</p>

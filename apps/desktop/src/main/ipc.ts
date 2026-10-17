@@ -17,7 +17,7 @@ import { ANSWER_COMMAND, CANCEL_COMMAND, MAX_UPLOAD_BYTES, POST_COMMAND, UPLOAD_
 import { MAX_IMAGE_PREVIEW_BYTES, MAX_TEXT_PREVIEW_BYTES, isActiveContent, isExecutable, mediaKind, openAllowed, previewPlan } from "../artifacts/preview.js";
 import { searchQueryString, searchRequest } from "../artifacts/search.js";
 import { OBJECTIVE_COMMAND, PROPOSE_COMMAND } from "../work/monitor.js";
-import { browserInput as inputCommand, computerCommand, decidePermission as permissionCommand, handback as handbackCommand, requestTakeover as takeoverCommand, resolveCertificate as certificateCommand } from "../live/session.js";
+import { browserInput as inputCommand, type UserKey, computerCommand, decidePermission as permissionCommand, handback as handbackCommand, requestTakeover as takeoverCommand, resolveCertificate as certificateCommand } from "../live/session.js";
 import { desktopNotice, type DesktopNotice } from "../automation/notifications.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { parseOpenSettings, parsePermissionRequest, readSnapshot, settingsUrl, notApplicable, type PermissionSnapshot, type PermissionSource } from "./permissions.js";
@@ -527,9 +527,19 @@ export class DesktopBridge {
         ? inputCommand(sessionId, tabId, { kind, x: Number(record["x"]), y: Number(record["y"]) })
         : kind === "text"
           ? inputCommand(sessionId, tabId, { kind, text: asText(record["text"], "live.input text") })
-          : null;
+          : kind === "key"
+            ? inputCommand(sessionId, tabId, { kind, key: asText(record["key"], "live.input key") as UserKey })
+            : kind === "scroll"
+              ? inputCommand(sessionId, tabId, {
+                  kind,
+                  x: Number(record["x"]),
+                  y: Number(record["y"]),
+                  deltaX: Number(record["deltaX"]),
+                  deltaY: Number(record["deltaY"]),
+                })
+              : null;
     if (!command) {
-      throw new Error("live.input is a click or typed text");
+      throw new Error("live.input is a click, typed text, a named key or a scroll");
     }
     return (await this.server.invoke(command.name, newCommandId(), command.params)).result;
   }

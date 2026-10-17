@@ -39,9 +39,6 @@ pub enum SessionError {
     /// A frame could not be written.
     #[error("a frame could not be encoded: {0}")]
     Encode(#[from] serde_json::Error),
-    /// The server sent something that is not a frame.
-    #[error("the server sent a malformed frame: {0}")]
-    Malformed(String),
 }
 
 /// The canonical instant the gateway compares against (`YYYY-MM-DDTHH:MM:SSZ`).
@@ -159,7 +156,17 @@ where
                 continue;
             }
         };
-        match wire::decode::<ToWorker>(&line).map_err(SessionError::Malformed)? {
+        // A frame this worker cannot read — damaged, or newer than the worker — is skipped and reported, not fatal: ending the
+        // connection over one frame would disconnect every worker the day the server learns a new order. A dispatch that is
+        // skipped is never answered, which the server settles as unknown and does not retry.
+        let frame = match wire::decode::<ToWorker>(&line) {
+            Ok(frame) => frame,
+            Err(why) => {
+                eprintln!("qworkerd: skipped a frame it cannot read: {why}");
+                continue;
+            }
+        };
+        match frame {
             ToWorker::Lease(held) => lease = held.into(),
             ToWorker::Dispatch(wire_envelope) => {
                 let dispatch_token = wire_envelope.dispatch_token.clone();

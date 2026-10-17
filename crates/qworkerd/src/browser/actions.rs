@@ -1260,6 +1260,83 @@ impl BrowserDriver {
         Ok(())
     }
 
+    /// A named key the user pressed while they hold the session. Only the keys a person may send
+    /// ([`quansio_machine::gateway::wire::USER_KEYS`]): printable characters are text, and no chord is accepted.
+    ///
+    /// # Errors
+    /// Returns [`BrowserFault`] for any other key, or unless a user holds the session.
+    pub async fn user_key(&self, tab_id: &str, key_name: &str) -> Result<(), BrowserFault> {
+        if !quansio_machine::gateway::wire::USER_KEYS.contains(&key_name) {
+            return Err(BrowserFault::new(
+                FaultCode::InvalidRequest,
+                format!("{key_name:?} is not a key a person can send"),
+            ));
+        }
+        let spec = KeySpec::parse(key_name)?;
+        let _turn = self.inner.queue.lock().await;
+        self.require_user_control()?;
+        let tab = self.tab(Some(tab_id))?;
+        tab.state().last_user_gesture = Some(std::time::Instant::now());
+        let mut down = json!({
+            "type": if spec.text.is_some() { "keyDown" } else { "rawKeyDown" },
+            "key": spec.key, "code": spec.code, "windowsVirtualKeyCode": spec.virtual_key, "modifiers": 0,
+        });
+        if let Some(text) = &spec.text {
+            down["text"] = json!(text);
+        }
+        let up = json!({
+            "type": "keyUp",
+            "key": spec.key, "code": spec.code, "windowsVirtualKeyCode": spec.virtual_key, "modifiers": 0,
+        });
+        for event in [down, up] {
+            tab.conn
+                .call_within(
+                    "Input.dispatchKeyEvent",
+                    event,
+                    self.inner.config.action_timeout,
+                )
+                .await?;
+        }
+        tab.state().invalidate_observations();
+        Ok(())
+    }
+
+    /// A scroll the user made while they hold the session.
+    ///
+    /// # Errors
+    /// Returns [`BrowserFault`] for a point or delta that is not finite or is out of bounds, or unless a user holds the session.
+    pub async fn user_scroll(
+        &self,
+        tab_id: &str,
+        x: f64,
+        y: f64,
+        delta_x: f64,
+        delta_y: f64,
+    ) -> Result<(), BrowserFault> {
+        let limit = quansio_machine::gateway::wire::MAX_USER_SCROLL;
+        let point = |value: f64| value.is_finite() && (0.0..=20_000.0).contains(&value);
+        let delta = |value: f64| value.is_finite() && value.abs() <= limit;
+        if !point(x) || !point(y) || !delta(delta_x) || !delta(delta_y) {
+            return Err(BrowserFault::new(
+                FaultCode::InvalidRequest,
+                "a scroll is at a point from 0 to 20000 and by at most 10000 pixels",
+            ));
+        }
+        let _turn = self.inner.queue.lock().await;
+        self.require_user_control()?;
+        let tab = self.tab(Some(tab_id))?;
+        tab.state().last_user_gesture = Some(std::time::Instant::now());
+        tab.conn
+            .call_within(
+                "Input.dispatchMouseEvent",
+                json!({ "type": "mouseWheel", "x": x, "y": y, "deltaX": delta_x, "deltaY": delta_y }),
+                self.inner.config.action_timeout,
+            )
+            .await?;
+        tab.state().invalidate_observations();
+        Ok(())
+    }
+
     fn require_user_control(&self) -> Result<(), BrowserFault> {
         let session = self.session();
         if matches!(session.control_holder, super::ControlHolder::User) {

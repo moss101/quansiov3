@@ -224,6 +224,23 @@ impl BrowserRuntime {
                 .user_click(tab_id, *x, *y)
                 .await
                 .map_err(|fault| fault.to_string()),
+            BrowserOrder::UserKey { tab_id, key, .. } => live
+                .driver
+                .user_key(tab_id, key)
+                .await
+                .map_err(|fault| fault.to_string()),
+            BrowserOrder::UserScroll {
+                tab_id,
+                x,
+                y,
+                delta_x,
+                delta_y,
+                ..
+            } => live
+                .driver
+                .user_scroll(tab_id, *x, *y, *delta_x, *delta_y)
+                .await
+                .map_err(|fault| fault.to_string()),
             BrowserOrder::UserText { tab_id, text, .. } => live
                 .driver
                 .user_text(tab_id, text)

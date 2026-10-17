@@ -459,13 +459,41 @@ export function decidePermission(
   return { name: "DecideBrowserPermission", params: { session_id: sessionId, tab_id: tabId, origin, permission, decision } };
 }
 
-/** A person's input to a browser session they hold: a click at a page point, or typed text. */
+/** The named keys a person can send to a browser they hold. Printable characters travel as text; no chord does. */
+export const USER_KEYS = ["Enter", "Tab", "Escape", "Backspace", "Delete", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"] as const;
+export type UserKey = (typeof USER_KEYS)[number];
+
+/** The largest scroll one input carries, in CSS pixels along either axis. */
+export const MAX_SCROLL = 10000;
+
+/** A person's input to a browser session they hold: a click at a page point, typed text, a named key, or a scroll. */
 export type BrowserInput =
   | { readonly kind: "click"; readonly x: number; readonly y: number }
-  | { readonly kind: "text"; readonly text: string };
+  | { readonly kind: "text"; readonly text: string }
+  | { readonly kind: "key"; readonly key: UserKey }
+  | { readonly kind: "scroll"; readonly x: number; readonly y: number; readonly deltaX: number; readonly deltaY: number };
 
 /** The most text one input carries; the server refuses more. */
 export const MAX_INPUT_TEXT_BYTES = 4096;
+
+/**
+ * What a key press means to the page: a named key, a printable character as text, or nothing.
+ *
+ * A chord (Control, Meta or Alt held) stays with the person's own keyboard and is not forwarded, and neither are keys that
+ * only compose another (`Dead`, `Process`) or that the browser could not name (`Unidentified`).
+ */
+export function inputForKey(event: { readonly key: string; readonly ctrlKey: boolean; readonly metaKey: boolean; readonly altKey: boolean }): BrowserInput | null {
+  if (event.ctrlKey || event.metaKey || event.altKey) {
+    return null;
+  }
+  if ((USER_KEYS as readonly string[]).includes(event.key)) {
+    return { kind: "key", key: event.key as UserKey };
+  }
+  // One typed character (a grapheme: an emoji or a letter with a combining mark is still one), never a named key such as
+  // "Shift" or "F5", which are several.
+  const graphemes = Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(event.key));
+  return graphemes.length === 1 ? { kind: "text", text: event.key } : null;
+}
 
 /**
  * `SendBrowserInput {session_id, tab_id, kind, …}`: a person's act, valid only while they hold the session. The builder
@@ -479,12 +507,28 @@ export function browserInput(
   if (!sessionId.startsWith("bsn_") || tabId === "") {
     throw new Error("an input names a bsn_ session and a tab");
   }
+  const point = (value: number): boolean => Number.isFinite(value) && value >= 0 && value <= 20000;
+  const delta = (value: number): boolean => Number.isFinite(value) && Math.abs(value) <= MAX_SCROLL;
   if (input.kind === "click") {
-    const inRange = (value: number): boolean => Number.isFinite(value) && value >= 0 && value <= 20000;
-    if (!inRange(input.x) || !inRange(input.y)) {
+    if (!point(input.x) || !point(input.y)) {
       throw new Error("a click is at a point from 0 to 20000");
     }
     return { name: "SendBrowserInput", params: { session_id: sessionId, tab_id: tabId, kind: "click", x: input.x, y: input.y } };
+  }
+  if (input.kind === "key") {
+    if (!(USER_KEYS as readonly string[]).includes(input.key)) {
+      throw new Error("that is not a key a person can send");
+    }
+    return { name: "SendBrowserInput", params: { session_id: sessionId, tab_id: tabId, kind: "key", key: input.key } };
+  }
+  if (input.kind === "scroll") {
+    if (!point(input.x) || !point(input.y) || !delta(input.deltaX) || !delta(input.deltaY)) {
+      throw new Error(`a scroll is at a point from 0 to 20000 and by at most ${String(MAX_SCROLL)} pixels`);
+    }
+    return {
+      name: "SendBrowserInput",
+      params: { session_id: sessionId, tab_id: tabId, kind: "scroll", x: input.x, y: input.y, delta_x: input.deltaX, delta_y: input.deltaY },
+    };
   }
   if (input.text === "" || new TextEncoder().encode(input.text).length > MAX_INPUT_TEXT_BYTES) {
     throw new Error(`typed text is 1 to ${String(MAX_INPUT_TEXT_BYTES)} bytes`);

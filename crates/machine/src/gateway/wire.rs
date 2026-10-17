@@ -138,6 +138,27 @@ impl EnvelopeWire {
     }
 }
 
+/// The named keys a person can send to a browser they hold. Printable characters travel as text; no chord or modifier
+/// does. The control plane refuses anything else before it reaches a worker, and the worker refuses it again.
+pub const USER_KEYS: [&str; 13] = [
+    "Enter",
+    "Tab",
+    "Escape",
+    "Backspace",
+    "Delete",
+    "ArrowUp",
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+    "Home",
+    "End",
+    "PageUp",
+    "PageDown",
+];
+
+/// The largest scroll a single input may carry, in CSS pixels along either axis.
+pub const MAX_USER_SCROLL: f64 = 10_000.0;
+
 /// An order about a browser session, from the control plane to the worker that runs it (EXEC-009 composition).
 ///
 /// These carry what only the server knows — who holds the session, what a person decided, what a person did while
@@ -187,6 +208,30 @@ pub enum BrowserOrder {
         /// Viewport y.
         y: f64,
     },
+    /// A named key the user pressed while holding the session (one of [`USER_KEYS`]).
+    UserKey {
+        /// The session.
+        session_id: String,
+        /// The tab.
+        tab_id: String,
+        /// The key.
+        key: String,
+    },
+    /// A scroll the user made while holding the session: the wheel turned by `delta_x`, `delta_y` at a viewport point.
+    UserScroll {
+        /// The session.
+        session_id: String,
+        /// The tab.
+        tab_id: String,
+        /// Viewport x of the pointer.
+        x: f64,
+        /// Viewport y of the pointer.
+        y: f64,
+        /// Horizontal wheel delta in CSS pixels.
+        delta_x: f64,
+        /// Vertical wheel delta in CSS pixels.
+        delta_y: f64,
+    },
     /// Text the user typed while holding the session.
     UserText {
         /// The session.
@@ -206,6 +251,8 @@ impl BrowserOrder {
             Self::Control { session_id, .. }
             | Self::Screencast { session_id, .. }
             | Self::UserClick { session_id, .. }
+            | Self::UserKey { session_id, .. }
+            | Self::UserScroll { session_id, .. }
             | Self::UserText { session_id, .. } => session_id,
             Self::Certificate { receipt } | Self::Permission { receipt } => &receipt.session_id,
         }

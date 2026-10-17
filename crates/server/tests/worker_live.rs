@@ -45,6 +45,7 @@ const BIG: &str = "<html><head><title>Big</title></head><body style=\"margin:0\"
 <button style=\"position:fixed;left:0;top:0;width:100vw;height:100vh\" onclick=\"var x=new XMLHttpRequest();x.open('GET','/hit',false);x.send();\">Count</button>\
 </body></html>";
 const LIVE: &str = "<html><body><div id=\"c\">0</div><script>var n=0;setInterval(function(){document.getElementById('c').textContent=String(++n)},100)</script></body></html>";
+const KEYS: &str = "<html><body style=\"margin:0;height:6000px\"><input id=\"i\" autofocus style=\"width:200px\" onkeydown=\"var x=new XMLHttpRequest();x.open('GET','/key-'+event.key,false);x.send();\"><script>window.addEventListener('scroll',function(){var x=new XMLHttpRequest();x.open('GET','/scrolled',false);x.send();});document.getElementById('i').focus();</script></body></html>";
 const PAGE: &str = "<html><head><title>Shop</title></head><body>\
 <button onclick=\"var x=new XMLHttpRequest();x.open('GET','/hit',false);x.send();\">Count</button>\
 <button onclick=\"var x=new XMLHttpRequest();x.open('GET','/buy',false);x.send();\">Buy now</button>\
@@ -88,6 +89,7 @@ impl Site {
                         "/" => ("text/html", PAGE),
                         "/big" => ("text/html", BIG),
                         "/live" => ("text/html", LIVE),
+                        "/keys" => ("text/html", KEYS),
                         _ => ("text/plain", "ok"),
                     };
                     let reply = format!(
@@ -102,6 +104,9 @@ impl Site {
     }
     fn url(&self) -> String {
         format!("http://127.0.0.1:{}/", self.port)
+    }
+    fn keys(&self) -> String {
+        format!("http://127.0.0.1:{}/keys", self.port)
     }
     fn animated(&self) -> String {
         format!("http://127.0.0.1:{}/live", self.port)
@@ -1158,4 +1163,144 @@ async fn the_stream_follows_a_newer_tab_and_stops_when_the_last_viewer_leaves() 
 /// Whether a picture arrives within a short wait.
 async fn followed_viewer_frame(viewer: &mut Viewer) -> bool {
     viewer.frame(400).await.is_some()
+}
+
+#[tokio::test]
+async fn a_person_s_special_keys_and_scroll_reach_the_page_and_anything_else_is_refused() {
+    let Some(world) = world("wl_keys", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    let navigated = ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.keys()}),
+    )
+    .await;
+    let tab = navigated["tab_id"].as_str().unwrap().to_string();
+    let session = sessions(&world.pool, &world.target).await.remove(0).0;
+    let (status, taken) = command(
+        &world,
+        "RequestTakeover",
+        51,
+        json!({"session_id": session}),
+    )
+    .await;
+    assert_eq!(status, 200, "{taken}");
+
+    // A named key reaches the focused field: the page reports it by name.
+    for (n, key) in [(52, "Enter"), (53, "Backspace"), (54, "ArrowDown")] {
+        let (status, body) = command(
+            &world,
+            "SendBrowserInput",
+            n,
+            json!({"session_id": session, "tab_id": tab, "kind": "key", "key": key}),
+        )
+        .await;
+        assert_eq!(status, 200, "{key}: {body}");
+        eventually(&format!("the page saw {key}"), || async {
+            site.hits(&format!("/key-{key}")) == 1
+        })
+        .await;
+    }
+
+    // A scroll moves the page: the page reports its own scroll event.
+    let (status, body) = command(
+        &world,
+        "SendBrowserInput",
+        55,
+        json!({"session_id": session, "tab_id": tab, "kind": "scroll", "x": 100, "y": 100, "delta_x": 0, "delta_y": 400}),
+    )
+    .await;
+    assert_eq!(status, 200, "{body}");
+    eventually("the page scrolled", || async {
+        site.hits("/scrolled") >= 1
+    })
+    .await;
+
+    // What a person may not send is refused before any worker: printable characters are text, chords are not keys, and a
+    // scroll is bounded.
+    let before = site.hits("/key-a");
+    for (n, bad) in [
+        (56, json!({"kind": "key", "key": "a"})),
+        (57, json!({"kind": "key", "key": "Control+a"})),
+        (58, json!({"kind": "key", "key": "F12"})),
+        (59, json!({"kind": "key"})),
+        (
+            60,
+            json!({"kind": "scroll", "x": 1, "y": 1, "delta_x": 0, "delta_y": 10001}),
+        ),
+        (
+            61,
+            json!({"kind": "scroll", "x": -1, "y": 1, "delta_x": 0, "delta_y": 1}),
+        ),
+        (62, json!({"kind": "scroll", "x": 1, "y": 1, "delta_y": 1})),
+    ] {
+        let mut params = bad.clone();
+        params["session_id"] = json!(session);
+        params["tab_id"] = json!(tab);
+        let (status, body) = command(&world, "SendBrowserInput", n, params).await;
+        assert_eq!(status, 400, "{bad}: {body}");
+    }
+    assert_eq!(
+        site.hits("/key-a"),
+        before,
+        "a refused key reached the page"
+    );
+
+    // The worker does not take the server's word for it: orders sent straight to it, bypassing the server's checks, are
+    // refused by the driver itself and the page sees nothing.
+    use quansio_machine::gateway::wire::BrowserOrder;
+    let scrolled = site.hits("/scrolled");
+    for key in ["F12", "a", "Control+a", "Shift"] {
+        world
+            .hub
+            .send_order(
+                TENANT,
+                &world.target,
+                BrowserOrder::UserKey {
+                    session_id: session.clone(),
+                    tab_id: tab.clone(),
+                    key: key.to_string(),
+                },
+            )
+            .await;
+    }
+    for (x, delta_x, delta_y) in [
+        (10.0, 0.0, 50_000.0),
+        (10.0, 50_000.0, 0.0),
+        (10.0, 0.0, -50_000.0),
+        (-5.0, 0.0, 10.0),
+    ] {
+        world
+            .hub
+            .send_order(
+                TENANT,
+                &world.target,
+                BrowserOrder::UserScroll {
+                    session_id: session.clone(),
+                    tab_id: tab.clone(),
+                    x,
+                    y: 10.0,
+                    delta_x,
+                    delta_y,
+                },
+            )
+            .await;
+    }
+    tokio::time::sleep(Duration::from_millis(800)).await;
+    for key in ["F12", "a", "Shift"] {
+        assert_eq!(
+            site.hits(&format!("/key-{key}")),
+            0,
+            "the worker accepted {key}"
+        );
+    }
+    assert_eq!(
+        site.hits("/scrolled"),
+        scrolled,
+        "the worker accepted an out-of-bounds scroll"
+    );
+    drop_pool(&world.pool, &world.name).await;
 }

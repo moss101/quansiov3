@@ -722,7 +722,39 @@ pub async fn send_browser_input(
                 text: typed.to_string(),
             }
         }
-        _ => return Err(invalid("kind is click or text")),
+        Some("key") => {
+            let named = text("key").ok_or_else(|| invalid("key is required"))?;
+            if !quansio_machine::gateway::wire::USER_KEYS.contains(&named) {
+                return Err(invalid(&format!(
+                    "key is one of {}; printable characters are sent as text",
+                    quansio_machine::gateway::wire::USER_KEYS.join(", ")
+                )));
+            }
+            BrowserOrder::UserKey {
+                session_id: session_id.clone(),
+                tab_id,
+                key: named.to_string(),
+            }
+        }
+        Some("scroll") => {
+            let limit = quansio_machine::gateway::wire::MAX_USER_SCROLL;
+            let number = |key: &str, low: f64, high: f64| {
+                params
+                    .get(key)
+                    .and_then(Value::as_f64)
+                    .filter(|value| value.is_finite() && (low..=high).contains(value))
+                    .ok_or_else(|| invalid(&format!("{key} is a number from {low} to {high}")))
+            };
+            BrowserOrder::UserScroll {
+                session_id: session_id.clone(),
+                tab_id,
+                x: number("x", 0.0, 20_000.0)?,
+                y: number("y", 0.0, 20_000.0)?,
+                delta_x: number("delta_x", -limit, limit)?,
+                delta_y: number("delta_y", -limit, limit)?,
+            }
+        }
+        _ => return Err(invalid("kind is click, text, key or scroll")),
     };
     let workspace_id = workspace_of(
         state,
