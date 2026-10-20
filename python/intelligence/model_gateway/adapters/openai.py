@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterator
+from dataclasses import replace
 from typing import Any
 
 from quansio.v1.intelligence import intelligence_pb2
@@ -42,10 +43,11 @@ from intelligence.model_gateway.adapters.base import (
     assert_no_disabled_features,
     assert_operator_channel,
     decode_json,
+    degrade_optional_images,
     iter_sse,
 )
 from intelligence.model_gateway.catalog import ProviderKind
-from intelligence.model_gateway.content import to_openai_blocks
+from intelligence.model_gateway.content import RenderedContent, to_openai_blocks
 from intelligence.model_gateway.credentials import SecretValue
 from intelligence.model_gateway.errors import GatewayError, GatewayErrorCode
 from intelligence.model_gateway.events import EventFactory, UsageTotals
@@ -92,7 +94,9 @@ class OpenAIAdapter:
                 GatewayErrorCode.VALIDATION_SCHEMA, "max_output_tokens must be set for a model call"
             )
         model = context.route.model
-        assert_modality_capabilities(context.messages, model.capabilities)
+        shown = degrade_optional_images(context.messages, model.capabilities)
+        assert_modality_capabilities(shown, model.capabilities)
+        context = replace(context, messages=shown)
         body: dict[str, object] = {
             "model": model.model_id,
             "stream": True,
@@ -153,7 +157,13 @@ class OpenAIAdapter:
 
     def _render_messages(self, context: ProviderCallContext) -> list[dict[str, object]]:
         messages: list[dict[str, object]] = []
+        # A chat-completions tool message carries text only. A picture a tool returned follows the run of tool
+        # messages as a user message that says whose it is, so the model sees it and nothing is dropped.
+        pictures: list[dict[str, object]] = []
         for message in context.messages:
+            if pictures and message.role != TOOL_ROLE:
+                messages.append({"role": "user", "content": pictures})
+                pictures = []
             if message.role == SYSTEM_ROLE:
                 messages.append({"role": "system", "content": message.content.text()})
             elif message.role == OPERATOR_ROLE:
@@ -166,6 +176,16 @@ class OpenAIAdapter:
                         "content": message.content.text(),
                     }
                 )
+                images = message.content.image_parts()
+                if images:
+                    pictures.append(
+                        {
+                            "type": "text",
+                            "text": f"The picture(s) from tool call {message.content.tool_call_id} "
+                            f"({message.content.tool_name or 'a tool'}):",
+                        }
+                    )
+                    pictures.extend(to_openai_blocks(RenderedContent(parts=images), allow_documents=False))
             elif message.role == ASSISTANT_ROLE:
                 assistant: dict[str, object] = {
                     "role": "assistant",
@@ -187,6 +207,8 @@ class OpenAIAdapter:
                 messages.append(
                     {"role": "user", "content": to_openai_blocks(message.content, allow_documents=False)}
                 )
+        if pictures:
+            messages.append({"role": "user", "content": pictures})
         return messages
 
     def decode(self, factory: EventFactory, lines: Iterator[bytes]) -> Iterator[StreamItem]:

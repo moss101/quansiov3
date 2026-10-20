@@ -138,8 +138,9 @@ impl EnvelopeWire {
     }
 }
 
-/// The named keys a person can send to a browser they hold. Printable characters travel as text; no chord or modifier
-/// does. The control plane refuses anything else before it reaches a worker, and the worker refuses it again.
+/// The named keys a person can send to a browser they hold. Printable characters travel as text. A key may be held with
+/// modifiers ([`user_key_allowed`]); the control plane refuses anything else before it reaches a worker, and the worker
+/// refuses it again.
 pub const USER_KEYS: [&str; 13] = [
     "Enter",
     "Tab",
@@ -158,6 +159,66 @@ pub const USER_KEYS: [&str; 13] = [
 
 /// The largest scroll a single input may carry, in CSS pixels along either axis.
 pub const MAX_USER_SCROLL: f64 = 10_000.0;
+
+/// The modifier keys a person can hold with a key, a click or a drag, in the order a chord names them.
+pub const USER_MODIFIERS: [&str; 4] = ["Alt", "Control", "Meta", "Shift"];
+
+/// The mouse buttons a person can click with.
+pub const USER_BUTTONS: [&str; 3] = ["left", "middle", "right"];
+
+/// The furthest a viewport point may be, in CSS pixels, on either axis.
+pub const MAX_USER_POINT: f64 = 20_000.0;
+
+/// Whether `spec` is a key a person may send: one of [`USER_KEYS`], optionally held with modifiers (`Shift+Tab`), or a
+/// chord of one ASCII letter or digit with at least one of `Alt`, `Control` or `Meta` (`Control+a`, `Meta+Shift+z`).
+///
+/// Modifiers are named once each, in [`USER_MODIFIERS`] order, before the key. A printable character without such a
+/// modifier is text, not a key, and a function key (`F12`) or any other name is refused.
+#[must_use]
+pub fn user_key_allowed(spec: &str) -> bool {
+    let mut parts: Vec<&str> = spec.split('+').collect();
+    let Some(key) = parts.pop() else {
+        return false;
+    };
+    let mut last = None;
+    for modifier in &parts {
+        let Some(position) = USER_MODIFIERS.iter().position(|known| known == modifier) else {
+            return false;
+        };
+        if last.is_some_and(|previous| position <= previous) {
+            return false;
+        }
+        last = Some(position);
+    }
+    if USER_KEYS.contains(&key) {
+        return true;
+    }
+    let mut characters = key.chars();
+    let single = matches!((characters.next(), characters.next()), (Some(c), None) if c.is_ascii_alphanumeric());
+    single
+        && parts
+            .iter()
+            .any(|modifier| matches!(*modifier, "Alt" | "Control" | "Meta"))
+}
+
+/// Whether every name in `modifiers` is one of [`USER_MODIFIERS`], each at most once.
+#[must_use]
+pub fn user_modifiers_allowed(modifiers: &[String]) -> bool {
+    modifiers.len() <= USER_MODIFIERS.len()
+        && modifiers
+            .iter()
+            .all(|modifier| USER_MODIFIERS.contains(&modifier.as_str()))
+        && modifiers
+            .iter()
+            .enumerate()
+            .all(|(index, modifier)| !modifiers[..index].contains(modifier))
+}
+
+/// Whether `value` is a viewport coordinate a person's input may name.
+#[must_use]
+pub fn user_point_allowed(value: f64) -> bool {
+    value.is_finite() && (0.0..=MAX_USER_POINT).contains(&value)
+}
 
 /// An order about a browser session, from the control plane to the worker that runs it (EXEC-009 composition).
 ///
@@ -207,8 +268,37 @@ pub enum BrowserOrder {
         x: f64,
         /// Viewport y.
         y: f64,
+        /// `left` (the default), `middle` or `right` ([`USER_BUTTONS`]).
+        #[serde(default = "left_button")]
+        button: String,
+        /// The press's click count: 1 for a click (the default), 2 for the second click of a double click, 3 for the third
+        /// of a triple click. Each is delivered as one press after the earlier ones.
+        #[serde(default = "one_click")]
+        click_count: u8,
+        /// Modifier keys held during the click ([`USER_MODIFIERS`]).
+        #[serde(default)]
+        modifiers: Vec<String>,
     },
-    /// A named key the user pressed while holding the session (one of [`USER_KEYS`]).
+    /// A drag the user made while holding the session: the left button pressed at one viewport point, moved, and released
+    /// at another (selecting text, moving a slider, dragging an item).
+    UserDrag {
+        /// The session.
+        session_id: String,
+        /// The tab.
+        tab_id: String,
+        /// Where the button went down.
+        from_x: f64,
+        /// See `from_x`.
+        from_y: f64,
+        /// Where it came up.
+        to_x: f64,
+        /// See `to_x`.
+        to_y: f64,
+        /// Modifier keys held during the drag ([`USER_MODIFIERS`]).
+        #[serde(default)]
+        modifiers: Vec<String>,
+    },
+    /// A key the user pressed while holding the session, perhaps with modifiers ([`user_key_allowed`]).
     UserKey {
         /// The session.
         session_id: String,
@@ -253,10 +343,19 @@ impl BrowserOrder {
             | Self::UserClick { session_id, .. }
             | Self::UserKey { session_id, .. }
             | Self::UserScroll { session_id, .. }
+            | Self::UserDrag { session_id, .. }
             | Self::UserText { session_id, .. } => session_id,
             Self::Certificate { receipt } | Self::Permission { receipt } => &receipt.session_id,
         }
     }
+}
+
+fn left_button() -> String {
+    "left".to_string()
+}
+
+const fn one_click() -> u8 {
+    1
 }
 
 /// Server to worker.
@@ -442,6 +541,62 @@ mod tests {
         );
         envelope.kind = "format_disk".into();
         assert_eq!(envelope.into_envelope().unwrap_err(), "format_disk");
+    }
+
+    #[test]
+    fn a_person_s_keys_are_named_keys_or_modified_chords_and_nothing_else() {
+        for allowed in [
+            "Enter",
+            "Shift+Tab",
+            "Control+a",
+            "Meta+Shift+z",
+            "Alt+ArrowLeft",
+            "Alt+Control+Delete",
+            "Meta+7",
+        ] {
+            assert!(user_key_allowed(allowed), "{allowed} should be allowed");
+        }
+        for refused in [
+            "a",
+            "Shift+a",
+            "F12",
+            "Control+F12",
+            "Control+",
+            "Control+Control+a",
+            "Shift+Control+a",
+            "Hyper+a",
+            "Control+é",
+            "Control+ab",
+            "",
+        ] {
+            assert!(!user_key_allowed(refused), "{refused} should be refused");
+        }
+        assert!(user_modifiers_allowed(&["Shift".into(), "Alt".into()]));
+        assert!(!user_modifiers_allowed(&["Shift".into(), "Shift".into()]));
+        assert!(!user_modifiers_allowed(&["Fn".into()]));
+        assert!(user_point_allowed(0.0) && user_point_allowed(MAX_USER_POINT));
+        assert!(!user_point_allowed(-1.0) && !user_point_allowed(f64::NAN));
+    }
+
+    #[test]
+    fn a_click_from_an_older_server_is_a_single_left_click() {
+        let order: ToWorker = decode(
+            r#"{"type":"browser","order":"user_click","session_id":"s","tab_id":"t","x":1.0,"y":2.0}"#,
+        )
+        .unwrap_or_else(|why| panic!("{why}"));
+        let ToWorker::Browser(BrowserOrder::UserClick {
+            button,
+            click_count,
+            modifiers,
+            ..
+        }) = order
+        else {
+            panic!("not a click");
+        };
+        assert_eq!(
+            (button.as_str(), click_count, modifiers.len()),
+            ("left", 1, 0)
+        );
     }
 
     #[test]

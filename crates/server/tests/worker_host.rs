@@ -645,7 +645,7 @@ async fn calls_on_one_worker_run_side_by_side_and_cancelling_the_run_stops_its_c
     assert_eq!(
         world
             .hub
-            .cancel_run(TENANT, "run_01J8Z3K6F1N8VQ2X5W9YNOTRUN")
+            .cancel_run(TENANT, "run_01J8Z3K6F1N8VQ2X5W9YNZTRVN")
             .await,
         0,
         "another run's cancel stops nothing"

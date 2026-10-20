@@ -729,6 +729,17 @@ async fn dispatch(
             ))
             .await?
         }
+        "ProvisionTarget" => {
+            Box::pin(super::worker_targets::provision_target(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            ))
+            .await?
+        }
         "RequestTakeover" => {
             Box::pin(super::live_sessions::request_takeover(
                 state,
@@ -1751,6 +1762,21 @@ pub(super) async fn seed_projection(
     workspace_id: &str,
     run: &Run,
 ) -> Result<(), String> {
+    seed_projection_narrowed(state, identity, workspace_id, run, &[]).await
+}
+
+/// The effect classes a run that only observes may hold (DOMAIN.md §13.8 mode): reads, and nothing that changes anything.
+pub(super) const OBSERVE_ONLY_CLASSES: [&str; 2] = ["read.internal", "read.external"];
+
+/// [`seed_projection`] narrowed to `only` when it names any effect class: the run's projection then holds no grant outside
+/// them, whatever the policies allow. It narrows and never widens, like a teammate's needs.
+pub(super) async fn seed_projection_narrowed(
+    state: &ApiState,
+    identity: &RuntimeIdentity,
+    workspace_id: &str,
+    run: &Run,
+    only: &[&str],
+) -> Result<(), String> {
     // The run's projection covers what the workspace's policies allow or ask for: policy
     // still decides per call (allow → dispatch, ask → approval), but a class no policy
     // mentions is not even in the projection. The skeleton's read grant stays as the floor.
@@ -1847,6 +1873,9 @@ pub(super) async fn seed_projection(
                 digest_of(&json!(versions)),
             ));
         }
+    }
+    if !only.is_empty() {
+        grants.retain(|grant| only.contains(&grant.effect_class.as_str()));
     }
     let mut generator = UlidGenerator::new();
     let projection = CapabilityProjection::from_parts(

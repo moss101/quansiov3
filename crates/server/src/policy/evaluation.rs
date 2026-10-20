@@ -26,6 +26,7 @@ use quansio_capability::{Decision, EffectClass, ResourceSelector, Tier, UserRule
 use quansio_core::Digest;
 use serde_json::json;
 
+use crate::policy::autonomy::AutonomyMode;
 use crate::policy::escalation::{escalate, Escalation, TrustLevel, FAIL_CLOSED_TRUST};
 use crate::policy::guards::{
     check_privacy, check_sequence, DataClass, EgressDestination, EgressGrantSet, GuardFailure,
@@ -43,6 +44,8 @@ pub enum UserRuleRejection {
     Escalated,
     /// Policy did not explicitly allow the effect, so `ask` may not widen.
     NotPermittedByPolicy,
+    /// The autonomy mode in force asks for this effect whatever a standing rule said.
+    AutonomyMode,
 }
 
 impl UserRuleRejection {
@@ -53,6 +56,7 @@ impl UserRuleRejection {
             Self::TierFour => "user_rule_tier_four_always_rejected",
             Self::Escalated => "user_rule_escalated_always_rejected",
             Self::NotPermittedByPolicy => "user_rule_always_not_permitted",
+            Self::AutonomyMode => "user_rule_always_overridden_by_autonomy_mode",
         }
     }
 }
@@ -88,6 +92,10 @@ pub enum PolicyReason {
     },
     /// A privacy or sequence guard denied.
     Guard(GuardFailure),
+    /// The autonomy mode in force is `read_only` and the effect is more than a read.
+    AutonomyReadOnly,
+    /// The autonomy mode in force asks for this effect.
+    AutonomyApprovalRequired,
     /// A matching user rule is `never`.
     UserRuleNever {
         /// The `rule_…` id.
@@ -116,6 +124,8 @@ impl PolicyReason {
                 SequenceGuard::ReservationBeforeSettlement,
             )) => "sequence_settlement_before_reservation",
             Self::UserRuleNever { .. } => "user_rule_never",
+            Self::AutonomyReadOnly => "autonomy_read_only",
+            Self::AutonomyApprovalRequired => "autonomy_approval_required",
         }
     }
 }
@@ -219,6 +229,8 @@ pub struct PolicyEvaluator<'a> {
     pub policies: &'a PolicySet,
     /// The user rules in scope.
     pub user_rules: &'a [UserRule],
+    /// The autonomy mode in force (only ever narrows what the rules decided).
+    pub autonomy: AutonomyMode,
 }
 
 impl<'a> PolicyEvaluator<'a> {
@@ -228,7 +240,15 @@ impl<'a> PolicyEvaluator<'a> {
         Self {
             policies,
             user_rules,
+            autonomy: AutonomyMode::Standard,
         }
+    }
+
+    /// The same evaluator under an autonomy mode.
+    #[must_use]
+    pub const fn with_autonomy(mut self, autonomy: AutonomyMode) -> Self {
+        self.autonomy = autonomy;
+        self
     }
 
     /// Evaluate one proposal exactly as documented at the module head.
@@ -236,7 +256,13 @@ impl<'a> PolicyEvaluator<'a> {
     pub fn evaluate(&self, request: &EvaluationRequest<'_>) -> PolicyOutcome {
         let trust = request.derived_from_trust.unwrap_or(FAIL_CLOSED_TRUST);
         let escalation = escalate(request.catalog_tier, trust);
-        let digest = inputs_digest(request, &escalation, self.policies, self.user_rules);
+        let digest = inputs_digest(
+            request,
+            &escalation,
+            self.policies,
+            self.user_rules,
+            self.autonomy,
+        );
 
         // 1. RBAC.
         if let Err(failure) = rbac::check(request.roles, request.action) {
@@ -286,6 +312,18 @@ impl<'a> PolicyEvaluator<'a> {
             return self.outcome(
                 Decision::Deny,
                 PolicyReason::Guard(failure),
+                &escalation,
+                false,
+                Vec::new(),
+                digest,
+            );
+        }
+
+        // 5b. Autonomy mode `read_only`: nothing above a read, whatever the rules say.
+        if self.autonomy.denies(escalation.effective_tier.get()) {
+            return self.outcome(
+                Decision::Deny,
+                PolicyReason::AutonomyReadOnly,
                 &escalation,
                 false,
                 Vec::new(),
@@ -351,11 +389,19 @@ impl<'a> PolicyEvaluator<'a> {
             decision = Decision::Ask;
         }
 
+        // 7b. Autonomy mode asks: an effect the mode asks about asks, and no standing rule can undo that.
+        let mode_asks = self.autonomy.asks(escalation.effective_tier.get());
+        let mode_made_it_ask = mode_asks && decision == Decision::Allow;
+        if mode_asks && decision == Decision::Allow {
+            decision = Decision::Ask;
+        }
+
         // 8. User rules may only narrow, or widen `ask → always` where policy permits.
         let mut standing_allow = false;
         let mut rejected: Vec<RejectedUserRule> = Vec::new();
         let mut reason = match decision {
             Decision::Deny => PolicyReason::PolicyExplicitDeny,
+            Decision::Ask if mode_made_it_ask => PolicyReason::AutonomyApprovalRequired,
             Decision::Ask => PolicyReason::ApprovalRequired,
             Decision::Allow => PolicyReason::Allowed,
         };
@@ -393,7 +439,9 @@ impl<'a> PolicyEvaluator<'a> {
                 .iter()
                 .filter(|rule| rule.decision == UserRuleDecision::Always)
             {
-                if escalation.effective_tier.get() == 4 {
+                if mode_asks {
+                    rejected.push(reject(&rule.id, UserRuleRejection::AutonomyMode));
+                } else if escalation.effective_tier.get() == 4 {
                     rejected.push(reject(&rule.id, UserRuleRejection::TierFour));
                 } else if escalation.escalated {
                     rejected.push(reject(&rule.id, UserRuleRejection::Escalated));
@@ -456,6 +504,7 @@ fn inputs_digest(
     escalation: &Escalation,
     policies: &PolicySet,
     user_rules: &[UserRule],
+    autonomy: AutonomyMode,
 ) -> Digest {
     let material = json!({
         "effect_class": request.effect_class.as_str(),
@@ -509,6 +558,7 @@ fn inputs_digest(
             }))
             .collect::<Vec<_>>(),
         "user_id": request.user_id,
+        "autonomy_mode": autonomy.as_str(),
         "user_rules": user_rules
             .iter()
             .map(|rule| json!({
@@ -884,5 +934,170 @@ mod tests {
             evaluator.evaluate(&first).inputs_digest,
             evaluator.evaluate(&second).inputs_digest
         );
+    }
+
+    fn always(effect: &str) -> UserRule {
+        UserRule {
+            id: "rule_1".to_string(),
+            user_id: "usr_x".to_string(),
+            workspace_id: "ws_x".to_string(),
+            effect_class: class(effect),
+            resource_selector: selector("*"),
+            decision: UserRuleDecision::Always,
+            expires_at: None,
+        }
+    }
+
+    fn outcome_under(
+        mode: AutonomyMode,
+        effect: &str,
+        tier: u8,
+        policy: PolicyDecision,
+        user_rules: &[UserRule],
+    ) -> PolicyOutcome {
+        let policies = policy_set(vec![rule(effect, policy)]);
+        let evaluator = PolicyEvaluator::new(&policies, user_rules).with_autonomy(mode);
+        let effect = class(effect);
+        let resource = selector("*");
+        let mut req = request(
+            &effect,
+            &resource,
+            Tier::new(tier).expect("tier"),
+            if tier == 0 {
+                ActionFamily::Read
+            } else {
+                ActionFamily::ExecuteEffect { tier }
+            },
+        );
+        req.roles = ActorRoles::new(Some(TenantRole::Admin), Some(WorkspaceRole::Admin));
+        evaluator.evaluate(&req)
+    }
+
+    #[test]
+    fn read_only_refuses_everything_above_a_read_whatever_policy_and_standing_rules_say() {
+        // A read is still allowed; a write that policy allows and a standing rule blesses is refused, at every tier.
+        let read = outcome_under(
+            AutonomyMode::ReadOnly,
+            "read.internal",
+            0,
+            PolicyDecision::Allow,
+            &[],
+        );
+        assert!(read.is_allow(), "{read:?}");
+        for (effect, tier) in [
+            ("fs.write.workspace", 1),
+            ("record.update", 2),
+            ("message.send", 3),
+            ("payment.execute", 4),
+        ] {
+            let outcome = outcome_under(
+                AutonomyMode::ReadOnly,
+                effect,
+                tier,
+                PolicyDecision::Allow,
+                &[always(effect)],
+            );
+            assert!(outcome.is_deny(), "{effect}: {outcome:?}");
+            assert_eq!(outcome.reason, PolicyReason::AutonomyReadOnly, "{effect}");
+            assert!(!outcome.standing_allow);
+        }
+    }
+
+    #[test]
+    fn ask_every_action_asks_above_a_read_and_no_standing_rule_undoes_it() {
+        let standard = outcome_under(
+            AutonomyMode::Standard,
+            "fs.write.workspace",
+            1,
+            PolicyDecision::Allow,
+            &[],
+        );
+        assert!(
+            standard.is_allow(),
+            "the control: standard allows it ({standard:?})"
+        );
+        let asked = outcome_under(
+            AutonomyMode::AskEveryAction,
+            "fs.write.workspace",
+            1,
+            PolicyDecision::Allow,
+            &[],
+        );
+        assert!(asked.requires_approval(), "{asked:?}");
+        assert_eq!(asked.reason, PolicyReason::AutonomyApprovalRequired);
+        let blessed = outcome_under(
+            AutonomyMode::AskEveryAction,
+            "message.send",
+            3,
+            PolicyDecision::Allow,
+            &[always("message.send")],
+        );
+        assert!(
+            blessed.requires_approval() && !blessed.standing_allow,
+            "{blessed:?}"
+        );
+        assert_eq!(
+            blessed.rejected_user_rules[0].reason,
+            UserRuleRejection::AutonomyMode
+        );
+        // A read is not an action.
+        let read = outcome_under(
+            AutonomyMode::AskEveryAction,
+            "read.internal",
+            0,
+            PolicyDecision::Allow,
+            &[],
+        );
+        assert!(read.is_allow());
+    }
+
+    #[test]
+    fn ask_for_consequences_leaves_internal_work_alone_and_asks_from_tier_two() {
+        let internal = outcome_under(
+            AutonomyMode::AskForConsequences,
+            "fs.write.workspace",
+            1,
+            PolicyDecision::Allow,
+            &[],
+        );
+        assert!(internal.is_allow(), "{internal:?}");
+        let external = outcome_under(
+            AutonomyMode::AskForConsequences,
+            "record.update",
+            2,
+            PolicyDecision::Allow,
+            &[],
+        );
+        assert!(external.requires_approval(), "{external:?}");
+        assert_eq!(external.reason, PolicyReason::AutonomyApprovalRequired);
+    }
+
+    #[test]
+    fn a_mode_never_widens_a_deny_an_ask_or_a_user_never() {
+        for mode in AutonomyMode::ALL {
+            let denied = outcome_under(mode, "message.send", 3, PolicyDecision::Deny, &[]);
+            assert!(denied.is_deny(), "{mode:?}: {denied:?}");
+            let asked = outcome_under(mode, "message.send", 3, PolicyDecision::Ask, &[]);
+            assert!(!asked.is_allow(), "{mode:?}: {asked:?}");
+        }
+    }
+
+    #[test]
+    fn the_mode_is_part_of_what_a_decision_records() {
+        let one = outcome_under(
+            AutonomyMode::Standard,
+            "fs.write.workspace",
+            1,
+            PolicyDecision::Allow,
+            &[],
+        );
+        let two = outcome_under(
+            AutonomyMode::AskEveryAction,
+            "fs.write.workspace",
+            1,
+            PolicyDecision::Allow,
+            &[],
+        );
+        assert_ne!(one.inputs_digest, two.inputs_digest);
     }
 }

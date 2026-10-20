@@ -51,6 +51,8 @@ import { ConnectivityMonitor } from "./connectivity.js";
 import { deepLinkFromArgv, parseDeepLink, DEEP_LINK_SCHEME } from "./deeplinks.js";
 import { quitChosen, quitDialog, updateChoiceOf, updateDialog, type MessageBox } from "./dialogs.js";
 import { DesktopBridge, type DesktopAuth } from "./ipc.js";
+import { spawn as spawnProcess } from "node:child_process";
+import { WorkerLauncher, discoverChrome, discoverWorkerBinary, isLoopbackOrigin, type ProvisionedWorker } from "./worker-launcher.js";
 import { IpcGuard, registerGuardedHandlers, type WindowHandler } from "./ipc-trust.js";
 import { loadLocalFilesConfig } from "./local-files/config.js";
 import { loadLocalSecretsConfig } from "./secrets/config.js";
@@ -465,7 +467,33 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
     ? { kind: "trusted-headers", scope: { tenantId: environment.harness.tenantId, userId: environment.harness.userId }, workspaceId: environment.harness.workspaceId }
     : { kind: "session", tokens: new TokenStore(userData, safeStorage) };
   const localSecrets = loadLocalSecretsConfig(join(bundleRoot, "local-secrets.yaml"));
+  // The worker on this computer (EXEC-002): started from the app against a folder the person picks.
+  const worker = new WorkerLauncher({
+    provision: async () => {
+      const workspace = bridgeRef?.workspaceId() ?? environment.harness?.workspaceId ?? "";
+      const answer = await bridgeRef?.server.invoke<ProvisionedWorker>("ProvisionTarget", newCommandId(), { workspace_id: workspace, substrate: "customer_private_worker" });
+      if (!answer) {
+        throw new Error("the app is not ready");
+      }
+      return answer.result;
+    },
+    pickFolder: async () => {
+      const parent = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+      const options = { title: t("workerFolderDialogTitle"), properties: ["openDirectory" as const] };
+      const chosen = parent ? await dialog.showOpenDialog(parent, options) : await dialog.showOpenDialog(options);
+      return chosen.canceled ? null : (chosen.filePaths[0] ?? null);
+    },
+    binary: discoverWorkerBinary(process.env, process.resourcesPath, process.env["QUANSIO_REPO_ROOT"] ?? null),
+    chrome: discoverChrome(process.platform, process.env),
+    stateRoot: join(userData, "worker"),
+    protectedPaths: [userData],
+    serverIsLocal: isLoopbackOrigin(environment.serverOrigin),
+    spawn: (binary, args) => spawnProcess(binary, [...args], { stdio: ["ignore", "ignore", "pipe"] }),
+    log,
+  });
+  let bridgeRef: DesktopBridge | null = null;
   const bridge = new DesktopBridge({
+    worker,
     serverOrigin: environment.serverOrigin,
     auth,
     // One-time payment values (ADP-009): the limits the payment form and its channel run on.
@@ -542,6 +570,7 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
       host?.onStreamFrame(frame);
     },
   });
+  bridgeRef = bridge;
 
   const shortcuts = new ShortcutRegistry({
     platform: process.platform,
@@ -750,6 +779,7 @@ export async function startDesktop(): Promise<{ bridge: DesktopBridge; host: She
   });
   app.on("will-quit", () => {
     files.dispose();
+    worker.dispose();
     shortcuts.releaseAll();
     keepAwake.dispose();
     connectivity.dispose();

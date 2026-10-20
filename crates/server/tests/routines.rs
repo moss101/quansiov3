@@ -887,3 +887,156 @@ async fn notifications_follow_preferences_and_deliver_email() {
     );
     common::drop_pool(&h.pool, &h.name).await;
 }
+
+/// The effect classes of the capability projection of the routine's runs, one entry per run.
+async fn projected_classes(h: &Harness, routine_id: &str) -> Vec<Vec<String>> {
+    let mut tx = h.pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant context");
+    let grants: Vec<Value> = sqlx::query_scalar(
+        "SELECT p.grants FROM capability_projections p \
+         JOIN runs r ON r.tenant_id = p.tenant_id AND r.id = p.subject_id AND p.subject_kind = 'run' \
+         JOIN messages m ON m.tenant_id = r.tenant_id AND m.id = r.trigger_ref \
+         WHERE r.tenant_id = $1 AND m.author_id = 'routine:' || $2 ORDER BY r.created_at",
+    )
+    .bind(TENANT)
+    .bind(routine_id)
+    .fetch_all(&mut *tx)
+    .await
+    .expect("projections");
+    tx.commit().await.expect("commit");
+    grants
+        .iter()
+        .map(|run| {
+            run.as_array()
+                .expect("grants")
+                .iter()
+                .map(|grant| grant["effect_class"].as_str().expect("class").to_string())
+                .collect()
+        })
+        .collect()
+}
+
+#[tokio::test]
+async fn an_observing_routine_s_runs_can_read_and_report_and_nothing_else() {
+    let Some(h) = prepare("routine_observe").await else {
+        common::blocked_marker();
+        return;
+    };
+    // A workspace policy that lets agents write: the authority an acting routine's run is given.
+    let mut tx = h.pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant context");
+    sqlx::query("UPDATE policies SET rules = $2 WHERE tenant_id = $1 AND scope = 'tenant'")
+        .bind(TENANT)
+        .bind(json!([
+            { "effect_class": "read.internal", "resource": { "kind": "fs", "selector": "**" }, "decision": "allow" },
+            { "effect_class": "read.external", "resource": { "kind": "domain", "selector": "*" }, "decision": "allow" },
+            { "effect_class": "fs.write.workspace", "resource": { "kind": "fs", "selector": "**" }, "decision": "allow" },
+            { "effect_class": "message.send", "resource": { "kind": "domain", "selector": "*" }, "decision": "ask" }
+        ]))
+        .execute(&mut *tx)
+        .await
+        .expect("policy");
+    tx.commit().await.expect("commit");
+
+    // Anything but `act` and `observe` is refused.
+    let (status, refused) = command(&h.router, OWNER, "CreateRoutine", 1, json!({ "workspace_id": WORKSPACE, "title": "x", "prompt": "p", "mode": "autonomous", "trigger": { "kind": "interval", "spec": "1h" } })).await;
+    assert_eq!(status, 400, "{refused}");
+
+    let create = |id: u32, title: &str, mode: Option<&str>| {
+        let mut params = json!({ "workspace_id": WORKSPACE, "title": title, "prompt": "look at the board and report", "trigger": { "kind": "interval", "spec": "1h" } });
+        if let Some(mode) = mode {
+            params["mode"] = json!(mode);
+        }
+        let (router,) = (h.router.clone(),);
+        async move { command(&router, OWNER, "CreateRoutine", id, params).await }
+    };
+    let (status, watching) = create(2, "Watcher", Some("observe")).await;
+    assert_eq!(status, 200, "{watching}");
+    assert_eq!(watching["result"]["objective_template"]["mode"], "observe");
+    let (status, working) = create(3, "Worker", None).await;
+    assert_eq!(status, 200, "{working}");
+    assert!(
+        working["result"]["objective_template"]
+            .get("mode")
+            .is_none(),
+        "act is the default and is not stored"
+    );
+    let (watching, working) = (
+        watching["result"]["id"].as_str().unwrap().to_string(),
+        working["result"]["id"].as_str().unwrap().to_string(),
+    );
+
+    for (n, routine) in [(4, &watching), (5, &working)] {
+        let (status, fired) = command(
+            &h.router,
+            OWNER,
+            "TriggerRoutineNow",
+            n,
+            json!({ "routine_id": routine }),
+        )
+        .await;
+        assert_eq!(status, 200, "{fired}");
+    }
+    let observed = projected_classes(&h, &watching).await;
+    let acted = projected_classes(&h, &working).await;
+    assert_eq!(observed.len(), 1);
+    assert!(
+        observed[0].iter().all(|class| class.starts_with("read.")) && !observed[0].is_empty(),
+        "an observing run was given {:?}",
+        observed[0]
+    );
+    // The control: the same workspace gives an acting routine's run the writes the policy allows.
+    assert!(
+        acted[0].iter().any(|class| class == "fs.write.workspace")
+            && acted[0].iter().any(|class| class == "message.send"),
+        "an acting run was given {:?}",
+        acted[0]
+    );
+
+    // Updating it keeps the mode unless the caller says; saying `act` clears it, and it is the owner's call to make.
+    let (status, kept) = command(
+        &h.router,
+        OWNER,
+        "UpdateRoutine",
+        6,
+        json!({ "routine_id": watching, "prompt": "look again" }),
+    )
+    .await;
+    assert_eq!(status, 200, "{kept}");
+    assert_eq!(kept["result"]["objective_template"]["mode"], "observe");
+    // A full replacement that leaves the mode out does not lose it.
+    let revision = kept["result"]["revision"].as_i64().expect("revision");
+    let (status, replaced) = command(
+        &h.router,
+        OWNER,
+        "UpdateRoutine",
+        8,
+        json!({ "routine_id": watching, "expected_revision": revision, "title": "Watcher", "prompt": "look once more", "trigger": { "kind": "interval", "spec": "1h" } }),
+    )
+    .await;
+    assert_eq!(status, 200, "{replaced}");
+    assert_eq!(
+        replaced["result"]["objective_template"]["mode"], "observe",
+        "{replaced}"
+    );
+    let (status, cleared) = command(
+        &h.router,
+        OWNER,
+        "UpdateRoutine",
+        7,
+        json!({ "routine_id": watching, "mode": "act" }),
+    )
+    .await;
+    assert_eq!(status, 200, "{cleared}");
+    assert!(
+        cleared["result"]["objective_template"]
+            .get("mode")
+            .is_none(),
+        "{cleared}"
+    );
+    common::drop_pool(&h.pool, &h.name).await;
+}

@@ -36,6 +36,9 @@ pub const APPROVAL_SCENARIO: &str = "[[scenario:approval]]";
 /// Marker in a trigger message that selects the delegation scenario: the stub hands the
 /// run's work node to a worker (RUN-002's port) and the run parks in `WAITING_CHILD`.
 pub const DELEGATE_SCENARIO: &str = "[[scenario:delegate]]";
+/// Marker in a trigger message that selects the browse scenario: `[[scenario:browse <url>]]`. The stub opens the page on
+/// the run's worker with `browser.navigate` and then finishes, so a person can watch and take over a real browser.
+pub const BROWSE_SCENARIO: &str = "[[scenario:browse ";
 /// The provider the seam records itself as on the ModelRoute rows it writes.
 pub const SEAM_PROVIDER: &str = "in-process";
 /// The model the seam records itself as; not a `config/models.yaml` model, and not a
@@ -233,6 +236,29 @@ impl ConformanceStubModel {
             }
             return Ok(ModelProposal {
                 assistant_text: Some("the file is written.".to_string()),
+                ..ModelProposal::default()
+            });
+        }
+        if let Some(start) = scenario.find(BROWSE_SCENARIO) {
+            let url = scenario[start + BROWSE_SCENARIO.len()..]
+                .split("]]")
+                .next()
+                .unwrap_or_default()
+                .trim()
+                .to_string();
+            if count == 1 && !url.is_empty() {
+                return Ok(ModelProposal {
+                    assistant_text: Some("opening the page.".to_string()),
+                    tool_calls: vec![ProposedToolCall::new(
+                        "call_browse",
+                        "browser.navigate",
+                        json!({ "session_id": "session", "url": url }),
+                    )],
+                    ..ModelProposal::default()
+                });
+            }
+            return Ok(ModelProposal {
+                assistant_text: Some("the page is open.".to_string()),
                 ..ModelProposal::default()
             });
         }

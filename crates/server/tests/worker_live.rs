@@ -46,6 +46,19 @@ const BIG: &str = "<html><head><title>Big</title></head><body style=\"margin:0\"
 </body></html>";
 const LIVE: &str = "<html><body><div id=\"c\">0</div><script>var n=0;function t(){document.getElementById('c').textContent=String(++n);setTimeout(t,100)}t()</script></body></html>";
 const KEYS: &str = "<html><body style=\"margin:0;height:6000px\"><input id=\"i\" autofocus style=\"width:200px\" onkeydown=\"var x=new XMLHttpRequest();x.open('GET','/key-'+event.key,false);x.send();\"><script>window.addEventListener('scroll',function(){var x=new XMLHttpRequest();x.open('GET','/scrolled',false);x.send();});document.getElementById('i').focus();</script></body></html>";
+/// A page that reports, by request, what the pointer and keyboard did: the button of a click, a double click, a drag, a
+/// click with Shift held, and a shortcut.
+const POINTER: &str = "<html><body style=\"margin:0\"><div id=\"d\" style=\"width:600px;height:400px;background:#ddd\"></div><input id=\"i\" style=\"position:absolute;top:420px\"><script>\
+function ping(p){var x=new XMLHttpRequest();x.open('GET',p,false);x.send();}\
+var d=document.getElementById('d'),down=null;\
+d.addEventListener('contextmenu',function(e){e.preventDefault();ping('/ctx');});\
+d.addEventListener('dblclick',function(){ping('/dbl');});\
+d.addEventListener('mousedown',function(e){down=[e.clientX,e.clientY];});\
+d.addEventListener('mouseup',function(e){if(down&&Math.abs(e.clientX-down[0])>50)ping('/drag');down=null;});\
+d.addEventListener('click',function(e){if(e.shiftKey)ping('/shift-click');});\
+var i=document.getElementById('i');i.focus();\
+document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='a')ping('/select-all');});\
+</script></body></html>";
 const PAGE: &str = "<html><head><title>Shop</title></head><body>\
 <button onclick=\"var x=new XMLHttpRequest();x.open('GET','/hit',false);x.send();\">Count</button>\
 <button onclick=\"var x=new XMLHttpRequest();x.open('GET','/buy',false);x.send();\">Buy now</button>\
@@ -90,6 +103,7 @@ impl Site {
                         "/big" => ("text/html", BIG),
                         "/live" => ("text/html", LIVE),
                         "/keys" => ("text/html", KEYS),
+                        "/pointer" => ("text/html", POINTER),
                         _ => ("text/plain", "ok"),
                     };
                     let reply = format!(
@@ -104,6 +118,9 @@ impl Site {
     }
     fn url(&self) -> String {
         format!("http://127.0.0.1:{}/", self.port)
+    }
+    fn pointer(&self) -> String {
+        format!("http://127.0.0.1:{}/pointer", self.port)
     }
     fn keys(&self) -> String {
         format!("http://127.0.0.1:{}/keys", self.port)
@@ -324,18 +341,32 @@ fn command_id(n: u32) -> String {
 }
 
 async fn command(world: &World, name: &str, id: u32, params: Value) -> (u16, Value) {
+    command_as(world, USER, name, id, params).await
+}
+
+async fn command_as(world: &World, user: &str, name: &str, id: u32, params: Value) -> (u16, Value) {
+    command_on(world.router.clone(), user, name, id, params).await
+}
+
+async fn command_on(
+    router: axum::Router,
+    user: &str,
+    name: &str,
+    id: u32,
+    params: Value,
+) -> (u16, Value) {
     use tower::ServiceExt;
     let request = axum::http::Request::builder()
         .method("POST")
         .uri(format!("/v1/commands/{name}"))
         .header("x-quansio-tenant", TENANT)
-        .header("x-quansio-user", USER)
+        .header("x-quansio-user", user)
         .header("content-type", "application/json")
         .body(axum::body::Body::from(
             json!({ "command_id": command_id(id), "params": params }).to_string(),
         ))
         .unwrap();
-    let response = world.router.clone().oneshot(request).await.unwrap();
+    let response = router.oneshot(request).await.unwrap();
     let status = response.status().as_u16();
     let bytes = axum::body::to_bytes(response.into_body(), 1 << 22)
         .await
@@ -502,6 +533,9 @@ async fn takeover_and_handback_commands_move_the_workers_driver_and_the_page_see
         tab_id: tab.clone(),
         x,
         y: 50.0,
+        button: "left".to_string(),
+        click_count: 1,
+        modifiers: Vec::new(),
     };
     let hits = || site.hits("/hit");
 
@@ -936,6 +970,10 @@ async fn serve_http(world: &World) -> std::net::SocketAddr {
 
 impl Viewer {
     async fn join(addr: std::net::SocketAddr, target: &str) -> Self {
+        Self::join_as(addr, USER, target).await
+    }
+
+    async fn join_as(addr: std::net::SocketAddr, user: &str, target: &str) -> Self {
         use futures_util::SinkExt;
         use tokio_tungstenite::tungstenite::client::IntoClientRequest;
         use tokio_tungstenite::tungstenite::Message;
@@ -947,7 +985,7 @@ impl Viewer {
             .insert("x-quansio-tenant", TENANT.parse().unwrap());
         request
             .headers_mut()
-            .insert("x-quansio-user", USER.parse().unwrap());
+            .insert("x-quansio-user", user.parse().unwrap());
         let (mut ws, _) = tokio_tungstenite::connect_async(request)
             .await
             .expect("connect");
@@ -972,6 +1010,20 @@ impl Viewer {
                         return Some(value["frame"].clone());
                     }
                 }
+                Ok(Some(Ok(_))) => {}
+                _ => return None,
+            }
+        }
+    }
+
+    /// The next text message within `ms`, parsed.
+    async fn next_text(&mut self, ms: u64) -> Option<Value> {
+        use futures_util::StreamExt;
+        use tokio_tungstenite::tungstenite::Message;
+        let deadline = tokio::time::Instant::now() + Duration::from_millis(ms);
+        loop {
+            match tokio::time::timeout_at(deadline, self.ws.next()).await {
+                Ok(Some(Ok(Message::Text(text)))) => return serde_json::from_str(&text).ok(),
                 Ok(Some(Ok(_))) => {}
                 _ => return None,
             }
@@ -1224,7 +1276,7 @@ async fn a_person_s_special_keys_and_scroll_reach_the_page_and_anything_else_is_
     let before = site.hits("/key-a");
     for (n, bad) in [
         (56, json!({"kind": "key", "key": "a"})),
-        (57, json!({"kind": "key", "key": "Control+a"})),
+        (57, json!({"kind": "key", "key": "Shift+a"})),
         (58, json!({"kind": "key", "key": "F12"})),
         (59, json!({"kind": "key"})),
         (
@@ -1253,7 +1305,7 @@ async fn a_person_s_special_keys_and_scroll_reach_the_page_and_anything_else_is_
     // refused by the driver itself and the page sees nothing.
     use quansio_machine::gateway::wire::BrowserOrder;
     let scrolled = site.hits("/scrolled");
-    for key in ["F12", "a", "Control+a", "Shift"] {
+    for key in ["F12", "a", "Shift+a", "Control+F12", "Shift"] {
         world
             .hub
             .send_order(
@@ -1356,6 +1408,573 @@ async fn cancelling_a_run_stops_its_command_on_the_worker_and_leaves_another_run
     assert!(
         !root.join("a.done").exists(),
         "the cancelled command finished its work"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn a_person_s_right_click_double_click_drag_and_shortcut_reach_the_page_and_malformed_ones_do_not(
+) {
+    let Some(world) = world("wl_pointer", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    let navigated = ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.pointer()}),
+    )
+    .await;
+    let tab = navigated["tab_id"].as_str().unwrap().to_string();
+    let session = sessions(&world.pool, &world.target).await.remove(0).0;
+    let (status, taken) = command(
+        &world,
+        "RequestTakeover",
+        71,
+        json!({"session_id": session}),
+    )
+    .await;
+    assert_eq!(status, 200, "{taken}");
+
+    let input = |n: u32, params: Value| {
+        let (world, session, tab) = (&world, session.clone(), tab.clone());
+        async move {
+            let mut params = params;
+            params["session_id"] = json!(session);
+            params["tab_id"] = json!(tab);
+            command(world, "SendBrowserInput", n, params).await
+        }
+    };
+    for (n, params, what, path) in [
+        (
+            72,
+            json!({"kind": "click", "x": 100, "y": 100, "button": "right"}),
+            "a right click",
+            "/ctx",
+        ),
+        (
+            73,
+            json!({"kind": "click", "x": 100, "y": 100, "click_count": 2}),
+            "a double click",
+            "/dbl",
+        ),
+        (
+            74,
+            json!({"kind": "drag", "from_x": 50, "from_y": 200, "to_x": 400, "to_y": 220}),
+            "a drag",
+            "/drag",
+        ),
+        (
+            75,
+            json!({"kind": "click", "x": 100, "y": 100, "modifiers": ["Shift"]}),
+            "a click with Shift held",
+            "/shift-click",
+        ),
+    ] {
+        let (status, body) = input(n, params).await;
+        assert_eq!(status, 200, "{what}: {body}");
+        eventually(&format!("the page saw {what}"), || async {
+            site.hits(path) >= 1
+        })
+        .await;
+    }
+    // A plain click does not look like a shift-click, and a drag is not a click: the page told them apart.
+    assert_eq!(site.hits("/shift-click"), 1);
+
+    // A shortcut reaches the focused field as a chord (Meta on macOS pages, Control elsewhere: either sets the flag the page
+    // checks).
+    let (status, body) = input(76, json!({"kind": "key", "key": "Control+a"})).await;
+    assert_eq!(status, 200, "{body}");
+    eventually("the page saw the shortcut", || async {
+        site.hits("/select-all") >= 1
+    })
+    .await;
+
+    // What a person may not send is refused before any worker.
+    let before = (site.hits("/ctx"), site.hits("/drag"));
+    for (n, bad) in [
+        (
+            77,
+            json!({"kind": "click", "x": 1, "y": 1, "button": "back"}),
+        ),
+        (
+            78,
+            json!({"kind": "click", "x": 1, "y": 1, "click_count": 4}),
+        ),
+        (
+            79,
+            json!({"kind": "click", "x": 1, "y": 1, "modifiers": ["Hyper"]}),
+        ),
+        (
+            80,
+            json!({"kind": "click", "x": 1, "y": 1, "modifiers": ["Shift", "Shift"]}),
+        ),
+        (
+            81,
+            json!({"kind": "click", "x": 1, "y": 1, "modifiers": "Shift"}),
+        ),
+        (
+            82,
+            json!({"kind": "drag", "from_x": 1, "from_y": 1, "to_x": 30000, "to_y": 1}),
+        ),
+        (
+            83,
+            json!({"kind": "drag", "from_x": 1, "from_y": 1, "to_x": 5}),
+        ),
+        (84, json!({"kind": "key", "key": "Control+Control+a"})),
+        (85, json!({"kind": "key", "key": "Shift+Control+a"})),
+    ] {
+        let (status, body) = input(n, bad.clone()).await;
+        assert_eq!(status, 400, "{bad}: {body}");
+    }
+
+    // The worker does not take the server's word for it either: orders sent straight to it are refused by the driver.
+    use quansio_machine::gateway::wire::BrowserOrder;
+    for order in [
+        BrowserOrder::UserClick {
+            session_id: session.clone(),
+            tab_id: tab.clone(),
+            x: 100.0,
+            y: 100.0,
+            button: "back".to_string(),
+            click_count: 1,
+            modifiers: Vec::new(),
+        },
+        BrowserOrder::UserClick {
+            session_id: session.clone(),
+            tab_id: tab.clone(),
+            x: 100.0,
+            y: 100.0,
+            button: "right".to_string(),
+            click_count: 9,
+            modifiers: Vec::new(),
+        },
+        BrowserOrder::UserDrag {
+            session_id: session.clone(),
+            tab_id: tab.clone(),
+            from_x: 1.0,
+            from_y: 1.0,
+            to_x: f64::NAN,
+            to_y: 1.0,
+            modifiers: Vec::new(),
+        },
+        BrowserOrder::UserDrag {
+            session_id: session.clone(),
+            tab_id: tab.clone(),
+            from_x: 1.0,
+            from_y: 1.0,
+            to_x: 400.0,
+            to_y: 1.0,
+            modifiers: vec!["Fn".to_string()],
+        },
+    ] {
+        world.hub.send_order(TENANT, &world.target, order).await;
+    }
+    tokio::time::sleep(Duration::from_millis(800)).await;
+    assert_eq!(
+        (site.hits("/ctx"), site.hits("/drag")),
+        before,
+        "the worker accepted an input it should have refused"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn only_a_reader_of_the_targets_workspace_may_watch_its_channel() {
+    let Some(world) = world("wl_channel_auth", true).await else {
+        return blocked_marker();
+    };
+    // A member of the tenant who belongs to no workspace of it, and a stranger to the tenant.
+    let outsider = "usr_01J8Z3K6F1N8VQ2X5W9YQZTSXD";
+    let mut tx = world.pool.begin().await.unwrap();
+    sqlx::query(
+        "INSERT INTO users (id, primary_email, display_name) VALUES ($1, 'o@example.com', 'o')",
+    )
+    .bind(outsider)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO tenant_memberships (id, tenant_id, user_id, role, status) VALUES ('tm_outsider', $1, $2, 'member', 'active')")
+        .bind(TENANT)
+        .bind(outsider)
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+    let addr = serve_http(&world).await;
+
+    // The refusal is typed, and a refused socket starts nothing: no stream is asked for on the target's behalf.
+    let mut refused = Viewer::join_as(addr, outsider, &world.target).await;
+    let answer = refused.next_text(5_000).await.expect("an answer");
+    assert_eq!(answer["code"], "SCOPE_FORBIDDEN", "{answer}");
+    assert!(
+        !world.hub.has_viewers(TENANT, &world.target),
+        "a refused socket became a viewer"
+    );
+    // A target that does not exist is refused the same way, so the answer does not say which targets there are.
+    let mut missing = Viewer::join_as(addr, USER, "tgt_01J8Z3K6F1N8VQ2X5W9YNZSVCH").await;
+    let answer = missing.next_text(5_000).await.expect("an answer");
+    assert_eq!(answer["code"], "SCOPE_FORBIDDEN", "{answer}");
+
+    // A reader of the workspace is admitted and counted.
+    let reader = Viewer::join(addr, &world.target).await;
+    for _ in 0..50 {
+        if world.hub.has_viewers(TENANT, &world.target) {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    assert!(
+        world.hub.has_viewers(TENANT, &world.target),
+        "the workspace's reader was not admitted"
+    );
+    reader.leave().await;
+    drop_pool(&world.pool, &world.name).await;
+}
+
+/// An executor that runs nothing and remembers the decisions it was handed.
+struct DecisionLog(Arc<std::sync::Mutex<Vec<(String, String, String)>>>);
+
+#[async_trait]
+impl quansio_qworkerd::host::ToolExecutor for DecisionLog {
+    async fn run(
+        &self,
+        _: &quansio_machine::gateway::ActionEnvelope,
+        _: &mut quansio_qworkerd::host::OutputSink,
+    ) -> Result<quansio_qworkerd::host::ToolOutput, quansio_qworkerd::host::HostFailure> {
+        Ok(quansio_qworkerd::host::ToolOutput::new())
+    }
+
+    async fn browser_decision(
+        &self,
+        receipt: &quansio_machine::control::browser::DecisionReceipt,
+    ) -> Result<(), String> {
+        self.0.lock().unwrap().push((
+            receipt.kind().as_str().to_string(),
+            receipt.subject().to_string(),
+            receipt.decision().as_str().to_string(),
+        ));
+        Ok(())
+    }
+}
+
+#[tokio::test]
+async fn a_decision_made_while_the_worker_was_away_is_told_to_it_when_it_attaches() {
+    let Some(world) = world("wl_replay", false).await else {
+        return blocked_marker();
+    };
+    // A session whose person decided a certificate and a permission while no worker was attached (and changed their mind on
+    // the permission): the decisions are on the session.
+    let session = "bsn_01J8Z3K6F1N8VQ2X5W9YRPLY01";
+    let mut tx = world.pool.begin().await.unwrap();
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .unwrap();
+    quansio_machine::control::browser::BrowserSessionStore::open(
+        &mut tx,
+        TENANT,
+        session,
+        &world.target,
+        Some(RUN_A),
+        None,
+    )
+    .await
+    .unwrap();
+    let decisions = json!({ "decisions": [
+        { "kind": "certificate", "tab_id": "T1", "subject": "crt_1", "decision": "allow", "decided_by": USER, "decided_at": "2026-10-20T00:00:00Z" },
+        { "kind": "permission", "tab_id": "T1", "subject": "http://127.0.0.1:1|camera", "decision": "allow", "decided_by": USER, "decided_at": "2026-10-20T00:00:01Z" },
+        { "kind": "permission", "tab_id": "T1", "subject": "http://127.0.0.1:1|camera", "decision": "deny", "decided_by": USER, "decided_at": "2026-10-20T00:00:02Z" },
+    ]});
+    sqlx::query("UPDATE browser_sessions SET guard_state = $1 WHERE id = $2")
+        .bind(decisions)
+        .bind(session)
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let seen = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let (socket, target, log) = (
+        world._dir.path().join("w.sock"),
+        world.target.clone(),
+        seen.clone(),
+    );
+    tokio::spawn(async move {
+        let host = Arc::new(WorkerHost::new(DecisionLog(log), UnattachedEvidence));
+        let stream = tokio::net::UnixStream::connect(&socket).await.unwrap();
+        let (reader, writer) = stream.into_split();
+        let _ = serve(
+            host,
+            TENANT,
+            &target,
+            Duration::from_secs(3600),
+            reader,
+            writer,
+        )
+        .await;
+    });
+    eventually(
+        "the worker was told what was decided while it was away",
+        || async { seen.lock().unwrap().len() == 3 },
+    )
+    .await;
+    assert_eq!(
+        *seen.lock().unwrap(),
+        [
+            (
+                "certificate".to_string(),
+                "crt_1".to_string(),
+                "allow".to_string()
+            ),
+            (
+                "permission".to_string(),
+                "http://127.0.0.1:1|camera".to_string(),
+                "allow".to_string()
+            ),
+            (
+                "permission".to_string(),
+                "http://127.0.0.1:1|camera".to_string(),
+                "deny".to_string()
+            ),
+        ],
+        "oldest first, so the last word on a subject is the one the worker ends with"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn a_person_registers_a_worker_target_once_and_a_worker_can_then_attach_to_it() {
+    let Some(world) = world("wl_provision", false).await else {
+        return blocked_marker();
+    };
+    // A member of the tenant with no part in the workspace may not register machines for it.
+    let outsider = "usr_01J8Z3K6F1N8VQ2X5W9YQZTSXE";
+    let mut tx = world.pool.begin().await.unwrap();
+    sqlx::query(
+        "INSERT INTO users (id, primary_email, display_name) VALUES ($1, 'p@example.com', 'p')",
+    )
+    .bind(outsider)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO tenant_memberships (id, tenant_id, user_id, role, status) VALUES ('tm_prov', $1, $2, 'member', 'active')")
+        .bind(TENANT)
+        .bind(outsider)
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+    let ask = json!({"workspace_id": WORKSPACE, "substrate": "customer_private_worker"});
+    let (status, body) = command_as(&world, outsider, "ProvisionTarget", 600, ask.clone()).await;
+    assert_eq!(status, 403, "{body}");
+    // A person who can read the workspace and author work in it still may not register machines for it.
+    for (role, user) in [
+        ("viewer", "usr_01J8Z3K6F1N8VQ2X5W9YQZTSXF"),
+        ("editor", "usr_01J8Z3K6F1N8VQ2X5W9YQZTSXG"),
+    ] {
+        let mut tx = world.pool.begin().await.unwrap();
+        sqlx::query("INSERT INTO users (id, primary_email, display_name) VALUES ($1, $2, $3)")
+            .bind(user)
+            .bind(format!("{role}@example.com"))
+            .bind(role)
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO tenant_memberships (id, tenant_id, user_id, role, status) VALUES ($1, $2, $3, 'member', 'active')")
+            .bind(format!("tm_{role}"))
+            .bind(TENANT)
+            .bind(user)
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO workspace_memberships (id, tenant_id, workspace_id, user_id, role, status) VALUES ($1, $2, $3, $4, $5, 'active')")
+            .bind(format!("wm_{role}"))
+            .bind(TENANT)
+            .bind(WORKSPACE)
+            .bind(user)
+            .bind(role)
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        tx.commit().await.unwrap();
+        let (status, body) = command_as(&world, user, "ProvisionTarget", 610, ask.clone()).await;
+        assert_eq!(status, 403, "{role} registered a machine: {body}");
+    }
+
+    // Other substrates have flows of their own and are not answered here.
+    for (n, bad) in [
+        (
+            601,
+            json!({"workspace_id": WORKSPACE, "substrate": "cloud_microvm"}),
+        ),
+        (602, json!({"workspace_id": WORKSPACE})),
+        (603, json!({"substrate": "customer_private_worker"})),
+        (
+            604,
+            json!({"workspace_id": WORKSPACE, "substrate": "customer_private_worker", "target_class": "isolated_task_runtime"}),
+        ),
+    ] {
+        let (status, body) = command(&world, "ProvisionTarget", n, bad.clone()).await;
+        assert_eq!(status, 400, "{bad}: {body}");
+    }
+
+    // The workspace's administrator registers one, ready to be leased; asking again returns it. (The harness's own target
+    // is a worker target too, so it is the one that exists: no second is made.)
+    let (status, first) = command(&world, "ProvisionTarget", 605, ask.clone()).await;
+    assert_eq!(status, 200, "{first}");
+    assert_eq!(first["result"]["created"], false, "{first}");
+    assert_eq!(first["result"]["target_id"], world.target.as_str());
+
+    // In a workspace with none, it makes exactly one, even when asked at once.
+    let fresh = "ws_01J8Z3K6F1N8VQ2X5W9YPRVN01";
+    let mut tx = world.pool.begin().await.unwrap();
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO workspaces (id, tenant_id, name) VALUES ($1, $2, 'fresh')")
+        .bind(fresh)
+        .bind(TENANT)
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+    let ask = json!({"workspace_id": fresh, "substrate": "customer_private_worker"});
+    // Many asks at once, on a runtime with threads, in a few workspaces: each workspace ends with exactly one target.
+    let mut spare = Vec::new();
+    for n in 0..2u32 {
+        let id = format!("ws_01J8Z3K6F1N8VQ2X5W9YPRVN0{}", n + 2);
+        let mut tx = world.pool.begin().await.unwrap();
+        quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO workspaces (id, tenant_id, name) VALUES ($1, $2, 'spare')")
+            .bind(&id)
+            .bind(TENANT)
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        tx.commit().await.unwrap();
+        spare.push(id);
+    }
+    for (w, workspace) in spare.iter().enumerate() {
+        let mut asks = Vec::new();
+        for n in 0..8u32 {
+            let router = world.router.clone();
+            let params = json!({"workspace_id": workspace, "substrate": "customer_private_worker"});
+            asks.push(tokio::spawn(async move {
+                command_on(
+                    router,
+                    USER,
+                    "ProvisionTarget",
+                    700 + 10 * u32::try_from(w).unwrap() + n,
+                    params,
+                )
+                .await
+            }));
+        }
+        let mut targets = std::collections::BTreeSet::new();
+        for ask in asks {
+            let (status, body) = ask.await.unwrap();
+            assert_eq!(status, 200, "{body}");
+            targets.insert(body["result"]["target_id"].as_str().unwrap().to_string());
+        }
+        assert_eq!(targets.len(), 1, "{workspace}: eight asks made {targets:?}");
+        let mut tx = world.pool.begin().await.unwrap();
+        quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .unwrap();
+        let rows: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM execution_targets WHERE tenant_id = $1 AND workspace_id = $2",
+        )
+        .bind(TENANT)
+        .bind(workspace)
+        .fetch_one(&mut *tx)
+        .await
+        .unwrap();
+        assert_eq!(rows, 1, "{workspace}: {rows} target rows");
+    }
+    let (one, two) = tokio::join!(
+        command(&world, "ProvisionTarget", 606, ask.clone()),
+        command(&world, "ProvisionTarget", 607, ask.clone()),
+    );
+    assert_eq!((one.0, two.0), (200, 200), "{one:?} {two:?}");
+    assert_eq!(
+        one.1["result"]["target_id"], two.1["result"]["target_id"],
+        "two asks made two targets"
+    );
+    assert_eq!(
+        [&one.1["result"]["created"], &two.1["result"]["created"]]
+            .iter()
+            .filter(|created| created.as_bool() == Some(true))
+            .count(),
+        1
+    );
+    let target = one.1["result"]["target_id"].as_str().unwrap().to_string();
+    assert_eq!(
+        one.1["result"]["status"]
+            .as_str()
+            .map(str::to_string)
+            .or(two.1["result"]["status"].as_str().map(str::to_string))
+            .as_deref(),
+        Some("READY")
+    );
+    assert_eq!(
+        one.1["result"]["worker_socket"],
+        world
+            ._dir
+            .path()
+            .join("w.sock")
+            .display()
+            .to_string()
+            .as_str()
+    );
+    assert_eq!(one.1["result"]["attached"], false);
+
+    // A worker given what the answer names attaches to the target, and the hub holds its lease.
+    let (socket, tenant, name) = (world._dir.path().join("w.sock"), TENANT, target.clone());
+    tokio::spawn(async move {
+        let host = Arc::new(WorkerHost::new(
+            DecisionLog(Arc::default()),
+            UnattachedEvidence,
+        ));
+        let stream = tokio::net::UnixStream::connect(&socket).await.unwrap();
+        let (reader, writer) = stream.into_split();
+        let _ = serve(
+            host,
+            tenant,
+            &name,
+            Duration::from_secs(3600),
+            reader,
+            writer,
+        )
+        .await;
+    });
+    eventually("the worker attached to the registered target", || async {
+        world
+            .hub
+            .links()
+            .iter()
+            .any(|link| link.target_id == target)
+    })
+    .await;
+    let (status, again) = command(&world, "ProvisionTarget", 608, ask).await;
+    assert_eq!(status, 200, "{again}");
+    assert_eq!(
+        (
+            again["result"]["created"].as_bool(),
+            again["result"]["attached"].as_bool()
+        ),
+        (Some(false), Some(true))
     );
     drop_pool(&world.pool, &world.name).await;
 }

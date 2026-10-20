@@ -13,6 +13,7 @@ pub fn platform_defaults() -> Value {
         "unsigned_updates": false,
         "share_analytics": false,
         "retention_days": 365,
+        "autonomy_mode": "standard",
         "theme": "system"
     })
 }
@@ -28,6 +29,10 @@ pub const SECURITY_BOOL_DENY_WINS: &[&str] = &[
 /// Numeric security limits: the smallest value wins.
 pub const SECURITY_MIN_WINS: &[&str] = &["retention_days"];
 
+/// The autonomy mode (`standard`, `ask_for_consequences`, `ask_every_action`, `read_only`): the strictest layer wins, so a
+/// user can make their agent more careful than the workspace requires and never less.
+pub const SECURITY_AUTONOMY: &str = "autonomy_mode";
+
 /// Merge layers. Later layers override non-security keys; security keys never widen.
 #[must_use]
 pub fn merge_settings(layers: &[Value]) -> Value {
@@ -41,6 +46,16 @@ pub fn merge_settings(layers: &[Value]) -> Value {
                 let incoming = value.as_bool().unwrap_or(false);
                 let current = out.get(key).and_then(Value::as_bool).unwrap_or(true);
                 out.insert(key.clone(), Value::Bool(current && incoming));
+            } else if key == SECURITY_AUTONOMY {
+                let incoming =
+                    crate::policy::autonomy::mode_of(&json!({ SECURITY_AUTONOMY: value }));
+                let current = out
+                    .get(key)
+                    .map(|current| {
+                        crate::policy::autonomy::mode_of(&json!({ SECURITY_AUTONOMY: current }))
+                    })
+                    .unwrap_or_default();
+                out.insert(key.clone(), json!(current.strictest(incoming).as_str()));
             } else if SECURITY_MIN_WINS.contains(&key.as_str()) {
                 let incoming = value.as_u64().unwrap_or(u64::MAX);
                 let current = out.get(key).and_then(Value::as_u64).unwrap_or(u64::MAX);
@@ -151,6 +166,19 @@ pub fn validate_settings(settings: &Value) -> Result<(), String> {
                     }
                 }
             }
+            SECURITY_AUTONOMY => {
+                let named = value
+                    .as_str()
+                    .and_then(crate::policy::autonomy::AutonomyMode::parse);
+                if named.is_none() {
+                    return Err(format!(
+                        "autonomy_mode must be one of {}",
+                        crate::policy::autonomy::AutonomyMode::ALL
+                            .map(crate::policy::autonomy::AutonomyMode::as_str)
+                            .join(", ")
+                    ));
+                }
+            }
             key if SECURITY_BOOL_DENY_WINS.contains(&key) => {
                 if !value.is_boolean() {
                     return Err(format!("{key} must be a boolean"));
@@ -208,4 +236,62 @@ pub fn settings_effects(before: &Value, after: &Value) -> Vec<SettingsEffect> {
         ));
     }
     effects
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn the_autonomy_mode_merges_to_the_strictest_layer_and_no_layer_can_loosen_another() {
+        let tenant = json!({});
+        let workspace = json!({ "autonomy_mode": "ask_every_action" });
+        // A user can be more careful than the workspace, never less.
+        let careful = effective_settings(
+            &tenant,
+            &workspace,
+            &json!({ "autonomy_mode": "read_only" }),
+        );
+        assert_eq!(careful["autonomy_mode"], "read_only");
+        let loose =
+            effective_settings(&tenant, &workspace, &json!({ "autonomy_mode": "standard" }));
+        assert_eq!(loose["autonomy_mode"], "ask_every_action");
+        // The tenant's floor holds under every other layer; the platform default is standard.
+        let floor = effective_settings(
+            &json!({ "autonomy_mode": "ask_for_consequences" }),
+            &json!({}),
+            &json!({ "autonomy_mode": "standard" }),
+        );
+        assert_eq!(floor["autonomy_mode"], "ask_for_consequences");
+        assert_eq!(
+            effective_settings(&json!({}), &json!({}), &json!({}))["autonomy_mode"],
+            "standard"
+        );
+        // A layer holding something that is not a mode reads as the strictest, never as standard.
+        let damaged = effective_settings(&json!({}), &json!({ "autonomy_mode": 7 }), &json!({}));
+        assert_eq!(damaged["autonomy_mode"], "read_only");
+    }
+
+    #[test]
+    fn only_a_named_mode_is_accepted() {
+        for mode in crate::policy::autonomy::AutonomyMode::ALL {
+            assert!(validate_settings(&json!({ "autonomy_mode": mode.as_str() })).is_ok());
+        }
+        for bad in [
+            json!("autonomous"),
+            json!(""),
+            json!(1),
+            json!(null),
+            json!(true),
+        ] {
+            let refusal = validate_settings(&json!({ "autonomy_mode": bad.clone() }))
+                .expect_err("a mode that does not exist");
+            assert!(
+                refusal.contains("autonomy_mode must be one of"),
+                "{bad}: {refusal}"
+            );
+        }
+    }
 }

@@ -13,6 +13,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { browserInput, decodeBrowserFrame, inputForKey, USER_KEYS } from "../src/index.js";
+import { userKeyAllowed } from "../src/live/session.js";
 import { frameToPage, wheelToPage } from "../src/live/frames.js";
 import { DesktopBridge } from "../src/main/ipc.js";
 import { SessionFile } from "../src/main/session-file.js";
@@ -144,7 +145,7 @@ describe("the live view", () => {
 });
 
 describe("a key press", () => {
-  const press = (key: string, held: Partial<{ ctrlKey: boolean; metaKey: boolean; altKey: boolean }> = {}) =>
+  const press = (key: string, held: Partial<{ ctrlKey: boolean; metaKey: boolean; altKey: boolean; shiftKey: boolean }> = {}) =>
     inputForKey({ key, ctrlKey: false, metaKey: false, altKey: false, ...held });
 
   it("is a named key, a printable character as text, or nothing", () => {
@@ -158,13 +159,71 @@ describe("a key press", () => {
     expect(press("e\u0301")).toEqual({ kind: "text", text: "e\u0301" });
   });
 
-  it("stays with the person's own keyboard when it is a chord or not a key the page can be told", () => {
-    expect(press("c", { metaKey: true })).toBeNull();
-    expect(press("a", { ctrlKey: true })).toBeNull();
-    expect(press("Enter", { altKey: true })).toBeNull();
+  it("is a shortcut when a letter or digit is held with Alt, Control or Meta, named in lower case whatever Shift did", () => {
+    expect(press("c", { metaKey: true })).toEqual({ kind: "key", key: "Meta+c" });
+    expect(press("a", { ctrlKey: true })).toEqual({ kind: "key", key: "Control+a" });
+    expect(press("Z", { metaKey: true, shiftKey: true })).toEqual({ kind: "key", key: "Meta+Shift+z" });
+    expect(press("7", { altKey: true })).toEqual({ kind: "key", key: "Alt+7" });
+    expect(press("Enter", { altKey: true })).toEqual({ kind: "key", key: "Alt+Enter" });
+    expect(press("Tab", { shiftKey: true })).toEqual({ kind: "key", key: "Shift+Tab" });
+    // Shift alone only changes the character; it is text.
+    expect(press("A", { shiftKey: true })).toEqual({ kind: "text", text: "A" });
+  });
+
+  it("stays with the person's own keyboard when it is not a key the page can be told", () => {
+    // A shortcut on something that is not a letter or a digit, and a printable character that is not a shortcut.
+    expect(press("€", { metaKey: true })).toBeNull();
+    expect(press("F12", { ctrlKey: true })).toBeNull();
     for (const key of ["Shift", "Control", "Meta", "Alt", "CapsLock", "F5", "F12", "Dead", "Process", "Unidentified", ""]) {
       expect(press(key), key).toBeNull();
     }
+  });
+
+  it("is judged by the same rule as the server's", () => {
+    for (const allowed of ["Enter", "Shift+Tab", "Control+a", "Meta+Shift+z", "Alt+ArrowLeft", "Alt+Control+Delete", "Meta+7"]) {
+      expect(userKeyAllowed(allowed), allowed).toBe(true);
+    }
+    for (const refused of ["a", "Shift+a", "F12", "Control+F12", "Control+", "Control+Control+a", "Shift+Control+a", "Hyper+a", "Control+é", "Control+ab", ""]) {
+      expect(userKeyAllowed(refused), refused).toBe(false);
+    }
+  });
+});
+
+describe("a click, a drag and a held modifier", () => {
+  it("are built from exactly what the server accepts, sending only what differs from a plain click", () => {
+    expect(browserInput(SESSION, "T1", { kind: "click", x: 1, y: 2, button: "right" })).toEqual({
+      name: "SendBrowserInput",
+      params: { session_id: SESSION, tab_id: "T1", kind: "click", x: 1, y: 2, button: "right" },
+    });
+    expect(browserInput(SESSION, "T1", { kind: "click", x: 1, y: 2, clickCount: 2, modifiers: ["Shift"] })).toEqual({
+      name: "SendBrowserInput",
+      params: { session_id: SESSION, tab_id: "T1", kind: "click", x: 1, y: 2, click_count: 2, modifiers: ["Shift"] },
+    });
+    expect(browserInput(SESSION, "T1", { kind: "drag", fromX: 1, fromY: 2, toX: 30, toY: 40 })).toEqual({
+      name: "SendBrowserInput",
+      params: { session_id: SESSION, tab_id: "T1", kind: "drag", from_x: 1, from_y: 2, to_x: 30, to_y: 40 },
+    });
+    for (const bad of [
+      { kind: "click", x: 1, y: 2, button: "back" },
+      { kind: "click", x: 1, y: 2, clickCount: 4 },
+      { kind: "click", x: 1, y: 2, modifiers: ["Hyper"] },
+      { kind: "click", x: 1, y: 2, modifiers: ["Shift", "Shift"] },
+      { kind: "drag", fromX: 1, fromY: 2, toX: 30000, toY: 40 },
+      { kind: "drag", fromX: 1, fromY: 2, toX: Number.NaN, toY: 40 },
+    ]) {
+      expect(() => browserInput(SESSION, "T1", bad as never), JSON.stringify(bad)).toThrow();
+    }
+  });
+
+  it("travel the same channel, and are sent from the live view only while the person holds the session", () => {
+    const source = readFileSync(join(__dirname, "..", "src", "renderer", "Live.tsx"), "utf8");
+    for (const handler of ["onMouseDown={session.controller", "onMouseUp={session.controller", "onAuxClick={session.controller", "onContextMenu={session.controller"]) {
+      expect(source).toContain(`${handler} === "user" ?`);
+    }
+    // The local context menu is the remote page's to show: the right click is sent, not shown here.
+    expect(source).toContain("event.preventDefault?.()");
+    // The browser's own image drag would swallow the mouse-up that ends a drag on the picture (found in a real window).
+    expect(source).toContain("draggable={false}");
   });
 });
 
@@ -200,8 +259,9 @@ describe("the key and scroll commands", () => {
       name: "SendBrowserInput",
       params: { session_id: SESSION, tab_id: "T1", kind: "scroll", x: 5, y: 6, delta_x: 0, delta_y: -120 },
     });
-    expect(() => browserInput(SESSION, "T1", { kind: "key", key: "a" as never })).toThrow();
-    expect(() => browserInput(SESSION, "T1", { kind: "key", key: "Control+a" as never })).toThrow();
+    expect(() => browserInput(SESSION, "T1", { kind: "key", key: "a" })).toThrow();
+    expect(() => browserInput(SESSION, "T1", { kind: "key", key: "Control+F12" })).toThrow();
+    expect(browserInput(SESSION, "T1", { kind: "key", key: "Control+a" })).toMatchObject({ params: { key: "Control+a" } });
     expect(() => browserInput(SESSION, "T1", { kind: "scroll", x: -1, y: 0, deltaX: 0, deltaY: 1 })).toThrow();
     expect(() => browserInput(SESSION, "T1", { kind: "scroll", x: 0, y: 0, deltaX: 0, deltaY: 10001 })).toThrow();
     expect(() => browserInput(SESSION, "T1", { kind: "scroll", x: 0, y: 0, deltaX: Number.NaN, deltaY: 1 })).toThrow();

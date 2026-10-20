@@ -160,6 +160,23 @@ pub struct RecordedDecision {
     pub decided_at: String,
 }
 
+impl RecordedDecision {
+    /// This stored decision as the order a worker takes it in. The decision was minted by machine control for a user and
+    /// recorded with the session; sending it again to a worker that was away is not a new decision.
+    #[must_use]
+    pub fn to_receipt_wire(&self, session_id: &str) -> ReceiptWire {
+        ReceiptWire {
+            session_id: session_id.to_string(),
+            tab_id: self.tab_id.clone(),
+            kind: self.kind.as_str().to_string(),
+            subject: self.subject.clone(),
+            decision: self.decision.as_str().to_string(),
+            decided_by: self.decided_by.clone(),
+            decided_at: self.decided_at.clone(),
+        }
+    }
+}
+
 /// The session's guard state: the worker's last report, and the user's decisions.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct GuardState {

@@ -70,6 +70,9 @@ export const BRIDGE_CHANNELS = [
   "live.permission",
   "live.input",
   "live.attach",
+  "worker.status",
+  "worker.start",
+  "worker.stop",
   "computer.permissions",
   "computer.openSettings",
   "recording.status",
@@ -321,8 +324,13 @@ export function createPreloadApi(send: BridgeSend, subscribe: BridgeSubscribe = 
     resolveCertificate: (decision: { sessionId: string; tabId: string; certificateId: string; decision: "allow" | "deny" }) => send("live.certificate", decision),
     decidePermission: (decision: { sessionId: string; tabId: string; origin: string; permission: "camera" | "microphone"; decision: "allow" | "deny" }) => send("live.permission", decision),
     // A person's click or typed text in the browser session they hold (APP-007). The server refuses it unless they hold it.
-    sendBrowserInput: (input: { sessionId: string; tabId: string } & ({ kind: "click"; x: number; y: number } | { kind: "text"; text: string } | { kind: "key"; key: string } | { kind: "scroll"; x: number; y: number; deltaX: number; deltaY: number })) => send("live.input", input),
+    sendBrowserInput: (input: { sessionId: string; tabId: string } & ({ kind: "click"; x: number; y: number; button?: "left" | "middle" | "right"; clickCount?: 1 | 2 | 3; modifiers?: readonly string[] } | { kind: "drag"; fromX: number; fromY: number; toX: number; toY: number; modifiers?: readonly string[] } | { kind: "text"; text: string } | { kind: "key"; key: string } | { kind: "scroll"; x: number; y: number; deltaX: number; deltaY: number })) => send("live.input", input),
     attachLive: (targetId: string) => send("live.attach", { targetId }),
+    // The worker on this computer (EXEC-002): start it against a folder the person picks, see whether the server holds its
+    // lease, stop it. The page names no path and no program.
+    workerStatus: () => send("worker.status", {}),
+    startWorker: () => send("worker.start", {}),
+    stopWorker: () => send("worker.stop", {}),
     // Native computer permissions (ADP-002): the status the guide polls, and the one click that opens a
     // Privacy pane (a permission name, never a URL).
     computerPermissions: (request: { needs?: readonly string[]; pauseInput?: boolean } = {}) => send("computer.permissions", request),

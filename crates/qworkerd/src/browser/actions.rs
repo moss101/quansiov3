@@ -948,7 +948,7 @@ impl BrowserDriver {
         let sent = Arc::new(AtomicBool::new(false));
         let within = self.inner.config.action_timeout;
         let mut down = json!({
-            "type": if spec.text.is_some() { "keyDown" } else { "rawKeyDown" },
+            "type": if spec.text.is_some() && spec.modifiers & 0b111 == 0 { "keyDown" } else { "rawKeyDown" },
             "key": spec.key,
             "code": spec.code,
             "windowsVirtualKeyCode": spec.virtual_key,
@@ -1217,15 +1217,56 @@ impl BrowserDriver {
     /// # Errors
     /// Returns [`BrowserFault`] unless a user holds the session.
     pub async fn user_click(&self, tab_id: &str, x: f64, y: f64) -> Result<(), BrowserFault> {
+        self.user_press(tab_id, x, y, "left", 1, &[]).await
+    }
+
+    /// A click the user made: a button, the press's click count (1 to 3) and modifier keys held.
+    ///
+    /// # Errors
+    /// Returns [`BrowserFault`] for a point, button, count or modifier a person may not send, or unless a user holds the
+    /// session.
+    pub async fn user_press(
+        &self,
+        tab_id: &str,
+        x: f64,
+        y: f64,
+        button: &str,
+        click_count: u8,
+        modifiers: &[String],
+    ) -> Result<(), BrowserFault> {
+        use quansio_machine::gateway::wire::{
+            user_modifiers_allowed, user_point_allowed, USER_BUTTONS,
+        };
+        let invalid =
+            |detail: &str| BrowserFault::new(FaultCode::InvalidRequest, detail.to_string());
+        if !user_point_allowed(x) || !user_point_allowed(y) {
+            return Err(invalid("a click is at a point from 0 to 20000"));
+        }
+        if !USER_BUTTONS.contains(&button) {
+            return Err(invalid("a click is with the left, middle or right button"));
+        }
+        if !(1..=3).contains(&click_count) {
+            return Err(invalid("a click is a single, double or triple click"));
+        }
+        if !user_modifiers_allowed(modifiers) {
+            return Err(invalid(
+                "modifiers are Alt, Control, Meta or Shift, each once",
+            ));
+        }
+        let mask = modifier_mask(modifiers);
         let _turn = self.inner.queue.lock().await;
         self.require_user_control()?;
         let tab = self.tab(Some(tab_id))?;
         tab.state().last_user_gesture = Some(std::time::Instant::now());
-        for event in [
-            json!({ "type": "mouseMoved", "x": x, "y": y }),
-            json!({ "type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1 }),
-            json!({ "type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1 }),
-        ] {
+        let mut events = vec![json!({ "type": "mouseMoved", "x": x, "y": y, "modifiers": mask })];
+        // One press and release. The count is the press's own: the second click of a double click arrives as a click of
+        // count 2, after the first (count 1) was delivered, exactly as the browser itself sends them.
+        for kind in ["mousePressed", "mouseReleased"] {
+            events.push(json!({
+                "type": kind, "x": x, "y": y, "button": button, "clickCount": click_count, "modifiers": mask,
+            }));
+        }
+        for event in events {
             tab.conn
                 .call_within(
                     "Input.dispatchMouseEvent",
@@ -1237,6 +1278,64 @@ impl BrowserDriver {
         tab.state().invalidate_observations();
         // A popup or a handoff the click caused is judged by the follow-up tasks; give them a moment.
         tokio::time::sleep(Duration::from_millis(500)).await;
+        Ok(())
+    }
+
+    /// A drag the user made: the left button down at one point, moved in steps, and up at another.
+    ///
+    /// # Errors
+    /// Returns [`BrowserFault`] for a point or modifier a person may not send, or unless a user holds the session.
+    pub async fn user_drag(
+        &self,
+        tab_id: &str,
+        from: (f64, f64),
+        to: (f64, f64),
+        modifiers: &[String],
+    ) -> Result<(), BrowserFault> {
+        use quansio_machine::gateway::wire::{user_modifiers_allowed, user_point_allowed};
+        let invalid =
+            |detail: &str| BrowserFault::new(FaultCode::InvalidRequest, detail.to_string());
+        if ![from.0, from.1, to.0, to.1]
+            .into_iter()
+            .all(user_point_allowed)
+        {
+            return Err(invalid("a drag is between points from 0 to 20000"));
+        }
+        if !user_modifiers_allowed(modifiers) {
+            return Err(invalid(
+                "modifiers are Alt, Control, Meta or Shift, each once",
+            ));
+        }
+        let mask = modifier_mask(modifiers);
+        let _turn = self.inner.queue.lock().await;
+        self.require_user_control()?;
+        let tab = self.tab(Some(tab_id))?;
+        tab.state().last_user_gesture = Some(std::time::Instant::now());
+        const STEPS: u32 = 8;
+        let mut events = vec![
+            json!({ "type": "mouseMoved", "x": from.0, "y": from.1, "modifiers": mask }),
+            json!({ "type": "mousePressed", "x": from.0, "y": from.1, "button": "left", "buttons": 1, "clickCount": 1, "modifiers": mask }),
+        ];
+        for step in 1..=STEPS {
+            let along = f64::from(step) / f64::from(STEPS);
+            events.push(json!({
+                "type": "mouseMoved",
+                "x": from.0 + (to.0 - from.0) * along,
+                "y": from.1 + (to.1 - from.1) * along,
+                "button": "left", "buttons": 1, "modifiers": mask,
+            }));
+        }
+        events.push(json!({ "type": "mouseReleased", "x": to.0, "y": to.1, "button": "left", "buttons": 0, "clickCount": 1, "modifiers": mask }));
+        for event in events {
+            tab.conn
+                .call_within(
+                    "Input.dispatchMouseEvent",
+                    event,
+                    self.inner.config.action_timeout,
+                )
+                .await?;
+        }
+        tab.state().invalidate_observations();
         Ok(())
     }
 
@@ -1260,13 +1359,14 @@ impl BrowserDriver {
         Ok(())
     }
 
-    /// A named key the user pressed while they hold the session. Only the keys a person may send
-    /// ([`quansio_machine::gateway::wire::USER_KEYS`]): printable characters are text, and no chord is accepted.
+    /// A key the user pressed while they hold the session, perhaps with modifiers: a named key of
+    /// [`quansio_machine::gateway::wire::USER_KEYS`], or a letter or digit held with `Alt`, `Control` or `Meta`
+    /// ([`quansio_machine::gateway::wire::user_key_allowed`]). Other printable characters are text.
     ///
     /// # Errors
     /// Returns [`BrowserFault`] for any other key, or unless a user holds the session.
     pub async fn user_key(&self, tab_id: &str, key_name: &str) -> Result<(), BrowserFault> {
-        if !quansio_machine::gateway::wire::USER_KEYS.contains(&key_name) {
+        if !quansio_machine::gateway::wire::user_key_allowed(key_name) {
             return Err(BrowserFault::new(
                 FaultCode::InvalidRequest,
                 format!("{key_name:?} is not a key a person can send"),
@@ -1279,14 +1379,15 @@ impl BrowserDriver {
         tab.state().last_user_gesture = Some(std::time::Instant::now());
         let mut down = json!({
             "type": if spec.text.is_some() { "keyDown" } else { "rawKeyDown" },
-            "key": spec.key, "code": spec.code, "windowsVirtualKeyCode": spec.virtual_key, "modifiers": 0,
+            "key": spec.key, "code": spec.code, "windowsVirtualKeyCode": spec.virtual_key, "modifiers": spec.modifiers,
         });
-        if let Some(text) = &spec.text {
+        // A chord is a shortcut, not typed text: the character is sent as text only when nothing but Shift is held.
+        if let Some(text) = spec.text.as_ref().filter(|_| spec.modifiers & 0b111 == 0) {
             down["text"] = json!(text);
         }
         let up = json!({
             "type": "keyUp",
-            "key": spec.key, "code": spec.code, "windowsVirtualKeyCode": spec.virtual_key, "modifiers": 0,
+            "key": spec.key, "code": spec.code, "windowsVirtualKeyCode": spec.virtual_key, "modifiers": spec.modifiers,
         });
         for event in [down, up] {
             tab.conn
@@ -1408,6 +1509,19 @@ const ACTIVE_ELEMENT_JS: &str = r#"(() => {
     editable: !!(el.isContentEditable || /^(input|textarea|select)$/i.test(el.tagName || ""))
   };
 })()"#;
+
+/// The CDP modifier bitmask for the named modifiers (`Alt` 1, `Control` 2, `Meta` 4, `Shift` 8).
+fn modifier_mask(modifiers: &[String]) -> u32 {
+    modifiers.iter().fold(0, |mask, modifier| {
+        mask | match modifier.as_str() {
+            "Alt" => 1,
+            "Control" => 2,
+            "Meta" => 4,
+            "Shift" => 8,
+            _ => 0,
+        }
+    })
+}
 
 /// A key a model may press, resolved to the CDP fields.
 struct KeySpec {

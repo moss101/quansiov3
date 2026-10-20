@@ -56,6 +56,9 @@ struct Args {
     live: bool,
     /// Also register a READY `customer_private_worker` target a `qworkerd` can attach to.
     worker: bool,
+    /// Also let agents open pages: `network.egress.new_destination` and `read.external` are allowed, so a
+    /// `browser.navigate` runs on the worker without parking for an approval.
+    browse: bool,
     /// Extra users with roles: `--member <usr_…>:<tenant role>:<workspace role>`.
     members: Vec<(String, String, String)>,
 }
@@ -114,6 +117,7 @@ fn parse_args() -> Result<Args, String> {
         intelligence: false,
         live: false,
         worker: false,
+        browse: false,
         members: Vec::new(),
     };
     while let Some(flag) = args.next() {
@@ -131,6 +135,10 @@ fn parse_args() -> Result<Args, String> {
         }
         if flag == "--worker" {
             parsed.worker = true;
+            continue;
+        }
+        if flag == "--browse" {
+            parsed.browse = true;
             continue;
         }
         let value = args.next().ok_or_else(|| format!("{flag} needs a value"))?;
@@ -294,6 +302,10 @@ async fn run(args: Args) -> Result<(), String> {
         // the runtime classifies fs.write as the host class, so both are governed.
         rules.push(json!({ "effect_class": "fs.write.workspace", "resource": { "kind": "fs", "selector": "**" }, "decision": "ask" }));
         rules.push(json!({ "effect_class": "fs.write.host", "resource": { "kind": "fs", "selector": "**" }, "decision": "ask" }));
+    }
+    if args.browse {
+        rules.push(json!({ "effect_class": "network.egress.new_destination", "resource": { "kind": "domain", "selector": "*" }, "decision": "allow" }));
+        rules.push(json!({ "effect_class": "read.external", "resource": { "kind": "domain", "selector": "*" }, "decision": "allow" }));
     }
     let rules = json!(rules);
     sqlx::query(

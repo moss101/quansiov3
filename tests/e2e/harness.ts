@@ -19,7 +19,7 @@
 
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { generateKeyPairSync } from "node:crypto";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -36,6 +36,9 @@ const ELECTRON = join(DESKTOP, "node_modules", "electron", "dist", "Electron.app
 const DESKTOP_MAIN = join(DESKTOP, "dist", "app", "main.cjs");
 const WEB_BUNDLE = join(ROOT, "apps", "web", "dist", "web");
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const QWORKERD_BIN = process.env["QUANSIO_TEST_QWORKERD_BIN"]?.trim() || join(ROOT, "target", "debug", "qworkerd");
+/** The READY `customer_private_worker` target `quansio-dev-seed --worker` registers. */
+export const WORKER_TARGET = "tgt_01J8Z3K6F1N8VQ2X5W9Y0E2WK1";
 
 export const TENANT = "tn_01J8Z3K6F1N8VQ2X5W9Y0QA8AA";
 export const OWNER = "usr_01J8Z3K6F1N8VQ2X5W9Y0QA8AA";
@@ -55,6 +58,9 @@ export function serverBlocked(): string | null {
   }
   if (!existsSync(SERVER_BIN) || !existsSync(SEED_BIN)) {
     return `BLOCKED_EXTERNAL: ${SERVER_BIN} and ${SEED_BIN} are needed; build them with cargo build -p quansio-server --bins`;
+  }
+  if (!existsSync(QWORKERD_BIN)) {
+    return `BLOCKED_EXTERNAL: ${QWORKERD_BIN} is needed (the stack runs a real worker); build it with cargo build -p quansio-qworkerd`;
   }
   return null;
 }
@@ -113,7 +119,12 @@ export async function waitFor<T>(probe: () => T | undefined | null | false | Pro
   }
 }
 
-/** A scratch database and the server over it. */
+export interface StackOptions {
+  /** Also let agents open pages (`quansio-dev-seed --browse`) and give the worker a real Chrome. */
+  readonly browse?: boolean;
+}
+
+/** A scratch database and the server over it, with a real worker attached (agents' files and browsers run on it). */
 export class Stack {
   readonly database: string;
   readonly databaseUrl: string;
@@ -123,6 +134,11 @@ export class Stack {
   /** A stable session-signing key, as a deployment configures one, so sessions survive a restart. */
   readonly #signingKey = generateKeyPairSync("ec", { namedCurve: "P-256" }).privateKey.export({ type: "pkcs8", format: "der" }).toString("base64");
   #child: ChildProcess | null = null;
+  /** Holds the worker socket, and the folder the worker works in. */
+  readonly workerDir = mkdtempSync(join("/tmp", "qa-w-"));
+  readonly workerRoot = realpathSync(mkdtempSync(join(tmpdir(), "qa-wroot-")));
+  readonly workerSocket = join(this.workerDir, "w.sock");
+  #worker: ChildProcess | null = null;
 
   private constructor(database: string, databaseUrl: string, port: number) {
     this.database = database;
@@ -131,13 +147,13 @@ export class Stack {
     this.origin = `http://127.0.0.1:${String(port)}`;
   }
 
-  static async start(label: string): Promise<Stack> {
+  static async start(label: string, options: StackOptions = {}): Promise<Stack> {
     const database = `quansio_qa008_${label}_${String(process.pid)}`;
     const output = execFileSync(
       SEED_BIN,
       [
         "create", "--database", database, "--tenant", TENANT, "--user", OWNER, "--workspace", WORKSPACE, "--node", NODE,
-        "--ask-writes", "--live",
+        "--ask-writes", "--live", "--worker", ...(options.browse ? ["--browse"] : []),
         "--member", `${APPROVER}:member:approver`,
         "--member", `${VIEWER}:member:viewer`,
       ],
@@ -149,7 +165,25 @@ export class Stack {
     }
     const stack = new Stack(database, line.slice("database_url=".length), await freePort());
     await stack.up();
+    await stack.attachWorker(options.browse === true);
     return stack;
+  }
+
+  /** Dial a real `qworkerd` in on the stack's worker socket, with a real Chrome when asked; resolves once the hub holds its lease. */
+  async attachWorker(withBrowser: boolean): Promise<void> {
+    mkdirSync(join(this.workerDir, "state"), { recursive: true });
+    const args = ["--socket", this.workerSocket, "--tenant", TENANT, "--target", WORKER_TARGET, "--workspace-root", this.workerRoot];
+    if (withBrowser) {
+      args.push("--chrome", CHROME, "--state-dir", join(this.workerDir, "state"), "--allow-private-network");
+    }
+    this.#worker = spawn(QWORKERD_BIN, args, { stdio: ["ignore", "ignore", "pipe"] });
+    this.#worker.stderr?.on("data", (chunk: Buffer) => this.log.push(`[qworkerd] ${chunk.toString()}`));
+    await waitFor(() => {
+      if (this.#worker?.exitCode !== null && this.#worker?.exitCode !== undefined) {
+        throw new Error(`qworkerd exited with ${String(this.#worker.exitCode)}: ${this.log.join("").slice(-1000)}`);
+      }
+      return this.log.join("").includes(`worker attached for ${WORKER_TARGET}`);
+    }, "the worker to attach", 60_000);
   }
 
   get running(): boolean {
@@ -165,6 +199,7 @@ export class Stack {
       QUANSIO_APPROVAL_SIGNING_KEY: "qa008-signing-key",
       QUANSIO_AUTH_SIGNING_KEY_PKCS8_B64: this.#signingKey,
       QUANSIO_WEB_ROOT: WEB_BUNDLE,
+      QUANSIO_WORKER_SOCKET: this.workerSocket,
       QUANSIO_OBJECT_STORE: "1",
       QUANSIO_SCHEDULER_INTERVAL_MS: "250",
     };
@@ -197,7 +232,10 @@ export class Stack {
   }
 
   async drop(): Promise<void> {
+    this.#worker?.kill("SIGKILL");
     await this.down();
+    rmSync(this.workerDir, { recursive: true, force: true });
+    rmSync(this.workerRoot, { recursive: true, force: true });
     try {
       execFileSync(SEED_BIN, ["drop", "--database", this.database], { env: { ...process.env, QUANSIO_DATABASE_URL: ADMIN_URL } });
     } catch {

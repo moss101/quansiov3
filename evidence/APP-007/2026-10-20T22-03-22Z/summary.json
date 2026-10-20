@@ -1,0 +1,197 @@
+{
+  "task_id": "APP-007",
+  "git_commit": "7bb0ff45bc9eade0ea891f364af69e8b04856b70",
+  "recorded_at": "2026-10-20T22:56:24Z",
+  "commands": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/clippy.log"
+    },
+    {
+      "command": "gen_contracts.py --check --only catalog,openapi,sdk,ts,rust  # zero drift",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/contracts.log"
+    },
+    {
+      "command": "ruff check, ruff format --check, mypy over python/intelligence",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/python-static.log"
+    },
+    {
+      "command": "pytest python/tests  # 857 passed, 18 skipped (the live-provider suites, BLOCKED_EXTERNAL without credentials). New: test_model_gateway_pictures.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/python-tests.log"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # clean clone",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/architecture-clean-clone.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1361 passed, 0 failed. Real PostgreSQL, a real Unix socket, a real qworkerd, a real Chrome. New: worker_live.rs (pointer, chords, channel authorization, decision replay, ProvisionTarget roles/idempotence/concurrency, CancelRun), turn_loop.rs (autonomy modes through the turn loop), routines.rs (observing routines), policy::autonomy and identity::settings unit tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/full-crates.log"
+    },
+    {
+      "command": "cd apps/desktop && tsc --noEmit && eslint src tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/desktop-static.log"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # 694 passed, 4 skipped (the recorder suites: the native recorder is BLOCKED_EXTERNAL, as before). New: worker-launcher.test.ts, worker-launcher.e2e.test.ts (real server, real daemon), live-input.test.ts, settings-form.test.ts, automation-triggers.test.ts",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/desktop-full.log"
+    },
+    {
+      "command": "vitest run --config tests/e2e/vitest.config.ts --no-file-parallelism  # QA-008 on the built desktop, web bundle, real server, real worker and Chrome: 40 passed. New: live-worker.e2e.spec.ts (the viewer in a real Electron window: show, take over, click, right-click, double-click, drag, type, hand back). The stack now runs a real worker, which fixed approves-an-effect and the activity-indicator journeys that had no worker to run the effect",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/qa008-e2e.log"
+    },
+    {
+      "command": "mutation checks: 22 mutants KILLED across the Rust, desktop and real-window suites; two (a worker target registered without the lock; anyone may register one) first SURVIVED the registration tests, which were strengthened (eight concurrent asks on a runtime with threads; a viewer and an editor refused) and then KILLED; every mutant compiles, every restored tree is identical, every control passes",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "gen_contracts.py --check --only catalog,openapi,sdk,ts,rust  # zero drift",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "ruff check, ruff format --check, mypy over python/intelligence",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pytest python/tests  # 857 passed, 18 skipped (the live-provider suites, BLOCKED_EXTERNAL without credentials). New: test_model_gateway_pictures.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # clean clone",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1361 passed, 0 failed. Real PostgreSQL, a real Unix socket, a real qworkerd, a real Chrome. New: worker_live.rs (pointer, chords, channel authorization, decision replay, ProvisionTarget roles/idempotence/concurrency, CancelRun), turn_loop.rs (autonomy modes through the turn loop), routines.rs (observing routines), policy::autonomy and identity::settings unit tests",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && tsc --noEmit && eslint src tests",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # 694 passed, 4 skipped (the recorder suites: the native recorder is BLOCKED_EXTERNAL, as before). New: worker-launcher.test.ts, worker-launcher.e2e.test.ts (real server, real daemon), live-input.test.ts, settings-form.test.ts, automation-triggers.test.ts",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "vitest run --config tests/e2e/vitest.config.ts --no-file-parallelism  # QA-008 on the built desktop, web bundle, real server, real worker and Chrome: 40 passed. New: live-worker.e2e.spec.ts (the viewer in a real Electron window: show, take over, click, right-click, double-click, drag, type, hand back). The stack now runs a real worker, which fixed approves-an-effect and the activity-indicator journeys that had no worker to run the effect",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks: 22 mutants KILLED across the Rust, desktop and real-window suites; two (a worker target registered without the lock; anyone may register one) first SURVIVED the registration tests, which were strengthened (eight concurrent asks on a runtime with threads; a viewer and an editor refused) and then KILLED; every mutant compiles, every restored tree is identical, every control passes",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/RECONCILIATION.md",
+      "sha256": "57b12904b5a61079f46a2cf9b872359679cd7480f1784a9a341d4d28458748ce",
+      "bytes": 2818
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/architecture-clean-clone.log",
+      "sha256": "f86a990aff8b89ac8750e782a4c3233e1b9e2131b83871cbcace3139e7a4eb79",
+      "bytes": 322
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/build-bins.log",
+      "sha256": "8ff208724cf0c04081c037b021a39dac4e914bed652a41bbea2f278fdd6433e0",
+      "bytes": 72
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/clippy.log",
+      "sha256": "dc504fe6c24cd17712db502c16c292bae032b35477f3675698ee4ca242671aa0",
+      "bytes": 84
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/contracts.log",
+      "sha256": "a44fddaa61891f9cdff2244740da74007436eb6336b28e3547f5fbd0c074ea32",
+      "bytes": 80
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/desktop-full.log",
+      "sha256": "e7c90164dd2d9a3f657857a3e0bd02d82b7aadd910d5c510e3992b648fe0f56e",
+      "bytes": 8817
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/desktop-static.log",
+      "sha256": "ba352ec06cc2bfa2b0e8d4ae06c8f2986741fc3f54db13cff81190402442f7b1",
+      "bytes": 20
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/fmt.log",
+      "sha256": "8bc7b290341d8b4d3fbdc6c48bffc1dac5c9e8a41608403e62b6f2a0c1af9957",
+      "bytes": 9
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/full-crates.log",
+      "sha256": "0566788ec04a0b9475866a927fe1919b4ff0de90104e389da70479d72e9c43d9",
+      "bytes": 137309
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/mutation-checks.log",
+      "sha256": "a87a275476a1ed28a7e3a5763581a2ff99e960c0c79da8d790d297426d2280be",
+      "bytes": 4807
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/python-static.log",
+      "sha256": "191782181296f40c697a710d771fc76420a717cdfdef1f5d13558b6da579a23f",
+      "bytes": 111
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/python-tests.log",
+      "sha256": "55c91670d8d66326d1205ad774df5ff1abdccb4d534b720051274f6c0653a9c1",
+      "bytes": 1073
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/qa008-e2e.log",
+      "sha256": "c71baf0a9a368f2b1dd4eb087b95ee9e08e477141f59d9e6b3287420beb121f1",
+      "bytes": 6134
+    }
+  ]
+}

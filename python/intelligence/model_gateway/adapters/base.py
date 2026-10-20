@@ -175,6 +175,36 @@ def assert_stable_prefix(messages: Iterable[RenderedMessageView]) -> None:
         volatile_seen = True
 
 
+OPTIONAL_IMAGE_OMITTED = (
+    "[A picture was captured here and is not shown: the selected model cannot see pictures.]"
+)
+
+
+def degrade_optional_images(
+    messages: Iterable[RenderedMessageView], capabilities: frozenset[str]
+) -> tuple[RenderedMessageView, ...]:
+    """Tell a model that cannot see pictures that one was left out, instead of failing the call.
+
+    Only an image the runtime marked `optional` is ever replaced (a screenshot beside the text that already
+    describes the page); a required image on a model without `vision` still fails closed in
+    `assert_modality_capabilities`. The
+    replacement is a sentence in the model's context, so the model knows what it was not shown.
+    """
+    if "vision" in capabilities:
+        return tuple(messages)
+    return tuple(
+        RenderedMessageView(
+            role=message.role,
+            trust_level=message.trust_level,
+            cache_hint=message.cache_hint,
+            content=message.content.without_optional_images(OPTIONAL_IMAGE_OMITTED)
+            if message.content.has_optional_image
+            else message.content,
+        )
+        for message in messages
+    )
+
+
 def assert_modality_capabilities(
     messages: Iterable[RenderedMessageView], capabilities: frozenset[str]
 ) -> None:

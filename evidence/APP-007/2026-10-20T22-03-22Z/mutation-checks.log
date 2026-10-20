@@ -1,0 +1,61 @@
+## Rust mutants (first pass)
+Y1 a right click is sent as a left click: COMPILES
+Y1 a right click is sent as a left click: KILLED (never: the page saw a right click)
+Y2 a drag sends no events: COMPILES
+Y2 a drag sends no events: KILLED (never: the page saw a drag)
+Y3 any modified key is allowed: COMPILES
+Y3 any modified key is allowed: KILLED (Control+F12 should be refused)
+Y4 a target channel is open to any member: COMPILES
+Y4 a target channel is open to any member: KILLED (an answer)
+Y5 decisions made while away are never replayed: COMPILES
+Y5 decisions made while away are never replayed: KILLED (never: the worker was told what was decided while it was away)
+Y6 a worker target is registered without the lock: COMPILES
+Y6 a worker target is registered without the lock: SURVIVED <-- gap
+Y7 anyone may register a worker target: COMPILES
+Y7 anyone may register a worker target: SURVIVED <-- gap
+Y8 ask_every_action never asks: COMPILES
+Y8 ask_every_action never asks: KILLED (assertion failed: AutonomyMode::AskEveryAction.asks(1) &&)
+Y9 read_only denies nothing: COMPILES
+Y9 read_only denies nothing: KILLED (assertion failed: AutonomyMode::ReadOnly.denies(1) && AutonomyMode::ReadOnly.denies(4))
+Y10 a standing rule can undo the mode's ask: COMPILES
+Y10 a standing rule can undo the mode's ask: KILLED (PolicyOutcome { decision: Allow, reason: AllowedByStandingRule, catalog_tier: Tier(3), effective_tier: Tier(3), escalated: false, approval_required: f)
+Y11 the mode is not applied when a call is evaluated: COMPILES
+Y11 the mode is not applied when a call is evaluated: KILLED (assertion `left == right` failed: only the read reached a host: [("fs.read", "completed", Some(Object {"ok": Bool(true), "tool": String("fs.read")})),)
+Y12 the last layer wins instead of the strictest: COMPILES
+Y12 the last layer wins instead of the strictest: KILLED (assertion `left == right` failed)
+Y13 an observing routine's run is not narrowed: COMPILES
+Y13 an observing routine's run is not narrowed: KILLED (an observing run was given ["read.internal", "read.external", "fs.write.workspace", "message.send"])
+Y14 a full replacement forgets the observe mode: COMPILES
+Y14 a full replacement forgets the observe mode: KILLED (assertion `left == right` failed: {"accepted_at":"2026-10-20T21:56:30.953480Z","command_id":"cmd_01J8Z3K6F1N8VQ2X5W9Y0R0008","replayed":false,"result")
+RESTORED: identical to the committed change
+CONTROL (restored): passes
+
+## Y6 and Y7 again, against the stronger registration tests
+Y6 a worker target is registered without the lock: COMPILES
+Y6 a worker target is registered without the lock: KILLED (assertion `left == right` failed: ws_01J8Z3K6F1N8VQ2X5W9YPRVN02: eight asks made {"tgt_01M5DN8DX07Y3DSF4TJC6VK57A", "tgt_01M5DN8DX1HWZGTVWZT3T0G5P5", )
+Y7 anyone may register a worker target: COMPILES
+Y7 anyone may register a worker target: KILLED (assertion `left == right` failed: viewer registered a machine: {"accepted_at":"2026-10-20T22:01:06.030632Z","command_id":"cmd_01J8Z3K6F1N8VQ2X5W9Y0E06)
+RESTORED: identical to the committed change
+CONTROL (restored): passes
+
+## Desktop mutants
+T1 the shell's own data folder is accepted: COMPILES
+T1 the shell's own data folder is accepted: KILLED (     → promise resolved "{ available: true, reason: null, …(7) }" instead of rejecting)
+T2 the home folder is accepted: COMPILES
+T2 the home folder is accepted: KILLED (     → /Users/mohsin: expected Error: must not be asked to match object { code: 'VALIDATION_SCHEMA' })
+T3 the launcher does not wait for the server to hold the lease: COMPILES
+T4 a second start while one runs is allowed: COMPILES
+T4 a second start while one runs is allowed: KILLED (     → promise resolved "{ available: true, reason: null, …(7) }" instead of rejecting)
+T5 a shortcut is not forwarded: COMPILES
+T5 a shortcut is not forwarded: KILLED (     → expected null to deeply equal { kind: 'key', key: 'Meta+c' })
+T6 a click may carry any modifier: COMPILES
+T6 a click may carry any modifier: KILLED (     → {"kind":"click","x":1,"y":2,"modifiers":["Hyper"]}: expected [Function] to throw an error)
+T7 the key rule accepts a bare letter: COMPILES
+T7 the key rule accepts a bare letter: KILLED (     → a: expected true to be false // Object.is equality)
+RESTORED: identical to the committed change
+CONTROL (restored): passes
+T3 the launcher does not wait for the server to hold the lease: COMPILES
+T3 the launcher does not wait for the server to hold the lease: KILLED (     → promise resolved "{ available: true, reason: null, …(7) }" instead of rejecting)
+RESTORED: identical to the committed change
+
+## Real-window mutant (found and fixed by the Electron E2E): the picture draggable again -> the page never sees the drag (KILLED: timed out waiting for the page to see the drag; restored)

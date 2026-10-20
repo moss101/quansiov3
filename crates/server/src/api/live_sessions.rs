@@ -33,6 +33,7 @@ use quansio_machine::control::browser::{
     DecisionReceipt, SessionStatus,
 };
 use quansio_machine::control::terminal::{TerminalSession, TerminalStore};
+use quansio_machine::gateway::wire;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::{PgConnection, Postgres, Row, Transaction};
@@ -643,6 +644,21 @@ async fn relay_control(state: &ApiState, tenant_id: &str, answer: &Value, holder
     sent
 }
 
+/// The modifier keys held with an input: an array of names from [`wire::USER_MODIFIERS`], each at most once.
+fn modifiers(params: &Value, invalid: &dyn Fn(&str) -> ApiError) -> Result<Vec<String>, ApiError> {
+    let names = match params.get("modifiers") {
+        None | Some(Value::Null) => return Ok(Vec::new()),
+        Some(Value::Array(items)) => items
+            .iter()
+            .map(|item| item.as_str().map(str::to_string))
+            .collect::<Option<Vec<_>>>(),
+        Some(_) => None,
+    };
+    names
+        .filter(|names| wire::user_modifiers_allowed(names))
+        .ok_or_else(|| invalid("modifiers are Alt, Control, Meta or Shift, each at most once"))
+}
+
 /// `SendBrowserInput {session_id, tab_id, kind: "click" | "text", x?, y?, text?}`: a person's click or typing in a
 /// browser session they hold (DOMAIN.md §8.4.2).
 ///
@@ -701,14 +717,47 @@ pub async fn send_browser_input(
                 params
                     .get(key)
                     .and_then(Value::as_f64)
-                    .filter(|value| value.is_finite() && (0.0..=20_000.0).contains(value))
+                    .filter(|value| wire::user_point_allowed(*value))
                     .ok_or_else(|| invalid(&format!("{key} is a number from 0 to 20000")))
+            };
+            let button = text("button").unwrap_or("left");
+            if !wire::USER_BUTTONS.contains(&button) {
+                return Err(invalid("button is left, middle or right"));
+            }
+            let click_count = match params.get("click_count") {
+                None | Some(Value::Null) => 1,
+                Some(value) => value
+                    .as_u64()
+                    .filter(|count| (1..=3).contains(count))
+                    .and_then(|count| u8::try_from(count).ok())
+                    .ok_or_else(|| invalid("click_count is 1, 2 or 3"))?,
             };
             BrowserOrder::UserClick {
                 session_id: session_id.clone(),
                 tab_id,
                 x: coordinate("x")?,
                 y: coordinate("y")?,
+                button: button.to_string(),
+                click_count,
+                modifiers: modifiers(params, &invalid)?,
+            }
+        }
+        Some("drag") => {
+            let coordinate = |key: &str| {
+                params
+                    .get(key)
+                    .and_then(Value::as_f64)
+                    .filter(|value| wire::user_point_allowed(*value))
+                    .ok_or_else(|| invalid(&format!("{key} is a number from 0 to 20000")))
+            };
+            BrowserOrder::UserDrag {
+                session_id: session_id.clone(),
+                tab_id,
+                from_x: coordinate("from_x")?,
+                from_y: coordinate("from_y")?,
+                to_x: coordinate("to_x")?,
+                to_y: coordinate("to_y")?,
+                modifiers: modifiers(params, &invalid)?,
             }
         }
         Some("text") => {
@@ -724,10 +773,11 @@ pub async fn send_browser_input(
         }
         Some("key") => {
             let named = text("key").ok_or_else(|| invalid("key is required"))?;
-            if !quansio_machine::gateway::wire::USER_KEYS.contains(&named) {
+            if !wire::user_key_allowed(named) {
                 return Err(invalid(&format!(
-                    "key is one of {}; printable characters are sent as text",
-                    quansio_machine::gateway::wire::USER_KEYS.join(", ")
+                    "key is one of {}, optionally with modifiers (Shift+Tab), or a letter or digit with Alt, Control or Meta \
+                     (Control+a); printable characters are sent as text",
+                    wire::USER_KEYS.join(", ")
                 )));
             }
             BrowserOrder::UserKey {
@@ -754,7 +804,7 @@ pub async fn send_browser_input(
                 delta_y: number("delta_y", -limit, limit)?,
             }
         }
-        _ => return Err(invalid("kind is click, text, key or scroll")),
+        _ => return Err(invalid("kind is click, drag, text, key or scroll")),
     };
     let workspace_id = workspace_of(
         state,
