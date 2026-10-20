@@ -48,6 +48,7 @@ pub mod threads;
 pub mod trust;
 pub mod web;
 pub mod webhooks;
+pub mod worker_targets;
 pub mod workflow;
 pub mod workgraph;
 

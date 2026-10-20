@@ -729,6 +729,17 @@ async fn dispatch(
             ))
             .await?
         }
+        "ProvisionTarget" => {
+            Box::pin(super::worker_targets::provision_target(
+                state,
+                scope,
+                identity,
+                user_id.as_deref(),
+                &request.params,
+                correlation,
+            ))
+            .await?
+        }
         "RequestTakeover" => {
             Box::pin(super::live_sessions::request_takeover(
                 state,

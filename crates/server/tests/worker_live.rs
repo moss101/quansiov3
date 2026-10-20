@@ -341,12 +341,16 @@ fn command_id(n: u32) -> String {
 }
 
 async fn command(world: &World, name: &str, id: u32, params: Value) -> (u16, Value) {
+    command_as(world, USER, name, id, params).await
+}
+
+async fn command_as(world: &World, user: &str, name: &str, id: u32, params: Value) -> (u16, Value) {
     use tower::ServiceExt;
     let request = axum::http::Request::builder()
         .method("POST")
         .uri(format!("/v1/commands/{name}"))
         .header("x-quansio-tenant", TENANT)
-        .header("x-quansio-user", USER)
+        .header("x-quansio-user", user)
         .header("content-type", "application/json")
         .body(axum::body::Body::from(
             json!({ "command_id": command_id(id), "params": params }).to_string(),
@@ -1728,6 +1732,149 @@ async fn a_decision_made_while_the_worker_was_away_is_told_to_it_when_it_attache
             ),
         ],
         "oldest first, so the last word on a subject is the one the worker ends with"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn a_person_registers_a_worker_target_once_and_a_worker_can_then_attach_to_it() {
+    let Some(world) = world("wl_provision", false).await else {
+        return blocked_marker();
+    };
+    // A member of the tenant with no part in the workspace may not register machines for it.
+    let outsider = "usr_01J8Z3K6F1N8VQ2X5W9YQZTSXE";
+    let mut tx = world.pool.begin().await.unwrap();
+    sqlx::query(
+        "INSERT INTO users (id, primary_email, display_name) VALUES ($1, 'p@example.com', 'p')",
+    )
+    .bind(outsider)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO tenant_memberships (id, tenant_id, user_id, role, status) VALUES ('tm_prov', $1, $2, 'member', 'active')")
+        .bind(TENANT)
+        .bind(outsider)
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+    let ask = json!({"workspace_id": WORKSPACE, "substrate": "customer_private_worker"});
+    let (status, body) = command_as(&world, outsider, "ProvisionTarget", 600, ask.clone()).await;
+    assert_eq!(status, 403, "{body}");
+
+    // Other substrates have flows of their own and are not answered here.
+    for (n, bad) in [
+        (
+            601,
+            json!({"workspace_id": WORKSPACE, "substrate": "cloud_microvm"}),
+        ),
+        (602, json!({"workspace_id": WORKSPACE})),
+        (603, json!({"substrate": "customer_private_worker"})),
+        (
+            604,
+            json!({"workspace_id": WORKSPACE, "substrate": "customer_private_worker", "target_class": "isolated_task_runtime"}),
+        ),
+    ] {
+        let (status, body) = command(&world, "ProvisionTarget", n, bad.clone()).await;
+        assert_eq!(status, 400, "{bad}: {body}");
+    }
+
+    // The workspace's administrator registers one, ready to be leased; asking again returns it. (The harness's own target
+    // is a worker target too, so it is the one that exists: no second is made.)
+    let (status, first) = command(&world, "ProvisionTarget", 605, ask.clone()).await;
+    assert_eq!(status, 200, "{first}");
+    assert_eq!(first["result"]["created"], false, "{first}");
+    assert_eq!(first["result"]["target_id"], world.target.as_str());
+
+    // In a workspace with none, it makes exactly one, even when asked at once.
+    let fresh = "ws_01J8Z3K6F1N8VQ2X5W9YPRVN01";
+    let mut tx = world.pool.begin().await.unwrap();
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO workspaces (id, tenant_id, name) VALUES ($1, $2, 'fresh')")
+        .bind(fresh)
+        .bind(TENANT)
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+    let ask = json!({"workspace_id": fresh, "substrate": "customer_private_worker"});
+    let (one, two) = tokio::join!(
+        command(&world, "ProvisionTarget", 606, ask.clone()),
+        command(&world, "ProvisionTarget", 607, ask.clone()),
+    );
+    assert_eq!((one.0, two.0), (200, 200), "{one:?} {two:?}");
+    assert_eq!(
+        one.1["result"]["target_id"], two.1["result"]["target_id"],
+        "two asks made two targets"
+    );
+    assert_eq!(
+        [&one.1["result"]["created"], &two.1["result"]["created"]]
+            .iter()
+            .filter(|created| created.as_bool() == Some(true))
+            .count(),
+        1
+    );
+    let target = one.1["result"]["target_id"].as_str().unwrap().to_string();
+    assert_eq!(
+        one.1["result"]["status"]
+            .as_str()
+            .map(str::to_string)
+            .or(two.1["result"]["status"].as_str().map(str::to_string))
+            .as_deref(),
+        Some("READY")
+    );
+    assert_eq!(
+        one.1["result"]["worker_socket"],
+        world
+            ._dir
+            .path()
+            .join("w.sock")
+            .display()
+            .to_string()
+            .as_str()
+    );
+    assert_eq!(one.1["result"]["attached"], false);
+
+    // A worker given what the answer names attaches to the target, and the hub holds its lease.
+    let (socket, tenant, name) = (world._dir.path().join("w.sock"), TENANT, target.clone());
+    tokio::spawn(async move {
+        let host = Arc::new(WorkerHost::new(
+            DecisionLog(Arc::default()),
+            UnattachedEvidence,
+        ));
+        let stream = tokio::net::UnixStream::connect(&socket).await.unwrap();
+        let (reader, writer) = stream.into_split();
+        let _ = serve(
+            host,
+            tenant,
+            &name,
+            Duration::from_secs(3600),
+            reader,
+            writer,
+        )
+        .await;
+    });
+    eventually("the worker attached to the registered target", || async {
+        world
+            .hub
+            .links()
+            .iter()
+            .any(|link| link.target_id == target)
+    })
+    .await;
+    let (status, again) = command(&world, "ProvisionTarget", 608, ask).await;
+    assert_eq!(status, 200, "{again}");
+    assert_eq!(
+        (
+            again["result"]["created"].as_bool(),
+            again["result"]["attached"].as_bool()
+        ),
+        (Some(false), Some(true))
     );
     drop_pool(&world.pool, &world.name).await;
 }
