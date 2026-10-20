@@ -2082,6 +2082,28 @@ async fn a_screenshot_is_kept_as_evidence_of_the_run_and_the_model_is_shown_it()
         row.get::<String, _>("content_digest")
     );
 
+    // Bytes that are not the ones the row's digest names are never shown: the object is replaced by another picture.
+    let key_text: String = row
+        .get::<Option<String>, _>("object_key")
+        .expect("the object key");
+    let key = quansio_server::artifacts::ObjectKey::parse(&key_text).expect("an object key");
+    let mut other = b"\x89PNG\r\n\x1a\n".to_vec();
+    other.extend_from_slice(b"a different picture");
+    objects
+        .put(&key, &other, "image/png")
+        .await
+        .expect("replace the object");
+    assert!(
+        quansio_server::intelligence::model_source::screenshot_part(
+            &world.pool,
+            objects.as_ref(),
+            TENANT,
+            &evidence_id
+        )
+        .await
+        .is_none(),
+        "a picture that does not match its digest was shown to the model"
+    );
     // Evidence that is not a screenshot, or is not this tenant's, is never shown as one.
     assert!(quansio_server::intelligence::model_source::screenshot_part(
         &world.pool,
@@ -2212,5 +2234,155 @@ async fn a_viewer_that_asks_gets_the_picture_as_binary_and_a_viewer_that_does_no
     );
     binary.leave().await;
     text.leave().await;
+    drop_pool(&world.pool, &world.name).await;
+}
+
+/// What a stand-in worker sends beside each result: nothing, or this evidence (and a stray one for a dispatch never sent).
+type Behaviour = Arc<std::sync::Mutex<Option<(String, Vec<u8>)>>>;
+
+/// A worker the test controls: it dials the hub, takes the lease, and answers every dispatch with a driver reply that says
+/// `ok`, preceded by the evidence the test chose. It is a stand-in for what a *faulty or hostile* worker could send; the real
+/// one is proved above.
+fn stand_in_worker(
+    socket: std::path::PathBuf,
+    tenant: &'static str,
+    target: String,
+    behaviour: Behaviour,
+) {
+    use quansio_machine::gateway::wire::{self, FromWorker, OutcomeWire, ToWorker};
+    use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+    tokio::spawn(async move {
+        let stream = tokio::net::UnixStream::connect(&socket).await.unwrap();
+        let (reader, mut writer) = stream.into_split();
+        writer
+            .write_all(
+                wire::encode(&FromWorker::Hello {
+                    tenant_id: tenant.to_string(),
+                    target_id: target.clone(),
+                })
+                .unwrap()
+                .as_bytes(),
+            )
+            .await
+            .unwrap();
+        let mut lines = BufReader::new(reader).lines();
+        while let Ok(Some(line)) = lines.next_line().await {
+            let Ok(ToWorker::Dispatch(envelope)) = wire::decode::<ToWorker>(&line) else {
+                continue;
+            };
+            use base64::Engine as _;
+            let evidence = behaviour.lock().unwrap().clone();
+            // Evidence for a dispatch that was never sent, ahead of the real one.
+            let stray = FromWorker::Evidence {
+                dispatch_token: "dsp_01J8Z3K6F1N8VQ2X5W9YSTRAY1".to_string(),
+                media_type: "image/png".to_string(),
+                data_base64: base64::engine::general_purpose::STANDARD
+                    .encode(b"\x89PNG\r\n\x1a\nstray"),
+            };
+            writer
+                .write_all(wire::encode(&stray).unwrap().as_bytes())
+                .await
+                .unwrap();
+            if let Some((media_type, bytes)) = evidence {
+                let frame = FromWorker::Evidence {
+                    dispatch_token: envelope.dispatch_token.clone(),
+                    media_type,
+                    data_base64: base64::engine::general_purpose::STANDARD.encode(bytes),
+                };
+                writer
+                    .write_all(wire::encode(&frame).unwrap().as_bytes())
+                    .await
+                    .unwrap();
+            }
+            let reply = json!({"status": "ok", "output": {"capture_id": "cap_1", "document_revision": "1"}, "replayed": false});
+            let result = FromWorker::Result {
+                dispatch_token: envelope.dispatch_token.clone(),
+                effect_id: envelope.effect_id.clone(),
+                replayed: false,
+                outcome: OutcomeWire::Completed {
+                    output: reply.to_string(),
+                    truncated: false,
+                    evidence_ref: Some("inline:x".to_string()),
+                },
+            };
+            writer
+                .write_all(wire::encode(&result).unwrap().as_bytes())
+                .await
+                .unwrap();
+        }
+    });
+}
+
+#[tokio::test]
+async fn evidence_a_worker_sends_is_kept_only_when_it_is_a_png_of_a_size_the_host_takes() {
+    let Some(world) = world("wl_evidence_rules", false).await else {
+        return blocked_marker();
+    };
+    let objects: Arc<dyn quansio_server::artifacts::ObjectStore> = Arc::new(
+        quansio_server::artifacts::S3ObjectStore::from_env().expect("QUANSIO_TEST_MINIO_*"),
+    );
+    let behaviour: Behaviour = Arc::default();
+    stand_in_worker(
+        world._dir.path().join("w.sock"),
+        TENANT,
+        world.target.clone(),
+        Arc::clone(&behaviour),
+    );
+    eventually("the stand-in worker attached", || async {
+        world.hub.links().len() == 1
+    })
+    .await;
+    let routed = WorkerRoutedHost::new(
+        Arc::new(WorkerToolHost::new(world.hub.clone()).with_object_store(Some(objects))),
+        Arc::new(Stub),
+    );
+    let png = |extra: usize| {
+        let mut bytes = b"\x89PNG\r\n\x1a\n".to_vec();
+        bytes.resize(8 + extra, 7);
+        bytes
+    };
+    let shoot = |routed: &WorkerRoutedHost| {
+        let call = dispatch(RUN_A, "browser.screenshot", json!({"session_id": "x"}));
+        let routed = routed.clone();
+        async move { routed.execute(call).await }
+    };
+    let kept = |outcome: &Result<HostOutcome, HostFailure>| match outcome {
+        Ok(HostOutcome::Success {
+            output,
+            evidence_ids,
+            ..
+        }) => output.get("artifact_id").is_some() && !evidence_ids.is_empty(),
+        other => panic!("the screenshot call itself must still succeed: {other:?}"),
+    };
+
+    *behaviour.lock().unwrap() = Some(("image/png".to_string(), png(64)));
+    assert!(kept(&shoot(&routed).await), "a PNG is kept");
+    for (what, evidence) in [
+        (
+            "bytes that are not a PNG",
+            Some(("image/png".to_string(), b"<svg onload=alert(1)>".to_vec())),
+        ),
+        (
+            "a media type that is not image/png",
+            Some(("image/svg+xml".to_string(), png(64))),
+        ),
+        (
+            "a PNG over the bound",
+            Some((
+                "image/png".to_string(),
+                png(quansio_machine::gateway::wire::MAX_EVIDENCE_BYTES),
+            )),
+        ),
+        (
+            "no evidence, and stray evidence for a dispatch that was never sent",
+            None,
+        ),
+    ] {
+        *behaviour.lock().unwrap() = evidence;
+        assert!(
+            !kept(&shoot(&routed).await),
+            "{what} was kept as a screenshot"
+        );
+    }
     drop_pool(&world.pool, &world.name).await;
 }
