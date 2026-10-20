@@ -10,7 +10,9 @@ use std::time::Duration;
 
 use crate::runtime::state_machine::LiveFramePort;
 use quansio_core::{CanonicalId, Prefix, UlidGenerator};
-use quansio_machine::control::browser::{BrowserSessionStore, GuardReport, SessionStatus};
+use quansio_machine::control::browser::{
+    BrowserSessionStore, DecisionKind, GuardReport, SessionStatus,
+};
 use quansio_machine::control::{
     Lease, LeaseRequest, MachineControl, MachineError, TargetFence, TargetStatus,
 };
@@ -359,6 +361,9 @@ impl WorkerHub {
                 }
             }
         });
+        // A decision made while this worker was away reached no one. What the people decided is on the sessions, so it is
+        // told to the worker as it arrives; a decision it already applied is refused by its driver, which is harmless.
+        self.replay_decisions(&link).await;
         while let Ok(Some(line)) = lines.next_line().await {
             match wire::decode::<FromWorker>(&line) {
                 Ok(FromWorker::Result {
@@ -422,6 +427,37 @@ impl WorkerHub {
         }
         writer_task.abort();
         self.drop_link(&key, &link, true).await;
+    }
+
+    /// Tell a worker that has just attached every certificate and permission decision recorded for its target's open sessions,
+    /// oldest first, so the last word on a subject is the one it ends up with.
+    async fn replay_decisions(&self, link: &Arc<Link>) {
+        let sessions = async {
+            let mut tx = self.pool.begin().await.ok()?;
+            crate::control::schema::set_tenant_context(&mut tx, &link.tenant_id)
+                .await
+                .ok()?;
+            BrowserSessionStore::list_for_target(&mut tx, &link.tenant_id, &link.target_id)
+                .await
+                .ok()
+        }
+        .await
+        .unwrap_or_default();
+        for session in sessions
+            .into_iter()
+            .filter(|session| session.status != SessionStatus::Closed)
+        {
+            for decision in &session.guard.decisions {
+                let receipt = decision.to_receipt_wire(&session.id);
+                let order = match decision.kind {
+                    DecisionKind::Certificate => BrowserOrder::Certificate { receipt },
+                    DecisionKind::Permission => BrowserOrder::Permission { receipt },
+                };
+                if let Ok(line) = wire::encode(&ToWorker::Browser(order)) {
+                    let _ = link.outbound.send(line).await;
+                }
+            }
+        }
     }
 
     async fn send_lease(link: &Link, lease: &Lease) -> Result<(), ()> {

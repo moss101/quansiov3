@@ -1621,3 +1621,113 @@ async fn only_a_reader_of_the_targets_workspace_may_watch_its_channel() {
     reader.leave().await;
     drop_pool(&world.pool, &world.name).await;
 }
+
+/// An executor that runs nothing and remembers the decisions it was handed.
+struct DecisionLog(Arc<std::sync::Mutex<Vec<(String, String, String)>>>);
+
+#[async_trait]
+impl quansio_qworkerd::host::ToolExecutor for DecisionLog {
+    async fn run(
+        &self,
+        _: &quansio_machine::gateway::ActionEnvelope,
+        _: &mut quansio_qworkerd::host::OutputSink,
+    ) -> Result<quansio_qworkerd::host::ToolOutput, quansio_qworkerd::host::HostFailure> {
+        Ok(quansio_qworkerd::host::ToolOutput::new())
+    }
+
+    async fn browser_decision(
+        &self,
+        receipt: &quansio_machine::control::browser::DecisionReceipt,
+    ) -> Result<(), String> {
+        self.0.lock().unwrap().push((
+            receipt.kind().as_str().to_string(),
+            receipt.subject().to_string(),
+            receipt.decision().as_str().to_string(),
+        ));
+        Ok(())
+    }
+}
+
+#[tokio::test]
+async fn a_decision_made_while_the_worker_was_away_is_told_to_it_when_it_attaches() {
+    let Some(world) = world("wl_replay", false).await else {
+        return blocked_marker();
+    };
+    // A session whose person decided a certificate and a permission while no worker was attached (and changed their mind on
+    // the permission): the decisions are on the session.
+    let session = "bsn_01J8Z3K6F1N8VQ2X5W9YRPLY01";
+    let mut tx = world.pool.begin().await.unwrap();
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .unwrap();
+    quansio_machine::control::browser::BrowserSessionStore::open(
+        &mut tx,
+        TENANT,
+        session,
+        &world.target,
+        Some(RUN_A),
+        None,
+    )
+    .await
+    .unwrap();
+    let decisions = json!({ "decisions": [
+        { "kind": "certificate", "tab_id": "T1", "subject": "crt_1", "decision": "allow", "decided_by": USER, "decided_at": "2026-10-20T00:00:00Z" },
+        { "kind": "permission", "tab_id": "T1", "subject": "http://127.0.0.1:1|camera", "decision": "allow", "decided_by": USER, "decided_at": "2026-10-20T00:00:01Z" },
+        { "kind": "permission", "tab_id": "T1", "subject": "http://127.0.0.1:1|camera", "decision": "deny", "decided_by": USER, "decided_at": "2026-10-20T00:00:02Z" },
+    ]});
+    sqlx::query("UPDATE browser_sessions SET guard_state = $1 WHERE id = $2")
+        .bind(decisions)
+        .bind(session)
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let seen = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let (socket, target, log) = (
+        world._dir.path().join("w.sock"),
+        world.target.clone(),
+        seen.clone(),
+    );
+    tokio::spawn(async move {
+        let host = Arc::new(WorkerHost::new(DecisionLog(log), UnattachedEvidence));
+        let stream = tokio::net::UnixStream::connect(&socket).await.unwrap();
+        let (reader, writer) = stream.into_split();
+        let _ = serve(
+            host,
+            TENANT,
+            &target,
+            Duration::from_secs(3600),
+            reader,
+            writer,
+        )
+        .await;
+    });
+    eventually(
+        "the worker was told what was decided while it was away",
+        || async { seen.lock().unwrap().len() == 3 },
+    )
+    .await;
+    assert_eq!(
+        *seen.lock().unwrap(),
+        [
+            (
+                "certificate".to_string(),
+                "crt_1".to_string(),
+                "allow".to_string()
+            ),
+            (
+                "permission".to_string(),
+                "http://127.0.0.1:1|camera".to_string(),
+                "allow".to_string()
+            ),
+            (
+                "permission".to_string(),
+                "http://127.0.0.1:1|camera".to_string(),
+                "deny".to_string()
+            ),
+        ],
+        "oldest first, so the last word on a subject is the one the worker ends with"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
