@@ -1,0 +1,6 @@
+0b1692e2 [EXEC-002] regenerate the manifest for the worker channel spec
+architecture check: CLEAN (0 findings)
+.........................................................                [100%]
+129 passed in 25.94s
+V8.1 VALIDATION: PASS (108 tasks, 11 milestones, 70 PASS, 0 ready)
+arch rc=0

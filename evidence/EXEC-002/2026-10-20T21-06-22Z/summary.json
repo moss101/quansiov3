@@ -1,0 +1,144 @@
+{
+  "task_id": "EXEC-002",
+  "git_commit": "0b1692e270e7522f4f26faff8e5c25bb1e38f803",
+  "recorded_at": "2026-10-20T21:22:09Z",
+  "commands": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-20T21-06-22Z/fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-20T21-06-22Z/clippy.log"
+    },
+    {
+      "command": "gen_contracts.py --check --only catalog,openapi,sdk,ts,rust  # zero drift",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-20T21-06-22Z/contracts.log"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # clean clone",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-20T21-06-22Z/architecture-clean-clone.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1344 passed, 0 failed. New: qworkerd tests/daemon_concurrency.rs (real binary, real socket, real processes: a long command does not hold the channel and heartbeats continue; --max-concurrent bounds and a waiting dispatch cancelled never runs; a running one is interrupted and does not finish; a re-delivery while running is answered from that run), server worker_host.rs and worker_live.rs (CancelRun through the API stops the run's command on the worker and leaves another run's alone)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-20T21-06-22Z/full-crates.log"
+    },
+    {
+      "command": "cd apps/desktop && tsc --noEmit && eslint src tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-20T21-06-22Z/desktop-static.log"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # 68 files, 676 passed, 4 skipped (the skips are the suite's own)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-20T21-06-22Z/desktop-full.log"
+    },
+    {
+      "command": "mutation checks, 7 of 7 KILLED, every mutant compiles, restored tree identical, control passes: one-at-a-time dispatch; cancel ignored by the worker; no concurrency bound; re-delivery while running runs again; a running dispatch cannot be stopped; CancelRun does not reach the worker; an interrupted call settled as a known failure",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-002/2026-10-20T21-06-22Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "gen_contracts.py --check --only catalog,openapi,sdk,ts,rust  # zero drift",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # clean clone",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1344 passed, 0 failed. New: qworkerd tests/daemon_concurrency.rs (real binary, real socket, real processes: a long command does not hold the channel and heartbeats continue; --max-concurrent bounds and a waiting dispatch cancelled never runs; a running one is interrupted and does not finish; a re-delivery while running is answered from that run), server worker_host.rs and worker_live.rs (CancelRun through the API stops the run's command on the worker and leaves another run's alone)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && tsc --noEmit && eslint src tests",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # 68 files, 676 passed, 4 skipped (the skips are the suite's own)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks, 7 of 7 KILLED, every mutant compiles, restored tree identical, control passes: one-at-a-time dispatch; cancel ignored by the worker; no concurrency bound; re-delivery while running runs again; a running dispatch cannot be stopped; CancelRun does not reach the worker; an interrupted call settled as a known failure",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/EXEC-002/2026-10-20T21-06-22Z/RECONCILIATION.md",
+      "sha256": "4dc4b22973504f37fbfb3f67050ea57a301c138ce8c0145021278fdf364fe50d",
+      "bytes": 1160
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-20T21-06-22Z/architecture-clean-clone.log",
+      "sha256": "42cd670eaada4997a70623a6fb5e194a023cd0309a7fb65928b6dafe24ea5956",
+      "bytes": 289
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-20T21-06-22Z/clippy.log",
+      "sha256": "841503f8745ed5f800778e1b4c1dbb53a09f3dedea292d95d033f75b34159b62",
+      "bytes": 257
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-20T21-06-22Z/contracts.log",
+      "sha256": "c0ffa6a540f6b3c058dcc89a4929a193254bee521883d94e59a7b79e83ba8181",
+      "bytes": 108
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-20T21-06-22Z/desktop-full.log",
+      "sha256": "79ddd31a6159d6d9e49ee455d23f6f7b63b31d9f6c2058f7dfb0867ef0a600de",
+      "bytes": 8097
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-20T21-06-22Z/desktop-static.log",
+      "sha256": "ba352ec06cc2bfa2b0e8d4ae06c8f2986741fc3f54db13cff81190402442f7b1",
+      "bytes": 20
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-20T21-06-22Z/fmt.log",
+      "sha256": "8bc7b290341d8b4d3fbdc6c48bffc1dac5c9e8a41608403e62b6f2a0c1af9957",
+      "bytes": 9
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-20T21-06-22Z/full-crates.log",
+      "sha256": "fee68acfc2ed997fa365042069119ab49b8197e9ec0dc7adeecae42eeaf322f5",
+      "bytes": 135796
+    },
+    {
+      "path": "evidence/EXEC-002/2026-10-20T21-06-22Z/mutation-checks.log",
+      "sha256": "67322ead1da4bc4a9bb151483dc021de51bbcbf571fa1c5f674e9d7cffc87bc1",
+      "bytes": 1328
+    }
+  ]
+}
