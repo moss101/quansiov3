@@ -222,6 +222,8 @@ describe("a click, a drag and a held modifier", () => {
     }
     // The local context menu is the remote page's to show: the right click is sent, not shown here.
     expect(source).toContain("event.preventDefault?.()");
+    // The browser's own image drag would swallow the mouse-up that ends a drag on the picture (found in a real window).
+    expect(source).toContain("draggable={false}");
   });
 });
 

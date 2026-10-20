@@ -440,6 +440,9 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
                 src={frame.dataUrl}
                 alt={t("liveScreenAlt")}
                 className={session.controller === "user" ? "live-picture live-picture-driving" : "live-picture"}
+                // A picture the person drags on is the page's, not a file to pick up: the browser's own image drag would swallow
+                // the mouse-up that ends the drag.
+                draggable={false}
                 tabIndex={session.controller === "user" ? 0 : undefined}
                 onMouseDown={session.controller === "user" ? pressPicture : undefined}
                 onMouseUp={session.controller === "user" ? releasePicture : undefined}
