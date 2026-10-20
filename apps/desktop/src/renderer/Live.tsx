@@ -33,6 +33,7 @@ import { TerminalReplay, decodeTerminalBytes } from "../live/terminal.js";
 import { ComputerPermissions } from "./ComputerPermissions.js";
 import { LoginSuggestions } from "./LoginSuggestions.js";
 import { PaymentInput } from "./PaymentInput.js";
+import { WorkerPanel } from "./WorkerPanel.js";
 
 interface LiveProps {
   readonly workspaceId: string;
@@ -385,6 +386,7 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
   return (
     <section className="live" aria-label={t("liveSurface")}>
       <aside className="live-sessions">
+        <WorkerPanel />
         <h2>{t("liveSessions")}</h2>
         {targets === null ? (
           <p>{t("connecting")}</p>

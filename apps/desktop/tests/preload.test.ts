@@ -110,6 +110,9 @@ describe("preload bridge", () => {
         "decidePermission",
         "sendBrowserInput",
         "attachLive",
+        "workerStatus",
+        "startWorker",
+        "stopWorker",
         "computerPermissions",
         "openComputerSettings",
         "recordingStatus",
@@ -271,6 +274,9 @@ describe("preload bridge", () => {
     await api.decidePermission({ sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", tabId: "cdp-1", origin: "https://example.com", permission: "camera", decision: "deny" });
     await api.sendBrowserInput({ sessionId: "bsn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA", tabId: "cdp-1", kind: "click", x: 10, y: 20 });
     await api.attachLive("tgt_01J8Z3K6F1N8VQ2X5W9Y0AAAAA");
+    await api.workerStatus();
+    await api.startWorker();
+    await api.stopWorker();
     await api.computerPermissions({ needs: ["accessibility"] });
     await api.openComputerSettings("accessibility");
     await api.recordingStatus();

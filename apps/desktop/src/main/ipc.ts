@@ -17,6 +17,7 @@ import { ANSWER_COMMAND, CANCEL_COMMAND, MAX_UPLOAD_BYTES, POST_COMMAND, UPLOAD_
 import { MAX_IMAGE_PREVIEW_BYTES, MAX_TEXT_PREVIEW_BYTES, isActiveContent, isExecutable, mediaKind, openAllowed, previewPlan } from "../artifacts/preview.js";
 import { searchQueryString, searchRequest } from "../artifacts/search.js";
 import { OBJECTIVE_COMMAND, PROPOSE_COMMAND } from "../work/monitor.js";
+import { WorkerLaunchError, type WorkerLauncher } from "./worker-launcher.js";
 import { browserInput as inputCommand, type UserButton, type UserModifier, computerCommand, decidePermission as permissionCommand, handback as handbackCommand, requestTakeover as takeoverCommand, resolveCertificate as certificateCommand } from "../live/session.js";
 import { desktopNotice, type DesktopNotice } from "../automation/notifications.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
@@ -90,6 +91,8 @@ export interface DesktopBridgeOptions {
    * Absent both, save and open are refused; the preview never needs them.
    */
   readonly files?: DesktopFiles;
+  /** Starts and stops the worker on this computer (EXEC-002); absent, the app offers none. */
+  readonly worker?: WorkerLauncher;
   /**
    * What the system says about the OS permissions native computer use needs (ADP-002; main supplies
    * Electron's `systemPreferences` on macOS). Absent, the guide reports that it does not apply.
@@ -342,6 +345,9 @@ export class DesktopBridge {
       "recording.submit": (payload) => settled(Promise.resolve(payload).then((raw) => this.recordingCommand("SubmitRecordingSkill", raw))),
       // One-time payment values (ADP-009, DOMAIN.md 13.9 C): the answer names fields and times, never a value.
       "payment.supply": (payload) => settled(Promise.resolve(payload).then((raw) => this.payments.supply(raw))),
+      "worker.status": () => (this.#options.worker ? this.#options.worker.status() : Promise.resolve(NO_WORKER)),
+      "worker.start": () => settled(this.#options.worker ? this.#options.worker.start() : Promise.reject(new WorkerLaunchError("TARGET_UNAVAILABLE", NO_WORKER.reason))),
+      "worker.stop": () => settled(this.#options.worker ? this.#options.worker.stop() : Promise.resolve(NO_WORKER)),
       "live.attach": (payload) => Promise.resolve(payload).then((raw) => this.attachLive(asTargetId(raw, "live.attach"))),
       "live.detach": () => Promise.resolve().then(() => this.detachLive()),
       // Collaboration (APP-009): a protected thread refuses a non-participant, and the
@@ -1291,12 +1297,18 @@ export type Settled<T> =
   | { readonly ok: true; readonly result: T }
   | { readonly ok: false; readonly error: { readonly code: string; readonly message: string; readonly retryable: boolean; readonly details: unknown } };
 
+/** What the worker channels answer when this build has no launcher. */
+const NO_WORKER = { available: false, reason: "this app was started without a worker launcher", state: "stopped", pid: null, root: null, targetId: null, attached: false, exitCode: null, lastError: null } as const;
+
 export async function settled<T>(work: Promise<T>): Promise<Settled<T>> {
   try {
     return { ok: true, result: await work };
   } catch (error) {
     if (error instanceof ApiError) {
       return { ok: false, error: { code: error.code, message: error.message, retryable: error.retryable, details: error.details } };
+    }
+    if (error instanceof WorkerLaunchError) {
+      return { ok: false, error: { code: error.code, message: error.message, retryable: false, details: null } };
     }
     if (error instanceof PaymentSupplyError) {
       // A refusal of a payment supply names a rule, never a value (payments.ts).
