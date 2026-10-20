@@ -82,6 +82,7 @@ async fn run(
         }
         HostOutcome::Failed { failure, .. } => Err(failure.to_string()),
         HostOutcome::Cancelled { .. } => Err("cancelled".to_string()),
+        HostOutcome::Interrupted { .. } => Err("interrupted".to_string()),
     }
 }
 
@@ -262,7 +263,7 @@ async fn a_terminal_command_cannot_start_outside_the_workspace() {
 #[tokio::test]
 async fn output_is_bounded_while_it_arrives() {
     let dir = tempfile::tempdir().unwrap();
-    let mut host = worker(dir.path());
+    let host = worker(dir.path());
     let small = envelope(
         "terminal.exec",
         &json!({"command": "yes x | head -c 200000"}),
@@ -304,7 +305,7 @@ async fn output_is_bounded_while_it_arrives() {
 #[tokio::test]
 async fn an_expired_deadline_stops_a_command_and_a_dispatch_runs_once() {
     let dir = tempfile::tempdir().unwrap();
-    let mut host = worker(dir.path());
+    let host = worker(dir.path());
     let counted = envelope(
         "terminal.exec",
         &json!({"command": "echo run >> count.txt"}),

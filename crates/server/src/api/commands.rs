@@ -1039,6 +1039,11 @@ async fn cancel_run(
     let (run_id, generation) = run_ref(params, correlation)?;
     // A native computer sequence in flight ends before it asks for another action (DOMAIN.md 8.6.1 B).
     state.computer_stops().stop(&run_id.to_string());
+    // A worker's dispatches of the run are stopped too (DOMAIN.md 8.3.1).
+    if let Some(hub) = state.worker_hub() {
+        hub.cancel_run(&identity.tenant_id, &run_id.to_string())
+            .await;
+    }
     let engine = RuntimeEngine::new(state.pool().clone(), identity.clone())
         .map_err(|error| internal(error, correlation))?;
     let run = engine
@@ -1056,6 +1061,10 @@ async fn pause_run(
 ) -> Result<Value, ApiError> {
     let (run_id, generation) = run_ref(params, correlation)?;
     state.computer_stops().stop(&run_id.to_string());
+    if let Some(hub) = state.worker_hub() {
+        hub.cancel_run(&identity.tenant_id, &run_id.to_string())
+            .await;
+    }
     let engine = RuntimeEngine::new(state.pool().clone(), identity.clone())
         .map_err(|error| internal(error, correlation))?;
     let run = engine

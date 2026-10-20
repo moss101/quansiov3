@@ -220,11 +220,11 @@ async fn world(label: &str, with_worker: bool) -> Option<World> {
             let executor = LocalToolExecutor::new(sandbox, TENANT).with_browser(
                 BrowserRuntime::new(chrome, state_path, TENANT).allow_private_network(true),
             );
-            let mut host = WorkerHost::new(executor, UnattachedEvidence);
+            let host = std::sync::Arc::new(WorkerHost::new(executor, UnattachedEvidence));
             let stream = tokio::net::UnixStream::connect(&socket).await.unwrap();
             let (reader, writer) = stream.into_split();
             let _ = serve(
-                &mut host,
+                host,
                 TENANT,
                 &target,
                 Duration::from_secs(3600),
@@ -1301,6 +1301,61 @@ async fn a_person_s_special_keys_and_scroll_reach_the_page_and_anything_else_is_
         site.hits("/scrolled"),
         scrolled,
         "the worker accepted an out-of-bounds scroll"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn cancelling_a_run_stops_its_command_on_the_worker_and_leaves_another_runs_alone() {
+    let Some(world) = world("live_cancel", true).await else {
+        return blocked_marker();
+    };
+    let host = Arc::new(host(&world));
+    let root = world._root.path().to_path_buf();
+    let start = |run: &'static str, name: &'static str| {
+        let host = Arc::clone(&host);
+        tokio::spawn(async move {
+            host.execute(dispatch(
+                run,
+                "terminal.exec",
+                json!({ "command": format!("echo started > {name}.started; sleep 4; echo done > {name}.done") }),
+            ))
+            .await
+        })
+    };
+    let cancelled = start(RUN_A, "a");
+    let other = start(RUN_B, "b");
+    eventually("both commands started", || {
+        let root = root.clone();
+        async move { root.join("a.started").exists() && root.join("b.started").exists() }
+    })
+    .await;
+
+    // A person cancels run A: the command it is running on the worker is stopped, and run B's is not.
+    let (status, body) = command(
+        &world,
+        "CancelRun",
+        900,
+        json!({ "run_id": RUN_A, "generation": 1 }),
+    )
+    .await;
+    assert_eq!(status, 200, "{body}");
+    match tokio::time::timeout(Duration::from_secs(2), cancelled)
+        .await
+        .expect("the cancelled call returns at once")
+        .unwrap()
+    {
+        Ok(HostOutcome::Unknown { detail }) => assert!(detail.contains("cancel"), "{detail}"),
+        other => panic!("a command stopped part-way settles as unknown, got {other:?}"),
+    }
+    match other.await.unwrap() {
+        Ok(HostOutcome::Success { .. }) => {}
+        other => panic!("the other run's command was disturbed: {other:?}"),
+    }
+    assert!(root.join("b.done").exists());
+    assert!(
+        !root.join("a.done").exists(),
+        "the cancelled command finished its work"
     );
     drop_pool(&world.pool, &world.name).await;
 }

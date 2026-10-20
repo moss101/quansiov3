@@ -3,14 +3,15 @@
 //!
 //! ```text
 //! qworkerd --socket PATH --tenant tnt_… --target tgt_… --workspace-root DIR [--shell /bin/sh] [--heartbeat-secs 15] \
-//!         [--chrome PATH --state-dir DIR]
+//!         [--max-concurrent 8] [--chrome PATH --state-dir DIR]
 //! ```
 //!
 //! The socket is the server's `QUANSIO_WORKER_SOCKET`. The daemon is outbound-only: it connects, it never
 //! listens. It reconnects with a bounded backoff, keeping the host (and so its record of what already ran)
-//! across connections.
+//! across connections. Up to `--max-concurrent` dispatches run at once; one more waits for a turn.
 
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Duration;
 
 use quansio_qworkerd::browser_runtime::BrowserRuntime;
@@ -26,6 +27,7 @@ struct Args {
     root: PathBuf,
     shell: Option<String>,
     heartbeat: Duration,
+    max_concurrent: usize,
     chrome: Option<PathBuf>,
     state_dir: Option<PathBuf>,
     allow_private_network: bool,
@@ -34,6 +36,7 @@ struct Args {
 fn parse(mut input: impl Iterator<Item = String>) -> Result<Args, String> {
     let (mut socket, mut tenant, mut target, mut root, mut shell) = (None, None, None, None, None);
     let mut heartbeat = Duration::from_secs(15);
+    let mut max_concurrent = quansio_qworkerd::host::DEFAULT_CONCURRENCY;
     let (mut chrome, mut state_dir) = (None, None);
     let mut allow_private_network = false;
     while let Some(flag) = input.next() {
@@ -58,6 +61,15 @@ fn parse(mut input: impl Iterator<Item = String>) -> Result<Args, String> {
                     .map_err(|_| "--heartbeat-secs needs a whole number".to_string())?;
                 heartbeat = Duration::from_secs(seconds.max(1));
             }
+            "--max-concurrent" => {
+                max_concurrent = value
+                    .parse::<usize>()
+                    .ok()
+                    .filter(|count| (1..=64).contains(count))
+                    .ok_or_else(|| {
+                        "--max-concurrent needs a whole number from 1 to 64".to_string()
+                    })?;
+            }
             other => return Err(format!("unknown flag {other}")),
         }
     }
@@ -71,6 +83,7 @@ fn parse(mut input: impl Iterator<Item = String>) -> Result<Args, String> {
         root: need(root, "--workspace-root")?,
         shell,
         heartbeat,
+        max_concurrent,
         chrome,
         state_dir,
         allow_private_network,
@@ -83,7 +96,7 @@ async fn main() {
     let args = match parse(std::env::args().skip(1)) {
         Ok(args) => args,
         Err(message) => {
-            eprintln!("qworkerd: {message}\nusage: qworkerd --socket PATH --tenant ID --target ID --workspace-root DIR [--shell PATH] [--heartbeat-secs N] [--chrome PATH --state-dir DIR [--allow-private-network]]");
+            eprintln!("qworkerd: {message}\nusage: qworkerd --socket PATH --tenant ID --target ID --workspace-root DIR [--shell PATH] [--heartbeat-secs N] [--max-concurrent N] [--chrome PATH --state-dir DIR [--allow-private-network]]");
             std::process::exit(2);
         }
     };
@@ -135,7 +148,11 @@ async fn main() {
         eprintln!("qworkerd: --state-dir and --allow-private-network are only used with --chrome");
         std::process::exit(2);
     }
-    let mut host = WorkerHost::new(executor, UnattachedEvidence);
+    let host = Arc::new(WorkerHost::with_concurrency(
+        executor,
+        UnattachedEvidence,
+        args.max_concurrent,
+    ));
 
     let mut backoff = Duration::from_millis(250);
     loop {
@@ -144,7 +161,7 @@ async fn main() {
                 backoff = Duration::from_millis(250);
                 let (reader, writer) = stream.into_split();
                 match serve(
-                    &mut host,
+                    Arc::clone(&host),
                     &args.tenant,
                     &args.target,
                     args.heartbeat,

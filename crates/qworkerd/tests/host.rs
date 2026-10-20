@@ -137,7 +137,7 @@ fn host(executor: CountingExecutor) -> WorkerHost<CountingExecutor, RecordingSin
 #[tokio::test]
 async fn a_stale_envelope_fails_before_any_tool_runs() {
     let (executor, calls) = CountingExecutor::new("output");
-    let mut host = host(executor);
+    let host = host(executor);
     let good = dispatch();
 
     let mut cases: Vec<(&str, ActionEnvelope, LeaseClaim, String, Rejection)> = Vec::new();
@@ -284,7 +284,7 @@ fn an_unknown_kind_is_refused_rather_than_guessed() {
 #[tokio::test]
 async fn a_replayed_dispatch_is_answered_from_the_record_not_run_again() {
     let (executor, calls) = CountingExecutor::new("the tool output");
-    let mut host = host(executor);
+    let host = host(executor);
     let envelope = dispatch();
 
     let first = host
@@ -323,7 +323,7 @@ async fn a_replayed_dispatch_is_answered_from_the_record_not_run_again() {
 #[tokio::test]
 async fn a_replay_after_the_lease_lapsed_is_fenced_rather_than_served() {
     let (executor, calls) = CountingExecutor::new("output");
-    let mut host = host(executor);
+    let host = host(executor);
     let envelope = dispatch();
     host.receive(&envelope, &lease(), NOW)
         .await
@@ -345,7 +345,7 @@ async fn a_replay_after_the_lease_lapsed_is_fenced_rather_than_served() {
 #[tokio::test]
 async fn a_cancelled_effect_is_recorded_and_not_re_dispatched() {
     let (executor, calls) = CountingExecutor::new("output");
-    let mut host = host(executor);
+    let host = host(executor);
     let mut envelope = dispatch();
     envelope.kind = EnvelopeKind::Cancel;
 
@@ -377,7 +377,7 @@ async fn output_is_bounded_while_the_tool_streams_and_evidence_is_uploaded() {
         evidence: b"screenshot bytes".to_vec(),
         fail: false,
     };
-    let mut host = host(executor);
+    let host = host(executor);
     let mut envelope = dispatch();
     envelope.max_output_bytes = 100;
 
@@ -467,7 +467,7 @@ fn a_worker_reports_the_state_it_observes_and_only_its_own_generation() {
 #[tokio::test]
 async fn a_checkpoint_hook_records_the_target() {
     let (executor, calls) = CountingExecutor::new("output");
-    let mut host = host(executor);
+    let host = host(executor);
     let mut envelope = dispatch();
     envelope.kind = EnvelopeKind::Checkpoint;
 
@@ -487,7 +487,7 @@ async fn a_failing_tool_is_recorded_as_a_failure() {
         evidence: Vec::new(),
         fail: true,
     };
-    let mut host = host(executor);
+    let host = host(executor);
     let recorded: Recorded = host.receive(&dispatch(), &lease(), NOW).await.expect("run");
     assert!(matches!(recorded.outcome, HostOutcome::Failed { .. }));
     assert_eq!(

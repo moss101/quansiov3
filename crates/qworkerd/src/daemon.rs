@@ -6,14 +6,17 @@
 //! recorded is what goes back. The host outlives the connection, so a dispatch the server re-sends after a
 //! reconnect is answered from the record rather than run twice.
 //!
-//! Dispatches are served one at a time: a long command holds the channel until it ends. That is the
-//! conservative reading of "at most once"; concurrent dispatch is a later change, not an assumption here.
+//! Dispatches run side by side (up to the host's concurrency), each in its own task, so a long command does not hold
+//! the channel: heartbeats, browser orders and a cancel keep flowing while it runs. "At most once" is the host's rule, not
+//! the channel's: a token runs once however it is delivered ([`WorkerHost::receive`]).
 
 use quansio_machine::control::browser::DecisionReceipt;
 use quansio_machine::gateway::wire::{self, BrowserOrder, FromWorker, OutcomeWire, ToWorker};
 use quansio_machine::gateway::LeaseClaim;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader};
+use tokio::sync::mpsc;
 
 use crate::host::{EvidenceSink, HostFailure, HostOutcome, ToolExecutor, WorkerHost};
 
@@ -63,6 +66,11 @@ fn outcome_wire(outcome: HostOutcome) -> OutcomeWire {
             detail: failure.to_string(),
         },
         HostOutcome::Cancelled { .. } => OutcomeWire::Cancelled,
+        HostOutcome::Interrupted { .. } => OutcomeWire::Interrupted {
+            detail:
+                "the action was stopped by a cancel after it started; part of it may have happened"
+                    .to_string(),
+        },
     }
 }
 
@@ -71,14 +79,15 @@ fn outcome_wire(outcome: HostOutcome) -> OutcomeWire {
 /// While a lease is held the worker reports what it observes every `heartbeat_every`; the server renews the lease
 /// on a heartbeat it accepts, so a worker that stops reporting is fenced when the lease lapses.
 ///
-/// `lease` is the lease the worker currently holds; it starts as "none" and is replaced by each
-/// [`ToWorker::Lease`], and survives a reconnect only if the caller keeps it (the server re-sends it on
-/// connect, so the caller need not).
+/// The lease the worker holds starts as "none" and is replaced by each [`ToWorker::Lease`] (the server sends it on
+/// connect). Each dispatch is validated against the lease held when it arrived and runs in its own task; its answer goes
+/// out on this connection if it is still open. A dispatch still running when the connection ends runs to its end and is
+/// recorded, so a re-delivery is answered from the record rather than run again.
 ///
 /// # Errors
 /// Returns [`SessionError`] when the stream fails or the server sends a frame that is not one.
 pub async fn serve<E, S, R, W>(
-    host: &mut WorkerHost<E, S>,
+    host: Arc<WorkerHost<E, S>>,
     tenant_id: &str,
     target_id: &str,
     heartbeat_every: Duration,
@@ -86,8 +95,8 @@ pub async fn serve<E, S, R, W>(
     mut writer: W,
 ) -> Result<(), SessionError>
 where
-    E: ToolExecutor,
-    S: EvidenceSink,
+    E: ToolExecutor + 'static,
+    S: EvidenceSink + 'static,
     R: AsyncRead + Unpin,
     W: AsyncWrite + Unpin,
 {
@@ -108,6 +117,8 @@ where
         held: false,
         expires_at: String::new(),
     };
+    // What the dispatch tasks have to say, written by this loop alone so lines never interleave.
+    let (outbound, mut answers) = mpsc::unbounded_channel::<String>();
     let mut lines = BufReader::new(reader).lines();
     let mut next_beat = tokio::time::Instant::now() + heartbeat_every;
     loop {
@@ -116,6 +127,10 @@ where
                 Some(line) => line,
                 None => return Ok(()),
             },
+            Some(answer) = answers.recv() => {
+                writer.write_all(answer.as_bytes()).await?;
+                continue;
+            }
             frame = host.executor().next_frame() => {
                 // Frames flow only while the server asked for them, and only to a worker that still holds its lease.
                 if let (Some(frame), true) = (frame, lease.held) {
@@ -169,41 +184,16 @@ where
         match frame {
             ToWorker::Lease(held) => lease = held.into(),
             ToWorker::Dispatch(wire_envelope) => {
-                let dispatch_token = wire_envelope.dispatch_token.clone();
-                let effect_id = wire_envelope.effect_id.clone();
-                let is_browser = wire_envelope.tool.starts_with("browser.");
-                let result = match (*wire_envelope).into_envelope() {
-                    Err(kind) => FromWorker::Result {
-                        dispatch_token,
-                        effect_id,
-                        replayed: false,
-                        outcome: OutcomeWire::Rejected {
-                            reason: format!("unknown envelope kind: {kind}"),
-                        },
-                    },
-                    Ok(envelope) => match host.receive(&envelope, &lease, &now_utc()).await {
-                        Ok(recorded) => FromWorker::Result {
-                            dispatch_token,
-                            effect_id,
-                            replayed: recorded.replayed,
-                            outcome: outcome_wire(recorded.outcome),
-                        },
-                        Err(rejection) => FromWorker::Result {
-                            dispatch_token,
-                            effect_id,
-                            replayed: false,
-                            outcome: OutcomeWire::Rejected {
-                                reason: rejection.to_string(),
-                            },
-                        },
-                    },
-                };
-                writer.write_all(wire::encode(&result)?.as_bytes()).await?;
-                // A browser action may have changed what its driver guards (a dialog, a certificate error, a call in
-                // doubt): the control plane is told while the action is fresh.
-                if is_browser {
-                    report_guards(host, None, &mut writer).await?;
-                }
+                tokio::spawn(dispatch(
+                    Arc::clone(&host),
+                    *wire_envelope,
+                    lease.clone(),
+                    outbound.clone(),
+                ));
+            }
+            // A cancel only ever stops work, so a fenced worker honours it too.
+            ToWorker::Cancel { dispatch_token } => {
+                host.cancel(&dispatch_token);
             }
             ToWorker::Browser(order) => {
                 // A worker that does not hold a lease takes no orders: it has been fenced.
@@ -225,27 +215,86 @@ where
                 if let Err(why) = applied {
                     eprintln!("qworkerd: a browser order for {session} was not applied: {why}");
                 }
-                report_guards(host, Some(&session), &mut writer).await?;
+                for line in guard_lines(&host, Some(&session)).await? {
+                    writer.write_all(line.as_bytes()).await?;
+                }
             }
         }
     }
 }
 
-/// Send the control plane the guard report of one session, or of every live one.
-async fn report_guards<E, S, W>(
+/// Run one dispatch and queue its answer (and, after a browser action, the guard reports) for the connection.
+async fn dispatch<E, S>(
+    host: Arc<WorkerHost<E, S>>,
+    wire_envelope: wire::EnvelopeWire,
+    lease: LeaseClaim,
+    outbound: mpsc::UnboundedSender<String>,
+) where
+    E: ToolExecutor + 'static,
+    S: EvidenceSink + 'static,
+{
+    let dispatch_token = wire_envelope.dispatch_token.clone();
+    let effect_id = wire_envelope.effect_id.clone();
+    let is_browser = wire_envelope.tool.starts_with("browser.");
+    let result = match wire_envelope.into_envelope() {
+        Err(kind) => FromWorker::Result {
+            dispatch_token,
+            effect_id,
+            replayed: false,
+            outcome: OutcomeWire::Rejected {
+                reason: format!("unknown envelope kind: {kind}"),
+            },
+        },
+        Ok(envelope) => match host.receive(&envelope, &lease, &now_utc()).await {
+            Ok(recorded) => FromWorker::Result {
+                dispatch_token,
+                effect_id,
+                replayed: recorded.replayed,
+                outcome: outcome_wire(recorded.outcome),
+            },
+            Err(rejection) => FromWorker::Result {
+                dispatch_token,
+                effect_id,
+                replayed: false,
+                outcome: OutcomeWire::Rejected {
+                    reason: rejection.to_string(),
+                },
+            },
+        },
+    };
+    // A closed connection drops the answer; the outcome is recorded for a re-delivery.
+    match wire::encode(&result) {
+        Ok(line) => {
+            let _ = outbound.send(line);
+        }
+        Err(why) => eprintln!("qworkerd: a result could not be encoded: {why}"),
+    }
+    // A browser action may have changed what its driver guards (a dialog, a certificate error, a call in doubt): the
+    // control plane is told while the action is fresh.
+    if is_browser {
+        if let Ok(lines) = guard_lines(&host, None).await {
+            for line in lines {
+                let _ = outbound.send(line);
+            }
+        }
+    }
+}
+
+/// The guard report of one session, or of every live one, as lines for the control plane.
+async fn guard_lines<E, S>(
     host: &WorkerHost<E, S>,
     only: Option<&str>,
-    writer: &mut W,
-) -> Result<(), SessionError>
+) -> Result<Vec<String>, SessionError>
 where
     E: ToolExecutor,
     S: EvidenceSink,
-    W: AsyncWrite + Unpin,
 {
+    let mut lines = Vec::new();
     for (session_id, report) in host.executor().browser_guards(only).await {
-        writer
-            .write_all(wire::encode(&FromWorker::BrowserGuard { session_id, report })?.as_bytes())
-            .await?;
+        lines.push(wire::encode(&FromWorker::BrowserGuard {
+            session_id,
+            report,
+        })?);
     }
-    Ok(())
+    Ok(lines)
 }

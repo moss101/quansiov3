@@ -90,6 +90,9 @@ type LinkKey = (String, String);
 
 type LinkMap = Mutex<HashMap<LinkKey, Arc<Link>>>;
 
+/// The dispatches sent and not yet answered, by `(tenant, run)`: the worker (`(tenant, target)`) and the token of each.
+type InFlightTable = Mutex<HashMap<LinkKey, Vec<(LinkKey, String)>>>;
+
 struct Link {
     tenant_id: String,
     workspace_id: String,
@@ -113,6 +116,8 @@ pub struct WorkerHub {
     live: Arc<Mutex<Option<Arc<dyn LiveFramePort>>>>,
     /// How many live sockets are watching each target's channel, by `(tenant, target)`.
     viewers: Arc<Mutex<HashMap<LinkKey, usize>>>,
+    /// The dispatches sent and not yet answered, by `(tenant, run)`: the worker and the token of each.
+    in_flight: Arc<InFlightTable>,
 }
 
 impl std::fmt::Debug for WorkerHub {
@@ -136,7 +141,51 @@ impl WorkerHub {
             connections: Arc::new(std::sync::atomic::AtomicU64::new(0)),
             live: Arc::new(Mutex::new(None)),
             viewers: Arc::new(Mutex::new(HashMap::new())),
+            in_flight: Arc::new(Mutex::new(HashMap::new())),
         }
+    }
+
+    /// Stop every dispatch of a run that a worker is still running (a person cancelled or paused the run).
+    ///
+    /// Each worker is sent `cancel {dispatch_token}`: a dispatch still waiting for its turn ends `cancelled` (nothing ran)
+    /// and one already running is stopped and ends `interrupted`, which settles as unknown — the caller waiting for it
+    /// gets that answer. Returns how many cancels were sent.
+    pub async fn cancel_run(&self, tenant_id: &str, run_id: &str) -> usize {
+        let running = self
+            .in_flight
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get(&(tenant_id.to_string(), run_id.to_string()))
+            .cloned()
+            .unwrap_or_default();
+        let mut sent = 0;
+        for ((tenant, target), dispatch_token) in running {
+            let link = self
+                .links
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .get(&(tenant, target))
+                .cloned();
+            let Some(link) = link else { continue };
+            let Ok(line) = wire::encode(&ToWorker::Cancel { dispatch_token }) else {
+                continue;
+            };
+            if link.outbound.send(line).await.is_ok() {
+                sent += 1;
+            }
+        }
+        sent
+    }
+
+    /// The tokens of a run's dispatches that are sent and not yet answered.
+    #[must_use]
+    pub fn running(&self, tenant_id: &str, run_id: &str) -> Vec<String> {
+        self.in_flight
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get(&(tenant_id.to_string(), run_id.to_string()))
+            .map(|running| running.iter().map(|(_, token)| token.clone()).collect())
+            .unwrap_or_default()
     }
 
     /// The control-plane pool the hub leases through.
@@ -754,6 +803,15 @@ impl WorkerHub {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .insert(request.dispatch_token.to_string(), answer);
+        // Known to `cancel_run` from before it is sent until this call returns, however it returns.
+        let _in_flight = InFlight::enter(
+            &self.in_flight,
+            (tenant_id.to_string(), request.run_id.to_string()),
+            (
+                (link.tenant_id.clone(), link.target_id.clone()),
+                request.dispatch_token.to_string(),
+            ),
+        );
         let line = wire::encode(&ToWorker::Dispatch(Box::new((&envelope).into())))
             .map_err(|e| HubError::Send(e.to_string()))?;
         if link.outbound.send(line).await.is_err() {
@@ -816,6 +874,42 @@ impl Drop for Viewer {
         if last {
             if let Ok(runtime) = tokio::runtime::Handle::try_current() {
                 runtime.spawn(self.hub.clone().stream_target(self.key.clone(), false));
+            }
+        }
+    }
+}
+
+/// A dispatch's entry in the hub's in-flight table, removed when the dispatch call ends.
+struct InFlight {
+    table: Arc<InFlightTable>,
+    run: LinkKey,
+    token: String,
+}
+
+impl InFlight {
+    fn enter(table: &Arc<InFlightTable>, run: LinkKey, entry: (LinkKey, String)) -> Self {
+        let token = entry.1.clone();
+        table
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .entry(run.clone())
+            .or_default()
+            .push(entry);
+        Self {
+            table: Arc::clone(table),
+            run,
+            token,
+        }
+    }
+}
+
+impl Drop for InFlight {
+    fn drop(&mut self) {
+        let mut table = self.table.lock().unwrap_or_else(PoisonError::into_inner);
+        if let Some(running) = table.get_mut(&self.run) {
+            running.retain(|(_, token)| token != &self.token);
+            if running.is_empty() {
+                table.remove(&self.run);
             }
         }
     }
