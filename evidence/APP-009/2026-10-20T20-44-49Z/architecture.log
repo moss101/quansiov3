@@ -1,0 +1,65 @@
+architecture check: CLEAN (0 findings)
+........................................................................ [ 55%]
+.....................................F.......FF......F...                [100%]
+=================================== FAILURES ===================================
+____________________ test_owner_and_dependency_map_is_clean ____________________
+
+    def test_owner_and_dependency_map_is_clean() -> None:
+        """Named test: manifest/DAG validation. One owner per crate, no dependency cycles."""
+        from scripts.ci import workspace_check
+    
+>       assert workspace_check.check() == [], "workspace owner/dependency mapping regressed"
+E       AssertionError: workspace owner/dependency mapping regressed
+E       assert [{'rule': 'no...ackage.json'}] == []
+E         
+E         Left contains one more item: {'rule': 'node-package-without-manifest', 'path': 'apps/.DS_Store', 'detail': 'package directory needs package.json'}
+E         Use -v to get more diff
+
+tests/architecture/test_qa002_consistency.py:31: AssertionError
+______________________ test_real_workspace_is_conformant _______________________
+
+    def test_real_workspace_is_conformant():
+>       assert workspace_check.check() == []
+E       AssertionError: assert [{'rule': 'no...ackage.json'}] == []
+E         
+E         Left contains one more item: {'rule': 'node-package-without-manifest', 'path': 'apps/.DS_Store', 'detail': 'package directory needs package.json'}
+E         Use -v to get more diff
+
+tests/architecture/test_workspace_check.py:33: AssertionError
+_______________ test_owner_map_covers_every_canonical_rust_owner _______________
+
+    def test_owner_map_covers_every_canonical_rust_owner():
+        findings = workspace_check.check()
+>       assert findings == []
+E       AssertionError: assert [{'rule': 'no...ackage.json'}] == []
+E         
+E         Left contains one more item: {'rule': 'node-package-without-manifest', 'path': 'apps/.DS_Store', 'detail': 'package directory needs package.json'}
+E         Use -v to get more diff
+
+tests/architecture/test_workspace_check.py:38: AssertionError
+_____________________ test_cli_reports_clean_and_findings ______________________
+
+tmp_path = PosixPath('/private/var/folders/_1/1xvpd9n50m97rq8_c4ylpw940000gn/T/pytest-of-mohsin/pytest-17/test_cli_reports_clean_and_fin0')
+capsys = <_pytest.capture.CaptureFixture object at 0x10704a6f0>
+
+    def test_cli_reports_clean_and_findings(tmp_path, capsys):
+>       assert workspace_check.main(["--json"]) == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = <function main at 0x1070898a0>(['--json'])
+E        +    where <function main at 0x1070898a0> = workspace_check.main
+
+tests/architecture/test_workspace_check.py:113: AssertionError
+----------------------------- Captured stdout call -----------------------------
+[
+  {
+    "rule": "node-package-without-manifest",
+    "path": "apps/.DS_Store",
+    "detail": "package directory needs package.json"
+  }
+]
+=========================== short test summary info ============================
+FAILED tests/architecture/test_qa002_consistency.py::test_owner_and_dependency_map_is_clean
+FAILED tests/architecture/test_workspace_check.py::test_real_workspace_is_conformant
+FAILED tests/architecture/test_workspace_check.py::test_owner_map_covers_every_canonical_rust_owner
+FAILED tests/architecture/test_workspace_check.py::test_cli_reports_clean_and_findings
+4 failed, 125 passed in 24.74s

@@ -1,0 +1,101 @@
+{
+  "task_id": "APP-009",
+  "git_commit": "9589f2d45237a75304ebdae7a11309ba85c0db5c",
+  "recorded_at": "2026-10-20T20:57:12Z",
+  "commands": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-20T20-44-49Z/fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-20T20-44-49Z/clippy.log"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # clean clone: 129 passed, validator PASS (the in-tree run, architecture.log, failed only on an untracked, git-ignored apps/.DS_Store Finder file)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-20T20-44-49Z/architecture-clean-clone.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1338 passed, 0 failed. New: teammate_thread_race.rs (12 rounds x 8 simultaneous first messages: one default teammate, one thread; duplicate threads retired once idle, a busy one kept until its run ends) and teammates.rs (6 PostMessage at once over the API: one teammate)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-20T20-44-49Z/full-crates.log"
+    },
+    {
+      "command": "mutation checks, 5 of 5 KILLED, every mutant compiles, restored tree identical, control passes: the route without the lock (the original bug) -> 6 posts went to 6 teammates; no look-again -> 8 default teammates; loser told it failed -> conflict error; never retire -> idle duplicate stays ACTIVE; retire busy too -> a duplicate with an open run is terminated",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-009/2026-10-20T20-44-49Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings  # exit captured before filtering",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # clean clone: 129 passed, validator PASS (the in-tree run, architecture.log, failed only on an untracked, git-ignored apps/.DS_Store Finder file)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1338 passed, 0 failed. New: teammate_thread_race.rs (12 rounds x 8 simultaneous first messages: one default teammate, one thread; duplicate threads retired once idle, a busy one kept until its run ends) and teammates.rs (6 PostMessage at once over the API: one teammate)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks, 5 of 5 KILLED, every mutant compiles, restored tree identical, control passes: the route without the lock (the original bug) -> 6 posts went to 6 teammates; no look-again -> 8 default teammates; loser told it failed -> conflict error; never retire -> idle duplicate stays ACTIVE; retire busy too -> a duplicate with an open run is terminated",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/APP-009/2026-10-20T20-44-49Z/RECONCILIATION.md",
+      "sha256": "008980d92937ed00197ba18a85e0ceb03bb60d150001e862073883f4144ab383",
+      "bytes": 1207
+    },
+    {
+      "path": "evidence/APP-009/2026-10-20T20-44-49Z/architecture-clean-clone.log",
+      "sha256": "15a711087197abfcc5f33998b5f2e342e7b9fe95ed029c7e3897ed7557a514d0",
+      "bytes": 317
+    },
+    {
+      "path": "evidence/APP-009/2026-10-20T20-44-49Z/architecture.log",
+      "sha256": "e5cf0db99148154da465b5757d29bf4c5acae25e12c543b85686f9781e4f85a3",
+      "bytes": 3441
+    },
+    {
+      "path": "evidence/APP-009/2026-10-20T20-44-49Z/clippy.log",
+      "sha256": "f680fddd57134eb7bc9f6d4769827b058ee67a084c2f59702cee6a2c6b06c07a",
+      "bytes": 169
+    },
+    {
+      "path": "evidence/APP-009/2026-10-20T20-44-49Z/fmt.log",
+      "sha256": "8bc7b290341d8b4d3fbdc6c48bffc1dac5c9e8a41608403e62b6f2a0c1af9957",
+      "bytes": 9
+    },
+    {
+      "path": "evidence/APP-009/2026-10-20T20-44-49Z/full-crates.log",
+      "sha256": "ee5169a01640d9bf4e41dd901ce51bb832b70f0ad97359aeb457890326ceafac",
+      "bytes": 134888
+    },
+    {
+      "path": "evidence/APP-009/2026-10-20T20-44-49Z/mutation-checks.log",
+      "sha256": "3f1ccd2e555564f8ec5894620d34c666004fc4025cac4ef4095b96a23261ede8",
+      "bytes": 1179
+    }
+  ]
+}
