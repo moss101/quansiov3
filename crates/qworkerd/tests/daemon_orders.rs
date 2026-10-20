@@ -88,9 +88,9 @@ async fn a_worker_takes_browser_orders_only_while_it_holds_a_lease_and_rebuilds_
     let (worker_read, worker_write) = tokio::io::split(worker_end);
     let shared = recorded.clone();
     let worker = tokio::spawn(async move {
-        let mut host = WorkerHost::new(Recording(shared), UnattachedEvidence);
+        let host = std::sync::Arc::new(WorkerHost::new(Recording(shared), UnattachedEvidence));
         let _ = serve(
-            &mut host,
+            host,
             "tnt_x",
             TARGET,
             Duration::from_secs(3600),

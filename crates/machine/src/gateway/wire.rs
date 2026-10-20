@@ -269,6 +269,13 @@ pub enum ToWorker {
     Dispatch(Box<EnvelopeWire>),
     /// An order about a browser session.
     Browser(BrowserOrder),
+    /// Stop a dispatch the worker was sent. One still waiting for its turn ends `cancelled` (nothing ran); one already
+    /// running is stopped and ends `interrupted` (it may have done part of its work). A token the worker has already
+    /// answered, or never saw, is ignored: the cancel changes nothing that has settled.
+    Cancel {
+        /// The dispatch to stop.
+        dispatch_token: String,
+    },
 }
 
 /// How a dispatch ended on the worker.
@@ -291,6 +298,11 @@ pub enum OutcomeWire {
     },
     /// The action was cancelled before it ran.
     Cancelled,
+    /// The action had started and was stopped by a cancel: part of it may have happened, so its outcome is not known.
+    Interrupted {
+        /// What was stopped.
+        detail: String,
+    },
     /// The worker refused to run it: the envelope did not pass the lease it holds. Nothing ran.
     Rejected {
         /// The rule that fired.

@@ -205,11 +205,11 @@ async fn world(label: &str, with_worker: bool) -> Option<World> {
             let executor = LocalToolExecutor::new(sandbox, TENANT).with_browser(
                 BrowserRuntime::new(chrome, state_path, TENANT).allow_private_network(true),
             );
-            let mut host = WorkerHost::new(executor, UnattachedEvidence);
+            let host = std::sync::Arc::new(WorkerHost::new(executor, UnattachedEvidence));
             let stream = tokio::net::UnixStream::connect(&socket).await.unwrap();
             let (reader, writer) = stream.into_split();
             let _ = serve(
-                &mut host,
+                host,
                 TENANT,
                 &target,
                 Duration::from_secs(3600),

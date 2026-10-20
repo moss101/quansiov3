@@ -13,7 +13,9 @@
 //! * **one worker per target**: a second worker for a leased target is refused;
 //! * **a lost worker releases its lease**, and the next dispatch is refused;
 //! * **an unanswered dispatch is unknown, never retried**;
-//! * **routing**: a tool the worker does not host goes to the host it wraps.
+//! * **routing**: a tool the worker does not host goes to the host it wraps;
+//! * **side by side, and stoppable**: two calls on one worker run at once, and a run's cancel stops its call on the worker
+//!   — it settles as unknown (it may have done part of its work) and the command does not finish.
 //!
 //! Environment: `QUANSIO_TEST_POSTGRES_URL`.
 
@@ -138,12 +140,15 @@ fn attach_worker_beating(
         let sandbox = Sandbox::empty()
             .authorize(RootScope::Workspace, &root)
             .unwrap();
-        let mut host = WorkerHost::new(LocalToolExecutor::new(sandbox, TENANT), UnattachedEvidence);
+        let host = Arc::new(WorkerHost::new(
+            LocalToolExecutor::new(sandbox, TENANT),
+            UnattachedEvidence,
+        ));
         let stream = tokio::net::UnixStream::connect(&socket)
             .await
             .expect("connect");
         let (reader, writer) = stream.into_split();
-        let _ = serve(&mut host, TENANT, &target, beat, reader, writer).await;
+        let _ = serve(host, TENANT, &target, beat, reader, writer).await;
     })
 }
 
@@ -580,6 +585,86 @@ async fn a_lease_revoked_in_the_control_plane_stops_forwarding_even_before_its_c
     assert!(
         !root.path().join("after").exists(),
         "nothing was sent to a worker whose lease was revoked"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn calls_on_one_worker_run_side_by_side_and_cancelling_the_run_stops_its_call() {
+    let Some(world) = world("worker_cancel").await else {
+        return blocked_marker();
+    };
+    let target = register(&world.pool, Substrate::CustomerPrivateWorker, true).await;
+    let root = tempfile::tempdir().unwrap();
+    let _worker = attach_worker(&world, &target, root.path());
+    attached(&world, 1).await;
+    let host = Arc::new(routed(&world, Arc::new(Recording::default())));
+
+    // Two two-second commands on the one worker finish in about two seconds, not four.
+    let started = std::time::Instant::now();
+    let (first, second) = tokio::join!(
+        host.execute(dispatch(
+            "terminal.exec",
+            json!({"command": "sleep 2; echo a > a.txt"}),
+            20_000
+        )),
+        host.execute(dispatch(
+            "terminal.exec",
+            json!({"command": "sleep 2; echo b > b.txt"}),
+            20_000
+        )),
+    );
+    success(first);
+    success(second);
+    assert!(
+        started.elapsed() < Duration::from_millis(3500),
+        "the worker ran them one after the other: {:?}",
+        started.elapsed()
+    );
+
+    // A call in flight is known to the hub by its run, and cancelling the run stops it on the worker.
+    let call = dispatch(
+        "terminal.exec",
+        json!({"command": "echo started > started.txt; sleep 4; echo done > done.txt"}),
+        20_000,
+    );
+    let (run_id, token) = (call.run_id.clone(), call.dispatch_token.clone());
+    let running = tokio::spawn({
+        let host = Arc::clone(&host);
+        async move { host.execute(call).await }
+    });
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    while !root.path().join("started.txt").exists() {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "the command never started"
+        );
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    assert_eq!(world.hub.running(TENANT, &run_id), [token]);
+    assert_eq!(
+        world
+            .hub
+            .cancel_run(TENANT, "run_01J8Z3K6F1N8VQ2X5W9YNOTRUN")
+            .await,
+        0,
+        "another run's cancel stops nothing"
+    );
+    let cancelled_at = std::time::Instant::now();
+    assert_eq!(world.hub.cancel_run(TENANT, &run_id).await, 1);
+    match running.await.unwrap() {
+        Ok(HostOutcome::Unknown { detail }) => assert!(detail.contains("cancel"), "{detail}"),
+        other => panic!("a call stopped part-way settles as unknown, got {other:?}"),
+    }
+    assert!(cancelled_at.elapsed() < Duration::from_secs(2));
+    assert!(
+        world.hub.running(TENANT, &run_id).is_empty(),
+        "the hub forgets a call once it is answered"
+    );
+    tokio::time::sleep(Duration::from_secs(5)).await;
+    assert!(
+        !root.path().join("done.txt").exists(),
+        "the cancelled command finished its work"
     );
     drop_pool(&world.pool, &world.name).await;
 }

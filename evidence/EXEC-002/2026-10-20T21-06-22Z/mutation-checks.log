@@ -1,0 +1,16 @@
+X1 dispatches served one at a time again: COMPILES
+X1 dispatches served one at a time again: KILLED (assertion `left == right` failed)
+X2 the worker ignores a cancel: COMPILES
+X2 the worker ignores a cancel: KILLED (assertion `left == right` failed)
+X3 no bound on how many run at once: COMPILES
+X3 no bound on how many run at once: KILLED (a second dispatch ran past --max-concurrent 1)
+X4 a re-delivery while running runs again: COMPILES
+X4 a re-delivery while running runs again: KILLED (assertion `left == right` failed: one run and one replay)
+X5 a running dispatch cannot be stopped: COMPILES
+X5 a running dispatch cannot be stopped: KILLED (a command stopped part-way is interrupted, not completed or cancelled: Completed { output: "{\"cancelled\":false,\"exit_code\":0,\"output\":\"\",\"output_bytes\":0,\"succ)
+X6 CancelRun does not reach the worker: COMPILES
+X6 CancelRun does not reach the worker: KILLED (the cancelled call returns at once: Elapsed(()))
+X7 an interrupted call settles as a known failure: COMPILES
+X7 an interrupted call settles as a known failure: KILLED (a call stopped part-way settles as unknown, got Ok(Failure { retryable: false, error: Object {"code": String("TOOL_FAILED"), "detail": String("the action was stopped by a)
+RESTORED: identical to the committed change
+CONTROL (restored): passes

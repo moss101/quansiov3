@@ -167,6 +167,8 @@ impl WorkerToolHost {
                 error: json!({ "code": "CANCELLED", "detail": "the worker cancelled the action before it ran" }),
                 evidence_ids: Vec::new(),
             }),
+            // Stopped part-way by a cancel: it may have done part of its work. The runtime reconciles; nothing re-sends.
+            Ok((OutcomeWire::Interrupted { detail }, _)) => Ok(HostOutcome::Unknown { detail }),
             // The worker ran nothing: the lease it holds did not admit the envelope.
             Ok((OutcomeWire::Rejected { reason }, _)) => Err(HostFailure::Refused {
                 detail: format!("WORKER_REJECTED: {reason}"),

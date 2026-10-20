@@ -251,7 +251,7 @@ async fn a_worker_without_a_browser_refuses_and_a_bad_session_id_never_becomes_a
     let sandbox = Sandbox::empty()
         .authorize(RootScope::Workspace, root.path())
         .unwrap();
-    let mut bare = WorkerHost::new(
+    let bare = WorkerHost::new(
         LocalToolExecutor::new(sandbox, "tnt_test"),
         UnattachedEvidence,
     );

@@ -1,0 +1,3 @@
+Installed 6 packages in 9ms
+contract regeneration check: CLEAN (catalog,openapi,sdk,ts,rust)
+contracts rc=0

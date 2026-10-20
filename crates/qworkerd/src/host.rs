@@ -18,6 +18,9 @@
 //! outcomes it recorded. `crates/qworkerd/tests/host.rs` scans its sources to keep it that way.
 
 use std::collections::BTreeMap;
+use std::sync::{Mutex, PoisonError};
+
+use tokio::sync::{watch, Semaphore};
 
 use quansio_machine::control::browser::DecisionReceipt;
 use quansio_machine::gateway::wire::BrowserOrder;
@@ -164,6 +167,11 @@ pub enum HostOutcome {
         /// Effect that was cancelled.
         effect_id: String,
     },
+    /// The action had started and was stopped by a cancel. Part of it may have happened, so its outcome is unknown.
+    Interrupted {
+        /// Effect that was interrupted.
+        effect_id: String,
+    },
 }
 
 impl HostOutcome {
@@ -173,7 +181,8 @@ impl HostOutcome {
         match self {
             Self::Completed { effect_id, .. }
             | Self::Failed { effect_id, .. }
-            | Self::Cancelled { effect_id } => effect_id,
+            | Self::Cancelled { effect_id }
+            | Self::Interrupted { effect_id } => effect_id,
         }
     }
 }
@@ -265,12 +274,38 @@ impl ToolExecutor for NoopExecutor {
     }
 }
 
+/// How many dispatches a host runs at once unless told otherwise.
+pub const DEFAULT_CONCURRENCY: usize = 8;
+
+/// Where one dispatch token stands on this host.
+enum Slot {
+    /// Received and not yet settled. `done` carries the outcome once there is one; `cancel` stops it.
+    Running {
+        done: watch::Receiver<Option<HostOutcome>>,
+        cancel: watch::Sender<bool>,
+    },
+    /// Settled; a re-delivery is answered from here.
+    Settled(HostOutcome),
+}
+
+/// What `receive` found for a token.
+enum Entry {
+    Settled(HostOutcome),
+    Running(watch::Receiver<Option<HostOutcome>>),
+    New(watch::Sender<Option<HostOutcome>>, watch::Receiver<bool>),
+}
+
 /// The worker host.
+///
+/// Dispatches run side by side, up to the host's concurrency; one past it waits for a turn. Whatever runs at once, a token
+/// runs at most once: a re-delivery of a token that is still running waits for that run and is answered with its outcome
+/// (`replayed`), and one that has settled is answered from the record.
 pub struct WorkerHost<E: ToolExecutor, S: EvidenceSink> {
     executor: E,
     evidence: S,
-    recorded: BTreeMap<String, HostOutcome>,
-    checkpoints: Vec<String>,
+    slots: Mutex<BTreeMap<String, Slot>>,
+    checkpoints: Mutex<Vec<String>>,
+    turns: Semaphore,
 }
 
 impl<E: ToolExecutor, S: EvidenceSink> WorkerHost<E, S> {
@@ -280,45 +315,79 @@ impl<E: ToolExecutor, S: EvidenceSink> WorkerHost<E, S> {
         &self.executor
     }
 
-    /// Build a host over an executor and an evidence sink.
+    /// Build a host over an executor and an evidence sink that runs [`DEFAULT_CONCURRENCY`] dispatches at once.
     pub fn new(executor: E, evidence: S) -> Self {
+        Self::with_concurrency(executor, evidence, DEFAULT_CONCURRENCY)
+    }
+
+    /// Build a host that runs at most `concurrency` dispatches at once (at least one).
+    pub fn with_concurrency(executor: E, evidence: S, concurrency: usize) -> Self {
         Self {
             executor,
             evidence,
-            recorded: BTreeMap::new(),
-            checkpoints: Vec::new(),
+            slots: Mutex::new(BTreeMap::new()),
+            checkpoints: Mutex::new(Vec::new()),
+            turns: Semaphore::new(concurrency.max(1)),
         }
     }
 
     /// Receive an action, validate it against the lease this host holds, and run it at most once.
     ///
     /// A dispatch whose token was already recorded is answered from the record: the tool does not run
-    /// again, and the caller learns the action was a replay. Validation happens first in every case, so
-    /// a replay that arrives after the lease lapsed is fenced rather than served.
+    /// again, and the caller learns the action was a replay. One whose token is still running waits for that run and is
+    /// answered the same way. Validation happens first in every case, so a replay that arrives after the lease lapsed is
+    /// fenced rather than served.
     ///
     /// # Errors
     /// Returns [`Rejection`] when the envelope may not be executed at all.
     pub async fn receive(
-        &mut self,
+        &self,
         envelope: &ActionEnvelope,
         lease: &LeaseClaim,
         now: &str,
     ) -> Result<Recorded, Rejection> {
         MachineGateway::validate(envelope, lease, now)?;
 
-        if let Some(outcome) = self.recorded.get(&envelope.dispatch_token) {
-            return Ok(Recorded {
-                outcome: outcome.clone(),
-                replayed: true,
-            });
-        }
+        let token = envelope.dispatch_token.clone();
+        // Decided under the lock, acted on after it is released: nothing is awaited while it is held.
+        let entry = {
+            let mut slots = self.slots.lock().unwrap_or_else(PoisonError::into_inner);
+            match slots.get(&token) {
+                Some(Slot::Settled(outcome)) => Entry::Settled(outcome.clone()),
+                Some(Slot::Running { done, .. }) => Entry::Running(done.clone()),
+                None => {
+                    let (finished, done) = watch::channel(None);
+                    let (cancel, cancelled) = watch::channel(false);
+                    slots.insert(token.clone(), Slot::Running { done, cancel });
+                    Entry::New(finished, cancelled)
+                }
+            }
+        };
+        let (finished, mut cancelled) = match entry {
+            Entry::Settled(outcome) => {
+                return Ok(Recorded {
+                    outcome,
+                    replayed: true,
+                })
+            }
+            Entry::Running(mut done) => {
+                return Ok(Recorded {
+                    outcome: wait_for(&mut done, &envelope.effect_id).await,
+                    replayed: true,
+                })
+            }
+            Entry::New(finished, cancelled) => (finished, cancelled),
+        };
 
         let outcome = match envelope.kind {
             EnvelopeKind::Cancel => HostOutcome::Cancelled {
                 effect_id: envelope.effect_id.clone(),
             },
             EnvelopeKind::Checkpoint => {
-                self.checkpoints.push(envelope.target_id.clone());
+                self.checkpoints
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner)
+                    .push(envelope.target_id.clone());
                 HostOutcome::Completed {
                     effect_id: envelope.effect_id.clone(),
                     output: Vec::new(),
@@ -327,64 +396,115 @@ impl<E: ToolExecutor, S: EvidenceSink> WorkerHost<E, S> {
                 }
             }
             EnvelopeKind::EvidenceUpload | EnvelopeKind::Dispatch => {
-                let mut output = OutputSink::new(envelope.max_output_bytes);
-                match self.executor.run(envelope, &mut output).await {
-                    Ok(tool_output) => {
-                        let (bounded, truncated) = output.finish();
-                        let evidence_ref = if tool_output.evidence.is_empty() {
-                            None
-                        } else {
-                            match self
-                                .evidence
-                                .upload(
-                                    &envelope.effect_id,
-                                    &tool_output.evidence,
-                                    &tool_output.evidence_media_type,
-                                )
-                                .await
-                            {
-                                Ok(reference) => Some(reference),
-                                Err(failure) => {
-                                    let failed = HostOutcome::Failed {
-                                        effect_id: envelope.effect_id.clone(),
-                                        failure,
-                                    };
-                                    self.recorded
-                                        .insert(envelope.dispatch_token.clone(), failed.clone());
-                                    return Ok(Recorded {
-                                        outcome: failed,
-                                        replayed: false,
-                                    });
-                                }
-                            }
-                        };
-                        HostOutcome::Completed {
-                            effect_id: envelope.effect_id.clone(),
-                            output: bounded,
-                            truncated,
-                            evidence_ref,
+                // A turn first: a cancel while waiting for one means nothing ran.
+                let turn = tokio::select! {
+                    turn = self.turns.acquire() => turn.ok(),
+                    () = raised(&mut cancelled) => None,
+                };
+                match turn {
+                    None => HostOutcome::Cancelled {
+                        effect_id: envelope.effect_id.clone(),
+                    },
+                    Some(_turn) => {
+                        tokio::select! {
+                            outcome = self.execute(envelope) => outcome,
+                            // Dropping the run stops it: a command's process is killed with it.
+                            () = raised(&mut cancelled) => HostOutcome::Interrupted {
+                                effect_id: envelope.effect_id.clone(),
+                            },
                         }
                     }
-                    Err(failure) => HostOutcome::Failed {
-                        effect_id: envelope.effect_id.clone(),
-                        failure,
-                    },
                 }
             }
         };
 
-        self.recorded
-            .insert(envelope.dispatch_token.clone(), outcome.clone());
+        self.slots
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .insert(token, Slot::Settled(outcome.clone()));
+        let _ = finished.send(Some(outcome.clone()));
         Ok(Recorded {
             outcome,
             replayed: false,
         })
     }
 
-    /// The outcomes this host has recorded.
+    /// Stop the dispatch `dispatch_token` if it has not settled. Returns whether there was one to stop.
+    pub fn cancel(&self, dispatch_token: &str) -> bool {
+        let slots = self.slots.lock().unwrap_or_else(PoisonError::into_inner);
+        match slots.get(dispatch_token) {
+            Some(Slot::Running { cancel, .. }) => {
+                let _ = cancel.send(true);
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// The dispatches received and not yet settled.
     #[must_use]
-    pub fn recorded(&self) -> &BTreeMap<String, HostOutcome> {
-        &self.recorded
+    pub fn running(&self) -> Vec<String> {
+        self.slots
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .iter()
+            .filter(|(_, slot)| matches!(slot, Slot::Running { .. }))
+            .map(|(token, _)| token.clone())
+            .collect()
+    }
+
+    async fn execute(&self, envelope: &ActionEnvelope) -> HostOutcome {
+        let mut output = OutputSink::new(envelope.max_output_bytes);
+        match self.executor.run(envelope, &mut output).await {
+            Ok(tool_output) => {
+                let (bounded, truncated) = output.finish();
+                let evidence_ref = if tool_output.evidence.is_empty() {
+                    None
+                } else {
+                    match self
+                        .evidence
+                        .upload(
+                            &envelope.effect_id,
+                            &tool_output.evidence,
+                            &tool_output.evidence_media_type,
+                        )
+                        .await
+                    {
+                        Ok(reference) => Some(reference),
+                        Err(failure) => {
+                            return HostOutcome::Failed {
+                                effect_id: envelope.effect_id.clone(),
+                                failure,
+                            }
+                        }
+                    }
+                };
+                HostOutcome::Completed {
+                    effect_id: envelope.effect_id.clone(),
+                    output: bounded,
+                    truncated,
+                    evidence_ref,
+                }
+            }
+            Err(failure) => HostOutcome::Failed {
+                effect_id: envelope.effect_id.clone(),
+                failure,
+            },
+        }
+    }
+
+    /// The outcomes this host has settled, by dispatch token.
+    #[must_use]
+    pub fn recorded(&self) -> BTreeMap<String, HostOutcome> {
+        self.slots
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .iter()
+            .filter_map(|(token, slot)| match slot {
+                Slot::Settled(outcome) => Some((token.clone(), outcome.clone())),
+                Slot::Running { .. } => None,
+            })
+            .collect()
     }
 
     /// The report this worker puts on the outbound half of the channel, built from the lease it holds.
@@ -403,7 +523,34 @@ impl<E: ToolExecutor, S: EvidenceSink> WorkerHost<E, S> {
 
     /// Targets this host has checkpointed, in order.
     #[must_use]
-    pub fn checkpoints(&self) -> &[String] {
-        &self.checkpoints
+    pub fn checkpoints(&self) -> Vec<String> {
+        self.checkpoints
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
+    }
+}
+
+/// Resolve once `flag` is raised; never if its sender is gone without raising it.
+async fn raised(flag: &mut watch::Receiver<bool>) {
+    if flag.wait_for(|raised| *raised).await.is_err() {
+        std::future::pending::<()>().await;
+    }
+}
+
+/// The outcome a running dispatch settles as.
+async fn wait_for(done: &mut watch::Receiver<Option<HostOutcome>>, effect_id: &str) -> HostOutcome {
+    match done.wait_for(Option::is_some).await {
+        Ok(outcome) => outcome
+            .clone()
+            .unwrap_or_else(|| unreachable_outcome(effect_id)),
+        // The run that held the token was dropped before it settled (its caller went away): nothing is known about it.
+        Err(_) => unreachable_outcome(effect_id),
+    }
+}
+
+fn unreachable_outcome(effect_id: &str) -> HostOutcome {
+    HostOutcome::Interrupted {
+        effect_id: effect_id.to_string(),
     }
 }
