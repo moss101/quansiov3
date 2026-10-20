@@ -806,15 +806,7 @@ impl AgentStore {
         let mut retired = Vec::new();
         for (id, generation) in rows {
             let id = CanonicalId::parse_typed(&id, Prefix::AgentThread)?;
-            match self
-                .transition_with_reason(
-                    &id,
-                    generation_from_i64(generation)?,
-                    AgentThreadStatus::Terminated,
-                    Some(format!("duplicate of {keep}")),
-                )
-                .await
-            {
+            match self.terminate(&id, generation_from_i64(generation)?).await {
                 Ok(_) => retired.push(id),
                 // Another message retired it, or moved it, first.
                 Err(
