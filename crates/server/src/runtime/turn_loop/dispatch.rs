@@ -1696,7 +1696,16 @@ impl ToolDispatchService {
             // relax a decision that policy already permits, so omitting them fails closed.
             None => Vec::new(),
         };
-        let evaluator = PolicyEvaluator::new(&policies, &user_rules);
+        // The autonomy mode only narrows. A setting that cannot be read is a refusal, not a standard run.
+        let autonomy = crate::policy::autonomy::effective_mode(
+            &self.pool,
+            &self.identity.tenant_id,
+            &run.workspace_id,
+            actor.user_id.as_deref(),
+        )
+        .await
+        .map_err(|error| RuntimeError::InvalidArgument(format!("autonomy mode: {error}")))?;
+        let evaluator = PolicyEvaluator::new(&policies, &user_rules).with_autonomy(autonomy);
         let egress = EgressGrantSet::empty();
         let data_classes: Vec<DataClass> = Vec::new();
         let sequence_guards = Vec::new();

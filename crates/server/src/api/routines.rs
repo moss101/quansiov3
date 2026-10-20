@@ -259,11 +259,33 @@ fn routine_result(view: &RoutineView, secret: Option<String>, replayed: Option<b
 }
 
 /// The template a command's parameters describe: `{title, prompt, workflow?}`.
+/// `mode` of a routine: `act` (the default, not stored) or `observe`, which reads and reports and can do nothing else.
+fn mode_param(params: &Value, correlation: &str) -> Result<Option<&'static str>, ApiError> {
+    match params.get("mode") {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::String(mode)) if mode == "act" => Ok(None),
+        Some(Value::String(mode)) if mode == "observe" => Ok(Some("observe")),
+        Some(_) => Err(ApiError::new(
+            ApiErrorCode::ValidationSchema,
+            "mode is `act` or `observe`",
+            correlation,
+        )),
+    }
+}
+
+/// Whether a routine's template is in observe mode: its runs may read and report, and nothing more.
+pub(super) fn observes(objective_template: &Value) -> bool {
+    objective_template.get("mode").and_then(Value::as_str) == Some("observe")
+}
+
 fn template_of(params: &Value, correlation: &str) -> Result<Value, ApiError> {
     let mut template = json!({
         "title": text(params, "title").unwrap_or(""),
         "prompt": text(params, "prompt").unwrap_or(""),
     });
+    if let Some(mode) = mode_param(params, correlation)? {
+        template["mode"] = json!(mode);
+    }
     match params.get("workflow") {
         None | Some(Value::Null) => {}
         Some(workflow) if workflow.is_object() => template["workflow"] = workflow.clone(),
@@ -421,7 +443,7 @@ pub async fn update_routine(
         if let Some(trigger) = params.get("trigger") {
             change.trigger = Some(trigger_of(trigger, correlation)?);
         }
-        if ["title", "prompt", "workflow"]
+        if ["title", "prompt", "workflow", "mode"]
             .iter()
             .any(|field| params.get(*field).is_some())
         {
@@ -429,6 +451,14 @@ pub async fn update_routine(
                 "title": text(params, "title").or_else(|| routine.objective_template.get("title").and_then(Value::as_str)).unwrap_or(""),
                 "prompt": text(params, "prompt").or_else(|| routine.objective_template.get("prompt").and_then(Value::as_str)).unwrap_or(""),
             });
+            // Absent: the mode stays. Given: `act` clears it and `observe` sets it.
+            if params.get("mode").is_none_or(Value::is_null) {
+                if observes(&routine.objective_template) {
+                    template["mode"] = json!("observe");
+                }
+            } else if let Some(mode) = mode_param(params, correlation)? {
+                template["mode"] = json!(mode);
+            }
             match params.get("workflow") {
                 // Absent: the script stays. Null: it is removed. An object: it is replaced.
                 None => {
@@ -1175,9 +1205,22 @@ async fn fire_run(
                 .create_run(new_run)
                 .await
                 .map_err(|error| runtime_error(error, correlation))?;
-            seed_projection(state, identity, &request.workspace_id, &run)
-                .await
-                .map_err(|error| internal(error, correlation))?;
+            // An observing routine's runs can read and report and nothing else: the narrowing is in the run's own
+            // projection, so no setting, rule or approval can give it more, and the run's workers inherit it.
+            let narrowed: &[&str] = if observes(&request.objective_template) {
+                &super::commands::OBSERVE_ONLY_CLASSES
+            } else {
+                &[]
+            };
+            super::commands::seed_projection_narrowed(
+                state,
+                identity,
+                &request.workspace_id,
+                &run,
+                narrowed,
+            )
+            .await
+            .map_err(|error| internal(error, correlation))?;
             run
         }
     };

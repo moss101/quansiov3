@@ -22,6 +22,7 @@
 pub const POLICY_OWNER: &str = "crates/server/src/policy";
 
 pub mod approval;
+pub mod autonomy;
 pub mod error;
 pub mod escalation;
 pub mod evaluation;
@@ -36,6 +37,7 @@ pub use approval::{
     ConsequencePreview, DispatchBinding, NewApprovalRequest, ReceiptScope, RequestedOf,
     UntrustedOrigin, APPROVAL_SIGNING_KEY_ENV,
 };
+pub use autonomy::AutonomyMode;
 pub use error::{ApprovalFailure, PolicyError};
 pub use escalation::{
     derived_from_trust, escalate, Escalation, TrustLabellingSource, TrustLevel,

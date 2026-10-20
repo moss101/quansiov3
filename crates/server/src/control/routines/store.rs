@@ -335,12 +335,21 @@ pub fn validate_template(template: &Value, script: &ScriptConfig) -> Result<(), 
     if let Some(object) = template.as_object() {
         if let Some(unknown) = object
             .keys()
-            .find(|key| !matches!(key.as_str(), "title" | "prompt" | "workflow"))
+            .find(|key| !matches!(key.as_str(), "title" | "prompt" | "workflow" | "mode"))
         {
             return Err(RoutineError::Validation(format!(
                 "objective_template has no field {unknown:?}"
             )));
         }
+    }
+    // `mode` is stored only as `observe` (`act` is the default and absent), so nothing else is a mode.
+    if template
+        .get("mode")
+        .is_some_and(|mode| mode.as_str() != Some("observe"))
+    {
+        return Err(RoutineError::Validation(
+            "objective_template.mode is `observe` or absent".to_string(),
+        ));
     }
     match template.get("workflow") {
         None | Some(Value::Null) => {}

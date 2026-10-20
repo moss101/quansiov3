@@ -1855,3 +1855,127 @@ async fn a_proposal_from_an_unlabelled_context_window_fails_closed() {
     };
     assert_eq!(state, RunStatus::WaitingApproval);
 }
+
+// ---------------------------------------------------------------------------------------
+// Autonomy modes (RUN-006 over RUN-011): a setting that only ever narrows what policy allowed
+// ---------------------------------------------------------------------------------------
+
+/// Set `autonomy_mode` on one settings layer (`tenants`, `workspaces` or `users`).
+async fn set_autonomy(fixture: &Fixture, table: &str, id: &str, mode: &str) {
+    let mut tx = fixture.pool.begin().await.expect("begin");
+    schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .expect("tenant context");
+    sqlx::query(&format!(
+        "UPDATE {table} SET settings = jsonb_set(settings, '{{autonomy_mode}}', to_jsonb($1::text)) WHERE id = $2"
+    ))
+    .bind(mode)
+    .bind(id)
+    .execute(&mut *tx)
+    .await
+    .expect("set the mode");
+    tx.commit().await.expect("commit");
+}
+
+/// One turn proposing a read and a sandboxed command (tier 0 and tier 1, both allowed by the seeded policy).
+async fn turn_with_read_and_command(
+    label: &str,
+    mode: Option<(&str, &str, &str)>,
+) -> (usize, TurnOutcome, Vec<(String, String, Option<Value>)>) {
+    let fixture = prepare(label).await.expect("the dev database");
+    seed_policy(&fixture).await;
+    if let Some((table, id, mode)) = mode {
+        set_autonomy(&fixture, table, id, mode).await;
+    }
+    let model = StubModel::with(vec![
+        ModelProposal {
+            tool_calls: vec![
+                read_tool("call_read", "/work/root/notes.md"),
+                ProposedToolCall::new(
+                    "call_term",
+                    "terminal.exec",
+                    json!({ "command": "ls -la", "cwd": "/work/root" }),
+                ),
+            ],
+            ..ModelProposal::default()
+        },
+        ModelProposal {
+            assistant_text: Some("done".to_string()),
+            ..ModelProposal::default()
+        },
+    ]);
+    let host = ConformanceHost::default();
+    let seams = build_seams(&fixture, model, host.clone());
+    let run = start_run(&fixture, &seams.engine, 8).await;
+    seed_projection(&fixture, &run.id.to_string()).await;
+    let outcome = seams
+        .engine
+        .run_turn(
+            &run.id,
+            run.generation,
+            TurnInput::new(RunTriggerKind::Manual),
+        )
+        .await
+        .expect("turn");
+    let rows = tool_call_rows(&fixture).await;
+    let dispatched = host.dispatch_count();
+    finish(fixture).await;
+    (dispatched, outcome, rows)
+}
+
+#[tokio::test]
+async fn the_autonomy_mode_in_force_decides_what_an_agent_may_do_without_asking() {
+    if admin_url().is_none() {
+        return blocked_marker();
+    }
+    // The control: with no mode set, both calls run.
+    let (dispatched, outcome, _) = turn_with_read_and_command("run006_standard", None).await;
+    assert_eq!(dispatched, 2, "standard runs the read and the command");
+    assert!(
+        matches!(outcome, TurnOutcome::Completed { .. }),
+        "{outcome:?}"
+    );
+
+    // `read_only`, set by the workspace: the read runs and the command is refused before any host.
+    let (dispatched, _, rows) = turn_with_read_and_command(
+        "run006_readonly",
+        Some(("workspaces", WORKSPACE, "read_only")),
+    )
+    .await;
+    assert_eq!(dispatched, 1, "only the read reached a host: {rows:?}");
+    let command = rows
+        .iter()
+        .find(|(tool, _, _)| tool == "terminal.exec")
+        .expect("the command's row");
+    assert_eq!(command.1, "rejected", "{rows:?}");
+    assert!(
+        command
+            .2
+            .as_ref()
+            .is_some_and(|result| result.to_string().contains("autonomy_read_only")),
+        "{rows:?}"
+    );
+
+    // `ask_every_action`, set by the person themselves (their layer, stricter than the workspace's): the command parks for
+    // approval and nothing but the read is dispatched.
+    let (dispatched, outcome, _) =
+        turn_with_read_and_command("run006_askevery", Some(("users", USER, "ask_every_action")))
+            .await;
+    assert_eq!(dispatched, 1, "the command waits for a person");
+    let TurnOutcome::Parked { state, .. } = outcome else {
+        panic!("the command parks for approval: {outcome:?}");
+    };
+    assert_eq!(state, RunStatus::WaitingApproval);
+
+    // `ask_for_consequences` leaves the sandboxed command (tier 1) alone.
+    let (dispatched, outcome, _) = turn_with_read_and_command(
+        "run006_asksome",
+        Some(("tenants", TENANT, "ask_for_consequences")),
+    )
+    .await;
+    assert_eq!(dispatched, 2);
+    assert!(
+        matches!(outcome, TurnOutcome::Completed { .. }),
+        "{outcome:?}"
+    );
+}
