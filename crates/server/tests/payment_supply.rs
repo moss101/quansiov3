@@ -177,13 +177,38 @@ async fn find_anywhere(pool: &PgPool, needles: &[&str]) -> Vec<(String, String)>
         for row in rows {
             let text: String = row.try_get("row").unwrap_or_default();
             for needle in needles {
-                if text.contains(needle) {
+                if holds_as_a_value(&text, needle) {
                     found.push((table.clone(), (*needle).to_string()));
                 }
             }
         }
     }
     found
+}
+
+/// Whether `needle` appears in a row's text as a value: not as a stretch of hexadecimal digits inside a longer run of them.
+/// A row's `bytea` columns print as hex, so a short secret (a four-digit security code) occurs in random sealed bytes now and
+/// then by chance; that is not the value being stored, and a test that failed on it would fail about one run in a few hundred.
+/// A value in a JSON document, a column or a log line has a non-hex character on each side.
+fn holds_as_a_value(text: &str, needle: &str) -> bool {
+    let is_hex = |c: char| c.is_ascii_hexdigit();
+    text.match_indices(needle).any(|(at, _)| {
+        let before = text[..at].chars().next_back();
+        let after = text[at + needle.len()..].chars().next();
+        !before.is_some_and(is_hex) && !after.is_some_and(is_hex)
+    })
+}
+
+#[test]
+fn a_secret_inside_a_run_of_hex_is_chance_and_a_value_in_a_document_is_a_find() {
+    assert!(!holds_as_a_value("\\x9a6803f1c2", "6803"));
+    assert!(holds_as_a_value(r#"{"cvc":"6803"}"#, "6803"));
+    assert!(holds_as_a_value(
+        "card 4242424242424242 stored",
+        "4242424242424242"
+    ));
+    assert!(holds_as_a_value("6803", "6803"));
+    assert!(!holds_as_a_value("x0123456803abc", "6803"));
 }
 
 fn code(body: &Value) -> &str {
