@@ -345,6 +345,16 @@ async fn command(world: &World, name: &str, id: u32, params: Value) -> (u16, Val
 }
 
 async fn command_as(world: &World, user: &str, name: &str, id: u32, params: Value) -> (u16, Value) {
+    command_on(world.router.clone(), user, name, id, params).await
+}
+
+async fn command_on(
+    router: axum::Router,
+    user: &str,
+    name: &str,
+    id: u32,
+    params: Value,
+) -> (u16, Value) {
     use tower::ServiceExt;
     let request = axum::http::Request::builder()
         .method("POST")
@@ -356,7 +366,7 @@ async fn command_as(world: &World, user: &str, name: &str, id: u32, params: Valu
             json!({ "command_id": command_id(id), "params": params }).to_string(),
         ))
         .unwrap();
-    let response = world.router.clone().oneshot(request).await.unwrap();
+    let response = router.oneshot(request).await.unwrap();
     let status = response.status().as_u16();
     let bytes = axum::body::to_bytes(response.into_body(), 1 << 22)
         .await
@@ -1736,7 +1746,7 @@ async fn a_decision_made_while_the_worker_was_away_is_told_to_it_when_it_attache
     drop_pool(&world.pool, &world.name).await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn a_person_registers_a_worker_target_once_and_a_worker_can_then_attach_to_it() {
     let Some(world) = world("wl_provision", false).await else {
         return blocked_marker();
@@ -1764,6 +1774,42 @@ async fn a_person_registers_a_worker_target_once_and_a_worker_can_then_attach_to
     let ask = json!({"workspace_id": WORKSPACE, "substrate": "customer_private_worker"});
     let (status, body) = command_as(&world, outsider, "ProvisionTarget", 600, ask.clone()).await;
     assert_eq!(status, 403, "{body}");
+    // A person who can read the workspace and author work in it still may not register machines for it.
+    for (role, user) in [
+        ("viewer", "usr_01J8Z3K6F1N8VQ2X5W9YQZTSXF"),
+        ("editor", "usr_01J8Z3K6F1N8VQ2X5W9YQZTSXG"),
+    ] {
+        let mut tx = world.pool.begin().await.unwrap();
+        sqlx::query("INSERT INTO users (id, primary_email, display_name) VALUES ($1, $2, $3)")
+            .bind(user)
+            .bind(format!("{role}@example.com"))
+            .bind(role)
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO tenant_memberships (id, tenant_id, user_id, role, status) VALUES ($1, $2, $3, 'member', 'active')")
+            .bind(format!("tm_{role}"))
+            .bind(TENANT)
+            .bind(user)
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO workspace_memberships (id, tenant_id, workspace_id, user_id, role, status) VALUES ($1, $2, $3, $4, $5, 'active')")
+            .bind(format!("wm_{role}"))
+            .bind(TENANT)
+            .bind(WORKSPACE)
+            .bind(user)
+            .bind(role)
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        tx.commit().await.unwrap();
+        let (status, body) = command_as(&world, user, "ProvisionTarget", 610, ask.clone()).await;
+        assert_eq!(status, 403, "{role} registered a machine: {body}");
+    }
 
     // Other substrates have flows of their own and are not answered here.
     for (n, bad) in [
@@ -1803,6 +1849,60 @@ async fn a_person_registers_a_worker_target_once_and_a_worker_can_then_attach_to
         .unwrap();
     tx.commit().await.unwrap();
     let ask = json!({"workspace_id": fresh, "substrate": "customer_private_worker"});
+    // Many asks at once, on a runtime with threads, in a few workspaces: each workspace ends with exactly one target.
+    let mut spare = Vec::new();
+    for n in 0..2u32 {
+        let id = format!("ws_01J8Z3K6F1N8VQ2X5W9YPRVN0{}", n + 2);
+        let mut tx = world.pool.begin().await.unwrap();
+        quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO workspaces (id, tenant_id, name) VALUES ($1, $2, 'spare')")
+            .bind(&id)
+            .bind(TENANT)
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        tx.commit().await.unwrap();
+        spare.push(id);
+    }
+    for (w, workspace) in spare.iter().enumerate() {
+        let mut asks = Vec::new();
+        for n in 0..8u32 {
+            let router = world.router.clone();
+            let params = json!({"workspace_id": workspace, "substrate": "customer_private_worker"});
+            asks.push(tokio::spawn(async move {
+                command_on(
+                    router,
+                    USER,
+                    "ProvisionTarget",
+                    700 + 10 * u32::try_from(w).unwrap() + n,
+                    params,
+                )
+                .await
+            }));
+        }
+        let mut targets = std::collections::BTreeSet::new();
+        for ask in asks {
+            let (status, body) = ask.await.unwrap();
+            assert_eq!(status, 200, "{body}");
+            targets.insert(body["result"]["target_id"].as_str().unwrap().to_string());
+        }
+        assert_eq!(targets.len(), 1, "{workspace}: eight asks made {targets:?}");
+        let mut tx = world.pool.begin().await.unwrap();
+        quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+            .await
+            .unwrap();
+        let rows: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM execution_targets WHERE tenant_id = $1 AND workspace_id = $2",
+        )
+        .bind(TENANT)
+        .bind(workspace)
+        .fetch_one(&mut *tx)
+        .await
+        .unwrap();
+        assert_eq!(rows, 1, "{workspace}: {rows} target rows");
+    }
     let (one, two) = tokio::join!(
         command(&world, "ProvisionTarget", 606, ask.clone()),
         command(&world, "ProvisionTarget", 607, ask.clone()),

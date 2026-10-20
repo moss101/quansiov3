@@ -38,7 +38,7 @@ from typing import Any
 from quansio.v1.intelligence import intelligence_pb2
 
 from intelligence.context.projection import ContextError
-from intelligence.model_gateway.content import PART_TEXT, parse_content
+from intelligence.model_gateway.content import PART_IMAGE, PART_TEXT, parse_content
 from intelligence.model_gateway.errors import GatewayError
 from intelligence.model_gateway.ids import new_ulid
 from intelligence.skills.models import CapabilitySnapshot, SkillError, SkillVersionRef
@@ -214,9 +214,37 @@ def parse_segment_request(raw: str) -> SegmentRequest:
     )
 
 
+IMAGE_TOKENS = 1600
+"""What one picture costs the budget, whatever its bytes: providers price an image by its size in pixels, and
+four characters a token would charge a picture's base64 as if it were prose (a 300 KiB screenshot as 100,000
+tokens)."""
+
+
 def estimate_tokens(content_json: str) -> int:
-    """A deterministic, provider-independent estimate: four characters a token, at least one."""
-    return max(1, math.ceil(len(content_json) / 4))
+    """A deterministic, provider-independent estimate.
+
+    Four characters a token, at least one, and a fixed cost per picture.
+    """
+    try:
+        decoded = json.loads(content_json)
+    except json.JSONDecodeError:
+        decoded = None
+    pictures = 0
+    if isinstance(decoded, dict) and isinstance(decoded.get("parts"), list):
+        parts = decoded["parts"]
+        pictures = sum(1 for part in parts if isinstance(part, dict) and part.get("kind") == PART_IMAGE)
+        if pictures:
+            stripped = {
+                **decoded,
+                "parts": [
+                    {key: value for key, value in part.items() if key != "data_base64"}
+                    if isinstance(part, dict) and part.get("kind") == PART_IMAGE
+                    else part
+                    for part in parts
+                ],
+            }
+            content_json = json.dumps(stripped)
+    return max(1, math.ceil(len(content_json) / 4)) + pictures * IMAGE_TOKENS
 
 
 def build_turn_context(

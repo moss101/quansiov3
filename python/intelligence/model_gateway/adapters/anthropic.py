@@ -41,6 +41,7 @@ from intelligence.model_gateway.adapters.base import (
     assert_no_disabled_features,
     assert_operator_channel,
     decode_json,
+    degrade_optional_images,
     iter_sse,
 )
 from intelligence.model_gateway.catalog import ProviderKind
@@ -96,9 +97,10 @@ class AnthropicAdapter:
                 "constraint as a forced strict tool instead",
             )
         model = context.route.model
-        assert_modality_capabilities(context.messages, model.capabilities)
+        shown = degrade_optional_images(context.messages, model.capabilities)
+        assert_modality_capabilities(shown, model.capabilities)
         cache_enabled = model.supports(capabilities.PROMPT_CACHING)
-        system_blocks, messages = _render_messages(context.messages, cache_enabled=cache_enabled)
+        system_blocks, messages = _render_messages(shown, cache_enabled=cache_enabled)
         body: dict[str, object] = {
             "model": model.model_id,
             "max_tokens": call.max_output_tokens,

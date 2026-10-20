@@ -51,6 +51,10 @@ class ContentPart:
     media_type: str = ""
     data_base64: str = ""
     url: str = ""
+    # An optional image helps when the model can see it and is replaced by a sentence when it cannot (a
+    # model without the `vision` capability). It is never dropped silently: `without_optional_images`
+    # says what went.
+    optional: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +88,38 @@ class RenderedContent:
 
     def text(self) -> str:
         return "\n".join(part.text for part in self.parts if part.kind == PART_TEXT and part.text)
+
+    @property
+    def has_required_image(self) -> bool:
+        return any(part.kind == PART_IMAGE and not part.optional for part in self.parts)
+
+    @property
+    def has_optional_image(self) -> bool:
+        return any(part.kind == PART_IMAGE and part.optional for part in self.parts)
+
+    def without_optional_images(self, note: str) -> RenderedContent:
+        """The same content, each optional image replaced by `note` (a sentence saying what is not shown)."""
+        parts = tuple(
+            ContentPart(kind=PART_TEXT, text=note) if part.kind == PART_IMAGE and part.optional else part
+            for part in self.parts
+        )
+        return RenderedContent(
+            parts=parts,
+            tool_call_id=self.tool_call_id,
+            tool_name=self.tool_name,
+            tool_calls=self.tool_calls,
+        )
+
+    def image_parts(self) -> tuple[ContentPart, ...]:
+        return tuple(part for part in self.parts if part.kind == PART_IMAGE)
+
+    def without_images(self) -> RenderedContent:
+        return RenderedContent(
+            parts=tuple(part for part in self.parts if part.kind != PART_IMAGE),
+            tool_call_id=self.tool_call_id,
+            tool_name=self.tool_name,
+            tool_calls=self.tool_calls,
+        )
 
 
 def parse_content(
@@ -216,6 +252,12 @@ def _parse_part(raw: object) -> ContentPart:
     kind = raw.get("kind")
     if kind not in _ALLOWED_PART_KINDS:
         raise GatewayError(GatewayErrorCode.VALIDATION_SCHEMA, f"unsupported content part kind {kind!r}")
+    optional = raw.get("optional", False)
+    if not isinstance(optional, bool) or (optional and kind != PART_IMAGE):
+        raise GatewayError(
+            GatewayErrorCode.VALIDATION_SCHEMA,
+            "`optional` is a boolean and only an image part may be optional",
+        )
     if kind == PART_TEXT:
         text = raw.get("text")
         if not isinstance(text, str) or not text:
@@ -247,7 +289,7 @@ def _parse_part(raw: object) -> ContentPart:
             raise GatewayError(
                 GatewayErrorCode.VALIDATION_SCHEMA, "content part `data_base64` is not valid base64"
             ) from error
-    return ContentPart(kind=kind, media_type=media_type, data_base64=data_base64, url=url)
+    return ContentPart(kind=kind, media_type=media_type, data_base64=data_base64, url=url, optional=optional)
 
 
 def _opt_text(value: object) -> str:
