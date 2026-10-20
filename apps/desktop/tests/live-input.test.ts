@@ -13,6 +13,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { browserInput, decodeBrowserFrame, inputForKey, USER_KEYS } from "../src/index.js";
+import { parseBinaryPicture, StreamClient, subscribeRequest, type LiveFrame, type SocketLike } from "../src/client/stream.js";
 import { userKeyAllowed } from "../src/live/session.js";
 import { frameToPage, wheelToPage } from "../src/live/frames.js";
 import { DesktopBridge } from "../src/main/ipc.js";
@@ -305,3 +306,78 @@ describe("the key and scroll commands", () => {
     expect(source).toContain("inputForKey(event)");
   });
 });
+
+describe("a binary picture", () => {
+  const message = (header: unknown, picture: Uint8Array): Uint8Array => {
+    const head = new TextEncoder().encode(JSON.stringify(header));
+    const out = new Uint8Array(8 + head.length + picture.length);
+    out.set([0x51, 0x46, 0x52, 0x31], 0);
+    new DataView(out.buffer).setUint32(4, head.length, false);
+    out.set(head, 8);
+    out.set(picture, 8 + head.length);
+    return out;
+  };
+  const header = { kind: "live", channel: "target:tgt_1", frame: { kind: "browser.frame", session_id: SESSION, tab_id: "T1", media_type: "image/jpeg", width: 1000, height: 500, sequence: 3 } };
+
+  it("becomes the live frame its text form would have been, the bytes as base64", () => {
+    const picture = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+    const live = parseBinaryPicture(message(header, picture));
+    expect(live).toMatchObject({ kind: "live", channel: "target:tgt_1", frame: { kind: "browser.frame", sequence: 3, width: 1000 } });
+    expect(live.frame["data"]).toBe(Buffer.from(picture).toString("base64"));
+    // And the live view reads it as it reads any frame.
+    expect(decodeBrowserFrame(live.frame, SESSION)).toMatchObject({ tabId: "T1", width: 1000 });
+  });
+
+  it("is refused when it is not one", () => {
+    const ok = message(header, Uint8Array.from([1]));
+    for (const bad of [new Uint8Array(0), Uint8Array.from([1, 2, 3, 4, 5, 6, 7, 8]), ok.subarray(0, 12), message({ kind: "event" }, Uint8Array.from([1])), message({ kind: "live", channel: "c" }, Uint8Array.from([1]))]) {
+      expect(() => parseBinaryPicture(bad)).toThrow();
+    }
+    const lying = Uint8Array.from(ok);
+    new DataView(lying.buffer).setUint32(4, 99999, false);
+    expect(() => parseBinaryPicture(lying)).toThrow(/runs past/);
+  });
+
+  it("is asked for only by the live view of a target", () => {
+    expect(subscribeRequest(["target:tgt_1"], null, "c", { binaryFrames: true })).toEqual({ subscribe: [{ channel: "target:tgt_1" }], consumer: "c", binary_frames: true });
+    expect(subscribeRequest(["workspace:ws_1"], null, "c")).not.toHaveProperty("binary_frames");
+    const source = readFileSync(join(__dirname, "..", "src", "main", "ipc.ts"), "utf8");
+    expect(source.match(/binaryFrames: true/g)?.length).toBe(1);
+    expect(source).toMatch(/channels: \[`target:\$\{targetId\}`\],[\s\S]{0,200}binaryFrames: true/);
+  });
+
+  it("is delivered by the stream client as the live frame, whatever buffer type the socket hands over, and a damaged one is dropped", () => {
+    const listeners: Record<string, ((event: { data: unknown }) => void)[]> = {};
+    const sent: string[] = [];
+    const socket: SocketLike = {
+      send: (data) => sent.push(data),
+      close: () => undefined,
+      readyState: 1,
+      addEventListener: ((type: string, listener: (event: { data: unknown }) => void) => {
+        (listeners[type] ??= []).push(listener);
+      }) as SocketLike["addEventListener"],
+    };
+    const seen: LiveFrame[] = [];
+    const client = new StreamClient({
+      url: "ws://x/v1/stream",
+      headers: {},
+      channels: ["target:tgt_1"],
+      consumer: "c",
+      openSocket: () => socket,
+      binaryFrames: true,
+      onLive: (frame) => seen.push(frame),
+    });
+    client.connect();
+    listeners["open"]?.forEach((listener) => { listener({ data: null }); });
+    expect(JSON.parse(sent[0] ?? "{}")).toMatchObject({ binary_frames: true });
+    const picture = Uint8Array.from([0xff, 0xd8, 9]);
+    const bytes = message(header, picture);
+    const deliver = (data: unknown): void => listeners["message"]?.forEach((listener) => { listener({ data }); });
+    deliver(Buffer.from(bytes));
+    deliver(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+    deliver(Buffer.from("QFR1garbage"));
+    deliver(Buffer.alloc(0));
+    expect(seen.map((frame) => frame.frame["data"])).toEqual([Buffer.from(picture).toString("base64"), Buffer.from(picture).toString("base64")]);
+  });
+});
+

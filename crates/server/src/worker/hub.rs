@@ -105,6 +105,21 @@ struct Link {
     lease: Mutex<Lease>,
     /// Sessions already proven to be on this worker's target, so a frame costs no query.
     verified: Mutex<HashSet<String>>,
+    /// Evidence a worker sent ahead of the result that names it, by dispatch token; at most [`MAX_HELD_EVIDENCE`], the
+    /// oldest dropped first, so a worker that sends evidence nobody asked for cannot grow the server.
+    evidence: Mutex<std::collections::VecDeque<(String, HeldEvidence)>>,
+}
+
+/// How much evidence waits for its result at most, per worker.
+const MAX_HELD_EVIDENCE: usize = 8;
+
+/// Evidence bytes a worker sent with a dispatch, still base64.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HeldEvidence {
+    /// Media type the worker claimed; the host checks the bytes against it.
+    pub media_type: String,
+    /// The bytes, base64.
+    pub data_base64: String,
 }
 
 /// Accepts workers and carries dispatches to them.
@@ -355,6 +370,7 @@ impl WorkerHub {
             pending: Mutex::new(HashMap::new()),
             lease: Mutex::new(lease.clone()),
             verified: Mutex::new(HashSet::new()),
+            evidence: Mutex::new(std::collections::VecDeque::new()),
         });
         let key = (tenant_id.clone(), target_id.clone());
         self.links
@@ -410,6 +426,31 @@ impl WorkerHub {
                         },
                     )
                     .await;
+                }
+                Ok(FromWorker::Evidence {
+                    dispatch_token,
+                    media_type,
+                    data_base64,
+                }) => {
+                    // Kept only for a dispatch this hub is waiting on: evidence for anything else is dropped.
+                    let waiting = link
+                        .pending
+                        .lock()
+                        .unwrap_or_else(PoisonError::into_inner)
+                        .contains_key(&dispatch_token);
+                    if waiting {
+                        let mut held = link.evidence.lock().unwrap_or_else(PoisonError::into_inner);
+                        held.push_back((
+                            dispatch_token,
+                            HeldEvidence {
+                                media_type,
+                                data_base64,
+                            },
+                        ));
+                        while held.len() > MAX_HELD_EVIDENCE {
+                            held.pop_front();
+                        }
+                    }
                 }
                 Ok(FromWorker::BrowserGuard { session_id, report }) => {
                     self.record_guard(&link, &session_id, &report).await;
@@ -789,7 +830,7 @@ impl WorkerHub {
         tenant_id: &str,
         workspace_id: &str,
         request: &DispatchArgs<'_>,
-    ) -> Result<(OutcomeWire, bool), HubError> {
+    ) -> Result<(OutcomeWire, bool, Option<HeldEvidence>), HubError> {
         let link = self
             .link_for_workspace(tenant_id, workspace_id)
             .ok_or_else(|| HubError::NoWorker(workspace_id.to_string()))?;
@@ -871,7 +912,16 @@ impl WorkerHub {
             return Err(HubError::Send("the worker's channel is closed".to_string()));
         }
         match tokio::time::timeout(request.wait, waiting).await {
-            Ok(Ok(answer)) => Ok(answer),
+            Ok(Ok((outcome, replayed))) => {
+                let evidence = {
+                    let mut held = link.evidence.lock().unwrap_or_else(PoisonError::into_inner);
+                    held.iter()
+                        .position(|(token, _)| token == request.dispatch_token)
+                        .and_then(|at| held.remove(at))
+                        .map(|(_, evidence)| evidence)
+                };
+                Ok((outcome, replayed, evidence))
+            }
             Ok(Err(_)) => Err(HubError::NoAnswer("the worker disconnected".to_string())),
             Err(_) => {
                 link.pending

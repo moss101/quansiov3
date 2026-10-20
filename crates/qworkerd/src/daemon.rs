@@ -33,6 +33,58 @@ impl EvidenceSink for UnattachedEvidence {
     }
 }
 
+/// An evidence sink that keeps what a dispatch captured until the channel carries it to the server (the worker has no
+/// credential for the evidence store). At most [`MAX_HELD`] items are held, the oldest dropped first, and an item over
+/// [`quansio_machine::gateway::wire::MAX_EVIDENCE_BYTES`] is refused, so a worker cannot be made to hoard bytes.
+#[derive(Debug, Default)]
+pub struct InlineEvidence {
+    held: std::sync::Mutex<std::collections::VecDeque<(String, String, Vec<u8>)>>,
+}
+
+/// How many captures wait for the channel at most.
+const MAX_HELD: usize = 16;
+
+#[async_trait::async_trait]
+impl EvidenceSink for InlineEvidence {
+    async fn upload(
+        &self,
+        effect_id: &str,
+        payload: &[u8],
+        media_type: &str,
+    ) -> Result<String, HostFailure> {
+        if payload.len() > quansio_machine::gateway::wire::MAX_EVIDENCE_BYTES {
+            return Err(HostFailure::EvidenceFailed(format!(
+                "{} bytes of evidence is over the {} the channel carries",
+                payload.len(),
+                quansio_machine::gateway::wire::MAX_EVIDENCE_BYTES
+            )));
+        }
+        let reference = format!("inline:{effect_id}");
+        let mut held = self
+            .held
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        held.retain(|(held_reference, _, _)| held_reference != &reference);
+        held.push_back((reference.clone(), media_type.to_string(), payload.to_vec()));
+        while held.len() > MAX_HELD {
+            held.pop_front();
+        }
+        Ok(reference)
+    }
+
+    fn take(&self, reference: &str) -> Option<(String, Vec<u8>)> {
+        let mut held = self
+            .held
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let at = held
+            .iter()
+            .position(|(held_reference, _, _)| held_reference == reference)?;
+        held.remove(at)
+            .map(|(_, media_type, bytes)| (media_type, bytes))
+    }
+}
+
 /// Why a session ended.
 #[derive(Debug, thiserror::Error)]
 pub enum SessionError {
@@ -262,6 +314,29 @@ async fn dispatch<E, S>(
             },
         },
     };
+    // Evidence the dispatch captured goes first, so the server has it when the result that names it arrives.
+    if let FromWorker::Result {
+        dispatch_token,
+        outcome:
+            OutcomeWire::Completed {
+                evidence_ref: Some(reference),
+                ..
+            },
+        ..
+    } = &result
+    {
+        if let Some((media_type, bytes)) = host.evidence().take(reference) {
+            use base64::Engine as _;
+            let frame = FromWorker::Evidence {
+                dispatch_token: dispatch_token.clone(),
+                media_type,
+                data_base64: base64::engine::general_purpose::STANDARD.encode(bytes),
+            };
+            if let Ok(line) = wire::encode(&frame) {
+                let _ = outbound.send(line);
+            }
+        }
+    }
     // A closed connection drops the answer; the outcome is recorded for a re-delivery.
     match wire::encode(&result) {
         Ok(line) => {

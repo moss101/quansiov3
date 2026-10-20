@@ -284,6 +284,7 @@ impl Composition {
             );
         }
         api = api.with_worker_hub(hub);
+        let objects_for_pictures = api.object_store_handle();
         if let Some(endpoint) = config.intelligence_endpoint.as_deref() {
             let settings = crate::intelligence::model_source::ModelCallSettings::load()?;
             let client = crate::intelligence::IntelligenceClient::connect_lazy(endpoint)
@@ -301,7 +302,8 @@ impl Composition {
                         client,
                         context,
                         settings,
-                    ),
+                    )
+                    .with_object_store(objects_for_pictures),
                 ));
         } else {
             crate::observability::notice(crate::observability::Level::Info, "QUANSIO_INTELLIGENCE_ENDPOINT is not set: turns are answered by the conformance stub, not a model");

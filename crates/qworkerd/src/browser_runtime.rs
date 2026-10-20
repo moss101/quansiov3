@@ -309,11 +309,20 @@ impl BrowserRuntime {
 
     /// Run one `browser.*` envelope and return the driver's reply document.
     pub async fn call(&self, envelope: &ActionEnvelope) -> Value {
+        self.call_with_evidence(envelope).await.0
+    }
+
+    /// Run one `browser.*` envelope and return the driver's reply document and the evidence it captured (a screenshot's PNG).
+    pub async fn call_with_evidence(&self, envelope: &ActionEnvelope) -> (Value, Option<Vec<u8>>) {
+        self.call_inner(envelope).await
+    }
+
+    async fn call_inner(&self, envelope: &ActionEnvelope) -> (Value, Option<Vec<u8>>) {
         let tool = envelope.tool.as_str();
         let args: Value = match serde_json::from_str(&envelope.args_json) {
             Ok(args) => args,
             Err(error) => {
-                return refusal(
+                return refused(
                     tool,
                     FaultCode::InvalidRequest,
                     format!("the arguments are not JSON: {error}"),
@@ -321,12 +330,12 @@ impl BrowserRuntime {
             }
         };
         let Some(session_id) = args.get("session_id").and_then(Value::as_str) else {
-            return refusal(tool, FaultCode::InvalidRequest, "session_id is required");
+            return refused(tool, FaultCode::InvalidRequest, "session_id is required");
         };
         if tool == "browser.navigate" && !self.allow_private_network {
             if let Some(url) = args.get("url").and_then(Value::as_str) {
                 if let Err(why) = vet_navigation(url).await {
-                    return refusal(
+                    return refused(
                         tool,
                         FaultCode::NavigationDenied,
                         format!("navigation refused: {why}"),
@@ -337,7 +346,7 @@ impl BrowserRuntime {
         let live = match self.session(session_id, envelope).await {
             Ok(live) => live,
             Err(why) => {
-                return refusal(
+                return refused(
                     tool,
                     FaultCode::TargetNotFound,
                     format!("no browser is available: {why}"),
@@ -353,8 +362,13 @@ impl BrowserRuntime {
         };
         let reply = live.driver.dispatch(tool, &args, &context).await;
         let mut document = reply.to_json();
-        // Pixels do not cross the control channel yet; the reply says how many were captured and left behind.
+        // The reply says how many bytes were captured; the bytes themselves go back beside it, outside the bounded document.
         document["evidence_bytes"] = json!(reply.evidence.as_ref().map_or(0, Vec::len));
-        document
+        (document, reply.evidence)
     }
+}
+
+/// A refusal as `call_inner` returns it: the document, and no evidence.
+fn refused(tool: &str, code: FaultCode, message: impl Into<String>) -> (Value, Option<Vec<u8>>) {
+    (refusal(tool, code, message), None)
 }

@@ -61,6 +61,36 @@ export function parseStreamFrame(text: string): StreamFrame | StreamErrorFrame {
   throw new Error(`unrecognized stream frame: ${text.slice(0, 120)}`);
 }
 
+/** What opens a binary picture message (`QFR1`, then the header's length as a big-endian u32, the header, the bytes). */
+const BINARY_PICTURE_MAGIC = [0x51, 0x46, 0x52, 0x31] as const;
+
+/**
+ * Parse one binary picture message into the live frame the text form would have been: the header names the picture, the
+ * bytes after it are the picture, and `data` is set to them as base64 so everything downstream reads one shape. Anything that
+ * is not a well-formed binary picture is refused.
+ */
+export function parseBinaryPicture(bytes: Uint8Array): LiveFrame {
+  if (bytes.length < 8 || BINARY_PICTURE_MAGIC.some((byte, index) => bytes[index] !== byte)) {
+    throw new Error("not a binary picture");
+  }
+  const headerLength = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(4, false);
+  if (headerLength === 0 || 8 + headerLength > bytes.length) {
+    throw new Error("a binary picture's header runs past its message");
+  }
+  const decoded: unknown = JSON.parse(new TextDecoder().decode(bytes.subarray(8, 8 + headerLength)));
+  const frame = decoded && typeof decoded === "object" ? (decoded as Record<string, unknown>) : {};
+  const inner = frame["frame"];
+  if (frame["kind"] !== "live" || typeof frame["channel"] !== "string" || !inner || typeof inner !== "object") {
+    throw new Error("a binary picture's header is not a live frame");
+  }
+  const picture = bytes.subarray(8 + headerLength);
+  return {
+    kind: "live",
+    channel: frame["channel"],
+    frame: { ...(inner as Record<string, unknown>), kind: String((inner as Record<string, unknown>)["kind"]), data: Buffer.from(picture).toString("base64") },
+  };
+}
+
 /** The HTTP status of a refused WebSocket handshake, from the socket's error event, if any. */
 export function handshakeStatus(event: unknown): number | null {
   const message = event && typeof event === "object" && "message" in event ? String(event.message) : "";
@@ -85,7 +115,8 @@ export function subscribeRequest(
   channels: readonly string[],
   cursor: string | null,
   consumer: string,
-): { subscribe: { channel: string }[]; cursor?: string; consumer: string } {
+  options: { readonly binaryFrames?: boolean } = {},
+): { subscribe: { channel: string }[]; cursor?: string; consumer: string; binary_frames?: boolean } {
   if (channels.length === 0) {
     throw new Error("subscribe needs at least one channel");
   }
@@ -94,10 +125,13 @@ export function subscribeRequest(
       throw new Error(`invalid stream channel: ${channel}`);
     }
   }
-  const request: { subscribe: { channel: string }[]; cursor?: string; consumer: string } = {
+  const request: { subscribe: { channel: string }[]; cursor?: string; consumer: string; binary_frames?: boolean } = {
     subscribe: channels.map((channel) => ({ channel })),
     consumer,
   };
+  if (options.binaryFrames) {
+    request.binary_frames = true;
+  }
   if (cursor) {
     request.cursor = cursor;
   }
@@ -126,6 +160,8 @@ export interface StreamClientOptions {
   readonly openSocket: SocketFactory;
   /** Cursor to resume from on the first connect (from the durable session). */
   readonly cursor?: string | null;
+  /** Ask for browser pictures as binary messages rather than base64 inside JSON (the live view of a target). */
+  readonly binaryFrames?: boolean;
   readonly maxAttempts?: number;
   readonly onEvent?: (frame: EventFrame) => void;
   readonly onLive?: (frame: LiveFrame) => void;
@@ -172,12 +208,25 @@ export class StreamClient {
     const socket = this.#options.openSocket(this.#options.url, headers);
     this.#socket = socket;
     socket.addEventListener("open", () => {
-      socket.send(JSON.stringify(subscribeRequest(this.#options.channels, this.#cursor, this.#options.consumer)));
+      socket.send(JSON.stringify(subscribeRequest(this.#options.channels, this.#cursor, this.#options.consumer, { binaryFrames: this.#options.binaryFrames === true })));
       this.#attempt = 0;
       this.#setState("open");
     });
     socket.addEventListener("message", (event) => {
-      this.#onMessage(typeof event.data === "string" ? event.data : String(event.data));
+      const data = event.data;
+      if (typeof data === "string") {
+        this.#onMessage(data);
+      } else if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) {
+        // A binary message is a picture: the same live frame the text form carries, with its bytes beside the header.
+        try {
+          const bytes = data instanceof ArrayBuffer ? new Uint8Array(data) : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+          this.#options.onLive?.(parseBinaryPicture(bytes));
+        } catch {
+          // a damaged picture is dropped, as an unparseable text frame is
+        }
+      } else {
+        this.#onMessage(String(data));
+      }
     });
     let refusedStatus: number | null = null;
     socket.addEventListener("error", (event) => {

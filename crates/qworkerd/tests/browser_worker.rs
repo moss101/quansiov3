@@ -11,6 +11,8 @@
 //!   and the same click under a higher ceiling goes through;
 //! * **at most once**: a re-delivered envelope is answered from the worker's record and the page is not clicked
 //!   again;
+//! * **a screenshot's pixels are kept for the channel**: the reply stays small and names the bytes; the PNG itself is held by
+//!   the worker's evidence sink under the reference the result carries, and is handed over once;
 //! * **fail closed**: a worker without a browser refuses; a session id that is not a session id never becomes a
 //!   directory; one browser per session.
 //!
@@ -23,8 +25,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use common::{blocked, chrome_path, ref_named, Route, Site};
 use quansio_machine::gateway::{ActionEnvelope, DispatchRequest, LeaseClaim};
 use quansio_qworkerd::browser_runtime::BrowserRuntime;
-use quansio_qworkerd::daemon::UnattachedEvidence;
+use quansio_qworkerd::daemon::{InlineEvidence, UnattachedEvidence};
 use quansio_qworkerd::executor::LocalToolExecutor;
+use quansio_qworkerd::host::EvidenceSink;
 use quansio_qworkerd::host::{HostOutcome, WorkerHost};
 use quansio_qworkerd::tools::{RootScope, Sandbox};
 use serde_json::{json, Value};
@@ -289,5 +292,102 @@ async fn a_worker_without_a_browser_refuses_and_a_bad_session_id_never_becomes_a
     assert!(
         !state_has_escape,
         "no directory was created for a refused session id"
+    );
+}
+
+#[tokio::test]
+async fn a_screenshot_s_pixels_are_held_for_the_channel_and_handed_over_once() {
+    let Some(chrome) = chrome_path() else {
+        blocked("no Chrome on this host");
+        return;
+    };
+    let (root, state) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let sandbox = Sandbox::empty()
+        .authorize(RootScope::Workspace, root.path())
+        .unwrap();
+    let executor = LocalToolExecutor::new(sandbox, "tnt_test").with_browser(
+        BrowserRuntime::new(chrome, state.path(), "tnt_test").allow_private_network(true),
+    );
+    let host = WorkerHost::new(executor, InlineEvidence::default());
+    let site = Site::start().await;
+    site.html("/", PAGE);
+    let navigated = envelope(
+        "browser.navigate",
+        &json!({"session_id": SESSION, "url": site.url("/")}),
+        Some(3),
+    );
+    let first = host
+        .receive(&navigated, &lease(), "2026-10-17T00:00:00Z")
+        .await
+        .unwrap();
+    let HostOutcome::Completed { output, .. } = first.outcome else {
+        panic!("navigate did not complete");
+    };
+    let tab = serde_json::from_slice::<Value>(&output).unwrap()["output"]["tab_id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+
+    let shot = envelope(
+        "browser.screenshot",
+        &json!({"session_id": SESSION, "tab_id": tab}),
+        Some(3),
+    );
+    let recorded = host
+        .receive(&shot, &lease(), "2026-10-17T00:00:00Z")
+        .await
+        .unwrap();
+    let HostOutcome::Completed {
+        output,
+        evidence_ref,
+        ..
+    } = recorded.outcome
+    else {
+        panic!("the screenshot did not complete");
+    };
+    let reply: Value = serde_json::from_slice(&output).unwrap();
+    assert_eq!(reply["status"], "ok", "{reply}");
+    let reference = evidence_ref.expect("the pixels are named by the result");
+    assert!(reference.starts_with("inline:"), "{reference}");
+    // The reply is a small document that says how many bytes there are; it carries none of them.
+    let named = reply["evidence_bytes"].as_u64().unwrap();
+    assert!(
+        named > 100 && output.len() < 4096,
+        "{named} bytes named in a {}-byte reply",
+        output.len()
+    );
+    let (media_type, bytes) = host
+        .evidence()
+        .take(&reference)
+        .expect("the pixels are held");
+    assert_eq!(media_type, "image/png");
+    assert!(bytes.starts_with(b"\x89PNG\r\n\x1a\n"), "a real PNG");
+    assert_eq!(bytes.len() as u64, named);
+    assert!(
+        host.evidence().take(&reference).is_none(),
+        "handed over once"
+    );
+}
+
+#[tokio::test]
+async fn a_sink_that_keeps_nothing_makes_a_screenshot_fail_rather_than_lose_its_pixels_silently() {
+    let Some(mut world) = world(true).await else {
+        return;
+    };
+    let (tab, _) = open(&mut world, Some(3)).await;
+    let shot = envelope(
+        "browser.screenshot",
+        &json!({"session_id": SESSION, "tab_id": tab}),
+        Some(3),
+    );
+    let recorded = world
+        .host
+        .receive(&shot, &lease(), "2026-10-17T00:00:00Z")
+        .await
+        .unwrap();
+    assert!(
+        matches!(recorded.outcome, HostOutcome::Failed { .. }),
+        "an unattached sink cannot take the pixels: {:?}",
+        recorded.outcome
     );
 }

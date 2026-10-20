@@ -607,6 +607,8 @@ export class DesktopBridge {
       headers,
       channels: [`target:${targetId}`],
       consumer: `${this.#options.consumer}:live`,
+      // Pictures of the target's browsers arrive as binary messages, not base64 inside JSON (OD-008).
+      binaryFrames: true,
       openSocket: this.#options.openSocket,
       cursor: null,
       onEvent: (frame) => {

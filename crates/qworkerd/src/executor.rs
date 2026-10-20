@@ -382,13 +382,20 @@ impl ToolExecutor for LocalToolExecutor {
                     });
                 };
                 // The reply is a document whatever happened (ok, error or in doubt); the server settles on it.
-                let document = browser.call(envelope).await;
+                let (document, evidence) = browser.call_with_evidence(envelope).await;
                 output.push(
                     Self::fit(document, "output", Self::limit(envelope))
                         .to_string()
                         .as_bytes(),
                 );
-                return Ok(ToolOutput::new());
+                // A screenshot's pixels are evidence, not part of the bounded reply: the host uploads them (the daemon sends
+                // them down the channel) and the reply names that they exist.
+                return Ok(match evidence {
+                    Some(bytes) if !bytes.is_empty() => {
+                        ToolOutput::new().with_evidence(bytes, "image/png")
+                    }
+                    _ => ToolOutput::new(),
+                });
             }
             other => Err(ToolError::UnknownTool(other.to_string())),
         };
