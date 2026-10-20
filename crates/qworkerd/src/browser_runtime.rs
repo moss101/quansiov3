@@ -219,9 +219,30 @@ impl BrowserRuntime {
                 }
                 Ok(())
             }
-            BrowserOrder::UserClick { tab_id, x, y, .. } => live
+            BrowserOrder::UserClick {
+                tab_id,
+                x,
+                y,
+                button,
+                click_count,
+                modifiers,
+                ..
+            } => live
                 .driver
-                .user_click(tab_id, *x, *y)
+                .user_press(tab_id, *x, *y, button, *click_count, modifiers)
+                .await
+                .map_err(|fault| fault.to_string()),
+            BrowserOrder::UserDrag {
+                tab_id,
+                from_x,
+                from_y,
+                to_x,
+                to_y,
+                modifiers,
+                ..
+            } => live
+                .driver
+                .user_drag(tab_id, (*from_x, *from_y), (*to_x, *to_y), modifiers)
                 .await
                 .map_err(|fault| fault.to_string()),
             BrowserOrder::UserKey { tab_id, key, .. } => live

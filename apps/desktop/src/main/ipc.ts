@@ -17,7 +17,7 @@ import { ANSWER_COMMAND, CANCEL_COMMAND, MAX_UPLOAD_BYTES, POST_COMMAND, UPLOAD_
 import { MAX_IMAGE_PREVIEW_BYTES, MAX_TEXT_PREVIEW_BYTES, isActiveContent, isExecutable, mediaKind, openAllowed, previewPlan } from "../artifacts/preview.js";
 import { searchQueryString, searchRequest } from "../artifacts/search.js";
 import { OBJECTIVE_COMMAND, PROPOSE_COMMAND } from "../work/monitor.js";
-import { browserInput as inputCommand, type UserKey, computerCommand, decidePermission as permissionCommand, handback as handbackCommand, requestTakeover as takeoverCommand, resolveCertificate as certificateCommand } from "../live/session.js";
+import { browserInput as inputCommand, type UserButton, type UserModifier, computerCommand, decidePermission as permissionCommand, handback as handbackCommand, requestTakeover as takeoverCommand, resolveCertificate as certificateCommand } from "../live/session.js";
 import { desktopNotice, type DesktopNotice } from "../automation/notifications.js";
 import { parseDeepLink, type DeepLinkIntent } from "./deeplinks.js";
 import { parseOpenSettings, parsePermissionRequest, readSnapshot, settingsUrl, notApplicable, type PermissionSnapshot, type PermissionSource } from "./permissions.js";
@@ -522,24 +522,44 @@ export class DesktopBridge {
     const sessionId = asSessionId(record, "live.input");
     const tabId = asText(record["tabId"], "live.input tabId");
     const kind = record["kind"];
+    const modifiers = (): UserModifier[] => {
+      const raw = record["modifiers"];
+      return Array.isArray(raw) ? raw.map((item) => asText(item, "live.input modifiers") as UserModifier) : [];
+    };
     const command =
       kind === "click"
-        ? inputCommand(sessionId, tabId, { kind, x: Number(record["x"]), y: Number(record["y"]) })
-        : kind === "text"
-          ? inputCommand(sessionId, tabId, { kind, text: asText(record["text"], "live.input text") })
-          : kind === "key"
-            ? inputCommand(sessionId, tabId, { kind, key: asText(record["key"], "live.input key") as UserKey })
-            : kind === "scroll"
-              ? inputCommand(sessionId, tabId, {
-                  kind,
-                  x: Number(record["x"]),
-                  y: Number(record["y"]),
-                  deltaX: Number(record["deltaX"]),
-                  deltaY: Number(record["deltaY"]),
-                })
-              : null;
+        ? inputCommand(sessionId, tabId, {
+            kind,
+            x: Number(record["x"]),
+            y: Number(record["y"]),
+            ...(record["button"] === undefined ? {} : { button: asText(record["button"], "live.input button") as UserButton }),
+            ...(record["clickCount"] === undefined ? {} : { clickCount: Number(record["clickCount"]) as 1 | 2 | 3 }),
+            modifiers: modifiers(),
+          })
+        : kind === "drag"
+          ? inputCommand(sessionId, tabId, {
+              kind,
+              fromX: Number(record["fromX"]),
+              fromY: Number(record["fromY"]),
+              toX: Number(record["toX"]),
+              toY: Number(record["toY"]),
+              modifiers: modifiers(),
+            })
+          : kind === "text"
+            ? inputCommand(sessionId, tabId, { kind, text: asText(record["text"], "live.input text") })
+            : kind === "key"
+              ? inputCommand(sessionId, tabId, { kind, key: asText(record["key"], "live.input key") })
+              : kind === "scroll"
+                ? inputCommand(sessionId, tabId, {
+                    kind,
+                    x: Number(record["x"]),
+                    y: Number(record["y"]),
+                    deltaX: Number(record["deltaX"]),
+                    deltaY: Number(record["deltaY"]),
+                  })
+                : null;
     if (!command) {
-      throw new Error("live.input is a click, typed text, a named key or a scroll");
+      throw new Error("live.input is a click, a drag, typed text, a key or a scroll");
     }
     return (await this.server.invoke(command.name, newCommandId(), command.params)).result;
   }

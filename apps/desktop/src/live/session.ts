@@ -459,41 +459,93 @@ export function decidePermission(
   return { name: "DecideBrowserPermission", params: { session_id: sessionId, tab_id: tabId, origin, permission, decision } };
 }
 
-/** The named keys a person can send to a browser they hold. Printable characters travel as text; no chord does. */
+/** The named keys a person can send to a browser they hold. Printable characters travel as text. */
 export const USER_KEYS = ["Enter", "Tab", "Escape", "Backspace", "Delete", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"] as const;
 export type UserKey = (typeof USER_KEYS)[number];
+
+/** The modifier keys a person can hold with a key, a click or a drag, in the order a chord names them. */
+export const USER_MODIFIERS = ["Alt", "Control", "Meta", "Shift"] as const;
+export type UserModifier = (typeof USER_MODIFIERS)[number];
+
+/** The mouse buttons a person can click with. */
+export const USER_BUTTONS = ["left", "middle", "right"] as const;
+export type UserButton = (typeof USER_BUTTONS)[number];
 
 /** The largest scroll one input carries, in CSS pixels along either axis. */
 export const MAX_SCROLL = 10000;
 
-/** A person's input to a browser session they hold: a click at a page point, typed text, a named key, or a scroll. */
+/** A person's input to a browser session they hold: a click or drag at page points, typed text, a key or chord, or a scroll. */
 export type BrowserInput =
-  | { readonly kind: "click"; readonly x: number; readonly y: number }
+  | { readonly kind: "click"; readonly x: number; readonly y: number; readonly button?: UserButton; readonly clickCount?: 1 | 2 | 3; readonly modifiers?: readonly UserModifier[] }
+  | { readonly kind: "drag"; readonly fromX: number; readonly fromY: number; readonly toX: number; readonly toY: number; readonly modifiers?: readonly UserModifier[] }
   | { readonly kind: "text"; readonly text: string }
-  | { readonly kind: "key"; readonly key: UserKey }
+  | { readonly kind: "key"; readonly key: string }
   | { readonly kind: "scroll"; readonly x: number; readonly y: number; readonly deltaX: number; readonly deltaY: number };
 
 /** The most text one input carries; the server refuses more. */
 export const MAX_INPUT_TEXT_BYTES = 4096;
 
+/** The modifiers held in a mouse or key event, in chord order. */
+export function modifiersOf(event: { readonly ctrlKey: boolean; readonly metaKey: boolean; readonly altKey: boolean; readonly shiftKey?: boolean }): UserModifier[] {
+  const held: UserModifier[] = [];
+  if (event.altKey) held.push("Alt");
+  if (event.ctrlKey) held.push("Control");
+  if (event.metaKey) held.push("Meta");
+  if (event.shiftKey) held.push("Shift");
+  return held;
+}
+
+/** Whether `modifiers` are known modifiers, each at most once. */
+function modifiersAllowed(modifiers: readonly string[]): boolean {
+  return modifiers.every((modifier, index) => (USER_MODIFIERS as readonly string[]).includes(modifier) && !modifiers.slice(0, index).includes(modifier));
+}
+
 /**
- * What a key press means to the page: a named key, a printable character as text, or nothing.
- *
- * A chord (Control, Meta or Alt held) stays with the person's own keyboard and is not forwarded, and neither are keys that
- * only compose another (`Dead`, `Process`) or that the browser could not name (`Unidentified`).
+ * Whether `spec` is a key a person may send, as the server decides it: a named key, optionally with modifiers (`Shift+Tab`),
+ * or one letter or digit held with Alt, Control or Meta (`Control+a`). Modifiers come once each in chord order.
  */
-export function inputForKey(event: { readonly key: string; readonly ctrlKey: boolean; readonly metaKey: boolean; readonly altKey: boolean }): BrowserInput | null {
-  if (event.ctrlKey || event.metaKey || event.altKey) {
-    return null;
+export function userKeyAllowed(spec: string): boolean {
+  const parts = spec.split("+");
+  const key = parts.pop() ?? "";
+  let last = -1;
+  for (const modifier of parts) {
+    const position = (USER_MODIFIERS as readonly string[]).indexOf(modifier);
+    if (position <= last) {
+      return false;
+    }
+    last = position;
   }
-  if ((USER_KEYS as readonly string[]).includes(event.key)) {
-    return { kind: "key", key: event.key as UserKey };
+  if ((USER_KEYS as readonly string[]).includes(key)) {
+    return true;
+  }
+  return /^[A-Za-z0-9]$/.test(key) && parts.some((modifier) => modifier === "Alt" || modifier === "Control" || modifier === "Meta");
+}
+
+/**
+ * What a key press means to the page: a named key (with the modifiers held), a shortcut (a letter or digit with Alt, Control or
+ * Meta held), a printable character as text, or nothing.
+ *
+ * Keys that only compose another (`Dead`, `Process`), that the browser could not name (`Unidentified`), function keys and
+ * modifiers on their own are not forwarded.
+ */
+export function inputForKey(event: { readonly key: string; readonly ctrlKey: boolean; readonly metaKey: boolean; readonly altKey: boolean; readonly shiftKey?: boolean }): BrowserInput | null {
+  const held = modifiersOf(event);
+  const chord = [...held, event.key].join("+");
+  if ((USER_KEYS as readonly string[]).includes(event.key) || (held.some((modifier) => modifier !== "Shift") && /^[A-Za-z0-9]$/.test(event.key))) {
+    // A shortcut names its letter in lower case, whatever Shift did to it.
+    const spec = (USER_KEYS as readonly string[]).includes(event.key) ? chord : [...held, event.key.toLowerCase()].join("+");
+    return userKeyAllowed(spec) ? { kind: "key", key: spec } : null;
+  }
+  if (held.some((modifier) => modifier !== "Shift")) {
+    return null;
   }
   // One typed character (a grapheme: an emoji or a letter with a combining mark is still one), never a named key such as
   // "Shift" or "F5", which are several.
   const graphemes = Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(event.key));
   return graphemes.length === 1 ? { kind: "text", text: event.key } : null;
 }
+
+type InputParams = Record<string, string | number | readonly string[]>;
 
 /**
  * `SendBrowserInput {session_id, tab_id, kind, …}`: a person's act, valid only while they hold the session. The builder
@@ -503,23 +555,52 @@ export function browserInput(
   sessionId: string,
   tabId: string,
   input: BrowserInput,
-): { readonly name: "SendBrowserInput"; readonly params: Record<string, string | number> } {
+): { readonly name: "SendBrowserInput"; readonly params: InputParams } {
   if (!sessionId.startsWith("bsn_") || tabId === "") {
     throw new Error("an input names a bsn_ session and a tab");
   }
   const point = (value: number): boolean => Number.isFinite(value) && value >= 0 && value <= 20000;
   const delta = (value: number): boolean => Number.isFinite(value) && Math.abs(value) <= MAX_SCROLL;
+  const base = { session_id: sessionId, tab_id: tabId };
   if (input.kind === "click") {
     if (!point(input.x) || !point(input.y)) {
       throw new Error("a click is at a point from 0 to 20000");
     }
-    return { name: "SendBrowserInput", params: { session_id: sessionId, tab_id: tabId, kind: "click", x: input.x, y: input.y } };
+    const button = input.button ?? "left";
+    const count = input.clickCount ?? 1;
+    const modifiers = input.modifiers ?? [];
+    if (!(USER_BUTTONS as readonly string[]).includes(button) || ![1, 2, 3].includes(count) || !modifiersAllowed(modifiers)) {
+      throw new Error("a click is with the left, middle or right button, a count of 1 to 3 and each modifier once");
+    }
+    // Only what differs from a plain click is sent, so a plain click is the command the catalog first defined.
+    return {
+      name: "SendBrowserInput",
+      params: {
+        ...base,
+        kind: "click",
+        x: input.x,
+        y: input.y,
+        ...(button === "left" ? {} : { button }),
+        ...(count === 1 ? {} : { click_count: count }),
+        ...(modifiers.length === 0 ? {} : { modifiers }),
+      },
+    };
+  }
+  if (input.kind === "drag") {
+    const modifiers = input.modifiers ?? [];
+    if (![input.fromX, input.fromY, input.toX, input.toY].every(point) || !modifiersAllowed(modifiers)) {
+      throw new Error("a drag is between points from 0 to 20000 with each modifier once");
+    }
+    return {
+      name: "SendBrowserInput",
+      params: { ...base, kind: "drag", from_x: input.fromX, from_y: input.fromY, to_x: input.toX, to_y: input.toY, ...(modifiers.length === 0 ? {} : { modifiers }) },
+    };
   }
   if (input.kind === "key") {
-    if (!(USER_KEYS as readonly string[]).includes(input.key)) {
+    if (!userKeyAllowed(input.key)) {
       throw new Error("that is not a key a person can send");
     }
-    return { name: "SendBrowserInput", params: { session_id: sessionId, tab_id: tabId, kind: "key", key: input.key } };
+    return { name: "SendBrowserInput", params: { ...base, kind: "key", key: input.key } };
   }
   if (input.kind === "scroll") {
     if (!point(input.x) || !point(input.y) || !delta(input.deltaX) || !delta(input.deltaY)) {
@@ -527,13 +608,13 @@ export function browserInput(
     }
     return {
       name: "SendBrowserInput",
-      params: { session_id: sessionId, tab_id: tabId, kind: "scroll", x: input.x, y: input.y, delta_x: input.deltaX, delta_y: input.deltaY },
+      params: { ...base, kind: "scroll", x: input.x, y: input.y, delta_x: input.deltaX, delta_y: input.deltaY },
     };
   }
   if (input.text === "" || new TextEncoder().encode(input.text).length > MAX_INPUT_TEXT_BYTES) {
     throw new Error(`typed text is 1 to ${String(MAX_INPUT_TEXT_BYTES)} bytes`);
   }
-  return { name: "SendBrowserInput", params: { session_id: sessionId, tab_id: tabId, kind: "text", text: input.text } };
+  return { name: "SendBrowserInput", params: { ...base, kind: "text", text: input.text } };
 }
 
 /** `RequestTakeover {target_id}` / `Handback {target_id}` for the native computer. */

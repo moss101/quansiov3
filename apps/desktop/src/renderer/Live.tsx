@@ -21,6 +21,7 @@ import {
   decodeTargets,
   handbackAllowed,
   inputForKey,
+  modifiersOf,
   originOf,
   takeoverAllowed,
   type BrowserInput,
@@ -228,22 +229,80 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
     [session, frame],
   );
 
+  // A click is a press and release in one place; a press that is released somewhere else is a drag, and the click the browser
+  // reports after it is not sent as well. A second click in quick succession arrives as a click of count 2 (the first was
+  // already delivered), so a double click reaches the page as the browser itself would send it.
+  const pressedAt = useRef<{ x: number; y: number } | null>(null);
+  const dragged = useRef(false);
+  type PointerEventLike = { clientX: number; clientY: number; detail?: number; button: number; ctrlKey: boolean; metaKey: boolean; altKey: boolean; shiftKey: boolean; currentTarget: HTMLElement; preventDefault?: () => void };
+  const pressPicture = useCallback((event: PointerEventLike) => {
+    pressedAt.current = event.button === 0 ? { x: event.clientX, y: event.clientY } : null;
+    dragged.current = false;
+  }, []);
+  const releasePicture = useCallback(
+    (event: PointerEventLike) => {
+      const start = pressedAt.current;
+      pressedAt.current = null;
+      if (!frame || !start || event.button !== 0 || Math.hypot(event.clientX - start.x, event.clientY - start.y) < 6) {
+        return;
+      }
+      const rect = event.currentTarget.getBoundingClientRect();
+      const from = frameToPage(frame, rect, start.x, start.y);
+      const to = frameToPage(frame, rect, event.clientX, event.clientY);
+      if (from && to) {
+        dragged.current = true;
+        void sendInput({ kind: "drag", fromX: from.x, fromY: from.y, toX: to.x, toY: to.y, modifiers: modifiersOf(event) });
+      }
+    },
+    [frame, sendInput],
+  );
   const clickPicture = useCallback(
-    (event: { clientX: number; clientY: number; currentTarget: HTMLElement }) => {
+    (event: PointerEventLike) => {
+      if (!frame) {
+        return;
+      }
+      if (dragged.current) {
+        dragged.current = false;
+        return;
+      }
+      const point = frameToPage(frame, event.currentTarget.getBoundingClientRect(), event.clientX, event.clientY);
+      if (point) {
+        const clickCount = Math.min(Math.max(event.detail ?? 1, 1), 3) as 1 | 2 | 3;
+        void sendInput({ kind: "click", ...point, clickCount, modifiers: modifiersOf(event) });
+      }
+    },
+    [frame, sendInput],
+  );
+  // The page's own context menu is the remote page's to show, so the local one is suppressed and the right click is sent.
+  const rightClickPicture = useCallback(
+    (event: PointerEventLike) => {
+      event.preventDefault?.();
       if (!frame) {
         return;
       }
       const point = frameToPage(frame, event.currentTarget.getBoundingClientRect(), event.clientX, event.clientY);
       if (point) {
-        void sendInput({ kind: "click", ...point });
+        void sendInput({ kind: "click", ...point, button: "right", modifiers: modifiersOf(event) });
+      }
+    },
+    [frame, sendInput],
+  );
+  const middleClickPicture = useCallback(
+    (event: PointerEventLike) => {
+      if (!frame || event.button !== 1) {
+        return;
+      }
+      const point = frameToPage(frame, event.currentTarget.getBoundingClientRect(), event.clientX, event.clientY);
+      if (point) {
+        void sendInput({ kind: "click", ...point, button: "middle", modifiers: modifiersOf(event) });
       }
     },
     [frame, sendInput],
   );
 
   const typeInPicture = useCallback(
-    (event: { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean; preventDefault: () => void }) => {
-      // Named keys and printable characters are the person's to send; a chord stays with their own keyboard.
+    (event: { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean; shiftKey: boolean; preventDefault: () => void }) => {
+      // Named keys, shortcuts and printable characters are the person's to send to the page they hold.
       const input = inputForKey(event);
       if (input) {
         event.preventDefault();
@@ -380,7 +439,11 @@ export function Live({ workspaceId }: LiveProps): ReactElement {
                 alt={t("liveScreenAlt")}
                 className={session.controller === "user" ? "live-picture live-picture-driving" : "live-picture"}
                 tabIndex={session.controller === "user" ? 0 : undefined}
+                onMouseDown={session.controller === "user" ? pressPicture : undefined}
+                onMouseUp={session.controller === "user" ? releasePicture : undefined}
                 onClick={session.controller === "user" ? clickPicture : undefined}
+                onAuxClick={session.controller === "user" ? middleClickPicture : undefined}
+                onContextMenu={session.controller === "user" ? rightClickPicture : undefined}
                 onKeyDown={session.controller === "user" ? typeInPicture : undefined}
                 onWheel={session.controller === "user" ? wheelOverPicture : undefined}
               />

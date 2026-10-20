@@ -46,6 +46,19 @@ const BIG: &str = "<html><head><title>Big</title></head><body style=\"margin:0\"
 </body></html>";
 const LIVE: &str = "<html><body><div id=\"c\">0</div><script>var n=0;function t(){document.getElementById('c').textContent=String(++n);setTimeout(t,100)}t()</script></body></html>";
 const KEYS: &str = "<html><body style=\"margin:0;height:6000px\"><input id=\"i\" autofocus style=\"width:200px\" onkeydown=\"var x=new XMLHttpRequest();x.open('GET','/key-'+event.key,false);x.send();\"><script>window.addEventListener('scroll',function(){var x=new XMLHttpRequest();x.open('GET','/scrolled',false);x.send();});document.getElementById('i').focus();</script></body></html>";
+/// A page that reports, by request, what the pointer and keyboard did: the button of a click, a double click, a drag, a
+/// click with Shift held, and a shortcut.
+const POINTER: &str = "<html><body style=\"margin:0\"><div id=\"d\" style=\"width:600px;height:400px;background:#ddd\"></div><input id=\"i\" style=\"position:absolute;top:420px\"><script>\
+function ping(p){var x=new XMLHttpRequest();x.open('GET',p,false);x.send();}\
+var d=document.getElementById('d'),down=null;\
+d.addEventListener('contextmenu',function(e){e.preventDefault();ping('/ctx');});\
+d.addEventListener('dblclick',function(){ping('/dbl');});\
+d.addEventListener('mousedown',function(e){down=[e.clientX,e.clientY];});\
+d.addEventListener('mouseup',function(e){if(down&&Math.abs(e.clientX-down[0])>50)ping('/drag');down=null;});\
+d.addEventListener('click',function(e){if(e.shiftKey)ping('/shift-click');});\
+var i=document.getElementById('i');i.focus();\
+document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='a')ping('/select-all');});\
+</script></body></html>";
 const PAGE: &str = "<html><head><title>Shop</title></head><body>\
 <button onclick=\"var x=new XMLHttpRequest();x.open('GET','/hit',false);x.send();\">Count</button>\
 <button onclick=\"var x=new XMLHttpRequest();x.open('GET','/buy',false);x.send();\">Buy now</button>\
@@ -90,6 +103,7 @@ impl Site {
                         "/big" => ("text/html", BIG),
                         "/live" => ("text/html", LIVE),
                         "/keys" => ("text/html", KEYS),
+                        "/pointer" => ("text/html", POINTER),
                         _ => ("text/plain", "ok"),
                     };
                     let reply = format!(
@@ -104,6 +118,9 @@ impl Site {
     }
     fn url(&self) -> String {
         format!("http://127.0.0.1:{}/", self.port)
+    }
+    fn pointer(&self) -> String {
+        format!("http://127.0.0.1:{}/pointer", self.port)
     }
     fn keys(&self) -> String {
         format!("http://127.0.0.1:{}/keys", self.port)
@@ -502,6 +519,9 @@ async fn takeover_and_handback_commands_move_the_workers_driver_and_the_page_see
         tab_id: tab.clone(),
         x,
         y: 50.0,
+        button: "left".to_string(),
+        click_count: 1,
+        modifiers: Vec::new(),
     };
     let hits = || site.hits("/hit");
 
@@ -1224,7 +1244,7 @@ async fn a_person_s_special_keys_and_scroll_reach_the_page_and_anything_else_is_
     let before = site.hits("/key-a");
     for (n, bad) in [
         (56, json!({"kind": "key", "key": "a"})),
-        (57, json!({"kind": "key", "key": "Control+a"})),
+        (57, json!({"kind": "key", "key": "Shift+a"})),
         (58, json!({"kind": "key", "key": "F12"})),
         (59, json!({"kind": "key"})),
         (
@@ -1253,7 +1273,7 @@ async fn a_person_s_special_keys_and_scroll_reach_the_page_and_anything_else_is_
     // refused by the driver itself and the page sees nothing.
     use quansio_machine::gateway::wire::BrowserOrder;
     let scrolled = site.hits("/scrolled");
-    for key in ["F12", "a", "Control+a", "Shift"] {
+    for key in ["F12", "a", "Shift+a", "Control+F12", "Shift"] {
         world
             .hub
             .send_order(
@@ -1356,6 +1376,174 @@ async fn cancelling_a_run_stops_its_command_on_the_worker_and_leaves_another_run
     assert!(
         !root.join("a.done").exists(),
         "the cancelled command finished its work"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn a_person_s_right_click_double_click_drag_and_shortcut_reach_the_page_and_malformed_ones_do_not(
+) {
+    let Some(world) = world("wl_pointer", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    let navigated = ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.pointer()}),
+    )
+    .await;
+    let tab = navigated["tab_id"].as_str().unwrap().to_string();
+    let session = sessions(&world.pool, &world.target).await.remove(0).0;
+    let (status, taken) = command(
+        &world,
+        "RequestTakeover",
+        71,
+        json!({"session_id": session}),
+    )
+    .await;
+    assert_eq!(status, 200, "{taken}");
+
+    let input = |n: u32, params: Value| {
+        let (world, session, tab) = (&world, session.clone(), tab.clone());
+        async move {
+            let mut params = params;
+            params["session_id"] = json!(session);
+            params["tab_id"] = json!(tab);
+            command(world, "SendBrowserInput", n, params).await
+        }
+    };
+    for (n, params, what, path) in [
+        (
+            72,
+            json!({"kind": "click", "x": 100, "y": 100, "button": "right"}),
+            "a right click",
+            "/ctx",
+        ),
+        (
+            73,
+            json!({"kind": "click", "x": 100, "y": 100, "click_count": 2}),
+            "a double click",
+            "/dbl",
+        ),
+        (
+            74,
+            json!({"kind": "drag", "from_x": 50, "from_y": 200, "to_x": 400, "to_y": 220}),
+            "a drag",
+            "/drag",
+        ),
+        (
+            75,
+            json!({"kind": "click", "x": 100, "y": 100, "modifiers": ["Shift"]}),
+            "a click with Shift held",
+            "/shift-click",
+        ),
+    ] {
+        let (status, body) = input(n, params).await;
+        assert_eq!(status, 200, "{what}: {body}");
+        eventually(&format!("the page saw {what}"), || async {
+            site.hits(path) >= 1
+        })
+        .await;
+    }
+    // A plain click does not look like a shift-click, and a drag is not a click: the page told them apart.
+    assert_eq!(site.hits("/shift-click"), 1);
+
+    // A shortcut reaches the focused field as a chord (Meta on macOS pages, Control elsewhere: either sets the flag the page
+    // checks).
+    let (status, body) = input(76, json!({"kind": "key", "key": "Control+a"})).await;
+    assert_eq!(status, 200, "{body}");
+    eventually("the page saw the shortcut", || async {
+        site.hits("/select-all") >= 1
+    })
+    .await;
+
+    // What a person may not send is refused before any worker.
+    let before = (site.hits("/ctx"), site.hits("/drag"));
+    for (n, bad) in [
+        (
+            77,
+            json!({"kind": "click", "x": 1, "y": 1, "button": "back"}),
+        ),
+        (
+            78,
+            json!({"kind": "click", "x": 1, "y": 1, "click_count": 4}),
+        ),
+        (
+            79,
+            json!({"kind": "click", "x": 1, "y": 1, "modifiers": ["Hyper"]}),
+        ),
+        (
+            80,
+            json!({"kind": "click", "x": 1, "y": 1, "modifiers": ["Shift", "Shift"]}),
+        ),
+        (
+            81,
+            json!({"kind": "click", "x": 1, "y": 1, "modifiers": "Shift"}),
+        ),
+        (
+            82,
+            json!({"kind": "drag", "from_x": 1, "from_y": 1, "to_x": 30000, "to_y": 1}),
+        ),
+        (
+            83,
+            json!({"kind": "drag", "from_x": 1, "from_y": 1, "to_x": 5}),
+        ),
+        (84, json!({"kind": "key", "key": "Control+Control+a"})),
+        (85, json!({"kind": "key", "key": "Shift+Control+a"})),
+    ] {
+        let (status, body) = input(n, bad.clone()).await;
+        assert_eq!(status, 400, "{bad}: {body}");
+    }
+
+    // The worker does not take the server's word for it either: orders sent straight to it are refused by the driver.
+    use quansio_machine::gateway::wire::BrowserOrder;
+    for order in [
+        BrowserOrder::UserClick {
+            session_id: session.clone(),
+            tab_id: tab.clone(),
+            x: 100.0,
+            y: 100.0,
+            button: "back".to_string(),
+            click_count: 1,
+            modifiers: Vec::new(),
+        },
+        BrowserOrder::UserClick {
+            session_id: session.clone(),
+            tab_id: tab.clone(),
+            x: 100.0,
+            y: 100.0,
+            button: "right".to_string(),
+            click_count: 9,
+            modifiers: Vec::new(),
+        },
+        BrowserOrder::UserDrag {
+            session_id: session.clone(),
+            tab_id: tab.clone(),
+            from_x: 1.0,
+            from_y: 1.0,
+            to_x: f64::NAN,
+            to_y: 1.0,
+            modifiers: Vec::new(),
+        },
+        BrowserOrder::UserDrag {
+            session_id: session.clone(),
+            tab_id: tab.clone(),
+            from_x: 1.0,
+            from_y: 1.0,
+            to_x: 400.0,
+            to_y: 1.0,
+            modifiers: vec!["Fn".to_string()],
+        },
+    ] {
+        world.hub.send_order(TENANT, &world.target, order).await;
+    }
+    tokio::time::sleep(Duration::from_millis(800)).await;
+    assert_eq!(
+        (site.hits("/ctx"), site.hits("/drag")),
+        before,
+        "the worker accepted an input it should have refused"
     );
     drop_pool(&world.pool, &world.name).await;
 }
