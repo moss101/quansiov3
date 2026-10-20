@@ -37,6 +37,12 @@ const THEMES: readonly [string, StringKey][] = [
   ["light", "settingsThemeLight"],
   ["dark", "settingsThemeDark"],
 ];
+const AUTONOMY: readonly [string, StringKey][] = [
+  ["standard", "settingsAutonomyStandard"],
+  ["ask_for_consequences", "settingsAutonomyConsequences"],
+  ["ask_every_action", "settingsAutonomyEvery"],
+  ["read_only", "settingsAutonomyReadOnly"],
+];
 const SECURITY: readonly [string, StringKey][] = [
   ["telemetry", "settingsTelemetry"],
   ["share_analytics", "settingsShareAnalytics"],
@@ -48,8 +54,8 @@ function refusal(error: unknown): string {
   return error instanceof Error ? error.message : t("commandFailed");
 }
 
-const EMPTY: SettingsFields = { name: "", target: "cloud", retention: "365", theme: "system", security: {} };
-const WORKSPACE_FIELDS: readonly FieldKey[] = ["name", "target", "retention", ...SECURITY.map(([key]) => `security.${key}`)];
+const EMPTY: SettingsFields = { name: "", target: "cloud", retention: "365", theme: "system", autonomy: "standard", security: {} };
+const WORKSPACE_FIELDS: readonly FieldKey[] = ["name", "target", "retention", "autonomy", ...SECURITY.map(([key]) => `security.${key}`)];
 
 export function Settings({ workspaceId }: { readonly workspaceId: string }): ReactElement {
   const ids = useId();
@@ -105,6 +111,10 @@ export function Settings({ workspaceId }: { readonly workspaceId: string }): Rea
     if (Number.isFinite(days) && days > 0) {
       settings["retention_days"] = days;
     }
+    // The workspace's floor is written only when the administrator changed it: the value shown is the strictest layer's.
+    if (edited.current.has("autonomy")) {
+      settings["autonomy_mode"] = sent.autonomy;
+    }
     window.quansio.updateWorkspace(workspaceId, { name: sent.name.trim(), settings }).then((result) => saved(result, WORKSPACE_FIELDS, sent), (error: unknown) => {
       setStatus(refusal(error));
     });
@@ -112,12 +122,17 @@ export function Settings({ workspaceId }: { readonly workspaceId: string }): Rea
 
   const saveMine = useCallback(() => {
     const sent = current.current;
-    window.quansio.updateUserSettings(workspaceId, { theme: sent.theme }).then((result) => saved(result, ["theme"], sent), (error: unknown) => {
+    const mine: Record<string, unknown> = { theme: sent.theme };
+    // Anyone may make their own agent more careful; the strictest layer wins, so this never loosens the workspace's.
+    if (edited.current.has("myAutonomy")) {
+      mine["autonomy_mode"] = sent.autonomy;
+    }
+    window.quansio.updateUserSettings(workspaceId, mine).then((result) => saved(result, ["theme", "myAutonomy"], sent), (error: unknown) => {
       setStatus(refusal(error));
     });
   }, [workspaceId, saved]);
 
-  const { name, target, retention, theme, security } = fields;
+  const { name, target, retention, theme, autonomy, security } = fields;
   const admin = workspace?.role === "admin";
   const effective = workspace?.effective_settings ?? {};
 
@@ -144,6 +159,13 @@ export function Settings({ workspaceId }: { readonly workspaceId: string }): Rea
               <option key={value} value={value}>{t(label)}</option>
             ))}
           </select>
+          <label htmlFor={`${ids}-autonomy`}>{t("settingsAutonomy")}</label>
+          <select id={`${ids}-autonomy`} value={autonomy} onChange={(event) => { const value = event.target.value; edit("autonomy", (previous) => ({ ...previous, autonomy: value })); }}>
+            {AUTONOMY.map(([value, label]) => (
+              <option key={value} value={value}>{t(label)}</option>
+            ))}
+          </select>
+          <p>{t("settingsAutonomyNote")}</p>
           <h4>{t("settingsPrivacy")}</h4>
           <p>{t("settingsPrivacyNote")}</p>
           {SECURITY.map(([key, label]) => (
@@ -173,6 +195,12 @@ export function Settings({ workspaceId }: { readonly workspaceId: string }): Rea
         <label htmlFor={`${ids}-theme`}>{t("settingsTheme")}</label>
         <select id={`${ids}-theme`} value={theme} onChange={(event) => { const value = event.target.value; edit("theme", (previous) => ({ ...previous, theme: value })); }}>
           {THEMES.map(([value, label]) => (
+            <option key={value} value={value}>{t(label)}</option>
+          ))}
+        </select>
+        <label htmlFor={`${ids}-my-autonomy`}>{t("settingsAutonomyMine")}</label>
+        <select id={`${ids}-my-autonomy`} value={autonomy} onChange={(event) => { const value = event.target.value; edit("myAutonomy", (previous) => ({ ...previous, autonomy: value })); }}>
+          {AUTONOMY.map(([value, label]) => (
             <option key={value} value={value}>{t(label)}</option>
           ))}
         </select>

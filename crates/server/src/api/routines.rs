@@ -423,7 +423,13 @@ pub async fn update_routine(
             }
         }
         change.trigger = Some(trigger_of(&params["trigger"], correlation)?);
-        change.objective_template = Some(template_of(params, correlation)?);
+        let mut template = template_of(params, correlation)?;
+        // A full replacement returns an absent field to its default, except this one: an observing routine stays observing
+        // unless the caller says `act`, so a limit is never lost by leaving a field out.
+        if params.get("mode").is_none_or(Value::is_null) && observes(&routine.objective_template) {
+            template["mode"] = json!("observe");
+        }
+        change.objective_template = Some(template);
         let teammate = teammate_param(params, correlation)?;
         if let Some(teammate) = &teammate {
             check_teammate(state, scope, &routine.workspace_id, teammate, correlation).await?;

@@ -1008,6 +1008,21 @@ async fn an_observing_routine_s_runs_can_read_and_report_and_nothing_else() {
     .await;
     assert_eq!(status, 200, "{kept}");
     assert_eq!(kept["result"]["objective_template"]["mode"], "observe");
+    // A full replacement that leaves the mode out does not lose it.
+    let revision = kept["result"]["revision"].as_i64().expect("revision");
+    let (status, replaced) = command(
+        &h.router,
+        OWNER,
+        "UpdateRoutine",
+        8,
+        json!({ "routine_id": watching, "expected_revision": revision, "title": "Watcher", "prompt": "look once more", "trigger": { "kind": "interval", "spec": "1h" } }),
+    )
+    .await;
+    assert_eq!(status, 200, "{replaced}");
+    assert_eq!(
+        replaced["result"]["objective_template"]["mode"], "observe",
+        "{replaced}"
+    );
     let (status, cleared) = command(
         &h.router,
         OWNER,

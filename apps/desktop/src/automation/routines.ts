@@ -46,6 +46,8 @@ export interface HookView {
   readonly deliveries: { readonly accepted: number; readonly filtered: number } | null;
 }
 
+export type RoutineMode = "act" | "observe";
+
 export interface RoutineView {
   readonly id: string;
   readonly title: string;
@@ -53,6 +55,8 @@ export interface RoutineView {
   readonly trigger: RoutineTrigger;
   readonly teammateId: string | null;
   readonly absencePolicy: AbsencePolicy;
+  /** `observe`: its runs can read and report and nothing else (DOMAIN.md §13.8). */
+  readonly mode: RoutineMode;
   readonly status: RoutineStatus;
   readonly ownerUserId: string;
   readonly nextDueAt: string | null;
@@ -75,6 +79,7 @@ export interface RoutineDraft {
   readonly trigger: RoutineTrigger;
   readonly teammateId?: string | null;
   readonly absencePolicy?: AbsencePolicy;
+  readonly mode?: RoutineMode;
   /** A webhook's filters while they are being edited (values are text until checked). */
   readonly filters?: FilterDraft;
   /** Carried through an edit unchanged: a full replacement returns an absent field to its default. */
@@ -160,6 +165,7 @@ export function decodeRoutines(raw: unknown): RoutineView[] {
       trigger: triggerOf(source["trigger"]),
       teammateId: str(source, "teammate_id"),
       absencePolicy: policy === "queue" || policy === "catch_up_once" ? policy : "skip",
+      mode: template["mode"] === "observe" ? "observe" : "act",
       status: status === "paused" || status === "deleted" ? status : "active",
       ownerUserId: str(source, "owner_user_id") ?? "",
       nextDueAt: str(source, "next_due_at"),
@@ -242,6 +248,9 @@ export function createRoutineParams(workspaceId: string, draft: RoutineDraft, cr
     trigger: triggerParams(draft, "cron-only"),
     absence_policy: draft.absencePolicy ?? "skip",
   };
+  if (draft.mode === "observe") {
+    params["mode"] = "observe";
+  }
   if (draft.teammateId) {
     params["teammate_id"] = draft.teammateId;
   }
@@ -268,6 +277,8 @@ export function updateRoutineParams(routineId: string, expectedRevision: number,
     prompt: draft.prompt.trim(),
     trigger: triggerParams(draft),
     absence_policy: draft.absencePolicy ?? "skip",
+    // Said either way on a full replacement, so what the form shows is what is stored.
+    mode: draft.mode ?? "act",
     budget: draft.budget ?? {},
     notification_prefs: draft.notificationPrefs ?? {},
   };
@@ -288,6 +299,7 @@ export function draftOf(routine: RoutineView): RoutineDraft {
     trigger: { kind: routine.trigger.kind, spec: routine.trigger.spec, timezone: routine.trigger.timezone ?? "UTC" },
     teammateId: routine.teammateId,
     absencePolicy: routine.absencePolicy,
+    mode: routine.mode,
     filters: filtersFromWire(routine.trigger.filters),
     workflow: routine.workflow,
     budget: routine.budget,
@@ -318,6 +330,9 @@ export function draftsDiffer(left: RoutineDraft, right: RoutineDraft): string[] 
   }
   if ((left.absencePolicy ?? "skip") !== (right.absencePolicy ?? "skip")) {
     differences.push("missed windows");
+  }
+  if ((left.mode ?? "act") !== (right.mode ?? "act")) {
+    differences.push("mode");
   }
   if ((left.teammateId ?? null) !== (right.teammateId ?? null)) {
     differences.push("teammate");

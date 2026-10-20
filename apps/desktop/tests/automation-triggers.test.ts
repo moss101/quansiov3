@@ -349,9 +349,19 @@ describe("routine commands", () => {
       prompt: "p",
       trigger: { kind: "cron", spec: "0 9 * * *", timezone: "Asia/Kolkata" },
       absence_policy: "skip",
+      mode: "act",
       budget: {},
       notification_prefs: {},
     });
+    // What an edit of an observing routine sends back: the limit is stated, not left to a default.
+    const watching = updateRoutineParams(ROUTINE, 7, { title: "T", prompt: "p", mode: "observe", trigger: { kind: "interval", spec: "1h" } });
+    expect(watching["mode"]).toBe("observe");
+    expect(createRoutineParams("ws_1", { title: "T", prompt: "p", mode: "observe", trigger: { kind: "interval", spec: "1h" } })["mode"]).toBe("observe");
+    expect(createRoutineParams("ws_1", { title: "T", prompt: "p", trigger: { kind: "interval", spec: "1h" } })["mode"]).toBeUndefined();
+    const view = decodeRoutines({ items: [{ ...HOOK_ROUTINE, objective_template: { ...(HOOK_ROUTINE as { objective_template: object }).objective_template, mode: "observe" } }] })[0];
+    expect(view?.mode).toBe("observe");
+    expect(view && draftOf(view).mode).toBe("observe");
+    expect(decodeRoutines({ items: [HOOK_ROUTINE] })[0]?.mode).toBe("act");
     expect(() => updateRoutineParams(ROUTINE, 7, { title: "", prompt: "p", trigger: { kind: "interval", spec: "1h" } })).toThrow(/title/);
   });
 

@@ -374,6 +374,18 @@ export function RoutineForm(props: RoutineFormProps): ReactElement {
         />
       ) : null}
       <label>
+        {t("autoMode")}
+        <select
+          value={draft.mode ?? "act"}
+          onChange={(event) => {
+            onChange({ ...draft, mode: event.target.value === "observe" ? "observe" : "act" });
+          }}
+        >
+          <option value="act">{t("autoModeAct")}</option>
+          <option value="observe">{t("autoModeObserve")}</option>
+        </select>
+      </label>
+      <label>
         {t("autoAbsence")}
         <select
           value={draft.absencePolicy ?? "skip"}

@@ -10,6 +10,8 @@ export interface SettingsFields {
   readonly target: string;
   readonly retention: string;
   readonly theme: string;
+  /** The autonomy mode in force (`standard`, `ask_for_consequences`, `ask_every_action`, `read_only`). */
+  readonly autonomy: string;
   /** Security controls by key (`telemetry`, …). */
   readonly security: Readonly<Record<string, boolean>>;
 }
@@ -25,6 +27,7 @@ export function fieldsFromWorkspace(workspace: { readonly name: string; readonly
     target: typeof effective["execution_target"] === "string" ? effective["execution_target"] : "cloud",
     retention: String(typeof effective["retention_days"] === "number" ? effective["retention_days"] : 365),
     theme: typeof effective["theme"] === "string" ? effective["theme"] : "system",
+    autonomy: typeof effective["autonomy_mode"] === "string" ? effective["autonomy_mode"] : "standard",
     security: Object.fromEntries(securityKeys.map((key) => [key, effective[key] === true])),
   };
 }
@@ -42,6 +45,7 @@ export function mergeLoaded(current: SettingsFields, loaded: SettingsFields, edi
     target: edited.has("target") ? current.target : loaded.target,
     retention: edited.has("retention") ? current.retention : loaded.retention,
     theme: edited.has("theme") ? current.theme : loaded.theme,
+    autonomy: edited.has("autonomy") || edited.has("myAutonomy") ? current.autonomy : loaded.autonomy,
     security,
   };
 }
