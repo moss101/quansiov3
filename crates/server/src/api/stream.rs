@@ -31,8 +31,10 @@ use quansio_events::{
 use serde::Deserialize;
 use serde_json::json;
 
+use super::rbac::Authorization;
 use super::{ApiError, ApiErrorCode, ApiState, TenantScope};
 use crate::control::collaboration::{thread_access, ThreadGate};
+use crate::policy::rbac::ActionFamily;
 
 #[derive(Debug, Deserialize)]
 struct SubscribeRequest {
@@ -144,6 +146,26 @@ async fn handle_socket(
             Err(error) => {
                 let _ = socket
                     .send(Message::Text(stream_error_json(&error).to_string()))
+                    .await;
+                return;
+            }
+        }
+    }
+    // A target's channel is its workspace's readers' (APP-007).
+    for item in &request.subscribe {
+        if let Some(target_id) = item.channel.strip_prefix("target:") {
+            if let Err(error) = target_admitted(&state, &scope, target_id).await {
+                let _ = socket
+                    .send(Message::Text(
+                        json!({
+                            "code": error.code,
+                            "message": error.message,
+                            "correlation_id": "stream",
+                            "retryable": false,
+                            "details": { "kind": "target", "target_id": target_id },
+                        })
+                        .to_string(),
+                    ))
                     .await;
                 return;
             }
@@ -555,6 +577,49 @@ struct SseTail {
     standing: Standing,
 }
 
+/// A target's channel carries its browsers' pictures and its terminals' bytes, which are the workspace's to see: the caller
+/// must be able to read the workspace the target belongs to. A target that does not exist for the tenant is refused the same
+/// way, so the answer does not say which targets there are.
+async fn target_admitted(
+    state: &ApiState,
+    scope: &TenantScope,
+    target_id: &str,
+) -> Result<(), ApiError> {
+    let forbidden = || {
+        ApiError::new(
+            ApiErrorCode::ScopeForbidden,
+            format!("target {target_id} is not one this user can watch"),
+            "stream",
+        )
+    };
+    let workspace: Option<String> = async {
+        let mut tx = state.pool().begin().await.ok()?;
+        crate::control::schema::set_tenant_context(&mut tx, &scope.tenant_id)
+            .await
+            .ok()?;
+        sqlx::query_scalar(
+            "SELECT workspace_id FROM execution_targets WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(&scope.tenant_id)
+        .bind(target_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .ok()?
+    }
+    .await;
+    let workspace = workspace.ok_or_else(forbidden)?;
+    Authorization::check(
+        state.pool(),
+        scope,
+        Some(&workspace),
+        ActionFamily::Read,
+        "stream",
+    )
+    .await
+    .map(|_| ())
+    .map_err(|_| forbidden())
+}
+
 /// `GET /v1/stream/events?channel=…&cursor=…&consumer=…`: the stream as Server-Sent Events.
 ///
 /// # Errors
@@ -579,6 +644,9 @@ pub async fn stream_events(
         channels.push(Channel::parse(&scope.tenant_id, channel).map_err(|error| {
             ApiError::new(ApiErrorCode::ValidationSchema, error.to_string(), "stream")
         })?);
+        if let Some(target_id) = channel.strip_prefix("target:") {
+            target_admitted(&state, &scope, target_id).await?;
+        }
         if let Some(thread_id) = channel.strip_prefix("thread:") {
             let admitted = thread_access(
                 state.pool(),

@@ -956,6 +956,10 @@ async fn serve_http(world: &World) -> std::net::SocketAddr {
 
 impl Viewer {
     async fn join(addr: std::net::SocketAddr, target: &str) -> Self {
+        Self::join_as(addr, USER, target).await
+    }
+
+    async fn join_as(addr: std::net::SocketAddr, user: &str, target: &str) -> Self {
         use futures_util::SinkExt;
         use tokio_tungstenite::tungstenite::client::IntoClientRequest;
         use tokio_tungstenite::tungstenite::Message;
@@ -967,7 +971,7 @@ impl Viewer {
             .insert("x-quansio-tenant", TENANT.parse().unwrap());
         request
             .headers_mut()
-            .insert("x-quansio-user", USER.parse().unwrap());
+            .insert("x-quansio-user", user.parse().unwrap());
         let (mut ws, _) = tokio_tungstenite::connect_async(request)
             .await
             .expect("connect");
@@ -992,6 +996,20 @@ impl Viewer {
                         return Some(value["frame"].clone());
                     }
                 }
+                Ok(Some(Ok(_))) => {}
+                _ => return None,
+            }
+        }
+    }
+
+    /// The next text message within `ms`, parsed.
+    async fn next_text(&mut self, ms: u64) -> Option<Value> {
+        use futures_util::StreamExt;
+        use tokio_tungstenite::tungstenite::Message;
+        let deadline = tokio::time::Instant::now() + Duration::from_millis(ms);
+        loop {
+            match tokio::time::timeout_at(deadline, self.ws.next()).await {
+                Ok(Some(Ok(Message::Text(text)))) => return serde_json::from_str(&text).ok(),
                 Ok(Some(Ok(_))) => {}
                 _ => return None,
             }
@@ -1545,5 +1563,61 @@ async fn a_person_s_right_click_double_click_drag_and_shortcut_reach_the_page_an
         before,
         "the worker accepted an input it should have refused"
     );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn only_a_reader_of_the_targets_workspace_may_watch_its_channel() {
+    let Some(world) = world("wl_channel_auth", true).await else {
+        return blocked_marker();
+    };
+    // A member of the tenant who belongs to no workspace of it, and a stranger to the tenant.
+    let outsider = "usr_01J8Z3K6F1N8VQ2X5W9YQZTSXD";
+    let mut tx = world.pool.begin().await.unwrap();
+    sqlx::query(
+        "INSERT INTO users (id, primary_email, display_name) VALUES ($1, 'o@example.com', 'o')",
+    )
+    .bind(outsider)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO tenant_memberships (id, tenant_id, user_id, role, status) VALUES ('tm_outsider', $1, $2, 'member', 'active')")
+        .bind(TENANT)
+        .bind(outsider)
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+    let addr = serve_http(&world).await;
+
+    // The refusal is typed, and a refused socket starts nothing: no stream is asked for on the target's behalf.
+    let mut refused = Viewer::join_as(addr, outsider, &world.target).await;
+    let answer = refused.next_text(5_000).await.expect("an answer");
+    assert_eq!(answer["code"], "SCOPE_FORBIDDEN", "{answer}");
+    assert!(
+        !world.hub.has_viewers(TENANT, &world.target),
+        "a refused socket became a viewer"
+    );
+    // A target that does not exist is refused the same way, so the answer does not say which targets there are.
+    let mut missing = Viewer::join_as(addr, USER, "tgt_01J8Z3K6F1N8VQ2X5W9YNZSVCH").await;
+    let answer = missing.next_text(5_000).await.expect("an answer");
+    assert_eq!(answer["code"], "SCOPE_FORBIDDEN", "{answer}");
+
+    // A reader of the workspace is admitted and counted.
+    let reader = Viewer::join(addr, &world.target).await;
+    for _ in 0..50 {
+        if world.hub.has_viewers(TENANT, &world.target) {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    assert!(
+        world.hub.has_viewers(TENANT, &world.target),
+        "the workspace's reader was not admitted"
+    );
+    reader.leave().await;
     drop_pool(&world.pool, &world.name).await;
 }
