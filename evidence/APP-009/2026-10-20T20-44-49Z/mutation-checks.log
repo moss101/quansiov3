@@ -1,0 +1,12 @@
+D1 the route creates a teammate without the lock again: COMPILES
+D1 the route creates a teammate without the lock again: KILLED (assertion `left == right` failed: the messages went to ["agt_01M5DGT7V3GR1EWXG9XQCV3M6D", "agt_01M5DGT7V51EH0JRBDH8NZGMB4", "agt_01M5DGT7V5CTC8AX8SDR8J7BDJ", "agt_01M5DGT)
+D2 no look-again under the lock: COMPILES
+D2 no look-again under the lock: KILLED (assertion `left == right` failed: round 0: the callers were handed 8 default teammates)
+D3 a creator that lost is told it failed: COMPILES
+D3 a creator that lost is told it failed: KILLED (round 0: a first message failed because another was posted at the same time: teammate conflict: workspace ws_01J8Z3K6F1N8VQ2X5W9YRACE01 already has default teammate agt_0)
+D4 duplicate threads are never retired: COMPILES
+D4 duplicate threads are never retired: KILLED (assertion `left == right` failed: an idle duplicate is retired)
+D5 a duplicate with an open run is retired too: COMPILES
+D5 a duplicate with an open run is retired too: KILLED (assertion `left == right` failed: a duplicate whose run is still open is left to finish it)
+RESTORED: identical to the committed fix
+CONTROL (restored): passes

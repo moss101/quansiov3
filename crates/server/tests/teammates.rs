@@ -748,3 +748,52 @@ async fn archiving_suspends_the_thread_and_keeps_every_identity() {
 
     common::drop_pool(&h.pool, &h.name).await;
 }
+
+#[tokio::test]
+async fn first_messages_posted_at_once_share_one_default_teammate() {
+    let Some(h) = prepare("teammates_first").await else {
+        common::blocked_marker();
+        return;
+    };
+    // A workspace with no teammate: every one of these messages finds none, and they must not each create one.
+    let mut posts = Vec::new();
+    for id in 0..6u32 {
+        let router = h.router.clone();
+        posts.push(tokio::spawn(async move {
+            command(
+                &router,
+                OWNER,
+                "PostMessage",
+                100 + id,
+                json!({ "workspace_id": WORKSPACE, "content": format!("hello {id}") }),
+            )
+            .await
+        }));
+    }
+    let mut teammates = Vec::new();
+    for post in posts {
+        let (status, posted) = post.await.expect("task");
+        assert_eq!(status, 200, "a first message failed: {posted}");
+        teammates.push(
+            posted["result"]["teammate"]["id"]
+                .as_str()
+                .expect("teammate")
+                .to_string(),
+        );
+    }
+    teammates.sort();
+    teammates.dedup();
+    assert_eq!(teammates.len(), 1, "the messages went to {teammates:?}");
+    let (_, roster) = get(
+        &h.router,
+        OWNER,
+        &format!("/v1/teammates?workspace_id={WORKSPACE}"),
+    )
+    .await;
+    assert_eq!(
+        roster["teammates"].as_array().map_or(0, Vec::len),
+        1,
+        "{roster}"
+    );
+    common::drop_pool(&h.pool, &h.name).await;
+}

@@ -181,6 +181,9 @@ pub struct TurnDefinition {
     pub version: i32,
 }
 
+/// The template a workspace's default teammate is created from when a message names no teammate and the workspace has none.
+pub const DEFAULT_TEMPLATE: &str = "general-assistant";
+
 /// The durable teammate registry.
 #[derive(Debug, Clone)]
 pub struct TeammateStore {
@@ -323,6 +326,51 @@ impl TeammateStore {
         workspace_id: &str,
         new: NewTeammate,
     ) -> Result<(Teammate, AgentThread), TeammateError> {
+        self.create_unless_default(admin, identity, workspace_id, new, false)
+            .await
+    }
+
+    /// The workspace's default teammate (the one [`TeammateStore::default_for`] names), created from the
+    /// `general-assistant` template when it has none, with its ACTIVE AgentThread.
+    ///
+    /// Safe to call from any number of messages at once: a workspace's first messages can all find no teammate. The creation
+    /// takes a lock for the workspace and looks again, so exactly one creates the teammate and the others are handed it.
+    ///
+    /// # Errors
+    /// As [`TeammateStore::create`].
+    pub async fn ensure_default(
+        &self,
+        admin: &TeammateAdmin,
+        identity: &RuntimeIdentity,
+        workspace_id: &str,
+    ) -> Result<(Teammate, AgentThread), TeammateError> {
+        if let Some(teammate) = self.default_for(&admin.tenant_id, workspace_id).await? {
+            let thread = self.provision_thread(identity, &teammate).await?;
+            return Ok((teammate, thread));
+        }
+        self.create_unless_default(
+            admin,
+            identity,
+            workspace_id,
+            NewTeammate {
+                template_id: Some(DEFAULT_TEMPLATE.to_string()),
+                ..Default::default()
+            },
+            true,
+        )
+        .await
+    }
+
+    /// Create a teammate; with `unless_default`, only if the workspace still has no default teammate once a lock for the
+    /// workspace is held, and otherwise hand back that default.
+    async fn create_unless_default(
+        &self,
+        admin: &TeammateAdmin,
+        identity: &RuntimeIdentity,
+        workspace_id: &str,
+        new: NewTeammate,
+        unless_default: bool,
+    ) -> Result<(Teammate, AgentThread), TeammateError> {
         let template = match new.template_id.as_deref() {
             Some(id) => Some(
                 templates()?
@@ -394,11 +442,36 @@ impl TeammateStore {
         let template_id = template.map(|template| template.id);
         let tenant = admin.tenant_id.clone();
         let tenant_scope = tenant.clone();
+        let admin_tenant = tenant.clone();
         let admin = admin.clone();
         let workspace = workspace_id.to_string();
-        let teammate = self
+        let found: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+        let found_slot = Arc::clone(&found);
+        let created = self
             .commit(&tenant_scope, move |tx, batch| {
                 Box::pin(async move {
+                    if unless_default {
+                        // Held until this transaction ends: a second creator waits here and then sees the first one's teammate.
+                        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+                            .bind(format!("default_teammate:{tenant}:{workspace}"))
+                            .execute(&mut **tx)
+                            .await?;
+                        let existing: Option<String> = sqlx::query_scalar(
+                            "SELECT id FROM teammates WHERE tenant_id = $1 AND workspace_id = $2 \
+                             AND status = 'active' AND availability = 'available' ORDER BY created_at, id LIMIT 1",
+                        )
+                        .bind(&tenant)
+                        .bind(&workspace)
+                        .fetch_optional(&mut **tx)
+                        .await?;
+                        if let Some(id) = existing {
+                            // Another message created it first: nothing to write, so the transaction is abandoned.
+                            *found_slot.lock().unwrap_or_else(PoisonError::into_inner) = Some(id.clone());
+                            return Err(TeammateError::Conflict(format!(
+                                "workspace {workspace} already has default teammate {id}"
+                            )));
+                        }
+                    }
                     let id = CanonicalId::generate(Prefix::Teammate, &mut UlidGenerator::new());
                     sqlx::query(
                         "INSERT INTO teammates (id, tenant_id, workspace_id, name, persona, standing_instructions, \
@@ -444,7 +517,16 @@ impl TeammateStore {
                     Ok(teammate)
                 })
             })
-            .await?;
+            .await;
+        let winner = found.lock().unwrap_or_else(PoisonError::into_inner).take();
+        let teammate = match (created, winner) {
+            (Err(TeammateError::Conflict(_)), Some(id)) => {
+                let id = CanonicalId::parse_typed(&id, Prefix::Teammate)
+                    .map_err(|error| TeammateError::Config(error.to_string()))?;
+                self.get(&admin_tenant, &id).await?
+            }
+            (created, _) => created?,
+        };
         let thread = self.provision_thread(identity, &teammate).await?;
         Ok((teammate, thread))
     }
@@ -473,7 +555,12 @@ impl TeammateStore {
         // One thread per teammate however many messages ask for it at once, and an activation another caller got to first is
         // accepted: see `AgentStore::ensure_thread_for_definition`.
         let thread = agents.ensure_thread_for_definition(new).await?;
-        Ok(agents.ensure_active(thread).await?)
+        let thread = agents.ensure_active(thread).await?;
+        // A teammate given several threads before that was atomic keeps the first; the others are ended once idle.
+        agents
+            .retire_duplicate_threads(&teammate.id, &thread.id)
+            .await?;
+        Ok(thread)
     }
 
     /// Change a definition: version bumped, `agent.definition_updated` and the AuditEntry in

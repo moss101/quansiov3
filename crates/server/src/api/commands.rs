@@ -1640,16 +1640,9 @@ pub(super) async fn route_to_teammate(
                         actor: identity.actor.clone(),
                         correlation_id: identity.correlation_id,
                     };
+                    // Several first messages can all get here; they all get the one teammate the first of them creates.
                     let (teammate, thread) = store
-                        .create(
-                            &admin,
-                            identity,
-                            workspace_id,
-                            crate::control::teammates::NewTeammate {
-                                template_id: Some("general-assistant".to_string()),
-                                ..Default::default()
-                            },
-                        )
+                        .ensure_default(&admin, identity, workspace_id)
                         .await
                         .map_err(teammate_error)?;
                     let _ = work_node;

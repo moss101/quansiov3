@@ -265,6 +265,8 @@ A WorkNode reaches `done` only via `run.verification_passed`, never via a model 
 
 States: `PROVISIONED → ACTIVE ⇄ SUSPENDED; ACTIVE → HANDING_OFF → HANDED_OFF; ACTIVE → JOINING → JOINED (worker merged into parent); any → TERMINATED`. Persistent teammates never reach `JOINED`; workers must.
 
+One teammate, one thread (APP-009): a teammate's AgentThread is its first by `(created_at, id)`, provisioned under a lock for the definition so concurrent messages share it. A message naming no teammate goes to the workspace's default teammate (the oldest `active`, `available` one), created from the `general-assistant` template under a lock for the workspace when there is none, so concurrent first messages create one. Extra threads a teammate was given before provisioning was atomic are terminated (`agent.terminated`) when the teammate is next provisioned, each once no run on it is unfinished; their messages and runs stay as history.
+
 ### 5.2 Run
 `id, workspace_id, work_node_id, agent_thread_id, generation, status, trigger {kind: message|routine|wake|child_result|manual, ref}, current_turn_id?, budget_snapshot, started_at, ended_at?, terminal_reason? (typed), execution_target_id?`.
 
