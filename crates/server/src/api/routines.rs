@@ -31,7 +31,6 @@ use sqlx::Row;
 
 use super::commands::{
     chat_engine, internal, load_target, post_agent_reply, route_to_teammate, runtime_error,
-    seed_projection,
 };
 use super::rbac::Authorization;
 use super::{ApiError, ApiErrorCode, ApiState, TenantScope};
