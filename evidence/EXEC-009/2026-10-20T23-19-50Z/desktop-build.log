@@ -1,0 +1,5 @@
+
+> @quansio/desktop@0.1.0 build
+> tsc -p tsconfig.build.json && node scripts/bundle.mjs
+
+desktop bundle written to /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/7830eed2-0e46-47ee-bda7-821473d4e7c9/scratchpad/wt-live/apps/desktop/dist/app

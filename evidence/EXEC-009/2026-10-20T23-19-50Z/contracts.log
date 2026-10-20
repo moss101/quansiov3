@@ -1,0 +1,2 @@
+contract regeneration check: CLEAN (catalog,openapi,sdk,ts,rust)
+contracts rc=0

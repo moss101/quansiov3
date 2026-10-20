@@ -1,0 +1,134 @@
+
+ RUN  v2.1.9 /private/tmp/claude-501/-Users-mohsin-projects-quansiov3/7830eed2-0e46-47ee-bda7-821473d4e7c9/scratchpad/wt-live
+
+ ✓ |qa-e2e| tests/e2e/shell.e2e.spec.ts (8 tests) 4363ms
+   ✓ desktop shell (real Electron, real server) > creates the windows with the sandboxed baseline, each knowing only what main says it is 552ms
+   ✓ desktop shell (real Electron, real server) > IPC from an untrusted URL, or from a window the shell did not create, reaches nothing and answers nothing 342ms
+   ✓ desktop shell (real Electron, real server) > never quits over running work without the person's answer, asks when the status cannot be read, and quits quietly when idle 612ms
+ ✓ |qa-e2e| tests/e2e/files.e2e.spec.ts (6 tests) 4334ms
+   ✓ local files (real Electron, real server) > a grant is bound to the window that asked: another window cannot claim it, preview it or load its media URL 374ms
+   ✓ local files (real Electron, real server) > the attach deep link opens the dialog and hands the page a grant; a link with a path is refused and opens nothing 511ms
+   ✓ local files (real Electron, real server) > a granted folder: opaque entries, a media URL for a file in it, a conflict-checked edit and a watch that is quiet about its own save 1446ms
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > chats with a teammate
+- region "Conversation":
+  - list:
+    - listitem:
+      - time: Today 2:35 AM
+    - listitem:
+      - text: user
+      - paragraph: Summarize the launch checklist
+    - listitem:
+      - text: Teammate
+      - paragraph: working
+  - textbox "Message your teammates…"
+  - button "Attach files from your computer"
+  - button "Cancel"
+  - button "Send" [disabled]
+
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > reviews an artifact's versions and preview
+- region "Artifacts":
+  - complementary:
+    - heading "Artifacts" [level=2]
+    - searchbox "Search threads, artifacts, knowledge and evidence…"
+    - checkbox "artifacts" [checked]
+    - text: artifacts
+    - checkbox "threads" [checked]
+    - text: threads
+    - checkbox "knowledge" [checked]
+    - text: knowledge
+    - checkbox "evidence" [checked]
+    - text: evidence
+    - button "Search" [disabled]
+    - text: Kind
+    - combobox "Kind":
+      - option "All kinds" [selected]
+      - option "document"
+      - option "spreadsheet"
+      - option "presentation"
+      - option "code"
+      - option "data"
+      - option "image"
+      - option "audio"
+      - option "video"
+      - option "archive"
+      - option "other"
+    - list:
+      - listitem:
+        - button "document Launch plan.md v1"
+  - heading "Launch plan.md" [level=2]
+  - text: "document Source: upload usr_01J8Z3K6F1N8VQ2X5W9Y0QA8AA"
+  - heading "Versions" [level=3]
+  - list:
+    - listitem:
+      - button "v1 · text/markdown · 34 B"
+      - text: uploaded by usr_01J8Z3K6F1N8VQ2X5W9Y0QA8AAvalid source
+  - button "Save…"
+  - button "Open"
+  - button "Edit"
+  - code: b169a11ddb663ab5f339c53c26aa58a905db041d040dd1c1ccafcb064193f9d2
+  - text: "# Launch plan - ship the desktop"
+
+stdout | tests/e2e/desktop.e2e.spec.ts > desktop journeys (real Electron, real server) > reports the server going away and recovers when it returns
+offline: - complementary:
+  - heading "Quansio" [level=1]
+  - button "Search conversations"
+  - button "New thread"
+  - navigation "Surfaces":
+    - list:
+      - listitem:
+        - button "Chat"
+      - listitem:
+        - button "Objectives and plan"
+      - listitem:
+        - button "Teammates"
+      - listitem:
+        - button "Plan and agents"
+      - listitem:
+        - button "Run status"
+      - listitem:
+        - button "Approvals"
+      - listitem:
+        - button "Evidence and effects"
+      - listitem:
+        - button "Live browser and terminal"
+      - listitem:
+        - button "Files and artifacts"
+      - listitem:
+        - button "Knowledge, memory and skills"
+      - listitem:
+        - button "Group threads"
+      - listitem:
+        - button "Routines and notifications"
+      - listitem: Connectors (web admin)
+      - listitem:
+        - button "Capabilities"
+      - listitem:
+        - button "Models and tools used"
+  - button "Account"
+  - button "Chats"
+
+ ✓ |qa-e2e| tests/e2e/desktop.e2e.spec.ts (12 tests) 10829ms
+   ✓ desktop journeys (real Electron, real server) > onboards a new person with nothing but an email address 807ms
+   ✓ desktop journeys (real Electron, real server) > approves an effect from the preview it was asked about 562ms
+   ✓ desktop journeys (real Electron, real server) > returns a person whose sessions were revoked to sign-in 1256ms
+   ✓ desktop journeys (real Electron, real server) > has no accessibility blockers on any surface and every control is keyboard reachable 5069ms
+   ✓ desktop journeys (real Electron, real server) > reports the server going away and recovers when it returns 320ms
+ ✓ |qa-e2e| tests/e2e/web.e2e.spec.ts (9 tests) 14037ms
+   ✓ web journeys (Chrome, real server) > signs in from the emailed link and reviews the work 402ms
+   ✓ web journeys (Chrome, real server) > lets an approver decide a request remotely, bound to its preview 979ms
+   ✓ web journeys (Chrome, real server) > administers members and the change is audited 667ms
+   ✓ web journeys (Chrome, real server) > offers a viewer no administration and the server agrees 374ms
+   ✓ web journeys (Chrome, real server) > has no accessibility blockers on any page, works by keyboard, and fits a phone 8457ms
+   ✓ web journeys (Chrome, real server) > jumps to a page from the command palette and closes it with Escape 742ms
+   ✓ web journeys (Chrome, real server) > follows the person's theme preference over the system's 533ms
+   ✓ web journeys (Chrome, real server) > signs out 386ms
+   ✓ web journeys (Chrome, real server) > the accessibility checks find what they look for (a control with no name, hidden focus) 358ms
+ ✓ |qa-e2e| tests/e2e/journeys.spec.ts (4 tests) 5ms
+ ✓ |qa-e2e| tests/e2e/live-worker.e2e.spec.ts (1 test) 6867ms
+   ✓ the live viewer in a real Electron window (real worker, real Chrome) > shows what the agent opened, and a person who takes it over can click, right-click, double-click, drag and type on it 5605ms
+
+ Test Files  6 passed (6)
+      Tests  40 passed (40)
+   Start at  02:35:25
+   Duration  42.00s (transform 105ms, setup 0ms, collect 682ms, tests 40.43s, environment 0ms, prepare 131ms)
+

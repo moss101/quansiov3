@@ -1,0 +1,12 @@
+# EXEC-009 — a screenshot's pixels reach the evidence store and the model; the live view receives pictures as binary messages
+
+| Gap | Owner | Change | Proof |
+|---|---|---|---|
+| Screenshot pixels never left the worker | `qworkerd` (`InlineEvidence`, `daemon.rs`, `browser_runtime.rs`, `executor.rs`), `machine/src/gateway/wire.rs` (`Evidence`, `MAX_EVIDENCE_BYTES`), `server/src/worker` (hub holds, host checks and records) | evidence sent ahead of the result that names the dispatch, recorded as `screenshot` evidence of the run (step and effect linked when they exist), named in `artifact_id` and `evidence_ids` | `browser_worker.rs` (real Chrome: held and handed over once; an unattached sink fails the shot), `worker_live.rs` (real daemon, hub, MinIO; a stand-in worker for what a faulty one could send) |
+| The model could not see the page | `server/src/intelligence/model_source.rs`, `python/intelligence` | the newest completed screenshot of a run is read back (digest-checked) and offered as an `optional` image part after a sentence marking it untrusted; models without `vision` are told it was left out | `model_source` unit test, `worker_live.rs` (`screenshot_part`, tamper), `test_model_gateway_pictures.py` |
+| Frames were base64 inside JSON | `server/src/api/stream.rs`, desktop `client/stream.ts` | `binary_frames: true` on subscribe: `QFR1` + header length + header + bytes | `worker_live.rs` (binary against text on one stream), `live-input.test.ts`, the real-window E2E |
+| A flaky payment test (found by this gate) | `crates/server/tests/payment_supply.rs` | a four-digit security code occurred by chance inside random sealed bytes printed as hex; the scan now ignores a match inside a run of hex digits | the test repeated six times, plus a unit test of the rule |
+
+State touched: evidence rows (existing table, existing kind). No migration. New wire frame: `evidence`. New subscribe field: `binary_frames`. Settings and commands: none. External effects: none (a screenshot is a read). Real boundaries: PostgreSQL, MinIO (the dev stack's object store), a real Chrome, a real `qworkerd`, the real Electron window.
+
+Not proved: a real provider receiving the picture (needs `QUANSIO_TEST_ANTHROPIC_API_KEY` or the OpenAI one; the request bytes are asserted against the stub providers, which refuse what the first-party APIs refuse). The two hygiene bounds on the hub's evidence stash (only for a waiting dispatch; at most 8 held) have no test that can observe them from outside.

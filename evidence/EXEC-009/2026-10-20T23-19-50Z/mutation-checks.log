@@ -1,0 +1,22 @@
+Z1 the worker never sends its pixels: COMPILES
+Z1 the worker never sends its pixels: KILLED (the evidence id)
+Z2 the hub drops every worker's evidence: COMPILES
+Z2 the hub drops every worker's evidence: KILLED (a PNG is kept)
+Z3 the host keeps bytes that are not a PNG: COMPILES
+Z3 the host keeps bytes that are not a PNG: KILLED (bytes that are not a PNG was kept as a screenshot)
+Z4 the host keeps a PNG of any size: COMPILES
+Z4 the host keeps a PNG of any size: KILLED (a PNG over the bound was kept as a screenshot)
+Z5 the host keeps any media type: COMPILES
+Z5 the host keeps any media type: KILLED (a media type that is not image/png was kept as a screenshot)
+Z6 the model is shown the oldest screenshot: COMPILES
+Z6 the model is shown the oldest screenshot: KILLED (assertion `left == right` failed)
+Z7 a picture that does not match its digest is shown: COMPILES
+Z7 a picture that does not match its digest is shown: KILLED (a picture that does not match its digest was shown to the model)
+Z8 the server ignores the request for binary pictures: COMPILES
+Z8 the server ignores the request for binary pictures: KILLED (the bytes are not in the header)
+Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+AssertionError
+RESTORED: identical to the committed change
+CONTROL (restored): passes
+Z9 the desktop ignores a binary message (the stream client's binary branch switched off): KILLED (a binary picture > is delivered by the stream client... expected [] to deeply equal [ '/9gJ', '/9gJ' ]); restored
