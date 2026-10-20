@@ -14,6 +14,9 @@ use serde::{Deserialize, Serialize};
 use super::{ActionEnvelope, EnvelopeKind, LeaseClaim};
 use crate::control::browser::ReceiptWire;
 
+/// The most evidence one dispatch may carry back, in bytes before base64 (a viewport screenshot is a fraction of this).
+pub const MAX_EVIDENCE_BYTES: usize = 5 * 1024 * 1024;
+
 /// The longest frame either side accepts, so a peer cannot make the other buffer without bound.
 pub const MAX_FRAME_BYTES: usize = 8 * 1024 * 1024;
 
@@ -430,6 +433,17 @@ pub enum FromWorker {
         replayed: bool,
         /// How it ended.
         outcome: OutcomeWire,
+    },
+    /// Evidence bytes a dispatch produced (a screenshot), sent immediately before the `Result` that names the dispatch. The
+    /// worker holds no credential for the evidence store, so the bytes travel the control channel and the server records
+    /// them. Bounded by [`MAX_EVIDENCE_BYTES`]; a worker that has more sends none.
+    Evidence {
+        /// Dispatch the bytes belong to.
+        dispatch_token: String,
+        /// Media type (`image/png`).
+        media_type: String,
+        /// The bytes, base64.
+        data_base64: String,
     },
     /// What a browser session's driver reports about its tabs and actions (DOMAIN.md §8.4.1 E): sent after each browser
     /// action and each order. Bounded and parsed strictly by the control plane, which stores it only for a session of

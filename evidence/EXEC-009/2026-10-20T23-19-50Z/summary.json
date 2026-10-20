@@ -1,0 +1,207 @@
+{
+  "task_id": "EXEC-009",
+  "git_commit": "d59c057be0edae80817670ae9baf7292b859acf1",
+  "recorded_at": "2026-10-20T23:36:55Z",
+  "commands": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/clippy.log"
+    },
+    {
+      "command": "gen_contracts.py --check --only catalog,openapi,sdk,ts,rust  # zero drift",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/contracts.log"
+    },
+    {
+      "command": "ruff check, ruff format --check, mypy over python/intelligence",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/python-static.log"
+    },
+    {
+      "command": "pytest python/tests  # 857 passed, 18 skipped (live-provider suites, BLOCKED_EXTERNAL without credentials)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/python-tests.log"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # clean clone, at 73c8a93f; the only later change is a Rust test file",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/architecture-clean-clone.log"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1368 passed, 0 failed on the final tree. The first run (full-crates-first-run.log) had one failure, payment_supply.rs: a four-digit test security code occurred by chance inside random sealed bytes; fixed and repeated, see RECONCILIATION.md",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/full-crates.log"
+    },
+    {
+      "command": "cd apps/desktop && tsc --noEmit && eslint src tests",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/desktop-static.log"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # 698 passed, 4 skipped (the native recorder, BLOCKED_EXTERNAL as before), at 73c8a93f",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/desktop-full.log"
+    },
+    {
+      "command": "vitest run --config tests/e2e/vitest.config.ts --no-file-parallelism  # QA-008 on the rebuilt desktop: 40 passed, including the viewer in a real Electron window over binary pictures",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/qa008-e2e.log"
+    },
+    {
+      "command": "mutation checks: 9 of 9 KILLED (the worker never sends pixels; the hub drops evidence; the host keeps non-PNG bytes, an oversize PNG, any media type; the model is shown the oldest screenshot; a picture that does not match its digest is shown; the server ignores binary_frames; the desktop ignores a binary message), every mutant compiles, restored tree identical, control passes",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo fmt --check -p quansio-qworkerd -p quansio-machine -p quansio-server",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-qworkerd -p quansio-machine -p quansio-server --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "gen_contracts.py --check --only catalog,openapi,sdk,ts,rust  # zero drift",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "ruff check, ruff format --check, mypy over python/intelligence",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pytest python/tests  # 857 passed, 18 skipped (live-provider suites, BLOCKED_EXTERNAL without credentials)",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "git clone . && arch_check.py && pytest tests/architecture && validate_v81.py  # clean clone, at 73c8a93f; the only later change is a Rust test file",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "QUANSIO_TEST_POSTGRES_URL=<dev stack> cargo test --no-fail-fast -p quansio-machine -p quansio-qworkerd -p quansio-server  # 1368 passed, 0 failed on the final tree. The first run (full-crates-first-run.log) had one failure, payment_supply.rs: a four-digit test security code occurred by chance inside random sealed bytes; fixed and repeated, see RECONCILIATION.md",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && tsc --noEmit && eslint src tests",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cd apps/desktop && vitest run  # 698 passed, 4 skipped (the native recorder, BLOCKED_EXTERNAL as before), at 73c8a93f",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "vitest run --config tests/e2e/vitest.config.ts --no-file-parallelism  # QA-008 on the rebuilt desktop: 40 passed, including the viewer in a real Electron window over binary pictures",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks: 9 of 9 KILLED (the worker never sends pixels; the hub drops evidence; the host keeps non-PNG bytes, an oversize PNG, any media type; the model is shown the oldest screenshot; a picture that does not match its digest is shown; the server ignores binary_frames; the desktop ignores a binary message), every mutant compiles, restored tree identical, control passes",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/RECONCILIATION.md",
+      "sha256": "b4d320dc3ee5b94ae0169f9ec2c0ab3a2a73faeec930588cbf2eeb4e5128f498",
+      "bytes": 2500
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/architecture-clean-clone.log",
+      "sha256": "f577ae7255fdbd429842ea2de01ca81d24aa508b156ee4858a61a666b88b88d5",
+      "bytes": 342
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/build-bins.log",
+      "sha256": "22e0df986057b9ba5be07526ac5fb348862a3dedef42108383cc3e088acbb889",
+      "bytes": 72
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/clippy.log",
+      "sha256": "25919488d425c83c8da134939cf859d34c010cc8e4be543aa15798fccffc4ccb",
+      "bytes": 236
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/contracts.log",
+      "sha256": "a44fddaa61891f9cdff2244740da74007436eb6336b28e3547f5fbd0c074ea32",
+      "bytes": 80
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/desktop-build.log",
+      "sha256": "0dc1d614e1713d74ec772f80d4be054978f7a45b00df56c2285ac8d6a4f32f27",
+      "bytes": 250
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/desktop-full.log",
+      "sha256": "52845ee0e19b7c07c42863d228b9243687ae053768bd1885abc78fb5de44b1f0",
+      "bytes": 8729
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/desktop-static.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/full-crates-first-run.log",
+      "sha256": "01d3e7855cdd6205ee5af23c4897fedd8d58bf3666118a50dc1a56a469527ebb",
+      "bytes": 138951
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/full-crates.log",
+      "sha256": "6b98d7aae77463358e5896f2c545a685a929317144a6167a13c0a1ec9d757ab8",
+      "bytes": 137969
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/mutation-checks.log",
+      "sha256": "1609bbe9caa21b936e7a0e065fc550c1dff5f8ea63444bdb03c954f43cf393af",
+      "bytes": 1529
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/python-static.log",
+      "sha256": "191782181296f40c697a710d771fc76420a717cdfdef1f5d13558b6da579a23f",
+      "bytes": 111
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/python-tests.log",
+      "sha256": "e93dc4509f16d39b3185f8b1b949daacf65750466510e1160e68fea4598030f1",
+      "bytes": 1073
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/qa008-e2e.log",
+      "sha256": "8feca4a26aec9dd9e81c52328efaab93084392f9089a143808dc5de8b855f711",
+      "bytes": 6504
+    }
+  ]
+}

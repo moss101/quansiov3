@@ -15,7 +15,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use quansio_qworkerd::browser_runtime::BrowserRuntime;
-use quansio_qworkerd::daemon::{serve, UnattachedEvidence};
+use quansio_qworkerd::daemon::{serve, InlineEvidence};
 use quansio_qworkerd::executor::LocalToolExecutor;
 use quansio_qworkerd::host::WorkerHost;
 use quansio_qworkerd::tools::{RootScope, Sandbox};
@@ -150,7 +150,7 @@ async fn main() {
     }
     let host = Arc::new(WorkerHost::with_concurrency(
         executor,
-        UnattachedEvidence,
+        InlineEvidence::default(),
         args.max_concurrent,
     ));
 

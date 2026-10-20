@@ -255,6 +255,13 @@ pub trait EvidenceSink: Send + Sync {
         payload: &[u8],
         media_type: &str,
     ) -> Result<String, HostFailure>;
+
+    /// Take back what [`EvidenceSink::upload`] kept under `reference`, if this sink keeps bytes for the channel to carry.
+    /// A sink that uploads elsewhere has nothing to give back.
+    fn take(&self, reference: &str) -> Option<(String, Vec<u8>)> {
+        let _ = reference;
+        None
+    }
 }
 
 /// A host that runs nothing: the seam a host is installed into.
@@ -313,6 +320,12 @@ impl<E: ToolExecutor, S: EvidenceSink> WorkerHost<E, S> {
     #[must_use]
     pub const fn executor(&self) -> &E {
         &self.executor
+    }
+
+    /// The sink evidence goes to.
+    #[must_use]
+    pub const fn evidence(&self) -> &S {
+        &self.evidence
     }
 
     /// Build a host over an executor and an evidence sink that runs [`DEFAULT_CONCURRENCY`] dispatches at once.

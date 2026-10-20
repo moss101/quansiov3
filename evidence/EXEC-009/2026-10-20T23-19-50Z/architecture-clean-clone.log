@@ -1,0 +1,6 @@
+73c8a93f [EXEC-009] tests: what the host keeps of a worker's evidence; a picture that does not match its digest is not shown
+architecture check: CLEAN (0 findings)
+.........................................................                [100%]
+129 passed in 25.90s
+V8.1 VALIDATION: PASS (108 tasks, 11 milestones, 70 PASS, 0 ready)
+arch rc=0

@@ -629,6 +629,12 @@ impl ApiState {
         self.web_root.as_ref()
     }
 
+    /// The object store, when one is composed.
+    #[must_use]
+    pub fn object_store_handle(&self) -> Option<Arc<dyn ObjectStore>> {
+        self.objects.clone()
+    }
+
     /// Install the object store attachments are written to (CORE-007's store; none means
     /// uploads fail closed with `TARGET_UNAVAILABLE`).
     #[must_use]
@@ -701,7 +707,9 @@ impl ApiState {
     pub fn with_worker_hub(mut self, hub: crate::worker::WorkerHub) -> Self {
         // The frames a worker sends go to whoever is watching through this state's live hub.
         hub.attach_live(self.live.clone());
-        self.worker = Some(Arc::new(crate::worker::WorkerToolHost::new(hub)));
+        self.worker = Some(Arc::new(
+            crate::worker::WorkerToolHost::new(hub).with_object_store(self.objects.clone()),
+        ));
         self.rebuild_host();
         self
     }

@@ -22,7 +22,7 @@ use quansio_machine::control::{
     MachineControl, NewTarget, Substrate, TargetClass, TargetFence, TargetStatus,
 };
 use quansio_qworkerd::browser_runtime::BrowserRuntime;
-use quansio_qworkerd::daemon::{serve, UnattachedEvidence};
+use quansio_qworkerd::daemon::{serve, InlineEvidence, UnattachedEvidence};
 use quansio_qworkerd::executor::LocalToolExecutor;
 use quansio_qworkerd::host::WorkerHost;
 use quansio_qworkerd::tools::{RootScope, Sandbox};
@@ -237,7 +237,7 @@ async fn world(label: &str, with_worker: bool) -> Option<World> {
             let executor = LocalToolExecutor::new(sandbox, TENANT).with_browser(
                 BrowserRuntime::new(chrome, state_path, TENANT).allow_private_network(true),
             );
-            let host = std::sync::Arc::new(WorkerHost::new(executor, UnattachedEvidence));
+            let host = std::sync::Arc::new(WorkerHost::new(executor, InlineEvidence::default()));
             let stream = tokio::net::UnixStream::connect(&socket).await.unwrap();
             let (reader, writer) = stream.into_split();
             let _ = serve(
@@ -973,7 +973,16 @@ impl Viewer {
         Self::join_as(addr, USER, target).await
     }
 
+    /// A viewer that asks for pictures as binary messages.
+    async fn join_binary(addr: std::net::SocketAddr, target: &str) -> Self {
+        Self::connect(addr, USER, target, true).await
+    }
+
     async fn join_as(addr: std::net::SocketAddr, user: &str, target: &str) -> Self {
+        Self::connect(addr, user, target, false).await
+    }
+
+    async fn connect(addr: std::net::SocketAddr, user: &str, target: &str, binary: bool) -> Self {
         use futures_util::SinkExt;
         use tokio_tungstenite::tungstenite::client::IntoClientRequest;
         use tokio_tungstenite::tungstenite::Message;
@@ -990,7 +999,7 @@ impl Viewer {
             .await
             .expect("connect");
         ws.send(Message::Text(
-            json!({ "subscribe": [{ "channel": format!("target:{target}") }] }).to_string(),
+            json!({ "subscribe": [{ "channel": format!("target:{target}") }], "binary_frames": binary }).to_string(),
         ))
         .await
         .expect("subscribe");
@@ -1976,5 +1985,404 @@ async fn a_person_registers_a_worker_target_once_and_a_worker_can_then_attach_to
         ),
         (Some(false), Some(true))
     );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+#[tokio::test]
+async fn a_screenshot_is_kept_as_evidence_of_the_run_and_the_model_is_shown_it() {
+    let Some(world) = world("wl_pixels", true).await else {
+        return blocked_marker();
+    };
+    // The evidence store is the real object store of the dev stack (MinIO).
+    let objects: Arc<dyn quansio_server::artifacts::ObjectStore> = Arc::new(
+        quansio_server::artifacts::S3ObjectStore::from_env().expect("QUANSIO_TEST_MINIO_*"),
+    );
+    let routed = WorkerRoutedHost::new(
+        Arc::new(
+            WorkerToolHost::new(world.hub.clone()).with_object_store(Some(Arc::clone(&objects))),
+        ),
+        Arc::new(Stub),
+    );
+    let site = Site::start().await;
+    let navigated = ok(
+        &routed,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.url()}),
+    )
+    .await;
+    let tab = navigated["tab_id"].as_str().unwrap().to_string();
+    let shot = routed
+        .execute(dispatch(
+            RUN_A,
+            "browser.screenshot",
+            json!({"session_id": "x", "tab_id": tab}),
+        ))
+        .await;
+    let Ok(HostOutcome::Success {
+        output,
+        evidence_ids,
+        ..
+    }) = shot
+    else {
+        panic!("the screenshot did not succeed: {shot:?}");
+    };
+    // The result names the evidence the pixels were kept as, and nothing in it carries a pixel.
+    let evidence_id = output["artifact_id"]
+        .as_str()
+        .expect("the evidence id")
+        .to_string();
+    assert_eq!(evidence_ids, std::slice::from_ref(&evidence_id));
+    assert!(
+        evidence_id.starts_with("evd_") && output.to_string().len() < 2048,
+        "{output}"
+    );
+
+    // The row is a screenshot of this run, and its bytes in the object store are the PNG the digest names.
+    let mut tx = world.pool.begin().await.unwrap();
+    quansio_server::control::schema::set_tenant_context(&mut tx, TENANT)
+        .await
+        .unwrap();
+    let row =
+        sqlx::query("SELECT kind, run_id, content_digest, object_key FROM evidence WHERE id = $1")
+            .bind(&evidence_id)
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap();
+    assert_eq!(row.get::<String, _>("kind"), "screenshot");
+    assert_eq!(
+        row.get::<Option<String>, _>("run_id").as_deref(),
+        Some(RUN_A)
+    );
+
+    // What the model is shown: an optional image part, the bytes the row's digest names.
+    let part = quansio_server::intelligence::model_source::screenshot_part(
+        &world.pool,
+        objects.as_ref(),
+        TENANT,
+        &evidence_id,
+    )
+    .await
+    .expect("a picture for the model");
+    assert_eq!(
+        (
+            part["kind"].as_str(),
+            part["media_type"].as_str(),
+            part["optional"].as_bool()
+        ),
+        (Some("image"), Some("image/png"), Some(true))
+    );
+    use base64::Engine as _;
+    let shown = base64::engine::general_purpose::STANDARD
+        .decode(part["data_base64"].as_str().unwrap())
+        .unwrap();
+    assert!(shown.starts_with(b"\x89PNG\r\n\x1a\n"));
+    assert_eq!(
+        quansio_core::Digest::of(&shown).as_str(),
+        row.get::<String, _>("content_digest")
+    );
+
+    // Bytes that are not the ones the row's digest names are never shown: the object is replaced by another picture.
+    let key_text: String = row
+        .get::<Option<String>, _>("object_key")
+        .expect("the object key");
+    let key = quansio_server::artifacts::ObjectKey::parse(&key_text).expect("an object key");
+    let mut other = b"\x89PNG\r\n\x1a\n".to_vec();
+    other.extend_from_slice(b"a different picture");
+    objects
+        .put(&key, &other, "image/png")
+        .await
+        .expect("replace the object");
+    assert!(
+        quansio_server::intelligence::model_source::screenshot_part(
+            &world.pool,
+            objects.as_ref(),
+            TENANT,
+            &evidence_id
+        )
+        .await
+        .is_none(),
+        "a picture that does not match its digest was shown to the model"
+    );
+    // Evidence that is not a screenshot, or is not this tenant's, is never shown as one.
+    assert!(quansio_server::intelligence::model_source::screenshot_part(
+        &world.pool,
+        objects.as_ref(),
+        "tn_01J8Z3K6F1N8VQ2X5W9YOTHERX",
+        &evidence_id
+    )
+    .await
+    .is_none());
+    assert!(quansio_server::intelligence::model_source::screenshot_part(
+        &world.pool,
+        objects.as_ref(),
+        TENANT,
+        "evd_01J8Z3K6F1N8VQ2X5W9YNZSVCH"
+    )
+    .await
+    .is_none());
+
+    // A worker given no object store to keep it in loses nothing it was promised: the result says the shot was taken and
+    // names no evidence, and the model has the text.
+    let bare = WorkerRoutedHost::new(
+        Arc::new(WorkerToolHost::new(world.hub.clone())),
+        Arc::new(Stub),
+    );
+    let again = bare
+        .execute(dispatch(
+            RUN_A,
+            "browser.screenshot",
+            json!({"session_id": "x", "tab_id": tab}),
+        ))
+        .await;
+    let Ok(HostOutcome::Success {
+        output,
+        evidence_ids,
+        ..
+    }) = again
+    else {
+        panic!("{again:?}");
+    };
+    assert!(
+        evidence_ids.is_empty() && output.get("artifact_id").is_none(),
+        "{output}"
+    );
+    drop_pool(&world.pool, &world.name).await;
+}
+
+/// The next binary message within `ms`, as `(header, bytes)`, or the next text frame's `data` decoded.
+async fn next_picture(viewer: &mut Viewer, ms: u64) -> Option<(Value, Vec<u8>, usize)> {
+    use base64::Engine as _;
+    use futures_util::StreamExt;
+    use tokio_tungstenite::tungstenite::Message;
+    let deadline = tokio::time::Instant::now() + Duration::from_millis(ms);
+    loop {
+        match tokio::time::timeout_at(deadline, viewer.ws.next()).await {
+            Ok(Some(Ok(Message::Binary(bytes)))) => {
+                assert_eq!(
+                    &bytes[..4],
+                    b"QFR1",
+                    "a binary picture opens with its magic"
+                );
+                let header_len = u32::from_be_bytes(bytes[4..8].try_into().unwrap()) as usize;
+                let header: Value = serde_json::from_slice(&bytes[8..8 + header_len]).unwrap();
+                return Some((header, bytes[8 + header_len..].to_vec(), bytes.len()));
+            }
+            Ok(Some(Ok(Message::Text(text)))) => {
+                let value: Value = serde_json::from_str(&text).ok()?;
+                if value["kind"] == "live" && value["frame"]["kind"] == "browser.frame" {
+                    let data = value["frame"]["data"].as_str()?;
+                    let bytes = base64::engine::general_purpose::STANDARD
+                        .decode(data)
+                        .ok()?;
+                    return Some((value, bytes, text.len()));
+                }
+            }
+            Ok(Some(Ok(_))) => {}
+            _ => return None,
+        }
+    }
+}
+
+#[tokio::test]
+async fn a_viewer_that_asks_gets_the_picture_as_binary_and_a_viewer_that_does_not_gets_json() {
+    let Some(world) = world("wl_binary", true).await else {
+        return blocked_marker();
+    };
+    let (site, host) = (Site::start().await, host(&world));
+    let addr = serve_http(&world).await;
+    let mut binary = Viewer::join_binary(addr, &world.target).await;
+    let mut text = Viewer::join(addr, &world.target).await;
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    ok(
+        &host,
+        RUN_A,
+        "browser.navigate",
+        json!({"session_id": "x", "url": site.animated()}),
+    )
+    .await;
+
+    let (header, bytes, wire_binary) = next_picture(&mut binary, 20_000)
+        .await
+        .expect("a binary picture");
+    assert_eq!(
+        (header["kind"].as_str(), header["frame"]["kind"].as_str()),
+        (Some("live"), Some("browser.frame"))
+    );
+    assert!(
+        header["frame"].get("data").is_none(),
+        "the bytes are not in the header"
+    );
+    assert!(
+        header["frame"]["width"].as_u64().unwrap_or(0) > 0 && header["frame"]["sequence"].is_u64()
+    );
+    assert!(
+        bytes.starts_with(&[0xFF, 0xD8]) || bytes.starts_with(b"\x89PNG"),
+        "a real picture"
+    );
+    let (_, same_kind, wire_text) = next_picture(&mut text, 20_000)
+        .await
+        .expect("a text picture");
+    assert!(
+        same_kind.starts_with(&bytes[..2]),
+        "the same sort of picture either way"
+    );
+    // The same picture costs a third less on the wire without base64 (the header is a few hundred bytes either way).
+    assert!(
+        wire_binary * 10 < wire_text * 9 || bytes.len() < 4000,
+        "binary {wire_binary} bytes against text {wire_text}"
+    );
+    binary.leave().await;
+    text.leave().await;
+    drop_pool(&world.pool, &world.name).await;
+}
+
+/// What a stand-in worker sends beside each result: nothing, or this evidence (and a stray one for a dispatch never sent).
+type Behaviour = Arc<std::sync::Mutex<Option<(String, Vec<u8>)>>>;
+
+/// A worker the test controls: it dials the hub, takes the lease, and answers every dispatch with a driver reply that says
+/// `ok`, preceded by the evidence the test chose. It is a stand-in for what a *faulty or hostile* worker could send; the real
+/// one is proved above.
+fn stand_in_worker(
+    socket: std::path::PathBuf,
+    tenant: &'static str,
+    target: String,
+    behaviour: Behaviour,
+) {
+    use quansio_machine::gateway::wire::{self, FromWorker, OutcomeWire, ToWorker};
+    use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+    tokio::spawn(async move {
+        let stream = tokio::net::UnixStream::connect(&socket).await.unwrap();
+        let (reader, mut writer) = stream.into_split();
+        writer
+            .write_all(
+                wire::encode(&FromWorker::Hello {
+                    tenant_id: tenant.to_string(),
+                    target_id: target.clone(),
+                })
+                .unwrap()
+                .as_bytes(),
+            )
+            .await
+            .unwrap();
+        let mut lines = BufReader::new(reader).lines();
+        while let Ok(Some(line)) = lines.next_line().await {
+            let Ok(ToWorker::Dispatch(envelope)) = wire::decode::<ToWorker>(&line) else {
+                continue;
+            };
+            use base64::Engine as _;
+            let evidence = behaviour.lock().unwrap().clone();
+            // Evidence for a dispatch that was never sent, ahead of the real one.
+            let stray = FromWorker::Evidence {
+                dispatch_token: "dsp_01J8Z3K6F1N8VQ2X5W9YSTRAY1".to_string(),
+                media_type: "image/png".to_string(),
+                data_base64: base64::engine::general_purpose::STANDARD
+                    .encode(b"\x89PNG\r\n\x1a\nstray"),
+            };
+            writer
+                .write_all(wire::encode(&stray).unwrap().as_bytes())
+                .await
+                .unwrap();
+            if let Some((media_type, bytes)) = evidence {
+                let frame = FromWorker::Evidence {
+                    dispatch_token: envelope.dispatch_token.clone(),
+                    media_type,
+                    data_base64: base64::engine::general_purpose::STANDARD.encode(bytes),
+                };
+                writer
+                    .write_all(wire::encode(&frame).unwrap().as_bytes())
+                    .await
+                    .unwrap();
+            }
+            let reply = json!({"status": "ok", "output": {"capture_id": "cap_1", "document_revision": "1"}, "replayed": false});
+            let result = FromWorker::Result {
+                dispatch_token: envelope.dispatch_token.clone(),
+                effect_id: envelope.effect_id.clone(),
+                replayed: false,
+                outcome: OutcomeWire::Completed {
+                    output: reply.to_string(),
+                    truncated: false,
+                    evidence_ref: Some("inline:x".to_string()),
+                },
+            };
+            writer
+                .write_all(wire::encode(&result).unwrap().as_bytes())
+                .await
+                .unwrap();
+        }
+    });
+}
+
+#[tokio::test]
+async fn evidence_a_worker_sends_is_kept_only_when_it_is_a_png_of_a_size_the_host_takes() {
+    let Some(world) = world("wl_evidence_rules", false).await else {
+        return blocked_marker();
+    };
+    let objects: Arc<dyn quansio_server::artifacts::ObjectStore> = Arc::new(
+        quansio_server::artifacts::S3ObjectStore::from_env().expect("QUANSIO_TEST_MINIO_*"),
+    );
+    let behaviour: Behaviour = Arc::default();
+    stand_in_worker(
+        world._dir.path().join("w.sock"),
+        TENANT,
+        world.target.clone(),
+        Arc::clone(&behaviour),
+    );
+    eventually("the stand-in worker attached", || async {
+        world.hub.links().len() == 1
+    })
+    .await;
+    let routed = WorkerRoutedHost::new(
+        Arc::new(WorkerToolHost::new(world.hub.clone()).with_object_store(Some(objects))),
+        Arc::new(Stub),
+    );
+    let png = |extra: usize| {
+        let mut bytes = b"\x89PNG\r\n\x1a\n".to_vec();
+        bytes.resize(8 + extra, 7);
+        bytes
+    };
+    let shoot = |routed: &WorkerRoutedHost| {
+        let call = dispatch(RUN_A, "browser.screenshot", json!({"session_id": "x"}));
+        let routed = routed.clone();
+        async move { routed.execute(call).await }
+    };
+    let kept = |outcome: &Result<HostOutcome, HostFailure>| match outcome {
+        Ok(HostOutcome::Success {
+            output,
+            evidence_ids,
+            ..
+        }) => output.get("artifact_id").is_some() && !evidence_ids.is_empty(),
+        other => panic!("the screenshot call itself must still succeed: {other:?}"),
+    };
+
+    *behaviour.lock().unwrap() = Some(("image/png".to_string(), png(64)));
+    assert!(kept(&shoot(&routed).await), "a PNG is kept");
+    for (what, evidence) in [
+        (
+            "bytes that are not a PNG",
+            Some(("image/png".to_string(), b"<svg onload=alert(1)>".to_vec())),
+        ),
+        (
+            "a media type that is not image/png",
+            Some(("image/svg+xml".to_string(), png(64))),
+        ),
+        (
+            "a PNG over the bound",
+            Some((
+                "image/png".to_string(),
+                png(quansio_machine::gateway::wire::MAX_EVIDENCE_BYTES),
+            )),
+        ),
+        (
+            "no evidence, and stray evidence for a dispatch that was never sent",
+            None,
+        ),
+    ] {
+        *behaviour.lock().unwrap() = evidence;
+        assert!(
+            !kept(&shoot(&routed).await),
+            "{what} was kept as a screenshot"
+        );
+    }
     drop_pool(&world.pool, &world.name).await;
 }

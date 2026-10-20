@@ -1,0 +1,58 @@
+{
+  "task_id": "INT-002",
+  "git_commit": "d59c057be0edae80817670ae9baf7292b859acf1",
+  "recorded_at": "2026-10-20T23:36:55Z",
+  "commands": [
+    {
+      "command": "full gate, see the EXEC-009 bundle: fmt, clippy, contracts, architecture (clean clone), cargo test 1368 passed 0 failed, python 857 passed, desktop 698 passed, QA-008 40 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/full-crates.log"
+    },
+    {
+      "command": "mutation checks, see the EXEC-009 bundle: all KILLED",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/EXEC-009/2026-10-20T23-19-50Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "full gate, see the EXEC-009 bundle: fmt, clippy, contracts, architecture (clean clone), cargo test 1368 passed 0 failed, python 857 passed, desktop 698 passed, QA-008 40 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks, see the EXEC-009 bundle: all KILLED",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-002/2026-10-20T23-19-50Z/RECONCILIATION.md",
+      "sha256": "9b01e276fc663ab9f0c43467a4af20ec44e2fe9cf36a747f163486362581c352",
+      "bytes": 193
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/summary.json",
+      "sha256": "3f6d930d3b15883be1bcf554bdc1a6860976b27062d7f83026f41c455bf81f90",
+      "bytes": 8860
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/clippy.log",
+      "sha256": "25919488d425c83c8da134939cf859d34c010cc8e4be543aa15798fccffc4ccb",
+      "bytes": 236
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/python-tests.log",
+      "sha256": "e93dc4509f16d39b3185f8b1b949daacf65750466510e1160e68fea4598030f1",
+      "bytes": 1073
+    },
+    {
+      "path": "evidence/EXEC-009/2026-10-20T23-19-50Z/qa008-e2e.log",
+      "sha256": "8feca4a26aec9dd9e81c52328efaab93084392f9089a143808dc5de8b855f711",
+      "bytes": 6504
+    }
+  ]
+}

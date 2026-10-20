@@ -41,6 +41,9 @@ struct SubscribeRequest {
     subscribe: Vec<SubscribeChannel>,
     cursor: Option<String>,
     consumer: Option<String>,
+    /// Ask for a browser picture as a binary message ([`binary_picture`]) instead of base64 inside JSON.
+    #[serde(default)]
+    binary_frames: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -317,8 +320,35 @@ async fn handle_socket(
         &mut standing,
         &state,
         &relay,
+        request.binary_frames,
     )
     .await;
+}
+
+/// Magic that opens a binary picture message.
+pub const BINARY_PICTURE_MAGIC: &[u8; 4] = b"QFR1";
+
+/// A `browser.frame` as one binary WebSocket message instead of base64 inside JSON (OD-008): the magic `QFR1`, the length of
+/// the header as a big-endian `u32`, the header (the live-frame JSON exactly as the text form carries it, without `data`),
+/// then the picture's bytes. `None` for any frame that is not a browser picture with valid base64, which is sent as text.
+#[must_use]
+pub fn binary_picture(frame: &quansio_events::LiveFrame) -> Option<Vec<u8>> {
+    use base64::Engine as _;
+    if frame.frame.get("kind")?.as_str()? != "browser.frame" {
+        return None;
+    }
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(frame.frame.get("data")?.as_str()?.as_bytes())
+        .ok()?;
+    let mut header = StreamFrame::Live(frame.clone()).to_json_value();
+    header["frame"].as_object_mut()?.remove("data");
+    let header = header.to_string().into_bytes();
+    let mut message = Vec::with_capacity(8 + header.len() + bytes.len());
+    message.extend_from_slice(BINARY_PICTURE_MAGIC);
+    message.extend_from_slice(&u32::try_from(header.len()).ok()?.to_be_bytes());
+    message.extend_from_slice(&header);
+    message.extend_from_slice(&bytes);
+    Some(message)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -335,6 +365,7 @@ async fn tail_events(
     standing: &mut Standing,
     state: &ApiState,
     relay: &super::remote::SocketRelay,
+    binary_frames: bool,
 ) {
     let subscribed: Vec<String> = subscription
         .channels()
@@ -367,14 +398,17 @@ async fn tail_events(
                     } else {
                         gate.admits_live(&frame).await
                     };
-                    if subscribed.iter().any(|channel| channel == &frame.channel)
-                        && admitted
-                        && socket
-                            .send(Message::Text(StreamFrame::Live(frame).to_json_value().to_string()))
-                            .await
-                            .is_err()
-                    {
-                        return;
+                    if subscribed.iter().any(|channel| channel == &frame.channel) && admitted {
+                        let message = binary_frames
+                            .then(|| binary_picture(&frame))
+                            .flatten()
+                            .map_or_else(
+                                || Message::Text(StreamFrame::Live(frame).to_json_value().to_string()),
+                                Message::Binary,
+                            );
+                        if socket.send(message).await.is_err() {
+                            return;
+                        }
                     }
                 }
                 Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
