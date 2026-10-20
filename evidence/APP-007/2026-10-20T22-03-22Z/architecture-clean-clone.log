@@ -1,0 +1,6 @@
+7bb0ff45 [APP-007] the live viewer proven in a real Electron window; the QA-008 stack runs a real worker
+architecture check: CLEAN (0 findings)
+.........................................................                [100%]
+129 passed in 27.21s
+V8.1 VALIDATION: PASS (108 tasks, 11 milestones, 70 PASS, 0 ready)
+arch rc=0

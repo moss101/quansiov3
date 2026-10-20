@@ -1,0 +1,63 @@
+{
+  "task_id": "EXEC-002",
+  "git_commit": "7bb0ff45bc9eade0ea891f364af69e8b04856b70",
+  "recorded_at": "2026-10-20T22:56:36Z",
+  "commands": [
+    {
+      "command": "full gate, see the APP-007 bundle: fmt, clippy, contracts, architecture (clean clone), cargo test 1361 passed 0 failed, python 857 passed, desktop 694 passed, QA-008 40 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/full-crates.log"
+    },
+    {
+      "command": "mutation checks for this task's change, see the APP-007 bundle: all KILLED",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/APP-007/2026-10-20T22-03-22Z/mutation-checks.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "full gate, see the APP-007 bundle: fmt, clippy, contracts, architecture (clean clone), cargo test 1361 passed 0 failed, python 857 passed, desktop 694 passed, QA-008 40 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks for this task's change, see the APP-007 bundle: all KILLED",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/EXEC-002/2026-10-20T22-03-22Z/RECONCILIATION.md",
+      "sha256": "e54bebe5ead9a6d568c2c174f077e6ce9d6bdfdc6e435041ac7b1738bcd8a35a",
+      "bytes": 610
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/summary.json",
+      "sha256": "0cabf86b0cdfa61b506e0dc52354997248a83f7f124aed92e2f989923135d550",
+      "bytes": 9566
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/clippy.log",
+      "sha256": "dc504fe6c24cd17712db502c16c292bae032b35477f3675698ee4ca242671aa0",
+      "bytes": 84
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/architecture-clean-clone.log",
+      "sha256": "f86a990aff8b89ac8750e782a4c3233e1b9e2131b83871cbcace3139e7a4eb79",
+      "bytes": 322
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/desktop-full.log",
+      "sha256": "e7c90164dd2d9a3f657857a3e0bd02d82b7aadd910d5c510e3992b648fe0f56e",
+      "bytes": 8817
+    },
+    {
+      "path": "evidence/APP-007/2026-10-20T22-03-22Z/python-tests.log",
+      "sha256": "55c91670d8d66326d1205ad774df5ff1abdccb4d534b720051274f6c0653a9c1",
+      "bytes": 1073
+    }
+  ]
+}
