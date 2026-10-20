@@ -774,6 +774,60 @@ impl AgentStore {
         }
     }
 
+    /// Terminate the extra threads a definition was given before provisioning was made atomic, keeping `keep` (its first).
+    ///
+    /// Concurrent first messages used to give one teammate several threads. Routing already converges on the first; this
+    /// ends the others (`agent.terminated`) so the teammate has one live thread again. A duplicate with a run that has not
+    /// finished is left alone — its conversation is still being answered on it — and is retired by a later call once the run
+    /// ends. Nothing is moved or deleted: the messages and runs of a retired thread stay its history.
+    ///
+    /// # Errors
+    /// A database error, or a refused transition other than a race with another retirer.
+    pub async fn retire_duplicate_threads(
+        &self,
+        definition_id: &CanonicalId,
+        keep: &CanonicalId,
+    ) -> Result<Vec<CanonicalId>, RuntimeError> {
+        let tenant_id = self.identity.tenant_id.clone();
+        let mut tx = self.events.begin_tenant_transaction(&tenant_id).await?;
+        let rows: Vec<(String, i64)> = sqlx::query_as(
+            "SELECT t.id, t.generation FROM agent_threads t \
+             WHERE t.tenant_id = $1 AND t.definition_id = $2 AND t.id <> $3 AND t.status <> 'TERMINATED' \
+             AND NOT EXISTS (SELECT 1 FROM runs r WHERE r.tenant_id = t.tenant_id AND r.agent_thread_id = t.id \
+                 AND r.status NOT IN ('SUCCEEDED', 'FAILED', 'CANCELLED', 'BLOCKED_UNRECOVERABLE')) \
+             ORDER BY t.created_at, t.id",
+        )
+        .bind(&tenant_id)
+        .bind(definition_id.to_string())
+        .bind(keep.to_string())
+        .fetch_all(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        let mut retired = Vec::new();
+        for (id, generation) in rows {
+            let id = CanonicalId::parse_typed(&id, Prefix::AgentThread)?;
+            match self
+                .transition_with_reason(
+                    &id,
+                    generation_from_i64(generation)?,
+                    AgentThreadStatus::Terminated,
+                    Some(format!("duplicate of {keep}")),
+                )
+                .await
+            {
+                Ok(_) => retired.push(id),
+                // Another message retired it, or moved it, first.
+                Err(
+                    RuntimeError::StateConflict { .. }
+                    | RuntimeError::FencedStaleGeneration { .. }
+                    | RuntimeError::IllegalTransition { .. },
+                ) => {}
+                Err(error) => return Err(error),
+            }
+        }
+        Ok(retired)
+    }
+
     /// The first AgentThread of a definition, if it has one.
     async fn thread_of_definition(
         &self,
