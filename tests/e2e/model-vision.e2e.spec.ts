@@ -133,9 +133,7 @@ models:
     await stack.drop();
     site.close();
     intelligence.kill("SIGTERM");
-    {
-      rmSync(scratch, { recursive: true, force: true });
-    }
+    rmSync(scratch, { recursive: true, force: true });
   }, 60_000);
 
   it("reads the words drawn in the page's pixels, which no text of the page contains", async () => {
@@ -184,6 +182,8 @@ models:
     // It could only have read it from the picture: the page's text has no such words, and the evidence is a screenshot of this run.
     expect(PAGE.replace(CODE, "")).not.toContain("4417");
     const evidence = await stack.get(owner.access_token, `/v1/runs/${posted.run_id}/timeline`);
-    expect(JSON.stringify(evidence)).toContain("browser.screenshot");
+    const steps = (evidence as { turns: { steps: { evidence_ids: string[]; tool_calls?: { tool_name: string }[] }[] }[] }).turns.flatMap((turn) => turn.steps);
+    const shot = steps.find((step) => (step.tool_calls ?? []).some((call) => call.tool_name === "browser.screenshot"));
+    expect(shot?.evidence_ids.length ?? 0).toBeGreaterThan(0);
   }, 480_000);
 });
