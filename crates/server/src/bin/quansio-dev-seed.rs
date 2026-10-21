@@ -306,6 +306,7 @@ async fn run(args: Args) -> Result<(), String> {
     if args.browse {
         rules.push(json!({ "effect_class": "network.egress.new_destination", "resource": { "kind": "domain", "selector": "*" }, "decision": "allow" }));
         rules.push(json!({ "effect_class": "read.external", "resource": { "kind": "domain", "selector": "*" }, "decision": "allow" }));
+        rules.push(json!({ "effect_class": "read.internal", "resource": { "kind": "target", "selector": "browser" }, "decision": "allow" }));
     }
     let rules = json!(rules);
     sqlx::query(
