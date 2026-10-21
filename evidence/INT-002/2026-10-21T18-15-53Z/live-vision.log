@@ -1,0 +1,39 @@
+== CONTROL (unmutated)
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3
+
+ ✓ tests/e2e/model-vision.e2e.spec.ts (1 test) 10625ms
+   ✓ a live model reads a page from its screenshot > reads the words drawn in the page's pixels, which no text of the page contains 9210ms
+ ↓ .claude/worktrees/funny-neumann-b688a7/tests/e2e/model-vision.e2e.spec.ts (1 test | 1 skipped)
+
+ Test Files  1 passed | 1 skipped (2)
+      Tests  1 passed | 1 skipped (2)
+   Start at  21:15:53
+   Duration  13.92s (transform 85ms, setup 0ms, collect 309ms, tests 10.63s, environment 0ms, prepare 60ms)
+
+== MUTANT: screenshot_part never yields a picture (COMPILES)
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3
+
+ ❯ tests/e2e/model-vision.e2e.spec.ts (1 test | 1 failed) 48570ms
+   × a live model reads a page from its screenshot > reads the words drawn in the page's pixels, which no text of the page contains 45160ms
+     → Error: timed out waiting for the model's answer to name the code in the picture
+{"messages":{"messages":[{"attachments":[],"author_id":"usr_01J8Z3K6F1N8VQ2X5W9Y0QA8AA","author_kind":"user","content_blocks":[{"text":"Open http://127.0.0.1:62915/ in the browser, take a screenshot of it, and tell me the code written in white letters on the purple block. Use the screenshot to read it. Reply with the code only.","type":"text"}],"created_at":"2026-10-21T18:17:03.507426Z","id":"msg_
+ ↓ .claude/worktrees/funny-neumann-b688a7/tests/e2e/model-vision.e2e.spec.ts (1 test | 1 skipped)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/e2e/model-vision.e2e.spec.ts > a live model reads a page from its screenshot > reads the words drawn in the page's pixels, which no text of the page contains
+== RESTORED, rebuilt
+
+ RUN  v2.1.9 /Users/mohsin/projects/quansiov3
+
+ ✓ tests/e2e/model-vision.e2e.spec.ts (1 test) 11925ms
+   ✓ a live model reads a page from its screenshot > reads the words drawn in the page's pixels, which no text of the page contains 8883ms
+ ↓ .claude/worktrees/funny-neumann-b688a7/tests/e2e/model-vision.e2e.spec.ts (1 test | 1 skipped)
+
+ Test Files  1 passed | 1 skipped (2)
+      Tests  1 passed | 1 skipped (2)
+   Start at  21:18:00
+   Duration  13.48s (transform 80ms, setup 0ms, collect 288ms, tests 11.93s, environment 0ms, prepare 62ms)
+

@@ -1,0 +1,112 @@
+{
+  "task_id": "INT-002",
+  "git_commit": "0a83523f42dcf54c73ac803a67416af206514c20",
+  "recorded_at": "2026-10-21T18:20:03Z",
+  "commands": [
+    {
+      "command": "live spec, control (OpenRouter minimax/minimax-m3.1-flash:free): the model read ZEBRA-4417 from the screenshot only; 1 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-10-21T18-15-53Z/live-vision.log"
+    },
+    {
+      "command": "mutation: screenshot_part never yields a picture (compiles) -> spec FAILED (killed); restored and rebuilt -> passes",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-10-21T18-15-53Z/live-vision.log"
+    },
+    {
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-10-21T18-15-53Z/fmt.log"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -D warnings",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-10-21T18-15-53Z/clippy.log"
+    },
+    {
+      "command": "eslint tests/e2e",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-10-21T18-15-53Z/eslint.log"
+    },
+    {
+      "command": "cargo test -p quansio-server --test api: 17 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/INT-002/2026-10-21T18-15-53Z/server-api.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "live spec, control (OpenRouter minimax/minimax-m3.1-flash:free): the model read ZEBRA-4417 from the screenshot only; 1 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation: screenshot_part never yields a picture (compiles) -> spec FAILED (killed); restored and rebuilt -> passes",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo clippy -p quansio-server --all-targets -D warnings",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "eslint tests/e2e",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test -p quansio-server --test api: 17 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/INT-002/2026-10-21T18-15-53Z/RECONCILIATION.md",
+      "sha256": "f3b2a8d615104b9b7fce3eff77f0b2c5559108139d31893e36b160249d6f57af",
+      "bytes": 614
+    },
+    {
+      "path": "evidence/INT-002/2026-10-21T18-15-53Z/live-vision.log",
+      "sha256": "8ce2a7e743f9c4cd4035f9c39418773e59464f10b025c58bb06ef542aa727ff5",
+      "bytes": 2292
+    },
+    {
+      "path": "evidence/INT-002/2026-10-21T18-15-53Z/mutant-build.log",
+      "sha256": "c4fc3e2f18c0969197e5ddd0872b7470de623c5632b8d157794c0ac95b507e36",
+      "bytes": 243
+    },
+    {
+      "path": "evidence/INT-002/2026-10-21T18-15-53Z/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/INT-002/2026-10-21T18-15-53Z/clippy.log",
+      "sha256": "be01c88f7a69c88b9123b3837a1d32d6488b3508e34b8fec3bf2e76dd5421222",
+      "bytes": 331
+    },
+    {
+      "path": "evidence/INT-002/2026-10-21T18-15-53Z/eslint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/INT-002/2026-10-21T18-15-53Z/server-api.log",
+      "sha256": "06bdf4daa3554de774fee3402ef7dc6b6c362fa080d219dc6f8512471c104090",
+      "bytes": 1527
+    }
+  ]
+}

@@ -869,7 +869,7 @@
       "status": "PASS",
       "claimed_by": "agent:subagent-int002",
       "started_at": "2026-09-12T03:52:23Z",
-      "updated_at": "2026-10-20T23:37:08Z",
+      "updated_at": "2026-10-21T18:20:03Z",
       "git_commit": "e57acf06012b329c39b48d84fbe43540b388a041",
       "tests": [
         "(cd python && uv run --frozen pytest -q)",
@@ -879,7 +879,8 @@
         "uv run --project python pytest python/tests/intelligence/test_model_gateway_tool_turns.py (26 passed: assistant tool calls, wire-safe names, second-round wire shape per adapter, provider refusal of a result without its call, production schemas = config/tools.yaml)",
         "live suite with the new tool_result scenario against Z.ai (openai-compatible + anthropic wire): 16 passed, 4 BLOCKED_EXTERNAL (first-party OpenAI)",
         "bash scripts/ci/ci.sh on the fix branch (11/11 gates PASS)",
-        "pytest python/tests/intelligence/test_model_gateway_pictures.py"
+        "pytest python/tests/intelligence/test_model_gateway_pictures.py",
+        "npx vitest run tests/e2e/model-vision.e2e.spec.ts --no-file-parallelism (live: a real model reads canvas-drawn words from a real screenshot; mutant killed)"
       ],
       "artifacts": [
         "evidence/INT-002/2026-09-12T03-49-40Z/summary.json",
@@ -897,7 +898,8 @@
         "evidence/INT-002/2026-09-24T02-37-47Z/NOTES.md",
         "python/tests/intelligence/test_model_gateway_tool_turns.py",
         "evidence/INT-002/2026-10-20T22-03-22Z/summary.json",
-        "evidence/INT-002/2026-10-20T23-19-50Z/summary.json"
+        "evidence/INT-002/2026-10-20T23-19-50Z/summary.json",
+        "evidence/INT-002/2026-10-21T18-15-53Z/summary.json"
       ],
       "real_boundary_evidence": [
         {
@@ -923,6 +925,14 @@
           "artifact": "evidence/INT-002/2026-09-24T02-37-47Z/live-run-2.log",
           "sha256": "ff6991dea2e4f59d4e556d9fe784cfad2a547216ce3fefe873fe8b79cdfe127a",
           "recorded_at": "2026-09-24T02:38:47Z"
+        },
+        {
+          "boundary": "openai-compatible-live-vision",
+          "environment": "developer macOS host; OpenRouter https://openrouter.ai/api/v1, model minimax/minimax-m3.1-flash:free; real Chrome worker; credential from QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY (never recorded)",
+          "command": "QUANSIO_TEST_OPENAI_COMPATIBLE_BASE_URL=https://openrouter.ai/api/v1 QUANSIO_TEST_OPENAI_COMPATIBLE_MODEL_ID=minimax/minimax-m3.1-flash:free QUANSIO_TEST_OPENAI_COMPATIBLE_API_KEY=<secret custody> npx vitest run tests/e2e/model-vision.e2e.spec.ts --no-file-parallelism",
+          "artifact": "evidence/INT-002/2026-10-21T18-15-53Z/live-vision.log",
+          "sha256": "8ce2a7e743f9c4cd4035f9c39418773e59464f10b025c58bb06ef542aa727ff5",
+          "recorded_at": "2026-10-21T18:20:03Z"
         }
       ],
       "implementation_complete": true,
