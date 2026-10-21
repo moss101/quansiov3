@@ -122,6 +122,8 @@ export async function waitFor<T>(probe: () => T | undefined | null | false | Pro
 export interface StackOptions {
   /** Also let agents open pages (`quansio-dev-seed --browse`) and give the worker a real Chrome. */
   readonly browse?: boolean;
+  /** The intelligence process the server answers turns through (`QUANSIO_INTELLIGENCE_ENDPOINT`); absent, the stub model answers. */
+  readonly intelligenceEndpoint?: string;
 }
 
 /** A scratch database and the server over it, with a real worker attached (agents' files and browsers run on it). */
@@ -140,7 +142,10 @@ export class Stack {
   readonly workerSocket = join(this.workerDir, "w.sock");
   #worker: ChildProcess | null = null;
 
-  private constructor(database: string, databaseUrl: string, port: number) {
+  readonly #intelligence: string | undefined;
+
+  private constructor(database: string, databaseUrl: string, port: number, intelligence?: string) {
+    this.#intelligence = intelligence;
     this.database = database;
     this.databaseUrl = databaseUrl;
     this.port = port;
@@ -163,7 +168,7 @@ export class Stack {
     if (!line) {
       throw new Error(`quansio-dev-seed printed no database_url: ${output}`);
     }
-    const stack = new Stack(database, line.slice("database_url=".length), await freePort());
+    const stack = new Stack(database, line.slice("database_url=".length), await freePort(), options.intelligenceEndpoint);
     await stack.up();
     await stack.attachWorker(options.browse === true);
     return stack;
@@ -205,6 +210,9 @@ export class Stack {
     };
     delete env["QUANSIO_TRUST_SCOPE_HEADERS"];
     delete env["QUANSIO_INTELLIGENCE_ENDPOINT"];
+    if (this.#intelligence) {
+      env["QUANSIO_INTELLIGENCE_ENDPOINT"] = this.#intelligence;
+    }
     const child = spawn(SERVER_BIN, [], { env, stdio: ["ignore", "ignore", "pipe"] });
     child.stderr.on("data", (chunk: Buffer) => this.log.push(chunk.toString()));
     this.#child = child;
