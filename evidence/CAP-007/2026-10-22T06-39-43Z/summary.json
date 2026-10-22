@@ -1,0 +1,48 @@
+{
+  "task_id": "CAP-007",
+  "git_commit": "15c48d7554bcb80f8f728105a69249de40c50032",
+  "recorded_at": "2026-10-22T06:39:43Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-tools --test builtin_packs: 2 passed",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-007/2026-10-22T06-39-43Z/packs.log"
+    },
+    {
+      "command": "uv run --frozen pytest -q tests/intelligence/test_builtin_packs.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-007/2026-10-22T06-39-43Z/bpy.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-tools --test builtin_packs: 2 passed",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --frozen pytest -q tests/intelligence/test_builtin_packs.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-007/2026-10-22T06-39-43Z/RECONCILIATION.md",
+      "sha256": "8f275e548655c49e7e22339b716547b1cbd9faa7c93871c0b7f5890450a72119",
+      "bytes": 227
+    },
+    {
+      "path": "evidence/CAP-007/2026-10-22T06-39-43Z/packs.log",
+      "sha256": "4d85755c772624dbee85b5592b155c8fffd633928b3019b42d775ef6c48cc1cd",
+      "bytes": 1988
+    },
+    {
+      "path": "evidence/CAP-007/2026-10-22T06-39-43Z/bpy.log",
+      "sha256": "9f5fca75b3047a6b50338570acc3b84d6f91fc01f7616bf565c9c7f9222d4381",
+      "bytes": 98
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.11s
+     Running tests/audit_lifecycle.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/audit_lifecycle-5287bd12f980a32d)
+
+running 3 tests
+test derived_deletion_clears_index_memory_and_cache ... ok
+test export_and_delete_e2e_respects_legal_hold ... ok
+test audit_entries_cannot_be_edited_in_place ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

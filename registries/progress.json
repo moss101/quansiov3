@@ -2459,38 +2459,42 @@
     },
     "CAP-006": {
       "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T07:15:00Z",
-      "updated_at": "2026-09-16T18:43:39Z",
-      "git_commit": "e031b8a82777474dcf02431719ec8f9d77ed8275",
+      "updated_at": "2026-10-22T06:39:43Z",
+      "git_commit": "15c48d7554bcb80f8f728105a69249de40c50032",
       "tests": [
-        "uv run --project python pytest tests/intelligence/test_wiki_skill.py -q (3 passed: pinned eval campaign holds navigation/provenance/link/budget thresholds via INT-010 gate; budget regression records dropped segments; disabling WikiSkill leaves SearchProgram and ContextProjection functional)"
+        "uv run --project python pytest tests/intelligence/test_wiki_skill.py -q (3 passed: pinned eval campaign holds navigation/provenance/link/budget thresholds via INT-010 gate; budget regression records dropped segments; disabling WikiSkill leaves SearchProgram and ContextProjection functional)",
+        "uv run --frozen pytest -q tests/intelligence/test_wiki_skill.py: 3 passed (eval thresholds, budget regression, disable/fallback)"
       ],
       "artifacts": [
         "evidence/CAP-006/2026-09-15T07-25-00Z/summary.json",
         "packs/skills/wiki/navigate.py",
         "packs/skills/wiki/skill.yaml",
-        "evidence/OPS-007/2026-09-16T18-43-39Z/summary.json"
+        "evidence/OPS-007/2026-09-16T18-43-39Z/summary.json",
+        "evidence/CAP-006/2026-10-22T06-39-43Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
-      "blocker": "Implementation is complete. PASS is forbidden while INT-010 is BLOCKED_EXTERNAL. Unblock: flip INT-010 to PASS.",
+      "blocker": null,
       "notes": "WikiSkill pack navigates pinned knowledge via typed SearchProgram, active-only Knowledge Fabric hits, provenance-preserving selection and budgeted ContextProjection. Not a new search subsystem. Disable/fallback leaves core search and context packing working. CORRECTION 2026-09-16: the original implementation_complete=true claim was verified only against targeted test files (test_wiki_skill.py), not the full test suite. packs/skills/wiki/{skill.yaml,meta.yaml} did not actually satisfy OPS-007's own quarantine-lifecycle gate (a real, then-undetected defect -- see evidence/OPS-007/2026-09-16T18-43-39Z/). Fixed forward by adding the lifecycle record to packs/skills/wiki/meta.yaml (skill.yaml's closed vocabulary is untouched); packs/skills/wiki now passes scripts/ci/supply_chain/check.py and the full `pytest tests -q`. implementation_complete remains true and the blocker is unchanged (INT-010, via INT-002's live provider credentials) -- this correction removes a second, independent reason it could not have reached PASS even after INT-010 clears."
     },
     "CAP-007": {
       "coverage": "PARTIAL",
-      "status": "BLOCKED_EXTERNAL",
+      "status": "PASS",
       "claimed_by": "agent:claude-opus-5.5",
       "started_at": "2026-09-24T01:41:55Z",
-      "updated_at": "2026-09-24T01:56:49Z",
-      "git_commit": "d5dfc757624d4c01c889816afb1fde7760ed11af",
+      "updated_at": "2026-10-22T06:39:43Z",
+      "git_commit": "15c48d7554bcb80f8f728105a69249de40c50032",
       "tests": [
         "cargo test -p quansio-tools --test builtin_packs (every pack tool callable in ToolRegistry::builtin; capability needs exactly the tools' grant templates)",
         "uv run --project python pytest python/tests/intelligence/test_builtin_packs.py (schema/eval checks incl. missing-capability narrowing, capability scan with negatives, provenance digests, pack/skill consistency)",
         "uv run --project python python scripts/dev/pack_records.py; scripts/ci/supply_chain/check.py",
         "mutation checks: old coding manifest, non-effect-class need, surplus need, stale digest, daemon flag each fail the named tests (evidence)",
-        "bash scripts/ci/ci.sh (11/11 gates PASS)"
+        "bash scripts/ci/ci.sh (11/11 gates PASS)",
+        "cargo test -p quansio-tools --test builtin_packs: 2 passed",
+        "uv run --frozen pytest -q tests/intelligence/test_builtin_packs.py"
       ],
       "artifacts": [
         "evidence/CAP-007/2026-09-24T01-47-32Z/summary.json",
@@ -2500,24 +2504,27 @@
         "packs/capabilities/",
         "scripts/dev/pack_records.py",
         "crates/tools/tests/builtin_packs.rs",
-        "python/tests/intelligence/test_builtin_packs.py"
+        "python/tests/intelligence/test_builtin_packs.py",
+        "evidence/CAP-007/2026-10-22T06-39-43Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
-      "blocker": "Implementation is complete. PASS is forbidden while dependency CAP-006 is BLOCKED_EXTERNAL (itself on INT-010). Unblock: flip CAP-006 to PASS.",
+      "blocker": null,
       "notes": "Built-in skill and capability packs (research, coding, artifacts, data-analysis, cloud-devops, business-ops, wiki) re-checked against the runtime: the coding pack no longer needs scm tools the Tool Registry cannot dispatch (it works through fs.read/fs.patch/sandboxed terminal); capability_needs are the effect classes of each tool's registry grant templates (were artifact.write, work.plan, scm.write, network.egress); packs list exactly their skill's tools; evals add a missing-capability case; provenance digests are verifiable (skill: sha256 of skill.yaml; pack: canonical content without the record) via scripts/dev/pack_records.py. Tool availability is tested through the Rust ToolRegistry loader. BLOCKED_EXTERNAL only because CAP-006 is."
     },
     "CAP-008": {
       "coverage": "PARTIAL",
-      "status": "BLOCKED_EXTERNAL",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-24T07:42:17Z",
-      "updated_at": "2026-09-24T08:11:02Z",
-      "git_commit": "3c972d8a167e255101e3cea250ec2ea235a187a3",
+      "updated_at": "2026-10-22T06:39:43Z",
+      "git_commit": "15c48d7554bcb80f8f728105a69249de40c50032",
       "tests": [
         "cargo test -p quansio-server --test skill_evolution (3 passed against the real Python plane: verified runs -> CANDIDATE with evidence+eval provenance; governed promotion; evaluation gate; idempotence; RBAC; fail-closed; no run-callable skill tool)",
         "uv run --project python pytest python/tests/intelligence/test_skill_evolution_proposals.py python/tests/intelligence/test_skill_evolution.py (12 passed)",
-        "bash scripts/ci/ci.sh on the task branch (11/11 gates PASS)"
+        "bash scripts/ci/ci.sh on the task branch (11/11 gates PASS)",
+        "cargo test -p quansio-server --test skill_evolution: 3 passed against the real Python plane",
+        "uv run --frozen pytest -q test_skill_evolution.py test_skill_evolution_proposals.py"
       ],
       "artifacts": [
         "evidence/CAP-008/2026-09-24T08-10-34Z/summary.json",
@@ -2527,11 +2534,12 @@
         "python/intelligence/skills/evolution/evaluate.py",
         "crates/server/src/control/skills/evolution.rs",
         "config/evolution.yaml",
-        "crates/server/tests/skill_evolution.rs"
+        "crates/server/tests/skill_evolution.rs",
+        "evidence/CAP-008/2026-10-22T06-39-43Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
-      "blocker": "Implementation is complete. PASS is forbidden while dependency CAP-007 is BLOCKED_EXTERNAL (itself on CAP-006, on INT-010's real boundary). Unblock: CAP-007 to PASS.",
+      "blocker": null,
       "notes": "Skill evolution detects repeated verified evidence, proposes candidate patches with evidence+eval provenance, and refuses silent ACTIVE mutation. Promotion requires the INT-010 gate. 2026-09-19 correction: was BLOCKED_EXTERNAL at 7c59327fe6cde1e490ee53ca439a2315339e4394 claimed by agent:principal-1 (started 2026-09-15T07:50:00Z); reset to NOT_STARTED \u2014 its own code is unchanged, but it was started on the strength of ['CAP-007'] being implementation-complete, which the audit found false; readiness must be re-established through those dependencies before it is claimed again. See docs/review/2026-09-18-m5-placeholder-audit.md. 2026-09-24 (evidence/CAP-008/2026-09-24T08-10-34Z/): re-reconciled -- the library existed but nothing fed or consumed it. Now: SkillEvolution reads verified run outcomes from canonical state (terminal runs, latest evidence, the skill versions their recorded projections named), the plane (ProposeSkillCandidates RPC) detects patterns, proposes one CANDIDATE patch per pattern and evaluates it deterministically against the skill's suite through INT-010's gate (protected regressions and widened needs block promotion; config/evolution.yaml); the registry stores CANDIDATE versions with provenance naming evidence and evaluation, never ACTIVE, idempotent by semver; SkillStore::promote refuses APPROVED/ACTIVE for an evolution candidate without a passing evaluation (POLICY_DENIED); PromoteSkillVersion and ProposeSkillCandidates require ManageTenant (promotion was open to any member). 8 compiling mutants each fail the suites. Merged to main as 3c972d8."
     },
     "OPS-001": {
@@ -2575,22 +2583,24 @@
     },
     "OPS-002": {
       "coverage": "GENUINE_GAP",
-      "status": "BLOCKED_EXTERNAL",
+      "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-15T08:20:00Z",
-      "updated_at": "2026-09-15T08:26:00Z",
-      "git_commit": "d6451fb55e23f1d12086acd13312554a81c27509",
+      "updated_at": "2026-10-22T06:39:43Z",
+      "git_commit": "15c48d7554bcb80f8f728105a69249de40c50032",
       "tests": [
-        "cargo test -p quansio-server --test audit_lifecycle (3 passed: audit immutability+hash chain; export/delete with legal hold; derived deletion of tantivy/pgvector/memory/cache)"
+        "cargo test -p quansio-server --test audit_lifecycle (3 passed: audit immutability+hash chain; export/delete with legal hold; derived deletion of tantivy/pgvector/memory/cache)",
+        "cargo test -p quansio-server --test audit_lifecycle: 3 passed (audit immutability, export/delete with legal hold, derived deletion)"
       ],
       "artifacts": [
         "evidence/OPS-002/2026-09-15T08-25-00Z/summary.json",
         "crates/server/src/audit/mod.rs",
-        "crates/server/src/control/data_lifecycle/mod.rs"
+        "crates/server/src/control/data_lifecycle/mod.rs",
+        "evidence/OPS-002/2026-10-22T06-39-43Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
-      "blocker": "Implementation is complete. PASS is forbidden while INT-006, INT-007 and INT-011 are BLOCKED_EXTERNAL. Unblock: flip those to PASS.",
+      "blocker": null,
       "notes": "AuditEntry is append-only and hash-chained per tenant. Deletion walks authoritative then derived planes unless a legal hold applies. 2026-09-26 (QA-007 662f245): audit_entries is append-only in the database: migration 0022 revokes UPDATE/DELETE/TRUNCATE from quansio_app and triggers refuse them for every role (finding F-3); web_admin_surface's tamper test now shows the refusal and, with the guard lifted by DDL, the chain still naming the edit."
     },
     "OPS-003": {

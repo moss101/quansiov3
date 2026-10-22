@@ -1,0 +1,48 @@
+{
+  "task_id": "CAP-008",
+  "git_commit": "15c48d7554bcb80f8f728105a69249de40c50032",
+  "recorded_at": "2026-10-22T06:39:43Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test skill_evolution: 3 passed against the real Python plane",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-008/2026-10-22T06-39-43Z/evo.log"
+    },
+    {
+      "command": "uv run --frozen pytest -q test_skill_evolution.py test_skill_evolution_proposals.py",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-008/2026-10-22T06-39-43Z/evpy.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test skill_evolution: 3 passed against the real Python plane",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "uv run --frozen pytest -q test_skill_evolution.py test_skill_evolution_proposals.py",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-008/2026-10-22T06-39-43Z/RECONCILIATION.md",
+      "sha256": "e9d58e4790a459703071d13181f32e35c04ad2663224ef90b718abd6c2ae9afc",
+      "bytes": 227
+    },
+    {
+      "path": "evidence/CAP-008/2026-10-22T06-39-43Z/evo.log",
+      "sha256": "00e3a9821ae7b886cd588638d23a99570d55141c0cfdedee869588c87a6db3d7",
+      "bytes": 1772
+    },
+    {
+      "path": "evidence/CAP-008/2026-10-22T06-39-43Z/evpy.log",
+      "sha256": "678e3e164efa6f94eb45cbf63902c48e8106118bdeb0c0c4b73e2f6ef78308e9",
+      "bytes": 99
+    }
+  ]
+}

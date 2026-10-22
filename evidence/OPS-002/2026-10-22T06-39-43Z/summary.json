@@ -1,0 +1,32 @@
+{
+  "task_id": "OPS-002",
+  "git_commit": "15c48d7554bcb80f8f728105a69249de40c50032",
+  "recorded_at": "2026-10-22T06:39:43Z",
+  "commands": [
+    {
+      "command": "cargo test -p quansio-server --test audit_lifecycle: 3 passed (audit immutability, export/delete with legal hold, derived deletion)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/OPS-002/2026-10-22T06-39-43Z/audit.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "cargo test -p quansio-server --test audit_lifecycle: 3 passed (audit immutability, export/delete with legal hold, derived deletion)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/OPS-002/2026-10-22T06-39-43Z/RECONCILIATION.md",
+      "sha256": "c3a1ddb3ea1179c52f4e1976169caeb1f283252f54eb2056ca1e2c890f8857de",
+      "bytes": 227
+    },
+    {
+      "path": "evidence/OPS-002/2026-10-22T06-39-43Z/audit.log",
+      "sha256": "57eee5e3df7d154360c841aa69ba2372ae0ec733a7c41266ee96519c197af226",
+      "bytes": 598
+    }
+  ]
+}

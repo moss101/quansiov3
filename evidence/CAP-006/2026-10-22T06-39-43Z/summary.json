@@ -1,0 +1,32 @@
+{
+  "task_id": "CAP-006",
+  "git_commit": "15c48d7554bcb80f8f728105a69249de40c50032",
+  "recorded_at": "2026-10-22T06:39:43Z",
+  "commands": [
+    {
+      "command": "uv run --frozen pytest -q tests/intelligence/test_wiki_skill.py: 3 passed (eval thresholds, budget regression, disable/fallback)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/CAP-006/2026-10-22T06-39-43Z/wiki.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "uv run --frozen pytest -q tests/intelligence/test_wiki_skill.py: 3 passed (eval thresholds, budget regression, disable/fallback)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/CAP-006/2026-10-22T06-39-43Z/RECONCILIATION.md",
+      "sha256": "20931e68c19748c15e001159e4bfba1d96a2f6f7f46d2acf64860de32736d76e",
+      "bytes": 227
+    },
+    {
+      "path": "evidence/CAP-006/2026-10-22T06-39-43Z/wiki.log",
+      "sha256": "1d3314562a9345a9f75b1adf32d61168822c00d316f7db85833230bba023e448",
+      "bytes": 98
+    }
+  ]
+}

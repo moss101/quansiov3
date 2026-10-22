@@ -1,0 +1,20 @@
+   Compiling quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/core)
+   Compiling quansio-server v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/server)
+   Compiling quansio-contracts v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/contracts)
+   Compiling quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/events)
+   Compiling quansio-machine v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/machine)
+   Compiling quansio-indexer v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/indexer)
+   Compiling quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/capability)
+   Compiling quansio-graph v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/graph)
+   Compiling quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/tools)
+   Compiling quansio-qworkerd v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/qworkerd)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 04s
+     Running tests/skill_evolution.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/skill_evolution-e53163fb6184d336)
+
+running 3 tests
+test no_tool_a_run_can_call_writes_a_skill ... ok
+test an_evolution_candidate_without_a_passing_evaluation_cannot_be_approved ... ok
+test verified_experience_becomes_an_evaluated_candidate_and_never_production ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.36s
+
