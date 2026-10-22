@@ -1,0 +1,45 @@
+   Compiling futures-util v0.3.34
+   Compiling crypto-common v0.1.7
+   Compiling tokio v1.53.1
+   Compiling either v1.18.0
+   Compiling quansio-events v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/events)
+   Compiling sync_wrapper v1.0.2
+   Compiling url v2.5.8
+   Compiling digest v0.10.7
+   Compiling axum-core v0.4.5
+   Compiling tower v0.5.3
+   Compiling sha2 v0.10.9
+   Compiling hmac v0.12.1
+   Compiling md-5 v0.10.6
+   Compiling hkdf v0.12.4
+   Compiling quansio-core v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/core)
+   Compiling itertools v0.14.0
+   Compiling prost-derive v0.13.5
+   Compiling tokio-stream v0.1.19
+   Compiling tokio-util v0.7.19
+   Compiling h2 v0.4.19
+   Compiling tower v0.4.13
+   Compiling prost v0.13.5
+   Compiling axum v0.7.9
+   Compiling prost-types v0.13.5
+   Compiling hyper v1.11.1
+   Compiling hyper-util v0.1.20
+   Compiling hyper-timeout v0.5.2
+   Compiling tonic v0.12.3
+   Compiling sqlx-core v0.8.6
+   Compiling sqlx-postgres v0.8.6
+   Compiling quansio-contracts v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/contracts)
+   Compiling sqlx-macros-core v0.8.6
+   Compiling sqlx-macros v0.8.6
+   Compiling sqlx v0.8.6
+   Compiling quansio-capability v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/capability)
+   Compiling quansio-tools v0.1.0 (/Users/mohsin/projects/quansiov3/.claude/worktrees/funny-neumann-b688a7/crates/tools)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 58.97s
+     Running tests/builtin_packs.rs (/Users/mohsin/projects/quansiov3/target/debug/deps/builtin_packs-43ae67d7067d9b8c)
+
+running 2 tests
+test a_skills_capability_needs_are_exactly_what_its_tools_require ... ok
+test every_tool_a_builtin_pack_names_is_callable_in_the_registry ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
