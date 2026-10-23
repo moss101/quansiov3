@@ -2764,14 +2764,15 @@
       "status": "PASS",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-27T05:20:00Z",
-      "updated_at": "2026-10-23T09:34:02Z",
+      "updated_at": "2026-10-23T10:20:25Z",
       "git_commit": "a62614d0be9bf0c6c7066dfe18fd1e48b8648319",
       "tests": [
         "clean checkout (git clone at edf72d2, fresh target, no .env) bash scripts/ci/ci.sh: 12 gates PASS incl. contract-drift (zero drift) and the new test-audit (no unexplained skip; blocked tests inventoried by variable)",
         "uv run --project python pytest tests/ci/test_qa001_tools.py tests/contract (test audit on runner-shaped fixtures with every failure path, coverage check fail-closed paths, bisecting export, continuous-mode flags, gate time limit, stdlib tracer; static bans on #[ignore] anywhere in crates/ and TS .only/.todo/.fails/unnamed .skip)",
         "scripts/ci/coverage.py rust (line-only, 138 test binaries) + rust --branch + python + check: DOSSIER 21.4 PASS - capability 96.19%, policy 92.15%, effects 90.13%, runtime 96.05%, recovery 94.60%, secrets 92.75%, egress 94.95%, qworkerd protocol 90.00% (floor 90), other Rust 86.34% (75), Python 87.50% (80); TypeScript BLOCKED_EXTERNAL",
         "125 new tests closing measured gaps (capability 34, recovery 2, effects 7, runtime 82 in 11 new server suites) plus the regression tests of the four fixes they exposed, each killed on its pre-fix source (mutations.log)",
-        "python scripts/ci/coverage.py typescript (88.91% lines vs 70% floor; jsdom view tests in apps/desktop/tests/dom and apps/web/tests/dom)"
+        "python scripts/ci/coverage.py typescript (88.91% lines vs 70% floor; jsdom view tests in apps/desktop/tests/dom and apps/web/tests/dom)",
+        "fix/QA-001-participant-add-notice: wrong-prefix participant Add shows a notice (apps/desktop/tests/dom/collaboration.dom.test.tsx); onboarded field reviewed, not a bug"
       ],
       "artifacts": [
         "evidence/QA-001/2026-09-27T14-35-00Z/summary.json",
@@ -2786,7 +2787,8 @@
         "tests/contract/test_qa001_gate.py",
         ".github/workflows/ci.yml",
         "evidence/QA-001/2026-10-23T06-26-04Z/summary.json",
-        "evidence/QA-001/2026-10-23T09-33-59Z/summary.json"
+        "evidence/QA-001/2026-10-23T09-33-59Z/summary.json",
+        "evidence/QA-001/2026-10-23T10-20-16Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
