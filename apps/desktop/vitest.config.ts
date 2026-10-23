@@ -14,7 +14,7 @@ const ciLogs = process.env["QUANSIO_CI_LOG_DIR"];
 export default defineConfig({
   resolve,
   test: {
-    include: ["tests/**/*.test.ts"],
+    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     ...(ciLogs
       ? { reporters: ["default", "json"], outputFile: { json: `${ciLogs}/vitest-desktop.json` } }
       : {}),
