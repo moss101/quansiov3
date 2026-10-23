@@ -10,7 +10,7 @@ import { vi } from "vitest";
 
 import { createPreloadApi, type BridgeSend, type PreloadChannel, type PushChannel } from "../../src/preload/bridge.js";
 
-type Answer = unknown | ((payload: unknown) => unknown);
+type Answer = unknown;
 
 export interface Rig {
   readonly container: HTMLElement;
@@ -27,21 +27,19 @@ export interface Rig {
 
 export async function flush(rounds = 6): Promise<void> {
   for (let i = 0; i < rounds; i += 1) {
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
   }
 }
 
 /** Render `element` with a bridge that answers each channel from `answers` (missing channels answer `[]`). */
 export async function mount(element: ReactElement, answers: Partial<Record<PreloadChannel, Answer>> = {}): Promise<Rig> {
-  const table = new Map<string, Answer>(Object.entries(answers) as [string, Answer][]);
+  const table = new Map<string, Answer>(Object.entries(answers));
   const calls: Rig["calls"] = [];
   const listeners = new Map<string, Set<(payload: unknown) => void>>();
-  const send: BridgeSend = async (channel, payload) => {
+  const send: BridgeSend = (channel, payload) => {
     calls.push({ channel, payload });
-    const answer = table.get(channel);
-    return typeof answer === "function" ? (answer as (p: unknown) => unknown)(payload) : (answer ?? []);
+    const answer = table.has(channel) ? table.get(channel) : [];
+    return Promise.resolve(typeof answer === "function" ? (answer as (p: unknown) => unknown)(payload) : answer);
   };
   const subscribe = (channel: PushChannel, listener: (payload: unknown) => void): (() => void) => {
     const set = listeners.get(channel) ?? new Set();
@@ -53,7 +51,7 @@ export async function mount(element: ReactElement, answers: Partial<Record<Prelo
   const container = document.createElement("div");
   document.body.appendChild(container);
   let root: Root;
-  await act(async () => {
+  await act(() => {
     root = createRoot(container);
     root.render(element);
   });
@@ -63,7 +61,7 @@ export async function mount(element: ReactElement, answers: Partial<Record<Prelo
     calls,
     answer: (channel, answer) => void table.set(channel, answer),
     push: async (channel, payload) => {
-      await act(async () => {
+      await act(() => {
         for (const listener of listeners.get(channel) ?? []) {
           listener(payload);
         }
@@ -72,7 +70,7 @@ export async function mount(element: ReactElement, answers: Partial<Record<Prelo
     },
     flush,
     unmount: async () => {
-      await act(async () => root.unmount());
+      await act(async () => { root.unmount(); });
       container.remove();
     },
   };
@@ -82,12 +80,12 @@ export async function mount(element: ReactElement, answers: Partial<Record<Prelo
 export async function click(rig: Rig, label: string | RegExp): Promise<void> {
   const match = (text: string): boolean => (typeof label === "string" ? text.includes(label) : label.test(text));
   const target = [...rig.container.querySelectorAll<HTMLElement>("button, a, [role=button], [role=tab], [role=menuitem], summary, label")].find(
-    (element) => match(element.textContent ?? "") || match(element.getAttribute("aria-label") ?? "") || match(element.getAttribute("title") ?? ""),
+    (element) => match(element.textContent) || match(element.getAttribute("aria-label") ?? "") || match(element.getAttribute("title") ?? ""),
   );
   if (!target) {
     throw new Error(`no control named ${String(label)}; the page has: ${(rig.container.textContent ?? "").slice(0, 400)}`);
   }
-  await act(async () => {
+  await act(() => {
     target.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
   });
   await rig.flush();
@@ -102,7 +100,7 @@ export async function type(rig: Rig, field: string, value: string): Promise<void
     throw new Error(`no field ${field}`);
   }
   const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : element instanceof HTMLSelectElement ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
-  await act(async () => {
+  await act(() => {
     Object.getOwnPropertyDescriptor(prototype, "value")?.set?.call(element, value);
     element.dispatchEvent(new Event(element instanceof HTMLSelectElement ? "change" : "input", { bubbles: true }));
   });
@@ -110,7 +108,7 @@ export async function type(rig: Rig, field: string, value: string): Promise<void
 }
 
 export function text(rig: Rig): string {
-  return rig.container.textContent ?? "";
+  return rig.container.textContent;
 }
 
 export { vi };
