@@ -68,7 +68,8 @@ export function reduceOnboarding(state: OnboardingState, event: OnboardingEvent)
       if (session.kind === "link-sent") {
         return { ...state, step: "check-inbox", email: session.email, error: null };
       }
-      // Signed in: a returning user skips straight to ready; a new one chooses a target.
+      // Signed in. The server's `onboarded` means "this sign-in created the user", so false is a returning
+      // user (straight to ready) and true a new one (chooses a target).
       if (!session.onboarded && state.step !== "choose-execution-target" && state.step !== "confirm-defaults") {
         return { ...state, step: "ready", workspaceId: session.workspaceId, error: null };
       }
