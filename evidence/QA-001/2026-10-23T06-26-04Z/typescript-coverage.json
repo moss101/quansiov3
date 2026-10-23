@@ -1,0 +1,20 @@
+{
+  "packages": {
+    "apps/desktop": {
+      "lines": 21993,
+      "lines_covered": 14240
+    },
+    "apps/web": {
+      "lines": 1678,
+      "lines_covered": 793
+    },
+    "sdk/typescript": {
+      "lines": 435,
+      "lines_covered": 421
+    }
+  },
+  "lines": 24106,
+  "covered": 15454,
+  "percent": 64.11,
+  "vitest_exit": 0
+}
