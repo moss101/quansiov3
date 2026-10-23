@@ -1,0 +1,64 @@
+{
+  "task_id": "QA-001",
+  "git_commit": "a62614d0be9bf0c6c7066dfe18fd1e48b8648319",
+  "recorded_at": "2026-10-23T09:34:02Z",
+  "commands": [
+    {
+      "command": "python scripts/ci/coverage.py typescript: desktop 883 passed, web 37 passed, sdk 8 passed; 88.91% lines (21433/24106) against the 70% floor",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-10-23T09-33-59Z/typescript-coverage.json"
+    },
+    {
+      "command": "mutation checks on the DOM tests: both mutants killed, restored tests pass",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-10-23T09-33-59Z/mutation-checks.log"
+    },
+    {
+      "command": "eslint apps/desktop/tests/dom apps/web/tests/dom: clean",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-10-23T09-33-59Z/eslint.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "python scripts/ci/coverage.py typescript: desktop 883 passed, web 37 passed, sdk 8 passed; 88.91% lines (21433/24106) against the 70% floor",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "mutation checks on the DOM tests: both mutants killed, restored tests pass",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "eslint apps/desktop/tests/dom apps/web/tests/dom: clean",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-001/2026-10-23T09-33-59Z/RECONCILIATION.md",
+      "sha256": "7cc7e84e00a8acbf545cbeec55a1c514897d118400da932fa342b34d7a33d92e",
+      "bytes": 670
+    },
+    {
+      "path": "evidence/QA-001/2026-10-23T09-33-59Z/typescript-coverage.json",
+      "sha256": "dd750a0275e3081153968fd678ab859e0b699bec4a002570c8fa4d01f9e6ec0d",
+      "bytes": 333
+    },
+    {
+      "path": "evidence/QA-001/2026-10-23T09-33-59Z/mutation-checks.log",
+      "sha256": "fca1447b0581956ac3e696990c53a671b7709ac35fa2d44175e47216b751eab9",
+      "bytes": 367
+    },
+    {
+      "path": "evidence/QA-001/2026-10-23T09-33-59Z/eslint.log",
+      "sha256": "19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061",
+      "bytes": 7
+    }
+  ]
+}

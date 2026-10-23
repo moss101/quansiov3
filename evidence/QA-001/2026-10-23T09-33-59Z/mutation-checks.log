@@ -1,0 +1,10 @@
+M1 approvals: a viewer may decide
+COMPILES rc=0
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)
+restored:       Tests  10 passed (10)
+M2 knowledge: forget sends no command
+COMPILES rc=0
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+restored:       Tests  4 passed (4)
