@@ -2765,7 +2765,7 @@
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-27T05:20:00Z",
       "updated_at": "2026-10-23T10:20:25Z",
-      "git_commit": "a62614d0be9bf0c6c7066dfe18fd1e48b8648319",
+      "git_commit": "6b1eb6b6f0dc6f25e75d9ff43eb2652ea6e17d13",
       "tests": [
         "clean checkout (git clone at edf72d2, fresh target, no .env) bash scripts/ci/ci.sh: 12 gates PASS incl. contract-drift (zero drift) and the new test-audit (no unexplained skip; blocked tests inventoried by variable)",
         "uv run --project python pytest tests/ci/test_qa001_tools.py tests/contract (test audit on runner-shaped fixtures with every failure path, coverage check fail-closed paths, bisecting export, continuous-mode flags, gate time limit, stdlib tracer; static bans on #[ignore] anywhere in crates/ and TS .only/.todo/.fails/unnamed .skip)",
