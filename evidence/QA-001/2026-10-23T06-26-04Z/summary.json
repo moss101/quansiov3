@@ -1,0 +1,32 @@
+{
+  "task_id": "QA-001",
+  "git_commit": "fda7ca961d51d8583c79b3b46f6ca7ea023bbb36",
+  "recorded_at": "2026-10-23T06:26:04Z",
+  "commands": [
+    {
+      "command": "python scripts/ci/coverage.py typescript: vitest passes in all three packages; 64.11% lines (15454/24106) against the 70% floor -> BELOW FLOOR",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-10-23T06-26-04Z/typescript-coverage.json"
+    }
+  ],
+  "results": [
+    {
+      "command": "python scripts/ci/coverage.py typescript: vitest passes in all three packages; 64.11% lines (15454/24106) against the 70% floor -> BELOW FLOOR",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-001/2026-10-23T06-26-04Z/RECONCILIATION.md",
+      "sha256": "e54e20b3ef7d0177f30eea488f8ef8a1da4b7538b3aa8594e7c7520693829bb4",
+      "bytes": 517
+    },
+    {
+      "path": "evidence/QA-001/2026-10-23T06-26-04Z/typescript-coverage.json",
+      "sha256": "37a17c5f8eb1bc3ce7925bf9e94ec2dcfde196098316302bccc2368158d34da7",
+      "bytes": 332
+    }
+  ]
+}

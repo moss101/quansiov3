@@ -2764,7 +2764,7 @@
       "status": "BLOCKED_EXTERNAL",
       "claimed_by": "agent:principal-1",
       "started_at": "2026-09-27T05:20:00Z",
-      "updated_at": "2026-09-27T14:50:00Z",
+      "updated_at": "2026-10-23T06:26:04Z",
       "git_commit": "16a4250297cc65d863cae9691c3cb1b33d92b44a",
       "tests": [
         "clean checkout (git clone at edf72d2, fresh target, no .env) bash scripts/ci/ci.sh: 12 gates PASS incl. contract-drift (zero drift) and the new test-audit (no unexplained skip; blocked tests inventoried by variable)",
@@ -2783,11 +2783,12 @@
         "scripts/ci/ci_summary.py",
         "tests/ci/test_qa001_tools.py",
         "tests/contract/test_qa001_gate.py",
-        ".github/workflows/ci.yml"
+        ".github/workflows/ci.yml",
+        "evidence/QA-001/2026-10-23T06-26-04Z/summary.json"
       ],
       "real_boundary_evidence": [],
       "implementation_complete": true,
-      "blocker": "Implementation complete and both acceptance statements hold (every required suite passes from a clean checkout; contract drift is zero), and every DOSSIER 21.4 Rust and Python floor passes with branch coverage reported. Not PASS: the TypeScript floor (70%) is unmeasured because no TypeScript coverage provider is installed (@vitest/coverage-v8 was not approved for download, 2026-09-27). Unblock: approve and add @vitest/coverage-v8 (matching vitest 2.1.x), then extend scripts/ci/coverage.py with a typescript measurement. The 21.4 numbers are provisional until the owner ratifies them (OD-011).",
+      "blocker": "Implementation complete and both acceptance statements hold; the Rust and Python floors pass. The TypeScript floor (70%, DOSSIER 21.4) is now measured by `coverage.py typescript` (@vitest/coverage-v8 added 2026-10-23) at 64.11% (15454/24106 lines): below it. The gap is the React views (renderer/*.tsx, web pages), driven only by the Playwright journeys that vitest's v8 run does not instrument. Unblock: the owner either ratifies the TypeScript floor over non-view modules (OD-011 numbers are provisional) or component tests (jsdom) are added for the views; then add `--typescript` to the coverage check and set PASS.",
       "notes": "Found and fixed through the regression protocol while closing coverage gaps: RUN-009 startup recovery was never composed (merge 99f5893); RUN-011 refusals after dispatch left phantom unknown outcomes (af30017); RUN-001 joined-delegation result recorded as an error and orphan budget steps (e0be8c1); RUN-011 questions never expired (14e07a7). Open and handed to follow-up tasks: model-driven plans, memory proposals and completion claims are not composed in the served product (C-8), plus the delegate digest config and plan-refusal typing (C-9). Rust tests that return early with a BLOCKED_EXTERNAL marker pass in libtest and cannot be inventoried by the audit."
     },
     "QA-002": {

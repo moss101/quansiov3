@@ -281,7 +281,11 @@ def group_of(path: str, areas: Dict[str, List[str]]) -> Optional[str]:
 
 
 def check(
-    rust: dict, python: Optional[dict], expectations: dict, branches: Optional[dict] = None
+    rust: dict,
+    python: Optional[dict],
+    expectations: dict,
+    branches: Optional[dict] = None,
+    typescript: Optional[dict] = None,
 ) -> dict:
     """Group the line run's files against the floors; take branch counts from the branch run.
 
@@ -347,8 +351,17 @@ def check(
         if python["percent"] < python_rules["line_min"]:
             findings.append(f"python: {python['percent']}% lines < {python_rules['line_min']}%")
 
-    typescript = expectations["typescript"]
-    results["typescript"] = {"line_min": typescript["line_min"], "status": typescript["status"], "reason": typescript["reason"]}
+    typescript_rules = expectations["typescript"]
+    if typescript is None:
+        results["typescript"] = {"line_min": typescript_rules["line_min"], "status": "UNMEASURED",
+                                 "reason": "run `coverage.py typescript` and pass --typescript"}
+    else:
+        results["typescript"] = {"lines": typescript["lines"], "lines_covered": typescript["covered"],
+                                 "line_percent": typescript["percent"], "line_min": typescript_rules["line_min"]}
+        if typescript.get("vitest_exit") != 0:
+            findings.append(f"typescript: the measured vitest run exited {typescript.get('vitest_exit')}")
+        if typescript["percent"] < typescript_rules["line_min"]:
+            findings.append(f"typescript: {typescript['percent']}% lines < {typescript_rules['line_min']}%")
     return {
         "source": expectations["source"],
         "status": "FAIL" if findings else "PASS",
@@ -361,6 +374,36 @@ def check(
             "unreportable": branch_source.get("unreportable", []),
         },
     }
+
+
+# --------------------------------------------------------------------------- typescript
+
+TS_PACKAGES = ("apps/desktop", "apps/web", "sdk/typescript")
+
+
+def measure_typescript(out: Path) -> int:
+    """Measure TypeScript line coverage of every package's `src/` with vitest's v8 provider."""
+    packages: Dict[str, dict] = {}
+    worst = 0
+    scratch = out.parent / "typescript-raw"
+    for package in TS_PACKAGES:
+        report_dir = scratch / package.replace("/", "-")
+        shutil.rmtree(report_dir, ignore_errors=True)
+        run = subprocess.run(
+            ["npx", "vitest", "run", "--coverage", "--coverage.provider=v8", "--coverage.reporter=json-summary",
+             "--coverage.include=src/**", "--coverage.exclude=**/*.d.ts", f"--coverage.reportsDirectory={report_dir}"],
+            cwd=ROOT / package,
+        )
+        worst = worst or run.returncode
+        summary = json.loads((report_dir / "coverage-summary.json").read_text())["total"]["lines"]
+        packages[package] = {"lines": summary["total"], "lines_covered": summary["covered"]}
+    lines = sum(row["lines"] for row in packages.values())
+    covered = sum(row["lines_covered"] for row in packages.values())
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps({"packages": packages, "lines": lines, "covered": covered,
+                               "percent": percent(covered, lines), "vitest_exit": worst}, indent=2) + "\n")
+    print(f"typescript: {percent(covered, lines)}% lines ({covered}/{lines})")
+    return worst
 
 
 # --------------------------------------------------------------------------- main
@@ -379,11 +422,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     rust.add_argument("--keep-profiles", action="store_true")
     rust.add_argument("--export-only", action="store_true", help="reuse the last test phase in --target-dir")
+    typescript = commands.add_parser("typescript")
+    typescript.add_argument("--out", type=Path, required=True)
     python = commands.add_parser("python")
     python.add_argument("--out", type=Path, required=True)
     verdict = commands.add_parser("check")
     verdict.add_argument("--rust", type=Path, required=True)
     verdict.add_argument("--python", type=Path)
+    verdict.add_argument("--typescript", type=Path)
     verdict.add_argument("--rust-branches", type=Path, help="a --branch run, for branch counts")
     verdict.add_argument("--out", type=Path)
     args = parser.parse_args(argv)
@@ -392,6 +438,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return measure_rust(
             args.out, args.target_dir, args.branch, args.keep_profiles, args.export_only
         )
+    if args.command == "typescript":
+        return measure_typescript(args.out)
     if args.command == "python":
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import pycoverage
@@ -402,6 +450,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         json.loads(args.python.read_text()) if args.python else None,
         load_expectations(),
         json.loads(args.rust_branches.read_text()) if args.rust_branches else None,
+        json.loads(args.typescript.read_text()) if args.typescript else None,
     )
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)

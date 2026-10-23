@@ -19,9 +19,5 @@
     "other": {"line_min": 75}
   },
   "python": {"line_min": 80, "scope": "python/intelligence"},
-  "typescript": {
-    "line_min": 70,
-    "status": "BLOCKED_EXTERNAL",
-    "reason": "no TypeScript coverage provider is installed: @vitest/coverage-v8 was not approved for download (2026-09-27); the critical journeys run in Playwright (QA-008)"
-  }
+  "typescript": {"line_min": 70, "scope": "apps/desktop, apps/web, sdk/typescript (src/)"}
 }
