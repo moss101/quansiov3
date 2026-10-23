@@ -68,6 +68,7 @@ export interface Session {
   readonly refresh_token: string;
   readonly refresh_expires_at: string;
   readonly workspace_id?: string;
+  /** True only when this sign-in created the user (a first sign-in); absent or false is a returning user. */
   readonly onboarded?: boolean;
 }
 

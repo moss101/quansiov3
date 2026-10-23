@@ -146,7 +146,14 @@ export function Collaboration({ workspaceId }: CollaborationProps): ReactElement
 
   const run = useCallback(
     async (work: () => Promise<unknown>) => {
-      const settled = (await work()) as SettledPayload;
+      let settled: SettledPayload;
+      try {
+        settled = (await work()) as SettledPayload;
+      } catch (error) {
+        // A request that cannot be built (a wrong-prefix id) or sent is a notice, never an unhandled rejection.
+        setNotice(error instanceof Error ? error.message : String(error));
+        return null;
+      }
       const refused = refusal(settled);
       setNotice(refused);
       await loadList();
@@ -178,7 +185,7 @@ export function Collaboration({ workspaceId }: CollaborationProps): ReactElement
         ...picked.map((id) => ({ kind: "teammate" as const, id })),
       ];
       const settled = await run(() => window.quansio.createThread(createThreadParams(workspaceId, "group", title, members)));
-      if (settled.ok) {
+      if (settled?.ok) {
         setTitle("");
         setPeople("");
         setPicked([]);
@@ -299,7 +306,7 @@ export function Collaboration({ workspaceId }: CollaborationProps): ReactElement
               );
             })}
           </ul>
-          <form onSubmit={(event) => { event.preventDefault(); const id = addId.trim(); void run(() => window.quansio.addParticipant(participantParams(thread.view.id, id.startsWith("agt_") ? "teammate" : "user", id))).then(() => { setAddId(""); }); }}>
+          <form onSubmit={(event) => { event.preventDefault(); const id = addId.trim(); void run(() => window.quansio.addParticipant(participantParams(thread.view.id, id.startsWith("agt_") ? "teammate" : "user", id))).then((settled) => { if (settled) { setAddId(""); } }); }}>
             <input value={addId} placeholder={t("collabAddPlaceholder")} onChange={(event) => { setAddId(event.target.value); }} />
             <button type="submit">{t("collabAdd")}</button>
           </form>

@@ -134,6 +134,15 @@ describe("the Collaboration view", () => {
     expect(sent("participants.add")[1]?.payload).toMatchObject({ kind: "user", id: "usr_new" });
   });
 
+  it("shows a notice, sends nothing and keeps the field when the id to add has the wrong prefix", async () => {
+    await open();
+    await type(rig, "or agt_", "bob");
+    await click(rig, "Add");
+    expect(rig.container.querySelector(".notice")?.textContent).toContain("usr_");
+    expect(sent("participants.add")).toHaveLength(0);
+    expect(rig.container.querySelector<HTMLInputElement>(".collab-members input")?.value).toBe("bob");
+  });
+
   it("hides member management from a plain member, who may leave", async () => {
     rig = await mount(<Collaboration workspaceId="ws_x" />, { ...answers, "session.me": { user: { id: EDITOR }, workspaces: [{ id: "ws_x", role: "member" }] }, "threads.view": { ok: true, result: threadView({ my_role: "member" }) } });
     await click(rig, "launch");

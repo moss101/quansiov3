@@ -1,0 +1,32 @@
+{
+  "task_id": "QA-001",
+  "git_commit": "3e322d900f0f8a87f7db4a10e12c4957ba967756",
+  "recorded_at": "2026-10-23T10:20:19Z",
+  "commands": [
+    {
+      "command": "vitest tests/dom tests/identity.test.ts: 220 passed incl. new wrong-prefix Add test (fails on the pre-fix source)",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "evidence/QA-001/2026-10-23T10-20-16Z/vitest.log"
+    }
+  ],
+  "results": [
+    {
+      "command": "vitest tests/dom tests/identity.test.ts: 220 passed incl. new wrong-prefix Add test (fails on the pre-fix source)",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/QA-001/2026-10-23T10-20-16Z/RECONCILIATION.md",
+      "sha256": "fca279826df2a3a9e5b92264d7375b62e600caff1f8851b2268d210797ed91ed",
+      "bytes": 894
+    },
+    {
+      "path": "evidence/QA-001/2026-10-23T10-20-16Z/vitest.log",
+      "sha256": "bd8ec609cc285e5db6da7a26fe4c3755127eeaf9f4b6609df43a9a32393ab490",
+      "bytes": 58
+    }
+  ]
+}
