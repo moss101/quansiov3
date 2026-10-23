@@ -25,9 +25,19 @@ export interface Rig {
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
+/** Run `work` inside React's `act` so every state change it causes has been applied when this resolves. */
+async function inAct(work: () => void): Promise<void> {
+  await act(async () => {
+    work();
+    await Promise.resolve();
+  });
+}
+
 export async function flush(rounds = 6): Promise<void> {
   for (let i = 0; i < rounds; i += 1) {
-    await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+    await act(async () => {
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    });
   }
 }
 
@@ -51,7 +61,7 @@ export async function mount(element: ReactElement, answers: Partial<Record<Prelo
   const container = document.createElement("div");
   document.body.appendChild(container);
   let root: Root;
-  await act(() => {
+  await inAct(() => {
     root = createRoot(container);
     root.render(element);
   });
@@ -61,7 +71,7 @@ export async function mount(element: ReactElement, answers: Partial<Record<Prelo
     calls,
     answer: (channel, answer) => void table.set(channel, answer),
     push: async (channel, payload) => {
-      await act(() => {
+      await inAct(() => {
         for (const listener of listeners.get(channel) ?? []) {
           listener(payload);
         }
@@ -70,7 +80,9 @@ export async function mount(element: ReactElement, answers: Partial<Record<Prelo
     },
     flush,
     unmount: async () => {
-      await act(async () => { root.unmount(); });
+      await inAct(() => {
+        root.unmount();
+      });
       container.remove();
     },
   };
@@ -83,9 +95,9 @@ export async function click(rig: Rig, label: string | RegExp): Promise<void> {
     (element) => match(element.textContent) || match(element.getAttribute("aria-label") ?? "") || match(element.getAttribute("title") ?? ""),
   );
   if (!target) {
-    throw new Error(`no control named ${String(label)}; the page has: ${(rig.container.textContent ?? "").slice(0, 400)}`);
+    throw new Error(`no control named ${String(label)}; the page has: ${rig.container.textContent.slice(0, 400)}`);
   }
-  await act(() => {
+  await inAct(() => {
     target.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
   });
   await rig.flush();
@@ -100,7 +112,7 @@ export async function type(rig: Rig, field: string, value: string): Promise<void
     throw new Error(`no field ${field}`);
   }
   const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : element instanceof HTMLSelectElement ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
-  await act(() => {
+  await inAct(() => {
     Object.getOwnPropertyDescriptor(prototype, "value")?.set?.call(element, value);
     element.dispatchEvent(new Event(element instanceof HTMLSelectElement ? "change" : "input", { bubbles: true }));
   });
