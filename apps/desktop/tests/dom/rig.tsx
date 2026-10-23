@@ -24,6 +24,8 @@ export interface Rig {
 }
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+// jsdom has no layout: scrolling an item into view is a no-op there.
+Element.prototype.scrollIntoView = () => undefined;
 
 /** Run `work` inside React's `act` so every state change it causes has been applied when this resolves. */
 async function inAct(work: () => void): Promise<void> {
