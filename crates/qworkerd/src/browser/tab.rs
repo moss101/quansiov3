@@ -285,9 +285,18 @@ pub enum FollowUp {
         /// The browser's event id.
         event_id: i64,
     },
+    /// Continue a certificate error the person's earlier decision already covers, now.
+    ContinueCertificate {
+        /// The browser's event id.
+        event_id: i64,
+    },
     /// The next download was refused for being over the per-tab limit.
     Noted,
 }
+
+/// How long after a person continues past a certificate error the same error from the same origin, raised
+/// by the browser's retry of the same navigation, is taken to be covered by that decision.
+const CERTIFICATE_RETRY_GRACE: Duration = Duration::from_secs(10);
 
 /// One tab's state.
 #[derive(Debug)]
@@ -315,6 +324,8 @@ pub struct TabState {
     /// Certificate errors and decisions, oldest first.
     pub certificates: Vec<CertificateRecord>,
     certificate_counter: u64,
+    /// Recent *continue* decisions: origin, fault, who decided, when.
+    certificate_allowances: Vec<(String, String, String, Instant)>,
     /// Downloads, oldest first.
     pub downloads: Vec<DownloadRecord>,
     download_counter: u64,
@@ -394,6 +405,7 @@ impl TabState {
             dialog_counter: 0,
             certificates: Vec::new(),
             certificate_counter: 0,
+            certificate_allowances: Vec::new(),
             downloads: Vec::new(),
             download_counter: 0,
             popups: Vec::new(),
@@ -496,6 +508,17 @@ impl TabState {
             } else {
                 siblings.push(record.event_id);
             }
+        }
+        if allow && subject_event.is_some() {
+            if self.certificate_allowances.len() >= 8 {
+                self.certificate_allowances.remove(0);
+            }
+            self.certificate_allowances.push((
+                origin,
+                error_type,
+                decided_by.to_string(),
+                Instant::now(),
+            ));
         }
         subject_event.into_iter().chain(siblings).collect()
     }
@@ -707,21 +730,40 @@ impl TabState {
                     .navigations
                     .iter()
                     .any(|seen| seen == &without_fragment);
+                let error_type = text(params, "errorType");
+                // The browser can raise the same error again when it retries the navigation after a
+                // *continue*; the person's decision about this origin and fault still stands for it.
+                let covered_by = navigating
+                    .then(|| {
+                        self.certificate_allowances.iter().rev().find(|allowed| {
+                            allowed.0 == origin
+                                && allowed.1 == error_type
+                                && allowed.3.elapsed() < CERTIFICATE_RETRY_GRACE
+                        })
+                    })
+                    .flatten()
+                    .map(|allowed| allowed.2.clone());
                 self.certificates.push(CertificateRecord {
                     id: id.clone(),
                     event_id,
                     origin,
-                    error_type: text(params, "errorType"),
+                    error_type,
                     url,
-                    status: if navigating {
+                    status: if covered_by.is_some() {
+                        CertificateStatus::Continued
+                    } else if navigating {
                         CertificateStatus::Pending
                     } else {
                         CertificateStatus::Cancelled
                     },
                     certificate_sha256: None,
-                    decided_by: (!navigating).then(|| "driver: not a navigation".to_string()),
+                    decided_by: covered_by
+                        .clone()
+                        .or_else(|| (!navigating).then(|| "driver: not a navigation".to_string())),
                 });
-                follow.push(if navigating {
+                follow.push(if covered_by.is_some() {
+                    FollowUp::ContinueCertificate { event_id }
+                } else if navigating {
                     FollowUp::CertificatePending { id }
                 } else {
                     FollowUp::CancelCertificate { event_id }
@@ -984,6 +1026,64 @@ mod tests {
         assert!(state
             .settle_certificates("crt_unknown", true, "usr_X")
             .is_empty());
+    }
+
+    #[test]
+    fn the_same_error_raised_again_just_after_a_continue_is_covered_by_it() {
+        let mut state = TabState::new("TAB", 7);
+        state.apply(
+            &event(
+                "Page.frameStartedNavigating",
+                json!({"frameId": "F", "url": "https://127.0.0.1:8443/"}),
+            ),
+            &DownloadPolicy::default(),
+        );
+        let error = |event_id: i64, url: &str, kind: &str| {
+            event(
+                "Security.certificateError",
+                json!({"eventId": event_id, "errorType": kind, "requestURL": url}),
+            )
+        };
+        state.apply(
+            &error(1, "https://127.0.0.1:8443/", "ERR_CERT_AUTHORITY_INVALID"),
+            &DownloadPolicy::default(),
+        );
+        let first = state.certificates[0].id.clone();
+        state.settle_certificates(&first, true, "usr_X");
+        // The browser's retry raises it again: continued for the same person, no new wait.
+        let follow = state.apply(
+            &error(2, "https://127.0.0.1:8443/", "ERR_CERT_AUTHORITY_INVALID"),
+            &DownloadPolicy::default(),
+        );
+        assert_eq!(follow, vec![FollowUp::ContinueCertificate { event_id: 2 }]);
+        assert_eq!(state.certificates[1].status, CertificateStatus::Continued);
+        assert_eq!(state.certificates[1].decided_by.as_deref(), Some("usr_X"));
+        // A different fault on the same origin still waits for a person.
+        let follow = state.apply(
+            &error(3, "https://127.0.0.1:8443/", "ERR_CERT_DATE_INVALID"),
+            &DownloadPolicy::default(),
+        );
+        assert!(matches!(follow[0], FollowUp::CertificatePending { .. }));
+        // And a cancel grants nothing to a later error.
+        let mut state = TabState::new("TAB", 7);
+        state.apply(
+            &event(
+                "Page.frameStartedNavigating",
+                json!({"frameId": "F", "url": "https://127.0.0.1:8443/"}),
+            ),
+            &DownloadPolicy::default(),
+        );
+        state.apply(
+            &error(1, "https://127.0.0.1:8443/", "ERR_CERT_AUTHORITY_INVALID"),
+            &DownloadPolicy::default(),
+        );
+        let first = state.certificates[0].id.clone();
+        state.settle_certificates(&first, false, "usr_X");
+        let follow = state.apply(
+            &error(2, "https://127.0.0.1:8443/", "ERR_CERT_AUTHORITY_INVALID"),
+            &DownloadPolicy::default(),
+        );
+        assert!(matches!(follow[0], FollowUp::CertificatePending { .. }));
     }
 
     #[test]

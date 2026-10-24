@@ -1551,6 +1551,18 @@ fn follow_up(driver: &Arc<DriverInner>, tab: &Arc<Tab>, work: FollowUp) {
                     .await;
             });
         }
+        FollowUp::ContinueCertificate { event_id } => {
+            let tab = Arc::clone(tab);
+            tokio::spawn(async move {
+                let _ = tab
+                    .conn
+                    .call(
+                        "Security.handleCertificateError",
+                        json!({ "eventId": event_id, "action": "continue" }),
+                    )
+                    .await;
+            });
+        }
         FollowUp::CertificatePending { id } => {
             tokio::spawn(certificate_timeout(Arc::clone(driver), Arc::clone(tab), id));
         }
