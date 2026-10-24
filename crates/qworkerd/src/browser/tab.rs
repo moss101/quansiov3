@@ -458,6 +458,48 @@ impl TabState {
         self.certificates.iter().find(|record| record.id == id)
     }
 
+    /// Record a user's decision on certificate error `subject` and on every other error still waiting
+    /// for the same origin and the same fault in this tab, and return the browser event ids to answer
+    /// (the subject's first). The browser raises one error per connection it opens for a navigation,
+    /// so a single page load can leave two waiting; the person saw one origin and decided about it, and
+    /// the others would only hold the tab until their wait ran out.
+    pub fn settle_certificates(
+        &mut self,
+        subject: &str,
+        allow: bool,
+        decided_by: &str,
+    ) -> Vec<i64> {
+        let Some((origin, error_type)) = self
+            .certificate(subject)
+            .map(|record| (record.origin.clone(), record.error_type.clone()))
+        else {
+            return Vec::new();
+        };
+        let mut subject_event = None;
+        let mut siblings = Vec::new();
+        for record in &mut self.certificates {
+            let this = record.id == subject;
+            let sibling = record.status == CertificateStatus::Pending
+                && record.origin == origin
+                && record.error_type == error_type;
+            if !this && !sibling {
+                continue;
+            }
+            record.status = if allow {
+                CertificateStatus::Continued
+            } else {
+                CertificateStatus::Cancelled
+            };
+            record.decided_by = Some(decided_by.to_string());
+            if this {
+                subject_event = Some(record.event_id);
+            } else {
+                siblings.push(record.event_id);
+            }
+        }
+        subject_event.into_iter().chain(siblings).collect()
+    }
+
     /// Certificate errors still waiting for a user.
     #[must_use]
     pub fn pending_certificates(&self) -> Vec<&CertificateRecord> {
@@ -888,6 +930,60 @@ mod tests {
         assert_eq!(record.origin, "https://127.0.0.1:8443");
         assert_eq!(record.status, CertificateStatus::Pending);
         assert_eq!(state.pending_certificates().len(), 1);
+    }
+
+    #[test]
+    fn a_decision_covers_the_other_errors_waiting_for_the_same_origin_and_fault() {
+        let mut state = TabState::new("TAB", 7);
+        state.apply(
+            &event(
+                "Page.frameStartedNavigating",
+                json!({"frameId": "F", "url": "https://127.0.0.1:8443/"}),
+            ),
+            &DownloadPolicy::default(),
+        );
+        state.apply(
+            &event(
+                "Page.frameStartedNavigating",
+                json!({"frameId": "F", "url": "https://other.example/"}),
+            ),
+            &DownloadPolicy::default(),
+        );
+        for (event_id, url, error) in [
+            (10, "https://127.0.0.1:8443/", "ERR_CERT_AUTHORITY_INVALID"),
+            (11, "https://127.0.0.1:8443/", "ERR_CERT_AUTHORITY_INVALID"),
+            (12, "https://127.0.0.1:8443/", "ERR_CERT_DATE_INVALID"),
+            (13, "https://other.example/", "ERR_CERT_AUTHORITY_INVALID"),
+        ] {
+            state.apply(
+                &event(
+                    "Security.certificateError",
+                    json!({"eventId": event_id, "errorType": error, "requestURL": url}),
+                ),
+                &DownloadPolicy::default(),
+            );
+        }
+        assert_eq!(state.pending_certificates().len(), 4);
+        let first = state.certificates[0].id.clone();
+        assert_eq!(
+            state.settle_certificates(&first, true, "usr_X"),
+            vec![10, 11]
+        );
+        let statuses: Vec<_> = state.certificates.iter().map(|r| r.status).collect();
+        assert_eq!(
+            statuses,
+            vec![
+                CertificateStatus::Continued,
+                CertificateStatus::Continued,
+                CertificateStatus::Pending,
+                CertificateStatus::Pending,
+            ],
+            "another fault and another origin keep waiting"
+        );
+        assert_eq!(state.certificates[1].decided_by.as_deref(), Some("usr_X"));
+        assert!(state
+            .settle_certificates("crt_unknown", true, "usr_X")
+            .is_empty());
     }
 
     #[test]

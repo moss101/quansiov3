@@ -1115,38 +1115,27 @@ impl BrowserDriver {
             ));
         }
         let tab = self.tab(Some(tab_id))?;
-        let (event_id, origin) = {
+        let origin = {
             let state = tab.state();
             let record = state
                 .certificate(receipt.subject())
                 .filter(|record| record.status == CertificateStatus::Pending)
                 .ok_or_else(|| invalid("no such certificate error is waiting for a decision"))?;
-            (record.event_id, record.origin.clone())
+            record.origin.clone()
         };
-        let action = match receipt.decision() {
-            Decision::Allow => "continue",
-            Decision::Deny => "cancel",
-        };
-        {
-            let mut state = tab.state();
-            if let Some(record) = state
-                .certificates
-                .iter_mut()
-                .find(|record| record.id == receipt.subject())
-            {
-                record.status = match receipt.decision() {
-                    Decision::Allow => CertificateStatus::Continued,
-                    Decision::Deny => CertificateStatus::Cancelled,
-                };
-                record.decided_by = Some(receipt.decided_by().to_string());
-            }
+        let allow = receipt.decision() == Decision::Allow;
+        let action = if allow { "continue" } else { "cancel" };
+        let event_ids =
+            tab.state()
+                .settle_certificates(receipt.subject(), allow, receipt.decided_by());
+        for event_id in event_ids {
+            tab.conn
+                .call(
+                    "Security.handleCertificateError",
+                    json!({ "eventId": event_id, "action": action }),
+                )
+                .await?;
         }
-        tab.conn
-            .call(
-                "Security.handleCertificateError",
-                json!({ "eventId": event_id, "action": action }),
-            )
-            .await?;
         tab.ping();
         // The navigation the error interrupted proceeds (or is cancelled); let it settle.
         self.wait_settled(&tab).await;
