@@ -21,8 +21,8 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
 use common::{
-    blocked, driver, evaluate, eventually, observe, open_page, ref_named, run, Browser, Route,
-    Site, TlsSite, SESSION,
+    blocked, call, driver, evaluate, eventually, observe, open_page, ref_named, run, Browser,
+    Route, Site, TlsSite, SESSION,
 };
 use quansio_machine::control::browser::{Decision, DecisionKind, DecisionReceipt};
 use quansio_qworkerd::browser::BrowserDriver;
@@ -775,20 +775,57 @@ async fn a_certificate_error_waits_for_a_user_and_agent_input_cannot_dismiss_it(
     );
 }
 
-/// What a failing CI run needs to see: the browser, where the tab is, its title and text, and what the
-/// driver observed (certificate records, console, permissions).
+/// What a failing CI run needs to see, gathered without ever panicking or waiting long: the browser's
+/// version, the open tabs, what this tab answers to a script, and what the driver observed.
 async fn page_state(browser: &Browser, driver: &BrowserDriver, tab: &str) -> String {
-    let agent = evaluate(browser, tab, "navigator.userAgent").await;
-    let href = evaluate(browser, tab, "location.href").await;
-    let title = evaluate(browser, tab, "document.title").await;
-    let body = evaluate(
-        browser,
-        tab,
-        "document.body ? document.body.innerText.slice(0, 300) : null",
-    )
+    use quansio_qworkerd::browser::cdp;
+    let bounded = Duration::from_secs(5);
+    let version = tokio::time::timeout(bounded, async {
+        cdp::pages(browser.port).await.map(|pages| {
+            pages
+                .iter()
+                .map(|page| format!("{} {:?} {:?}", page.id, page.url, page.title))
+                .collect::<Vec<_>>()
+        })
+    })
     .await;
-    let observed = observe(driver, 9000, tab).await;
-    format!("user agent {agent}; href {href}; title {title}; body {body}; observation {observed}")
+    let mut script = Vec::new();
+    for expression in [
+        "navigator.userAgent",
+        "location.href",
+        "document.readyState",
+        "document.body ? document.body.innerText.slice(0, 300) : null",
+    ] {
+        let answer = tokio::time::timeout(bounded, async {
+            let pages = cdp::pages(browser.port).await.map_err(|e| e.to_string())?;
+            let page = pages
+                .into_iter()
+                .find(|page| page.id == tab)
+                .ok_or("the tab is not open")?;
+            let connection = cdp::connect(page).await.map_err(|e| e.to_string())?;
+            connection
+                .call(
+                    "Runtime.evaluate",
+                    json!({ "expression": expression, "returnByValue": true }),
+                )
+                .await
+                .map(|result| result["result"]["value"].clone())
+                .map_err(|e| e.to_string())
+        })
+        .await;
+        script.push(format!("{expression} => {answer:?}"));
+    }
+    let observed = tokio::time::timeout(bounded, async {
+        run(
+            driver,
+            &call(9000),
+            "browser.observe",
+            json!({ "tab_id": tab }),
+        )
+        .await
+    })
+    .await;
+    format!("tabs {version:?}; script {script:?}; observation {observed:?}")
 }
 
 #[tokio::test]
