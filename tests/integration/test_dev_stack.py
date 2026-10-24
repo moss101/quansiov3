@@ -187,6 +187,35 @@ ISOLATION = {
 }
 
 
+def _port_holders() -> str:
+    """Who holds the suite's host ports, for a failed `up`: sockets, then published container ports."""
+    ports = (
+        POSTGRES_PORT,
+        NATS_PORT,
+        NATS_MONITOR_PORT,
+        MINIO_PORT,
+        STUB_PROVIDER_PORT,
+    )
+    out = []
+    for command in (
+        ["ss", "-tanp"],
+        ["docker", "ps", "-a", "--format", "{{.Names}} {{.Ports}}"],
+    ):
+        try:
+            text = subprocess.run(
+                command, capture_output=True, text=True, timeout=20, check=False
+            ).stdout
+        except (OSError, subprocess.SubprocessError):
+            continue
+        out.append(f"$ {' '.join(command)}")
+        out.extend(
+            line
+            for line in text.splitlines()
+            if command[0] == "docker" or any(f":{p} " in line for p in ports)
+        )
+    return "\n".join(out)
+
+
 def run_dev(
     command: str, *args: str, env_file: Path, timeout: int = 300
 ) -> subprocess.CompletedProcess[str]:
@@ -300,7 +329,9 @@ def _stub_chunks(streamed: str) -> list[dict[str, Any]]:
 
 def test_bootstrap_smoke(dev_env_file: Path) -> None:
     up = run_dev("up", env_file=dev_env_file)
-    assert up.returncode == 0, f"scripts/dev/up failed:\n{up.stdout}\n{up.stderr}"
+    assert up.returncode == 0, (
+        f"scripts/dev/up failed:\n{up.stdout}\n{up.stderr}\n{_port_holders()}"
+    )
 
     # The override reached the scripts: the generated file is the suite's, with its
     # project and ports, not the developer's canonical settings.
@@ -424,7 +455,9 @@ def test_bootstrap_smoke(dev_env_file: Path) -> None:
 
 def test_reset_then_reseed_is_deterministic(dev_env_file: Path) -> None:
     up = run_dev("up", env_file=dev_env_file)
-    assert up.returncode == 0, f"scripts/dev/up failed:\n{up.stdout}\n{up.stderr}"
+    assert up.returncode == 0, (
+        f"scripts/dev/up failed:\n{up.stdout}\n{up.stderr}\n{_port_holders()}"
+    )
     seed = run_dev("seed", env_file=dev_env_file)
     assert seed.returncode == 0, (
         f"scripts/dev/seed failed:\n{seed.stdout}\n{seed.stderr}"
@@ -460,7 +493,9 @@ def test_a_database_whose_init_scripts_were_skipped_is_repaired(
     scripts for that volume, so pgvector is missing and the stack never becomes ready. The
     readiness probe applies the (idempotent) init scripts when the extension is missing."""
     up = run_dev("up", env_file=dev_env_file)
-    assert up.returncode == 0, f"scripts/dev/up failed:\n{up.stdout}\n{up.stderr}"
+    assert up.returncode == 0, (
+        f"scripts/dev/up failed:\n{up.stdout}\n{up.stderr}\n{_port_holders()}"
+    )
     # The state the race leaves behind: a ready database without the extension.
     with psycopg.connect(_dsn(), autocommit=True) as conn:
         conn.execute("DROP EXTENSION IF EXISTS vector CASCADE")

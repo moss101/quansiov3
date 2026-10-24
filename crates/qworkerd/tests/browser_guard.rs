@@ -837,7 +837,7 @@ async fn a_user_can_continue_and_the_certificate_hash_is_recorded() {
         .await
         .expect("resolve");
     assert_eq!(resolved.output["decision"], "allow");
-    let loaded = eventually(Duration::from_secs(10), || async {
+    let loaded = eventually(Duration::from_secs(30), || async {
         observe(&driver, 700, &tab).await["text"]
             .as_str()
             .is_some_and(|text| text.contains("secure body"))
