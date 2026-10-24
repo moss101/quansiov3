@@ -8,7 +8,7 @@
  * server over HTTP and a WebSocket, PostgreSQL, the worker daemon and Chrome are the real ones.
  *
  * Environment: the QA-008 harness (`QUANSIO_TEST_POSTGRES_URL`, the server, seed and `qworkerd` binaries, the built desktop
- * app) and Google Chrome.
+ * app) and Google Chrome. Absent → the suite is reported `BLOCKED_EXTERNAL`.
  */
 
 import { createServer, type Server } from "node:http";
@@ -130,3 +130,7 @@ describe.skipIf(blocked !== null)("the live viewer in a real Electron window (re
     expect(hit("/click"), "after the hand back the picture takes no input").toBe(clicks);
   }, 240_000);
 });
+
+if (blocked !== null) {
+  it.skip(blocked, () => undefined);
+}
