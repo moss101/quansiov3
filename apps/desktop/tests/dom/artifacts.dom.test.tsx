@@ -107,8 +107,10 @@ describe("the Artifacts view", () => {
     const diff = rig.container.querySelector(".diff");
     expect(diff?.querySelector(".line-removed")?.textContent).toContain("beta");
     expect(diff?.querySelector(".line-added")?.textContent).toContain("gamma");
-    // The newest version is diffed against its parent by default, so the diff is shown before any explicit compare.
+    // The newest version is diffed against its parent by default; Clear hides that diff, and Compare brings it back.
     await click(rig, /Clear/i);
+    expect(rig.container.querySelector(".diff")).toBeNull();
+    await click(rig, /Compare/);
     expect(rig.container.querySelector(".diff")?.getAttribute("data-compare")).toBe(V1);
   });
 

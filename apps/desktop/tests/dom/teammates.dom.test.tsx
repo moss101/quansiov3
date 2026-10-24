@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 /** APP-014 on a page: the Teammates view over the real preload API — roster cards, create / edit / archive, refusals. */
 
-import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Teammates } from "../../src/renderer/Teammates.js";
-import { click, mount, text, type, type Rig } from "./rig.js";
+import { choose, click, mount, text, type, type Rig } from "./rig.js";
 
 const ATLAS = "agt_01J8Z3K6F1N8VQ2X5W9Y0AAAA1";
 const OLD = "agt_01J8Z3K6F1N8VQ2X5W9Y0AAAA2";
@@ -39,19 +38,6 @@ afterEach(async () => {
 
 function sent(channel: string): { channel: string; payload: unknown }[] {
   return rig.calls.filter((call) => call.channel === channel);
-}
-
-async function choose(selector: string, value: string): Promise<void> {
-  const select = rig.container.querySelector<HTMLSelectElement>(selector);
-  if (!select) {
-    throw new Error(`no select ${selector}`);
-  }
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(select, value);
-    select.dispatchEvent(new Event("change", { bubbles: true }));
-    await Promise.resolve();
-  });
-  await rig.flush();
 }
 
 describe("the Teammates view", () => {
@@ -90,7 +76,7 @@ describe("the Teammates view", () => {
     await type(rig, "name", "Atlas 2");
     await type(rig, "Persona", "sharper");
     await type(rig, "Capability needs", "read.internal");
-    await choose(".editor label select", "teammate");
+    await choose(rig, ".editor label select", "teammate");
     await click(rig, /^Saved/);
     const params = sent("teammates.update")[0]?.payload as Record<string, unknown>;
     expect(params).toMatchObject({ teammate_id: ATLAS, name: "Atlas 2", persona: "sharper", memory_scope: "teammate", default_capability_needs: ["read.internal"] });
@@ -119,7 +105,7 @@ describe("the Teammates view", () => {
   it("creates a teammate from a template, filling the draft from it", async () => {
     rig = await mount(<Teammates workspaceId="ws_1" />, { "teammates.list": roster, "teammates.create": ok });
     await click(rig, "New teammate");
-    await choose(".editor label select", "tpl_1");
+    await choose(rig, ".editor label select", "tpl_1");
     expect((rig.container.querySelector("input[aria-label=name]") as HTMLInputElement).value).toBe("Reviewer");
     expect((rig.container.querySelector("textarea[aria-label=Persona]") as HTMLTextAreaElement).value).toBe("templated persona");
     await click(rig, /New teammate/);
