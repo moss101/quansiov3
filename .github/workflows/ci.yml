@@ -95,6 +95,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     steps:
+      # Two instrumented debug builds of the workspace outgrow the runner's disk, and a full
+      # disk kills rustc and the linker with SIGBUS. Drop toolchains this job never uses.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
       - uses: actions/checkout@v4
 
       - name: Install Rust
@@ -122,6 +129,9 @@ jobs:
       - name: Measure and check coverage
         run: |
           python3 scripts/ci/coverage.py rust --out artifacts/coverage/rust.json
+          # The line run's report is written; its build is not read again.
+          rm -rf target/coverage
+          df -h /
           python3 scripts/ci/coverage.py rust --branch --target-dir target/coverage-branch \
             --out artifacts/coverage/rust-branches.json
           uv run --project python python scripts/ci/coverage.py python --out artifacts/coverage/python.json

@@ -418,15 +418,21 @@ async fn produce(
     })
 }
 
-/// Wait for fonts and images the document may use: a fixed number of short polls of
-/// `document.readyState`, not a sleep, and bounded by the render's own deadline.
+/// Wait for the stylesheets, fonts and images the document may use: a fixed number of short polls of
+/// `document.readyState`, not a sleep, and bounded by the render's own deadline. `readyState` can already be
+/// `complete` while a pinned stylesheet is still being fulfilled, so each `<link>` is awaited too (an errored
+/// one resolves, and none waits past 3 s).
 async fn settle(page: &CdpConnection) -> Result<(), RenderError> {
     for _ in 0..200 {
         let ready = evaluate(page, "document.readyState === 'complete'").await?;
         if ready.as_bool() == Some(true) {
             let _ = evaluate(
                 page,
-                "(async () => { if (document.fonts && document.fonts.ready) await document.fonts.ready; \
+                "(async () => { \
+                 const sheets = Array.from(document.querySelectorAll('link[rel~=stylesheet]')).map(l => l.sheet ? true : \
+                 new Promise(r => { l.addEventListener('load', r); l.addEventListener('error', r); setTimeout(r, 3000); })); \
+                 await Promise.all(sheets); \
+                 if (document.fonts && document.fonts.ready) await document.fonts.ready; \
                  await Promise.all(Array.from(document.images).map(i => i.decode().catch(() => undefined))); return true; })()",
             )
             .await;

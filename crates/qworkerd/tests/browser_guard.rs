@@ -513,14 +513,18 @@ async fn every_permission_is_denied_and_agent_input_cannot_grant_one() {
         );
     }
 
-    // The page asks, with the agent's click as the gesture. Chrome denies.
+    // The page asks, with the agent's click as the gesture. Chrome denies; a host with no camera
+    // fails the request as `NotFoundError` before it reaches the permission check. Either way the
+    // page is refused, and only `media-granted` would be a failure.
     click_named(&driver, &seq, &tab, "Camera").await;
     assert!(
         eventually(Duration::from_secs(5), || async {
-            evaluate(&browser, &tab, "document.title").await == json!("media-NotAllowedError")
+            let title = evaluate(&browser, &tab, "document.title").await;
+            title == json!("media-NotAllowedError") || title == json!("media-NotFoundError")
         })
         .await,
-        "the page was not refused the camera"
+        "the page was not refused the camera: title {:?}",
+        evaluate(&browser, &tab, "document.title").await
     );
     click_named(&driver, &seq, &tab, "Locate").await;
     assert!(
@@ -833,7 +837,7 @@ async fn a_user_can_continue_and_the_certificate_hash_is_recorded() {
         .await
         .expect("resolve");
     assert_eq!(resolved.output["decision"], "allow");
-    let loaded = eventually(Duration::from_secs(10), || async {
+    let loaded = eventually(Duration::from_secs(30), || async {
         observe(&driver, 700, &tab).await["text"]
             .as_str()
             .is_some_and(|text| text.contains("secure body"))

@@ -54,7 +54,7 @@ services:
       - nats-data:/data
 
   minio:
-    image: ${QUANSIO_DEV_MINIO_IMAGE:-quay.io/minio/minio:latest}
+    image: ${QUANSIO_DEV_MINIO_IMAGE:-pgsty/minio:RELEASE.2026-08-04T00-00-00Z}
     command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: ${QUANSIO_DEV_MINIO_ROOT_USER:-quansio-dev}
@@ -75,7 +75,7 @@ services:
       start_period: 5s
 
   minio-init:
-    image: ${QUANSIO_DEV_MINIO_MC_IMAGE:-quay.io/minio/mc:RELEASE.2024-01-13T08-44-48Z}
+    image: ${QUANSIO_DEV_MINIO_MC_IMAGE:-pgsty/mc:latest}
     depends_on:
       minio:
         condition: service_healthy
