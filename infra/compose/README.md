@@ -9,7 +9,7 @@ values here are dev-only; never point this stack at real data or credentials.
 |---|---|---|---|
 | postgres | `pgvector/pgvector:pg17` (16+) | `127.0.0.1:55440` | authoritative DB; `vector` extension + `derived` schema via `initdb/01-pgvector.sql` |
 | nats | `nats:2.11-alpine` | `127.0.0.1:54230` (client), `54231` (monitor) | JetStream event transport |
-| minio | `quay.io/minio/minio:latest` | `127.0.0.1:59010` (S3), `59011` (console) | object storage; bucket `quansio-dev` |
+| minio | `pgsty/minio:RELEASE.2026-08-04T00-00-00Z` | `127.0.0.1:59010` (S3), `59011` (console) | object storage; bucket `quansio-dev` |
 | stub-provider | `python:3.12-slim` + `stub-provider/server.py` | `127.0.0.1:59020` | deterministic OpenAI-compatible endpoint for offline model calls |
 | vector-adapter | `qdrant/qdrant:v1.12.4` | `127.0.0.1:59030` | optional, profile `vector`, derived index only |
 
