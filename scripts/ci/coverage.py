@@ -222,8 +222,15 @@ def measure_rust(out: Path, target: Path, branch: bool, keep: bool, export_only:
         profraw.mkdir(parents=True)
         subprocess.run(["cargo", "test", "--workspace", "--no-run"], cwd=ROOT, env=compile_env(env))
         tests_exit = subprocess.run(
-            ["cargo", "test", "--workspace", "--no-fail-fast"], cwd=ROOT, env=env
+            ["cargo", "test", "--workspace", "--no-fail-fast", "--lib", "--bins", "--tests"],
+            cwd=ROOT,
+            env=env,
         ).returncode
+        # rustdoc loads the instrumented proc macros too, and its profiles are of no binary we map.
+        doc_exit = subprocess.run(
+            ["cargo", "test", "--workspace", "--no-fail-fast", "--doc"], cwd=ROOT, env=compile_env(env)
+        ).returncode
+        tests_exit = tests_exit or doc_exit
         exit_file.write_text(f"{tests_exit}\n")
     objects = test_executables(env)
     profdata = target / "merged.profdata"
