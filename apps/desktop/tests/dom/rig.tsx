@@ -90,17 +90,35 @@ export async function mount(element: ReactElement, answers: Partial<Record<Prelo
   };
 }
 
-/** Click the first element whose text (or aria-label) contains `label`. */
-export async function click(rig: Rig, label: string | RegExp): Promise<void> {
+/** Click the first control within `scope` whose text (or aria-label or title) contains `label`. */
+export async function clickIn(rig: Rig, scope: HTMLElement, label: string | RegExp): Promise<void> {
   const match = (text: string): boolean => (typeof label === "string" ? text.includes(label) : label.test(text));
-  const target = [...rig.container.querySelectorAll<HTMLElement>("button, a, [role=button], [role=tab], [role=menuitem], summary, label")].find(
+  const target = [...scope.querySelectorAll<HTMLElement>("button, a, [role=button], [role=tab], [role=menuitem], summary, label")].find(
     (element) => match(element.textContent) || match(element.getAttribute("aria-label") ?? "") || match(element.getAttribute("title") ?? ""),
   );
   if (!target) {
-    throw new Error(`no control named ${String(label)}; the page has: ${rig.container.textContent.slice(0, 400)}`);
+    throw new Error(`no control named ${String(label)}; the scope has: ${scope.textContent.slice(0, 400)}`);
   }
   await inAct(() => {
     target.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+  });
+  await rig.flush();
+}
+
+/** Click the first control on the page whose text (or aria-label) contains `label`. */
+export async function click(rig: Rig, label: string | RegExp): Promise<void> {
+  await clickIn(rig, rig.container, label);
+}
+
+/** Choose `value` in a select, given the element or a selector for it. */
+export async function choose(rig: Rig, select: string | HTMLSelectElement, value: string): Promise<void> {
+  const element = typeof select === "string" ? rig.container.querySelector<HTMLSelectElement>(select) : select;
+  if (!element) {
+    throw new Error(`no select ${typeof select === "string" ? select : "element"}`);
+  }
+  await inAct(() => {
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(element, value);
+    element.dispatchEvent(new Event("change", { bubbles: true }));
   });
   await rig.flush();
 }

@@ -5,7 +5,7 @@ import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Automations } from "../../src/renderer/Automations.js";
-import { click, mount, text, type, type Rig } from "./rig.js";
+import { choose, click, clickIn, mount, text, type, type Rig } from "./rig.js";
 
 const ME = "usr_01J8Z3K6F1N8VQ2X5W9Y0AAAA1";
 const RTN = "rtn_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
@@ -65,33 +65,9 @@ function within(rig: Rig, id: string): HTMLElement {
   return row;
 }
 
-async function press(rig: Rig, scope: HTMLElement, label: string | RegExp): Promise<void> {
-  const button = [...scope.querySelectorAll<HTMLButtonElement>("button")].find((candidate) => {
-    const names = [candidate.textContent, candidate.getAttribute("aria-label") ?? ""];
-    return names.some((name) => (typeof label === "string" ? name.includes(label) : label.test(name)));
-  });
-  if (!button) {
-    throw new Error(`no button ${String(label)} in ${scope.textContent.slice(0, 200)}`);
-  }
-  await act(async () => {
-    button.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-    await Promise.resolve();
-  });
-  await rig.flush();
-}
-
 async function submit(rig: Rig, form: HTMLFormElement): Promise<void> {
   await act(async () => {
     form.requestSubmit();
-    await Promise.resolve();
-  });
-  await rig.flush();
-}
-
-async function select(rig: Rig, element: HTMLSelectElement, value: string): Promise<void> {
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(element, value);
-    element.dispatchEvent(new Event("change", { bubbles: true }));
     await Promise.resolve();
   });
   await rig.flush();
@@ -115,7 +91,7 @@ describe("the Automations surface", () => {
     expect(hook.textContent).toContain("last 24 h: 3 accepted, 2 filtered");
     expect(hook.textContent).toContain("/action = opened");
     expect(hook.querySelector("[data-attention=paused_budget]")).not.toBeNull();
-    await press(rig, hook, /review/i);
+    await clickIn(rig, hook, /review/i);
     expect(approvals).toBe(1);
     expect(rig.container.querySelectorAll(".auto-notifications li").length).toBe(2);
     expect(text(rig)).toContain("1 unread");
@@ -128,13 +104,13 @@ describe("the Automations surface", () => {
       DeleteRoutine: { ok: false, error: { code: "CONFLICT_REVISION", message: "moved", details: { routine_id: RTN, expected_revision: 3, current_revision: 5 } } },
     }));
     const row = within(rig, RTN);
-    await press(rig, row, "Pause");
-    await press(rig, row, "Run now");
+    await clickIn(rig, row, "Pause");
+    await clickIn(rig, row, "Run now");
     expect(commands(rig).map((command) => command.name)).toEqual(["PauseRoutine", "TriggerRoutineNow"]);
-    await press(rig, row, "Delete");
+    await clickIn(rig, row, "Delete");
     expect(text(rig)).toContain("revision 5, expected 3");
     // A plain refusal names its code.
-    await press(rig, within(rig, HOOK), "Delete");
+    await clickIn(rig, within(rig, HOOK), "Delete");
   });
 
   it("creates a routine from the form and resets it; the draft is checked before it is sent", async () => {
@@ -181,16 +157,16 @@ describe("the Automations surface", () => {
     await type(rig, "Title", "Hooked");
     await type(rig, "What should the teammate do", "p");
     const kind = [...rig.container.querySelectorAll<HTMLSelectElement>("form.auto-new select")][0] as HTMLSelectElement;
-    await select(rig, kind, "webhook");
+    await choose(rig, kind, "webhook");
     expect(text(rig)).toContain("A webhook has no schedule");
     await submit(rig, rig.container.querySelector("form.auto-new") as HTMLFormElement);
     expect(rig.container.querySelector(".hook-secret")?.textContent).toBe(SECRET);
     const region = rig.container.querySelector<HTMLElement>(".secret-once") as HTMLElement;
-    await press(rig, region, "Copy signing secret");
-    await press(rig, region, "Copy endpoint path");
+    await clickIn(rig, region, "Copy signing secret");
+    await clickIn(rig, region, "Copy endpoint path");
     expect(copied).toEqual([SECRET, "/v1/hooks/hk_x"]);
     expect(text(rig)).toContain("Endpoint path copied.");
-    await press(rig, region, "Dismiss");
+    await clickIn(rig, region, "Dismiss");
     expect(text(rig)).not.toContain(SECRET);
     expect(rig.container.querySelector(".secret-once")).toBeNull();
   });
@@ -204,7 +180,7 @@ describe("the Automations surface", () => {
     await type(rig, "What should the teammate do", "p");
     await type(rig, "Schedule or event", "1h");
     await submit(rig, rig.container.querySelector("form.auto-new") as HTMLFormElement);
-    await press(rig, rig.container.querySelector<HTMLElement>(".secret-once") as HTMLElement, "Copy signing secret");
+    await clickIn(rig, rig.container.querySelector<HTMLElement>(".secret-once") as HTMLElement, "Copy signing secret");
     expect(text(rig)).toContain("Could not copy");
   });
 
@@ -213,9 +189,9 @@ describe("the Automations surface", () => {
       RotateRoutineHook: { ok: true, result: { id: HOOK, hook: { path: "/v1/hooks/hk_x" }, secret: SECRET } },
     }));
     const row = within(rig, HOOK);
-    await press(rig, row, "Rotate secret");
+    await clickIn(rig, row, "Rotate secret");
     expect(commands(rig).some((command) => command.name === "RotateRoutineHook")).toBe(false);
-    await press(rig, within(rig, HOOK), "Confirm");
+    await clickIn(rig, within(rig, HOOK), "Confirm");
     expect(commands(rig).find((command) => command.name === "RotateRoutineHook")?.params).toMatchObject({ routine_id: HOOK });
     expect(rig.container.querySelector(".secret-once")?.getAttribute("data-kind")).toBe("rotated");
     expect(text(rig)).toContain("The previous secret stopped working at once.");
@@ -223,7 +199,7 @@ describe("the Automations surface", () => {
 
   it("edits a routine as a full replacement under its revision", async () => {
     rig = await mount(<Automations workspaceId="ws_1" />, bridge());
-    await press(rig, within(rig, RTN), "Edit");
+    await clickIn(rig, within(rig, RTN), "Edit");
     const edit = rig.container.querySelector<HTMLElement>("[data-edit]") as HTMLElement;
     const title = edit.querySelector("input[aria-label='Title']") as HTMLInputElement;
     await act(async () => {
@@ -245,7 +221,7 @@ describe("the Automations surface", () => {
       }),
       "routines.list": () => ({ items: [served] }),
     });
-    await press(rig, within(rig, RTN), "Edit");
+    await clickIn(rig, within(rig, RTN), "Edit");
     const edit = (): HTMLElement => rig.container.querySelector<HTMLElement>("[data-edit]") as HTMLElement;
     const title = edit().querySelector("input[aria-label='Title']") as HTMLInputElement;
     await act(async () => {
@@ -258,7 +234,7 @@ describe("the Automations surface", () => {
     expect((edit().querySelector("input[aria-label='Title']") as HTMLInputElement).value).toBe("Mine");
     expect(edit().querySelector<HTMLButtonElement>("button[type=submit]")?.disabled).toBe(true);
     served = routine(RTN, { revision: 4, objective_template: { title: "Routine A", prompt: "changed elsewhere" } });
-    await press(rig, edit(), "Reload and review");
+    await clickIn(rig, edit(), "Reload and review");
     expect(edit().querySelector(".conflict")?.textContent).toContain("title");
     expect(edit().querySelector<HTMLButtonElement>("button[type=submit]")?.disabled).toBe(false);
     rig.answer("routines.command", { ok: true, result: {} });
@@ -271,12 +247,12 @@ describe("the Automations surface", () => {
     rig = await mount(<Automations workspaceId="ws_1" />, bridge({
       UpdateRoutine: { ok: false, error: { code: "AUTOMATION_TIMEZONE_UNKNOWN", message: "unknown zone", details: { timezone: "Mars/Base" } } },
     }));
-    await press(rig, within(rig, RTN), "Edit");
+    await clickIn(rig, within(rig, RTN), "Edit");
     let edit = rig.container.querySelector<HTMLElement>("[data-edit]") as HTMLElement;
     await submit(rig, edit.querySelector("form") as HTMLFormElement);
     edit = rig.container.querySelector<HTMLElement>("[data-edit]") as HTMLElement;
     expect(edit.textContent).toContain("Mars/Base");
-    await press(rig, edit, "Cancel");
+    await clickIn(rig, edit, "Cancel");
     expect(rig.container.querySelector("[data-edit]")).toBeNull();
   });
 
@@ -284,12 +260,12 @@ describe("the Automations surface", () => {
     rig = await mount(<Automations workspaceId="ws_1" />, bridge({
       DryRunRoutine: { ok: true, result: { valid: true, trigger: { kind: "webhook" }, next_windows: ["2026-09-24T08:00:00Z"], filter: { evaluated: true, matched: true, matched_group: 0 }, instruction: { bytes: 12, blocks: [{ type: "untrusted_data", text: "payload", source: "hook" }, { type: "text", text: "do it" }] }, script: { static_calls: 1, estimated_agent_calls: 5, max_agent_calls: 9, needs_approval: true, approval_threshold_calls: 4, steps: [] } } },
     }));
-    await press(rig, within(rig, RTN), "Dry run");
+    await clickIn(rig, within(rig, RTN), "Dry run");
     expect(commands(rig)[0]?.name).toBe("DryRunRoutine");
     expect(within(rig, RTN).querySelector(".auto-dry-result")?.getAttribute("data-valid")).toBe("true");
     expect(within(rig, RTN).textContent).toContain("Nothing was started");
     // The webhook routine waits for a sample.
-    await press(rig, within(rig, HOOK), /^Dry run$/);
+    await clickIn(rig, within(rig, HOOK), /^Dry run$/);
     const hook = within(rig, HOOK);
     expect(commands(rig).length).toBe(1);
     const sample = hook.querySelector("textarea.auto-sample") as HTMLTextAreaElement;
@@ -301,18 +277,18 @@ describe("the Automations surface", () => {
       });
     };
     await setText("{not json");
-    await press(rig, within(rig, HOOK), "Run the dry run");
+    await clickIn(rig, within(rig, HOOK), "Run the dry run");
     expect(commands(rig).length).toBe(1);
     expect(within(rig, HOOK).querySelector(".auto-dry [role=alert]")?.textContent).toContain("VALIDATION_SCHEMA");
     await setText('{"action":"opened"}');
-    await press(rig, within(rig, HOOK), "Run the dry run");
+    await clickIn(rig, within(rig, HOOK), "Run the dry run");
     const body = within(rig, HOOK);
     expect(commands(rig)[1]?.params).toMatchObject({ routine_id: HOOK });
     expect(body.querySelector(".auto-dry-filter")?.getAttribute("data-verdict")).toBe("passes");
     expect(body.textContent).toContain("Untrusted data from hook");
     expect(body.textContent).toContain("Needs approval: more than 4 calls");
     // A second press closes the panel.
-    await press(rig, within(rig, HOOK), /^Dry run$/);
+    await clickIn(rig, within(rig, HOOK), /^Dry run$/);
     expect(within(rig, HOOK).querySelector(".auto-dry-result")).toBeNull();
   });
 
@@ -320,7 +296,7 @@ describe("the Automations surface", () => {
     rig = await mount(<Automations workspaceId="ws_1" />, bridge({
       DryRunRoutine: { ok: false, error: { code: "RATE_LIMITED", message: "slow down" } },
     }));
-    await press(rig, within(rig, RTN), "Dry run");
+    await clickIn(rig, within(rig, RTN), "Dry run");
     expect(within(rig, RTN).textContent).toContain("Too many dry runs this minute");
   });
 
@@ -329,22 +305,22 @@ describe("the Automations surface", () => {
     await type(rig, "Title", "T");
     await type(rig, "What should the teammate do", "p");
     const create = rig.container.querySelector("form.auto-new") as HTMLFormElement;
-    await select(rig, create.querySelector("select") as HTMLSelectElement, "webhook");
+    await choose(rig, create.querySelector("select") as HTMLSelectElement, "webhook");
     const form = (): HTMLFormElement => rig.container.querySelector("form.auto-new") as HTMLFormElement;
-    await press(rig, form(), "Add group");
-    await press(rig, form(), "Add condition");
-    await press(rig, form(), "Add group");
+    await clickIn(rig, form(), "Add group");
+    await clickIn(rig, form(), "Add condition");
+    await clickIn(rig, form(), "Add group");
     expect(form().querySelectorAll(".auto-filter-group").length).toBe(2);
-    await press(rig, form(), "Remove group 2");
+    await clickIn(rig, form(), "Remove group 2");
     expect(form().querySelectorAll(".auto-filter-group").length).toBe(1);
     // An empty condition is refused before anything is sent.
-    await press(rig, form(), "Dry run");
+    await clickIn(rig, form(), "Dry run");
     expect(rig.calls.filter((call) => call.channel === "routines.command").length).toBe(0);
     expect(rig.container.querySelector(".auto-dry [role=alert]")).not.toBeNull();
-    await press(rig, form(), "Remove condition 1.2");
+    await clickIn(rig, form(), "Remove condition 1.2");
     await type(rig, "JSON Pointer", "/action");
     await type(rig, "Value 1.1", "opened");
-    await press(rig, form(), "Dry run");
+    await clickIn(rig, form(), "Dry run");
     expect(commands(rig).length).toBe(1);
     expect(text(rig)).toContain("has problems");
     expect(text(rig)).toContain("BAD");

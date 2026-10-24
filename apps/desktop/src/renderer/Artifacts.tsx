@@ -88,6 +88,8 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
   const [channels, setChannels] = useState<readonly SearchChannel[]>(["artifacts", "threads", "knowledge", "evidence"]);
   const [results, setResults] = useState<SearchResults | null>(null);
   const [compareText, setCompareText] = useState<{ versionId: string; text: string } | null>(null);
+  // The version whose diff the user cleared; the diff against the parent is the default, so clearing must hide it.
+  const [diffHiddenFor, setDiffHiddenFor] = useState<string | null>(null);
   // An edit of a text source (CAP-003): saved as the artifact's next version, never in place.
   const [editing, setEditing] = useState<{ versionId: string; text: string } | null>(null);
 
@@ -267,7 +269,7 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
     }
   }, [state.selectedId, state.history, version, editing]);
 
-  const diff = version && other && state.preview?.text !== null && state.preview?.text !== undefined && compareText?.versionId === other.id
+  const diff = version && other && diffHiddenFor !== version.id && state.preview?.text !== null && state.preview?.text !== undefined && compareText?.versionId === other.id
     ? diffLines(compareText.text, state.preview.text)
     : null;
   // What the output tools made, shown from the text the preview already fetched.
@@ -388,7 +390,7 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
                       </small>
                     ) : null}
                     {candidate.id !== version.id ? (
-                      <button type="button" className="link" onClick={() => { dispatch({ type: "version.compare", versionId: candidate.id }); }}>
+                      <button type="button" className="link" onClick={() => { setDiffHiddenFor(null); dispatch({ type: "version.compare", versionId: candidate.id }); }}>
                         {t("compare")}
                       </button>
                     ) : null}
@@ -465,7 +467,7 @@ export function Artifacts({ workspaceId, onInspectRun }: ArtifactsProps): ReactE
                           </span>
                         ))}
                       </pre>
-                      <button type="button" onClick={() => { dispatch({ type: "version.compare", versionId: null }); setCompareText(null); }}>
+                      <button type="button" onClick={() => { dispatch({ type: "version.compare", versionId: null }); setCompareText(null); setDiffHiddenFor(version.id); }}>
                         {t("clear")}
                       </button>
                     </div>

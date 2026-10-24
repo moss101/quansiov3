@@ -1,12 +1,11 @@
 // @vitest-environment jsdom
 /** APP-005 on a page: the Work view over the real preload API, answering from a table of graph projections. */
 
-import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ApiError } from "../../src/client/server.js";
 import { Work } from "../../src/renderer/Work.js";
-import { click, mount, text, type, type Rig } from "./rig.js";
+import { choose, click, mount, text, type, type Rig } from "./rig.js";
 
 const WORKSPACE = "ws_01J8Z3K6F1N8VQ2X5W9Y0AAAAA";
 const OBJ = "wn_01J8Z3K6F1N8VQ2X5W9Y0AAAA0";
@@ -45,19 +44,6 @@ function wire(revision: number, extra: Record<string, unknown> = {}): Record<str
 }
 
 const conflictError = new ApiError(409, { code: "CONFLICT_REVISION", message: "moved", correlation_id: "c", retryable: false });
-
-async function chooseSelect(rig: Rig, selector: string, value: string): Promise<void> {
-  const select = rig.container.querySelector<HTMLSelectElement>(selector);
-  if (!select) {
-    throw new Error(`no select ${selector}`);
-  }
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(select, value);
-    select.dispatchEvent(new Event("change", { bubbles: true }));
-    await Promise.resolve();
-  });
-  await rig.flush();
-}
 
 let rig: Rig;
 afterEach(async () => {
@@ -140,7 +126,7 @@ describe("the Work view", () => {
     await click(rig, "Ship");
     const add = [...rig.container.querySelectorAll<HTMLButtonElement>(".add-edge button")][0];
     expect(add?.disabled).toBe(true);
-    await chooseSelect(rig, ".add-edge select", A);
+    await choose(rig, ".add-edge select", A);
     await click(rig, "Add dependency");
     expect(rig.container.querySelector(".draft")?.textContent).toContain(`${OBJ} depends_on ${A}`);
   });
