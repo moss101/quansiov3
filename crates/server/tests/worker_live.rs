@@ -58,6 +58,8 @@ d.addEventListener('mouseup',function(e){if(down&&Math.abs(e.clientX-down[0])>50
 d.addEventListener('click',function(e){if(e.shiftKey)ping('/shift-click');});\
 var i=document.getElementById('i');i.focus();\
 document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='a')ping('/select-all');});\
+ping('/ua-'+encodeURIComponent(navigator.userAgent)+'-'+innerWidth+'x'+innerHeight);\
+['mousedown','mouseup','dragstart','selectstart','pointercancel'].forEach(function(t){document.addEventListener(t,function(e){ping('/ev-'+t+'-'+Math.round(e.clientX||0)+'-'+Math.round(e.clientY||0));},true);});\
 </script></body></html>";
 const PAGE: &str = "<html><head><title>Shop</title></head><body>\
 <button onclick=\"var x=new XMLHttpRequest();x.open('GET','/hit',false);x.send();\">Count</button>\

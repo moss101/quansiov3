@@ -775,6 +775,22 @@ async fn a_certificate_error_waits_for_a_user_and_agent_input_cannot_dismiss_it(
     );
 }
 
+/// What a failing CI run needs to see: the browser, where the tab is, its title and text, and what the
+/// driver observed (certificate records, console, permissions).
+async fn page_state(browser: &Browser, driver: &BrowserDriver, tab: &str) -> String {
+    let agent = evaluate(browser, tab, "navigator.userAgent").await;
+    let href = evaluate(browser, tab, "location.href").await;
+    let title = evaluate(browser, tab, "document.title").await;
+    let body = evaluate(
+        browser,
+        tab,
+        "document.body ? document.body.innerText.slice(0, 300) : null",
+    )
+    .await;
+    let observed = observe(driver, 9000, tab).await;
+    format!("user agent {agent}; href {href}; title {title}; body {body}; observation {observed}")
+}
+
 #[tokio::test]
 async fn a_user_can_continue_and_the_certificate_hash_is_recorded() {
     let Some((browser, tls, dir)) = tls_fixture().await else {
@@ -843,14 +859,22 @@ async fn a_user_can_continue_and_the_certificate_hash_is_recorded() {
             .is_some_and(|text| text.contains("secure body"))
     })
     .await;
-    assert!(loaded, "the page did not load after the user continued");
+    assert!(
+        loaded,
+        "the page did not load after the user continued: {}",
+        page_state(&browser, &driver, &tab).await
+    );
 
     // Chrome reveals the certificate only after a continue; the record binds the decision to its hash.
     let hashed = eventually(Duration::from_secs(5), || async {
         observe(&driver, 701, &tab).await["certificates"][0]["certificate_sha256"].is_string()
     })
     .await;
-    assert!(hashed, "the certificate's hash was never recorded");
+    assert!(
+        hashed,
+        "the certificate's hash was never recorded: {}",
+        page_state(&browser, &driver, &tab).await
+    );
     let record = observe(&driver, 702, &tab).await["certificates"][0].clone();
     assert_eq!(record["status"], "continued");
     assert_eq!(record["decided_by"], "usr_01J8Z3K6F1N8VQ2X5W9Y0FFFFF");
