@@ -130,12 +130,22 @@ def coverage_env(target: Path, branch: bool) -> Dict[str, str]:
     return env
 
 
+def compile_env(env: Dict[str, str]) -> Dict[str, str]:
+    """The environment for compiling: rustc writes no profile.
+
+    rustc loads the instrumented proc macros while compiling. With continuous mode (`%c`) in
+    LLVM_PROFILE_FILE their counters are mapped into a profile file that can be shorter than the
+    mapping, and rustc dies with SIGBUS on the Linux runner.
+    """
+    return {**env, "LLVM_PROFILE_FILE": os.devnull}
+
+
 def test_executables(env: Dict[str, str]) -> List[str]:
     """Every test binary and workspace binary `cargo test` builds (the objects to map)."""
     listing = subprocess.run(
         ["cargo", "test", "--workspace", "--no-run", "--message-format=json"],
         cwd=ROOT,
-        env=env,
+        env=compile_env(env),
         capture_output=True,
         text=True,
         check=True,
@@ -210,6 +220,7 @@ def measure_rust(out: Path, target: Path, branch: bool, keep: bool, export_only:
         if profraw.exists():
             shutil.rmtree(profraw)
         profraw.mkdir(parents=True)
+        subprocess.run(["cargo", "test", "--workspace", "--no-run"], cwd=ROOT, env=compile_env(env))
         tests_exit = subprocess.run(
             ["cargo", "test", "--workspace", "--no-fail-fast"], cwd=ROOT, env=env
         ).returncode
