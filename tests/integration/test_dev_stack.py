@@ -18,20 +18,20 @@ documented dev default from `config/dev.yaml`:
   QUANSIO_TEST_COMPOSE_PROJECT        compose project name            (quansio-dev-test)
   QUANSIO_TEST_COMPOSE_FILE           compose file path               (infra/compose/compose.yaml)
   QUANSIO_TEST_POSTGRES_HOST          dev Postgres host               (127.0.0.1)
-  QUANSIO_TEST_POSTGRES_PORT          dev Postgres port               (56440)
+  QUANSIO_TEST_POSTGRES_PORT          dev Postgres port               (26440)
   QUANSIO_TEST_POSTGRES_USER          dev database user               (quansio)
   QUANSIO_TEST_POSTGRES_PASSWORD      dev-only password               (quansio-dev-only)
   QUANSIO_TEST_POSTGRES_DB            dev database name               (quansio)
   QUANSIO_TEST_NATS_HOST              NATS host                       (127.0.0.1)
-  QUANSIO_TEST_NATS_PORT              NATS client port                (55230)
-  QUANSIO_TEST_NATS_MONITOR_PORT      NATS monitoring port            (55231)
+  QUANSIO_TEST_NATS_PORT              NATS client port                (25230)
+  QUANSIO_TEST_NATS_MONITOR_PORT      NATS monitoring port            (25231)
   QUANSIO_TEST_MINIO_HOST             MinIO S3 API host               (127.0.0.1)
-  QUANSIO_TEST_MINIO_PORT             MinIO S3 API port               (59110)
+  QUANSIO_TEST_MINIO_PORT             MinIO S3 API port               (29110)
   QUANSIO_TEST_MINIO_ROOT_USER        MinIO root user                 (quansio-dev)
   QUANSIO_TEST_MINIO_ROOT_PASSWORD    dev-only MinIO password         (quansio-dev-only)
   QUANSIO_TEST_MINIO_BUCKET           dev object-storage bucket       (quansio-dev)
   QUANSIO_TEST_STUB_PROVIDER_HOST     stub model provider host        (127.0.0.1)
-  QUANSIO_TEST_STUB_PROVIDER_PORT     stub model provider port        (59120)
+  QUANSIO_TEST_STUB_PROVIDER_PORT     stub model provider port        (29120)
 """
 
 from __future__ import annotations
@@ -95,22 +95,22 @@ def _port(name: str, default: int, span: int = 1) -> str:
 # QUANSIO_TEST_* values to point the suite at a different stack.
 COMPOSE_PROJECT = os.environ.get("QUANSIO_TEST_COMPOSE_PROJECT", "quansio-dev-test")
 POSTGRES_HOST = os.environ.get("QUANSIO_TEST_POSTGRES_HOST", "127.0.0.1")
-POSTGRES_PORT = _port("QUANSIO_TEST_POSTGRES_PORT", 56440)
+POSTGRES_PORT = _port("QUANSIO_TEST_POSTGRES_PORT", 26440)
 POSTGRES_USER = os.environ.get("QUANSIO_TEST_POSTGRES_USER", "quansio")
 POSTGRES_PASSWORD = os.environ.get("QUANSIO_TEST_POSTGRES_PASSWORD", "quansio-dev-only")
 POSTGRES_DB = os.environ.get("QUANSIO_TEST_POSTGRES_DB", "quansio")
 NATS_HOST = os.environ.get("QUANSIO_TEST_NATS_HOST", "127.0.0.1")
-NATS_PORT = _port("QUANSIO_TEST_NATS_PORT", 55230)
-NATS_MONITOR_PORT = _port("QUANSIO_TEST_NATS_MONITOR_PORT", 55231)
+NATS_PORT = _port("QUANSIO_TEST_NATS_PORT", 25230)
+NATS_MONITOR_PORT = _port("QUANSIO_TEST_NATS_MONITOR_PORT", 25231)
 MINIO_HOST = os.environ.get("QUANSIO_TEST_MINIO_HOST", "127.0.0.1")
-MINIO_PORT = _port("QUANSIO_TEST_MINIO_PORT", 59110, span=2)
+MINIO_PORT = _port("QUANSIO_TEST_MINIO_PORT", 29110, span=2)
 MINIO_ROOT_USER = os.environ.get("QUANSIO_TEST_MINIO_ROOT_USER", "quansio-dev")
 MINIO_ROOT_PASSWORD = os.environ.get(
     "QUANSIO_TEST_MINIO_ROOT_PASSWORD", "quansio-dev-only"
 )
 MINIO_BUCKET = os.environ.get("QUANSIO_TEST_MINIO_BUCKET", "quansio-dev")
 STUB_PROVIDER_HOST = os.environ.get("QUANSIO_TEST_STUB_PROVIDER_HOST", "127.0.0.1")
-STUB_PROVIDER_PORT = _port("QUANSIO_TEST_STUB_PROVIDER_PORT", 59120)
+STUB_PROVIDER_PORT = _port("QUANSIO_TEST_STUB_PROVIDER_PORT", 29120)
 
 TENANT_ID = "tn_01J8Z3K6F1DEV0000000000TEN"
 WORKSPACE_ID = "ws_01J8Z3K6F1DEV0000000000WKS"

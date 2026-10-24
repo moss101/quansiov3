@@ -1483,10 +1483,17 @@ async fn a_person_s_right_click_double_click_drag_and_shortcut_reach_the_page_an
     ] {
         let (status, body) = input(n, params).await;
         assert_eq!(status, 200, "{what}: {body}");
-        eventually(&format!("the page saw {what}"), || async {
-            site.hits(path) >= 1
-        })
-        .await;
+        for _ in 0..100 {
+            if site.hits(path) >= 1 {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+        assert!(
+            site.hits(path) >= 1,
+            "the page saw {what}: it received {:?}",
+            site.hits.lock().unwrap()
+        );
     }
     // A plain click does not look like a shift-click, and a drag is not a click: the page told them apart.
     assert_eq!(site.hits("/shift-click"), 1);
