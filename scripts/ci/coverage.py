@@ -432,7 +432,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     rust = commands.add_parser("rust")
     rust.add_argument("--out", type=Path, required=True)
-    rust.add_argument("--target-dir", type=Path, default=DEFAULT_TARGET)
+    # Absolute: the tests run in their crates' directories, where a relative profile path names another place.
+    rust.add_argument("--target-dir", type=lambda value: (ROOT / value).resolve(), default=DEFAULT_TARGET)
     rust.add_argument(
         "--branch",
         action="store_true",
