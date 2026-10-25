@@ -21,8 +21,8 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
 use common::{
-    blocked, driver, evaluate, eventually, observe, open_page, ref_named, run, Browser, Route,
-    Site, TlsSite, SESSION,
+    blocked, call, driver, evaluate, eventually, observe, open_page, ref_named, run, Browser,
+    Route, Site, TlsSite, SESSION,
 };
 use quansio_machine::control::browser::{Decision, DecisionKind, DecisionReceipt};
 use quansio_qworkerd::browser::BrowserDriver;
@@ -775,6 +775,59 @@ async fn a_certificate_error_waits_for_a_user_and_agent_input_cannot_dismiss_it(
     );
 }
 
+/// What a failing CI run needs to see, gathered without ever panicking or waiting long: the browser's
+/// version, the open tabs, what this tab answers to a script, and what the driver observed.
+async fn page_state(browser: &Browser, driver: &BrowserDriver, tab: &str) -> String {
+    use quansio_qworkerd::browser::cdp;
+    let bounded = Duration::from_secs(5);
+    let version = tokio::time::timeout(bounded, async {
+        cdp::pages(browser.port).await.map(|pages| {
+            pages
+                .iter()
+                .map(|page| format!("{} {:?} {:?}", page.id, page.url, page.title))
+                .collect::<Vec<_>>()
+        })
+    })
+    .await;
+    let mut script = Vec::new();
+    for expression in [
+        "navigator.userAgent",
+        "location.href",
+        "document.readyState",
+        "document.body ? document.body.innerText.slice(0, 300) : null",
+    ] {
+        let answer = tokio::time::timeout(bounded, async {
+            let pages = cdp::pages(browser.port).await.map_err(|e| e.to_string())?;
+            let page = pages
+                .into_iter()
+                .find(|page| page.id == tab)
+                .ok_or("the tab is not open")?;
+            let connection = cdp::connect(page).await.map_err(|e| e.to_string())?;
+            connection
+                .call(
+                    "Runtime.evaluate",
+                    json!({ "expression": expression, "returnByValue": true }),
+                )
+                .await
+                .map(|result| result["result"]["value"].clone())
+                .map_err(|e| e.to_string())
+        })
+        .await;
+        script.push(format!("{expression} => {answer:?}"));
+    }
+    let observed = tokio::time::timeout(bounded, async {
+        run(
+            driver,
+            &call(9000),
+            "browser.observe",
+            json!({ "tab_id": tab }),
+        )
+        .await
+    })
+    .await;
+    format!("tabs {version:?}; script {script:?}; observation {observed:?}")
+}
+
 #[tokio::test]
 async fn a_user_can_continue_and_the_certificate_hash_is_recorded() {
     let Some((browser, tls, dir)) = tls_fixture().await else {
@@ -837,20 +890,28 @@ async fn a_user_can_continue_and_the_certificate_hash_is_recorded() {
         .await
         .expect("resolve");
     assert_eq!(resolved.output["decision"], "allow");
-    let loaded = eventually(Duration::from_secs(30), || async {
+    let loaded = eventually(Duration::from_secs(10), || async {
         observe(&driver, 700, &tab).await["text"]
             .as_str()
             .is_some_and(|text| text.contains("secure body"))
     })
     .await;
-    assert!(loaded, "the page did not load after the user continued");
+    assert!(
+        loaded,
+        "the page did not load after the user continued: {}",
+        page_state(&browser, &driver, &tab).await
+    );
 
     // Chrome reveals the certificate only after a continue; the record binds the decision to its hash.
     let hashed = eventually(Duration::from_secs(5), || async {
         observe(&driver, 701, &tab).await["certificates"][0]["certificate_sha256"].is_string()
     })
     .await;
-    assert!(hashed, "the certificate's hash was never recorded");
+    assert!(
+        hashed,
+        "the certificate's hash was never recorded: {}",
+        page_state(&browser, &driver, &tab).await
+    );
     let record = observe(&driver, 702, &tab).await["certificates"][0].clone();
     assert_eq!(record["status"], "continued");
     assert_eq!(record["decided_by"], "usr_01J8Z3K6F1N8VQ2X5W9Y0FFFFF");

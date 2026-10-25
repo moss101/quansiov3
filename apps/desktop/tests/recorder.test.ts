@@ -244,3 +244,7 @@ describe.skipIf(!AVAILABLE)("the real recorder process", () => {
     LONG,
   );
 });
+
+if (!AVAILABLE) {
+  it.skip(`BLOCKED_EXTERNAL: ${BINARY} is not built (swift build --package-path native/macos --product quansio-recorder)`, () => undefined);
+}

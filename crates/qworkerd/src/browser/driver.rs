@@ -1551,6 +1551,18 @@ fn follow_up(driver: &Arc<DriverInner>, tab: &Arc<Tab>, work: FollowUp) {
                     .await;
             });
         }
+        FollowUp::ContinueCertificate { event_id } => {
+            let tab = Arc::clone(tab);
+            tokio::spawn(async move {
+                let _ = tab
+                    .conn
+                    .call(
+                        "Security.handleCertificateError",
+                        json!({ "eventId": event_id, "action": "continue" }),
+                    )
+                    .await;
+            });
+        }
         FollowUp::CertificatePending { id } => {
             tokio::spawn(certificate_timeout(Arc::clone(driver), Arc::clone(tab), id));
         }
@@ -1562,12 +1574,14 @@ fn follow_up(driver: &Arc<DriverInner>, tab: &Arc<Tab>, work: FollowUp) {
         }
         FollowUp::CertificateObserved { origin, sha256 } => {
             let mut state = tab.state();
-            if let Some(record) = state.certificates.iter_mut().rev().find(|record| {
+            // Every continued error for this origin that has no hash yet: the decision and the browser's retry of the
+            // navigation after it (which the same decision covers) are about the one certificate now revealed.
+            for record in state.certificates.iter_mut().filter(|record| {
                 record.origin == origin
                     && record.status == CertificateStatus::Continued
                     && record.certificate_sha256.is_none()
             }) {
-                record.certificate_sha256 = Some(sha256);
+                record.certificate_sha256 = Some(sha256.clone());
             }
         }
         FollowUp::AttachmentPromised { url, filename } => {

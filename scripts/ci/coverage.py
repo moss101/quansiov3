@@ -30,6 +30,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -120,6 +121,14 @@ def continuous_mode_flags(platform: str = sys.platform) -> List[str]:
 
 def coverage_env(target: Path, branch: bool) -> Dict[str, str]:
     env = os.environ.copy()
+    # The database-backed suites report BLOCKED_EXTERNAL (and pass) without a database: the dev stack's, as the
+    # baseline pipeline passes it, so what they reach is measured.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from ci_summary import dev_database_url
+
+    database_url = dev_database_url(ROOT)
+    if database_url:
+        env["QUANSIO_TEST_POSTGRES_URL"] = database_url
     flags = ["-C instrument-coverage", *continuous_mode_flags()]
     if branch:
         env["RUSTC_BOOTSTRAP"] = "1"
@@ -164,31 +173,56 @@ def test_executables(env: Dict[str, str]) -> List[str]:
     return sorted(objects)
 
 
+# `llvm-cov` can crash on a file's branch mappings, and finding the files it crashes on takes a
+# run per halving. A bounded search keeps a slow one from holding the job: what is not reached
+# in the budget is reported as unreportable, as a crash is.
+EXPORT_BUDGET_SECONDS = 1200
+EXPORT_CALL_SECONDS = 300
+
+
 def export(
     llvm_cov: Path, profdata: Path, objects: Sequence[str], sources: Sequence[str]
 ) -> Optional[List[dict]]:
-    """Per-file summaries for `sources`, or None when `llvm-cov` crashes on them."""
+    """Per-file summaries for `sources`, or None when `llvm-cov` crashes or stalls on them."""
     command = [str(llvm_cov), "export", "-summary-only", f"--instr-profile={profdata}"]
     command += [str(objects[0])] + [f"--object={obj}" for obj in objects[1:]]
     command += ["--sources", *[str(ROOT / source) for source in sources]]
-    result = subprocess.run(command, capture_output=True, text=True)
+    started = time.monotonic()
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=EXPORT_CALL_SECONDS)
+    except subprocess.TimeoutExpired:
+        print(f"coverage: llvm-cov stalled on {len(sources)} files after {EXPORT_CALL_SECONDS} s", flush=True)
+        return None
+    print(
+        f"coverage: llvm-cov export of {len(sources)} files "
+        f"{'failed' if result.returncode else 'ok'} in {time.monotonic() - started:.0f} s",
+        flush=True,
+    )
     if result.returncode != 0:
         return None
     return json.loads(result.stdout)["data"][0]["files"]
 
 
 def export_bisecting(
-    llvm_cov: Path, profdata: Path, objects: Sequence[str], sources: Sequence[str]
+    llvm_cov: Path,
+    profdata: Path,
+    objects: Sequence[str],
+    sources: Sequence[str],
+    deadline: Optional[float] = None,
 ) -> Tuple[List[dict], List[str]]:
     """Export every file `llvm-cov` can, isolating the ones it crashes on."""
+    if deadline is None:
+        deadline = time.monotonic() + EXPORT_BUDGET_SECONDS
+    if time.monotonic() > deadline:
+        return [], list(sources)
     files = export(llvm_cov, profdata, objects, sources)
     if files is not None:
         return files, []
     if len(sources) == 1:
         return [], list(sources)
     middle = len(sources) // 2
-    left, left_failed = export_bisecting(llvm_cov, profdata, objects, sources[:middle])
-    right, right_failed = export_bisecting(llvm_cov, profdata, objects, sources[middle:])
+    left, left_failed = export_bisecting(llvm_cov, profdata, objects, sources[:middle], deadline)
+    right, right_failed = export_bisecting(llvm_cov, profdata, objects, sources[middle:], deadline)
     return left + right, left_failed + right_failed
 
 
@@ -432,7 +466,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     rust = commands.add_parser("rust")
     rust.add_argument("--out", type=Path, required=True)
-    rust.add_argument("--target-dir", type=Path, default=DEFAULT_TARGET)
+    # Absolute: the tests run in their crates' directories, where a relative profile path names another place.
+    rust.add_argument("--target-dir", type=lambda value: (ROOT / value).resolve(), default=DEFAULT_TARGET)
     rust.add_argument(
         "--branch",
         action="store_true",
@@ -462,7 +497,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import pycoverage
 
-        return pycoverage.main(["--out", str(args.out)])
+        # pycoverage changes into python/ to run the tests: a relative report path must name the caller's place.
+        return pycoverage.main(["--out", str(args.out.resolve())])
     report = check(
         json.loads(args.rust.read_text()),
         json.loads(args.python.read_text()) if args.python else None,

@@ -48,7 +48,7 @@ const LIVE: &str = "<html><body><div id=\"c\">0</div><script>var n=0;function t(
 const KEYS: &str = "<html><body style=\"margin:0;height:6000px\"><input id=\"i\" autofocus style=\"width:200px\" onkeydown=\"var x=new XMLHttpRequest();x.open('GET','/key-'+event.key,false);x.send();\"><script>window.addEventListener('scroll',function(){var x=new XMLHttpRequest();x.open('GET','/scrolled',false);x.send();});document.getElementById('i').focus();</script></body></html>";
 /// A page that reports, by request, what the pointer and keyboard did: the button of a click, a double click, a drag, a
 /// click with Shift held, and a shortcut.
-const POINTER: &str = "<html><body style=\"margin:0\"><div id=\"d\" style=\"width:600px;height:400px;background:#ddd\"></div><input id=\"i\" style=\"position:absolute;top:420px\"><script>\
+const POINTER: &str = "<html><body style=\"margin:0\"><div id=\"d\" style=\"width:600px;height:400px;background:#ddd;user-select:none\"></div><input id=\"i\" style=\"position:absolute;top:420px\"><script>\
 function ping(p){var x=new XMLHttpRequest();x.open('GET',p,false);x.send();}\
 var d=document.getElementById('d'),down=null;\
 d.addEventListener('contextmenu',function(e){e.preventDefault();ping('/ctx');});\

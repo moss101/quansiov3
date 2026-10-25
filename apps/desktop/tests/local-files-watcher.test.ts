@@ -306,7 +306,9 @@ describe("identity and failure", () => {
     const dir = join(r.base, "project");
     mkdirSync(dir, { recursive: true });
     watch(r, A, dir);
-    rmSync(dir, { recursive: true });
+    // The old directory is moved aside, not removed: a Linux file system hands a freed inode number straight to the next
+    // directory made, which would leave the replacement indistinguishable by `(device, inode)`.
+    renameSync(dir, join(r.base, "project-old"));
     mkdirSync(dir);
     r.clock.advance(300 * 10);
     expect(r.delivered.map((entry) => entry.delivery)).toEqual([expect.objectContaining({ dropped: "directory_replaced" })]);
