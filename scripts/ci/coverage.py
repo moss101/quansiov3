@@ -30,6 +30,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -164,31 +165,56 @@ def test_executables(env: Dict[str, str]) -> List[str]:
     return sorted(objects)
 
 
+# `llvm-cov` can crash on a file's branch mappings, and finding the files it crashes on takes a
+# run per halving. A bounded search keeps a slow one from holding the job: what is not reached
+# in the budget is reported as unreportable, as a crash is.
+EXPORT_BUDGET_SECONDS = 1200
+EXPORT_CALL_SECONDS = 300
+
+
 def export(
     llvm_cov: Path, profdata: Path, objects: Sequence[str], sources: Sequence[str]
 ) -> Optional[List[dict]]:
-    """Per-file summaries for `sources`, or None when `llvm-cov` crashes on them."""
+    """Per-file summaries for `sources`, or None when `llvm-cov` crashes or stalls on them."""
     command = [str(llvm_cov), "export", "-summary-only", f"--instr-profile={profdata}"]
     command += [str(objects[0])] + [f"--object={obj}" for obj in objects[1:]]
     command += ["--sources", *[str(ROOT / source) for source in sources]]
-    result = subprocess.run(command, capture_output=True, text=True)
+    started = time.monotonic()
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=EXPORT_CALL_SECONDS)
+    except subprocess.TimeoutExpired:
+        print(f"coverage: llvm-cov stalled on {len(sources)} files after {EXPORT_CALL_SECONDS} s", flush=True)
+        return None
+    print(
+        f"coverage: llvm-cov export of {len(sources)} files "
+        f"{'failed' if result.returncode else 'ok'} in {time.monotonic() - started:.0f} s",
+        flush=True,
+    )
     if result.returncode != 0:
         return None
     return json.loads(result.stdout)["data"][0]["files"]
 
 
 def export_bisecting(
-    llvm_cov: Path, profdata: Path, objects: Sequence[str], sources: Sequence[str]
+    llvm_cov: Path,
+    profdata: Path,
+    objects: Sequence[str],
+    sources: Sequence[str],
+    deadline: Optional[float] = None,
 ) -> Tuple[List[dict], List[str]]:
     """Export every file `llvm-cov` can, isolating the ones it crashes on."""
+    if deadline is None:
+        deadline = time.monotonic() + EXPORT_BUDGET_SECONDS
+    if time.monotonic() > deadline:
+        return [], list(sources)
     files = export(llvm_cov, profdata, objects, sources)
     if files is not None:
         return files, []
     if len(sources) == 1:
         return [], list(sources)
     middle = len(sources) // 2
-    left, left_failed = export_bisecting(llvm_cov, profdata, objects, sources[:middle])
-    right, right_failed = export_bisecting(llvm_cov, profdata, objects, sources[middle:])
+    left, left_failed = export_bisecting(llvm_cov, profdata, objects, sources[:middle], deadline)
+    right, right_failed = export_bisecting(llvm_cov, profdata, objects, sources[middle:], deadline)
     return left + right, left_failed + right_failed
 
 
