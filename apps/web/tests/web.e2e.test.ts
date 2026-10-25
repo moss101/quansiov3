@@ -277,7 +277,20 @@ describe.skipIf(blocked !== null)("web E2E against quansio-server", () => {
     const approver = session(APPROVER).client();
     expect(decide("approve", { ...previewed, digest: "0".repeat(64) }, previewed)).toMatchObject({ ok: false, code: "APPROVAL_SUPERSEDED" });
     expect((await refusal(approver.invoke("ApproveEffect", { approval_request_id: previewed.id, params_digest: "0".repeat(64) }))).code).toBe("APPROVAL_SUPERSEDED");
-    const granted = await approver.invoke<{ params_digest: string }>(decision.command, decision.params);
+    // The request is stored a moment before the run is parked on it; a grant that lands in that gap is answered
+    // CONFLICT_STATE (the run is still RUNNING) and is the same grant sent again once the run waits.
+    const grantedBy = Date.now() + 15_000;
+    let granted: { params_digest: string } | undefined;
+    while (granted === undefined) {
+      try {
+        granted = await approver.invoke<{ params_digest: string }>(decision.command, decision.params);
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.code !== "CONFLICT_STATE" || Date.now() > grantedBy) {
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    }
     expect(granted.params_digest).toBe(previewed.digest);
     expect((await load()).status).toBe("granted");
     // The released turn runs after the grant is accepted and consumes the receipt.
