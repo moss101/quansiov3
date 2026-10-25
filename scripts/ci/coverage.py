@@ -489,7 +489,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import pycoverage
 
-        return pycoverage.main(["--out", str(args.out)])
+        # pycoverage changes into python/ to run the tests: a relative report path must name the caller's place.
+        return pycoverage.main(["--out", str(args.out.resolve())])
     report = check(
         json.loads(args.rust.read_text()),
         json.loads(args.python.read_text()) if args.python else None,
