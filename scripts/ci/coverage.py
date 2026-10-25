@@ -121,6 +121,14 @@ def continuous_mode_flags(platform: str = sys.platform) -> List[str]:
 
 def coverage_env(target: Path, branch: bool) -> Dict[str, str]:
     env = os.environ.copy()
+    # The database-backed suites report BLOCKED_EXTERNAL (and pass) without a database: the dev stack's, as the
+    # baseline pipeline passes it, so what they reach is measured.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from ci_summary import dev_database_url
+
+    database_url = dev_database_url(ROOT)
+    if database_url:
+        env["QUANSIO_TEST_POSTGRES_URL"] = database_url
     flags = ["-C instrument-coverage", *continuous_mode_flags()]
     if branch:
         env["RUSTC_BOOTSTRAP"] = "1"
