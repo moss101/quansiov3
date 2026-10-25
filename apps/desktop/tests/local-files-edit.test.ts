@@ -309,6 +309,9 @@ describe("saveWithBaseline and readForEdit directly", () => {
   it("compares size and modification time, and never writes to a target that is a directory", () => {
     const dir = scratch();
     const path = put(dir, "f.txt", "hello");
+    // A file system stamps times at its own granularity (a Linux one can use whole kernel ticks), so a write made straight
+    // after the file was created can carry the same stamp. The baseline is taken from a file that is plainly older.
+    utimesSync(path, new Date(1_000_000_000_000), new Date(1_000_000_000_000));
     const read = readForEdit(path, 100);
     if (!read.ok) {
       throw new Error("not readable");

@@ -50,8 +50,16 @@ const COOKIES: readonly FixtureCookie[] = [
 
 let fixture: Fixture | null = null;
 let missing = false;
+let foreign = false;
 
 beforeAll(async () => {
+  // The reader decrypts with macOS Safe Storage's key (PBKDF2, 1003 rounds over the keychain's password). Chrome on another
+  // platform encrypts with its own key (1 round over "peanuts" with the basic password store), so a profile it wrote is
+  // not one this reader is meant to open: the real-Chrome cookie tests are for the macOS host.
+  if (process.platform !== "darwin") {
+    foreign = true;
+    return;
+  }
   if (chromePath() === null) {
     missing = true;
     return;
@@ -72,7 +80,8 @@ afterEach(() => {
 
 function withChrome(): Fixture | null {
   if (fixture === null) {
-    console.log(`BLOCKED_EXTERNAL: ${missing ? "no Chrome on this host" : "the Chrome profile fixture could not be made"}; the cookie import tests did not run`);
+    const why = foreign ? "this is not a macOS host, so Chrome would encrypt with a key the macOS reader does not use" : missing ? "no Chrome on this host" : "the Chrome profile fixture could not be made";
+    console.log(`BLOCKED_EXTERNAL: ${why}; the cookie import tests did not run`);
   }
   return fixture;
 }
